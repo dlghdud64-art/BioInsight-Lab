@@ -23,43 +23,40 @@ export default function ReportsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  const [period, setPeriod] = useState<"month" | "quarter" | "year" | "custom">("month");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [vendorId, setVendorId] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importProjectName, setImportProjectName] = useState("");
-  const [groupBy, setGroupBy] = useState<"none" | "vendor" | "category">("none");
-
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["purchase-reports", period, startDate, endDate, organizationId, vendorId, category],
+  // 필터 상태
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTeam, setSelectedTeam] = useState<string>("all");
+  const [selectedVendor, setSelectedVendor] = useState<string>("all");
+  const [selectedBudget, setSelectedBudget] = useState<string>("all");
+
+  // 리포트 데이터 조회
+  const { data: reportData, isLoading } = useQuery({
+    queryKey: ["reports", "purchase", startDate, endDate, selectedCategory, selectedTeam, selectedVendor, selectedBudget],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (period !== "custom") params.append("period", period);
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-      if (organizationId) params.append("organizationId", organizationId);
-      if (vendorId) params.append("vendorId", vendorId);
-      if (category) params.append("category", category);
+      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedTeam !== "all") params.append("team", selectedTeam);
+      if (selectedVendor !== "all") params.append("vendor", selectedVendor);
+      if (selectedBudget !== "all") params.append("budgetId", selectedBudget);
 
       const response = await fetch(`/api/reports/purchase?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch reports");
+      if (!response.ok) throw new Error("Failed to fetch report data");
       return response.json();
     },
     enabled: status === "authenticated",
   });
 
+  // CSV Import
   const importMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      if (organizationId) formData.append("organizationId", organizationId);
-      if (importProjectName) formData.append("projectName", importProjectName);
 
       const response = await fetch("/api/purchases/import", {
         method: "POST",
@@ -68,39 +65,31 @@ export default function ReportsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Import ?�패");
+        throw new Error(error.message || "Import failed");
       }
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
-        title: "Import ?�료",
-        description: `${data.imported}�?구매?�역???�공?�으�?Import?�었?�니??`,
+        title: "Import 성공",
+        description: "구매 내역이 성공적으로 import되었습니다.",
       });
-      setIsImportDialogOpen(false);
-      setImportFile(null);
-      setImportProjectName("");
-      // 리포???�이???�로고침
-      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      // 리포트 데이터 새로고침
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Import ?�패",
+        title: "Import 실패",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
+  // 인증 확인
   if (status === "loading") {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 �?..</p>
-        </div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (status === "unauthenticated") {
@@ -108,644 +97,339 @@ export default function ReportsPage() {
     return null;
   }
 
-  const metrics = data?.metrics || {};
-  const monthlyData = data?.monthlyData || [];
-  const vendorData = data?.vendorData || [];
-  const categoryData = data?.categoryData || [];
-  const details = data?.details || [];
-  const budgetUsage = data?.budgetUsage || [];
-
-  // ?�산 목록 조회
-  const { data: budgetsData } = useQuery({
+  // 예산 목록 조회
+  const { data: budgets } = useQuery({
     queryKey: ["budgets"],
     queryFn: async () => {
       const response = await fetch("/api/budgets");
-      if (!response.ok) return { budgets: [] };
+      if (!response.ok) throw new Error("Failed to fetch budgets");
       return response.json();
     },
-    enabled: status === "authenticated",
   });
 
-  const budgets = budgetsData?.budgets || [];
-
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">구매?�역 리포??/h1>
-            <p className="text-muted-foreground mt-1">
-              기간/?�/벤더�?�?구매 금액�??�산 ?�용 ?�황???�인?�니??
-            </p>
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">구매 리포트</h1>
+        <p className="text-muted-foreground">
+          기간/팀/벤더별 총 구매 금액과 예산 사용 상황을 확인합니다.
+        </p>
+      </div>
+
+      {/* 필터 */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>필터</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="startDate">시작일</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="endDate">종료일</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">카테고리</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {PRODUCT_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="team">팀/조직</Label>
+              <Input
+                id="team"
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                placeholder="전체"
+              />
+            </div>
+            <div>
+              <Label htmlFor="vendor">벤더</Label>
+              <Input
+                id="vendor"
+                value={selectedVendor}
+                onChange={(e) => setSelectedVendor(e.target.value)}
+                placeholder="전체"
+              />
+            </div>
+            <div>
+              <Label htmlFor="budget">예산</Label>
+              <Select value={selectedBudget} onValueChange={setSelectedBudget}>
+                <SelectTrigger id="budget">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {budgets?.map((budget: any) => (
+                    <SelectItem key={budget.id} value={budget.id}>
+                      {budget.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="h-4 w-4 mr-2" />
-                CSV Import
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>구매?�역 CSV Import</DialogTitle>
-                <DialogDescription>
-                  그룹?�어/ERP?�서 ?�운로드???�제 구매 ?�이?��? ?�로?�하?�요.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="csv-file">CSV ?�일</Label>
-                  <Input
-                    id="csv-file"
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                    className="mt-1"
+        </CardContent>
+      </Card>
+
+      {/* KPI 카드 */}
+      {isLoading ? (
+        <div className="text-center py-8">Loading...</div>
+      ) : reportData ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">총 구매 금액</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ₩{reportData.totalAmount?.toLocaleString("ko-KR") || 0}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">총 구매 건수</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData.totalCount || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">평균 단가</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ₩{reportData.averagePrice?.toLocaleString("ko-KR") || 0}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">벤더 수</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reportData.vendorCount || 0}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 예산 사용률 카드 */}
+          {selectedBudget !== "all" && reportData.budgetUsage && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  예산 사용률
+                  <Link href="/dashboard/budget">
+                    <Button variant="outline" size="sm">
+                      예산 관리
+                    </Button>
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>사용 금액</span>
+                    <span>
+                      ₩{reportData.budgetUsage.used?.toLocaleString("ko-KR") || 0} / ₩
+                      {reportData.budgetUsage.total?.toLocaleString("ko-KR") || 0}
+                    </span>
+                  </div>
+                  <Progress
+                    value={
+                      reportData.budgetUsage.total
+                        ? (reportData.budgetUsage.used / reportData.budgetUsage.total) * 100
+                        : 0
+                    }
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    지???�식: ?�짜, 벤더, ?�품, ?�량, ?��?, 총액, ?�화 ??                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="project-name">?�로?�트�?(?�택)</Label>
-                  <Input
-                    id="project-name"
-                    value={importProjectName}
-                    onChange={(e) => setImportProjectName(e.target.value)}
-                    placeholder="?�로?�트/과제�?
-                    className="mt-1"
-                  />
-                </div>
-                <div className="p-3 bg-blue-50 rounded-lg text-sm">
-                  <p className="font-semibold mb-1">CSV ?�식 ?�시:</p>
-                  <pre className="text-xs bg-white p-2 rounded border overflow-x-auto">
-{`?�짜,벤더,?�품,?�량,?��?,총액,?�화
-2024-01-15,벤더A,ELISA Kit,10,50000,500000,KRW
-2024-01-20,벤더B,Filter,5,10000,50000,KRW`}
-                  </pre>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsImportDialogOpen(false);
-                      setImportFile(null);
-                      setImportProjectName("");
-                    }}
-                    className="flex-1"
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (importFile) {
-                        importMutation.mutate(importFile);
-                      }
-                    }}
-                    disabled={!importFile || importMutation.isPending}
-                    className="flex-1"
-                  >
-                    {importMutation.isPending ? "Import �?.." : "Import"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* ?�터 */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>?�터</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>기간</Label>
-                <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="month">?�번 ??/SelectItem>
-                    <SelectItem value="quarter">?�번 분기</SelectItem>
-                    <SelectItem value="year">?�번 ?�도</SelectItem>
-                    <SelectItem value="custom">커스?�</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {period === "custom" && (
-                <>
-                  <div>
-                    <Label>?�작??/Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                  <div className="text-xs text-muted-foreground">
+                    남은 예산: ₩
+                    {(
+                      (reportData.budgetUsage.total || 0) - (reportData.budgetUsage.used || 0)
+                    ).toLocaleString("ko-KR")}
                   </div>
-                  <div>
-                    <Label>종료??/Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* KPI 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">�?구매 금액</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ??metrics.totalAmount?.toLocaleString() || 0}
-              </div>
-              {metrics.estimatedAmount !== undefined && metrics.actualAmount !== undefined && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  ?�상: ??metrics.estimatedAmount.toLocaleString()} / 
-                  ?�제: ??metrics.actualAmount.toLocaleString()}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">벤더 ??/CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.vendorCount || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">?�목 ??/CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.itemCount || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">리스????/CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.listCount || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* ?�산 ?�용�?카드 */}
-        {budgets.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>?�산 ?�용�?/CardTitle>
-                <Link href="/dashboard/budget">
-                  <Button variant="outline" size="sm">
-                    ?�산 관�?                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {budgets
-                  .filter((b: any) => {
-                    const now = new Date();
-                    return new Date(b.periodStart) <= now && new Date(b.periodEnd) >= now;
-                  })
-                  .map((budget: any) => {
-                    const usage = budget.usage || {};
-                    const usageRate = usage.usageRate || 0;
-                    const isOverBudget = usageRate > 100;
-                    const isWarning = usageRate > 80 && usageRate <= 100;
+          {/* 예상 vs 실제 비교 */}
+          {reportData.budgetComparison && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>예상 vs 실제</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={reportData.budgetComparison}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="expected" fill="#8884d8" name="예상" />
+                    <Bar dataKey="actual" fill="#82ca9d" name="실제" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-                    return (
-                      <div
-                        key={budget.id}
-                        className={`p-4 border rounded-lg ${
-                          isOverBudget
-                            ? "border-red-300 bg-red-50"
-                            : isWarning
-                            ? "border-orange-300 bg-orange-50"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <div className="font-semibold">{budget.name}</div>
-                            {budget.projectName && (
-                              <div className="text-sm text-muted-foreground">
-                                ?�로?�트: {budget.projectName}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-muted-foreground">?�용�?/div>
-                            <div className={`text-lg font-semibold ${isOverBudget ? "text-red-600" : ""}`}>
-                              {usageRate.toFixed(1)}%
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm mb-2">
-                          <div>
-                            <div className="text-muted-foreground">?�산</div>
-                            <div className="font-medium">
-                              {budget.amount.toLocaleString()} {budget.currency}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">?�용</div>
-                            <div className="font-medium">
-                              {usage.totalSpent?.toLocaleString() || 0} {budget.currency}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">?�여</div>
-                            <div className={`font-medium ${usage.remaining < 0 ? "text-red-600" : ""}`}>
-                              {usage.remaining?.toLocaleString() || budget.amount.toLocaleString()}{" "}
-                              {budget.currency}
-                            </div>
-                          </div>
-                        </div>
-                        <Progress
-                          value={Math.min(usageRate, 100)}
-                          className={isOverBudget ? "bg-red-200" : isWarning ? "bg-orange-200" : ""}
-                        />
-                      </div>
-                    );
-                  })}
-                {budgets.filter((b: any) => {
-                  const now = new Date();
-                  return new Date(b.periodStart) <= now && new Date(b.periodEnd) >= now;
-                }).length === 0 && (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    ?�재 ?�성?�된 ?�산???�습?�다.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {/* 그래프 */}
+          {reportData.chartData && reportData.chartData.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>기간별 구매 추이</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={reportData.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="amount" fill="#8884d8" name="구매 금액" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* ?�상 vs ?�제 비교 */}
-        {metrics.estimatedAmount !== undefined && metrics.actualAmount !== undefined && metrics.actualAmount > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>?�상 vs ?�제 구매??비교</CardTitle>
-              <CardDescription>
-                BioInsight Lab?�서 ?�성???�상 구매?�과 ?�제 구매?�을 비교?�니??
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="text-sm text-muted-foreground mb-1">?�상 구매??/div>
-                  <div className="text-2xl font-bold">??metrics.estimatedAmount.toLocaleString()}</div>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <div className="text-sm text-muted-foreground mb-1">?�제 구매??/div>
-                  <div className="text-2xl font-bold">??metrics.actualAmount.toLocaleString()}</div>
-                </div>
-                <div className={`p-4 border rounded-lg ${
-                  metrics.difference && metrics.difference > 0 
-                    ? "bg-red-50 border-red-200" 
-                    : metrics.difference && metrics.difference < 0
-                    ? "bg-green-50 border-green-200"
-                    : ""
-                }`}>
-                  <div className="text-sm text-muted-foreground mb-1">차이</div>
-                  <div className={`text-2xl font-bold ${
-                    metrics.difference && metrics.difference > 0 
-                      ? "text-red-600" 
-                      : metrics.difference && metrics.difference < 0
-                      ? "text-green-600"
-                      : ""
-                  }`}>
-                    {metrics.difference && metrics.difference > 0 ? "+" : ""}
-                    ??metrics.difference?.toLocaleString() || 0}
-                  </div>
-                  {metrics.difference && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {metrics.difference > 0 
-                        ? `?�상보다 ${((metrics.difference / metrics.estimatedAmount) * 100).toFixed(1)}% 초과`
-                        : `?�상보다 ${((Math.abs(metrics.difference) / metrics.estimatedAmount) * 100).toFixed(1)}% ?�감`
-                      }
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        </div>
+          {/* 예산 사용률 */}
+          {reportData.budgetUsageChart && reportData.budgetUsageChart.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>예산별 사용률</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={reportData.budgetUsageChart}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {reportData.budgetUsageChart.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || "#8884d8"} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* 그래??*/}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>?�별 구매 금액 추이</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value: number) => `??{value.toLocaleString()}`} />
-                  <Legend />
-                  <Bar dataKey="amount" fill="#0088FE" name="구매 금액" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>벤더�?구매 비율</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={vendorData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="amount"
-                  >
-                    {vendorData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `??{value.toLocaleString()}`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ?�산 ?�용�?*/}
-        {budgetUsage.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>?�산 ?��??�용�?/CardTitle>
-              <CardDescription>
-                ?�정???�산 ?��??�제 ?�용 금액???�인?????�습?�다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {budgetUsage.map((budget: any) => (
-                  <div key={budget.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold">{budget.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {budget.organization} {budget.projectName && `· ${budget.projectName}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(budget.periodStart).toLocaleDateString("ko-KR")} ~{" "}
-                          {new Date(budget.periodEnd).toLocaleDateString("ko-KR")}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">
-                          {budget.usageRate.toFixed(1)}%
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          ?�용�?                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">?�산:</span>
-                        <span className="font-semibold">??budget.budgetAmount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">?�용:</span>
-                        <span className="font-semibold">??budget.usedAmount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">?�여:</span>
-                        <span className={`font-semibold ${budget.remaining < 0 ? "text-red-600" : ""}`}>
-                          ??budget.remaining.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="mt-2">
-                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              budget.usageRate >= 100
-                                ? "bg-red-500"
-                                : budget.usageRate >= 80
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                            }`}
-                            style={{ width: `${Math.min(budget.usageRate, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ?�세 ?�이�?*/}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>구매?�역 ?�세</CardTitle>
-                <CardDescription>
-                  ?�터링된 기간??구매?�역???�인?????�습?�다.
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="group-by" className="text-sm">그룹??</Label>
-                <Select value={groupBy} onValueChange={(v: any) => setGroupBy(v)}>
-                  <SelectTrigger id="group-by" className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">그룹???�음</SelectItem>
-                    <SelectItem value="vendor">벤더�?/SelectItem>
-                    <SelectItem value="category">카테고리�?/SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-center py-8 text-muted-foreground">로딩 �?..</p>
-            ) : details.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                ?�당 기간??구매?�역???�습?�다.
-              </div>
-            ) : groupBy === "none" ? (
-              <div className="overflow-x-auto">
+          {/* 상세 테이블 */}
+          {reportData.details && reportData.details.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>상세 내역</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>?�짜</TableHead>
-                      <TableHead>조직</TableHead>
-                      <TableHead>?�로?�트</TableHead>
+                      <TableHead>날짜</TableHead>
+                      <TableHead>제품명</TableHead>
                       <TableHead>벤더</TableHead>
-                      <TableHead>카테고리</TableHead>
-                      <TableHead>?�품�?/TableHead>
-                      <TableHead className="text-right">금액</TableHead>
-                      <TableHead>비고</TableHead>
+                      <TableHead>수량</TableHead>
+                      <TableHead>단가</TableHead>
+                      <TableHead>총액</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {details.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {new Date(item.date).toLocaleDateString("ko-KR")}
-                        </TableCell>
-                        <TableCell>{item.organization}</TableCell>
-                        <TableCell>{item.project}</TableCell>
-                        <TableCell>{item.vendor}</TableCell>
+                    {reportData.details.map((item: any, index: number) => (
+                      <TableRow key={index}>
                         <TableCell>
-                          {item.category && PRODUCT_CATEGORIES[item.category as keyof typeof PRODUCT_CATEGORIES]
-                            ? PRODUCT_CATEGORIES[item.category as keyof typeof PRODUCT_CATEGORIES]
-                            : item.category}
+                          {new Date(item.purchaseDate).toLocaleDateString("ko-KR")}
                         </TableCell>
                         <TableCell>{item.productName}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          ??item.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {item.notes}
-                        </TableCell>
+                        <TableCell>{item.vendorName}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₩{item.unitPrice?.toLocaleString("ko-KR")}</TableCell>
+                        <TableCell>₩{item.totalAmount?.toLocaleString("ko-KR")}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {(() => {
-                  // 그룹??로직
-                  const grouped = new Map<string, any[]>();
-                  
-                  details.forEach((item: any) => {
-                    const key = groupBy === "vendor" 
-                      ? (item.vendor || "미�???벤더")
-                      : (item.category || "미�???카테고리");
-                    
-                    if (!grouped.has(key)) {
-                      grouped.set(key, []);
-                    }
-                    grouped.get(key)!.push(item);
-                  });
-
-                  const groupedArray = Array.from(grouped.entries()).sort((a, b) => {
-                    const aTotal = a[1].reduce((sum, d) => sum + (d.amount || 0), 0);
-                    const bTotal = b[1].reduce((sum, d) => sum + (d.amount || 0), 0);
-                    return bTotal - aTotal;
-                  });
-
-                  return groupedArray.map(([groupKey, items]) => {
-                    const groupTotal = items.reduce((sum, d) => sum + (d.amount || 0), 0);
-                    const itemCount = items.length;
-                    const displayKey = groupBy === "category" && PRODUCT_CATEGORIES[groupKey as keyof typeof PRODUCT_CATEGORIES]
-                      ? PRODUCT_CATEGORIES[groupKey as keyof typeof PRODUCT_CATEGORIES]
-                      : groupKey;
-
-                    return (
-                      <div key={groupKey} className="border rounded-lg overflow-hidden">
-                        <div className="bg-slate-50 px-4 py-3 border-b">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-semibold">{displayKey}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {itemCount}�??�목
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-lg font-bold">
-                                ??groupTotal.toLocaleString()}
-                              </div>
-                              <div className="text-xs text-muted-foreground">그룹 ?�계</div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>?�짜</TableHead>
-                                <TableHead>조직</TableHead>
-                                <TableHead>?�로?�트</TableHead>
-                                {groupBy === "category" && <TableHead>벤더</TableHead>}
-                                <TableHead>?�품�?/TableHead>
-                                {groupBy === "vendor" && <TableHead>카테고리</TableHead>}
-                                <TableHead className="text-right">금액</TableHead>
-                                <TableHead>비고</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {items.map((item: any) => (
-                                <TableRow key={item.id}>
-                                  <TableCell className="font-medium">
-                                    {new Date(item.date).toLocaleDateString("ko-KR")}
-                                  </TableCell>
-                                  <TableCell>{item.organization}</TableCell>
-                                  <TableCell>{item.project}</TableCell>
-                                  {groupBy === "category" && (
-                                    <TableCell>{item.vendor}</TableCell>
-                                  )}
-                                  <TableCell>{item.productName}</TableCell>
-                                  {groupBy === "vendor" && (
-                                    <TableCell>
-                                      {item.category && PRODUCT_CATEGORIES[item.category as keyof typeof PRODUCT_CATEGORIES]
-                                        ? PRODUCT_CATEGORIES[item.category as keyof typeof PRODUCT_CATEGORIES]
-                                        : item.category}
-                                    </TableCell>
-                                  )}
-                                  <TableCell className="text-right font-semibold">
-                                    ??item.amount.toLocaleString()}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-muted-foreground">
-                                    {item.notes}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            데이터가 없습니다. 필터를 조정하거나 구매 내역을 import해주세요.
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* CSV Import Dialog */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button className="fixed bottom-8 right-8" size="lg">
+            <Upload className="mr-2 h-4 w-4" />
+            CSV Import
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>구매 내역 CSV Import</DialogTitle>
+            <DialogDescription>
+              CSV 파일을 업로드하여 구매 내역을 import합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  importMutation.mutate(file);
+                }
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-
-
