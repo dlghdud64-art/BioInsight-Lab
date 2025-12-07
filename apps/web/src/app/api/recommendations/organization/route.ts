@@ -1,0 +1,103 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+
+// 조직별 추천 API
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get("limit") || "5");
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ recommendations: [] });
+    }
+
+    const userId = session.user.id;
+
+    // 사용자가 속한 조직 조회
+    const orgMembers = await db.organizationMember.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        organization: true,
+      },
+    });
+
+    if (orgMembers.length === 0) {
+      return NextResponse.json({ recommendations: [] });
+    }
+
+    const organizationIds = orgMembers.map((m) => m.organizationId);
+
+    // 조직 내 다른 멤버들의 견적 요청 분석
+    const orgQuotes = await db.quote.findMany({
+      where: {
+        organizationId: { in: organizationIds },
+        userId: { not: userId }, // 본인 제외
+        createdAt: {
+          gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // 최근 180일
+        },
+      },
+      include: {
+        items: {
+          include: {
+            quote: true,
+          },
+        },
+      },
+    });
+
+    // 조직 내 자주 사용되는 제품 카운트
+    const productUsageCount: Record<string, number> = {};
+    const productCategories: Record<string, string> = {};
+    const productBrands: Record<string, string> = {};
+
+    orgQuotes.forEach((quote) => {
+      quote.items.forEach((item) => {
+        productUsageCount[item.productId] = (productUsageCount[item.productId] || 0) + 1;
+      });
+    });
+
+    // 제품 정보 가져오기
+    const productIds = Object.keys(productUsageCount);
+    if (productIds.length === 0) {
+      return NextResponse.json({ recommendations: [] });
+    }
+
+    const products = await db.product.findMany({
+      where: {
+        id: { in: productIds },
+      },
+      include: {
+        vendors: {
+          include: {
+            vendor: true,
+          },
+        },
+      },
+    });
+
+    // 사용 빈도순으로 정렬
+    const recommendations = products
+      .map((product) => ({
+        product,
+        usageCount: productUsageCount[product.id],
+        reason: `이 조직에서 ${productUsageCount[product.id]}번 사용되었습니다`,
+      }))
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, limit);
+
+    return NextResponse.json({ recommendations });
+  } catch (error) {
+    console.error("Error generating organization recommendations:", error);
+    return NextResponse.json(
+      { error: "Failed to generate organization recommendations" },
+      { status: 500 }
+    );
+  }
+}
+
+
+
