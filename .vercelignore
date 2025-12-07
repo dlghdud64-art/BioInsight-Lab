@@ -1,0 +1,12 @@
+node_modules
+.next
+.env*
+*.log
+.DS_Store
+packages
+infra
+docs
+app
+public
+scripts
+
