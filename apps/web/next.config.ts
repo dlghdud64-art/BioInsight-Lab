@@ -22,16 +22,8 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
   },
-  // pdf-parse 같은 ESM 모듈을 위한 설정
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
-    return config;
-  },
+  // Turbopack 설정 (Next.js 16 기본)
+  turbopack: {},
 };
 
 export default nextConfig;
