@@ -1,8 +1,9 @@
 {
-  "buildCommand": "cd apps/web && npm install && npm run build",
-  "installCommand": "cd apps/web && npm install",
-  "outputDirectory": "apps/web/.next",
+  "buildCommand": "npm install && npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
   "framework": "nextjs",
+  "rootDirectory": "apps/web",
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "false",
     "NODE_ENV": "development"
