@@ -212,7 +212,8 @@ async function generatePersonalizedRecommendations(params: {
 
   // 점수순 정렬 및 상위 N개 반환
   return scoredProducts
-    .sort((a, b) => b.recommendationScore - a.recommendationScore)
+    // 타입 에러 수정: a, b 파라미터에 타입 명시
+    .sort((a: any, b: any) => b.recommendationScore - a.recommendationScore)
     .slice(0, limit)
     .map(({ recommendationScore, reason, ...product }) => ({
       product,
