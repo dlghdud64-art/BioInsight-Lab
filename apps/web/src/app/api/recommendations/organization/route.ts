@@ -83,8 +83,9 @@ export async function GET(request: NextRequest) {
     });
 
     // 사용 빈도순으로 정렬
+    // 타입 에러 수정: product 파라미터에 타입 명시
     const recommendations = products
-      .map((product) => ({
+      .map((product: any) => ({
         product,
         usageCount: productUsageCount[product.id],
         reason: `이 조직에서 ${productUsageCount[product.id]}번 사용되었습니다`,
