@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ recommendations: [] });
     }
 
-    const organizationIds = orgMembers.map((m) => m.organizationId);
+    // 타입 에러 수정: m 파라미터에 타입 명시
+    const organizationIds = orgMembers.map((m: any) => m.organizationId);
 
     // 조직 내 다른 멤버들의 견적 요청 분석
     const orgQuotes = await db.quote.findMany({
@@ -97,4 +98,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}
