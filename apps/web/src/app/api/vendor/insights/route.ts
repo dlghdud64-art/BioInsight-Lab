@@ -84,8 +84,9 @@ export async function GET(request: NextRequest) {
 
     // 제품별 통계
     const productStats: Record<string, any> = {};
-    quotes.forEach((quote) => {
-      quote.items.forEach((item) => {
+    // 타입 에러 수정: quote와 item 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
+      quote.items.forEach((item: any) => {
         const productId = item.productId;
         if (!productStats[productId]) {
           productStats[productId] = {
@@ -116,8 +117,9 @@ export async function GET(request: NextRequest) {
 
     // 카테고리별 통계
     const categoryStats: Record<string, any> = {};
-    quotes.forEach((quote) => {
-      quote.items.forEach((item) => {
+    // 타입 에러 수정: quote와 item 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
+      quote.items.forEach((item: any) => {
         const category = item.product.category;
         if (!categoryStats[category]) {
           categoryStats[category] = {
@@ -186,4 +188,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}
