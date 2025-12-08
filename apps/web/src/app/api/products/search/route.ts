@@ -44,7 +44,8 @@ export async function GET(request: NextRequest) {
                   maxPrice: params.maxPrice,
                 }))
               : null,
-            resultCount: result.products?.length || 0,
+            // 타입 에러 수정: result가 products 속성을 가지는지 확인
+            resultCount: (result as any).products?.length || 0,
           },
         });
       } catch (error) {
