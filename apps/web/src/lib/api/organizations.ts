@@ -37,7 +37,7 @@ export async function getOrganizationsByUser(userId: string) {
 }
 
 // 조직 상세 조회
-export async function getOrganizationById(id: string) {
+export async function getOrganizationById(id: string, userId?: string) {
   return await db.organization.findUnique({
     where: { id },
     include: {
@@ -69,5 +69,19 @@ export async function leaveOrganization(organizationId: string, userId: string) 
       organizationId,
       userId,
     },
+  });
+}
+
+// 조직 정보 업데이트
+export async function updateOrganization(
+  organizationId: string,
+  data: {
+    name?: string;
+    description?: string;
+  }
+) {
+  return await db.organization.update({
+    where: { id: organizationId },
+    data,
   });
 }
