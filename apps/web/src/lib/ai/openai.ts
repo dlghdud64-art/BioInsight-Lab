@@ -173,3 +173,60 @@ function analyzeSearchIntentFallback(query: string): SearchIntentResult {
 // 번역 캐시
 const translationCache = new Map<string, string>();
 const TRANSLATION_CACHE_TTL = 1000 * 60 * 60 * 24; // 24시간
+
+// 텍스트 번역
+export async function translateText(
+  text: string,
+  fromLang: string = "ko",
+  toLang: string = "en"
+): Promise<string> {
+  const cacheKey = `${fromLang}-${toLang}-${text}`;
+  const cached = translationCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    // API 키가 없으면 원문 반환
+    return text;
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional translator. Translate the following text from ${fromLang} to ${toLang}. Only return the translated text, no explanations.`,
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Translation failed");
+    }
+
+    const data = await response.json();
+    const translated = data.choices[0]?.message?.content?.trim() || text;
+    
+    translationCache.set(cacheKey, translated);
+    return translated;
+  } catch (error) {
+    console.error("Translation error:", error);
+    return text;
+  }
+}

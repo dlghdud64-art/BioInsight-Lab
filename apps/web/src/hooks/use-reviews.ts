@@ -56,4 +56,49 @@ export function useProductReviews(
     },
     enabled: !!productId,
   });
-}
+}
+
+// 리뷰 생성 hook
+export function useCreateReview() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      productId: string;
+      rating: number;
+      title?: string;
+      comment?: string;
+      pros?: string;
+      cons?: string;
+    }) => {
+      const response = await fetch(`/api/products/${data.productId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create review");
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["product-reviews", variables.productId] });
+    },
+  });
+}
+
+// 리뷰 삭제 hook
+export function useDeleteReview() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ reviewId, productId }: { reviewId: string; productId: string }) => {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete review");
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["product-reviews", variables.productId] });
+    },
+  });
+}

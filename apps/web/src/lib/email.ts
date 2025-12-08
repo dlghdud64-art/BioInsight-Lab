@@ -89,3 +89,29 @@ export async function sendQuoteConfirmationToUser(
     text: `견적 요청 "${quoteTitle}"이(가) 접수되었습니다. 확인: ${quoteUrl}`,
   });
 }
+
+// 벤더들에게 견적 알림 이메일 발송
+export async function sendQuoteNotificationToVendors(
+  vendorEmails: string[],
+  quoteTitle: string,
+  quoteId: string
+): Promise<boolean> {
+  const appUrl = getAppUrl();
+  const quoteUrl = `${appUrl}/vendor/quotes/${quoteId}`;
+
+  return await sendEmail({
+    to: vendorEmails,
+    subject: `새로운 견적 요청: ${quoteTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>새로운 견적 요청이 접수되었습니다</h2>
+        <p>안녕하세요,</p>
+        <p>새로운 견적 요청 "<strong>${quoteTitle}</strong>"이(가) 접수되었습니다.</p>
+        <p>견적을 확인하고 응답하시려면 아래 링크를 클릭해주세요:</p>
+        <p><a href="${quoteUrl}" style="background-color: #0070f3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">견적 확인하기</a></p>
+        <p>감사합니다.</p>
+      </div>
+    `,
+    text: `새로운 견적 요청 "${quoteTitle}"이(가) 접수되었습니다. 확인: ${quoteUrl}`,
+  });
+}

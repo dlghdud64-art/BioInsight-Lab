@@ -105,3 +105,23 @@ export async function isAdmin(userId: string): Promise<boolean> {
   });
   return user?.role === "ADMIN";
 }
+
+// 제품 업데이트
+export async function updateProduct(
+  productId: string,
+  data: {
+    name?: string;
+    nameEn?: string;
+    description?: string;
+    descriptionEn?: string;
+    category?: string;
+    brand?: string;
+    modelNumber?: string;
+    catalogNumber?: string;
+  }
+) {
+  return await db.product.update({
+    where: { id: productId },
+    data,
+  });
+}

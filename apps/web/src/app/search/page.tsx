@@ -371,7 +371,7 @@ export default function SearchPage() {
                                   {PRODUCT_CATEGORIES[product.category]}
                                 </Badge>
                               )}
-                              {minPrice && <span>??minPrice.toLocaleString()}</span>}
+                               {minPrice && <span>₩{minPrice.toLocaleString()}</span>}
                             </div>
                           </button>
                         </div>

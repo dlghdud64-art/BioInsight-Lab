@@ -299,3 +299,12 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
     </TestFlowContext.Provider>
   );
 }
+
+// useTestFlow hook export
+export function useTestFlow() {
+  const context = useContext(TestFlowContext);
+  if (!context) {
+    throw new Error("useTestFlow must be used within TestFlowProvider");
+  }
+  return context;
+}

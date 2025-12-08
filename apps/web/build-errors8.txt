@@ -1,0 +1,57 @@
+﻿
+> web@0.1.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+??Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 366ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
+
+   ??Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     쨌 optimizePackageImports
+
+   Creating an optimized production build ...
+node.exe : 
+위치 줄:1 문자:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./src/app/search/page.tsx:374:74
+Parsing ecmascript source code failed
+[0m [90m 372 |[39m                                 [33m<[39m[33m/[39m[3
+3mBadge[39m[33m>[39m
+ [90m 373 |[39m                               )}
+[31m[1m>[22m[39m[90m 374 |[39m                               {minPrice [
+33m&&[39m [33m<[39m[33mspan[39m[33m>[39m[33m?[39m[33m?[39mminPrice[
+33m.[39mtoLocaleString()}[33m<[39m[33m/[39m[33mspan[39m[33m>[39m}
+ [90m     |[39m                                                              
+            [31m[1m^[22m[39m
+ [90m 375 |[39m                             [33m<[39m[33m/[39m[33mdiv[3
+9m[33m>[39m
+ [90m 376 |[39m                           [33m<[39m[33m/[39m[33mbutton[
+39m[33m>[39m
+ [90m 377 |[39m                         [33m<[39m[33m/[39m[33mdiv[39m[
+33m>[39m[0m
+
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+
+    at <unknown> (./src/app/search/page.tsx:374:74)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\Users\young\ai-biocompare\apps\web
+npm error workspace web@0.1.0
+npm error location C:\Users\young\ai-biocompare\apps\web
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c prisma generate && next 
+build

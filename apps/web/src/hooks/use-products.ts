@@ -35,4 +35,18 @@ export function useSearchProducts(params: SearchProductsParams) {
     },
     enabled: true,
   });
-}
+}
+
+// 제품 ID로 조회 hook
+export function useProduct(productId: string | undefined) {
+  return useQuery({
+    queryKey: ["product", productId],
+    queryFn: async () => {
+      if (!productId) throw new Error("Product ID is required");
+      const response = await fetch(`/api/products/${productId}`);
+      if (!response.ok) throw new Error("Failed to fetch product");
+      return response.json();
+    },
+    enabled: !!productId,
+  });
+}
