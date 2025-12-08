@@ -7,11 +7,13 @@ function removeDuplicates(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     
-    // export function 또는 export async function 패턴 찾기
+    // export function, export const, export default 패턴 찾기
     const exportIndices = [];
     lines.forEach((line, index) => {
       if (line.match(/^export\s+(async\s+)?function\s+\w+/) || 
-          line.match(/^export\s+default\s+function/)) {
+          line.match(/^export\s+default\s+function/) ||
+          line.match(/^export\s+const\s+\{[^}]*\}/) ||
+          line.match(/^export\s+const\s+\w+\s*=/)) {
         exportIndices.push(index);
       }
     });
@@ -68,13 +70,18 @@ function findFunctionEnd(lines, startIndex) {
     // 중괄호가 모두 닫혔고, 다음 export가 나오면 여기서 끝
     if (inFunction && braceCount === 0) {
       // 다음 라인이 export로 시작하는지 확인
-      if (i + 1 < lines.length && lines[i + 1].match(/^export\s+(async\s+)?function/)) {
+      if (i + 1 < lines.length && (
+          lines[i + 1].match(/^export\s+(async\s+)?function/) ||
+          lines[i + 1].match(/^export\s+const\s+\{[^}]*\}/) ||
+          lines[i + 1].match(/^export\s+const\s+\w+\s*=/))) {
         return i;
       }
       // 또는 빈 줄 다음에 export가 나오는지 확인
       if (i + 2 < lines.length && 
-          lines[i + 1].trim() === '' && 
-          lines[i + 2].match(/^export\s+(async\s+)?function/)) {
+          lines[i + 1].trim() === '' && (
+          lines[i + 2].match(/^export\s+(async\s+)?function/) ||
+          lines[i + 2].match(/^export\s+const\s+\{[^}]*\}/) ||
+          lines[i + 2].match(/^export\s+const\s+\w+\s*=/))) {
         return i;
       }
       // 또는 import가 다시 나오면 (중복된 import 제거를 위해)
