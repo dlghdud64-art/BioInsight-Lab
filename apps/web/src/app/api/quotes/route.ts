@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         quote: {
           id: `demo-${Date.now()}`,
-          title,
+          title: body.title || "Demo Quote",
           userId: session?.user?.id || "demo-user",
           createdAt: new Date().toISOString(),
           demo: true,
