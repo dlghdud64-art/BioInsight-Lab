@@ -170,10 +170,11 @@ export async function GET(request: NextRequest) {
         totalQuotes: quotes.length,
         totalResponses: responses.length,
         responseRate: quotes.length > 0 ? ((responses.length / quotes.length) * 100).toFixed(2) : "0.00",
-        completedQuotes: quotes.filter((q) => q.status === "COMPLETED").length,
+        // 타입 에러 수정: q 파라미터에 타입 명시
+        completedQuotes: quotes.filter((q: any) => q.status === "COMPLETED").length,
         completionRate:
           quotes.length > 0
-            ? ((quotes.filter((q) => q.status === "COMPLETED").length / quotes.length) * 100).toFixed(2)
+            ? ((quotes.filter((q: any) => q.status === "COMPLETED").length / quotes.length) * 100).toFixed(2)
             : "0.00",
         totalRevenue: vendor.totalRevenue,
         totalLeads: vendor.totalLeads,
