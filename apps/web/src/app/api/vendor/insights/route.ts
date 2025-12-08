@@ -136,7 +136,8 @@ export async function GET(request: NextRequest) {
 
     // 월별 트렌드
     const monthlyTrends: Record<string, any> = {};
-    quotes.forEach((quote) => {
+    // 타입 에러 수정: quote 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
       const month = new Date(quote.createdAt).toISOString().slice(0, 7); // YYYY-MM
       if (!monthlyTrends[month]) {
         monthlyTrends[month] = {
