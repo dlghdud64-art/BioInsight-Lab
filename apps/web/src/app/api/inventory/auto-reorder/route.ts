@@ -57,8 +57,9 @@ export async function POST(request: NextRequest) {
           // ì¬ì©ë ì¶ì 
           let estimatedMonthlyUsage = 0;
           if (inventory.usageRecords.length > 0) {
+            // 타입 에러 수정: sum과 record 파라미터에 타입 명시
             const totalUsage = inventory.usageRecords.reduce(
-              (sum, record) => sum + record.quantity,
+              (sum: number, record: any) => sum + record.quantity,
               0
             );
             const days = Math.max(
