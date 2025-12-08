@@ -522,7 +522,101 @@ BioInsight Lab에서 생성된 품목 리스트
 
 테이블: No., 제품명, 벤더, 수량, 금액
 
-상단 요약: 총 n개 · 합계 ₩xxx
+상단 요약: 총 n개 · 합계 ₩xxx1. 심플 흑백 로고 컴포넌트
+
+components/bioinsight-logo.tsx 새로 만들거나 덮어쓰기 👇
+
+// components/bioinsight-logo.tsx
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+type BioInsightLogoProps = {
+  className?: string;
+  showText?: boolean; // 필요하면 아이콘만 쓸 수 있게 옵션
+};
+
+export function BioInsightLogo({
+  className,
+  showText = true,
+}: BioInsightLogoProps) {
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      {/* 아이콘: 라운드 스퀘어 안에 시험관 + 점(인사이트) */}
+      <svg
+        viewBox="0 0 32 32"
+        aria-hidden="true"
+        role="img"
+        className="h-7 w-7 text-slate-900"
+      >
+        <g
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        >
+          {/* 바깥 라운드 스퀘어 (플랫폼 아이콘 느낌) */}
+          <rect x="5" y="5" width="22" height="22" rx="7" />
+
+          {/* 안쪽 시험관(튜브) – 단순화된 세로 캡슐 */}
+          <rect x="12" y="10" width="6" height="11" rx="3" />
+
+          {/* 인사이트/드롭을 상징하는 점 */}
+          <circle cx="20" cy="11" r="1.8" />
+        </g>
+      </svg>
+
+      {/* 텍스트: 전부 흑백 계열, 심플하게 */}
+      {showText && (
+        <div className="leading-none">
+          <span className="text-sm font-semibold tracking-tight text-slate-900">
+            BioInsight
+          </span>
+          <span className="ml-1 text-[11px] font-medium text-slate-500">
+            Lab
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+특징:
+
+색은 전부 currentColor → 헤더에서 text-slate-900 하나만 쓰는 모노톤 로고
+
+아이콘은
+
+큰 둥근 사각형 → “플랫폼 / 앱” 느낌
+
+안에 시험관 같은 세로 캡슐
+
+옆에 큰 점 → 인사이트, 시약 방울 둘 다 상징
+
+전체적으로 Notion, Linear 같은 단정한 B2B SaaS 느낌에 맞춰서 최소한의 요소만 남김
+
+2. 헤더에 적용 (기존 로고 위치 교체)
+
+헤더 컴포넌트에서 이렇게 쓰면 돼:
+
+// 예: app/_components/layout/app-header.tsx
+import Link from "next/link";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
+
+export function AppHeader() {
+  return (
+    <header className="border-b border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link href="/" className="flex items-center gap-2">
+          <BioInsightLogo />
+        </Link>
+
+        {/* 나머지 네비 / 버튼들 */}
+      </div>
+    </header>
+  );
+}
 
 많은 경우 스크롤 가능한 작은 박스
 

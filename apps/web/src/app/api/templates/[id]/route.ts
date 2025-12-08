@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 // 템플릿 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -13,8 +13,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const template = await db.quoteTemplate.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         organization: {
           select: {
@@ -63,7 +64,7 @@ export async function GET(
 // 템플릿 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -71,8 +72,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const template = await db.quoteTemplate.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!template) {
@@ -94,7 +96,7 @@ export async function PATCH(
           userId: session.user.id,
           type: template.type,
           isDefault: true,
-          id: { not: params.id },
+          id: { not: id },
         },
         data: {
           isDefault: false,
@@ -103,7 +105,7 @@ export async function PATCH(
     }
 
     const updated = await db.quoteTemplate.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
@@ -126,7 +128,7 @@ export async function PATCH(
 // 템플릿 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -134,8 +136,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const template = await db.quoteTemplate.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!template) {
@@ -148,7 +151,7 @@ export async function DELETE(
     }
 
     await db.quoteTemplate.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
@@ -160,6 +163,3 @@ export async function DELETE(
     );
   }
 }
-
-
-

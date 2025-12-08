@@ -672,3 +672,1323 @@ model Subscription {
   @@index([organizationId])
   @@index([status])
 }
+
+  BUYER // 구매 담당자
+  SUPPLIER // 공급사
+  ADMIN // 관리자
+}
+
+// 조직 내 역할 (워크스페이스 역할)
+enum OrganizationRole {
+  VIEWER // 조회만 가능
+  REQUESTER // 견적 요청 가능
+  APPROVER // 견적 승인 가능
+  ADMIN // 조직 관리자
+}
+
+// 구독 플랜 타입
+enum SubscriptionPlan {
+  FREE // 무료/Beta
+  TEAM // 팀 플랜
+  ORGANIZATION // 조직/Enterprise 플랜
+}
+
+// 조직/워크스페이스
+model Organization {
+  id                String           @id @default(cuid())
+  name              String
+  description       String?          @db.Text
+  plan              SubscriptionPlan @default(FREE) // 구독 플랜
+  planExpiresAt     DateTime? // 플랜 만료일
+  maxMembers        Int? // 최대 멤버 수 (플랜별 제한)
+  maxQuotesPerMonth Int? // 월별 최대 품목 리스트 수
+  maxSharedLinks    Int? // 최대 공유 링크 수
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // 관계
+  members         OrganizationMember[]
+  quotes          Quote[]
+  templates       QuoteTemplate[]
+  inventories     ProductInventory[]
+  purchaseRecords PurchaseRecord[]
+  budgets         Budget[]
+  subscription    Subscription? // 구독 정보
+
+  @@index([name])
+  @@index([plan])
+}
+
+// 조직 멤버
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrganizationRole @default(VIEWER)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // 관계
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  role          UserRole  @default(RESEARCHER)
+  organization  String? // 레거시 필드 (조직명 직접 입력)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth 관계
+  accounts Account[]
+  sessions Session[]
+
+  // 관계
+  quotes              Quote[]
+  comparisons         Comparison[]
+  favorites           Favorite[]
+  searchHistory       SearchHistory[]
+  organizationMembers OrganizationMember[]
+  reviews             Review[]
+  templates           QuoteTemplate[]
+  inventories         ProductInventory[]
+  inventoryUsage      InventoryUsage[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// NextAuth.js v5를 위한 모델
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// 제품 카테고리
+enum ProductCategory {
+  REAGENT // 시약
+  TOOL // 기구
+  EQUIPMENT // 장비
+}
+
+// 제품
+model Product {
+  id                    String                       @id @default(cuid())
+  name                  String
+  nameEn                String? // 영문명
+  description           String?                      @db.Text
+  descriptionEn         String?                      @db.Text
+  descriptionTranslated String?                      @db.Text // 번역된 설명 (GPT 번역)
+  category              ProductCategory
+  brand                 String?
+  modelNumber           String?
+  catalogNumber         String? // 카탈로그 번호
+  specifications        Json? // 스펙 정보 (JSON)
+  datasheetUrl          String?
+  imageUrl              String?
+  embedding             Unsupported("vector(1536)")? // 벡터 임베딩 (pgvector)
+  // 그룹웨어 친화적 필드
+  grade                 String? // Grade (HPLC grade, GMP, EP/USP, cell culture tested 등)
+  specification         String? // 규격/용량 (예: 1mg, 500mL, 0.22um 등)
+  regulatoryCompliance  String? // 규제/약전 규격 (USP, EP, JP 등)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  vendors         ProductVendor[]
+  comparisons     ComparisonProduct[]
+  favorites       Favorite[]
+  recommendations ProductRecommendation[] @relation("ProductRecommendations")
+  recommendedFor  ProductRecommendation[] @relation("RecommendedProducts")
+  searchHistory   SearchHistory[]
+  reviews         Review[]
+  quoteListItems  QuoteListItem[]
+  inventories     ProductInventory[]
+  purchaseRecords PurchaseRecord[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([name])
+}
+
+// 벤더/공급사
+model Vendor {
+  id                String    @id @default(cuid())
+  name              String
+  nameEn            String?
+  email             String?
+  phone             String?
+  website           String?
+  country           String?   @default("KR")
+  currency          String?   @default("KRW")
+  // 수익 모델 관련 필드
+  isPremium         Boolean   @default(false) // 프리미엄 플랜 여부
+  premiumExpiresAt  DateTime? // 프리미엄 만료일
+  leadPricePerQuote Float?    @default(0) // 리드당 과금 (견적 요청당)
+  totalLeads        Int       @default(0) // 총 리드 수
+  totalRevenue      Float     @default(0) // 총 수익
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // 관계
+  products        ProductVendor[]
+  quoteResponses  QuoteResponse[]
+  billingRecords  VendorBillingRecord[]
+  purchaseRecords PurchaseRecord[]
+
+  @@index([name])
+  @@index([isPremium])
+}
+
+// 제품-벤더 관계 (가격, 재고, 납기 정보)
+model ProductVendor {
+  id                String   @id @default(cuid())
+  productId         String
+  vendorId          String
+  price             Float?
+  currency          String   @default("KRW")
+  priceInKRW        Float? // KRW 환산 가격
+  stockStatus       String? // 재고 상태
+  leadTime          Int? // 납기일 (일 단위)
+  minOrderQty       Int?
+  url               String?
+  // 프리미엄 노출 관련
+  isPremiumFeatured Boolean  @default(false) // 프리미엄 추천 영역 노출
+  premiumPriority   Int      @default(0) // 프리미엄 우선순위 (높을수록 상단 노출)
+  lastUpdated       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // 관계
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vendor  Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, vendorId])
+  @@index([productId])
+  @@index([vendorId])
+  @@index([priceInKRW])
+  @@index([isPremiumFeatured, premiumPriority])
+}
+
+// 비교 테이블
+model Comparison {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String? // 비교 세트 이름
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products ComparisonProduct[]
+
+  @@index([userId])
+}
+
+// 비교-제품 관계
+model ComparisonProduct {
+  id           String   @id @default(cuid())
+  comparisonId String
+  productId    String
+  order        Int // 정렬 순서
+  createdAt    DateTime @default(now())
+
+  // 관계
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, productId])
+  @@index([comparisonId])
+}
+
+// 그룹웨어용 품목 리스트 (기존 Quote 모델 유지하되, 개념을 품목 리스트로 확장)
+model Quote {
+  id             String    @id @default(cuid())
+  userId         String
+  organizationId String? // 조직 단위 리스트인 경우
+  comparisonId   String? // 비교 세트 기반 리스트인 경우
+  title          String // 리스트 제목
+  description    String?   @db.Text // 리스트 설명/비고
+  // 그룹웨어 연동 정보
+  templateId     String? // 사용한 템플릿 ID
+  templateType   String? // 템플릿 타입 (R&D, QC, 생산 등) - 하위 호환성
+  exportedAt     DateTime? // 내보내기 시점
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // 관계
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  items           QuoteListItem[] // QuoteItem 대신 QuoteListItem 사용
+  quoteItems      QuoteItem[] // 레거시 호환성
+  // 기존 호환성을 위해 QuoteResponse 유지 (향후 제거 가능)
+  responses       QuoteResponse[]
+  sharedLists     SharedList[] // 공유 링크
+  purchaseRecords PurchaseRecord[] // 실제 구매내역
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([templateId])
+}
+
+// 품목 리스트 템플릿 (조직별/용도별 컬럼 세트)
+model QuoteTemplate {
+  id             String   @id @default(cuid())
+  name           String // 템플릿 이름 (예: "R&D 기본형", "QC 시험용", "생산 대량구매형")
+  type           String // 템플릿 타입 (R&D, QC, PRODUCTION, CUSTOM)
+  organizationId String? // 조직별 템플릿인 경우
+  userId         String? // 사용자별 커스텀 템플릿인 경우
+  description    String?  @db.Text
+  // 컬럼 설정 (JSON)
+  columns        Json // 표시할 컬럼과 순서, 필수/선택 여부 등
+  // 예: { columns: [{ key: "lineNumber", label: "Line No.", required: true, order: 1 }, ...] }
+  isDefault      Boolean  @default(false) // 기본 템플릿 여부
+  isPublic       Boolean  @default(false) // 공개 템플릿 여부 (다른 사용자도 사용 가능)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes       Quote[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([type])
+}
+
+// 그룹웨어용 품목 리스트 항목 (기존 QuoteItem을 확장)
+model QuoteListItem {
+  id         String   @id @default(cuid())
+  quoteId    String
+  productId  String
+  lineNumber Int // Line No. (그룹웨어용)
+  quantity   Int      @default(1)
+  unitPrice  Float? // 단가
+  currency   String?  @default("KRW")
+  lineTotal  Float? // 금액 (단가 × 수량)
+  notes      String?  @db.Text // 비고 (용도/대체품 여부/기존 제품 코드 등)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // 관계
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([productId])
+}
+
+// 기존 QuoteItem 모델 (하위 호환성 유지)
+model QuoteItem {
+  id        String   @id @default(cuid())
+  quoteId   String
+  productId String
+  quantity  Int      @default(1)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  // 관계
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([productId])
+}
+
+// QuoteStatus enum은 기존 호환성을 위해 유지 (향후 제거 가능)
+enum QuoteStatus {
+  PENDING // 대기 중
+  SENT // 발송 완료
+  RESPONDED // 응답 받음
+  COMPLETED // 완료
+  CANCELLED // 취소
+}
+
+// 견적 응답
+model QuoteResponse {
+  id         String    @id @default(cuid())
+  quoteId    String
+  vendorId   String
+  totalPrice Float?
+  currency   String    @default("KRW")
+  message    String?   @db.Text
+  validUntil DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // 관계
+  quote  Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([vendorId])
+}
+
+// 벤더 과금 기록
+model VendorBillingRecord {
+  id          String    @id @default(cuid())
+  vendorId    String
+  type        String // "LEAD", "PREMIUM", "REPORT"
+  amount      Float // 과금 금액
+  quantity    Int? // 리드 수, 리포트 수 등
+  description String?   @db.Text
+  periodStart DateTime? // 과금 기간 시작
+  periodEnd   DateTime? // 과금 기간 종료
+  createdAt   DateTime  @default(now())
+
+  // 관계
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([createdAt])
+}
+
+// 즐겨찾기
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // 관계
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// 검색 기록
+model SearchHistory {
+  id               String           @id @default(cuid())
+  userId           String?
+  query            String
+  intent           Json? // GPT 분류 결과
+  category         ProductCategory?
+  filters          Json? // 적용된 필터
+  resultCount      Int?
+  clickedProductId String?
+  createdAt        DateTime         @default(now())
+
+  // 관계
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [clickedProductId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 제품 추천 (AI 추천 결과 저장)
+model ProductRecommendation {
+  id                   String   @id @default(cuid())
+  productId            String
+  recommendedProductId String
+  score                Float // 유사도 점수
+  reason               String?  @db.Text // 추천 근거
+  reasonEn             String?  @db.Text
+  createdAt            DateTime @default(now())
+
+  // 관계
+  product     Product                  @relation("ProductRecommendations", fields: [productId], references: [id], onDelete: Cascade)
+  recommended Product                  @relation("RecommendedProducts", fields: [recommendedProductId], references: [id], onDelete: Cascade)
+  feedbacks   RecommendationFeedback[]
+
+  @@unique([productId, recommendedProductId])
+  @@index([productId])
+  @@index([score])
+}
+
+// 추천 품질 피드백
+model RecommendationFeedback {
+  id               String   @id @default(cuid())
+  userId           String?
+  recommendationId String
+  isHelpful        Boolean // 👍/👎
+  reason           String?  @db.Text // 도움이 된 이유/이유 없음
+  createdAt        DateTime @default(now())
+
+  // 관계
+  recommendation ProductRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId])
+  @@index([userId])
+}
+
+// 제품 리뷰 및 평점
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int // 1-5점
+  title     String?
+  comment   String?  @db.Text
+  pros      String?  @db.Text // 장점
+  cons      String?  @db.Text // 단점
+  verified  Boolean  @default(false) // 구매 인증 여부
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // 사용자당 제품당 하나의 리뷰만
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// 제품 재고 관리
+model ProductInventory {
+  id                   String    @id @default(cuid())
+  userId               String? // 사용자별 재고
+  organizationId       String? // 조직별 재고
+  productId            String
+  currentQuantity      Float     @default(0) // 현재 재고량
+  unit                 String?   @default("개") // 단위 (개, mL, g 등)
+  safetyStock          Float? // 안전 재고 (이 수량 이하로 떨어지면 재주문 추천)
+  minOrderQty          Float? // 최소 주문 수량
+  location             String? // 보관 위치
+  expiryDate           DateTime? // 유통기한
+  autoReorderEnabled   Boolean   @default(false) // 자동 재주문 활성화 여부
+  autoReorderThreshold Float? // 자동 재주문 임계값 (기본값: safetyStock)
+  notes                String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // 관계
+  user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  usageRecords InventoryUsage[]
+
+  @@unique([userId, productId]) // 사용자별 제품당 하나의 재고 기록
+  @@unique([organizationId, productId]) // 조직별 제품당 하나의 재고 기록
+  @@index([productId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([currentQuantity])
+}
+
+// 재고 사용량 기록 (사용량 추정을 위한 데이터)
+model InventoryUsage {
+  id          String   @id @default(cuid())
+  inventoryId String
+  userId      String
+  quantity    Float // 사용량
+  unit        String? // 단위
+  usageDate   DateTime @default(now()) // 사용 일자
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  // 관계
+  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+  @@index([userId])
+  @@index([usageDate])
+}
+
+// 공유 링크 (스냅샷 방식)
+model SharedList {
+  id          String    @id @default(cuid())
+  quoteId     String // 원본 QuoteList ID
+  publicId    String    @unique // 공유용 난수 토큰
+  title       String
+  description String?   @db.Text
+  snapshot    Json // 스냅샷 데이터 (품목 리스트 전체)
+  createdBy   String? // 작성자 ID (옵션)
+  expiresAt   DateTime? // 만료일 (P1)
+  isActive    Boolean   @default(true) // 비활성화 여부
+  viewCount   Int       @default(0) // 조회 수
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // 관계
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([publicId])
+  @@index([quoteId])
+  @@index([isActive])
+}
+
+// 실제 구매내역 (CSV Import용)
+model PurchaseRecord {
+  id             String   @id @default(cuid())
+  quoteId        String? // BioInsight Lab에서 생성한 리스트와 연결
+  organizationId String? // 조직/팀
+  projectName    String? // 프로젝트/과제명
+  vendorId       String? // 벤더
+  productId      String? // 제품
+  externalDocId  String? // 외부 문서 번호 (그룹웨어/ERP)
+  purchaseDate   DateTime // 구매일
+  quantity       Int
+  unitPrice      Float
+  currency       String   @default("KRW")
+  totalAmount    Float // 총액 (세금, 배송비 포함 여부는 notes에)
+  category       String? // 카테고리
+  notes          String?  @db.Text // 비고 (세금 포함 여부, 배송비 등)
+  importedAt     DateTime @default(now()) // Import 시점
+  importedBy     String? // Import한 사용자
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  quote        Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  vendor       Vendor?       @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([organizationId])
+  @@index([vendorId])
+  @@index([productId])
+  @@index([purchaseDate])
+  @@index([category])
+}
+
+// 예산 관리 (P2)
+model Budget {
+  id             String   @id @default(cuid())
+  organizationId String? // 조직/팀
+  projectName    String? // 프로젝트/과제명
+  name           String // 예산 이름
+  amount         Float // 예산 금액
+  currency       String   @default("KRW")
+  periodStart    DateTime // 예산 기간 시작
+  periodEnd      DateTime // 예산 기간 종료
+  description    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([periodStart, periodEnd])
+}
+
+// 구독 정보 (Team/Org 플랜)
+model Subscription {
+  id                 String           @id @default(cuid())
+  organizationId     String           @unique
+  plan               SubscriptionPlan @default(FREE)
+  status             String           @default("active") // active, cancelled, expired
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // 관계
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+  BUYER // 구매 담당자
+  SUPPLIER // 공급사
+  ADMIN // 관리자
+}
+
+// 조직 내 역할 (워크스페이스 역할)
+enum OrganizationRole {
+  VIEWER // 조회만 가능
+  REQUESTER // 견적 요청 가능
+  APPROVER // 견적 승인 가능
+  ADMIN // 조직 관리자
+}
+
+// 구독 플랜 타입
+enum SubscriptionPlan {
+  FREE // 무료/Beta
+  TEAM // 팀 플랜
+  ORGANIZATION // 조직/Enterprise 플랜
+}
+
+// 조직/워크스페이스
+model Organization {
+  id                String           @id @default(cuid())
+  name              String
+  description       String?          @db.Text
+  plan              SubscriptionPlan @default(FREE) // 구독 플랜
+  planExpiresAt     DateTime? // 플랜 만료일
+  maxMembers        Int? // 최대 멤버 수 (플랜별 제한)
+  maxQuotesPerMonth Int? // 월별 최대 품목 리스트 수
+  maxSharedLinks    Int? // 최대 공유 링크 수
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // 관계
+  members         OrganizationMember[]
+  quotes          Quote[]
+  templates       QuoteTemplate[]
+  inventories     ProductInventory[]
+  purchaseRecords PurchaseRecord[]
+  budgets         Budget[]
+  subscription    Subscription? // 구독 정보
+
+  @@index([name])
+  @@index([plan])
+}
+
+// 조직 멤버
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrganizationRole @default(VIEWER)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // 관계
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  role          UserRole  @default(RESEARCHER)
+  organization  String? // 레거시 필드 (조직명 직접 입력)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth 관계
+  accounts Account[]
+  sessions Session[]
+
+  // 관계
+  quotes              Quote[]
+  comparisons         Comparison[]
+  favorites           Favorite[]
+  searchHistory       SearchHistory[]
+  organizationMembers OrganizationMember[]
+  reviews             Review[]
+  templates           QuoteTemplate[]
+  inventories         ProductInventory[]
+  inventoryUsage      InventoryUsage[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// NextAuth.js v5를 위한 모델
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// 제품 카테고리
+enum ProductCategory {
+  REAGENT // 시약
+  TOOL // 기구
+  EQUIPMENT // 장비
+}
+
+// 제품
+model Product {
+  id                    String                       @id @default(cuid())
+  name                  String
+  nameEn                String? // 영문명
+  description           String?                      @db.Text
+  descriptionEn         String?                      @db.Text
+  descriptionTranslated String?                      @db.Text // 번역된 설명 (GPT 번역)
+  category              ProductCategory
+  brand                 String?
+  modelNumber           String?
+  catalogNumber         String? // 카탈로그 번호
+  specifications        Json? // 스펙 정보 (JSON)
+  datasheetUrl          String?
+  imageUrl              String?
+  embedding             Unsupported("vector(1536)")? // 벡터 임베딩 (pgvector)
+  // 그룹웨어 친화적 필드
+  grade                 String? // Grade (HPLC grade, GMP, EP/USP, cell culture tested 등)
+  specification         String? // 규격/용량 (예: 1mg, 500mL, 0.22um 등)
+  regulatoryCompliance  String? // 규제/약전 규격 (USP, EP, JP 등)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  vendors         ProductVendor[]
+  comparisons     ComparisonProduct[]
+  favorites       Favorite[]
+  recommendations ProductRecommendation[] @relation("ProductRecommendations")
+  recommendedFor  ProductRecommendation[] @relation("RecommendedProducts")
+  searchHistory   SearchHistory[]
+  reviews         Review[]
+  quoteListItems  QuoteListItem[]
+  inventories     ProductInventory[]
+  purchaseRecords PurchaseRecord[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([name])
+}
+
+// 벤더/공급사
+model Vendor {
+  id                String    @id @default(cuid())
+  name              String
+  nameEn            String?
+  email             String?
+  phone             String?
+  website           String?
+  country           String?   @default("KR")
+  currency          String?   @default("KRW")
+  // 수익 모델 관련 필드
+  isPremium         Boolean   @default(false) // 프리미엄 플랜 여부
+  premiumExpiresAt  DateTime? // 프리미엄 만료일
+  leadPricePerQuote Float?    @default(0) // 리드당 과금 (견적 요청당)
+  totalLeads        Int       @default(0) // 총 리드 수
+  totalRevenue      Float     @default(0) // 총 수익
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // 관계
+  products        ProductVendor[]
+  quoteResponses  QuoteResponse[]
+  billingRecords  VendorBillingRecord[]
+  purchaseRecords PurchaseRecord[]
+
+  @@index([name])
+  @@index([isPremium])
+}
+
+// 제품-벤더 관계 (가격, 재고, 납기 정보)
+model ProductVendor {
+  id                String   @id @default(cuid())
+  productId         String
+  vendorId          String
+  price             Float?
+  currency          String   @default("KRW")
+  priceInKRW        Float? // KRW 환산 가격
+  stockStatus       String? // 재고 상태
+  leadTime          Int? // 납기일 (일 단위)
+  minOrderQty       Int?
+  url               String?
+  // 프리미엄 노출 관련
+  isPremiumFeatured Boolean  @default(false) // 프리미엄 추천 영역 노출
+  premiumPriority   Int      @default(0) // 프리미엄 우선순위 (높을수록 상단 노출)
+  lastUpdated       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // 관계
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vendor  Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, vendorId])
+  @@index([productId])
+  @@index([vendorId])
+  @@index([priceInKRW])
+  @@index([isPremiumFeatured, premiumPriority])
+}
+
+// 비교 테이블
+model Comparison {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String? // 비교 세트 이름
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products ComparisonProduct[]
+
+  @@index([userId])
+}
+
+// 비교-제품 관계
+model ComparisonProduct {
+  id           String   @id @default(cuid())
+  comparisonId String
+  productId    String
+  order        Int // 정렬 순서
+  createdAt    DateTime @default(now())
+
+  // 관계
+  comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, productId])
+  @@index([comparisonId])
+}
+
+// 그룹웨어용 품목 리스트 (기존 Quote 모델 유지하되, 개념을 품목 리스트로 확장)
+model Quote {
+  id             String    @id @default(cuid())
+  userId         String
+  organizationId String? // 조직 단위 리스트인 경우
+  comparisonId   String? // 비교 세트 기반 리스트인 경우
+  title          String // 리스트 제목
+  description    String?   @db.Text // 리스트 설명/비고
+  // 그룹웨어 연동 정보
+  templateId     String? // 사용한 템플릿 ID
+  templateType   String? // 템플릿 타입 (R&D, QC, 생산 등) - 하위 호환성
+  exportedAt     DateTime? // 내보내기 시점
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // 관계
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  items           QuoteListItem[] // QuoteItem 대신 QuoteListItem 사용
+  quoteItems      QuoteItem[] // 레거시 호환성
+  // 기존 호환성을 위해 QuoteResponse 유지 (향후 제거 가능)
+  responses       QuoteResponse[]
+  sharedLists     SharedList[] // 공유 링크
+  purchaseRecords PurchaseRecord[] // 실제 구매내역
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([templateId])
+}
+
+// 품목 리스트 템플릿 (조직별/용도별 컬럼 세트)
+model QuoteTemplate {
+  id             String   @id @default(cuid())
+  name           String // 템플릿 이름 (예: "R&D 기본형", "QC 시험용", "생산 대량구매형")
+  type           String // 템플릿 타입 (R&D, QC, PRODUCTION, CUSTOM)
+  organizationId String? // 조직별 템플릿인 경우
+  userId         String? // 사용자별 커스텀 템플릿인 경우
+  description    String?  @db.Text
+  // 컬럼 설정 (JSON)
+  columns        Json // 표시할 컬럼과 순서, 필수/선택 여부 등
+  // 예: { columns: [{ key: "lineNumber", label: "Line No.", required: true, order: 1 }, ...] }
+  isDefault      Boolean  @default(false) // 기본 템플릿 여부
+  isPublic       Boolean  @default(false) // 공개 템플릿 여부 (다른 사용자도 사용 가능)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes       Quote[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([type])
+}
+
+// 그룹웨어용 품목 리스트 항목 (기존 QuoteItem을 확장)
+model QuoteListItem {
+  id         String   @id @default(cuid())
+  quoteId    String
+  productId  String
+  lineNumber Int // Line No. (그룹웨어용)
+  quantity   Int      @default(1)
+  unitPrice  Float? // 단가
+  currency   String?  @default("KRW")
+  lineTotal  Float? // 금액 (단가 × 수량)
+  notes      String?  @db.Text // 비고 (용도/대체품 여부/기존 제품 코드 등)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // 관계
+  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([productId])
+}
+
+// 기존 QuoteItem 모델 (하위 호환성 유지)
+model QuoteItem {
+  id        String   @id @default(cuid())
+  quoteId   String
+  productId String
+  quantity  Int      @default(1)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  // 관계
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([productId])
+}
+
+// QuoteStatus enum은 기존 호환성을 위해 유지 (향후 제거 가능)
+enum QuoteStatus {
+  PENDING // 대기 중
+  SENT // 발송 완료
+  RESPONDED // 응답 받음
+  COMPLETED // 완료
+  CANCELLED // 취소
+}
+
+// 견적 응답
+model QuoteResponse {
+  id         String    @id @default(cuid())
+  quoteId    String
+  vendorId   String
+  totalPrice Float?
+  currency   String    @default("KRW")
+  message    String?   @db.Text
+  validUntil DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // 관계
+  quote  Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([vendorId])
+}
+
+// 벤더 과금 기록
+model VendorBillingRecord {
+  id          String    @id @default(cuid())
+  vendorId    String
+  type        String // "LEAD", "PREMIUM", "REPORT"
+  amount      Float // 과금 금액
+  quantity    Int? // 리드 수, 리포트 수 등
+  description String?   @db.Text
+  periodStart DateTime? // 과금 기간 시작
+  periodEnd   DateTime? // 과금 기간 종료
+  createdAt   DateTime  @default(now())
+
+  // 관계
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([createdAt])
+}
+
+// 즐겨찾기
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // 관계
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// 검색 기록
+model SearchHistory {
+  id               String           @id @default(cuid())
+  userId           String?
+  query            String
+  intent           Json? // GPT 분류 결과
+  category         ProductCategory?
+  filters          Json? // 적용된 필터
+  resultCount      Int?
+  clickedProductId String?
+  createdAt        DateTime         @default(now())
+
+  // 관계
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [clickedProductId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 제품 추천 (AI 추천 결과 저장)
+model ProductRecommendation {
+  id                   String   @id @default(cuid())
+  productId            String
+  recommendedProductId String
+  score                Float // 유사도 점수
+  reason               String?  @db.Text // 추천 근거
+  reasonEn             String?  @db.Text
+  createdAt            DateTime @default(now())
+
+  // 관계
+  product     Product                  @relation("ProductRecommendations", fields: [productId], references: [id], onDelete: Cascade)
+  recommended Product                  @relation("RecommendedProducts", fields: [recommendedProductId], references: [id], onDelete: Cascade)
+  feedbacks   RecommendationFeedback[]
+
+  @@unique([productId, recommendedProductId])
+  @@index([productId])
+  @@index([score])
+}
+
+// 추천 품질 피드백
+model RecommendationFeedback {
+  id               String   @id @default(cuid())
+  userId           String?
+  recommendationId String
+  isHelpful        Boolean // 👍/👎
+  reason           String?  @db.Text // 도움이 된 이유/이유 없음
+  createdAt        DateTime @default(now())
+
+  // 관계
+  recommendation ProductRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId])
+  @@index([userId])
+}
+
+// 제품 리뷰 및 평점
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int // 1-5점
+  title     String?
+  comment   String?  @db.Text
+  pros      String?  @db.Text // 장점
+  cons      String?  @db.Text // 단점
+  verified  Boolean  @default(false) // 구매 인증 여부
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // 사용자당 제품당 하나의 리뷰만
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// 제품 재고 관리
+model ProductInventory {
+  id                   String    @id @default(cuid())
+  userId               String? // 사용자별 재고
+  organizationId       String? // 조직별 재고
+  productId            String
+  currentQuantity      Float     @default(0) // 현재 재고량
+  unit                 String?   @default("개") // 단위 (개, mL, g 등)
+  safetyStock          Float? // 안전 재고 (이 수량 이하로 떨어지면 재주문 추천)
+  minOrderQty          Float? // 최소 주문 수량
+  location             String? // 보관 위치
+  expiryDate           DateTime? // 유통기한
+  autoReorderEnabled   Boolean   @default(false) // 자동 재주문 활성화 여부
+  autoReorderThreshold Float? // 자동 재주문 임계값 (기본값: safetyStock)
+  notes                String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  // 관계
+  user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  usageRecords InventoryUsage[]
+
+  @@unique([userId, productId]) // 사용자별 제품당 하나의 재고 기록
+  @@unique([organizationId, productId]) // 조직별 제품당 하나의 재고 기록
+  @@index([productId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([currentQuantity])
+}
+
+// 재고 사용량 기록 (사용량 추정을 위한 데이터)
+model InventoryUsage {
+  id          String   @id @default(cuid())
+  inventoryId String
+  userId      String
+  quantity    Float // 사용량
+  unit        String? // 단위
+  usageDate   DateTime @default(now()) // 사용 일자
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  // 관계
+  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+  @@index([userId])
+  @@index([usageDate])
+}
+
+// 공유 링크 (스냅샷 방식)
+model SharedList {
+  id          String    @id @default(cuid())
+  quoteId     String // 원본 QuoteList ID
+  publicId    String    @unique // 공유용 난수 토큰
+  title       String
+  description String?   @db.Text
+  snapshot    Json // 스냅샷 데이터 (품목 리스트 전체)
+  createdBy   String? // 작성자 ID (옵션)
+  expiresAt   DateTime? // 만료일 (P1)
+  isActive    Boolean   @default(true) // 비활성화 여부
+  viewCount   Int       @default(0) // 조회 수
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // 관계
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([publicId])
+  @@index([quoteId])
+  @@index([isActive])
+}
+
+// 실제 구매내역 (CSV Import용)
+model PurchaseRecord {
+  id             String   @id @default(cuid())
+  quoteId        String? // BioInsight Lab에서 생성한 리스트와 연결
+  organizationId String? // 조직/팀
+  projectName    String? // 프로젝트/과제명
+  vendorId       String? // 벤더
+  productId      String? // 제품
+  externalDocId  String? // 외부 문서 번호 (그룹웨어/ERP)
+  purchaseDate   DateTime // 구매일
+  quantity       Int
+  unitPrice      Float
+  currency       String   @default("KRW")
+  totalAmount    Float // 총액 (세금, 배송비 포함 여부는 notes에)
+  category       String? // 카테고리
+  notes          String?  @db.Text // 비고 (세금 포함 여부, 배송비 등)
+  importedAt     DateTime @default(now()) // Import 시점
+  importedBy     String? // Import한 사용자
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  quote        Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  vendor       Vendor?       @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([organizationId])
+  @@index([vendorId])
+  @@index([productId])
+  @@index([purchaseDate])
+  @@index([category])
+}
+
+// 예산 관리 (P2)
+model Budget {
+  id             String   @id @default(cuid())
+  organizationId String? // 조직/팀
+  projectName    String? // 프로젝트/과제명
+  name           String // 예산 이름
+  amount         Float // 예산 금액
+  currency       String   @default("KRW")
+  periodStart    DateTime // 예산 기간 시작
+  periodEnd      DateTime // 예산 기간 종료
+  description    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([periodStart, periodEnd])
+}
+
+// 구독 정보 (Team/Org 플랜)
+model Subscription {
+  id                 String           @id @default(cuid())
+  organizationId     String           @unique
+  plan               SubscriptionPlan @default(FREE)
+  status             String           @default("active") // active, cancelled, expired
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // 관계
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+}

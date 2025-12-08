@@ -104,3 +104,163 @@
     @apply bg-background text-foreground;
   }
 }
+
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    /* 로고 색상 (Tailwind 색상 값) */
+    --logo-bg: 222 47% 11%; /* slate-900 */
+    --logo-stroke: 214 32% 91%; /* slate-200 */
+    --logo-accent: 160 84% 39%; /* emerald-500 */
+    --logo-secondary: 215 16% 47%; /* slate-800 */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .surf-theme {
+    /* 전체 배경 / 기본 텍스트 */
+    --background: 30 41 59;          /* slate-800 (#1f2937) */
+    --foreground: 248 250 252;       /* slate-50  (#f9fafb) */
+
+    /* 카드 / 패널 */
+    --card: 15 23 42;                /* slate-900 (#0f172a) */
+    --card-foreground: 248 250 252;
+
+    /* 뮤트 영역 (서브 카드, 라벨 등) */
+    --muted: 30 41 59;               /* slate-800 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+
+    /* 액센트 (칩, 선택 상태 등) */
+    --accent: 51 65 85;              /* slate-700 */
+    --accent-foreground: 248 250 252;
+
+    /* 기본 버튼/포인트 컬러 (블루) */
+    --primary: 37 99 235;            /* blue-600 (#2563eb) */
+    --primary-foreground: 248 250 252;
+
+    /* 보더/인풋 */
+    --border: 51 65 85;              /* slate-700 */
+    --input: 51 65 85;
+    --ring: 37 99 235;
+
+    /* 텍스트/헤더 색 */
+    --secondary-foreground: 209 213 219; /* slate-300 */
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    /* 로고 색상 (Tailwind 색상 값) */
+    --logo-bg: 222 47% 11%; /* slate-900 */
+    --logo-stroke: 214 32% 91%; /* slate-200 */
+    --logo-accent: 160 84% 39%; /* emerald-500 */
+    --logo-secondary: 215 16% 47%; /* slate-800 */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .surf-theme {
+    /* 전체 배경 / 기본 텍스트 */
+    --background: 30 41 59;          /* slate-800 (#1f2937) */
+    --foreground: 248 250 252;       /* slate-50  (#f9fafb) */
+
+    /* 카드 / 패널 */
+    --card: 15 23 42;                /* slate-900 (#0f172a) */
+    --card-foreground: 248 250 252;
+
+    /* 뮤트 영역 (서브 카드, 라벨 등) */
+    --muted: 30 41 59;               /* slate-800 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+
+    /* 액센트 (칩, 선택 상태 등) */
+    --accent: 51 65 85;              /* slate-700 */
+    --accent-foreground: 248 250 252;
+
+    /* 기본 버튼/포인트 컬러 (블루) */
+    --primary: 37 99 235;            /* blue-600 (#2563eb) */
+    --primary-foreground: 248 250 252;
+
+    /* 보더/인풋 */
+    --border: 51 65 85;              /* slate-700 */
+    --input: 51 65 85;
+    --ring: 37 99 235;
+
+    /* 텍스트/헤더 색 */
+    --secondary-foreground: 209 213 219; /* slate-300 */
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

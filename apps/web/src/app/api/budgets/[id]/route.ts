@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 // 예산 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -13,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const budget = await db.budget.findUnique({
@@ -68,7 +68,7 @@ export async function PATCH(
 // 예산 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -76,7 +76,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const budget = await db.budget.findUnique({
       where: { id },
@@ -116,4 +116,3 @@ export async function DELETE(
     );
   }
 }
-

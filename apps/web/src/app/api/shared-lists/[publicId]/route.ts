@@ -5,10 +5,10 @@ import { db } from "@/lib/db";
 // 공유 링크 조회 (로그인 불필요)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { publicId: string } }
+  { params }: { params: Promise<{ publicId: string }> }
 ) {
   try {
-    const { publicId } = params;
+    const { publicId } = await params;
 
     const sharedList = await db.sharedList.findUnique({
       where: { publicId },
@@ -72,7 +72,7 @@ export async function GET(
 // 공유 링크 업데이트 (비활성화, 만료일 변경 등)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { publicId: string } }
+  { params }: { params: Promise<{ publicId: string }> }
 ) {
   try {
     const session = await auth();
@@ -80,7 +80,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { publicId } = params;
+    const { publicId } = await params;
     const body = await request.json();
     const { isActive, expiresAt } = body;
 

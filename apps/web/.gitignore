@@ -46,3 +46,13 @@ next-env.d.ts
 *.exe
 *.exe.exe
 tailwindcss.exe.exe
+
+# Executable files
+*.exe
+*.exe.exe
+tailwindcss.exe.exe
+
+# Executable files
+*.exe
+*.exe.exe
+tailwindcss.exe.exe

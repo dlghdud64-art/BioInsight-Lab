@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 // 견적 응답 목록 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -13,8 +13,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const quote = await db.quote.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         responses: {
           include: {
@@ -44,7 +45,7 @@ export async function GET(
 // 견적 응답 생성
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -65,9 +66,10 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
     // Quote 존재 확인
     const quote = await db.quote.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!quote) {
@@ -77,7 +79,7 @@ export async function POST(
     // 견적 응답 생성
     const response = await db.quoteResponse.create({
       data: {
-        quoteId: params.id,
+        quoteId: id,
         vendorId,
         totalPrice,
         currency,
@@ -98,5 +100,3 @@ export async function POST(
     );
   }
 }
-
-

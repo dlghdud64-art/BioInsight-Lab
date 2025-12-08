@@ -6,7 +6,7 @@ import { SubscriptionPlan } from "@/lib/plans";
 // 조직의 구독 정보 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -14,8 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const organization = await db.organization.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         subscription: true,
         members: true,
@@ -33,7 +34,7 @@ export async function GET(
     const isMember = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
-        organizationId: params.id,
+        organizationId: id,
       },
     });
 
@@ -60,7 +61,7 @@ export async function GET(
 // 구독 업그레이드/변경
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -78,8 +79,9 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
     const organization = await db.organization.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         subscription: true,
       },
@@ -96,7 +98,7 @@ export async function POST(
     const isAdmin = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
-        organizationId: params.id,
+        organizationId: id,
         role: "ADMIN",
       },
     });
@@ -115,9 +117,9 @@ export async function POST(
 
     // 구독 생성/업데이트
     const subscription = await db.subscription.upsert({
-      where: { organizationId: params.id },
+      where: { organizationId: id },
       create: {
-        organizationId: params.id,
+        organizationId: id,
         plan,
         status: "active",
         currentPeriodStart: now,
@@ -134,7 +136,7 @@ export async function POST(
 
     // 조직 플랜 정보 업데이트
     await db.organization.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         plan,
         planExpiresAt: periodEnd,
@@ -150,5 +152,3 @@ export async function POST(
     );
   }
 }
-
-
