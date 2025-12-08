@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         quote.title,
         quote.id
       ),
-      vendorEmails.length > 0 && sendQuoteNotificationToVendors(vendorEmails, quote.title, quote.id),
+      vendorEmails.length > 0 && sendQuoteNotificationToVendors(vendorEmails as string[], quote.title, quote.id),
     ]).catch((error) => {
       console.error("Failed to send quote emails:", error);
     });
