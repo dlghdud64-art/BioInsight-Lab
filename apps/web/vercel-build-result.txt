@@ -1,0 +1,24 @@
+﻿node.exe : Vercel CLI 49.1.0
+위치 C:\Users\young\AppData\Roaming\npm\vercel.ps1:24 문자:5
++     & "node$exe"  "$basedir/node_modules/vercel/dist/vc.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Vercel CLI 49.1.0:String) [], Rem 
+   oteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+WARN! Build not running on Vercel. System environment variables will not be ava
+ilable.
+WARNING: You should not upload the `.next` directory.
+Running "install" command: `npm install`...
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm notice Access token expired or revoked. Please try logging in again.
+npm error Cannot read properties of null (reading 'matches')
+npm error A complete log of this run can be found in: C:\Users\young\AppData\Lo
+cal\npm-cache\_logs\2025-12-08T16_41_33_699Z-debug-0.log
+Error: Command "npm install" exited with 1

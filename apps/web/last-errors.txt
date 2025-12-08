@@ -1,0 +1,46 @@
+﻿
+> web@0.1.0 build C:\Users\young\ai-biocompare\apps\web
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+??Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 409ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+   ??Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     쨌 optimizePackageImports
+
+   Creating an optimized production build ...
+ ??Compiled successfully in 6.5s
+   Running TypeScript ...
+node.exe : Failed to compile.
+위치 C:\Program Files\nodejs\pnpm.ps1:16 문자:5
++     & "$basedir/node$exe"  "$basedir/node_modules/corepack/dist/pnpm. ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:String) [], Re 
+   moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/api/reports/purchase/route.ts:115:21
+Type error: Parameter 'quote' implicitly has an 'any' type.
+
+[0m [90m 113 |[39m
+ [90m 114 |[39m     [90m// QuoteList 湲곕컲 怨꾩궛 (?덉긽 援щℓ??[39m
+[31m[1m>[22m[39m[90m 115 |[39m     quotes[33m.[39mforEach((quote) [33m
+=>[39m {
+ [90m     |[39m                     [31m[1m^[22m[39m
+ [90m 116 |[39m       quote[33m.[39mitems[33m.[39mforEach((item) [33m=>
+[39m {
+ [90m 117 |[39m         [36mconst[39m amount [33m=[39m (item[33m.[39mun
+itPrice [33m||[39m [35m0[39m) [33m*[39m item[33m.[39mquantity[33m;[39
+m
+ [90m 118 |[39m         estimatedAmount [33m+=[39m amount[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null
+?덭LIFECYCLE??Command failed with exit code 1.

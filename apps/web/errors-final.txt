@@ -1,0 +1,48 @@
+﻿
+> web@0.1.0 build C:\Users\young\ai-biocompare\apps\web
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+??Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 415ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+   ??Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     쨌 optimizePackageImports
+
+   Creating an optimized production build ...
+ ??Compiled successfully in 7.0s
+   Running TypeScript ...
+node.exe : Failed to compile.
+위치 C:\Program Files\nodejs\pnpm.ps1:16 문자:5
++     & "$basedir/node$exe"  "$basedir/node_modules/corepack/dist/pnpm. ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:String) [], Re 
+   moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/dashboard/inventory/page.tsx:391:16
+Type error: Property 'autoReorderEnabled' does not exist on type 'ProductInvent
+ory'.
+
+[0m [90m 389 |[39m   )[33m;[39m
+ [90m 390 |[39m   [36mconst[39m [autoReorderEnabled[33m,[39m setAutoReord
+erEnabled] [33m=[39m useState(
+[31m[1m>[22m[39m[90m 391 |[39m     inventory[33m?[39m[33m.[39mautoReo
+rderEnabled [33m||[39m [36mfalse[39m
+ [90m     |[39m                [31m[1m^[22m[39m
+ [90m 392 |[39m   )[33m;[39m
+ [90m 393 |[39m   [36mconst[39m [autoReorderThreshold[33m,[39m setAutoReo
+rderThreshold] [33m=[39m useState(
+ [90m 394 |[39m     inventory[33m?[39m[33m.[39mautoReorderThreshold[33m?
+[39m[33m.[39mtoString() [33m||[39m inventory[33m?[39m[33m.[39msafetySt
+ock[33m?[39m[33m.[39mtoString() [33m||[39m [32m""[39m[0m
+Next.js build worker exited with code: 1 and signal: null
+?덭LIFECYCLE??Command failed with exit code 1.

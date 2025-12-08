@@ -25,6 +25,8 @@ interface ProductInventory {
   location: string | null;
   expiryDate: string | null;
   notes: string | null;
+  autoReorderEnabled?: boolean; // 타입 에러 수정: 누락된 속성 추가
+  autoReorderThreshold?: number; // 타입 에러 수정: 누락된 속성 추가
   product: {
     id: string;
     name: string;

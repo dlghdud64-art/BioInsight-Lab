@@ -56,3 +56,5 @@ tailwindcss.exe.exe
 *.exe
 *.exe.exe
 tailwindcss.exe.exe
+
+.vercel
