@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
     });
 
     // 제품 정보를 맵으로 변환
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    // 타입 에러 수정: p 파라미터에 타입 명시
+    const productMap = new Map(products.map((p: any) => [p.id, p]));
 
     // GPT에 전달할 제품 정보 구성
     const itemsDescription = items
@@ -158,4 +159,4 @@ Your emails should be:
       { status: 500 }
     );
   }
-}
+}
