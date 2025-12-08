@@ -13,13 +13,14 @@ function scrollToId(id: string) {
   }
 }
 
+// UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function MainHeader() {
   const router = useRouter();
 
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        {/* 좌측: 로고 + ?�션 ?�비 */}
+        {/* 좌측: 로고 + 섹션 네비 */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <BioInsightLogo />
@@ -29,30 +30,30 @@ export function MainHeader() {
               onClick={() => scrollToId("features")}
               className="hover:text-slate-900 transition-colors"
             >
-              기능 ?�개
+              기능 소개
             </button>
             <button
               onClick={() => scrollToId("flow")}
               className="hover:text-slate-900 transition-colors"
             >
-              ?�용 ?�름
+              사용 흐름
             </button>
             <button
               onClick={() => scrollToId("personas")}
               className="hover:text-slate-900 transition-colors"
             >
-              ?��? ?�나??
+              누가 쓰나요?
             </button>
           </nav>
         </div>
 
-        {/* ?�측: CTA/?�틸 */}
+        {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => scrollToId("pricing")}
             className="text-xs text-slate-600 hover:text-slate-900 transition-colors"
           >
-            ?�금 & ?�입
+            요금 & 도입
           </button>
           <Button
             size="sm"
