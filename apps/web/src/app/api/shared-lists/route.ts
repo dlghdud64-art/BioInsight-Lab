@@ -164,8 +164,9 @@ export async function POST(request: NextRequest) {
         totalAmount: quote.items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0),
         vendors: Array.from(
           new Set(
+            // 타입 에러 수정: item과 v 파라미터에 타입 명시
             quote.items
-              .map((item) => item.product.vendors.map((v) => v.vendor?.name).filter(Boolean))
+              .map((item: any) => item.product.vendors.map((v: any) => v.vendor?.name).filter(Boolean))
               .flat()
           )
         ).slice(0, 5),
