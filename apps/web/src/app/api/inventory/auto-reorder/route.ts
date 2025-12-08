@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
         }
         return null;
       })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      .filter((item: any): item is NonNullable<typeof item> => item !== null);
 
     if (reorderItems.length === 0) {
       return NextResponse.json({
