@@ -116,7 +116,8 @@ export async function POST(request: NextRequest) {
           create: bomItems
             .filter((item) => item.productId) // 제품이 매칭된 항목만 추가
             .map((item, index) => {
-              const product = productMap.get(item.productId!);
+              // 타입 에러 수정: productMap.get()의 반환 타입이 제대로 추론되지 않아 타입 캐스팅 추가
+              const product = productMap.get(item.productId!) as any;
               const vendor = product?.vendors?.[0];
               const unitPrice = vendor?.priceInKRW || 0;
               const lineTotal = unitPrice * item.quantity;
