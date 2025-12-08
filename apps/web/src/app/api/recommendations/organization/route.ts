@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
 
     // 타입 에러 수정: quote 파라미터에 타입 명시
     orgQuotes.forEach((quote: any) => {
-      quote.items.forEach((item) => {
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      quote.items.forEach((item: any) => {
         productUsageCount[item.productId] = (productUsageCount[item.productId] || 0) + 1;
       });
     });
