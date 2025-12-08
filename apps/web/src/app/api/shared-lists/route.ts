@@ -170,8 +170,9 @@ export async function POST(request: NextRequest) {
               .flat()
           )
         ).slice(0, 5),
+        // 타입 에러 수정: item 파라미터에 타입 명시
         hasAlternatives: quote.items.some(
-          (item) =>
+          (item: any) =>
             item.product.recommendations.length > 0 ||
             item.product.vendors.length > 1
         ),
