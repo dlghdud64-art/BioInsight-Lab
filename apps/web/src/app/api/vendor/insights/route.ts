@@ -103,8 +103,9 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    responses.forEach((response) => {
-      response.quote.items.forEach((item) => {
+    // 타입 에러 수정: response와 item 파라미터에 타입 명시
+    responses.forEach((response: any) => {
+      response.quote.items.forEach((item: any) => {
         const productId = item.productId;
         if (productStats[productId]) {
           productStats[productId].respondedCount += 1;
