@@ -7,13 +7,15 @@ import { isDemoMode } from "@/lib/env";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
+  // body를 try 블록 밖에서 선언하여 catch 블록에서도 접근 가능하도록 수정
+  let body: any = {};
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    body = await request.json();
     const {
       title,
       message,
