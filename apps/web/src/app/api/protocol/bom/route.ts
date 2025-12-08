@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    // 타입 에러 수정: p 파라미터에 타입 명시
+    const productMap = new Map(products.map((p: any) => [p.id, p]));
 
     // QuoteList 생성
     const quote = await db.quote.create({
