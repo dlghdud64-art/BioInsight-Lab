@@ -99,3 +99,18 @@ export async function deleteReview(reviewId: string, userId: string) {
 }
 
 // 리뷰 생성
+export async function createReview(
+  userId: string,
+  productId: string,
+  rating: number,
+  comment: string
+) {
+  return await db.review.create({
+    data: {
+      userId,
+      productId,
+      rating,
+      comment,
+    },
+  });
+}
