@@ -209,8 +209,8 @@ export default function SearchPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `?목 리스??- ${new Date().toLocaleDateString()}`,
-          message: "그룹?어???목 리스??,
+          title: `품목 리스트- ${new Date().toLocaleDateString()}`,
+          message: "그룹웨어에 붙여넣을 품목 리스트",
           productIds: quoteListItems.map((item) => item.productId),
           quantities: Object.fromEntries(
             quoteListItems.map((item) => [item.productId, item.quantity])

@@ -1,4 +1,4 @@
-// 번역 파일
+// 중복 정의 제거 - 번역 파일
 export type Locale = "ko" | "en";
 
 export const locales: Locale[] = ["ko", "en"];
@@ -231,8 +231,3 @@ export type TranslationKey =
   | "quote.title" | "quote.manage" | "quote.create" | "quote.list" | "quote.status.pending" | "quote.status.sent" | "quote.status.responded" | "quote.status.completed" | "quote.status.cancelled" | "quote.items" | "quote.responses" | "quote.deliveryDate" | "quote.deliveryLocation" | "quote.message" | "quote.specialNotes"
   | "dashboard.title" | "dashboard.recentQuotes" | "dashboard.favorites" | "dashboard.recentProducts"
   | "home.title" | "home.subtitle" | "home.recommendedProducts" | "home.viewDetails" | "home.categories.reagent" | "home.categories.tool" | "home.categories.equipment";
-
-
-
-export const locales: Locale[] = ["ko", "en"];
-export const defaultLocale: Locale = "ko";

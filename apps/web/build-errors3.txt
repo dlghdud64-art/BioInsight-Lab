@@ -1,0 +1,2836 @@
+﻿
+> web@0.1.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+??Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 356ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to react to database changes in your app as they happen? Discover how with Pulse: https://pris.ly/tip-1-pulse
+
+   ??Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     쨌 optimizePackageImports
+
+   Creating an optimized production build ...
+node.exe : 
+위치 줄:1 문자:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed with 66 errors:
+./src/lib/ai/protocol-extractor.ts:120:7
+Ecmascript file had an error
+[0m [90m 118 |[39m
+ [90m 119 |[39m [90m// OpenAI API 吏곸젒 ?몄텧 (openai ?⑦궎吏 ???fetch ?ъ슜)[39m
+[31m[1m>[22m[39m[90m 120 |[39m [36mconst[39m [33mOPENAI_API_KEY[39m 
+[33m=[39m process[33m.[39menv[33m.[39m[33mOPENAI_API_KEY[39m[33m;[39m
+ [90m     |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 121 |[39m
+ [90m 122 |[39m [36mexport[39m [36minterface[39m [33mExtractedReagent[3
+9m {
+ [90m 123 |[39m   name[33m:[39m string[33m;[39m[0m
+
+the name `OPENAI_API_KEY` is defined multiple times
+
+Import trace:
+  App Route:
+    ./src/lib/ai/protocol-extractor.ts
+    ./src/app/api/protocol/extract/route.ts
+
+
+./src/lib/db.ts:94:10
+Ecmascript file had an error
+[0m [90m 92 |[39m })()[33m;[39m
+ [90m 93 |[39m
+[31m[1m>[22m[39m[90m 94 |[39m [36mexport[39m { db[33m,[39m isPrismaAv
+ailable }[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 95 |[39m
+ [90m 96 |[39m
+ [90m 97 |[39m[0m
+
+the name `db` is exported multiple times
+
+Import trace:
+  App Route:
+    ./src/lib/db.ts
+    ./src/app/api/budgets/route.ts
+
+
+./src/lib/db.ts:141:10
+Ecmascript file had an error
+[0m [90m 139 |[39m })()[33m;[39m
+ [90m 140 |[39m
+[31m[1m>[22m[39m[90m 141 |[39m [36mexport[39m { db[33m,[39m isPrismaA
+vailable }[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 142 |[39m
+ [90m 143 |[39m[0m
+
+the name `db` is exported multiple times
+
+Import trace:
+  App Route:
+    ./src/lib/db.ts
+    ./src/app/api/budgets/route.ts
+
+
+./src/lib/db.ts:94:14
+Ecmascript file had an error
+[0m [90m 92 |[39m })()[33m;[39m
+ [90m 93 |[39m
+[31m[1m>[22m[39m[90m 94 |[39m [36mexport[39m { db[33m,[39m isPrismaAv
+ailable }[33m;[39m
+ [90m    |[39m              [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 95 |[39m
+ [90m 96 |[39m
+ [90m 97 |[39m[0m
+
+the name `isPrismaAvailable` is exported multiple times
+
+Import trace:
+  App Route:
+    ./src/lib/db.ts
+    ./src/app/api/budgets/route.ts
+
+
+./src/lib/db.ts:141:14
+Ecmascript file had an error
+[0m [90m 139 |[39m })()[33m;[39m
+ [90m 140 |[39m
+[31m[1m>[22m[39m[90m 141 |[39m [36mexport[39m { db[33m,[39m isPrismaA
+vailable }[33m;[39m
+ [90m     |[39m              [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 142 |[39m
+ [90m 143 |[39m[0m
+
+the name `isPrismaAvailable` is exported multiple times
+
+Import trace:
+  App Route:
+    ./src/lib/db.ts
+    ./src/app/api/budgets/route.ts
+
+
+./src/lib/i18n/translations.ts:238:14
+Ecmascript file had an error
+[0m [90m 236 |[39m
+ [90m 237 |[39m [36mexport[39m [36mconst[39m locales[33m:[39m [33mLoca
+le[39m[] [33m=[39m [[32m"ko"[39m[33m,[39m [32m"en"[39m][33m;[39m
+[31m[1m>[22m[39m[90m 238 |[39m [36mexport[39m [36mconst[39m defaultLo
+cale[33m:[39m [33mLocale[39m [33m=[39m [32m"ko"[39m[33m;[39m
+ [90m     |[39m              [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[0m
+
+the name `defaultLocale` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/lib/i18n/translations.ts [Client Component Browser]
+    ./src/lib/store/locale-store.ts [Client Component Browser]
+    ./src/components/layout/locale-provider.tsx [Client Component Browser]
+    ./src/components/layout/locale-provider.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/i18n/translations.ts [Client Component SSR]
+    ./src/lib/store/locale-store.ts [Client Component SSR]
+    ./src/components/layout/locale-provider.tsx [Client Component SSR]
+    ./src/components/layout/locale-provider.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+
+./src/lib/i18n/translations.ts:237:14
+Ecmascript file had an error
+[0m [90m 235 |[39m
+ [90m 236 |[39m
+[31m[1m>[22m[39m[90m 237 |[39m [36mexport[39m [36mconst[39m locales[
+33m:[39m [33mLocale[39m[] [33m=[39m [[32m"ko"[39m[33m,[39m [32m"en"[
+39m][33m;[39m
+ [90m     |[39m              [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m
+ [90m 238 |[39m [36mexport[39m [36mconst[39m defaultLocale[33m:[39m [3
+3mLocale[39m [33m=[39m [32m"ko"[39m[33m;[39m[0m
+
+the name `locales` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/lib/i18n/translations.ts [Client Component Browser]
+    ./src/lib/store/locale-store.ts [Client Component Browser]
+    ./src/components/layout/locale-provider.tsx [Client Component Browser]
+    ./src/components/layout/locale-provider.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/lib/i18n/translations.ts [Client Component SSR]
+    ./src/lib/store/locale-store.ts [Client Component SSR]
+    ./src/components/layout/locale-provider.tsx [Client Component SSR]
+    ./src/components/layout/locale-provider.tsx [Server Component]
+    ./src/app/layout.tsx [Server Component]
+
+
+./src/app/_components/pricing-section.tsx:26:47
+Parsing ecmascript source code failed
+[0m [90m 24 |[39m               [33m<[39m[33mli[39m[33m>[39m[33m?[39
+m[33m?[39m蹂듭궗[33m/[39m[33m?[39m?대줈??[33m<[39m[33m/[39m[33mli[39m[33
+m>[39m
+ [90m 25 |[39m               [33m<[39m[33mli[39m[33m>[39m怨듭쑀 留곹겕 ([33m
+?[39m[33m?[39m [33m?[39m??[33m<[39m[33m/[39m[33mli[39m[33m>[39m
+[31m[1m>[22m[39m[90m 26 |[39m               [33m<[39m[33mli[39m[33m>
+[39m濡쒓렇[33m?[39m[33m?[39m[33m?[39m??泥댄뿕 媛[33m?[39m[33m?[39m[33m/[
+39mli[33m>[39m
+ [90m    |[39m                                               [31m[1m^[22m
+[39m
+ [90m 27 |[39m             [33m<[39m[33m/[39m[33mul[39m[33m>[39m
+ [90m 28 |[39m           [33m<[39m[33m/[39m[33mCardContent[39m[33m>[3
+9m
+ [90m 29 |[39m         [33m<[39m[33m/[39m[33mCard[39m[33m>[39m[0m
+
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+Import trace:
+  Server Component:
+    ./src/app/_components/pricing-section.tsx
+    ./src/app/page.tsx
+
+
+./src/app/search/page.tsx:213:17
+Parsing ecmascript source code failed
+[0m [90m 211 |[39m         body[33m:[39m [33mJSON[39m[33m.[39mstringif
+y({
+ [90m 212 |[39m           title[33m:[39m [32m`?紐?由ъ뒪??- ${new Date().toLoc
+aleDateString()}`[39m[33m,[39m
+[31m[1m>[22m[39m[90m 213 |[39m           message[33m:[39m [32m"洹몃９????
+?紐?由ъ뒪??,[39m
+ [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m
+ [90m 214 |[39m           productIds[33m:[39m quoteListItems[33m.[39mmap(
+(item) [33m=>[39m item[33m.[39mproductId)[33m,[39m
+ [90m 215 |[39m           quantities[33m:[39m [33mObject[39m[33m.[39mfr
+omEntries(
+ [90m 216 |[39m             quoteListItems[33m.[39mmap((item) [33m=>[39m 
+[item[33m.[39mproductId[33m,[39m item[33m.[39mquantity])[0m
+
+Unterminated string constant
+
+
+./src/lib/ai/text-extractor.ts:121:15
+Parsing ecmascript source code failed
+[0m [90m 119 |[39m
+ [90m 120 |[39m
+[31m[1m>[22m[39m[90m 121 |[39m   description[33m?[39m[33m:[39m string
+[33m;[39m
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 122 |[39m   quantity[33m?[39m[33m:[39m string[33m;[39m
+ [90m 123 |[39m   unit[33m?[39m[33m:[39m string[33m;[39m
+ [90m 124 |[39m   estimatedUsage[33m?[39m[33m:[39m number[33m;[39m[0m
+
+Expression expected
+
+Import trace:
+  App Route:
+    ./src/lib/ai/text-extractor.ts
+    ./src/app/api/protocol/extract-text/route.ts
+
+
+./src/app/test/analysis/page.tsx:4:1
+Export AnalysisResults doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mStepShell[39m } [36mfrom[39m [32m".
+./_components/step-shell"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAnalysisPanel[39m[
+33m,[39m [33mAnalysisResults[39m } [36mfrom[39m [32m"../_components/analy
+sis-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mAnal
+ysisPage[39m() {
+ [90m 7 |[39m   [36mreturn[39m ([0m
+
+The export AnalysisResults was not found in module [project]/src/app/test/_comp
+onents/analysis-panel.tsx [app-client] (ecmascript).
+Did you mean to import AnalysisPanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/analysis/page.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/analysis/page.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+
+./src/app/test/analysis/page.tsx:4:1
+Export AnalysisResults doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mStepShell[39m } [36mfrom[39m [32m".
+./_components/step-shell"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAnalysisPanel[39m[
+33m,[39m [33mAnalysisResults[39m } [36mfrom[39m [32m"../_components/analy
+sis-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mAnal
+ysisPage[39m() {
+ [90m 7 |[39m   [36mreturn[39m ([0m
+
+The export AnalysisResults was not found in module [project]/src/app/test/_comp
+onents/analysis-panel.tsx [app-ssr] (ecmascript).
+Did you mean to import AnalysisPanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/analysis/page.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/analysis/page.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+
+./src/app/dashboard/organizations/page.tsx:11:1
+Export ORGANIZATION_ROLES doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mBuilding2[39m[33m,[39m [33mPlu
+s[39m[33m,[39m [33mUsers[39m[33m,[39m [33mMail[39m[33m,[39m [33mUse
+rPlus[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mFileText[39m } [36mfro
+m[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { useState } [36mfrom[39m [32m"react"[39m
+[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mORGANIZATION_ROLES
+[39m } [36mfrom[39m [32m"@/lib/constants"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m"next/navig
+ation"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m {
+ [90m 14 |[39m   [33mSelect[39m[33m,[39m[0m
+
+The export ORGANIZATION_ROLES was not found in module [project]/src/lib/constan
+ts.ts [app-client] (ecmascript).
+Did you mean to import SORT_OPTIONS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/organizations/page.tsx [Client Component Browser]
+    ./src/app/dashboard/organizations/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/organizations/page.tsx [Client Component SSR]
+    ./src/app/dashboard/organizations/page.tsx [Server Component]
+
+
+./src/app/dashboard/organizations/page.tsx:11:1
+Export ORGANIZATION_ROLES doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mBuilding2[39m[33m,[39m [33mPlu
+s[39m[33m,[39m [33mUsers[39m[33m,[39m [33mMail[39m[33m,[39m [33mUse
+rPlus[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mFileText[39m } [36mfro
+m[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { useState } [36mfrom[39m [32m"react"[39m
+[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mORGANIZATION_ROLES
+[39m } [36mfrom[39m [32m"@/lib/constants"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m"next/navig
+ation"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m {
+ [90m 14 |[39m   [33mSelect[39m[33m,[39m[0m
+
+The export ORGANIZATION_ROLES was not found in module [project]/src/lib/constan
+ts.ts [app-ssr] (ecmascript).
+Did you mean to import SORT_OPTIONS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/organizations/page.tsx [Client Component Browser]
+    ./src/app/dashboard/organizations/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/organizations/page.tsx [Client Component SSR]
+    ./src/app/dashboard/organizations/page.tsx [Server Component]
+
+
+./src/app/test/quote/request/page.tsx:3:1
+Export QuoteItemsSummaryPanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuoteRequestPanel[3
+9m[33m,[39m [33mQuoteItemsSummaryPanel[39m } [36mfrom[39m [32m"../../_co
+mponents/quote-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link"
+[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mArrowLeft[39m } [36mfrom[39m [32m"l
+ucide-react"[39m[33m;[39m[0m
+
+The export QuoteItemsSummaryPanel was not found in module [project]/src/app/tes
+t/_components/quote-panel.tsx [app-client] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/request/page.tsx [Client Component Browser]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/request/page.tsx [Client Component SSR]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+
+./src/app/test/quote/request/page.tsx:3:1
+Export QuoteItemsSummaryPanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuoteRequestPanel[3
+9m[33m,[39m [33mQuoteItemsSummaryPanel[39m } [36mfrom[39m [32m"../../_co
+mponents/quote-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link"
+[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mArrowLeft[39m } [36mfrom[39m [32m"l
+ucide-react"[39m[33m;[39m[0m
+
+The export QuoteItemsSummaryPanel was not found in module [project]/src/app/tes
+t/_components/quote-panel.tsx [app-ssr] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/request/page.tsx [Client Component Browser]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/request/page.tsx [Client Component SSR]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+
+./src/app/test/quote/request/page.tsx:3:1
+Export QuoteRequestPanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuoteRequestPanel[3
+9m[33m,[39m [33mQuoteItemsSummaryPanel[39m } [36mfrom[39m [32m"../../_co
+mponents/quote-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link"
+[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mArrowLeft[39m } [36mfrom[39m [32m"l
+ucide-react"[39m[33m;[39m[0m
+
+The export QuoteRequestPanel was not found in module [project]/src/app/test/_co
+mponents/quote-panel.tsx [app-client] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/request/page.tsx [Client Component Browser]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/request/page.tsx [Client Component SSR]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+
+./src/app/test/quote/request/page.tsx:3:1
+Export QuoteRequestPanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuoteRequestPanel[3
+9m[33m,[39m [33mQuoteItemsSummaryPanel[39m } [36mfrom[39m [32m"../../_co
+mponents/quote-panel"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link"
+[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mArrowLeft[39m } [36mfrom[39m [32m"l
+ucide-react"[39m[33m;[39m[0m
+
+The export QuoteRequestPanel was not found in module [project]/src/app/test/_co
+mponents/quote-panel.tsx [app-ssr] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/request/page.tsx [Client Component Browser]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/request/page.tsx [Client Component SSR]
+    ./src/app/test/quote/request/page.tsx [Server Component]
+
+
+./src/app/test/quote/page.tsx:3:1
+Export SharePanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuotePanel[39m[33m
+,[39m [33mSharePanel[39m } [36mfrom[39m [32m"../_components/quote-panel"
+[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mQuot
+ePage[39m() {
+ [90m 6 |[39m   [36mreturn[39m ([0m
+
+The export SharePanel was not found in module [project]/src/app/test/_component
+s/quote-panel.tsx [app-client] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/app/test/quote/page.tsx:3:1
+Export SharePanel doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { [33mQuotePanel[39m[33m
+,[39m [33mSharePanel[39m } [36mfrom[39m [32m"../_components/quote-panel"
+[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mQuot
+ePage[39m() {
+ [90m 6 |[39m   [36mreturn[39m ([0m
+
+The export SharePanel was not found in module [project]/src/app/test/_component
+s/quote-panel.tsx [app-ssr] (ecmascript).
+Did you mean to import QuotePanel?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/app/dashboard/admin/page.tsx:11:1
+Export USER_ROLES doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mUsers[39m[33m,[39m [33mPackage
+[39m[33m,[39m [33mBuilding2[39m[33m,[39m [33mFileText[39m[33m,[39m 
+[33mSearch[39m } [36mfrom[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { useState } [36mfrom[39m [32m"react"[39m
+[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mUSER_ROLES[39m[33
+m,[39m [33mPRODUCT_CATEGORIES[39m } [36mfrom[39m [32m"@/lib/constants"[3
+9m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m"next/navig
+ation"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m {
+ [90m 14 |[39m   [33mSelect[39m[33m,[39m[0m
+
+The export USER_ROLES was not found in module [project]/src/lib/constants.ts [a
+pp-client] (ecmascript).
+Did you mean to import QUOTE_STATUS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/admin/page.tsx [Client Component Browser]
+    ./src/app/dashboard/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/admin/page.tsx [Client Component SSR]
+    ./src/app/dashboard/admin/page.tsx [Server Component]
+
+
+./src/app/dashboard/admin/page.tsx:11:1
+Export USER_ROLES doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mUsers[39m[33m,[39m [33mPackage
+[39m[33m,[39m [33mBuilding2[39m[33m,[39m [33mFileText[39m[33m,[39m 
+[33mSearch[39m } [36mfrom[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { useState } [36mfrom[39m [32m"react"[39m
+[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mUSER_ROLES[39m[33
+m,[39m [33mPRODUCT_CATEGORIES[39m } [36mfrom[39m [32m"@/lib/constants"[3
+9m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m"next/navig
+ation"[39m[33m;[39m
+ [90m 13 |[39m [36mimport[39m {
+ [90m 14 |[39m   [33mSelect[39m[33m,[39m[0m
+
+The export USER_ROLES was not found in module [project]/src/lib/constants.ts [a
+pp-ssr] (ecmascript).
+Did you mean to import QUOTE_STATUS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/admin/page.tsx [Client Component Browser]
+    ./src/app/dashboard/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/admin/page.tsx [Client Component SSR]
+    ./src/app/dashboard/admin/page.tsx [Server Component]
+
+
+./src/components/auth/user-menu.tsx:15:1
+Export USER_ROLES doesn't exist in target module
+[0m [90m 13 |[39m [36mimport[39m { [33mUser[39m[33m,[39m [33mLogOut[
+39m[33m,[39m [33mSettings[39m } [36mfrom[39m [32m"lucide-react"[39m[33
+m;[39m
+ [90m 14 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link
+"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 15 |[39m [36mimport[39m { [33mUSER_ROLES[39m } 
+[36mfrom[39m [32m"@/lib/constants"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 16 |[39m
+ [90m 17 |[39m [36mexport[39m [36mfunction[39m [33mUserMenu[39m() {
+ [90m 18 |[39m   [36mconst[39m { data[33m:[39m session[33m,[39m status 
+} [33m=[39m useSession()[33m;[39m[0m
+
+The export USER_ROLES was not found in module [project]/src/lib/constants.ts [a
+pp-client] (ecmascript).
+Did you mean to import QUOTE_STATUS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/auth/user-menu.tsx [Client Component Browser]
+    ./src/app/_components/main-header.tsx [Client Component Browser]
+    ./src/app/dashboard/budget/page.tsx [Client Component Browser]
+    ./src/app/dashboard/budget/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/auth/user-menu.tsx [Client Component SSR]
+    ./src/app/_components/main-header.tsx [Client Component SSR]
+    ./src/app/dashboard/budget/page.tsx [Client Component SSR]
+    ./src/app/dashboard/budget/page.tsx [Server Component]
+
+
+./src/components/auth/user-menu.tsx:15:1
+Export USER_ROLES doesn't exist in target module
+[0m [90m 13 |[39m [36mimport[39m { [33mUser[39m[33m,[39m [33mLogOut[
+39m[33m,[39m [33mSettings[39m } [36mfrom[39m [32m"lucide-react"[39m[33
+m;[39m
+ [90m 14 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link
+"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 15 |[39m [36mimport[39m { [33mUSER_ROLES[39m } 
+[36mfrom[39m [32m"@/lib/constants"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 16 |[39m
+ [90m 17 |[39m [36mexport[39m [36mfunction[39m [33mUserMenu[39m() {
+ [90m 18 |[39m   [36mconst[39m { data[33m:[39m session[33m,[39m status 
+} [33m=[39m useSession()[33m;[39m[0m
+
+The export USER_ROLES was not found in module [project]/src/lib/constants.ts [a
+pp-ssr] (ecmascript).
+Did you mean to import QUOTE_STATUS?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/auth/user-menu.tsx [Client Component Browser]
+    ./src/app/_components/main-header.tsx [Client Component Browser]
+    ./src/app/dashboard/budget/page.tsx [Client Component Browser]
+    ./src/app/dashboard/budget/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/auth/user-menu.tsx [Client Component SSR]
+    ./src/app/_components/main-header.tsx [Client Component SSR]
+    ./src/app/dashboard/budget/page.tsx [Client Component SSR]
+    ./src/app/dashboard/budget/page.tsx [Server Component]
+
+
+./src/app/api/exchange-rates/route.ts:2:1
+Export convertToKRW doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { getExchangeRates[33m,[3
+9m convertToKRW } [36mfrom[39m [32m"@/lib/api/exchange-rate"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [90m// 챠혲혱챙혵짢 챙징째챠혳혣 API[39m
+ [90m 5 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export convertToKRW was not found in module [project]/src/lib/api/exchange-
+rate.ts [app-route] (ecmascript).
+Did you mean to import getExchangeRates?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/lib/api/products.ts:2:1
+Export createCacheKey doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { db[33m,[39m isPrismaAvailable } [36mf
+rom[39m [32m"@/lib/db"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { cache[33m,[39m createCa
+cheKey } [36mfrom[39m [32m"@/lib/cache"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m [36mimport[39m type { [33mProductCategory[39m } [36mfrom[
+39m [32m"@/types"[39m[33m;[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [36mexport[39m [36minterface[39m [33mSearchProductsParams
+[39m {[0m
+
+The export createCacheKey was not found in module [project]/src/lib/cache.ts [a
+pp-route] (ecmascript).
+Did you mean to import cache?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  App Route:
+    ./src/lib/api/products.ts
+    ./src/app/api/products/[id]/route.ts
+
+
+./src/app/api/vendor/quotes/[quoteId]/response/route.ts:3:1
+Export createQuoteResponse doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { createQuoteResponse } [3
+6mfrom[39m [32m"@/lib/api/vendor-quotes"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { db } [36mfrom[39m [32m"@/lib/db"[39m[33
+m;[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [90m// 寃ъ쟻 ?묐떟 ?앹꽦/?낅뜲?댄듃[39m[0m
+
+The export createQuoteResponse was not found in module [project]/src/lib/api/ve
+ndor-quotes.ts [app-route] (ecmascript).
+Did you mean to import getQuotesForVendor?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/reviews/[id]/route.ts:3:1
+Export deleteReview doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { deleteReview } [36mfrom
+[39m [32m"@/lib/api/reviews"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 由щ럭 ??젣[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mDELETE
+[39m([0m
+
+The export deleteReview was not found in module [project]/src/lib/api/reviews.t
+s [app-route] (ecmascript).
+Did you mean to import getProductReviews?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/components/products/price-display.tsx:4:1
+Export formatPrice doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { formatPrice[33m,[39m ge
+tCurrencySymbol } [36mfrom[39m [32m"@/lib/api/exchange-rate"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [36minterface[39m [33mPriceDisplayProps[39m {
+ [90m 7 |[39m   price[33m?[39m[33m:[39m number[33m;[39m[0m
+
+The export formatPrice was not found in module [project]/src/lib/api/exchange-r
+ate.ts [app-client] (ecmascript).
+Did you mean to import getExchangeRates?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/price-display.tsx [Client Component Browser]
+    ./src/app/test/_components/quote-panel.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/price-display.tsx [Client Component SSR]
+    ./src/app/test/_components/quote-panel.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/components/products/price-display.tsx:4:1
+Export formatPrice doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { formatPrice[33m,[39m ge
+tCurrencySymbol } [36mfrom[39m [32m"@/lib/api/exchange-rate"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m
+ [90m 6 |[39m [36minterface[39m [33mPriceDisplayProps[39m {
+ [90m 7 |[39m   price[33m?[39m[33m:[39m number[33m;[39m[0m
+
+The export formatPrice was not found in module [project]/src/lib/api/exchange-r
+ate.ts [app-ssr] (ecmascript).
+Did you mean to import getExchangeRates?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/price-display.tsx [Client Component Browser]
+    ./src/app/test/_components/quote-panel.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/price-display.tsx [Client Component SSR]
+    ./src/app/test/_components/quote-panel.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/app/api/admin/stats/route.ts:3:1
+Export getAdminStats doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { getAdminStats[33m,[39m 
+isAdmin } [36mfrom[39m [32m"@/lib/api/admin"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 챗쨈?챘짝짭챙혷혨 챠혛쨉챗쨀혙 챙징째챠혳혣 - 챙짚혩챘쨀쨉 챙혻혮챙혶혱 챙혻혵챗짹째[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export getAdminStats was not found in module [project]/src/lib/api/admin.ts
+ [app-route] (ecmascript).
+Did you mean to import isAdmin?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/products/brands/route.ts:2:1
+Export getBrands doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextResponse[39m } [36mfrom[39m 
+[32m"next/server"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { getBrands } [36mfrom[39
+m [32m"@/lib/api/products"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m() {
+ [90m 5 |[39m   [36mtry[39m {[0m
+
+The export getBrands was not found in module [project]/src/lib/api/products.ts 
+[app-route] (ecmascript).
+Did you mean to import searchProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/organizations/[id]/route.ts:3:1
+Export getOrganizationById doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m {
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 4 |[39m   getOrganizationById[33m,[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 5 |[39m   updateOrganization[33m,[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 6 |[39m } [36mfrom[39m [32m"@/lib/api/organizatio
+ns"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m [90m// 議곗쭅 ?곸꽭 議고쉶[39m
+ [90m 9 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m([0m
+
+The export getOrganizationById was not found in module [project]/src/lib/api/or
+ganizations.ts [app-route] (ecmascript).
+Did you mean to import getOrganizationsByUser?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/products/[id]/route.ts:2:1
+Export getProductById doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { getProductById } [36mfro
+m[39m [32m"@/lib/api/products"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m(
+ [90m 5 |[39m   request[33m:[39m [33mNextRequest[39m[33m,[39m[0m
+
+The export getProductById was not found in module [project]/src/lib/api/product
+s.ts [app-route] (ecmascript).
+Did you mean to import searchProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/products/compare/route.ts:2:1
+Export getProductsByIds doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { getProductsByIds } [36mf
+rom[39m [32m"@/lib/api/products"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m(request[33m:[39m [33mNextRequest[39m) {
+ [90m 5 |[39m   [36mtry[39m {[0m
+
+The export getProductsByIds was not found in module [project]/src/lib/api/produ
+cts.ts [app-route] (ecmascript).
+Did you mean to import searchProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/admin/products/route.ts:3:1
+Export getProductsForAdmin doesn't exist in target module
+[0m [90m  1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mN
+extResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m  2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[3
+3m;[39m
+[31m[1m>[22m[39m[90m  3 |[39m [36mimport[39m {
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  4 |[39m   getProductsForAdmin[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  5 |[39m   createProduct[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  6 |[39m   isAdmin[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m } [36mfrom[39m [32m"@/lib/api/admin"[39
+m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [90m// 챙혻혵챠혪혞 챘짧짤챘징혶 챙징째챠혳혣 (챗쨈?챘짝짭챙혷혨챙혳짤) - 챙짚혩챘쨀쨉 챙혻혮챙혶혱 챙혻
+혵챗짹째[39m
+ [90m 10 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[
+39m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export getProductsForAdmin was not found in module [project]/src/lib/api/ad
+min.ts [app-route] (ecmascript).
+Did you mean to import isAdmin?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/quotes/[id]/route.ts:3:1
+Export getQuoteById doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { getQuoteById } [36mfrom
+[39m [32m"@/lib/api/quotes"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// ?뱀젙 寃ъ쟻 議고쉶[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m([0m
+
+The export getQuoteById was not found in module [project]/src/lib/api/quotes.ts
+ [app-route] (ecmascript).
+Did you mean to import createQuote?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/recommendations/[id]/feedback/route.ts:3:1
+Export getRecommendationFeedback doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { createRecommendationFeedb
+ack[33m,[39m getRecommendationFeedback } [36mfrom[39m [32m"@/lib/api/recom
+mendation-feedback"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 異붿쿇 ?쇰뱶諛?議고쉶[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m([0m
+
+The export getRecommendationFeedback was not found in module [project]/src/lib/
+api/recommendation-feedback.ts [app-route] (ecmascript).
+Did you mean to import createRecommendationFeedback?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/admin/users/route.ts:3:1
+Export getUsers doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { getUsers[33m,[39m updat
+eUserRole[33m,[39m isAdmin } [36mfrom[39m [32m"@/lib/api/admin"[39m[33m;
+[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 챙혗짭챙혳짤챙혷혨 챘짧짤챘징혶 챙징째챠혳혣 - 챙짚혩챘쨀쨉 챙혻혮챙혶혱 챙혻혵챗짹째[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mGET[3
+9m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export getUsers was not found in module [project]/src/lib/api/admin.ts [app
+-route] (ecmascript).
+Did you mean to import isAdmin?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/quotes/route.ts:6:1
+Export isDemoMode doesn't exist in target module
+[0m [90m 4 |[39m [36mimport[39m { sendQuoteConfirmationToUser[33m,[39m s
+endQuoteNotificationToVendors } [36mfrom[39m [32m"@/lib/email"[39m[33m;[3
+9m
+ [90m 5 |[39m [36mimport[39m { db[33m,[39m isPrismaAvailable } [36mfrom
+[39m [32m"@/lib/db"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m { isDemoMode } [36mfrom[3
+9m [32m"@/lib/env"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m
+ [90m 7 |[39m
+ [90m 8 |[39m [90m// 寃ъ쟻 ?붿껌 ?앹꽦[39m
+ [90m 9 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export isDemoMode was not found in module [project]/src/lib/env.ts [app-rou
+te] (ecmascript).
+Did you mean to import getAppUrl?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/shared-lists/route.ts:5:1
+Export isDemoMode doesn't exist in target module
+[0m [90m 3 |[39m [36mimport[39m { db[33m,[39m isPrismaAvailable } [36mf
+rom[39m [32m"@/lib/db"[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m { randomBytes } [36mfrom[39m [32m"crypto"[
+39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { getAppUrl[33m,[39m isDe
+moMode } [36mfrom[39m [32m"@/lib/env"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m
+ [90m 7 |[39m [90m// 怨듭쑀 留곹겕 ?앹꽦[39m
+ [90m 8 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export isDemoMode was not found in module [project]/src/lib/env.ts [app-rou
+te] (ecmascript).
+Did you mean to import getAppUrl?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/organizations/[id]/leave/route.ts:3:1
+Export leaveOrganization doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { leaveOrganization } [36m
+from[39m [32m"@/lib/api/organizations"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 챙징째챙짠혖 챠혘혞챠혝쨈[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m([0m
+
+The export leaveOrganization was not found in module [project]/src/lib/api/orga
+nizations.ts [app-route] (ecmascript).
+Did you mean to import getOrganizationsByUser?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/products/[id]/view/route.ts:3:1
+Export recordProductView doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { recordProductView } [36m
+from[39m [32m"@/lib/api/search-history"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// ?쒗뭹 議고쉶 湲곕줉[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m([0m
+
+The export recordProductView was not found in module [project]/src/lib/api/sear
+ch-history.ts [app-route] (ecmascript).
+Did you mean to import getRecentProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/quotes/route.ts:4:1
+Export sendQuoteConfirmationToUser doesn't exist in target module
+[0m [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m
+[33m;[39m
+ [90m 3 |[39m [36mimport[39m { createQuote } [36mfrom[39m [32m"@/lib/api
+/quotes"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { sendQuoteConfirmationToUs
+er[33m,[39m sendQuoteNotificationToVendors } [36mfrom[39m [32m"@/lib/email
+"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { db[33m,[39m isPrismaAvailable } [36mfrom
+[39m [32m"@/lib/db"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { isDemoMode } [36mfrom[39m [32m"@/lib/env"
+[39m[33m;[39m
+ [90m 7 |[39m[0m
+
+The export sendQuoteConfirmationToUser was not found in module [project]/src/li
+b/email.ts [app-route] (ecmascript).
+Did you mean to import sendEmail?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/quotes/route.ts:4:1
+Export sendQuoteNotificationToVendors doesn't exist in target module
+[0m [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m
+[33m;[39m
+ [90m 3 |[39m [36mimport[39m { createQuote } [36mfrom[39m [32m"@/lib/api
+/quotes"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { sendQuoteConfirmationToUs
+er[33m,[39m sendQuoteNotificationToVendors } [36mfrom[39m [32m"@/lib/email
+"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { db[33m,[39m isPrismaAvailable } [36mfrom
+[39m [32m"@/lib/db"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { isDemoMode } [36mfrom[39m [32m"@/lib/env"
+[39m[33m;[39m
+ [90m 7 |[39m[0m
+
+The export sendQuoteNotificationToVendors was not found in module [project]/src
+/lib/email.ts [app-route] (ecmascript).
+Did you mean to import sendEmail?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/app/api/translate/route.ts:2:1
+Export translateText doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { translateText } [36mfrom
+[39m [32m"@/lib/ai/openai"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m
+ [90m 4 |[39m [90m// GPT 湲곕컲 踰덉뿭 API[39m
+ [90m 5 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPOST[
+39m(request[33m:[39m [33mNextRequest[39m) {[0m
+
+The export translateText was not found in module [project]/src/lib/ai/openai.ts
+ [app-route] (ecmascript).
+Did you mean to import analyzeSearchIntent?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/lib/api/quotes.ts:2:1
+Export translateText doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { db } [36mfrom[39m [32m"@/lib/db"[39m
+[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { translateText } [36mfrom
+[39m [32m"@/lib/ai/openai"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m [36mimport[39m { cache } [36mfrom[39m [32m"@/lib/cache"[3
+9m[33m;[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [36mexport[39m [36minterface[39m [33mCreateQuoteParams[39
+m {[0m
+
+The export translateText was not found in module [project]/src/lib/ai/openai.ts
+ [app-route] (ecmascript).
+Did you mean to import analyzeSearchIntent?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  App Route:
+    ./src/lib/api/quotes.ts
+    ./src/app/api/inventory/auto-reorder/route.ts
+
+
+./src/app/api/admin/products/[id]/route.ts:3:1
+Export updateProduct doesn't exist in target module
+[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNe
+xtResponse[39m } [36mfrom[39m [32m"next/server"[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/auth"[39m[33
+m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { updateProduct[33m,[39m 
+deleteProduct[33m,[39m isAdmin } [36mfrom[39m [32m"@/lib/api/admin"[39m[
+33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [90m// 챙혻혵챠혪혞 챙혞혱챙혻혮 - 챙짚혩챘쨀쨉 챙혻혮챙혶혱 챙혻혵챗짹째[39m
+ [90m 6 |[39m [36mexport[39m [36masync[39m [36mfunction[39m [33mPATCH
+[39m([0m
+
+The export updateProduct was not found in module [project]/src/lib/api/admin.ts
+ [app-route] (ecmascript).
+Did you mean to import isAdmin?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+
+./src/components/products/review-section.tsx:11:1
+Export useCreateReview doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"
+@/components/ui/label"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mStar[39m } [36mfrom[39m [32m"lucid
+e-react"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { useProductReviews[33m,
+[39m useCreateReview[33m,[39m useDeleteReview } [36mfrom[39m [32m"@/hooks/
+use-reviews"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+[33m;[39m
+ [90m 13 |[39m
+ [90m 14 |[39m [36minterface[39m [33mReviewSectionProps[39m {[0m
+
+The export useCreateReview was not found in module [project]/src/hooks/use-revi
+ews.ts [app-client] (ecmascript).
+Did you mean to import useProductReviews?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/review-section.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/review-section.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/components/products/review-section.tsx:11:1
+Export useCreateReview doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"
+@/components/ui/label"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mStar[39m } [36mfrom[39m [32m"lucid
+e-react"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { useProductReviews[33m,
+[39m useCreateReview[33m,[39m useDeleteReview } [36mfrom[39m [32m"@/hooks/
+use-reviews"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+[33m;[39m
+ [90m 13 |[39m
+ [90m 14 |[39m [36minterface[39m [33mReviewSectionProps[39m {[0m
+
+The export useCreateReview was not found in module [project]/src/hooks/use-revi
+ews.ts [app-ssr] (ecmascript).
+Did you mean to import useProductReviews?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/review-section.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/review-section.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/components/products/review-section.tsx:11:1
+Export useDeleteReview doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"
+@/components/ui/label"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mStar[39m } [36mfrom[39m [32m"lucid
+e-react"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { useProductReviews[33m,
+[39m useCreateReview[33m,[39m useDeleteReview } [36mfrom[39m [32m"@/hooks/
+use-reviews"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+[33m;[39m
+ [90m 13 |[39m
+ [90m 14 |[39m [36minterface[39m [33mReviewSectionProps[39m {[0m
+
+The export useDeleteReview was not found in module [project]/src/hooks/use-revi
+ews.ts [app-client] (ecmascript).
+Did you mean to import useProductReviews?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/review-section.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/review-section.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/components/products/review-section.tsx:11:1
+Export useDeleteReview doesn't exist in target module
+[0m [90m  9 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"
+@/components/ui/label"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mStar[39m } [36mfrom[39m [32m"lucid
+e-react"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { useProductReviews[33m,
+[39m useCreateReview[33m,[39m useDeleteReview } [36mfrom[39m [32m"@/hooks/
+use-reviews"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+[33m;[39m
+ [90m 13 |[39m
+ [90m 14 |[39m [36minterface[39m [33mReviewSectionProps[39m {[0m
+
+The export useDeleteReview was not found in module [project]/src/hooks/use-revi
+ews.ts [app-ssr] (ecmascript).
+Did you mean to import useProductReviews?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/components/products/review-section.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/products/review-section.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/app/products/[id]/page.tsx:7:1
+Export useProduct doesn't exist in target module
+[0m [90m  5 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardCont
+ent[39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[
+33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m
+[33m;[39m
+ [90m  6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/c
+omponents/ui/button"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { useProduct } [36mfrom[
+39m [32m"@/hooks/use-products"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { useCompareStore } [36mfrom[39m [32m"@/li
+b/store/compare-store"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mPRODUCT_CATEGORIES[39m } [36mfrom[3
+9m [32m"@/lib/constants"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link
+"[39m[33m;[39m[0m
+
+The export useProduct was not found in module [project]/src/hooks/use-products.
+ts [app-client] (ecmascript).
+Did you mean to import useSearchProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/app/products/[id]/page.tsx:7:1
+Export useProduct doesn't exist in target module
+[0m [90m  5 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardCont
+ent[39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[
+33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m
+[33m;[39m
+ [90m  6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/c
+omponents/ui/button"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { useProduct } [36mfrom[
+39m [32m"@/hooks/use-products"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { useCompareStore } [36mfrom[39m [32m"@/li
+b/store/compare-store"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mPRODUCT_CATEGORIES[39m } [36mfrom[3
+9m [32m"@/lib/constants"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link
+"[39m[33m;[39m[0m
+
+The export useProduct was not found in module [project]/src/hooks/use-products.
+ts [app-ssr] (ecmascript).
+Did you mean to import useSearchProducts?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/products/[id]/page.tsx [Client Component Browser]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/products/[id]/page.tsx [Client Component SSR]
+    ./src/app/products/[id]/page.tsx [Server Component]
+
+
+./src/app/test/_components/analysis-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/
+components/ui/textarea"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/analysis-panel.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/analysis-panel.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+
+./src/app/test/_components/analysis-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/
+components/ui/textarea"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/analysis-panel.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Client Component Browser]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/analysis-panel.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Client Component SSR]
+    ./src/app/test/analysis/page.tsx [Server Component]
+
+
+./src/app/test/_components/quote-list-preview-card.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mTable[39m[33m,[39m [33mTableBody[3
+9m[33m,[39m [33mTableCell[39m[33m,[39m [33mTableHead[39m[33m,[39m [3
+3mTableHeader[39m[33m,[39m [33mTableRow[39m } [36mfrom[39m [32m"@/compo
+nents/ui/table"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/quote-list-preview-card.tsx [Client Component Br
+owser]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/quote-list-preview-card.tsx [Client Component SS
+R]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/_components/quote-list-preview-card.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mTable[39m[33m,[39m [33mTableBody[3
+9m[33m,[39m [33mTableCell[39m[33m,[39m [33mTableHead[39m[33m,[39m [3
+3mTableHeader[39m[33m,[39m [33mTableRow[39m } [36mfrom[39m [32m"@/compo
+nents/ui/table"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/quote-list-preview-card.tsx [Client Component Br
+owser]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/quote-list-preview-card.tsx [Client Component SS
+R]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/_components/quote-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/com
+ponents/ui/input"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/quote-panel.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/quote-panel.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/app/test/_components/quote-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/com
+ponents/ui/input"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/quote-panel.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Client Component Browser]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/quote-panel.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Client Component SSR]
+    ./src/app/test/quote/page.tsx [Server Component]
+
+
+./src/app/test/_components/search-analysis-card.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/search-analysis-card.tsx [Client Component Brows
+er]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/search-analysis-card.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/_components/search-analysis-card.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/search-analysis-card.tsx [Client Component Brows
+er]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/search-analysis-card.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/_components/search-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/com
+ponents/ui/input"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/com
+ponents/ui/label"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/search-panel.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/search-panel.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/_components/search-panel.tsx:3:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+ [90m 2 |[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"./test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 5 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/com
+ponents/ui/input"[39m[33m;[39m
+ [90m 6 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/com
+ponents/ui/label"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/_components/search-panel.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/_components/search-panel.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/search/page.tsx:4:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mSearchPanel[39m } [36mfrom[39m [32m
+"../_components/search-panel"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"../_components/test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-client] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+./src/app/test/search/page.tsx:4:1
+Export useTestFlow doesn't exist in target module
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { [33mSearchPanel[39m } [36mfrom[39m [32m
+"../_components/search-panel"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { useTestFlow } [36mfrom[
+39m [32m"../_components/test-flow-provider"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[
+39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,
+[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[33m
+;[39m
+ [90m 6 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/co
+mponents/ui/button"[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/com
+ponents/ui/badge"[39m[33m;[39m[0m
+
+The export useTestFlow was not found in module [project]/src/app/test/_componen
+ts/test-flow-provider.tsx [app-ssr] (ecmascript).
+Did you mean to import TestFlowProvider?
+All exports of the module are statically known (It doesn't have dynamic exports
+). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./src/app/test/search/page.tsx [Client Component Browser]
+    ./src/app/test/search/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/test/search/page.tsx [Client Component SSR]
+    ./src/app/test/search/page.tsx [Server Component]
+
+
+    at <unknown> (./src/lib/ai/protocol-extractor.ts:120:7)
+    at <unknown> (./src/lib/db.ts:94:10)
+    at <unknown> (./src/lib/db.ts:141:10)
+    at <unknown> (./src/lib/db.ts:94:14)
+    at <unknown> (./src/lib/db.ts:141:14)
+    at <unknown> (./src/lib/i18n/translations.ts:238:14)
+    at <unknown> (./src/lib/i18n/translations.ts:237:14)
+    at <unknown> (./src/app/_components/pricing-section.tsx:26:47)
+    at <unknown> (./src/app/search/page.tsx:213:17)
+    at <unknown> (./src/lib/ai/text-extractor.ts:121:15)
+    at <unknown> (./src/app/test/analysis/page.tsx:4:1)
+    at <unknown> (./src/app/test/analysis/page.tsx:4:1)
+    at <unknown> (./src/app/dashboard/organizations/page.tsx:11:1)
+    at <unknown> (./src/app/dashboard/organizations/page.tsx:11:1)
+    at <unknown> (./src/app/test/quote/request/page.tsx:3:1)
+    ... collapsed 3 duplicate lines matching above 1 lines 3 times...
+    at <unknown> (./src/app/test/quote/page.tsx:3:1)
+    at <unknown> (./src/app/test/quote/page.tsx:3:1)
+    at <unknown> (./src/app/dashboard/admin/page.tsx:11:1)
+    at <unknown> (./src/app/dashboard/admin/page.tsx:11:1)
+    at <unknown> (./src/components/auth/user-menu.tsx:15:1)
+    at <unknown> (./src/components/auth/user-menu.tsx:15:1)
+    at <unknown> (./src/app/api/exchange-rates/route.ts:2:1)
+    at <unknown> (./src/lib/api/products.ts:2:1)
+    at <unknown> (./src/app/api/vendor/quotes/[quoteId]/response/route.ts:3:1)
+    at <unknown> (./src/app/api/reviews/[id]/route.ts:3:1)
+    at <unknown> (./src/components/products/price-display.tsx:4:1)
+    at <unknown> (./src/components/products/price-display.tsx:4:1)
+    at <unknown> (./src/app/api/admin/stats/route.ts:3:1)
+    at <unknown> (./src/app/api/products/brands/route.ts:2:1)
+    at <unknown> (./src/app/api/organizations/[id]/route.ts:3:1)
+    at <unknown> (./src/app/api/products/[id]/route.ts:2:1)
+    at <unknown> (./src/app/api/products/compare/route.ts:2:1)
+    at <unknown> (./src/app/api/admin/products/route.ts:3:1)
+    at <unknown> (./src/app/api/quotes/[id]/route.ts:3:1)
+    at <unknown> (./src/app/api/recommendations/[id]/feedback/route.ts:3:1)
+    at <unknown> (./src/app/api/admin/users/route.ts:3:1)
+    at <unknown> (./src/app/api/quotes/route.ts:6:1)
+    at <unknown> (./src/app/api/shared-lists/route.ts:5:1)
+    at <unknown> (./src/app/api/organizations/[id]/leave/route.ts:3:1)
+    at <unknown> (./src/app/api/products/[id]/view/route.ts:3:1)
+    at <unknown> (./src/app/api/quotes/route.ts:4:1)
+    at <unknown> (./src/app/api/quotes/route.ts:4:1)
+    at <unknown> (./src/app/api/translate/route.ts:2:1)
+    at <unknown> (./src/lib/api/quotes.ts:2:1)
+    at <unknown> (./src/app/api/admin/products/[id]/route.ts:3:1)
+    at <unknown> (./src/components/products/review-section.tsx:11:1)
+    ... collapsed 3 duplicate lines matching above 1 lines 3 times...
+    at <unknown> (./src/app/products/[id]/page.tsx:7:1)
+    at <unknown> (./src/app/products/[id]/page.tsx:7:1)
+    at <unknown> (./src/app/test/_components/analysis-panel.tsx:3:1)
+    at <unknown> (./src/app/test/_components/analysis-panel.tsx:3:1)
+    at <unknown> (./src/app/test/_components/quote-list-preview-card.tsx:3:1)
+    at <unknown> (./src/app/test/_components/quote-list-preview-card.tsx:3:1)
+    at <unknown> (./src/app/test/_components/quote-panel.tsx:3:1)
+    at <unknown> (./src/app/test/_components/quote-panel.tsx:3:1)
+    at <unknown> (./src/app/test/_components/search-analysis-card.tsx:3:1)
+    at <unknown> (./src/app/test/_components/search-analysis-card.tsx:3:1)
+    at <unknown> (./src/app/test/_components/search-panel.tsx:3:1)
+    at <unknown> (./src/app/test/_components/search-panel.tsx:3:1)
+    at <unknown> (./src/app/test/search/page.tsx:4:1)
+    at <unknown> (./src/app/test/search/page.tsx:4:1)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\Users\young\ai-biocompare\apps\web
+npm error workspace web@0.1.0
+npm error location C:\Users\young\ai-biocompare\apps\web
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c prisma generate && next 
+build

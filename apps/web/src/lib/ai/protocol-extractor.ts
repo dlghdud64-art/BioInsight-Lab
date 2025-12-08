@@ -1,6 +1,6 @@
 import { extractTextFromPDF } from "./pdf-parser";
 
-// OpenAI API 직접 호출 (openai 패키지 대신 fetch 사용)
+// 중복 정의 제거 - OpenAI API 직접 호출 (openai 패키지 대신 fetch 사용)
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export interface ExtractedReagent {
@@ -114,27 +114,3 @@ ${truncatedText}
     throw new Error("프로토콜 분석에 실패했습니다.");
   }
 }
-
-
-// OpenAI API 직접 호출 (openai 패키지 대신 fetch 사용)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-export interface ExtractedReagent {
-  name: string;
-  description?: string;
-  quantity?: string;
-  unit?: string;
-  estimatedUsage?: number;
-  category?: "REAGENT" | "TOOL" | "EQUIPMENT";
-}
-
-export interface ProtocolExtractionResult {
-  reagents: ExtractedReagent[];
-  summary: string;
-  experimentType?: string;
-  sampleType?: string;
-}
-
-/**
- * PDF에서 실험 프로토콜을 추출하고 필요한 시약을 GPT로 분석
- */
