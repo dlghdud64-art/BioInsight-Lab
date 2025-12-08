@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // ì¬ì£¼ë¬¸ì´ íìí í­ëª© íí°ë§
     const reorderItems = inventories
-      .map((inventory) => {
+      .map((inventory: any) => {
         const currentQty = inventory.currentQuantity;
         const threshold = inventory.autoReorderThreshold || inventory.safetyStock || 0;
 
@@ -138,4 +138,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}

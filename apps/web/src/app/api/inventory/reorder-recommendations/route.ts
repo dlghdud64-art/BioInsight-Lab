@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // ì¬ì£¼ë¬¸ ì¶ì² ê³ì°
     const recommendations = inventories
-      .map((inventory) => {
+      .map((inventory: any) => {
         const currentQty = inventory.currentQuantity;
         const safetyStock = inventory.safetyStock || 0;
 
@@ -106,4 +106,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}
