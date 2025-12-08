@@ -138,7 +138,8 @@ export async function GET(request: NextRequest) {
     });
 
     // PurchaseRecord 기반 계산 (실제 구매액)
-    purchaseRecords.forEach((record) => {
+      // 타입 에러 수정: record 파라미터에 타입 명시
+      purchaseRecords.forEach((record: any) => {
       actualAmount += record.totalAmount;
       totalAmount += record.totalAmount;
       if (record.vendor) {
@@ -262,7 +263,8 @@ export async function GET(request: NextRequest) {
     });
 
     // PurchaseRecord 기반 상세 데이터
-    purchaseRecords.forEach((record) => {
+      // 타입 에러 수정: record 파라미터에 타입 명시
+      purchaseRecords.forEach((record: any) => {
       details.push({
         id: record.id,
         date: record.purchaseDate.toISOString().split("T")[0],
