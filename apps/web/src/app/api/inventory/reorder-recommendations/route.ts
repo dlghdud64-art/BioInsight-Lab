@@ -92,8 +92,9 @@ export async function GET(request: NextRequest) {
         }
         return null;
       })
-      .filter((r): r is NonNullable<typeof r> => r !== null)
-      .sort((a, b) => {
+      // 타입 에러 수정: filter와 sort 함수의 파라미터에 타입 명시
+      .filter((r: any): r is NonNullable<typeof r> => r !== null)
+      .sort((a: any, b: any) => {
         // ê¸´ê¸ë ìì¼ë¡ ì ë ¬
         const urgencyOrder = { urgent: 0, high: 1, medium: 2 };
         return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
