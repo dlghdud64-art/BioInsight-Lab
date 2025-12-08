@@ -131,9 +131,10 @@ export async function POST(request: NextRequest) {
         notes: item.notes,
         // 비교 정보: 다른 벤더 가격
         alternativeVendors: item.product.vendors
-          .filter((v) => v.vendor?.name !== item.vendorName)
+          // 타입 에러 수정: v 파라미터에 타입 명시
+          .filter((v: any) => v.vendor?.name !== item.vendorName)
           .slice(0, 2)
-          .map((v) => ({
+          .map((v: any) => ({
             vendorName: v.vendor?.name,
             price: v.priceInKRW,
             currency: v.currency,
