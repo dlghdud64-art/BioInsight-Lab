@@ -62,13 +62,15 @@ export async function POST(request: NextRequest) {
     const vendorEmails = Array.from(
       new Set(
         productVendors
-          .map((pv) => pv.vendor.email)
+          // 타입 에러 수정: pv 파라미터에 타입 명시
+          .map((pv: any) => pv.vendor.email)
           .filter((email): email is string => !!email)
       )
     );
 
     const vendorIds = Array.from(
-      new Set(productVendors.map((pv) => pv.vendor.id))
+      // 타입 에러 수정: pv 파라미터에 타입 명시
+      new Set(productVendors.map((pv: any) => pv.vendor.id))
     );
 
     // 리드당 과금 처리 (비동기, 실패해도 견적은 생성됨)
