@@ -24,3 +24,14 @@ export const QUOTE_STATUS = {
 } as const;
 
 // 사용자 역할
+export const USER_ROLES = {
+  ADMIN: "ADMIN",
+  USER: "USER",
+} as const;
+
+// 조직 역할
+export const ORGANIZATION_ROLES = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  MEMBER: "MEMBER",
+} as const;

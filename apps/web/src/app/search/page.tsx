@@ -305,7 +305,7 @@ export default function SearchPage() {
                 onChange={(e) => setBrand(e.target.value)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="">?체 브랜??/option>
+                <option value="">전체 브랜드</option>
                 {brands.map((b) => (
                   <option key={b} value={b}>
                     {b}

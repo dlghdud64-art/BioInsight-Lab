@@ -325,3 +325,52 @@ export function QuotePanel() {
     </div>
   );
 }
+
+// 누락된 컴포넌트 추가
+export function SharePanel() {
+  return (
+    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold text-slate-900">공유</CardTitle>
+        <CardDescription className="text-xs text-slate-500">
+          품목 리스트를 공유하세요
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-slate-500">공유 기능은 준비 중입니다.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function QuoteRequestPanel() {
+  return (
+    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold text-slate-900">견적 요청</CardTitle>
+        <CardDescription className="text-xs text-slate-500">
+          견적을 요청하세요
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-slate-500">견적 요청 기능은 준비 중입니다.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function QuoteItemsSummaryPanel() {
+  return (
+    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
+        <CardDescription className="text-xs text-slate-500">
+          요청한 품목을 확인하세요
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-slate-500">품목 요약 기능은 준비 중입니다.</p>
+      </CardContent>
+    </Card>
+  );
+}
