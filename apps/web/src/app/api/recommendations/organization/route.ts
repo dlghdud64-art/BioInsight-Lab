@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
         usageCount: productUsageCount[product.id],
         reason: `이 조직에서 ${productUsageCount[product.id]}번 사용되었습니다`,
       }))
-      .sort((a, b) => b.usageCount - a.usageCount)
+      // 타입 에러 수정: a, b 파라미터에 타입 명시
+      .sort((a: any, b: any) => b.usageCount - a.usageCount)
       .slice(0, limit);
 
     return NextResponse.json({ recommendations });
