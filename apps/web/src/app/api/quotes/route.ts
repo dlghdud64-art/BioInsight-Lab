@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
         productVendors
           // 타입 에러 수정: pv 파라미터에 타입 명시
           .map((pv: any) => pv.vendor.email)
-          .filter((email): email is string => !!email)
+          // 타입 에러 수정: email 파라미터에 타입 명시
+          .filter((email: any): email is string => !!email)
       )
     );
 
