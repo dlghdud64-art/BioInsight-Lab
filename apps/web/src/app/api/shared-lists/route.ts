@@ -160,7 +160,8 @@ export async function POST(request: NextRequest) {
       // 전체 비교 요약
       comparisonSummary: {
         totalItems: quote.items.length,
-        totalAmount: quote.items.reduce((sum, item) => sum + (item.lineTotal || 0), 0),
+        // 타입 에러 수정: sum과 item 파라미터에 타입 명시
+        totalAmount: quote.items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0),
         vendors: Array.from(
           new Set(
             quote.items
