@@ -29,31 +29,3 @@ export async function GET(
 }
 
 // 조직 정보 수정
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { id } = await params;
-    const body = await request.json();
-    const { name, description } = body;
-
-    const organization = await updateOrganization(id, session.user.id, {
-      name,
-      description,
-    });
-
-    return NextResponse.json({ organization });
-  } catch (error: any) {
-    console.error("Error updating organization:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to update organization" },
-      { status: 500 }
-    );
-  }
-}

@@ -33,35 +33,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 사용자 역할 변경 - 중복 정의 제거
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(session.user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { userId, role } = body;
-
-    if (!userId || !role) {
-      return NextResponse.json(
-        { error: "userId and role are required" },
-        { status: 400 }
-      );
-    }
-
-    const user = await updateUserRole(userId, role);
-    return NextResponse.json({ user });
-  } catch (error) {
-    console.error("Error updating user role:", error);
-    return NextResponse.json(
-      { error: "Failed to update user role" },
-      { status: 500 }
-    );
-  }
-}
+// 사용자 역할 변경 - 중복 정의 제거

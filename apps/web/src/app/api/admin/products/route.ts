@@ -37,26 +37,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 제품 생성 - 중복 정의 제거
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!(await isAdmin(session.user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const product = await createProduct(body);
-    return NextResponse.json({ product }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating product:", error);
-    return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
-    );
-  }
-}
+// 제품 생성 - 중복 정의 제거
