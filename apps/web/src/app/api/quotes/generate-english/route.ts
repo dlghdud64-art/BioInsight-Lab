@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
     // GPT에 전달할 제품 정보 구성
     const itemsDescription = items
       .map((item: any, index: number) => {
-        const product = productMap.get(item.productId);
+        // 타입 에러 수정: productMap.get()의 반환 타입이 제대로 추론되지 않아 타입 캐스팅 추가
+        const product = productMap.get(item.productId) as any;
         if (!product) return null;
 
         const vendor = product.vendors?.[0]?.vendor;
