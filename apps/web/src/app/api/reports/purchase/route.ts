@@ -112,8 +112,10 @@ export async function GET(request: NextRequest) {
     const monthlyMap = new Map<string, number>();
 
     // QuoteList 기반 계산 (예상 구매액)
-    quotes.forEach((quote) => {
-      quote.items.forEach((item) => {
+    // 타입 에러 수정: quote 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      quote.items.forEach((item: any) => {
         const amount = (item.unitPrice || 0) * item.quantity;
         estimatedAmount += amount;
         totalAmount += amount;
@@ -162,12 +164,14 @@ export async function GET(request: NextRequest) {
 
     // 벤더별 데이터
     const vendorData = Array.from(vendorMap.entries())
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount)
+      // 타입 에러 수정: 파라미터에 타입 명시
+      .map(([name, amount]: [string, number]) => ({ name, amount }))
+      .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 6);
 
     // 카테고리별 데이터
-    const categoryData = Array.from(categoryMap.entries()).map(([name, amount]) => ({
+    // 타입 에러 수정: 파라미터에 타입 명시
+    const categoryData = Array.from(categoryMap.entries()).map(([name, amount]: [string, number]) => ({
       name,
       amount,
     }));
@@ -184,25 +188,29 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const budgetUsage = budgets.map((budget) => {
+    // 타입 에러 수정: budget 파라미터에 타입 명시
+    const budgetUsage = budgets.map((budget: any) => {
       // 해당 예산 기간 내의 실제 사용 금액 계산
       let usedAmount = 0;
 
       // QuoteList 기반 계산
-      quotes.forEach((quote) => {
+      // 타입 에러 수정: quote 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
         if (
           (!budget.organizationId || quote.organizationId === budget.organizationId) &&
           quote.createdAt >= budget.periodStart &&
           quote.createdAt <= budget.periodEnd
         ) {
-          quote.items.forEach((item) => {
+          // 타입 에러 수정: item 파라미터에 타입 명시
+      quote.items.forEach((item: any) => {
             usedAmount += (item.unitPrice || 0) * item.quantity;
           });
         }
       });
 
       // PurchaseRecord 기반 계산
-      purchaseRecords.forEach((record) => {
+      // 타입 에러 수정: record 파라미터에 타입 명시
+      purchaseRecords.forEach((record: any) => {
         if (
           (!budget.organizationId || record.organizationId === budget.organizationId) &&
           record.purchaseDate >= budget.periodStart &&
@@ -233,8 +241,10 @@ export async function GET(request: NextRequest) {
     const details: any[] = [];
 
     // QuoteList 기반 상세 데이터
-    quotes.forEach((quote) => {
-      quote.items.forEach((item) => {
+    // 타입 에러 수정: quote 파라미터에 타입 명시
+    quotes.forEach((quote: any) => {
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      quote.items.forEach((item: any) => {
         const vendor = item.product.vendors?.[0]?.vendor;
         details.push({
           id: item.id,
@@ -268,7 +278,8 @@ export async function GET(request: NextRequest) {
     });
 
     // 날짜순 정렬
-    details.sort((a, b) => b.date.localeCompare(a.date));
+    // 타입 에러 수정: a, b 파라미터에 타입 명시
+    details.sort((a: any, b: any) => b.date.localeCompare(a.date));
 
     return NextResponse.json({
       metrics: {
@@ -277,7 +288,8 @@ export async function GET(request: NextRequest) {
         actualAmount,
         difference: actualAmount - estimatedAmount, // 실제 - 예상 (양수면 초과, 음수면 절감)
         vendorCount: vendorMap.size,
-        itemCount: quotes.reduce((sum, q) => sum + q.items.length, 0) + purchaseRecords.length,
+        // 타입 에러 수정: sum, q 파라미터에 타입 명시
+        itemCount: quotes.reduce((sum: number, q: any) => sum + q.items.length, 0) + purchaseRecords.length,
         listCount: quotes.length,
       },
       monthlyData,
