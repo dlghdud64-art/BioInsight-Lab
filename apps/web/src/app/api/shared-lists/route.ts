@@ -6,17 +6,20 @@ import { getAppUrl, isDemoMode } from "@/lib/env";
 
 // 공유 링크 생성
 export async function POST(request: NextRequest) {
+  // body와 expiresAtValue를 try 블록 밖에서 선언하여 catch 블록에서도 접근 가능하도록 수정
+  let body: any = {};
+  let expiresAtValue: Date | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    body = await request.json();
     const { quoteId, title, description, expiresInDays } = body;
 
     // expiresInDays가 0이면 만료 없음 (null)
-    const expiresAtValue = expiresInDays && expiresInDays > 0
+    expiresAtValue = expiresInDays && expiresInDays > 0
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
       : null;
 
