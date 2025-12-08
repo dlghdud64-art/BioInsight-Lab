@@ -1,0 +1,47 @@
+﻿
+> web@0.1.0 build C:\Users\young\ai-biocompare\apps\web
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+??Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 358ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
+
+   ??Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     쨌 optimizePackageImports
+
+   Creating an optimized production build ...
+ ??Compiled successfully in 6.5s
+   Running TypeScript ...
+node.exe : Failed to compile.
+위치 C:\Program Files\nodejs\pnpm.ps1:16 문자:5
++     & "$basedir/node$exe"  "$basedir/node_modules/corepack/dist/pnpm. ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:String) [], Re 
+   moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/app/api/budgets/route.ts:21:47
+Type error: Parameter 'm' implicitly has an 'any' type.
+
+[0m [90m 19 |[39m       select[33m:[39m { organizationId[33m:[39m [36mt
+rue[39m }[33m,[39m
+ [90m 20 |[39m     })[33m;[39m
+[31m[1m>[22m[39m[90m 21 |[39m     [36mconst[39m userOrgIds [33m=[39m 
+userOrganizations[33m.[39mmap((m) [33m=>[39m m[33m.[39morganizationId)[3
+3m;[39m
+ [90m    |[39m                                               [31m[1m^[22m
+[39m
+ [90m 22 |[39m
+ [90m 23 |[39m     [36mconst[39m budgets [33m=[39m [36mawait[39m db[33
+m.[39mbudget[33m.[39mfindMany({
+ [90m 24 |[39m       where[33m:[39m {[0m
+Next.js build worker exited with code: 1 and signal: null
+?덭LIFECYCLE??Command failed with exit code 1.

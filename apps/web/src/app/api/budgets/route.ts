@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
-    const userOrgIds = userOrganizations.map((m) => m.organizationId);
+    // 타입 에러 수정 - 파라미터에 타입 명시
+    const userOrgIds = userOrganizations.map((m: { organizationId: string }) => m.organizationId);
 
     const budgets = await db.budget.findMany({
       where: {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // ê° ìì°ì ì¬ì©ë¥  ê³ì°
     const budgetsWithUsage = await Promise.all(
-      budgets.map(async (budget) => {
+      budgets.map(async (budget: any) => {
         // ìì° ê¸°ê° ë´ êµ¬ë§¤ë´ì­ ì¡°í
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+// useState 미사용으로 인한 lint 경고 제거
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FlaskConical, CheckCircle2, Factory, ShoppingCart } from "lucide-react";

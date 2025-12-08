@@ -125,3 +125,34 @@ export async function updateProduct(
     data,
   });
 }
+
+// 제품 삭제
+export async function deleteProduct(productId: string) {
+  return await db.product.delete({
+    where: { id: productId },
+  });
+}
+
+// 제품 생성
+export async function createProduct(data: {
+  name: string;
+  nameEn?: string;
+  description?: string;
+  descriptionEn?: string;
+  category: string;
+  brand?: string;
+  modelNumber?: string;
+  catalogNumber?: string;
+}) {
+  return await db.product.create({
+    data,
+  });
+}
+
+// 사용자 역할 업데이트
+export async function updateUserRole(userId: string, role: string) {
+  return await db.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+}

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+// 중복 정의 제거 및 UTF-8 인코딩 문제 수정
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -25,44 +26,44 @@ const STEPS: {
 }[] = [
   {
     id: "search",
-    label: "寃??,
+    label: "검색",
     badge: "Step 1",
-    title: "寃?됱쑝濡??꾨낫瑜???踰덉뿉 紐⑥쑝湲?,
+    title: "검색으로 최적을 찾아 선택하기",
     subtitle:
-      "?쒗뭹紐? ?源? 移댄뀒怨좊━濡??щ윭 踰ㅻ뜑 ?쒗뭹????踰덉뿉 議고쉶?⑸땲??",
+      "제품명 또는 키워드로 검색하면 관련 제품이 자동으로 추천됩니다.",
     bullets: [
-      "GPT媛 寃?됱뼱瑜??댄빐?댁꽌 ?좎궗 ?쒗뭹???먮룞?쇰줈 ?뺣━",
-      "踰ㅻ뜑 / 移댄뀒怨좊━ / Grade濡??꾪꽣留?,
-      "?좏깮???쒗뭹??諛붾줈 ?덈ぉ 由ъ뒪?몄뿉 ?닿린",
+      "GPT가 검색 의도를 분석하여 관련 제품을 우선순위로 추천",
+      "카테고리 / 키워드 / Grade로 필터링",
+      "선택한 제품을 바로 품목 리스트에 추가",
     ],
-    cta: "寃???붾㈃ ?닿린",
+    cta: "검색하러 가기",
   },
   {
     id: "compare",
-    label: "鍮꾧탳",
+    label: "비교",
     badge: "Step 2",
-    title: "?꾩슂???쒗뭹留?怨⑤씪??鍮꾧탳 쨌 ?덈ぉ 由ъ뒪??留뚮뱾湲?,
-    subtitle: "?ㅼ젣 援щℓ ?꾨낫留??λ컮援щ땲泥섎읆 紐⑥븘 ?뺣━?⑸땲??",
+    title: "필요한 제품들을 선택하여 비교 · 품목 리스트 만들기",
+    subtitle: "가격과 수량을 입력하면 품목 리스트가 자동으로 생성됩니다.",
     bullets: [
-      "踰ㅻ뜑 / ?④? / 洹쒓꺽?????붾㈃?먯꽌 鍮꾧탳",
-      "?섎웾, 鍮꾧퀬瑜??낅젰?섎㈃ ?덈ぉ 由ъ뒪???먮룞 ?뺣━",
-      "寃ъ쟻 ?붿껌??諛붾줈 ?????덈뒗 ?뺥깭濡????,
+      "카테고리 / 스펙 / 가격을 한눈에 비교",
+      "수량, 가격을 입력하면 품목 리스트가 자동 생성",
+      "엑셀 형식으로 복사하여 바로 사용 가능",
     ],
-    cta: "?덈ぉ 由ъ뒪??蹂대윭 媛湲?,
+    cta: "품목 리스트로 이동하기",
   },
   {
     id: "groupware",
-    label: "洹몃９?⑥뼱??遺숈뿬?ｊ린",
+    label: "그룹웨어에 붙여넣기",
     badge: "Step 3",
-    title: "洹몃９?⑥뼱 寃곗옱 ?묒떇??遺숈뿬?ｊ린",
+    title: "그룹웨어 구매 요청 양식에 붙여넣기",
     subtitle:
-      "?뚯궗?먯꽌 ?곕뒗 ?꾩옄寃곗옱/洹몃９?⑥뼱 ?꾨줈?몄뒪瑜?洹몃?濡??ъ슜?⑸땲??",
+      "생성된 품목 리스트를 TSV/엑셀 형식으로 복사하여 그룹웨어에 붙여넣을 수 있습니다.",
     bullets: [
-      "?꾩꽦???덈ぉ 由ъ뒪?몃? TSV/?띿뒪?몃줈 蹂듭궗",
-      "援щℓ ?붿껌 ?묒떇??洹몃?濡?遺숈뿬?ｊ린",
-      "?ν썑?먮뒗 吏곸젒 寃ъ쟻 ?붿껌/援щℓ源뚯? ?뺤옣 ?덉젙",
+      "생성된 품목 리스트를 TSV/엑셀 형식으로 복사",
+      "구매 요청 양식에 그룹웨어로 붙여넣기",
+      "이후에는 기존 구매 프로세스/그룹웨어로 진행",
     ],
-    cta: "寃ъ쟻 ?붿껌 ?붾㈃ ?닿린",
+    cta: "구매 요청 양식으로 가기",
   },
 ];
 
@@ -75,20 +76,17 @@ export function DemoFlowSwitcherSection() {
       id="demo-flow-section"
       className="border-y border-slate-100 bg-slate-50/60 py-10"
     >
-      {/* ???ш린?쒕????꾩껜瑜?媛?대뜲濡?紐⑥???*/}
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4">
-        {/* ?뱀뀡 ?ㅻ뜑 */}
         <header className="text-center space-y-1">
           <p className="text-xs font-medium text-slate-500">
-            3?④퀎 ?곕え ?뚮줈??          </p>
+            3단계 사용 흐름
+          </p>
           <h2 className="text-lg font-semibold text-slate-900">
-            寃????鍮꾧탳 ??洹몃９?⑥뼱源뚯? ?ㅼ젣 ?ъ슜 ?먮쫫??媛꾨떒??泥댄뿕??蹂댁꽭??
+            검색부터 비교까지 그룹웨어까지의 전체 프로세스를 단계별로 확인할 수 있습니다.
           </h2>
         </header>
 
-        {/* ?좉? + 移대뱶: ?꾩껜 ??쓣 ??以꾩씠怨?媛?대뜲 ?뺣젹 */}
         <div className="w-full max-w-xl space-y-4">
-          {/* ?좉? 踰꾪듉 洹몃９ */}
           <div className="inline-flex w-full rounded-full border border-slate-200 bg-white/80 p-1 text-xs shadow-sm">
             {STEPS.map((step) => {
               const selected = step.id === active;
@@ -114,7 +112,6 @@ export function DemoFlowSwitcherSection() {
             })}
           </div>
 
-          {/* ?좏깮???④퀎 移대뱶 */}
           <Card className="border-slate-200 bg-white shadow-sm">
             <CardHeader className="flex flex-row items-start gap-3">
               <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
@@ -171,69 +168,3 @@ export function DemoFlowSwitcherSection() {
     </section>
   );
 }
-
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Search, ListChecks, ClipboardList } from "lucide-react";
-
-type StepId = "search" | "compare" | "groupware";
-
-const STEPS: {
-  id: StepId;
-  label: string;
-  badge: string;
-  title: string;
-  subtitle: string;
-  bullets: string[];
-  cta?: string;
-}[] = [
-  {
-    id: "search",
-    label: "寃??,
-    badge: "Step 1",
-    title: "寃?됱쑝濡??꾨낫瑜???踰덉뿉 紐⑥쑝湲?,
-    subtitle:
-      "?쒗뭹紐? ?源? 移댄뀒怨좊━濡??щ윭 踰ㅻ뜑 ?쒗뭹????踰덉뿉 議고쉶?⑸땲??",
-    bullets: [
-      "GPT媛 寃?됱뼱瑜??댄빐?댁꽌 ?좎궗 ?쒗뭹???먮룞?쇰줈 ?뺣━",
-      "踰ㅻ뜑 / 移댄뀒怨좊━ / Grade濡??꾪꽣留?,
-      "?좏깮???쒗뭹??諛붾줈 ?덈ぉ 由ъ뒪?몄뿉 ?닿린",
-    ],
-    cta: "寃???붾㈃ ?닿린",
-  },
-  {
-    id: "compare",
-    label: "鍮꾧탳",
-    badge: "Step 2",
-    title: "?꾩슂???쒗뭹留?怨⑤씪??鍮꾧탳 쨌 ?덈ぉ 由ъ뒪??留뚮뱾湲?,
-    subtitle: "?ㅼ젣 援щℓ ?꾨낫留??λ컮援щ땲泥섎읆 紐⑥븘 ?뺣━?⑸땲??",
-    bullets: [
-      "踰ㅻ뜑 / ?④? / 洹쒓꺽?????붾㈃?먯꽌 鍮꾧탳",
-      "?섎웾, 鍮꾧퀬瑜??낅젰?섎㈃ ?덈ぉ 由ъ뒪???먮룞 ?뺣━",
-      "寃ъ쟻 ?붿껌??諛붾줈 ?????덈뒗 ?뺥깭濡????,
-    ],
-    cta: "?덈ぉ 由ъ뒪??蹂대윭 媛湲?,
-  },
-  {
-    id: "groupware",
-    label: "洹몃９?⑥뼱??遺숈뿬?ｊ린",
-    badge: "Step 3",
-    title: "洹몃９?⑥뼱 寃곗옱 ?묒떇??遺숈뿬?ｊ린",
-    subtitle:
-      "?뚯궗?먯꽌 ?곕뒗 ?꾩옄寃곗옱/洹몃９?⑥뼱 ?꾨줈?몄뒪瑜?洹몃?濡??ъ슜?⑸땲??",
-    bullets: [
-      "?꾩꽦???덈ぉ 由ъ뒪?몃? TSV/?띿뒪?몃줈 蹂듭궗",
-      "援щℓ ?붿껌 ?묒떇??洹몃?濡?遺숈뿬?ｊ린",
-      "?ν썑?먮뒗 吏곸젒 寃ъ쟻 ?붿껌/援щℓ源뚯? ?뺤옣 ?덉젙",
-    ],
-    cta: "寃ъ쟻 ?붿껌 ?붾㈃ ?닿린",
-  },
-];
