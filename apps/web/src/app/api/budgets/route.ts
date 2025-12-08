@@ -53,8 +53,9 @@ export async function GET(request: NextRequest) {
         });
 
         // ì´ ì¬ì© ê¸ì¡ ê³ì°
+        // 타입 에러 수정: sum과 record 파라미터에 타입 명시
         const totalSpent = purchaseRecords.reduce(
-          (sum, record) => sum + (record.amount || 0),
+          (sum: number, record: any) => sum + (record.amount || 0),
           0
         );
 
