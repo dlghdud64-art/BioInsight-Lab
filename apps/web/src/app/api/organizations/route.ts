@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const organizations = memberships.map((m) => m.organization);
+    // 타입 에러 수정: m 파라미터에 타입 명시
+    const organizations = memberships.map((m: any) => m.organization);
 
     return NextResponse.json({ organizations });
   } catch (error: any) {
