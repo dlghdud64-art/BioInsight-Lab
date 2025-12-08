@@ -80,4 +80,17 @@ function getDefaultRates(): ExchangeRates {
   };
 }
 
-// 통화를 KRW로 변환
+// 통화를 KRW로 변환
+export async function convertToKRW(amount: number, fromCurrency: string): Promise<number> {
+  const rates = await getExchangeRates();
+  const rate = rates[fromCurrency] || 1;
+  return amount * rate;
+}
+
+// 가격 포맷팅
+export function formatPrice(amount: number, currency: string = "KRW"): string {
+  if (currency === "KRW") {
+    return `₩${amount.toLocaleString()}`;
+  }
+  return `${currency} ${amount.toLocaleString()}`;
+}

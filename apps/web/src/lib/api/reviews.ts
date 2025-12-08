@@ -78,4 +78,24 @@ async function getRatingDistribution(productId: string) {
   return result;
 }
 
-// 리뷰 생성
+// 리뷰 삭제
+export async function deleteReview(reviewId: string, userId: string) {
+  // 리뷰 소유자 확인
+  const review = await db.review.findUnique({
+    where: { id: reviewId },
+  });
+
+  if (!review) {
+    throw new Error("Review not found");
+  }
+
+  if (review.userId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  return await db.review.delete({
+    where: { id: reviewId },
+  });
+}
+
+// 리뷰 생성

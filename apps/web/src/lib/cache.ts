@@ -76,4 +76,7 @@ if (typeof setInterval !== "undefined") {
   }, 5 * 60 * 1000);
 }
 
-// 캐시 키 생성 헬퍼
+// 캐시 키 생성 헬퍼
+export function createCacheKey(...parts: (string | number)[]): string {
+  return parts.join(":");
+}

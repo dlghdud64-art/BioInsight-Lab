@@ -55,4 +55,23 @@ export async function getQuotesForVendor(vendorId: string) {
   return quotes;
 }
 
-// 벤더의 견적 응답 생성
+// 벤더의 견적 응답 생성
+export async function createQuoteResponse(
+  quoteId: string,
+  vendorId: string,
+  data: {
+    price: number;
+    leadTime?: number;
+    notes?: string;
+  }
+) {
+  return await db.quoteResponse.create({
+    data: {
+      quoteId,
+      vendorId,
+      price: data.price,
+      leadTime: data.leadTime,
+      notes: data.notes,
+    },
+  });
+}

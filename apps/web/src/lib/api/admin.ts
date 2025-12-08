@@ -1,13 +1,18 @@
 import { db } from "@/lib/db";
-import type { UserRole } from "@/types";
 
-// 관리자 권한 확인
-export async function isAdmin(userId: string): Promise<boolean> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
-  return user?.role === "ADMIN";
+// 관리자 통계 조회
+export async function getAdminStats() {
+  const [totalUsers, totalProducts, totalQuotes, totalOrganizations] = await Promise.all([
+    db.user.count(),
+    db.product.count(),
+    db.quote.count(),
+    db.organization.count(),
+  ]);
+
+  return {
+    totalUsers,
+    totalProducts,
+    totalQuotes,
+    totalOrganizations,
+  };
 }
-
-// 사용자 목록 조회
