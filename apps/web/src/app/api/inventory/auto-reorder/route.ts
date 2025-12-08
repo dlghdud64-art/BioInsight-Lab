@@ -117,12 +117,13 @@ export async function POST(request: NextRequest) {
       organizationId,
       title: `ìë ì¬ì£¼ë¬¸ - ${new Date().toLocaleDateString("ko-KR")}`,
       message: `ì¬ê³ ê° ìì  ì¬ê³  ì´íë¡ ë¨ì´ì ¸ ìëì¼ë¡ ìì±ë ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ìëë¤.`,
-      productIds: reorderItems.map((item) => item.productId),
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      productIds: reorderItems.map((item: any) => item.productId),
       quantities: Object.fromEntries(
-        reorderItems.map((item) => [item.productId, item.quantity])
+        reorderItems.map((item: any) => [item.productId, item.quantity])
       ),
       notes: Object.fromEntries(
-        reorderItems.map((item) => [
+        reorderItems.map((item: any) => [
           item.productId,
           `ìë ì¬ì£¼ë¬¸ (ì¬ê³ : ${item.inventoryId})`,
         ])
