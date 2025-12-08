@@ -49,7 +49,7 @@ export default function SearchPage() {
   const { productIds: compareProductIds, addProduct, removeProduct, hasProduct } = useCompareStore();
   const searchIntentMutation = useSearchIntent();
 
-  // 검?�어가 변경되�??�도 분석 (?�바?�싱)
+  // 검?어가 변경되??도 분석 (?바?싱)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
@@ -84,7 +84,7 @@ export default function SearchPage() {
   const products = searchData?.products || [];
   const quoteProducts = products.filter((p: any) => quoteProductIds.includes(p.id));
 
-  // 번역 미리보기 ?�성
+  // 번역 미리보기 ?성
   const translateMutation = useMutation({
     mutationFn: async (text: string) => {
       const response = await fetch("/api/translate", {
@@ -122,7 +122,7 @@ export default function SearchPage() {
     );
   };
 
-  // ?�목 리스????�� ?�데?�트 (?�품 ?�보 ?�함)
+  // ?목 리스???? ?데?트 (?품 ?보 ?함)
   useEffect(() => {
     const newItems = quoteProductIds.map((productId) => {
       const product = products.find((p: any) => p.id === productId);
@@ -155,7 +155,7 @@ export default function SearchPage() {
       notes?: string;
     }>;
     
-    // 기존 ??��???�량/비고???��??�고, ????���?추�?
+    // 기존 ?????량/비고?????고, ?????추?
     setQuoteListItems((prev) => {
       const existingIds = new Set(prev.map((item) => item.id));
       const updated = prev.map((item) => {
@@ -168,7 +168,7 @@ export default function SearchPage() {
   }, [quoteProductIds, products]);
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
-    // ?�태 ?�데?�트???�제로는 API ?�출�?처리
+    // ?태 ?데?트???제로는 API ?출?처리
     setQuoteListItems((prev) =>
       prev.map((item) =>
         item.id === id
@@ -200,7 +200,7 @@ export default function SearchPage() {
 
   const handleSaveQuoteList = async () => {
     if (quoteListItems.length === 0) {
-      alert("?�목 리스?�에 추�????�품???�습?�다.");
+      alert("?목 리스?에 추????품???습?다.");
       return;
     }
 
@@ -209,8 +209,8 @@ export default function SearchPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `?�목 리스??- ${new Date().toLocaleDateString()}`,
-          message: "그룹?�어???�목 리스??,
+          title: `?목 리스??- ${new Date().toLocaleDateString()}`,
+          message: "그룹?어???목 리스??,
           productIds: quoteListItems.map((item) => item.productId),
           quantities: Object.fromEntries(
             quoteListItems.map((item) => [item.productId, item.quantity])
@@ -223,29 +223,29 @@ export default function SearchPage() {
 
       if (!response.ok) throw new Error("Failed to create quote list");
 
-      alert("?�목 리스?��? ?�?�되?�습?�다.");
+      alert("?목 리스?? ??되?습?다.");
       setShowQuoteListDialog(false);
     } catch (error: any) {
-      alert(error.message || "?�목 리스???�?�에 ?�패?�습?�다.");
+      alert(error.message || "?목 리스????에 ?패?습?다.");
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-        {/* 검???�더 */}
+        {/* 검???더 */}
         <section className="space-y-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              ?�품 검??�?비교
+              ?품 검???비교
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              ?�품??검?�하�??�릭?�면 ?�세 ?�이지�??�동?�니??            </p>
+              ?품??검?하??릭?면 ?세 ?이지??동?니??            </p>
           </div>
 
-          {/* 검??�??�터 */}
+          {/* 검????터 */}
           <div className="space-y-4">
-          {/* 검?�창 */}
+          {/* 검?창 */}
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -262,10 +262,10 @@ export default function SearchPage() {
               검??            </Button>
           </form>
 
-          {/* 검???�도 �?*/}
+          {/* 검???도 ?*/}
           {searchIntentMutation.data?.intent && (
             <div className="flex flex-wrap gap-2 items-center p-3 bg-muted/50 rounded-lg">
-              <span className="text-xs font-medium text-muted-foreground">검???�도:</span>
+              <span className="text-xs font-medium text-muted-foreground">검???도:</span>
               {searchIntentMutation.data.intent.category && (
                 <Badge variant="outline" className="text-xs">
                   {PRODUCT_CATEGORIES[searchIntentMutation.data.intent.category]}
@@ -273,25 +273,25 @@ export default function SearchPage() {
               )}
               {searchIntentMutation.data.intent.purpose && (
                 <Badge variant="outline" className="text-xs bg-blue-50">
-                  ?�도: {searchIntentMutation.data.intent.purpose}
+                  ?도: {searchIntentMutation.data.intent.purpose}
                 </Badge>
               )}
               {searchIntentMutation.data.intent.targetExperiment && (
                 <Badge variant="outline" className="text-xs bg-green-50">
-                  ?�험: {searchIntentMutation.data.intent.targetExperiment}
+                  ?험: {searchIntentMutation.data.intent.targetExperiment}
                 </Badge>
               )}
             </div>
           )}
 
-          {/* ?�터 �??�렬 */}
+          {/* ?터 ??렬 */}
           <div className="flex flex-wrap items-center gap-4">
             <select
               value={category || ""}
               onChange={(e) => setCategory((e.target.value as ProductCategory) || undefined)}
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="">?�체 카테고리</option>
+              <option value="">?체 카테고리</option>
               {Object.entries(PRODUCT_CATEGORIES).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
@@ -305,7 +305,7 @@ export default function SearchPage() {
                 onChange={(e) => setBrand(e.target.value)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="">?�체 브랜??/option>
+                <option value="">?체 브랜??/option>
                 {brands.map((b) => (
                   <option key={b} value={b}>
                     {b}
@@ -330,13 +330,13 @@ export default function SearchPage() {
           {/* 검??결과 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">검??결과 ({products.length}�?</CardTitle>
+              <CardTitle className="text-base">검??결과 ({products.length}?</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {isLoading ? (
-                <p className="text-sm text-muted-foreground text-center py-8">검??�?..</p>
+                <p className="text-sm text-muted-foreground text-center py-8">검???..</p>
               ) : products.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">검??결과가 ?�습?�다</p>
+                <p className="text-sm text-muted-foreground text-center py-8">검??결과가 ?습?다</p>
               ) : (
                 products.map((product: any) => {
                   const minPrice = product.vendors?.reduce(
@@ -401,7 +401,7 @@ export default function SearchPage() {
             </CardContent>
           </Card>
 
-          {/* 비교 �?견적 ?�션 */}
+          {/* 비교 ?견적 ?션 */}
           {(compareProductIds.length > 0 || quoteProductIds.length > 0) && (
             <div className="flex gap-2">
               {compareProductIds.length > 0 && (
@@ -411,7 +411,7 @@ export default function SearchPage() {
                   className="gap-2"
                 >
                   <ArrowRight className="h-4 w-4" />
-                  비교 ?�이지�??�동 ({compareProductIds.length}�?
+                  비교 ?이지??동 ({compareProductIds.length}?
                 </Button>
               )}
               {quoteProductIds.length > 0 && (
@@ -419,7 +419,7 @@ export default function SearchPage() {
                   onClick={() => setShowQuoteListDialog(true)}
                   className="gap-2"
                 >
-                  ?�목 리스???�성 ({quoteProductIds.length}�?
+                  ?목 리스???성 ({quoteProductIds.length}?
                 </Button>
               )}
             </div>
@@ -427,14 +427,14 @@ export default function SearchPage() {
           </div>
         </section>
 
-        {/* ?�목 리스???�성 ?�이?�로�?*/}
+        {/* ?목 리스???성 ?이?로?*/}
         <Dialog open={showQuoteListDialog} onOpenChange={setShowQuoteListDialog}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>그룹?�어???�목 리스???�성</DialogTitle>
+              <DialogTitle>그룹?어???목 리스???성</DialogTitle>
               <DialogDescription>
-                ?�택???�품?�을 그룹?�어 구매?�청 ?�식???�용?????�는 ?�태�??�리?�니??
-                ?�립보드 복사 ?�는 ?��? ?�운로드�?그룹?�어??붙여?�을 ???�습?�다.
+                ?택???품?을 그룹?어 구매?청 ?식???용?????는 ?태??리?니??
+                ?립보드 복사 ?는 ?? ?운로드?그룹?어??붙여?을 ???습?다.
               </DialogDescription>
             </DialogHeader>
 
@@ -452,11 +452,11 @@ export default function SearchPage() {
 
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setShowQuoteListDialog(false)}>
-                  ?�기
+                  ?기
                 </Button>
                 <Button onClick={handleSaveQuoteList} disabled={quoteListItems.length === 0}>
                   <ArrowRight className="h-4 w-4 mr-2" />
-                  리스???�??                </Button>
+                  리스?????                </Button>
               </div>
             </div>
           </DialogContent>
