@@ -57,21 +57,29 @@ export async function getQuotesForVendor(vendorId: string) {
 
 // 벤더의 견적 응답 생성
 export async function createQuoteResponse(
-  quoteId: string,
   vendorId: string,
+  quoteId: string,
   data: {
-    price: number;
+    totalPrice?: number;
+    currency?: string;
+    message?: string;
+    validUntil?: Date;
+    price?: number; // 하위 호환성을 위해 유지
     leadTime?: number;
     notes?: string;
   }
 ) {
+  // totalPrice가 있으면 price로 사용, 없으면 price 사용
+  const price = data.totalPrice ?? data.price ?? 0;
+  
   return await db.quoteResponse.create({
     data: {
       quoteId,
       vendorId,
-      price: data.price,
+      price,
       leadTime: data.leadTime,
-      notes: data.notes,
+      notes: data.notes || data.message, // message를 notes로 매핑
+      // currency와 validUntil은 현재 스키마에 없으므로 notes에 포함하거나 무시
     },
   });
 }
