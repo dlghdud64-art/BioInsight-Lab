@@ -3,6 +3,7 @@
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "framework": "nextjs",
+  "rootDirectory": ".",
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "false",
     "NODE_ENV": "development"
