@@ -47,7 +47,7 @@ export async function getRecentProducts(userId: string | null, limit: number = 2
 }
 
 // 제품 조회 기록 저장
-export async function recordProductView(userId: string | null, productId: string) {
+export async function recordProductView(userId: string | null, productId: string, query?: string) {
   if (!userId) {
     return;
   }
@@ -57,6 +57,7 @@ export async function recordProductView(userId: string | null, productId: string
       data: {
         userId,
         clickedProductId: productId,
+        searchQuery: query || null,
       },
     });
   } catch (error) {
