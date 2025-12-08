@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
     const productCategories: Record<string, string> = {};
     const productBrands: Record<string, string> = {};
 
-    orgQuotes.forEach((quote) => {
+    // 타입 에러 수정: quote 파라미터에 타입 명시
+    orgQuotes.forEach((quote: any) => {
       quote.items.forEach((item) => {
         productUsageCount[item.productId] = (productUsageCount[item.productId] || 0) + 1;
       });
