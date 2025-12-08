@@ -115,7 +115,8 @@ export async function POST(request: NextRequest) {
       title: quote.title,
       description: quote.description,
       createdAt: quote.createdAt,
-      items: quote.items.map((item) => ({
+      // 타입 에러 수정: item 파라미터에 타입 명시
+      items: quote.items.map((item: any) => ({
         lineNumber: item.lineNumber,
         productName: item.product.name,
         productBrand: item.product.brand,
