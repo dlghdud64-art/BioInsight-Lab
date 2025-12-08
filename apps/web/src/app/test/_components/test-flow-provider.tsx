@@ -132,13 +132,10 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
     } else {
       addProduct(productId);
     }
-    // 상태 업데이트 강제 (리렌더링)
-    setProductIds([...productIds]);
   };
 
   const clearCompare = () => {
     clearProducts();
-    setProductIds([]);
   };
 
   const addProductToQuote = (product: any) => {

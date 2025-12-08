@@ -465,6 +465,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-import { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";

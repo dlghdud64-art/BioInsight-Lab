@@ -50,3 +50,15 @@ export function useProduct(productId: string | undefined) {
     enabled: !!productId,
   });
 }
+
+// 브랜드 목록 조회 hook
+export function useBrands() {
+  return useQuery<string[]>({
+    queryKey: ["brands"],
+    queryFn: async () => {
+      const response = await fetch("/api/products/brands");
+      if (!response.ok) throw new Error("Failed to fetch brands");
+      return response.json();
+    },
+  });
+}
