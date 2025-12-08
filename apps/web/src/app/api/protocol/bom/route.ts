@@ -58,9 +58,10 @@ export async function POST(request: NextRequest) {
           limit: 1,
         });
 
-        if (searchResults.products && searchResults.products.length > 0) {
+        // 타입 에러 수정: searchResults가 products 속성을 가지는지 확인
+        if ((searchResults as any).products && (searchResults as any).products.length > 0) {
           // 첫 번째 결과를 자동 매칭
-          matchedProductId = searchResults.products[0].id;
+          matchedProductId = (searchResults as any).products[0].id;
         }
       } catch (error) {
         console.error(`Failed to search product for ${reagent.name}:`, error);
