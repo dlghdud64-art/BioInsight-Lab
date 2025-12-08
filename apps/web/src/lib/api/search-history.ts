@@ -44,4 +44,22 @@ export async function getRecentProducts(userId: string | null, limit: number = 2
   });
 
   return Array.from(productMap.values());
-}
+}
+
+// 제품 조회 기록 저장
+export async function recordProductView(userId: string | null, productId: string) {
+  if (!userId) {
+    return;
+  }
+
+  try {
+    await db.searchHistory.create({
+      data: {
+        userId,
+        clickedProductId: productId,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to record product view:", error);
+  }
+}

@@ -33,4 +33,9 @@ export function getAppUrl(): string {
 /**
  * 데이터베이스 연결이 가능한지 확인합니다.
  * 데모 환경에서는 연결 실패 시에도 앱이 계속 작동하도록 합니다.
- */
+ */
+
+// 데모 모드 확인
+export function isDemoMode(): boolean {
+  return process.env.DEMO_MODE === "true" || process.env.NODE_ENV === "development";
+}

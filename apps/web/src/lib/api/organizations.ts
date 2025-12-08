@@ -61,3 +61,13 @@ export async function getOrganizationById(id: string) {
     },
   });
 }
+
+// 조직에서 나가기
+export async function leaveOrganization(organizationId: string, userId: string) {
+  return await db.organizationMember.deleteMany({
+    where: {
+      organizationId,
+      userId,
+    },
+  });
+}

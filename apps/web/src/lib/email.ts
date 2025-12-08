@@ -62,3 +62,30 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     return false;
   }
 }
+
+// 견적 확인 이메일 발송
+export async function sendQuoteConfirmationToUser(
+  userEmail: string,
+  userName: string,
+  quoteTitle: string,
+  quoteId: string
+): Promise<boolean> {
+  const appUrl = getAppUrl();
+  const quoteUrl = `${appUrl}/quotes/${quoteId}`;
+
+  return await sendEmail({
+    to: userEmail,
+    subject: `견적 요청이 접수되었습니다: ${quoteTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>견적 요청이 접수되었습니다</h2>
+        <p>안녕하세요, ${userName}님</p>
+        <p>견적 요청 "<strong>${quoteTitle}</strong>"이(가) 성공적으로 접수되었습니다.</p>
+        <p>견적 상세 정보를 확인하시려면 아래 링크를 클릭해주세요:</p>
+        <p><a href="${quoteUrl}" style="background-color: #0070f3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">견적 확인하기</a></p>
+        <p>감사합니다.</p>
+      </div>
+    `,
+    text: `견적 요청 "${quoteTitle}"이(가) 접수되었습니다. 확인: ${quoteUrl}`,
+  });
+}
