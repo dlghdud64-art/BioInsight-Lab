@@ -96,8 +96,9 @@ export async function GET(request: NextRequest) {
       .filter((r: any): r is NonNullable<typeof r> => r !== null)
       .sort((a: any, b: any) => {
         // ê¸´ê¸ë ìì¼ë¡ ì ë ¬
-        const urgencyOrder = { urgent: 0, high: 1, medium: 2 };
-        return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+        // 타입 에러 수정: urgencyOrder 인덱싱 타입 에러 해결
+        const urgencyOrder: { [key: string]: number } = { urgent: 0, high: 1, medium: 2 };
+        return (urgencyOrder[a.urgency as string] || 0) - (urgencyOrder[b.urgency as string] || 0);
       });
 
     return NextResponse.json({ recommendations });
