@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 /**
- * 클라이언트에서 환경 변수 설정을 확인할 수 있는 API
- * 보안상 민감하지 않은 설정만 반환
+ * í´ë¼ì´ì¸í¸ìì íê²½ ë³ì ì¤ì ì íì¸í  ì ìë API
+ * ë³´ìì ë¯¼ê°íì§ ìì ì¤ì ë§ ë°í
  */
 export async function GET() {
   const pdfMode = process.env.PDF_MODE || "paste-only";

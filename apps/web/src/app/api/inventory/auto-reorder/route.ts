@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createQuote } from "@/lib/api/quotes";
 
-// 자동 재주문 실행 API
+// ìë ì¬ì£¼ë¬¸ ì¤í API
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { organizationId, dryRun = false } = body;
 
-    // 자동 재주문이 활성화된 재고 조회
+    // ìë ì¬ì£¼ë¬¸ì´ íì±íë ì¬ê³  ì¡°í
     const inventories = await db.productInventory.findMany({
       where: {
         autoReorderEnabled: true,
@@ -46,15 +46,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 재주문이 필요한 항목 필터링
+    // ì¬ì£¼ë¬¸ì´ íìí í­ëª© íí°ë§
     const reorderItems = inventories
       .map((inventory) => {
         const currentQty = inventory.currentQuantity;
         const threshold = inventory.autoReorderThreshold || inventory.safetyStock || 0;
 
-        // 임계값 이하인 경우 재주문 필요
+        // ìê³ê° ì´íì¸ ê²½ì° ì¬ì£¼ë¬¸ íì
         if (currentQty <= threshold) {
-          // 사용량 추정
+          // ì¬ì©ë ì¶ì 
           let estimatedMonthlyUsage = 0;
           if (inventory.usageRecords.length > 0) {
             const totalUsage = inventory.usageRecords.reduce(
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
             estimatedMonthlyUsage = (totalUsage / days) * 30;
           }
 
-          // 재주문 수량 계산
+          // ì¬ì£¼ë¬¸ ìë ê³ì°
           const recommendedQty = Math.max(
             inventory.minOrderQty || 1,
             Math.ceil(threshold + estimatedMonthlyUsage - currentQty)
@@ -91,29 +91,29 @@ export async function POST(request: NextRequest) {
 
     if (reorderItems.length === 0) {
       return NextResponse.json({
-        message: "재주문이 필요한 항목이 없습니다.",
+        message: "ì¬ì£¼ë¬¸ì´ íìí í­ëª©ì´ ììµëë¤.",
         items: [],
       });
     }
 
     if (dryRun) {
-      // 드라이런 모드: 실제로 생성하지 않고 결과만 반환
+      // ëë¼ì´ë° ëª¨ë: ì¤ì ë¡ ìì±íì§ ìê³  ê²°ê³¼ë§ ë°í
       return NextResponse.json({
-        message: `${reorderItems.length}개 항목이 재주문 대상입니다.`,
+        message: `${reorderItems.length}ê° í­ëª©ì´ ì¬ì£¼ë¬¸ ëììëë¤.`,
         items: reorderItems.map((item) => ({
           productName: item.product.name,
           quantity: item.quantity,
-          unit: item.inventoryId, // 실제로는 unit을 가져와야 함
+          unit: item.inventoryId, // ì¤ì ë¡ë unitì ê°ì ¸ìì¼ í¨
         })),
       });
     }
 
-    // 실제 재주문: 품목 리스트 생성
+    // ì¤ì  ì¬ì£¼ë¬¸: íëª© ë¦¬ì¤í¸ ìì±
     const quote = await createQuote({
       userId: session.user.id,
       organizationId,
-      title: `자동 재주문 - ${new Date().toLocaleDateString("ko-KR")}`,
-      message: `재고가 안전 재고 이하로 떨어져 자동으로 생성된 재주문 리스트입니다.`,
+      title: `ìë ì¬ì£¼ë¬¸ - ${new Date().toLocaleDateString("ko-KR")}`,
+      message: `ì¬ê³ ê° ìì  ì¬ê³  ì´íë¡ ë¨ì´ì ¸ ìëì¼ë¡ ìì±ë ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ìëë¤.`,
       productIds: reorderItems.map((item) => item.productId),
       quantities: Object.fromEntries(
         reorderItems.map((item) => [item.productId, item.quantity])
@@ -121,20 +121,20 @@ export async function POST(request: NextRequest) {
       notes: Object.fromEntries(
         reorderItems.map((item) => [
           item.productId,
-          `자동 재주문 (재고: ${item.inventoryId})`,
+          `ìë ì¬ì£¼ë¬¸ (ì¬ê³ : ${item.inventoryId})`,
         ])
       ),
     });
 
     return NextResponse.json({
-      message: `${reorderItems.length}개 항목으로 재주문 리스트가 생성되었습니다.`,
+      message: `${reorderItems.length}ê° í­ëª©ì¼ë¡ ì¬ì£¼ë¬¸ ë¦¬ì¤í¸ê° ìì±ëììµëë¤.`,
       quoteId: quote.id,
       items: reorderItems,
     });
   } catch (error: any) {
     console.error("Error executing auto-reorder:", error);
     return NextResponse.json(
-      { error: error.message || "자동 재주문 실행에 실패했습니다." },
+      { error: error.message || "ìë ì¬ì£¼ë¬¸ ì¤íì ì¤í¨íìµëë¤." },
       { status: 500 }
     );
   }

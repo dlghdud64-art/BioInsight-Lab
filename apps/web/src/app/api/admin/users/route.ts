@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUsers, updateUserRole, isAdmin } from "@/lib/api/admin";
 
-// 사용자 목록 조회 - 중복 정의 제거
+// ì¬ì©ì ëª©ë¡ ì¡°í - ì¤ë³µ ì ì ì ê±°
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -33,4 +33,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 사용자 역할 변경 - 중복 정의 제거
+// ì¬ì©ì ì­í  ë³ê²½ - ì¤ë³µ ì ì ì ê±°

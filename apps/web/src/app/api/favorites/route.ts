@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getFavoritesByUser, addFavorite, removeFavorite } from "@/lib/api/favorites";
 
-// 즐겨찾기 목록 조회
+// ì¦ê²¨ì°¾ê¸° ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -21,4 +21,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 즐겨찾기 추가/제거
+// ì¦ê²¨ì°¾ê¸° ì¶ê°/ì ê±°

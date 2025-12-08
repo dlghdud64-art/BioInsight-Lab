@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 추천 성과 추적 API - 중복 정의 제거
+// ì¶ì² ì±ê³¼ ì¶ì  API - ì¤ë³µ ì ì ì ê±°
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -14,22 +14,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 행동 타입: 'view', 'click', 'compare_add', 'quote_add', 'feedback'
-    // 추천 관련 행동 추적
+    // íë íì: 'view', 'click', 'compare_add', 'quote_add', 'feedback'
+    // ì¶ì² ê´ë ¨ íë ì¶ì 
     
-    // 추천 피드백은 별도 API로 처리 (POST /api/recommendations/feedback)
+    // ì¶ì² í¼ëë°±ì ë³ë APIë¡ ì²ë¦¬ (POST /api/recommendations/feedback)
     if (action === "feedback") {
-      // 피드백은 별도 엔드포인트로 리다이렉트
+      // í¼ëë°±ì ë³ë ìëí¬ì¸í¸ë¡ ë¦¬ë¤ì´ë í¸
       return NextResponse.json(
         { error: "Use /api/recommendations/feedback for feedback" },
         { status: 400 }
       );
     }
 
-    // 추천 관련 행동 로깅 (향후 RecommendationMetric 모델로 확장 가능)
-    // 현재는 검색 기록에 통합하여 추적
+    // ì¶ì² ê´ë ¨ íë ë¡ê¹ (í¥í RecommendationMetric ëª¨ë¸ë¡ íì¥ ê°ë¥)
+    // íì¬ë ê²ì ê¸°ë¡ì íµí©íì¬ ì¶ì 
     if (action === "click" && session?.user?.id) {
-      // 검색 기록에 클릭 정보 저장
+      // ê²ì ê¸°ë¡ì í´ë¦­ ì ë³´ ì ì¥
       await db.searchHistory.create({
         data: {
           userId: session.user.id,
@@ -54,4 +54,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 추천 성과 조회 - 중복 정의 제거
+// ì¶ì² ì±ê³¼ ì¡°í - ì¤ë³µ ì ì ì ê±°

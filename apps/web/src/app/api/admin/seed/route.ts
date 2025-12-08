@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    // Prisma Client�??�적?�로 import (?�성?��? ?��? 경우 ?��?
+    // Prisma Clientë¥??ì ?¼ë¡ import (?ì±?ì? ?ì? ê²½ì° ?ë¹?
     const { db } = await import("@/lib/db");
-    // 벤더 ?�성
+    // ë²¤ë ?ì±
     const vendors = await Promise.all([
       db.vendor.upsert({
         where: { id: "vendor-thermo" },
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    // ?�시 검?�어???�품???�성
+    // ?ì ê²?ì´???í???ì±
     const products = await Promise.all([
       db.product.upsert({
         where: { id: "product-elisa-1" },
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
           id: "product-elisa-1",
           name: "Human IL-6 ELISA Kit",
           nameEn: "Human IL-6 ELISA Kit",
-          description: "?�간 ?�터루킨-6 (IL-6) ?�량 분석??ELISA ?�트",
+          description: "?¸ê° ?¸í°ë£¨í¨-6 (IL-6) ?ë ë¶ì??ELISA ?¤í¸",
           descriptionEn: "ELISA kit for quantitative analysis of human interleukin-6 (IL-6)",
           category: "REAGENT",
           brand: "R&D Systems",
@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-elisa-2",
-          name: "Human IL-6 ELISA Kit (?�체품)",
+          name: "Human IL-6 ELISA Kit (?ì²´í)",
           nameEn: "Human IL-6 ELISA Kit (Alternative)",
-          description: "?�간 IL-6 ?�량 분석??ELISA ?�트 ?��??�품",
+          description: "?¸ê° IL-6 ?ë ë¶ì??ELISA ?¤í¸ ?ì²??í",
           descriptionEn: "Alternative ELISA kit for human IL-6 quantitative analysis",
           category: "REAGENT",
           brand: "Thermo Fisher",
@@ -98,18 +98,18 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-filter-1",
-          name: "0.22μm 멸균 ?�터",
-          nameEn: "0.22μm Sterile Filter",
-          description: "?�포 배양??�??�약 멸균??0.22μm 멸균 ?�터",
-          descriptionEn: "0.22μm sterile filter for cell culture media and reagent sterilization",
+          name: "0.22Î¼m ë©¸ê·  ?í°",
+          nameEn: "0.22Î¼m Sterile Filter",
+          description: "?¸í¬ ë°°ì??ë°??ì½ ë©¸ê· ??0.22Î¼m ë©¸ê·  ?í°",
+          descriptionEn: "0.22Î¼m sterile filter for cell culture media and reagent sterilization",
           category: "TOOL",
           brand: "Millipore",
           modelNumber: "SLGP033RS",
           catalogNumber: "SLGP033RS",
           grade: "Sterile",
-          specification: "0.22μm, 33mm",
+          specification: "0.22Î¼m, 33mm",
           specifications: {
-            poreSize: "0.22μm",
+            poreSize: "0.22Î¼m",
             diameter: "33mm",
             material: "PVDF",
             sterilization: "Gamma irradiated",
@@ -121,18 +121,18 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-filter-2",
-          name: "0.22μm 멸균 ?�터 (?�체품)",
-          nameEn: "0.22μm Sterile Filter (Alternative)",
-          description: "0.22μm 멸균 ?�터 ?��??�품",
-          descriptionEn: "Alternative 0.22μm sterile filter",
+          name: "0.22Î¼m ë©¸ê·  ?í° (?ì²´í)",
+          nameEn: "0.22Î¼m Sterile Filter (Alternative)",
+          description: "0.22Î¼m ë©¸ê·  ?í° ?ì²??í",
+          descriptionEn: "Alternative 0.22Î¼m sterile filter",
           category: "TOOL",
           brand: "Sartorius",
           modelNumber: "16532",
           catalogNumber: "16532",
           grade: "Sterile",
-          specification: "0.22μm, 33mm",
+          specification: "0.22Î¼m, 33mm",
           specifications: {
-            poreSize: "0.22μm",
+            poreSize: "0.22Î¼m",
             diameter: "33mm",
             material: "PES",
             sterilization: "Gamma irradiated",
@@ -144,20 +144,20 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-hplc-1",
-          name: "HPLC C18 컬럼",
+          name: "HPLC C18 ì»¬ë¼",
           nameEn: "HPLC C18 Column",
-          description: "??�� HPLC 분석??C18 컬럼",
+          description: "?? HPLC ë¶ì??C18 ì»¬ë¼",
           descriptionEn: "C18 column for reverse-phase HPLC analysis",
           category: "EQUIPMENT",
           brand: "Waters",
           modelNumber: "186002350",
           catalogNumber: "186002350",
           grade: "HPLC Grade",
-          specification: "4.6 x 150mm, 5μm",
+          specification: "4.6 x 150mm, 5Î¼m",
           specifications: {
             dimensions: "4.6 x 150mm",
-            particleSize: "5μm",
-            poreSize: "100Å",
+            particleSize: "5Î¼m",
+            poreSize: "100Ã",
             phase: "C18",
           },
         },
@@ -167,27 +167,27 @@ export async function POST(request: NextRequest) {
         update: {},
         create: {
           id: "product-hplc-2",
-          name: "HPLC C18 컬럼 (?�체품)",
+          name: "HPLC C18 ì»¬ë¼ (?ì²´í)",
           nameEn: "HPLC C18 Column (Alternative)",
-          description: "HPLC C18 컬럼 ?��??�품",
+          description: "HPLC C18 ì»¬ë¼ ?ì²??í",
           descriptionEn: "Alternative HPLC C18 column",
           category: "EQUIPMENT",
           brand: "Agilent",
           modelNumber: "959700-902",
           catalogNumber: "959700-902",
           grade: "HPLC Grade",
-          specification: "4.6 x 150mm, 5μm",
+          specification: "4.6 x 150mm, 5Î¼m",
           specifications: {
             dimensions: "4.6 x 150mm",
-            particleSize: "5μm",
-            poreSize: "100Å",
+            particleSize: "5Î¼m",
+            poreSize: "100Ã",
             phase: "C18",
           },
         },
       }),
     ]);
 
-    // ?�품-벤더 ?�결 �?가�??�보
+    // ?í-ë²¤ë ?°ê²° ë°?ê°ê²??ë³´
     await Promise.all([
       db.productVendor.upsert({
         where: { id: "pv-elisa-1" },
@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "?�드 ?�이?��? ?�공?�으�??�성?�었?�니??",
+      message: "?ë ?°ì´?°ê? ?±ê³µ?ì¼ë¡??ì±?ì?µë??",
       vendors: vendors.length,
       products: products.length,
     });
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "?�드 ?�이???�성 ?�패",
+        error: error.message || "?ë ?°ì´???ì± ?¤í¨",
       },
       { status: 500 }
     );

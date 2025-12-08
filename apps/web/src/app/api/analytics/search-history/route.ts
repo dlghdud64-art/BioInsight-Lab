@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 검색 기록 저장
+// ê²ì ê¸°ë¡ ì ì¥
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -36,4 +36,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 사용자별 검색 기록 조회
+// ì¬ì©ìë³ ê²ì ê¸°ë¡ ì¡°í

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { updateProduct, deleteProduct, isAdmin } from "@/lib/api/admin";
 
-// 제품 수정 - 중복 정의 제거
+// ì í ìì  - ì¤ë³µ ì ì ì ê±°
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -30,4 +30,4 @@ export async function PATCH(
   }
 }
 
-// 제품 삭제 - 중복 정의 제거
+// ì í ì­ì  - ì¤ë³µ ì ì ì ê±°

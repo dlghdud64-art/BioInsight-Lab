@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 사용량 기록
+// ì¬ì©ë ê¸°ë¡
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 사용량 기록 생성
+    // ì¬ì©ë ê¸°ë¡ ìì±
     const usage = await db.inventoryUsage.create({
       data: {
         inventoryId,
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 재고량 업데이트 (감소)
+    // ì¬ê³ ë ìë°ì´í¸ (ê°ì)
     const inventory = await db.productInventory.findUnique({
       where: { id: inventoryId },
     });

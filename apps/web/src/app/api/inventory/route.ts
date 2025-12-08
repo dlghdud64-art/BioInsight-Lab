@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 재고 목록 조회
+// ì¬ê³  ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
-    const lowStock = searchParams.get("lowStock") === "true"; // 안전 재고 이하만
+    const lowStock = searchParams.get("lowStock") === "true"; // ìì  ì¬ê³  ì´íë§
 
     const where: any = {
       OR: [
@@ -64,4 +64,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 재고 생성/수정
+// ì¬ê³  ìì±/ìì 

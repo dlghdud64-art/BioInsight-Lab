@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 예산 수정
+// ìì° ìì 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,8 +27,8 @@ export async function PATCH(
       );
     }
 
-    // 권한 확인 (조직 예산인 경우 조직 멤버 확인 필요)
-    // 간단히 userId가 없으면 조직 예산으로 간주
+    // ê¶í íì¸ (ì¡°ì§ ìì°ì¸ ê²½ì° ì¡°ì§ ë©¤ë² íì¸ íì)
+    // ê°ë¨í userIdê° ìì¼ë©´ ì¡°ì§ ìì°ì¼ë¡ ê°ì£¼
     if (budget.organizationId) {
       const isOrgMember = await db.organizationMember.findFirst({
         where: {
@@ -65,4 +65,4 @@ export async function PATCH(
   }
 }
 
-// 예산 삭제
+// ìì° ì­ì 

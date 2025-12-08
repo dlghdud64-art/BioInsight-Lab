@@ -6,7 +6,7 @@ import {
   isAdmin,
 } from "@/lib/api/admin";
 
-// 제품 목록 조회 (관리자용) - 중복 정의 제거
+// ì í ëª©ë¡ ì¡°í (ê´ë¦¬ìì©) - ì¤ë³µ ì ì ì ê±°
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -37,4 +37,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 제품 생성 - 중복 정의 제거
+// ì í ìì± - ì¤ë³µ ì ì ì ê±°

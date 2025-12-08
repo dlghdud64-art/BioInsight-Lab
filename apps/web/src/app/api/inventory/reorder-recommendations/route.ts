@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 재주문 추천 목록 조회
+// ì¬ì£¼ë¬¸ ì¶ì² ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
 
-    // 사용자 또는 조직의 재고 조회
+    // ì¬ì©ì ëë ì¡°ì§ì ì¬ê³  ì¡°í
     const inventories = await db.productInventory.findMany({
       where: {
         OR: [
@@ -39,20 +39,20 @@ export async function GET(request: NextRequest) {
           orderBy: {
             usageDate: "desc",
           },
-          take: 30, // 최근 30개 사용 기록
+          take: 30, // ìµê·¼ 30ê° ì¬ì© ê¸°ë¡
         },
       },
     });
 
-    // 재주문 추천 계산
+    // ì¬ì£¼ë¬¸ ì¶ì² ê³ì°
     const recommendations = inventories
       .map((inventory) => {
         const currentQty = inventory.currentQuantity;
         const safetyStock = inventory.safetyStock || 0;
 
-        // 안전 재고 이하인 경우
+        // ìì  ì¬ê³  ì´íì¸ ê²½ì°
         if (currentQty <= safetyStock) {
-          // 사용량 추정 (최근 30일 평균 사용량)
+          // ì¬ì©ë ì¶ì  (ìµê·¼ 30ì¼ íê·  ì¬ì©ë)
           let estimatedMonthlyUsage = 0;
           if (inventory.usageRecords.length > 0) {
             const totalUsage = inventory.usageRecords.reduce(
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
             estimatedMonthlyUsage = (totalUsage / days) * 30;
           }
 
-          // 재주문 수량 계산: 안전 재고 + 예상 1개월 사용량 - 현재 재고
+          // ì¬ì£¼ë¬¸ ìë ê³ì°: ìì  ì¬ê³  + ìì 1ê°ì ì¬ì©ë - íì¬ ì¬ê³ 
           const recommendedQty = Math.max(
             inventory.minOrderQty || 1,
             Math.ceil(safetyStock + estimatedMonthlyUsage - currentQty)
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
             safetyStock,
             recommendedQuantity: recommendedQty,
             estimatedMonthlyUsage,
-            unit: inventory.unit || "개",
+            unit: inventory.unit || "ê°",
             urgency: currentQty <= 0 ? "urgent" : currentQty <= safetyStock * 0.5 ? "high" : "medium",
           };
         }
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       })
       .filter((r): r is NonNullable<typeof r> => r !== null)
       .sort((a, b) => {
-        // 긴급도 순으로 정렬
+        // ê¸´ê¸ë ìì¼ë¡ ì ë ¬
         const urgencyOrder = { urgent: 0, high: 1, medium: 2 };
         return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
       });

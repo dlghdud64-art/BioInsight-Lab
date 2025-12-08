@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 사용자가 소속된 조직 목록 조회
+// ì¬ì©ìê° ììë ì¡°ì§ ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 사용자가 멤버로 소속된 조직 조회
+    // ì¬ì©ìê° ë©¤ë²ë¡ ììë ì¡°ì§ ì¡°í
     const memberships = await db.organizationMember.findMany({
       where: {
         userId: session.user.id,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 예산 목록 조회
+// ìì° ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
 
-    // 예산 조회 (조직별 또는 사용자가 속한 조직)
+    // ìì° ì¡°í (ì¡°ì§ë³ ëë ì¬ì©ìê° ìí ì¡°ì§)
     const userOrganizations = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       select: { organizationId: true },
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // 각 예산의 사용률 계산
+    // ê° ìì°ì ì¬ì©ë¥  ê³ì°
     const budgetsWithUsage = await Promise.all(
       budgets.map(async (budget) => {
-        // 예산 기간 내 구매내역 조회
+        // ìì° ê¸°ê° ë´ êµ¬ë§¤ë´ì­ ì¡°í
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {
             purchaseDate: {
@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // 총 사용 금액 계산
+        // ì´ ì¬ì© ê¸ì¡ ê³ì°
         const totalSpent = purchaseRecords.reduce(
           (sum, record) => sum + (record.amount || 0),
           0
         );
 
-        // 사용률 계산
+        // ì¬ì©ë¥  ê³ì°
         const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
         const remaining = budget.amount - totalSpent;
 
@@ -82,4 +82,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 예산 생성
+// ìì° ìì±

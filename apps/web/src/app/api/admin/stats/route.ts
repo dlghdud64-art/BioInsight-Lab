@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getAdminStats, isAdmin } from "@/lib/api/admin";
 
-// 관리자 통계 조회 - 중복 정의 제거
+// ê´ë¦¬ì íµê³ ì¡°í - ì¤ë³µ ì ì ì ê±°
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();

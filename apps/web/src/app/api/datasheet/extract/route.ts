@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractProductInfoFromDatasheet } from "@/lib/ai/datasheet-extractor";
 
-// 데이터시트 텍스트에서 제품 정보 추출 API
+// ë°ì´í°ìí¸ íì¤í¸ìì ì í ì ë³´ ì¶ì¶ API
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

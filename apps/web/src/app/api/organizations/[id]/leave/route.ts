@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { leaveOrganization } from "@/lib/api/organizations";
 
-// 조직 탈퇴
+// ì¡°ì§ íí´
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
