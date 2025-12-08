@@ -142,7 +142,8 @@ export async function POST(request: NextRequest) {
         // 대체 후보 제품
         alternativeProducts: item.product.recommendations
           .slice(0, 2)
-          .map((rec) => ({
+          // 타입 에러 수정: rec 파라미터에 타입 명시
+          .map((rec: any) => ({
             productName: rec.recommended.name,
             productBrand: rec.recommended.brand,
             price: rec.recommended.vendors?.[0]?.priceInKRW,
