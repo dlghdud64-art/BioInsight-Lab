@@ -111,3 +111,40 @@ export async function createQuote(params: CreateQuoteParams) {
 
   return quote;
 }
+
+// 견적 ID로 조회
+export async function getQuoteById(id: string) {
+  return await db.quote.findUnique({
+    where: { id },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              vendors: {
+                include: {
+                  vendor: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          lineNumber: "asc",
+        },
+      },
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+      organization: true,
+      responses: {
+        include: {
+          vendor: true,
+        },
+      },
+    },
+  });
+}

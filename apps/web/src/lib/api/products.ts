@@ -1,5 +1,7 @@
 import { db, isPrismaAvailable } from "@/lib/db";
 import { cache, createCacheKey } from "@/lib/cache";
+import { convertToKRW } from "@/lib/api/exchange-rate";
+import { getEmbedding } from "@/lib/ai/embeddings";
 import type { ProductCategory } from "@/types";
 
 export interface SearchProductsParams {
@@ -357,4 +359,42 @@ export async function searchProducts(params: SearchProductsParams) {
   cache.set(cacheKey, result, 5 * 60000);
 
   return result;
+}
+
+// 제품 ID로 조회
+export async function getProductById(id: string) {
+  return await db.product.findUnique({
+    where: { id },
+    include: {
+      vendors: {
+        include: {
+          vendor: true,
+        },
+      },
+    },
+  });
+}
+
+// 여러 제품 ID로 조회
+export async function getProductsByIds(ids: string[]) {
+  return await db.product.findMany({
+    where: { id: { in: ids } },
+    include: {
+      vendors: {
+        include: {
+          vendor: true,
+        },
+      },
+    },
+  });
+}
+
+// 브랜드 목록 조회
+export async function getBrands(): Promise<string[]> {
+  const brands = await db.product.findMany({
+    select: { brand: true },
+    distinct: ["brand"],
+    where: { brand: { not: null } },
+  });
+  return brands.map((b) => b.brand).filter((b): b is string => !!b);
 }

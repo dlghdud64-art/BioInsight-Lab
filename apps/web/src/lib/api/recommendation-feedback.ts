@@ -39,4 +39,21 @@ export async function createRecommendationFeedback(
   });
 }
 
-// 추천 피드백 조회
+// 추천 피드백 조회
+export async function getRecommendationFeedback(recommendationId: string) {
+  return await db.recommendationFeedback.findMany({
+    where: { recommendationId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}

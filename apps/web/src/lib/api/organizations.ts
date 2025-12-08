@@ -36,4 +36,28 @@ export async function getOrganizationsByUser(userId: string) {
   });
 }
 
-// 조직 상세 조회
+// 조직 상세 조회
+export async function getOrganizationById(id: string) {
+  return await db.organization.findUnique({
+    where: { id },
+    include: {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          quotes: true,
+          members: true,
+        },
+      },
+    },
+  });
+}
