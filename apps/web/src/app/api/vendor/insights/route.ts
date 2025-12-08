@@ -150,7 +150,8 @@ export async function GET(request: NextRequest) {
       monthlyTrends[month].quoteCount += 1;
     });
 
-    responses.forEach((response) => {
+    // 타입 에러 수정: response 파라미터에 타입 명시
+    responses.forEach((response: any) => {
       const month = new Date(response.createdAt).toISOString().slice(0, 7);
       if (monthlyTrends[month]) {
         monthlyTrends[month].responseCount += 1;
