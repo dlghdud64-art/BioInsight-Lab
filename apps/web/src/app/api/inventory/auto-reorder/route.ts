@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       // ëë¼ì´ë° ëª¨ë: ì¤ì ë¡ ìì±íì§ ìê³  ê²°ê³¼ë§ ë°í
       return NextResponse.json({
         message: `${reorderItems.length}ê° í­ëª©ì´ ì¬ì£¼ë¬¸ ëììëë¤.`,
-        items: reorderItems.map((item) => ({
+        // 타입 에러 수정: map 함수의 item 파라미터에 타입 명시
+        items: reorderItems.map((item: any) => ({
           productName: item.product.name,
           quantity: item.quantity,
           unit: item.inventoryId, // ì¤ì ë¡ë unitì ê°ì ¸ìì¼ í¨
