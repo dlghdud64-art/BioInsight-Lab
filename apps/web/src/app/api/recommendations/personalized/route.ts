@@ -215,7 +215,8 @@ async function generatePersonalizedRecommendations(params: {
     // 타입 에러 수정: a, b 파라미터에 타입 명시
     .sort((a: any, b: any) => b.recommendationScore - a.recommendationScore)
     .slice(0, limit)
-    .map(({ recommendationScore, reason, ...product }) => ({
+    // 타입 에러 수정: 구조 분해 할당에 타입 명시
+    .map(({ recommendationScore, reason, ...product }: any) => ({
       product,
       score: recommendationScore,
       reason,
