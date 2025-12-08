@@ -90,8 +90,13 @@ export async function POST(request: NextRequest) {
 
     // 이메일 발송 (비동기, 실패해도 견적은 생성됨)
     Promise.all([
-      sendQuoteConfirmationToUser(quote, quote.user),
-      vendorEmails.length > 0 && sendQuoteNotificationToVendors(quote, vendorEmails),
+      sendQuoteConfirmationToUser(
+        session.user.email || "",
+        session.user.name || "사용자",
+        quote.title,
+        quote.id
+      ),
+      vendorEmails.length > 0 && sendQuoteNotificationToVendors(vendorEmails, quote.title, quote.id),
     ]).catch((error) => {
       console.error("Failed to send quote emails:", error);
     });
