@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // reactCompiler: true, // 일시적으로 비활성화 (babel-plugin-react-compiler 오류 해결 후 활성화)
   images: {
     remotePatterns: [
@@ -24,4 +23,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
+
