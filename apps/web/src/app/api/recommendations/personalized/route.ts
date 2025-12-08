@@ -189,7 +189,8 @@ async function generatePersonalizedRecommendations(params: {
   });
 
   // 점수 계산 및 정렬
-  const scoredProducts = recommendedProducts.map((product) => {
+  // 타입 에러 수정: product 파라미터에 타입 명시
+  const scoredProducts = recommendedProducts.map((product: any) => {
     let score = 0;
 
     // 카테고리 매칭 점수
