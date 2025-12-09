@@ -1,0 +1,14 @@
+﻿
+> web@0.1.0 build C:\Users\young\ai-biocompare\apps\web
+> prisma generate && next build
+
+node.exe : 'prisma'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+위치 C:\Program Files\nodejs\pnpm.ps1:16 문자:5
++     & "$basedir/node$exe"  "$basedir/node_modules/corepack/dist/pnpm. ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ('prisma'은(는) 내부...할 수 있는 프로그램, 또는 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+배치 파일이 아닙니다.
+?덭LIFECYCLE??Command failed with exit code 1.
