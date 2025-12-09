@@ -35,10 +35,14 @@ export function PersonalizedRecommendations({
   const recommendations = data?.recommendations || [];
   
   // 현재 제품의 최소 가격 계산
-  const currentMinPrice = currentProduct?.vendors?.reduce(
-    (min: number | null, v: any) => (v.priceInKRW && (!min || v.priceInKRW < min) ? v.priceInKRW : min),
-    null as number | null
-  ) || null;
+  let currentMinPrice: number | null = null;
+  if (currentProduct?.vendors && currentProduct.vendors.length > 0) {
+    for (const v of currentProduct.vendors) {
+      if (v.priceInKRW && (currentMinPrice === null || v.priceInKRW < currentMinPrice)) {
+        currentMinPrice = v.priceInKRW;
+      }
+    }
+  }
 
   if (isLoading) {
     return (
@@ -74,18 +78,25 @@ export function PersonalizedRecommendations({
       <CardContent className="space-y-4">
         {recommendations.map((rec) => {
           const product = rec.product;
-          const minPrice = product.vendors?.reduce(
-            (min, v) => (v.priceInKRW && (!min || v.priceInKRW < min) ? v.priceInKRW : min),
-            null as number | null
-          );
-          const maxPrice = product.vendors?.reduce(
-            (max, v) => (v.priceInKRW && (!max || v.priceInKRW > max) ? v.priceInKRW : max),
-            null as number | null
-          );
-          const minLeadTime = product.vendors?.reduce(
-            (min, v) => (v.leadTime !== null && (!min || v.leadTime < min) ? v.leadTime : min),
-            null as number | null
-          );
+          let minPrice: number | null = null;
+          let maxPrice: number | null = null;
+          let minLeadTime: number | null = null;
+          
+          if (product.vendors && product.vendors.length > 0) {
+            for (const v of product.vendors) {
+              if (v.priceInKRW) {
+                if (minPrice === null || v.priceInKRW < minPrice) {
+                  minPrice = v.priceInKRW;
+                }
+                if (maxPrice === null || v.priceInKRW > maxPrice) {
+                  maxPrice = v.priceInKRW;
+                }
+              }
+              if (v.leadTime !== null && v.leadTime !== undefined && (minLeadTime === null || v.leadTime < minLeadTime)) {
+                minLeadTime = v.leadTime;
+              }
+            }
+          }
           const inCompare = hasProduct(product.id);
 
           // 가격 비교 (현재 제품 대비)

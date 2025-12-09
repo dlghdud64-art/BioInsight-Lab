@@ -10,13 +10,19 @@ const nextConfig = {
   //   domains: ['example.com'],
   // },
 
-  webpack(config, { dir }) {
+  webpack(config, { dir, isServer }) {
     // 경로 alias 설정 - Vercel 빌드 환경을 고려한 절대 경로
-    const srcPath = path.join(dir, 'src');
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': srcPath,
-    };
+    const srcPath = path.resolve(dir, 'src');
+    
+    if (!config.resolve) {
+      config.resolve = {};
+    }
+    if (!config.resolve.alias) {
+      config.resolve.alias = {};
+    }
+    
+    config.resolve.alias['@'] = srcPath;
+    
     return config;
   }
 };
