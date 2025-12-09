@@ -4,7 +4,8 @@
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
     // pdf-parse는 ESM 모듈이므로 dynamic import 사용
-    const pdfParse = (await import("pdf-parse")).default;
+    const pdfParseModule = await import("pdf-parse");
+    const pdfParse = pdfParseModule.default || pdfParseModule;
     const data = await pdfParse(pdfBuffer);
     return data.text;
   } catch (error) {
