@@ -39,13 +39,11 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
     try {
       await createReview.mutateAsync({
         productId,
-        data: {
-          rating,
-          title: title || undefined,
-          comment: comment || undefined,
-          pros: pros || undefined,
-          cons: cons || undefined,
-        },
+        rating,
+        title: title || undefined,
+        comment: comment || undefined,
+        pros: pros || undefined,
+        cons: cons || undefined,
       });
       setShowForm(false);
       setRating(0);
