@@ -11,16 +11,18 @@ const nextConfig = {
   // },
 
   webpack(config, { dir, isServer }) {
-    // 경로 alias 설정 - Vercel 빌드 환경을 고려한 절대 경로
-    // dir은 apps/web을 가리키므로 src 경로를 정확히 설정
-    const srcPath = path.resolve(dir || __dirname, 'src');
-    
+    // 경로 alias 설정 - Vercel 빌드 환경을 위한 명시적 설정
     if (!config.resolve) {
       config.resolve = {};
     }
     if (!config.resolve.alias) {
       config.resolve.alias = {};
     }
+    
+    // dir은 apps/web 디렉토리를 가리킴 (Vercel: /vercel/path0/apps/web)
+    // __dirname은 next.config.cjs 파일의 위치 (apps/web)
+    const projectRoot = dir || __dirname;
+    const srcPath = path.resolve(projectRoot, 'src');
     
     // 기존 alias 유지하면서 @ 추가
     config.resolve.alias = {
