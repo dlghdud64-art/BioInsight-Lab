@@ -78,14 +78,14 @@ export async function searchProducts(params: SearchProductsParams) {
         // pgvector를 사용한 유사도 검색
         // Prisma는 직접 벡터 검색을 지원하지 않으므로 raw query 사용
         const embeddingArray = `[${embedding.join(",")}]`;
-        const vectorResults = await db.$queryRawUnsafe<Array<{ id: string; similarity: number }>>(
+        const vectorResults = (await db.$queryRawUnsafe(
           `SELECT id, 1 - (embedding <=> $1::vector) as similarity
            FROM "Product"
            WHERE embedding IS NOT NULL
            ORDER BY embedding <=> $1::vector
            LIMIT 50`,
           embeddingArray
-        );
+        )) as Array<{ id: string; similarity: number }>;
         
         vectorSearchProductIds = vectorResults.map((r) => r.id);
       }
