@@ -316,7 +316,7 @@ export async function searchProducts(params: SearchProductsParams) {
   });
 
   // 프리미엄 제품을 우선순위별로 정렬
-  premiumProducts.sort((a, b) => {
+  premiumProducts.sort((a: any, b: any) => {
     const aPriority = Math.max(
       ...a.vendors
         .filter((pv: any) => pv.isPremiumFeatured)
@@ -397,5 +397,5 @@ export async function getBrands(): Promise<string[]> {
     distinct: ["brand"],
     where: { brand: { not: null } },
   });
-  return brands.map((b) => b.brand).filter((b): b is string => !!b);
+  return brands.map((b: any) => b.brand).filter((b: string | null): b is string => !!b);
 }
