@@ -38,7 +38,7 @@ export async function getVendorsByProductIds(productIds: string[]) {
   // 제품별로 그룹화
   const vendorsByProduct = productIds.map((productId) => ({
     productId,
-    vendors: vendors.filter((v) => v.productId === productId),
+    vendors: vendors.filter((v: any) => v.productId === productId),
   }));
 
   // 캐시 저장 (5분 TTL)
