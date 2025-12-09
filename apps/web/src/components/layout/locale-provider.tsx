@@ -16,4 +16,5 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   return <>{children}</>;
-}
+}
+

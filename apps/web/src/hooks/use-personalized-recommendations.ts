@@ -48,4 +48,5 @@ export function usePersonalizedRecommendations(productId?: string, limit: number
     enabled: !!session?.user?.id,
     staleTime: 5 * 60 * 1000, // 5분
   });
-}
+}
+

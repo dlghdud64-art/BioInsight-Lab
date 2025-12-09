@@ -18,4 +18,5 @@ export function useSearchIntent() {
       return response.json();
     },
   });
-}
+}
+

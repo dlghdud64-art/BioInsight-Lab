@@ -68,4 +68,5 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
 
 export function getPlanLimits(plan: SubscriptionPlan): PlanLimits {
   return PLAN_LIMITS[plan] || PLAN_LIMITS[SubscriptionPlan.FREE];
-}
+}
+

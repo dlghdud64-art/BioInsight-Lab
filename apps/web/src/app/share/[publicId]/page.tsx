@@ -19,4 +19,5 @@ export default async function SharedListPage({
   params: { publicId: string };
 }) {
   return <SharedListView publicId={params.publicId} />;
-}
+}
+

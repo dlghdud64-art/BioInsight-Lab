@@ -37,4 +37,4 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ì í ìì± - ì¤ë³µ ì ì ì ê±°
+// ì í ìì± - ì¤ë³µ ì ì ì ê±°

@@ -134,4 +134,5 @@ export interface ExtractedProductInfo {
 
 /**
  * 데이터시트 텍스트에서 제품 정보를 추출하고 한글 요약/번역 생성
- */
+ */
+

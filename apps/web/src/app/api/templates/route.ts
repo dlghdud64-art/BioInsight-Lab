@@ -62,4 +62,5 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 템플릿 생성
+// 템플릿 생성
+

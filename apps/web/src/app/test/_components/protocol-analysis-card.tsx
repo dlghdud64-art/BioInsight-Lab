@@ -67,4 +67,5 @@ export function ProtocolAnalysisCard({ extractionResult }: ProtocolAnalysisCardP
       )}
     </TestCard>
   );
-}
+}
+

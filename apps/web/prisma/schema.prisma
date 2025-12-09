@@ -10,50 +10,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ?�용??�?권한
+// ?�용??�?권한
 enum UserRole {
-  RESEARCHER // ?�구??
-  BUYER // 구매 ?�당??
+  RESEARCHER // ?�구??
+  BUYER // 구매 ?�당??
   SUPPLIER // 공급??
   ADMIN // 관리자
 }
 
-// 조직 ????�� (?�크?�페?�스 ??��)
+// 조직 ????�� (?�크?�페?�스 ??��)
 enum OrganizationRole {
-  VIEWER // 조회�?가??
-  REQUESTER // 견적 ?�청 가??
-  APPROVER // 견적 ?�인 가??
+  VIEWER // 조회�?가??
+  REQUESTER // 견적 ?�청 가??
+  APPROVER // 견적 ?�인 가??
   ADMIN // 조직 관리자
 }
 
-// 구독 ?�랜 ?�??
+// 구독 ?�랜 ?�??
 enum SubscriptionPlan {
   FREE // 무료/Beta
-  TEAM // ?� ?�랜
-  ORGANIZATION // 조직/Enterprise ?�랜
+  TEAM // ?� ?�랜
+  ORGANIZATION // 조직/Enterprise ?�랜
 }
 
-// 조직/?�크?�페?�스
+// 조직/?�크?�페?�스
 model Organization {
   id                String           @id @default(cuid())
   name              String
   description       String?          @db.Text
-  plan              SubscriptionPlan @default(FREE) // 구독 ?�랜
-  planExpiresAt     DateTime? // ?�랜 만료??
-  maxMembers        Int? // 최�? 멤버 ??(?�랜�??�한)
-  maxQuotesPerMonth Int? // ?�별 최�? ?�목 리스????
-  maxSharedLinks    Int? // 최�? 공유 링크 ??
+  plan              SubscriptionPlan @default(FREE) // 구독 ?�랜
+  planExpiresAt     DateTime? // ?�랜 만료??
+  maxMembers        Int? // 최�? 멤버 ??(?�랜�??�한)
+  maxQuotesPerMonth Int? // ?�별 최�? ?�목 리스????
+  maxSharedLinks    Int? // 최�? 공유 링크 ??
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
-  // 관�?
+  // 관�?
   members         OrganizationMember[]
   quotes          Quote[]
   templates       QuoteTemplate[]
   inventories     ProductInventory[]
   purchaseRecords PurchaseRecord[]
   budgets         Budget[]
-  subscription    Subscription? // 구독 ?�보
+  subscription    Subscription? // 구독 ?�보
 
   @@index([name])
   @@index([plan])
@@ -68,7 +68,7 @@ model OrganizationMember {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  // 관�?
+  // 관�?
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -84,15 +84,15 @@ model User {
   name          String?
   image         String?
   role          UserRole  @default(RESEARCHER)
-  organization  String? // ?�거???�드 (조직�?직접 ?�력)
+  organization  String? // ?�거???�드 (조직�?직접 ?�력)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // NextAuth 관�?
+  // NextAuth 관�?
   accounts Account[]
   sessions Session[]
 
-  // 관�?
+  // 관�?
   quotes              Quote[]
   comparisons         Comparison[]
   favorites           Favorite[]
@@ -107,7 +107,7 @@ model User {
   @@index([role])
 }
 
-// NextAuth.js v5�??�한 모델
+// NextAuth.js v5�??�한 모델
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -146,38 +146,38 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ?�품 카테고리
+// ?�품 카테고리
 enum ProductCategory {
-  REAGENT // ?�약
+  REAGENT // ?�약
   TOOL // 기구
-  EQUIPMENT // ?�비
+  EQUIPMENT // ?�비
 }
 
-// ?�품
+// ?�품
 model Product {
   id                    String                       @id @default(cuid())
   name                  String
-  nameEn                String? // ?�문�?
+  nameEn                String? // ?�문�?
   description           String?                      @db.Text
   descriptionEn         String?                      @db.Text
-  descriptionTranslated String?                      @db.Text // 번역???�명 (GPT 번역)
+  descriptionTranslated String?                      @db.Text // 번역???�명 (GPT 번역)
   category              ProductCategory
   brand                 String?
   modelNumber           String?
   catalogNumber         String? // 카탈로그 번호
-  specifications        Json? // ?�펙 ?�보 (JSON)
+  specifications        Json? // ?�펙 ?�보 (JSON)
   datasheetUrl          String?
   imageUrl              String?
-  embedding             Unsupported("vector(1536)")? // 벡터 ?�베??(pgvector)
-  // 그룹?�어 친화???�드
+  embedding             Unsupported("vector(1536)")? // 벡터 ?�베??(pgvector)
+  // 그룹?�어 친화???�드
   grade                 String? // Grade (HPLC grade, GMP, EP/USP, cell culture tested ??
-  specification         String? // 규격/?�량 (?? 1mg, 500mL, 0.22um ??
-  regulatoryCompliance  String? // 규제/?�전 규격 (USP, EP, JP ??
+  specification         String? // 규격/?�량 (?? 1mg, 500mL, 0.22um ??
+  regulatoryCompliance  String? // 규제/?�전 규격 (USP, EP, JP ??
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   vendors         ProductVendor[]
   comparisons     ComparisonProduct[]
   favorites       Favorite[]
@@ -204,16 +204,16 @@ model Vendor {
   website           String?
   country           String?   @default("KR")
   currency          String?   @default("KRW")
-  // ?�익 모델 관???�드
-  isPremium         Boolean   @default(false) // ?�리미엄 ?�랜 ?��?
-  premiumExpiresAt  DateTime? // ?�리미엄 만료??
-  leadPricePerQuote Float?    @default(0) // 리드??과금 (견적 ?�청??
-  totalLeads        Int       @default(0) // �?리드 ??
-  totalRevenue      Float     @default(0) // �??�익
+  // ?�익 모델 관???�드
+  isPremium         Boolean   @default(false) // ?�리미엄 ?�랜 ?��?
+  premiumExpiresAt  DateTime? // ?�리미엄 만료??
+  leadPricePerQuote Float?    @default(0) // 리드??과금 (견적 ?�청??
+  totalLeads        Int       @default(0) // �?리드 ??
+  totalRevenue      Float     @default(0) // �??�익
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // 관�?
+  // 관�?
   products        ProductVendor[]
   quoteResponses  QuoteResponse[]
   billingRecords  VendorBillingRecord[]
@@ -223,26 +223,26 @@ model Vendor {
   @@index([isPremium])
 }
 
-// ?�품-벤더 관�?(가�? ?�고, ?�기 ?�보)
+// ?�품-벤더 관�?(가�? ?�고, ?�기 ?�보)
 model ProductVendor {
   id                String   @id @default(cuid())
   productId         String
   vendorId          String
   price             Float?
   currency          String   @default("KRW")
-  priceInKRW        Float? // KRW ?�산 가�?
-  stockStatus       String? // ?�고 ?�태
-  leadTime          Int? // ?�기??(???�위)
+  priceInKRW        Float? // KRW ?�산 가�?
+  stockStatus       String? // ?�고 ?�태
+  leadTime          Int? // ?�기??(???�위)
   minOrderQty       Int?
   url               String?
-  // ?�리미엄 ?�출 관??
-  isPremiumFeatured Boolean  @default(false) // ?�리미엄 추천 ?�역 ?�출
-  premiumPriority   Int      @default(0) // ?�리미엄 ?�선?�위 (?�을?�록 ?�단 ?�출)
+  // ?�리미엄 ?�출 관??
+  isPremiumFeatured Boolean  @default(false) // ?�리미엄 추천 ?�역 ?�출
+  premiumPriority   Int      @default(0) // ?�리미엄 ?�선?�위 (?�을?�록 ?�단 ?�출)
   lastUpdated       DateTime @default(now())
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   vendor  Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
@@ -253,30 +253,30 @@ model ProductVendor {
   @@index([isPremiumFeatured, premiumPriority])
 }
 
-// 비교 ?�이�?
+// 비교 ?�이�?
 model Comparison {
   id        String   @id @default(cuid())
   userId    String
-  name      String? // 비교 ?�트 ?�름
+  name      String? // 비교 ?�트 ?�름
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   products ComparisonProduct[]
 
   @@index([userId])
 }
 
-// 비교-?�품 관�?
+// 비교-?�품 관�?
 model ComparisonProduct {
   id           String   @id @default(cuid())
   comparisonId String
   productId    String
-  order        Int // ?�렬 ?�서
+  order        Int // ?�렬 ?�서
   createdAt    DateTime @default(now())
 
-  // 관�?
+  // 관�?
   comparison Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
   product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -284,54 +284,54 @@ model ComparisonProduct {
   @@index([comparisonId])
 }
 
-// 그룹?�어???�목 리스??(기존 Quote 모델 ?��??�되, 개념???�목 리스?�로 ?�장)
+// 그룹?�어???�목 리스??(기존 Quote 모델 ?��??�되, 개념???�목 리스?�로 ?�장)
 model Quote {
   id             String    @id @default(cuid())
   userId         String
-  organizationId String? // 조직 ?�위 리스?�인 경우
-  comparisonId   String? // 비교 ?�트 기반 리스?�인 경우
-  title          String // 리스???�목
-  description    String?   @db.Text // 리스???�명/비고
-  // 그룹?�어 ?�동 ?�보
-  templateId     String? // ?�용???�플�?ID
-  templateType   String? // ?�플�??�??(R&D, QC, ?�산 ?? - ?�위 ?�환??
-  exportedAt     DateTime? // ?�보?�기 ?�점
+  organizationId String? // 조직 ?�위 리스?�인 경우
+  comparisonId   String? // 비교 ?�트 기반 리스?�인 경우
+  title          String // 리스???�목
+  description    String?   @db.Text // 리스???�명/비고
+  // 그룹?�어 ?�동 ?�보
+  templateId     String? // ?�용???�플�?ID
+  templateType   String? // ?�플�??�??(R&D, QC, ?�산 ?? - ?�위 ?�환??
+  exportedAt     DateTime? // ?�보?�기 ?�점
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // 관�?
+  // 관�?
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  items           QuoteListItem[] // QuoteItem ?�??QuoteListItem ?�용
-  quoteItems      QuoteItem[] // ?�거???�환??
-  // 기존 ?�환?�을 ?�해 QuoteResponse ?��? (?�후 ?�거 가??
+  items           QuoteListItem[] // QuoteItem ?�??QuoteListItem ?�용
+  quoteItems      QuoteItem[] // ?�거???�환??
+  // 기존 ?�환?�을 ?�해 QuoteResponse ?��? (?�후 ?�거 가??
   responses       QuoteResponse[]
   sharedLists     SharedList[] // 공유 링크
-  purchaseRecords PurchaseRecord[] // ?�제 구매?�역
+  purchaseRecords PurchaseRecord[] // ?�제 구매?�역
 
   @@index([userId])
   @@index([organizationId])
   @@index([templateId])
 }
 
-// ?�목 리스???�플�?(조직�??�도�?컬럼 ?�트)
+// ?�목 리스???�플�?(조직�??�도�?컬럼 ?�트)
 model QuoteTemplate {
   id             String   @id @default(cuid())
-  name           String // ?�플�??�름 (?? "R&D 기본??, "QC ?�험??, "?�산 ?�?�구매형")
-  type           String // ?�플�??�??(R&D, QC, PRODUCTION, CUSTOM)
-  organizationId String? // 조직�??�플릿인 경우
-  userId         String? // ?�용?�별 커스?� ?�플릿인 경우
+  name           String // ?�플�??�름 (?? "R&D 기본??, "QC ?�험??, "?�산 ?�?�구매형")
+  type           String // ?�플�??�??(R&D, QC, PRODUCTION, CUSTOM)
+  organizationId String? // 조직�??�플릿인 경우
+  userId         String? // ?�용?�별 커스?� ?�플릿인 경우
   description    String?  @db.Text
-  // 컬럼 ?�정 (JSON)
-  columns        Json // ?�시??컬럼�??�서, ?�수/?�택 ?��? ??
+  // 컬럼 ?�정 (JSON)
+  columns        Json // ?�시??컬럼�??�서, ?�수/?�택 ?��? ??
   // ?? { columns: [{ key: "lineNumber", label: "Line No.", required: true, order: 1 }, ...] }
-  isDefault      Boolean  @default(false) // 기본 ?�플�??��?
-  isPublic       Boolean  @default(false) // 공개 ?�플�??��? (?�른 ?�용?�도 ?�용 가??
+  isDefault      Boolean  @default(false) // 기본 ?�플�??��?
+  isPublic       Boolean  @default(false) // 공개 ?�플�??��? (?�른 ?�용?�도 ?�용 가??
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   quotes       Quote[]
@@ -341,21 +341,21 @@ model QuoteTemplate {
   @@index([type])
 }
 
-// 그룹?�어???�목 리스????�� (기존 QuoteItem???�장)
+// 그룹?�어???�목 리스????�� (기존 QuoteItem???�장)
 model QuoteListItem {
   id         String   @id @default(cuid())
   quoteId    String
   productId  String
-  lineNumber Int // Line No. (그룹?�어??
+  lineNumber Int // Line No. (그룹?�어??
   quantity   Int      @default(1)
-  unitPrice  Float? // ?��?
+  unitPrice  Float? // ?��?
   currency   String?  @default("KRW")
-  lineTotal  Float? // 금액 (?��? × ?�량)
-  notes      String?  @db.Text // 비고 (?�도/?�체품 ?��?/기존 ?�품 코드 ??
+  lineTotal  Float? // 금액 (?��? × ?�량)
+  notes      String?  @db.Text // 비고 (?�도/?�체품 ?��?/기존 ?�품 코드 ??
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -363,7 +363,7 @@ model QuoteListItem {
   @@index([productId])
 }
 
-// 기존 QuoteItem 모델 (?�위 ?�환???��?)
+// 기존 QuoteItem 모델 (?�위 ?�환???��?)
 model QuoteItem {
   id        String   @id @default(cuid())
   quoteId   String
@@ -372,23 +372,23 @@ model QuoteItem {
   notes     String?  @db.Text
   createdAt DateTime @default(now())
 
-  // 관�?
+  // 관�?
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   @@index([quoteId])
   @@index([productId])
 }
 
-// QuoteStatus enum?� 기존 ?�환?�을 ?�해 ?��? (?�후 ?�거 가??
+// QuoteStatus enum?� 기존 ?�환?�을 ?�해 ?��? (?�후 ?�거 가??
 enum QuoteStatus {
-  PENDING // ?��?�?
-  SENT // 발송 ?�료
-  RESPONDED // ?�답 받음
-  COMPLETED // ?�료
+  PENDING // ?��?�?
+  SENT // 발송 ?�료
+  RESPONDED // ?�답 받음
+  COMPLETED // ?�료
   CANCELLED // 취소
 }
 
-// 견적 ?�답
+// 견적 ?�답
 model QuoteResponse {
   id         String    @id @default(cuid())
   quoteId    String
@@ -400,7 +400,7 @@ model QuoteResponse {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  // 관�?
+  // 관�?
   quote  Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
@@ -416,11 +416,11 @@ model VendorBillingRecord {
   amount      Float // 과금 금액
   quantity    Int? // 리드 ?? 리포??????
   description String?   @db.Text
-  periodStart DateTime? // 과금 기간 ?�작
+  periodStart DateTime? // 과금 기간 ?�작
   periodEnd   DateTime? // 과금 기간 종료
   createdAt   DateTime  @default(now())
 
-  // 관�?
+  // 관�?
   vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([vendorId])
@@ -434,7 +434,7 @@ model Favorite {
   productId String
   createdAt DateTime @default(now())
 
-  // 관�?
+  // 관�?
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -449,12 +449,12 @@ model SearchHistory {
   query            String
   intent           Json? // GPT 분류 결과
   category         ProductCategory?
-  filters          Json? // ?�용???�터
+  filters          Json? // ?�용???�터
   resultCount      Int?
   clickedProductId String?
   createdAt        DateTime         @default(now())
 
-  // 관�?
+  // 관�?
   user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [clickedProductId], references: [id], onDelete: SetNull)
 
@@ -462,17 +462,17 @@ model SearchHistory {
   @@index([createdAt])
 }
 
-// ?�품 추천 (AI 추천 결과 ?�??
+// ?�품 추천 (AI 추천 결과 ?�??
 model ProductRecommendation {
   id                   String   @id @default(cuid())
   productId            String
   recommendedProductId String
-  score                Float // ?�사???�수
+  score                Float // ?�사???�수
   reason               String?  @db.Text // 추천 근거
   reasonEn             String?  @db.Text
   createdAt            DateTime @default(now())
 
-  // 관�?
+  // 관�?
   product     Product                  @relation("ProductRecommendations", fields: [productId], references: [id], onDelete: Cascade)
   recommended Product                  @relation("RecommendedProducts", fields: [recommendedProductId], references: [id], onDelete: Cascade)
   feedbacks   RecommendationFeedback[]
@@ -482,23 +482,23 @@ model ProductRecommendation {
   @@index([score])
 }
 
-// 추천 ?�질 ?�드�?
+// 추천 ?�질 ?�드�?
 model RecommendationFeedback {
   id               String   @id @default(cuid())
   userId           String?
   recommendationId String
-  isHelpful        Boolean // ?��/?��
-  reason           String?  @db.Text // ?��??????�유/?�유 ?�음
+  isHelpful        Boolean // ?��/?��
+  reason           String?  @db.Text // ?��??????�유/?�유 ?�음
   createdAt        DateTime @default(now())
 
-  // 관�?
+  // 관�?
   recommendation ProductRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
 
   @@index([recommendationId])
   @@index([userId])
 }
 
-// ?�품 리뷰 �??�점
+// ?�품 리뷰 �??�점
 model Review {
   id        String   @id @default(cuid())
   userId    String
@@ -506,67 +506,67 @@ model Review {
   rating    Int // 1-5??
   title     String?
   comment   String?  @db.Text
-  pros      String?  @db.Text // ?�점
-  cons      String?  @db.Text // ?�점
-  verified  Boolean  @default(false) // 구매 ?�증 ?��?
+  pros      String?  @db.Text // ?�점
+  cons      String?  @db.Text // ?�점
+  verified  Boolean  @default(false) // 구매 ?�증 ?��?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId]) // ?�용?�당 ?�품???�나??리뷰�?
+  @@unique([userId, productId]) // ?�용?�당 ?�품???�나??리뷰�?
   @@index([productId])
   @@index([userId])
   @@index([rating])
   @@index([createdAt])
 }
 
-// ?�품 ?�고 관�?
+// ?�품 ?�고 관�?
 model ProductInventory {
   id                   String    @id @default(cuid())
-  userId               String? // ?�용?�별 ?�고
-  organizationId       String? // 조직�??�고
+  userId               String? // ?�용?�별 ?�고
+  organizationId       String? // 조직�??�고
   productId            String
-  currentQuantity      Float     @default(0) // ?�재 ?�고??
-  unit                 String?   @default("ea") // ���� (��: mL, g ��)
-  safetyStock          Float? // ?�전 ?�고 (???�량 ?�하�??�어지�??�주�?추천)
-  minOrderQty          Float? // 최소 주문 ?�량
-  location             String? // 보�? ?�치
-  expiryDate           DateTime? // ?�통기한
-  autoReorderEnabled   Boolean   @default(false) // ?�동 ?�주�??�성???��?
-  autoReorderThreshold Float? // ?�동 ?�주�??�계�?(기본�? safetyStock)
+  currentQuantity      Float     @default(0) // ?�재 ?�고??
+  unit                 String?   @default("ea") // ���� (��: mL, g ��)
+  safetyStock          Float? // ?�전 ?�고 (???�량 ?�하�??�어지�??�주�?추천)
+  minOrderQty          Float? // 최소 주문 ?�량
+  location             String? // 보�? ?�치
+  expiryDate           DateTime? // ?�통기한
+  autoReorderEnabled   Boolean   @default(false) // ?�동 ?�주�??�성???��?
+  autoReorderThreshold Float? // ?�동 ?�주�??�계�?(기본�? safetyStock)
   notes                String?   @db.Text
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  // 관�?
+  // 관�?
   user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   usageRecords InventoryUsage[]
 
-  @@unique([userId, productId]) // ?�용?�별 ?�품???�나???�고 기록
-  @@unique([organizationId, productId]) // 조직�??�품???�나???�고 기록
+  @@unique([userId, productId]) // ?�용?�별 ?�품???�나???�고 기록
+  @@unique([organizationId, productId]) // 조직�??�품???�나???�고 기록
   @@index([productId])
   @@index([userId])
   @@index([organizationId])
   @@index([currentQuantity])
 }
 
-// ?�고 ?�용??기록 (?�용??추정???�한 ?�이??
+// ?�고 ?�용??기록 (?�용??추정???�한 ?�이??
 model InventoryUsage {
   id          String   @id @default(cuid())
   inventoryId String
   userId      String
-  quantity    Float // ?�용??
-  unit        String? // ?�위
-  usageDate   DateTime @default(now()) // ?�용 ?�자
+  quantity    Float // ?�용??
+  unit        String? // ?�위
+  usageDate   DateTime @default(now()) // ?�용 ?�자
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
 
-  // 관�?
+  // 관�?
   inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -575,22 +575,22 @@ model InventoryUsage {
   @@index([usageDate])
 }
 
-// 공유 링크 (?�냅??방식)
+// 공유 링크 (?�냅??방식)
 model SharedList {
   id          String    @id @default(cuid())
-  quoteId     String // ?�본 QuoteList ID
-  publicId    String    @unique // 공유???�수 ?�큰
+  quoteId     String // ?�본 QuoteList ID
+  publicId    String    @unique // 공유???�수 ?�큰
   title       String
   description String?   @db.Text
-  snapshot    Json // ?�냅???�이??(?�목 리스???�체)
-  createdBy   String? // ?�성??ID (?�션)
+  snapshot    Json // ?�냅???�이??(?�목 리스???�체)
+  createdBy   String? // ?�성??ID (?�션)
   expiresAt   DateTime? // 만료??(P1)
-  isActive    Boolean   @default(true) // 비활?�화 ?��?
+  isActive    Boolean   @default(true) // 비활?�화 ?��?
   viewCount   Int       @default(0) // 조회 ??
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  // 관�?
+  // 관�?
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   @@index([publicId])
@@ -598,28 +598,28 @@ model SharedList {
   @@index([isActive])
 }
 
-// ?�제 구매?�역 (CSV Import??
+// ?�제 구매?�역 (CSV Import??
 model PurchaseRecord {
   id             String   @id @default(cuid())
-  quoteId        String? // BioInsight Lab?�서 ?�성??리스?��? ?�결
-  organizationId String? // 조직/?�
-  projectName    String? // ?�로?�트/과제�?
+  quoteId        String? // BioInsight Lab?�서 ?�성??리스?��? ?�결
+  organizationId String? // 조직/?�
+  projectName    String? // ?�로?�트/과제�?
   vendorId       String? // 벤더
-  productId      String? // ?�품
-  externalDocId  String? // ?��? 문서 번호 (그룹?�어/ERP)
+  productId      String? // ?�품
+  externalDocId  String? // ?��? 문서 번호 (그룹?�어/ERP)
   purchaseDate   DateTime // 구매??
   quantity       Int
   unitPrice      Float
   currency       String   @default("KRW")
-  totalAmount    Float // 총액 (?�금, 배송�??�함 ?��???notes??
+  totalAmount    Float // 총액 (?�금, 배송�??�함 ?��???notes??
   category       String? // 카테고리
-  notes          String?  @db.Text // 비고 (?�금 ?�함 ?��?, 배송�???
-  importedAt     DateTime @default(now()) // Import ?�점
-  importedBy     String? // Import???�용??
+  notes          String?  @db.Text // 비고 (?�금 ?�함 ?��?, 배송�???
+  importedAt     DateTime @default(now()) // Import ?�점
+  importedBy     String? // Import???�용??
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   quote        Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   vendor       Vendor?       @relation(fields: [vendorId], references: [id], onDelete: SetNull)
@@ -633,28 +633,28 @@ model PurchaseRecord {
   @@index([category])
 }
 
-// ?�산 관�?(P2)
+// ?�산 관�?(P2)
 model Budget {
   id             String   @id @default(cuid())
-  organizationId String? // 조직/?�
-  projectName    String? // ?�로?�트/과제�?
-  name           String // ?�산 ?�름
-  amount         Float // ?�산 금액
+  organizationId String? // 조직/?�
+  projectName    String? // ?�로?�트/과제�?
+  name           String // ?�산 ?�름
+  amount         Float // ?�산 금액
   currency       String   @default("KRW")
-  periodStart    DateTime // ?�산 기간 ?�작
-  periodEnd      DateTime // ?�산 기간 종료
+  periodStart    DateTime // ?�산 기간 ?�작
+  periodEnd      DateTime // ?�산 기간 종료
   description    String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // 관�?
+  // 관�?
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([periodStart, periodEnd])
 }
 
-// 구독 ?�보 (Team/Org ?�랜)
+// 구독 ?�보 (Team/Org ?�랜)
 model Subscription {
   id                 String           @id @default(cuid())
   organizationId     String           @unique
@@ -666,7 +666,7 @@ model Subscription {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
-  // 관�?
+  // 관�?
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])

@@ -70,4 +70,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 프리미엄 추천 제품 목록 조회 (검색 결과 정렬에 사용)
+// 프리미엄 추천 제품 목록 조회 (검색 결과 정렬에 사용)
+

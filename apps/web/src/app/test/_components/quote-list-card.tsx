@@ -37,4 +37,5 @@ export function QuoteListCard({ productCount = 0 }: QuoteListCardProps) {
       )}
     </TestCard>
   );
-}
+}
+

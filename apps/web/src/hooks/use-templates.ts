@@ -40,4 +40,5 @@ export function useTemplates(type?: TemplateType, organizationId?: string) {
   });
 }
 
-// 템플릿 조회
+// 템플릿 조회
+

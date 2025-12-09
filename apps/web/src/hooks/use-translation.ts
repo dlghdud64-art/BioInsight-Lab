@@ -32,4 +32,5 @@ export function useTranslation() {
 /**
  * 특정 경로의 번역 객체를 반환
  * @param path 번역 경로 (예: "common", "product")
- */
+ */
+

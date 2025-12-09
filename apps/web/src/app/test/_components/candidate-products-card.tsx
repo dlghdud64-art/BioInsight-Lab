@@ -83,4 +83,5 @@ export function CandidateProductsCard({
       )}
     </TestCard>
   );
-}
+}
+

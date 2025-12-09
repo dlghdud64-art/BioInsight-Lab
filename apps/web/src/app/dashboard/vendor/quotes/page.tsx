@@ -285,4 +285,5 @@ export default function VendorQuotesPage() {
       </div>
     </div>
   );
-}
+}
+

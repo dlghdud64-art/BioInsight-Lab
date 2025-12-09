@@ -47,4 +47,5 @@ export function PriceDisplay({
       )}
     </div>
   );
-}
+}
+

@@ -37,4 +37,5 @@ export async function getEmbedding(text: string): Promise<number[] | null> {
   }
 }
 
-// 여러 텍스트를 한 번에 임베딩으로 변환
+// 여러 텍스트를 한 번에 임베딩으로 변환
+

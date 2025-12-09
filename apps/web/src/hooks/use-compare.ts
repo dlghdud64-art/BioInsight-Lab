@@ -18,4 +18,5 @@ export function useCompareProducts() {
       return response.json();
     },
   });
-}
+}
+

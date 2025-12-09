@@ -434,4 +434,5 @@ function ProductsManagementTab() {
       </CardContent>
     </Card>
   );
-}
+}
+

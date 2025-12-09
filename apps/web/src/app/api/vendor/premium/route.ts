@@ -62,4 +62,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 프리미엄 상태 조회
+// 프리미엄 상태 조회
+

@@ -124,4 +124,5 @@ export function QuoteListPreviewCard() {
       </CardContent>
     </Card>
   );
-}
+}
+

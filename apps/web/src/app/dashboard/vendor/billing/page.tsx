@@ -232,4 +232,5 @@ export default function VendorBillingPage() {
       </div>
     </div>
   );
-}
+}
+

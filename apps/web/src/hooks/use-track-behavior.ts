@@ -27,4 +27,5 @@ export function useTrackBehavior() {
       return response.json();
     },
   });
-}
+}
+

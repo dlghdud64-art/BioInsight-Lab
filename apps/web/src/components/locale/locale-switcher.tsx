@@ -36,4 +36,5 @@ export function LocaleSwitcher() {
       </SelectContent>
     </Select>
   );
-}
+}
+
