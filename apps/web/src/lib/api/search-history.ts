@@ -35,7 +35,7 @@ export async function getRecentProducts(userId: string | null, limit: number = 2
 
   // 중복 제거 (같은 제품의 최신 기록만)
   const productMap = new Map();
-  history.forEach((item) => {
+  history.forEach((item: any) => {
     if (item.clickedProductId && item.product) {
       if (!productMap.has(item.clickedProductId)) {
         productMap.set(item.clickedProductId, item.product);
@@ -60,7 +60,7 @@ export async function recordProductView(userId: string | null, productId: string
         searchQuery: query || null,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to record product view:", error);
   }
 }
