@@ -283,10 +283,10 @@ export async function searchProducts(params: SearchProductsParams) {
               where: { id: vendor.id },
               data: { priceInKRW: vendor.priceInKRW },
             })
-            .catch((error) => {
+            .catch((error: any) => {
               console.error(`Failed to update priceInKRW for ${vendor.id}:`, error);
             });
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Failed to convert price for ${vendor.id}:`, error);
         }
       }
