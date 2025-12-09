@@ -41,7 +41,10 @@ export const TEMPLATE_TYPES = {
   STANDARD: "standard",
   DETAILED: "detailed",
   SIMPLE: "simple",
+  RND: "RND",
 } as const;
+
+export type TemplateType = typeof TEMPLATE_TYPES[keyof typeof TEMPLATE_TYPES] | string;
 
 // 기본 템플릿 컬럼
 export const DEFAULT_TEMPLATE_COLUMNS = [
