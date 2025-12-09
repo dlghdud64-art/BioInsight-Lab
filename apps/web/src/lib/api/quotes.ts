@@ -64,7 +64,7 @@ export async function createQuote(params: CreateQuoteParams) {
       description: message, // message를 description으로 사용
       items: {
         create: productIds.map((productId, index) => {
-          const product = products.find((p) => p.id === productId);
+          const product = products.find((p: any) => p.id === productId);
           const vendor = product?.vendors?.[0];
           const quantity = quantities[productId] || 1;
           const unitPrice = vendor?.priceInKRW || 0;
