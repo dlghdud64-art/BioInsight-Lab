@@ -11,7 +11,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes (성능 최적화)
-            cacheTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
             refetchOnWindowFocus: false,
             refetchOnMount: false, // 캐시된 데이터가 있으면 재요청하지 않음
             retry: 1, // 재시도 횟수 감소
