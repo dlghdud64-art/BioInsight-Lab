@@ -28,16 +28,17 @@ export async function searchProducts(params: SearchProductsParams) {
   } = params;
 
   // 캐시 키 생성
-  const cacheKey = createCacheKey("search-products", {
-    query,
-    category,
-    brand,
-    minPrice,
-    maxPrice,
+  const cacheKey = createCacheKey(
+    "search-products",
+    query || "",
+    category || "",
+    brand || "",
+    minPrice || 0,
+    maxPrice || 0,
     sortBy,
     page,
-    limit,
-  });
+    limit
+  );
 
   // 캐시 확인 (검색 결과는 5분 TTL로 연장)
   const cached = cache.get(cacheKey);
