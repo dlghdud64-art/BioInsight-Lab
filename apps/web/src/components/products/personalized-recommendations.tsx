@@ -147,9 +147,9 @@ export function PersonalizedRecommendations({
                         {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
                       </Badge>
                     )}
-                    {product.grade && (
+                    {(product as any).grade && (
                       <Badge variant="secondary" className="text-[10px]">
-                        {product.grade}
+                        {(product as any).grade}
                       </Badge>
                     )}
                     {product.specification && (
