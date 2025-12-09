@@ -10,22 +10,10 @@ const nextConfig = {
   //   domains: ['example.com'],
   // },
 
-  webpack(config, { dir, isServer }) {
-    // Next.js는 기본적으로 tsconfig.json의 paths를 읽지만
-    // Vercel 빌드 환경에서 명시적으로 설정
-    const projectRoot = path.resolve(dir || __dirname);
-    const srcPath = path.resolve(projectRoot, 'src');
-    
-    // 기존 alias 보존
-    const existingAlias = config.resolve?.alias || {};
-    
-    // @ alias 설정 (절대 경로)
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...existingAlias,
-      '@': srcPath,
-    };
-    
+  webpack(config) {
+    // Vercel 빌드 환경에서 tsconfig path를 자동 인식 못할 수 있음
+    // webpack alias 명시 필요
+    config.resolve.alias["@"] = path.resolve(__dirname);
     return config;
   }
 };
