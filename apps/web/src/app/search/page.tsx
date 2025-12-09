@@ -339,10 +339,10 @@ export default function SearchPage() {
                 <p className="text-sm text-muted-foreground text-center py-8">검??결과가 ?습?다</p>
               ) : (
                 products.map((product: any) => {
-                  const minPrice = product.vendors?.reduce<number | null>(
-                    (min, v: any) =>
+                  const minPrice = product.vendors?.reduce(
+                    (min: number | null, v: any) =>
                       v.priceInKRW && (!min || v.priceInKRW < min) ? v.priceInKRW : min,
-                    null
+                    null as number | null
                   );
                   const inCompare = hasProduct(product.id);
                   const inQuote = quoteProductIds.includes(product.id);
