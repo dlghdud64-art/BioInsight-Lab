@@ -90,7 +90,7 @@ export function QuoteListPreviewCard() {
                         </TableCell>
                         <TableCell className="text-[10px] p-1 text-right font-medium">
                           {item.lineTotal ? (
-                            <PriceDisplay amount={item.lineTotal} currency={vendor?.currency || "KRW"} />
+                            <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
                           ) : (
                             "-"
                           )}

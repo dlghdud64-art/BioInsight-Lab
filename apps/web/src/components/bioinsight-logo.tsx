@@ -93,9 +93,3 @@ export function BioInsightLogo({
     </div>
   );
 }
-
-
-type BioInsightLogoProps = {
-  className?: string;
-  showText?: boolean; // 아이콘만 쓰고 싶으면 false로
-};

@@ -204,7 +204,7 @@ export function QuotePanel() {
                           </TableCell>
                           <TableCell className="text-right text-xs whitespace-nowrap min-w-[100px]">
                             <PriceDisplay
-                              amount={item.unitPrice || 0}
+                              price={item.unitPrice || 0}
                               currency={item.currency || "KRW"}
                             />
                           </TableCell>
@@ -223,7 +223,7 @@ export function QuotePanel() {
                           </TableCell>
                           <TableCell className="text-right font-medium text-xs whitespace-nowrap min-w-[120px]">
                             <PriceDisplay
-                              amount={item.lineTotal || 0}
+                              price={item.lineTotal || 0}
                               currency={item.currency || "KRW"}
                             />
                           </TableCell>

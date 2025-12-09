@@ -125,7 +125,7 @@ export function SearchResultItem({
           <div className="text-right space-y-1">
             {unitPrice > 0 ? (
               <div className="text-sm font-semibold text-slate-900">
-                <PriceDisplay amount={unitPrice} currency={vendor?.currency || "KRW"} />
+                <PriceDisplay price={unitPrice} currency={vendor?.currency || "KRW"} />
               </div>
             ) : (
               <div className="text-xs text-slate-400">가격 문의</div>

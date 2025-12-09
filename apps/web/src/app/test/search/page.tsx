@@ -242,14 +242,14 @@ export default function SearchPage() {
                               <TableCell className="text-right">{item.quantity}</TableCell>
                               <TableCell className="text-right">
                                 {vendor?.priceInKRW ? (
-                                  <PriceDisplay amount={vendor.priceInKRW} currency={vendor.currency || "KRW"} />
+                                  <PriceDisplay price={vendor.priceInKRW} currency={vendor.currency || "KRW"} />
                                 ) : (
                                   "-"
                                 )}
                               </TableCell>
                               <TableCell className="text-right font-medium">
                                 {item.lineTotal ? (
-                                  <PriceDisplay amount={item.lineTotal} currency={vendor?.currency || "KRW"} />
+                                  <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
                                 ) : (
                                   "-"
                                 )}

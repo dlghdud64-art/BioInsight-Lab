@@ -188,7 +188,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
                         <TableCell className="text-right">
                           {item.unitPrice ? (
                             <PriceDisplay
-                              amount={item.unitPrice}
+                              price={item.unitPrice}
                               currency={item.currency || "KRW"}
                             />
                           ) : (
@@ -201,7 +201,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
                         <TableCell className="text-right font-medium">
                           {item.lineTotal ? (
                             <PriceDisplay
-                              amount={item.lineTotal}
+                              price={item.lineTotal}
                               currency={item.currency || "KRW"}
                             />
                           ) : (

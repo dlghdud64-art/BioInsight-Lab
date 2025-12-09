@@ -14,6 +14,7 @@ interface ReorderRecommendation {
     name: string;
     brand?: string;
     catalogNumber?: string;
+    category?: string;
     vendors?: Array<{
       id: string;
       vendor?: {

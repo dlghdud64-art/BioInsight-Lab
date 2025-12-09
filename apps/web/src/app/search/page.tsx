@@ -339,8 +339,8 @@ export default function SearchPage() {
                 <p className="text-sm text-muted-foreground text-center py-8">검??결과가 ?습?다</p>
               ) : (
                 products.map((product: any) => {
-                  const minPrice = product.vendors?.reduce(
-                    (min: number, v: any) =>
+                  const minPrice = product.vendors?.reduce<number | null>(
+                    (min, v: any) =>
                       v.priceInKRW && (!min || v.priceInKRW < min) ? v.priceInKRW : min,
                     null
                   );

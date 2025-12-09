@@ -69,13 +69,14 @@ export default function QuoteDetailPage() {
   }
 
   const quote = quoteData.quote;
+  const quoteStatus = quote.status as QuoteStatus;
   const statusIcon = {
     PENDING: <Clock className="h-4 w-4 text-yellow-500" />,
     SENT: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
     RESPONDED: <CheckCircle2 className="h-4 w-4 text-green-500" />,
     COMPLETED: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
     CANCELLED: <XCircle className="h-4 w-4 text-red-500" />,
-  }[quote.status];
+  }[quoteStatus];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,7 +103,7 @@ export default function QuoteDetailPage() {
                   className="flex items-center gap-1"
                 >
                   {statusIcon}
-                  {QUOTE_STATUS[quote.status]}
+                  {QUOTE_STATUS[quoteStatus]}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
