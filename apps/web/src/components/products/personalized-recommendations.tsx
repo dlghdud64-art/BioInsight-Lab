@@ -152,9 +152,9 @@ export function PersonalizedRecommendations({
                         {(product as any).grade}
                       </Badge>
                     )}
-                    {product.specification && (
+                    {(product as any).specification && (
                       <Badge variant="outline" className="text-[10px]">
-                        {product.specification}
+                        {(product as any).specification}
                       </Badge>
                     )}
                   </div>
@@ -197,12 +197,12 @@ export function PersonalizedRecommendations({
                 )}
 
                 {/* 성능 차이 하이라이트 (스펙 차이가 있는 경우) */}
-                {currentProduct && product.specification && currentProduct.specification && (
-                  product.specification !== currentProduct.specification && (
+                {currentProduct && (product as any).specification && (currentProduct as any).specification && (
+                  (product as any).specification !== (currentProduct as any).specification && (
                     <div className="flex items-center gap-2 text-xs">
                       <Zap className="h-3 w-3 text-amber-500" />
                       <span className="text-slate-600">
-                        규격 차이: {currentProduct.specification} → {product.specification}
+                        규격 차이: {(currentProduct as any).specification} → {(product as any).specification}
                       </span>
                     </div>
                   )
@@ -230,7 +230,7 @@ export function PersonalizedRecommendations({
                 >
                   상세 보기
                 </Button>
-                <RecommendationFeedbackButton recommendationId={rec.id} />
+                <RecommendationFeedbackButton recommendationId={(rec as any).id || ""} />
               </div>
             </div>
           );
