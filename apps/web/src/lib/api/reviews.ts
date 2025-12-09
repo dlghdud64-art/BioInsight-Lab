@@ -71,7 +71,7 @@ async function getRatingDistribution(productId: string) {
   });
 
   const result: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  distribution.forEach((item) => {
+  distribution.forEach((item: any) => {
     result[item.rating] = item._count.rating;
   });
 
