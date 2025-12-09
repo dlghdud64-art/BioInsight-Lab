@@ -59,7 +59,7 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
   const handleDelete = async (reviewId: string) => {
     if (!confirm("리뷰를 삭제하시겠습니까?")) return;
     try {
-      await deleteReview.mutateAsync(reviewId);
+      await deleteReview.mutateAsync({ reviewId, productId });
     } catch (error: any) {
       alert(error.message || "리뷰 삭제에 실패했습니다.");
     }
