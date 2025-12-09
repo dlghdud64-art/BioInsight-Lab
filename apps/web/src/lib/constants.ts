@@ -35,3 +35,23 @@ export const ORGANIZATION_ROLES = {
   ADMIN: "ADMIN",
   MEMBER: "MEMBER",
 } as const;
+
+// 템플릿 타입
+export const TEMPLATE_TYPES = {
+  STANDARD: "standard",
+  DETAILED: "detailed",
+  SIMPLE: "simple",
+} as const;
+
+// 기본 템플릿 컬럼
+export const DEFAULT_TEMPLATE_COLUMNS = [
+  "productName",
+  "vendorName",
+  "catalogNumber",
+  "specification",
+  "grade",
+  "unitPrice",
+  "currency",
+  "quantity",
+  "lineTotal",
+] as const;

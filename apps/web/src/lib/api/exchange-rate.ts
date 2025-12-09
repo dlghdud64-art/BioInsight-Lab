@@ -94,3 +94,16 @@ export function formatPrice(amount: number, currency: string = "KRW"): string {
   }
   return `${currency} ${amount.toLocaleString()}`;
 }
+
+// 통화 심볼 가져오기
+export function getCurrencySymbol(currency: string): string {
+  const symbols: Record<string, string> = {
+    KRW: "₩",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    JPY: "¥",
+    CNY: "¥",
+  };
+  return symbols[currency] || currency;
+}
