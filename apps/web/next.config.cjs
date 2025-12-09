@@ -24,11 +24,26 @@ const nextConfig = {
     const projectRoot = dir || __dirname;
     const srcPath = path.resolve(projectRoot, 'src');
     
-    // 기존 alias 유지하면서 @ 추가
+    // 디버깅을 위한 로그 (Vercel 빌드 로그에서 확인 가능)
+    if (process.env.VERCEL) {
+      console.log('Webpack alias config:', {
+        dir,
+        __dirname,
+        projectRoot,
+        srcPath,
+      });
+    }
+    
+    // 기존 alias 유지하면서 @ 추가 (절대 경로 사용)
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': srcPath,
     };
+    
+    // 모듈 해결 순서 확인
+    if (!config.resolve.modules) {
+      config.resolve.modules = ['node_modules'];
+    }
     
     return config;
   }
