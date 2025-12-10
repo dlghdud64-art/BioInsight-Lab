@@ -224,18 +224,19 @@ export default function SearchPage() {
                 </SheetHeader>
                 <div className="mt-4">
                   <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">No.</TableHead>
-                          <TableHead>제품명</TableHead>
-                          <TableHead className="text-right">수량</TableHead>
-                          <TableHead className="text-right">단가</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="w-10 text-center text-xs text-slate-400"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <div className="max-h-[60vh] overflow-y-auto border rounded-lg">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                          <TableRow>
+                            <TableHead className="w-12">No.</TableHead>
+                            <TableHead>제품명</TableHead>
+                            <TableHead className="text-right">수량</TableHead>
+                            <TableHead className="text-right">단가</TableHead>
+                            <TableHead className="text-right">금액</TableHead>
+                            <TableHead className="w-10 text-center text-xs text-slate-400"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                         {quoteItems.map((item, index) => {
                           const product = products.find((p) => p.id === item.productId);
                           const vendor = product?.vendors?.[0];
@@ -316,6 +317,7 @@ export default function SearchPage() {
                         })}
                       </TableBody>
                     </Table>
+                    </div>
                     <div className="flex items-center justify-between pt-4 border-t">
                       <span className="font-semibold text-slate-900">총액:</span>
                       <span className="font-bold text-lg text-slate-900">

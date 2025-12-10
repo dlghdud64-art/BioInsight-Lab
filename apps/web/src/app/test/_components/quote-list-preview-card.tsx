@@ -15,9 +15,9 @@ export function QuoteListPreviewCard() {
   const [editingQuantities, setEditingQuantities] = useState<Record<string, number>>({});
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-  const previewCount = 5;
-  const previewItems = quoteItems.slice(0, previewCount);
-  const remainingCount = quoteItems.length - previewCount;
+  // 전체 품목 표시 (스크롤로 확인 가능)
+  const previewItems = quoteItems;
+  const remainingCount = 0;
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -92,42 +92,43 @@ export function QuoteListPreviewCard() {
 
             {/* 미리보기 테이블 */}
             <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="h-8">
-                    <TableHead className="w-8 text-[10px] p-1">No.</TableHead>
-                    <TableHead className="text-[10px] p-1">제품명</TableHead>
-                    <TableHead className="w-12 text-[10px] p-1 text-right">수량</TableHead>
-                    <TableHead className="w-16 text-[10px] p-1 text-right">금액</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <div className="max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-white z-10">
+                    <TableRow className="h-9">
+                      <TableHead className="w-8 text-[10px] p-2">No.</TableHead>
+                      <TableHead className="text-[10px] p-2">제품명</TableHead>
+                      <TableHead className="w-20 text-[10px] p-2 text-right">수량</TableHead>
+                      <TableHead className="w-20 text-[10px] p-2 text-right">금액</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                   {previewItems.map((item, index) => {
                     const product = products.find((p) => p.id === item.productId);
                     const vendor = product?.vendors?.[0];
                     return (
-                      <TableRow key={item.id} className="h-8">
-                        <TableCell className="text-[10px] p-1">{index + 1}</TableCell>
-                        <TableCell className="text-[10px] p-1">
-                          <div className="truncate max-w-[120px]" title={product?.name || item.productName || "제품"}>
+                      <TableRow key={item.id} className="h-10">
+                        <TableCell className="text-[11px] p-2">{index + 1}</TableCell>
+                        <TableCell className="text-[11px] p-2">
+                          <div className="truncate max-w-[140px]" title={product?.name || item.productName || "제품"}>
                             {product?.name || item.productName || "제품"}
                           </div>
                           {product?.vendors?.[0]?.vendor?.name && (
-                            <div className="text-[9px] text-slate-500 truncate max-w-[120px]">
+                            <div className="text-[10px] text-slate-500 truncate max-w-[140px]">
                               {product.vendors[0].vendor.name}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="text-[10px] p-1 text-right">
+                        <TableCell className="text-[11px] p-2 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-5 w-5 p-0"
+                              className="h-6 w-6 p-0"
                               onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
                               disabled={(item.quantity || 1) <= 1}
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-3.5 w-3.5" />
                             </Button>
                             <Input
                               type="number"
@@ -135,20 +136,20 @@ export function QuoteListPreviewCard() {
                               value={editingQuantities[item.id] ?? item.quantity ?? 1}
                               onChange={(e) => handleQuantityInput(item.id, e.target.value)}
                               onBlur={() => handleQuantityBlur(item.id)}
-                              className="h-6 w-12 text-center text-[10px] p-0"
+                              className="h-7 w-14 text-center text-[11px] p-0"
                               onClick={(e) => e.stopPropagation()}
                             />
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-5 w-5 p-0"
+                              className="h-6 w-6 p-0"
                               onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-[10px] p-1 text-right font-medium">
+                        <TableCell className="text-[11px] p-2 text-right font-medium">
                           {item.lineTotal ? (
                             <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
                           ) : (
@@ -159,14 +160,15 @@ export function QuoteListPreviewCard() {
                     );
                   })}
                   {remainingCount > 0 && (
-                    <TableRow className="h-8">
-                      <TableCell colSpan={4} className="text-[10px] p-1 text-center text-slate-500">
+                    <TableRow className="h-9">
+                      <TableCell colSpan={4} className="text-[10px] p-2 text-center text-slate-500">
                         … 그 외 {remainingCount}개 품목
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+              </div>
             </div>
 
             {/* 하단 버튼 */}
