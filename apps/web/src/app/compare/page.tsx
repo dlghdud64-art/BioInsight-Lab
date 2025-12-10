@@ -63,6 +63,14 @@ export default function ComparePage() {
     });
     setSearchQuery("");
     setShowSearchResults(false);
+    
+    // 비교 목록 섹션으로 스크롤
+    setTimeout(() => {
+      const compareListSection = document.getElementById("compare-list-section");
+      if (compareListSection) {
+        compareListSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
   };
 
   const { data, isLoading } = useQuery({
@@ -296,151 +304,67 @@ export default function ComparePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* 제품 추가 검색 */}
-        <Card>
+        {/* 비교 제품 관리 리스트 - 위로 이동 */}
+        <Card id="compare-list-section">
           <CardHeader>
-            <CardTitle className="text-lg">제품 추가</CardTitle>
-            <CardDescription>
-              더 많은 제품을 검색하여 비교 목록에 추가하세요 ({productIds.length}/5)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="제품명, 벤더, 시약명 검색..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSearchResults(false);
-                  }}
-                  className="pl-10"
-                  disabled={productIds.length >= 5}
-                />
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">비교 중인 제품 ({productIds.length}/5)</CardTitle>
+                <CardDescription>
+                  비교할 제품을 추가하거나 제거할 수 있습니다
+                </CardDescription>
               </div>
-              <Button type="submit" disabled={!searchQuery.trim() || isSearching || productIds.length >= 5}>
-                {isSearching ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    검색 중...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    검색
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {/* 검색 결과 */}
-            {showSearchResults && productIds.length < 5 && (
-              <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-2">
-                {isSearching ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                    <p>검색 중...</p>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>검색 결과가 없습니다.</p>
-                  </div>
-                ) : (
-                  searchResults.map((product: any) => {
-                    const vendor = product.vendors?.[0];
-                    const isAlreadyAdded = hasProduct(product.id);
-                    return (
-                      <div
-                        key={product.id}
-                        className="flex items-center justify-between p-2 border border-slate-200 rounded hover:bg-slate-50"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm text-slate-900 truncate">
-                            {product.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            {vendor?.vendor?.name && (
-                              <span className="text-xs text-slate-500">
-                                {vendor.vendor.name}
-                              </span>
-                            )}
-                            {vendor?.priceInKRW && (
-                              <span className="text-xs font-medium text-slate-900">
-                                ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant={isAlreadyAdded ? "outline" : "default"}
-                          onClick={() => handleAddToCompare(product.id, product.name)}
-                          disabled={isAlreadyAdded}
-                          className="ml-2"
-                        >
-                          {isAlreadyAdded ? "추가됨" : <Plus className="h-3 w-3" />}
-                        </Button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {productIds.length >= 5 && (
-              <div className="text-center py-4 text-sm text-amber-600 bg-amber-50 rounded-lg">
-                최대 5개까지 비교할 수 있습니다. 제품을 제거한 후 추가해주세요.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 비교 제품 관리 리스트 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">비교 중인 제품 관리</CardTitle>
-            <CardDescription>
-              비교할 제품을 추가하거나 제거할 수 있습니다
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {products.map((product: any) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900 truncate">
-                      {product.name}
-                    </p>
-                    {product.brand && (
-                      <p className="text-xs text-slate-500 mt-1">
-                        {product.brand}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => removeProduct(product.id)}
-                    className="ml-4 text-xs"
+              {products.map((product: any) => {
+                const vendor = product.vendors?.[0];
+                return (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    <X className="h-3 w-3 mr-1" />
-                    제거
-                  </Button>
-                </div>
-              ))}
-              {products.length < 5 && (
-                <div className="pt-2 border-t border-slate-200">
-                  <Link href="/search">
-                    <Button variant="outline" size="sm" className="w-full text-xs">
-                      + 제품 추가하기
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-slate-900 truncate">
+                        {product.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {product.brand && (
+                          <span className="text-xs text-slate-500">
+                            {product.brand}
+                          </span>
+                        )}
+                        {vendor?.vendor?.name && (
+                          <>
+                            <span className="text-slate-400">·</span>
+                            <span className="text-xs text-slate-500">
+                              {vendor.vendor.name}
+                            </span>
+                          </>
+                        )}
+                        {vendor?.priceInKRW && (
+                          <>
+                            <span className="text-slate-400">·</span>
+                            <span className="text-xs font-medium text-slate-900">
+                              ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => removeProduct(product.id)}
+                      className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      제거
                     </Button>
-                  </Link>
-                </div>
-              )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
