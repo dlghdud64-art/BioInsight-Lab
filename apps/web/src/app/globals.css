@@ -4,12 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
-    "Helvetica Neue", sans-serif;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -108,12 +102,18 @@ html, body {
   * {
     border-color: hsl(var(--border));
   }
-  html, body {
+  html {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
-      "Helvetica Neue", sans-serif;
+      "Helvetica Neue", sans-serif !important;
   }
   body {
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
+      "Helvetica Neue", sans-serif !important;
     @apply bg-background text-foreground;
+  }
+  * {
+    font-family: inherit;
   }
 }

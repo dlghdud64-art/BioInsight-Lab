@@ -93,20 +93,14 @@ export async function GET(request: NextRequest) {
     */
 
     // 검색 기록 저장 (비동기, 에러가 나도 검색 결과는 반환)
-    if (params.query && session?.user?.id) {
+    if (query && session?.user?.id) {
       try {
         await db.searchHistory.create({
           data: {
             userId: session.user.id,
-            query: params.query,
-            category: params.category || null,
-            filters: params.brand || params.minPrice || params.maxPrice
-              ? JSON.parse(JSON.stringify({
-                  brand: params.brand,
-                  minPrice: params.minPrice,
-                  maxPrice: params.maxPrice,
-                }))
-              : null,
+            query: query,
+            category: category || null,
+            filters: null, // 더미 데이터에서는 필터 없음
             // 타입 에러 수정: result가 products 속성을 가지는지 확인
             resultCount: (result as any).products?.length || 0,
           },
