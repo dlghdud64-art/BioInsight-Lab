@@ -73,7 +73,7 @@ export default function ComparePage() {
     }, 100);
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["compare", productIds],
     queryFn: async () => {
       if (productIds.length === 0) return { products: [] };
@@ -82,10 +82,14 @@ export default function ComparePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds }),
       });
-      if (!response.ok) throw new Error("Failed to fetch products");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch products");
+      }
       return response.json();
     },
     enabled: productIds.length > 0,
+    retry: 1,
   });
 
   const products = data?.products || [];
@@ -317,55 +321,137 @@ export default function ComparePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {products.map((product: any) => {
-                const vendor = product.vendors?.[0];
-                return (
+            {isLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-slate-400" />
+                <p className="text-sm text-muted-foreground">제품 정보를 불러오는 중...</p>
+              </div>
+            ) : error ? (
+              <div className="space-y-2">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 mb-2">
+                    제품 정보를 불러오는 중 오류가 발생했습니다.
+                  </p>
+                  <p className="text-xs text-amber-600">
+                    제품 ID: {productIds.join(", ")}
+                  </p>
+                </div>
+                {/* 제품 ID만이라도 표시 */}
+                {productIds.map((id: string) => (
                   <div
-                    key={product.id}
-                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    key={id}
+                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-slate-900 truncate">
-                        {product.name}
+                        제품 ID: {id}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {product.brand && (
-                          <span className="text-xs text-slate-500">
-                            {product.brand}
-                          </span>
-                        )}
-                        {vendor?.vendor?.name && (
-                          <>
-                            <span className="text-slate-400">·</span>
-                            <span className="text-xs text-slate-500">
-                              {vendor.vendor.name}
-                            </span>
-                          </>
-                        )}
-                        {vendor?.priceInKRW && (
-                          <>
-                            <span className="text-slate-400">·</span>
-                            <span className="text-xs font-medium text-slate-900">
-                              ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        정보를 불러오는 중...
+                      </p>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => removeProduct(product.id)}
+                      onClick={() => removeProduct(id)}
                       className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
                     </Button>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : products.length === 0 && productIds.length > 0 ? (
+              <div className="space-y-2">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <p className="text-sm text-slate-800 mb-2">
+                    제품 정보를 찾을 수 없습니다.
+                  </p>
+                  <p className="text-xs text-slate-600 mb-3">
+                    제품 ID: {productIds.join(", ")}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    제품이 데이터베이스에 없거나 삭제되었을 수 있습니다.
+                  </p>
+                </div>
+                {/* 제품 ID 목록 표시 */}
+                {productIds.map((id: string) => (
+                  <div
+                    key={id}
+                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-slate-900 truncate">
+                        제품 ID: {id}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        정보 없음
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => removeProduct(id)}
+                      className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      제거
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {products.map((product: any) => {
+                  const vendor = product.vendors?.[0];
+                  return (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-slate-900 truncate">
+                          {product.name || product.id}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {product.brand && (
+                            <span className="text-xs text-slate-500">
+                              {product.brand}
+                            </span>
+                          )}
+                          {vendor?.vendor?.name && (
+                            <>
+                              <span className="text-slate-400">·</span>
+                              <span className="text-xs text-slate-500">
+                                {vendor.vendor.name}
+                              </span>
+                            </>
+                          )}
+                          {vendor?.priceInKRW && (
+                            <>
+                              <span className="text-slate-400">·</span>
+                              <span className="text-xs font-medium text-slate-900">
+                                ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeProduct(product.id)}
+                        className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        제거
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -378,16 +378,28 @@ export async function getProductById(id: string) {
 
 // 여러 제품 ID로 조회
 export async function getProductsByIds(ids: string[]) {
-  return await db.product.findMany({
-    where: { id: { in: ids } },
-    include: {
-      vendors: {
-        include: {
-          vendor: true,
+  if (!isPrismaAvailable || !db) {
+    console.warn("⚠️ Prisma Client not available, returning empty array");
+    return [];
+  }
+
+  try {
+    const products = await db.product.findMany({
+      where: { id: { in: ids } },
+      include: {
+        vendors: {
+          include: {
+            vendor: true,
+          },
         },
       },
-    },
-  });
+    });
+    return products;
+  } catch (error) {
+    console.error("Error fetching products by IDs:", error);
+    // 에러 발생 시 빈 배열 반환
+    return [];
+  }
 }
 
 // 브랜드 목록 조회
