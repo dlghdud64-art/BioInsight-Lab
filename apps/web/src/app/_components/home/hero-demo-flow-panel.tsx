@@ -52,6 +52,9 @@ const SAMPLE_SEARCH_RESULTS = [
 const SAMPLE_QUOTE_ITEMS = [
   { no: 1, name: "Human IL-6 ELISA Kit", qty: 2, price: "₩900,000" },
   { no: 2, name: "PCR Master Mix", qty: 1, price: "₩150,000" },
+  { no: 3, name: "96 Well Plate", qty: 5, price: "₩375,000" },
+  { no: 4, name: "Trypsin-EDTA 0.25%", qty: 3, price: "₩54,000" },
+  { no: 5, name: "FBS Premium", qty: 1, price: "₩390,000" },
 ];
 
 export function HeroDemoFlowPanel() {
@@ -172,21 +175,32 @@ export function HeroDemoFlowPanel() {
             {/* 비교 테이블 헤더 */}
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 border-b border-slate-200 pb-2 flex-shrink-0">
               <GitCompare className="h-3 w-3" />
-              <span>제품 비교 (3개)</span>
+              <span>제품 비교 (5개)</span>
             </div>
             
             {/* 비교 항목 */}
             <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {["제품명", "벤더", "가격", "납기"].map((label, idx) => (
+              {[
+                { label: "제품명", values: ["Human IL-6 ELISA", "IL-6 Quantikine", "Human IL-6 ELISA", "IL-6 ELISA Kit", "IL-6 Detection"] },
+                { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam", "Thermo Fisher", "BD Biosciences"] },
+                { label: "가격", values: ["₩450k", "₩520k", "₩380k", "₩490k", "₩510k"] },
+                { label: "납기", values: ["7일", "5일", "10일", "7일", "6일"] },
+                { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요", "재고 있음", "재고 있음"] },
+                { label: "최소주문", values: ["1개", "1개", "2개", "1개", "1개"] },
+              ].map((row, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-12 text-slate-500 flex-shrink-0">{label}</span>
-                  <div className="flex-1 grid grid-cols-3 gap-1">
-                    {[1, 2, 3].map((col) => (
+                  <span className="w-16 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
+                  <div className="flex-1 grid grid-cols-5 gap-0.5">
+                    {row.values.map((value, colIdx) => (
                       <div
-                        key={col}
-                        className="rounded bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-600 truncate"
+                        key={colIdx}
+                        className={`rounded px-1.5 py-0.5 text-[10px] text-slate-600 truncate ${
+                          row.label === "가격" && colIdx === 2 ? "bg-green-50 text-green-700 font-semibold" :
+                          row.label === "납기" && colIdx === 1 ? "bg-blue-50 text-blue-700 font-semibold" :
+                          "bg-slate-50"
+                        }`}
                       >
-                        {label === "가격" ? `₩${(450 + col * 50)}k` : `항목 ${col}`}
+                        {value}
                       </div>
                     ))}
                   </div>
@@ -213,18 +227,24 @@ export function HeroDemoFlowPanel() {
             </div>
             
             {/* 테이블 행 */}
-            <div className="space-y-1 flex-1 overflow-y-auto min-h-0">
+            <div className="space-y-0.5 flex-1 overflow-y-auto min-h-0">
               {SAMPLE_QUOTE_ITEMS.map((item) => (
                 <div
                   key={item.no}
-                  className="grid grid-cols-12 gap-1 text-[10px] text-slate-700 py-1"
+                  className="grid grid-cols-12 gap-1 text-[10px] text-slate-700 py-1 border-b border-slate-50 last:border-0"
                 >
-                  <div className="col-span-1">{item.no}</div>
+                  <div className="col-span-1 font-medium">{item.no}</div>
                   <div className="col-span-5 truncate">{item.name}</div>
-                  <div className="col-span-2">{item.qty}</div>
-                  <div className="col-span-4 font-medium">{item.price}</div>
+                  <div className="col-span-2 text-center">{item.qty}</div>
+                  <div className="col-span-4 font-medium text-right">{item.price}</div>
                 </div>
               ))}
+            </div>
+            
+            {/* 합계 행 */}
+            <div className="grid grid-cols-12 gap-1 text-[10px] font-semibold text-slate-900 pt-1 border-t border-slate-200 flex-shrink-0">
+              <div className="col-span-8 text-right pr-2">합계</div>
+              <div className="col-span-4 text-right">₩1,869,000</div>
             </div>
             
             {/* 복사 버튼 */}
