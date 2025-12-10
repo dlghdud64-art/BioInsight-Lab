@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, GitCompare, FileText, FlaskConical, ShoppingCart } from "lucide-react";
 
 function scrollToId(id: string) {
   const element = document.getElementById(id);
@@ -55,13 +62,48 @@ export function MainHeader() {
           >
             요금 & 도입
           </button>
-          <Button
-            size="sm"
-            onClick={() => router.push("/test/search")}
-            className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            기능 체험
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                기능 체험
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href="/test/search" className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  <span>검색/AI 분석</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/compare" className="flex items-center gap-2">
+                  <GitCompare className="h-4 w-4" />
+                  <span>제품 비교</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/test/quote" className="flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>품목 리스트</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/protocol/bom" className="flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4" />
+                  <span>프로토콜 분석</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/search" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span>일반 검색</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <UserMenu />
         </div>
       </div>

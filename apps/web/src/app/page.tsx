@@ -4,6 +4,7 @@ import { MainFooter } from "./_components/main-footer";
 import { HeroSection } from "./_components/hero-section";
 import { KeyValueSection } from "./_components/key-value-section";
 import { FlowSection } from "./_components/flow-section";
+import { FeaturesShowcaseSection } from "./_components/features-showcase-section";
 import { PersonaSection } from "./_components/persona-section";
 import { AISection } from "./_components/ai-section";
 import { SecuritySection } from "./_components/security-section";
@@ -20,6 +21,7 @@ export default function HomePage() {
           <HeroSection />
           <KeyValueSection />
           <FlowSection />
+          <FeaturesShowcaseSection />
           <PersonaSection />
           <AISection />
           <SecuritySection />
