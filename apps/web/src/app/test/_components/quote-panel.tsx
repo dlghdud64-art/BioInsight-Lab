@@ -177,9 +177,9 @@ export function QuotePanel() {
                         <TableHead className="min-w-[100px] text-right text-xs whitespace-nowrap">단가</TableHead>
                         <TableHead className="min-w-[80px] text-right text-xs whitespace-nowrap">수량</TableHead>
                         <TableHead className="min-w-[120px] text-right text-xs whitespace-nowrap">금액</TableHead>
-                        <TableHead className="min-w-[100px] text-center text-xs whitespace-nowrap">비교</TableHead>
-                        <TableHead className="w-10 text-center text-xs text-slate-400"></TableHead>
-                        <TableHead className="w-12 text-xs"></TableHead>
+                          <TableHead className="min-w-[100px] text-center text-xs whitespace-nowrap">비교</TableHead>
+                          <TableHead className="w-12 text-center text-xs whitespace-nowrap">삭제</TableHead>
+                          <TableHead className="w-12 text-xs"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
