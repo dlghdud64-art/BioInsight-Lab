@@ -70,8 +70,20 @@ export default function SearchPage() {
                     </span>
                     <div className="flex items-center gap-1 ml-2 flex-wrap">
                       {compareIds.map((id) => {
-                        const product = products.find((p) => p.id === id);
-                        const displayName = product?.name || product?.brand || id.substring(0, 8);
+                        // products 배열에서 찾기
+                        let product = products.find((p) => p.id === id);
+                        // products에서 못 찾으면 quoteItems에서 찾기
+                        if (!product) {
+                          const quoteItem = quoteItems.find((item) => item.productId === id);
+                          if (quoteItem) {
+                            product = {
+                              id: quoteItem.productId,
+                              name: quoteItem.productName,
+                              brand: quoteItem.brand,
+                            };
+                          }
+                        }
+                        const displayName = product?.name || product?.brand || `제품 ${id}`;
                         return (
                           <Badge
                             key={id}

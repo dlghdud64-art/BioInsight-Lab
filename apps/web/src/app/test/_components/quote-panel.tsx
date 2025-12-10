@@ -512,6 +512,7 @@ export function QuoteRequestPanel() {
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryDateOption, setDeliveryDateOption] = useState<"asap" | "custom" | "">("");
   const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [deliveryLocationCustom, setDeliveryLocationCustom] = useState("");
   const [specialNotes, setSpecialNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -528,17 +529,22 @@ export function QuoteRequestPanel() {
     if (quoteItems.length > 0 && !title) {
       const productNames = quoteItems
         .map((item) => {
-          const product = products.find((p) => p.id === item.productId);
-          return product?.name || item.productName;
+          // products 배열에서 찾기
+          const product = products?.find((p) => p.id === item.productId);
+          // productName이 있으면 사용, 없으면 products에서 가져오기
+          return item.productName || product?.name || product?.brand || null;
         })
-        .filter(Boolean)
+        .filter((name): name is string => Boolean(name))
         .slice(0, 3); // 최대 3개만
       
       if (productNames.length > 0) {
         const suggestedTitle = productNames.length === 1
           ? `${productNames[0]} 견적 요청`
-          : `${productNames[0]} 외 ${productNames.length - 1}건 견적 요청`;
+          : `${productNames[0]} 외 ${quoteItems.length - 1}건 견적 요청`;
         setTitle(suggestedTitle);
+      } else {
+        // 제품명을 찾을 수 없으면 기본 제목 사용
+        setTitle(`품목 ${quoteItems.length}건 견적 요청`);
       }
     }
   }, [quoteItems, products, title]);
@@ -596,7 +602,7 @@ export function QuoteRequestPanel() {
             quoteItems.map((item) => [item.productId, item.notes || ""])
           ),
           deliveryDate: deliveryDate || undefined,
-          deliveryLocation: deliveryLocation || undefined,
+          deliveryLocation: deliveryLocation === "custom" ? deliveryLocationCustom : (deliveryLocation || undefined),
           specialNotes: specialNotes || undefined,
         }),
       });
@@ -697,7 +703,12 @@ export function QuoteRequestPanel() {
               </Label>
               <Select
                 value={deliveryLocation}
-                onValueChange={setDeliveryLocation}
+                onValueChange={(value) => {
+                  setDeliveryLocation(value);
+                  if (value !== "custom") {
+                    setDeliveryLocationCustom("");
+                  }
+                }}
               >
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="납품 장소 선택" />
@@ -714,8 +725,8 @@ export function QuoteRequestPanel() {
               {deliveryLocation === "custom" && (
                 <Input
                   id="delivery-location-custom"
-                  value={deliveryLocation}
-                  onChange={(e) => setDeliveryLocation(e.target.value)}
+                  value={deliveryLocationCustom}
+                  onChange={(e) => setDeliveryLocationCustom(e.target.value)}
                   placeholder="납품 장소를 입력하세요"
                   className="text-sm mt-2"
                 />
