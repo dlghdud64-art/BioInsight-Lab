@@ -3,16 +3,67 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
+import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ComparePage() {
-  const { productIds, removeProduct, clearProducts } = useCompareStore();
+  const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const { toast } = useToast();
+
+  // 제품 검색
+  const { data: searchData, isLoading: isSearching } = useQuery({
+    queryKey: ["product-search", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return { products: [] };
+      const response = await fetch(`/api/products/search?query=${encodeURIComponent(searchQuery)}&limit=10`);
+      if (!response.ok) throw new Error("Failed to search products");
+      return response.json();
+    },
+    enabled: searchQuery.trim().length > 0 && showSearchResults,
+  });
+
+  const searchResults = searchData?.products || [];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setShowSearchResults(true);
+  };
+
+  const handleAddToCompare = (productId: string, productName: string) => {
+    if (hasProduct(productId)) {
+      toast({
+        title: "이미 추가됨",
+        description: "이 제품은 이미 비교 목록에 있습니다.",
+        variant: "default",
+      });
+      return;
+    }
+    if (productIds.length >= 5) {
+      toast({
+        title: "최대 개수 초과",
+        description: "최대 5개까지 비교할 수 있습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    addProduct(productId);
+    toast({
+      title: "추가 완료",
+      description: `${productName}이(가) 비교 목록에 추가되었습니다.`,
+    });
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["compare", productIds],
@@ -97,16 +148,120 @@ export default function ComparePage() {
   if (productIds.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
           <h1 className="text-3xl font-bold mb-6">제품 비교</h1>
+          
+          {/* 검색 섹션 */}
           <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground py-8">
-                비교할 제품을 추가해주세요
-              </p>
-              <div className="text-center">
+            <CardHeader>
+              <CardTitle>제품 검색 및 추가</CardTitle>
+              <CardDescription>
+                비교할 제품을 검색하고 추가하세요 (최대 5개)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="제품명, 벤더, 시약명 검색... (예: PBS, FBS, Trypsin)"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchResults(false);
+                    }}
+                    className="pl-10"
+                  />
+                </div>
+                <Button type="submit" disabled={!searchQuery.trim() || isSearching}>
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      검색 중...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      검색
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {/* 검색 결과 */}
+              {showSearchResults && (
+                <div className="mt-4 space-y-2">
+                  {isSearching ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      <p>검색 중...</p>
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>검색 결과가 없습니다.</p>
+                      <p className="text-sm mt-2">다른 검색어를 시도해보세요.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      {searchResults.map((product: any) => {
+                        const vendor = product.vendors?.[0];
+                        const isAlreadyAdded = hasProduct(product.id);
+                        return (
+                          <div
+                            key={product.id}
+                            className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm text-slate-900 truncate">
+                                {product.name}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                {vendor?.vendor?.name && (
+                                  <span className="text-xs text-slate-500">
+                                    {vendor.vendor.name}
+                                  </span>
+                                )}
+                                {product.category && (
+                                  <span className="text-xs text-slate-500">
+                                    · {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
+                                  </span>
+                                )}
+                                {vendor?.priceInKRW && (
+                                  <span className="text-xs font-medium text-slate-900">
+                                    · ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant={isAlreadyAdded ? "outline" : "default"}
+                              onClick={() => handleAddToCompare(product.id, product.name)}
+                              disabled={isAlreadyAdded || productIds.length >= 5}
+                              className="ml-4"
+                            >
+                              {isAlreadyAdded ? (
+                                "추가됨"
+                              ) : (
+                                <>
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  추가
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-4 border-t">
                 <Link href="/search">
-                  <Button>제품 검색하기</Button>
+                  <Button variant="outline" className="w-full">
+                    전체 검색 페이지로 이동
+                  </Button>
                 </Link>
               </div>
             </CardContent>
@@ -141,6 +296,106 @@ export default function ComparePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* 제품 추가 검색 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">제품 추가</CardTitle>
+            <CardDescription>
+              더 많은 제품을 검색하여 비교 목록에 추가하세요 ({productIds.length}/5)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="제품명, 벤더, 시약명 검색..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(false);
+                  }}
+                  className="pl-10"
+                  disabled={productIds.length >= 5}
+                />
+              </div>
+              <Button type="submit" disabled={!searchQuery.trim() || isSearching || productIds.length >= 5}>
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    검색 중...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    검색
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* 검색 결과 */}
+            {showSearchResults && productIds.length < 5 && (
+              <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-2">
+                {isSearching ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p>검색 중...</p>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>검색 결과가 없습니다.</p>
+                  </div>
+                ) : (
+                  searchResults.map((product: any) => {
+                    const vendor = product.vendors?.[0];
+                    const isAlreadyAdded = hasProduct(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-center justify-between p-2 border border-slate-200 rounded hover:bg-slate-50"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-sm text-slate-900 truncate">
+                            {product.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            {vendor?.vendor?.name && (
+                              <span className="text-xs text-slate-500">
+                                {vendor.vendor.name}
+                              </span>
+                            )}
+                            {vendor?.priceInKRW && (
+                              <span className="text-xs font-medium text-slate-900">
+                                ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={isAlreadyAdded ? "outline" : "default"}
+                          onClick={() => handleAddToCompare(product.id, product.name)}
+                          disabled={isAlreadyAdded}
+                          className="ml-2"
+                        >
+                          {isAlreadyAdded ? "추가됨" : <Plus className="h-3 w-3" />}
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {productIds.length >= 5 && (
+              <div className="text-center py-4 text-sm text-amber-600 bg-amber-50 rounded-lg">
+                최대 5개까지 비교할 수 있습니다. 제품을 제거한 후 추가해주세요.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* 비교 제품 관리 리스트 */}
         <Card>
           <CardHeader>
