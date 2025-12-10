@@ -71,6 +71,7 @@ export default function SearchPage() {
                     <div className="flex items-center gap-1 ml-2 flex-wrap">
                       {compareIds.map((id) => {
                         const product = products.find((p) => p.id === id);
+                        const displayName = product?.name || product?.brand || id.substring(0, 8);
                         return (
                           <Badge
                             key={id}
@@ -81,8 +82,8 @@ export default function SearchPage() {
                               toggleCompare(id);
                             }}
                           >
-                            <span className="text-xs font-medium leading-snug whitespace-normal break-words">
-                              {product?.name || id.substring(0, 8)}
+                            <span className="text-xs font-medium leading-snug whitespace-normal break-words max-w-[120px] truncate" title={displayName}>
+                              {displayName}
                             </span>
                             <button
                               onClick={(e) => {

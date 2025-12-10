@@ -504,15 +504,69 @@ export function SharePanel() {
 }
 
 export function QuoteRequestPanel() {
-  const { quoteItems } = useTestFlow();
+  const { quoteItems, products } = useTestFlow();
   const { toast } = useToast();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryDateOption, setDeliveryDateOption] = useState<"asap" | "custom" | "">("");
   const [deliveryLocation, setDeliveryLocation] = useState("");
   const [specialNotes, setSpecialNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 기본 납품 장소 목록 (나중에 사용자 설정에서 가져올 수 있음)
+  const defaultLocations = [
+    "본관 1층 창고",
+    "연구동 3층 실험실",
+    "본관 2층 보관실",
+    "연구동 지하 창고",
+  ];
+
+  // 제목 자동 생성 (품목명 기반)
+  useEffect(() => {
+    if (quoteItems.length > 0 && !title) {
+      const productNames = quoteItems
+        .map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          return product?.name || item.productName;
+        })
+        .filter(Boolean)
+        .slice(0, 3); // 최대 3개만
+      
+      if (productNames.length > 0) {
+        const suggestedTitle = productNames.length === 1
+          ? `${productNames[0]} 견적 요청`
+          : `${productNames[0]} 외 ${productNames.length - 1}건 견적 요청`;
+        setTitle(suggestedTitle);
+      }
+    }
+  }, [quoteItems, products, title]);
+
+  // 메시지 자동 생성
+  useEffect(() => {
+    if (quoteItems.length > 0 && !message) {
+      const productCount = quoteItems.length;
+      const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+      const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+      setMessage(suggestedMessage);
+    }
+  }, [quoteItems, message]);
+
+  // 납기 희망일 옵션 변경 핸들러
+  const handleDeliveryDateOptionChange = (option: "asap" | "custom" | "") => {
+    setDeliveryDateOption(option);
+    if (option === "asap") {
+      // 최대한 빨리 = 오늘로부터 7일 후
+      const date = new Date();
+      date.setDate(date.getDate() + 7);
+      setDeliveryDate(date.toISOString().split("T")[0]);
+    } else if (option === "custom") {
+      setDeliveryDate("");
+    } else {
+      setDeliveryDate("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -613,26 +667,59 @@ export function QuoteRequestPanel() {
               <Label htmlFor="delivery-date" className="text-xs font-medium">
                 납기 희망일
               </Label>
-              <Input
-                id="delivery-date"
-                type="date"
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-                className="text-sm"
-              />
+              <Select
+                value={deliveryDateOption}
+                onValueChange={(value: "asap" | "custom" | "") => handleDeliveryDateOptionChange(value)}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asap">최대한 빨리 (1주일 이내)</SelectItem>
+                  <SelectItem value="custom">직접 입력</SelectItem>
+                  <SelectItem value="">선택 안함</SelectItem>
+                </SelectContent>
+              </Select>
+              {deliveryDateOption === "custom" && (
+                <Input
+                  id="delivery-date"
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  className="text-sm mt-2"
+                />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="delivery-location" className="text-xs font-medium">
                 납품 장소
               </Label>
-              <Input
-                id="delivery-location"
+              <Select
                 value={deliveryLocation}
-                onChange={(e) => setDeliveryLocation(e.target.value)}
-                placeholder="납품 장소"
-                className="text-sm"
-              />
+                onValueChange={setDeliveryLocation}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="납품 장소 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {defaultLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">직접 입력</SelectItem>
+                </SelectContent>
+              </Select>
+              {deliveryLocation === "custom" && (
+                <Input
+                  id="delivery-location-custom"
+                  value={deliveryLocation}
+                  onChange={(e) => setDeliveryLocation(e.target.value)}
+                  placeholder="납품 장소를 입력하세요"
+                  className="text-sm mt-2"
+                />
+              )}
             </div>
           </div>
 
