@@ -229,7 +229,7 @@ export function QuotePanel() {
                             />
                           </TableCell>
                           <TableCell className="text-center min-w-[100px]">
-                            <Link href="/compare">
+                            <Link href="/test/compare">
                               <Button variant="ghost" size="sm" className="h-7 text-xs">
                                 <GitCompare className="h-3 w-3 mr-1" />
                                 비교

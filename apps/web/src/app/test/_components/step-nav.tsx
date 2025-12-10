@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, FileText, FlaskConical } from "lucide-react";
+import { Search, GitCompare, FileText, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -15,11 +15,19 @@ const steps = [
     match: /^\/test\/search(\/.*)?$/,
   },
   {
+    id: "compare",
+    label: "제품 비교",
+    href: "/test/compare",
+    icon: GitCompare,
+    step: 2,
+    match: /^\/test\/compare(\/.*)?$/,
+  },
+  {
     id: "quote",
-    label: "품목/공유",
+    label: "품목 리스트",
     href: "/test/quote",
     icon: FileText,
-    step: 2,
+    step: 3,
     match: /^\/test\/quote(\/.*)?$/,
   },
   {
@@ -27,7 +35,7 @@ const steps = [
     label: "프로토콜 분석",
     href: "/protocol/bom",
     icon: FlaskConical,
-    step: 3,
+    step: 4,
     match: /^\/protocol\/bom(\/.*)?$/,
   },
 ];

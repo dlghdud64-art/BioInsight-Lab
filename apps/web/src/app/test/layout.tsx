@@ -16,7 +16,7 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
             </span>
             <h1 className="text-2xl font-bold text-slate-900">기능 테스트 플로우</h1>
             <p className="text-sm text-slate-600">
-              검색/AI 분석 → 품목 리스트 → 프로토콜 분석까지 실제 사용자 플로우를 단계별로 테스트합니다.
+              검색/AI 분석 → 제품 비교 → 품목 리스트 → 프로토콜 분석까지 실제 사용자 플로우를 단계별로 테스트합니다.
             </p>
           </header>
 

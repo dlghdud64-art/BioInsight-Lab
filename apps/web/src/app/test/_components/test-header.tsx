@@ -18,7 +18,7 @@ export function TestHeader() {
               데모 플로우
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl">
-              검색 → 비교 → 품목 리스트 → 그룹웨어 공유까지 전체 플로우를 단계별로 체험할 수 있는 페이지입니다.
+              검색/AI 분석 → 제품 비교 → 품목 리스트 → 그룹웨어 공유까지 전체 플로우를 단계별로 체험할 수 있는 페이지입니다.
             </p>
           </div>
         </div>

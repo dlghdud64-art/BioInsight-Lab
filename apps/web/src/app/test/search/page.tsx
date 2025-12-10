@@ -114,7 +114,7 @@ export default function SearchPage() {
                       })}
                     </div>
                   </div>
-                  <Link href="/compare">
+                  <Link href="/test/compare">
                     <Button size="sm" variant="default" className="text-xs bg-blue-600 hover:bg-blue-700">
                       비교 보기 →
                     </Button>
