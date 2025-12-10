@@ -37,8 +37,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export function QuotePanel() {
   const {
@@ -326,50 +327,412 @@ export function QuotePanel() {
   );
 }
 
-// 누락된 컴포넌트 추가
+// 공유 패널
 export function SharePanel() {
+  const {
+    quoteItems,
+    shareLink: providerShareLink,
+    isGeneratingShareLink,
+    generateShareLink,
+  } = useTestFlow();
+  const { toast } = useToast();
+  const [shareTitle, setShareTitle] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [localShareLink, setLocalShareLink] = useState<string | null>(providerShareLink || null);
+
+  // providerShareLink가 변경되면 localShareLink 업데이트
+  useEffect(() => {
+    if (providerShareLink) {
+      setLocalShareLink(providerShareLink);
+    }
+  }, [providerShareLink]);
+
+  const handleGenerateShareLink = async () => {
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "공유할 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await generateShareLink(shareTitle || "품목 리스트", 30);
+      setIsShareDialogOpen(false);
+      // generateShareLink가 성공하면 providerShareLink가 업데이트되므로
+      // 잠시 후 localShareLink도 업데이트
+      setTimeout(() => {
+        setLocalShareLink(providerShareLink);
+      }, 100);
+      toast({
+        title: "공유 링크 생성 완료",
+        description: "공유 링크가 생성되었습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "공유 링크 생성 실패",
+        description: error.message || "공유 링크를 생성할 수 없습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const linkToCopy = localShareLink || providerShareLink;
+    if (!linkToCopy) return;
+    try {
+      await navigator.clipboard.writeText(linkToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "복사 완료",
+        description: "공유 링크가 클립보드에 복사되었습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "복사 실패",
+        description: "링크를 복사할 수 없습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">공유</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          품목 리스트를 공유하세요
+          품목 리스트를 공유 링크로 공유하세요
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-xs text-slate-500">공유 기능은 준비 중입니다.</p>
+      <CardContent className="space-y-4">
+        {(localShareLink || providerShareLink) ? (
+          <div className="space-y-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <Label className="text-xs font-medium text-slate-700 mb-2 block">
+                공유 링크
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={localShareLink || providerShareLink || ""}
+                  readOnly
+                  className="flex-1 text-xs font-mono bg-white"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="h-8"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                이 링크를 공유하면 다른 사람이 품목 리스트를 볼 수 있습니다.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setLocalShareLink(null);
+                setShareTitle("");
+              }}
+              className="w-full text-xs"
+            >
+              새 링크 생성
+            </Button>
+          </div>
+        ) : (
+          <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                disabled={quoteItems.length === 0 || isGeneratingShareLink}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                {isGeneratingShareLink ? "생성 중..." : "공유 링크 생성"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>공유 링크 생성</DialogTitle>
+                <DialogDescription>
+                  품목 리스트를 공유할 수 있는 링크를 생성합니다.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="share-title">제목 (선택사항)</Label>
+                  <Input
+                    id="share-title"
+                    value={shareTitle}
+                    onChange={(e) => setShareTitle(e.target.value)}
+                    placeholder="품목 리스트"
+                  />
+                </div>
+                <div className="text-xs text-slate-500">
+                  공유 링크는 30일 후 자동으로 만료됩니다.
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsShareDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleGenerateShareLink}
+                  disabled={isGeneratingShareLink}
+                >
+                  생성
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export function QuoteRequestPanel() {
+  const { quoteItems } = useTestFlow();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [specialNotes, setSpecialNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "견적을 요청할 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title || "견적 요청",
+          message: message || "",
+          productIds: quoteItems.map((item) => item.productId),
+          quantities: Object.fromEntries(
+            quoteItems.map((item) => [item.productId, item.quantity])
+          ),
+          notes: Object.fromEntries(
+            quoteItems.map((item) => [item.productId, item.notes || ""])
+          ),
+          deliveryDate: deliveryDate || undefined,
+          deliveryLocation: deliveryLocation || undefined,
+          specialNotes: specialNotes || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "견적 요청에 실패했습니다.");
+      }
+
+      const quote = await response.json();
+      toast({
+        title: "견적 요청 완료",
+        description: "견적 요청이 성공적으로 전송되었습니다.",
+      });
+      
+      // 견적 상세 페이지로 이동
+      router.push(`/quotes/${quote.id}`);
+    } catch (error: any) {
+      toast({
+        title: "견적 요청 실패",
+        description: error.message || "견적 요청을 처리할 수 없습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">견적 요청</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          견적을 요청하세요
+          벤더에게 견적을 요청하세요
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-slate-500">견적 요청 기능은 준비 중입니다.</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="quote-title" className="text-xs font-medium">
+              제목 *
+            </Label>
+            <Input
+              id="quote-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="견적 요청 제목"
+              required
+              className="text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quote-message" className="text-xs font-medium">
+              메시지
+            </Label>
+            <Textarea
+              id="quote-message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="벤더에게 전달할 메시지"
+              className="text-sm min-h-[100px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="delivery-date" className="text-xs font-medium">
+                납기 희망일
+              </Label>
+              <Input
+                id="delivery-date"
+                type="date"
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="delivery-location" className="text-xs font-medium">
+                납품 장소
+              </Label>
+              <Input
+                id="delivery-location"
+                value={deliveryLocation}
+                onChange={(e) => setDeliveryLocation(e.target.value)}
+                placeholder="납품 장소"
+                className="text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="special-notes" className="text-xs font-medium">
+              특이사항
+            </Label>
+            <Textarea
+              id="special-notes"
+              value={specialNotes}
+              onChange={(e) => setSpecialNotes(e.target.value)}
+              placeholder="특이사항이나 추가 요청사항"
+              className="text-sm min-h-[80px]"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-slate-900 text-white hover:bg-slate-800"
+            disabled={isSubmitting || quoteItems.length === 0}
+          >
+            {isSubmitting ? "전송 중..." : "견적 요청하기"}
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
 }
 
 export function QuoteItemsSummaryPanel() {
+  const { quoteItems, products } = useTestFlow();
+  const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+
+  if (quoteItems.length === 0) {
+    return (
+      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
+          <CardDescription className="text-xs text-slate-500">
+            요청한 품목을 확인하세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-slate-500 text-center py-8">
+            품목이 없습니다.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          요청한 품목을 확인하세요
+          요청할 품목 {quoteItems.length}개
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-slate-500">품목 요약 기능은 준비 중입니다.</p>
+        <div className="space-y-3">
+          <div className="max-h-[400px] overflow-y-auto space-y-2">
+            {quoteItems.map((item, index) => {
+              const product = products.find((p) => p.id === item.productId);
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-start justify-between gap-2 p-2 rounded-lg border border-slate-100 bg-slate-50"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-slate-900 truncate">
+                      {index + 1}. {product?.name || item.productName || "제품"}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      수량: {item.quantity} ×{" "}
+                      <PriceDisplay
+                        price={item.unitPrice || 0}
+                        currency={item.currency || "KRW"}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-900 whitespace-nowrap">
+                    <PriceDisplay
+                      price={item.lineTotal || 0}
+                      currency={item.currency || "KRW"}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-900">총액</span>
+              <span className="text-lg font-bold text-slate-900">
+                ₩{totalAmount.toLocaleString("ko-KR")}
+              </span>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
