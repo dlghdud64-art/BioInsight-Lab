@@ -8,7 +8,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
-import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy } from "lucide-react";
+import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReviewSection } from "@/components/products/review-section";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
@@ -441,6 +441,55 @@ ${extractedInfo.summary || "N/A"}`;
                     </a>
                   </div>
                 )}
+
+                {/* 안전 · 규제 정보 */}
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield className="h-4 w-4 text-amber-600" />
+                    <h3 className="font-semibold text-sm">⚠ 안전 · 규제 정보</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled={!product.vendors?.[0]?.msdsUrl}
+                        onClick={() => {
+                          if (product.vendors?.[0]?.msdsUrl) {
+                            window.open(product.vendors[0].msdsUrl, "_blank");
+                          }
+                        }}
+                      >
+                        <FileText className="h-3 w-3 mr-1.5" />
+                        MSDS / SDS 보기
+                        {!product.vendors?.[0]?.msdsUrl && (
+                          <span className="ml-1.5 text-[10px] text-slate-400">(준비 중)</span>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled
+                        onClick={() => {
+                          // 향후 구현: 국내 규제 정보 페이지로 이동
+                          window.open("https://www.mfds.go.kr", "_blank");
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1.5" />
+                        국내 규제 정보 페이지
+                        <span className="ml-1.5 text-[10px] text-slate-400">(준비 중)</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-amber-800 leading-relaxed">
+                        사용 전, 취급·보관·폐기 정보를 꼭 확인하세요.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* 데이터시트 텍스트 붙여넣기 섹션 */}
                 <div className="pt-4 border-t">

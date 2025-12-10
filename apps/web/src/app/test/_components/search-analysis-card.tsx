@@ -49,11 +49,28 @@ export function SearchAnalysisCard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-slate-500">
-            검색어를 입력하고 '검색 실행'을 눌러 주세요.
-            <br />
-            GPT가 타깃/카테고리/실험 유형을 분석한 결과가 여기 표시됩니다.
-          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">
+              검색어를 분석해서 타깃/실험 유형/카테고리 등을 추출한 결과가 여기에 표시됩니다.
+            </p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+              <p className="text-xs font-medium text-slate-500 mb-2">예시:</p>
+              <div className="space-y-1.5 text-xs text-slate-600">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">·</span>
+                  <span>타깃: <strong className="text-slate-700">Human IL-6</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">·</span>
+                  <span>실험 유형: <strong className="text-slate-700">Sandwich ELISA</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">·</span>
+                  <span>카테고리: <strong className="text-slate-700">ELISA Kit</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );

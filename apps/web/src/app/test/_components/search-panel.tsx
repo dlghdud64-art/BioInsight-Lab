@@ -51,6 +51,23 @@ export function SearchPanel() {
                 }
               }}
             />
+            {/* 예제 검색어 칩 */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-[10px] text-slate-500">예제:</span>
+              {["Human IL-6 ELISA kit", "PCR Master Mix"].map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery(example);
+                    setTimeout(() => runSearch(), 100);
+                  }}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -114,7 +131,7 @@ export function SearchPanel() {
         </CardHeader>
         <CardContent className="space-y-4 text-xs">
           {/* 1) GPT 분석 옵션 */}
-          <div className="space-y-1">
+          <div className="space-y-1 pb-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
                 id="gpt-analysis"
@@ -129,7 +146,7 @@ export function SearchPanel() {
           </div>
 
           {/* 2) 단계 이동 버튼 */}
-          <div className="pt-2 border-t border-slate-200">
+          <div className="pt-4 border-t border-slate-200 mt-4">
             <Button
               variant="outline"
               size="sm"

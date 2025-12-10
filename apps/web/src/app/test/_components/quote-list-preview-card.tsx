@@ -1,7 +1,7 @@
 "use client";
 
 import { useTestFlow } from "./test-flow-provider";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,9 +15,6 @@ export function QuoteListPreviewCard() {
   const [editingQuantities, setEditingQuantities] = useState<Record<string, number>>({});
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-  // 전체 품목 표시 (스크롤로 확인 가능)
-  const previewItems = quoteItems;
-  const remainingCount = 0;
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -62,59 +59,48 @@ export function QuoteListPreviewCard() {
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        {quoteItems.length === 0 ? (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500 text-center py-4">
-              품목을 추가하면 여기에 표시됩니다.
-            </p>
-            <Link href="/test/quote">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                disabled
-              >
-                견적 보기 →
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* 상단 요약 */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600">
-                품목 리스트 ({quoteItems.length}개)
-              </span>
-              <span className="font-semibold text-slate-900">
-                합계 ₩{totalAmount.toLocaleString("ko-KR")}
-              </span>
-            </div>
-
-            {/* 미리보기 테이블 */}
-            <div className="border rounded-lg overflow-hidden">
-              <div className="max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-white z-10">
-                    <TableRow className="h-9">
-                      <TableHead className="w-8 text-[10px] p-2">No.</TableHead>
-                      <TableHead className="text-[10px] p-2">제품명</TableHead>
-                      <TableHead className="w-20 text-[10px] p-2 text-right">수량</TableHead>
-                      <TableHead className="w-20 text-[10px] p-2 text-right">금액</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                  {previewItems.map((item, index) => {
+        {/* 테이블 헤더는 항상 표시 */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="max-h-[400px] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10">
+                <TableRow className="h-9">
+                  <TableHead className="w-8 text-[10px] p-2">No.</TableHead>
+                  <TableHead className="text-[10px] p-2">제품명</TableHead>
+                  <TableHead className="w-24 text-[10px] p-2 text-right">수량</TableHead>
+                  <TableHead className="w-16 text-[10px] p-2 text-right">금액</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {quoteItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8">
+                      <div className="space-y-2">
+                        <p className="text-xs text-slate-500">
+                          제품을 검색 결과에서 선택하면 이곳에 품목이 추가됩니다.
+                        </p>
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
+                          <span>비교</span>
+                          <span>·</span>
+                          <span>품목 추가</span>
+                          <span>버튼을 클릭하세요</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  quoteItems.map((item, index) => {
                     const product = products.find((p) => p.id === item.productId);
                     const vendor = product?.vendors?.[0];
                     return (
                       <TableRow key={item.id} className="h-10">
                         <TableCell className="text-[11px] p-2">{index + 1}</TableCell>
                         <TableCell className="text-[11px] p-2">
-                          <div className="truncate max-w-[140px]" title={product?.name || item.productName || "제품"}>
+                          <div className="truncate max-w-[120px]" title={product?.name || item.productName || "제품"}>
                             {product?.name || item.productName || "제품"}
                           </div>
                           {product?.vendors?.[0]?.vendor?.name && (
-                            <div className="text-[10px] text-slate-500 truncate max-w-[140px]">
+                            <div className="text-[10px] text-slate-500 truncate max-w-[120px]">
                               {product.vendors[0].vendor.name}
                             </div>
                           )}
@@ -158,20 +144,24 @@ export function QuoteListPreviewCard() {
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                  {remainingCount > 0 && (
-                    <TableRow className="h-9">
-                      <TableCell colSpan={4} className="text-[10px] p-2 text-center text-slate-500">
-                        … 그 외 {remainingCount}개 품목
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              </div>
-            </div>
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
 
-            {/* 하단 버튼 */}
+        {/* 하단 요약 및 버튼 */}
+        {quoteItems.length > 0 && (
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-600">
+                품목 리스트 ({quoteItems.length}개)
+              </span>
+              <span className="font-semibold text-slate-900">
+                합계 ₩{totalAmount.toLocaleString("ko-KR")}
+              </span>
+            </div>
             <Link href="/test/quote">
               <Button
                 variant="default"
@@ -183,8 +173,22 @@ export function QuoteListPreviewCard() {
             </Link>
           </div>
         )}
+
+        {quoteItems.length === 0 && (
+          <div className="mt-3">
+            <Link href="/test/quote">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                disabled
+              >
+                견적 보기 →
+              </Button>
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
-
