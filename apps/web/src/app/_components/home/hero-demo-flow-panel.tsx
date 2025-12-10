@@ -175,37 +175,56 @@ export function HeroDemoFlowPanel() {
             {/* 비교 테이블 헤더 */}
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 border-b border-slate-200 pb-2 flex-shrink-0">
               <GitCompare className="h-3 w-3" />
-              <span>제품 비교 (5개)</span>
+              <span>제품 비교 (3개)</span>
             </div>
             
             {/* 비교 항목 */}
             <div className="space-y-1.5 flex-1 overflow-y-auto">
               {[
-                { label: "제품명", values: ["Human IL-6 ELISA", "IL-6 Quantikine", "Human IL-6 ELISA", "IL-6 ELISA Kit", "IL-6 Detection"] },
-                { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam", "Thermo Fisher", "BD Biosciences"] },
-                { label: "가격", values: ["₩450k", "₩520k", "₩380k", "₩490k", "₩510k"] },
-                { label: "납기", values: ["7일", "5일", "10일", "7일", "6일"] },
-                { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요", "재고 있음", "재고 있음"] },
-                { label: "최소주문", values: ["1개", "1개", "2개", "1개", "1개"] },
+                { label: "제품명", values: ["Human IL-6 ELISA Kit", "IL-6 Quantikine ELISA", "Human IL-6 ELISA"] },
+                { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam"] },
+                { label: "가격", values: ["₩450k", "₩520k", "₩380k"] },
+                { label: "납기", values: ["7일", "5일", "10일"] },
+                { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요"] },
               ].map((row, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-16 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
-                  <div className="flex-1 grid grid-cols-5 gap-0.5">
+                  <span className="w-14 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
+                  <div className="flex-1 grid grid-cols-3 gap-1">
                     {row.values.map((value, colIdx) => (
                       <div
                         key={colIdx}
-                        className={`rounded px-1.5 py-0.5 text-[10px] text-slate-600 truncate ${
+                        className={`rounded px-1.5 py-0.5 text-[10px] text-slate-600 ${
                           row.label === "가격" && colIdx === 2 ? "bg-green-50 text-green-700 font-semibold" :
                           row.label === "납기" && colIdx === 1 ? "bg-blue-50 text-blue-700 font-semibold" :
                           "bg-slate-50"
                         }`}
+                        title={value}
                       >
-                        {value}
+                        <span className="truncate block">{value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* 하단 추가 정보 */}
+            <div className="pt-2 border-t border-slate-200 flex-shrink-0 space-y-1.5">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-500">평균 가격</span>
+                <span className="font-semibold text-slate-700">₩450k</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-500">최저가</span>
+                <span className="font-semibold text-green-600">₩380k (Abcam)</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-500">최단 납기</span>
+                <span className="font-semibold text-blue-600">5일 (Bio-Techne)</span>
+              </div>
+              <button className="w-full mt-2 rounded-lg bg-slate-900 px-2 py-1.5 text-[10px] text-white hover:bg-slate-800">
+                품목 리스트로 이동 →
+              </button>
             </div>
           </div>
         )}
