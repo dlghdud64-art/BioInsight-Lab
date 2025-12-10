@@ -3,18 +3,51 @@
 import { useTestFlow } from "./test-flow-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriceDisplay } from "@/components/products/price-display";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Plus, Minus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export function QuoteListPreviewCard() {
-  const { quoteItems, products } = useTestFlow();
+  const { quoteItems, products, updateQuoteItem } = useTestFlow();
+  const [editingQuantities, setEditingQuantities] = useState<Record<string, number>>({});
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
   const previewCount = 5;
   const previewItems = quoteItems.slice(0, previewCount);
   const remainingCount = quoteItems.length - previewCount;
+
+  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    updateQuoteItem(itemId, { quantity: newQuantity });
+    setEditingQuantities((prev) => ({ ...prev, [itemId]: newQuantity }));
+  };
+
+  const handleQuantityInput = (itemId: string, value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num > 0) {
+      setEditingQuantities((prev) => ({ ...prev, [itemId]: num }));
+    }
+  };
+
+  const handleQuantityBlur = (itemId: string) => {
+    const quantity = editingQuantities[itemId];
+    if (quantity && quantity >= 1) {
+      handleQuantityChange(itemId, quantity);
+    } else {
+      // 원래 값으로 복원
+      const item = quoteItems.find((i) => i.id === itemId);
+      if (item) {
+        setEditingQuantities((prev) => {
+          const next = { ...prev };
+          delete next[itemId];
+          return next;
+        });
+      }
+    }
+  };
 
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -86,7 +119,34 @@ export function QuoteListPreviewCard() {
                           )}
                         </TableCell>
                         <TableCell className="text-[10px] p-1 text-right">
-                          {item.quantity}
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 p-0"
+                              onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
+                              disabled={(item.quantity || 1) <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={editingQuantities[item.id] ?? item.quantity ?? 1}
+                              onChange={(e) => handleQuantityInput(item.id, e.target.value)}
+                              onBlur={() => handleQuantityBlur(item.id)}
+                              className="h-6 w-12 text-center text-[10px] p-0"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 p-0"
+                              onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell className="text-[10px] p-1 text-right font-medium">
                           {item.lineTotal ? (

@@ -596,7 +596,7 @@ export function QuoteRequestPanel() {
           message: message || "",
           productIds: quoteItems.map((item) => item.productId),
           quantities: Object.fromEntries(
-            quoteItems.map((item) => [item.productId, item.quantity])
+            quoteItems.map((item) => [item.productId, item.quantity || 1])
           ),
           notes: Object.fromEntries(
             quoteItems.map((item) => [item.productId, item.notes || ""])

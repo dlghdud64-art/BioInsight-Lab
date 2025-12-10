@@ -4,11 +4,12 @@ import { SearchPanel } from "../_components/search-panel";
 import { useTestFlow } from "../_components/test-flow-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2 } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { QuoteListPreviewCard } from "../_components/quote-list-preview-card";
@@ -39,6 +40,7 @@ export default function SearchPage() {
     queryAnalysis,
     clearCompare,
     removeQuoteItem,
+    updateQuoteItem,
   } = useTestFlow();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -252,7 +254,38 @@ export default function SearchPage() {
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right">{item.quantity}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) })}
+                                    disabled={(item.quantity || 1) <= 1}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity || 1}
+                                    onChange={(e) => {
+                                      const qty = parseInt(e.target.value) || 1;
+                                      updateQuoteItem(item.id, { quantity: Math.max(1, qty) });
+                                    }}
+                                    className="h-7 w-14 text-center text-xs p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 })}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </TableCell>
                               <TableCell className="text-right">
                                 {vendor?.priceInKRW ? (
                                   <PriceDisplay price={vendor.priceInKRW} currency={vendor.currency || "KRW"} />
