@@ -1,3 +1,5 @@
+@import "pretendard/dist/web/static/pretendard.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -94,6 +96,12 @@
 
     --radius: 0.75rem;
   }
+}
+
+html, body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
+    "Helvetica Neue", sans-serif;
 }
 
 @layer base {
