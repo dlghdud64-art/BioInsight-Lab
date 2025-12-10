@@ -11,6 +11,8 @@ import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { MainLayout } from "../_components/main-layout";
+import { MainHeader } from "../_components/main-header";
 
 export default function ComparePage() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
@@ -159,9 +161,11 @@ export default function ComparePage() {
 
   if (productIds.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <h1 className="text-3xl font-bold mb-6">제품 비교</h1>
+      <MainLayout>
+        <MainHeader />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <h1 className="text-3xl font-bold mb-6">제품 비교</h1>
           
           {/* 검색 섹션 */}
           <Card>
@@ -278,8 +282,9 @@ export default function ComparePage() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
@@ -306,8 +311,10 @@ export default function ComparePage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <MainLayout>
+      <MainHeader />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
         {/* 비교 제품 관리 리스트 - 위로 이동 */}
         <Card id="compare-list-section">
           <CardHeader>
@@ -752,5 +759,6 @@ export default function ComparePage() {
         </Card>
       </div>
     </div>
+    </MainLayout>
   );
 }
