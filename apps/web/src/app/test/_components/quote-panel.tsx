@@ -125,41 +125,41 @@ export function QuotePanel() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          {quoteItems.length > 0 ? (
-            <div className="space-y-4">
-              {/* 선택 액션바 */}
-              {selectedQuoteIds.length > 0 && (
-                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  <span>선택된 {selectedQuoteIds.length}개 품목</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearSelectedQuotes}
-                      className="h-7 text-xs"
-                    >
-                      선택 해제
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={deleteSelectedQuotes}
-                      className="h-7 text-xs"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      선택 삭제
-                    </Button>
-                  </div>
+          <div className="space-y-4">
+            {/* 선택 액션바 */}
+            {selectedQuoteIds.length > 0 && quoteItems.length > 0 && (
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                <span>선택된 {selectedQuoteIds.length}개 품목</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelectedQuotes}
+                    className="h-7 text-xs"
+                  >
+                    선택 해제
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={deleteSelectedQuotes}
+                    className="h-7 text-xs"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    선택 삭제
+                  </Button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* 테이블 */}
-              <div className="overflow-x-auto -mx-4 px-4">
-                <div className="inline-block min-w-full align-middle">
-                  <Table className="min-w-[900px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12 text-xs">
+            {/* 테이블 - 항상 헤더 표시 */}
+            <div className="overflow-x-auto -mx-4 px-4">
+              <div className="inline-block min-w-full align-middle">
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 text-xs">
+                        {quoteItems.length > 0 && (
                           <Checkbox
                             checked={allSelected || someSelected}
                             onCheckedChange={(checked) => {
@@ -171,20 +171,22 @@ export function QuotePanel() {
                             }}
                             className={someSelected && !allSelected ? "opacity-50" : ""}
                           />
-                        </TableHead>
-                        <TableHead className="w-16 text-xs whitespace-nowrap">No.</TableHead>
-                        <TableHead className="min-w-[200px] text-xs whitespace-nowrap">제품명</TableHead>
-                        <TableHead className="min-w-[120px] text-xs whitespace-nowrap">벤더</TableHead>
-                        <TableHead className="min-w-[100px] text-right text-xs whitespace-nowrap">단가</TableHead>
-                        <TableHead className="min-w-[80px] text-right text-xs whitespace-nowrap">수량</TableHead>
-                        <TableHead className="min-w-[120px] text-right text-xs whitespace-nowrap">금액</TableHead>
-                          <TableHead className="min-w-[100px] text-center text-xs whitespace-nowrap">비교</TableHead>
-                          <TableHead className="w-12 text-center text-xs whitespace-nowrap">삭제</TableHead>
-                          <TableHead className="w-12 text-xs"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {quoteItems.map((item, index) => (
+                        )}
+                      </TableHead>
+                      <TableHead className="w-16 text-xs whitespace-nowrap">No.</TableHead>
+                      <TableHead className="min-w-[200px] text-xs whitespace-nowrap">제품명</TableHead>
+                      <TableHead className="min-w-[120px] text-xs whitespace-nowrap">벤더</TableHead>
+                      <TableHead className="min-w-[100px] text-right text-xs whitespace-nowrap">단가</TableHead>
+                      <TableHead className="min-w-[80px] text-right text-xs whitespace-nowrap">수량</TableHead>
+                      <TableHead className="min-w-[120px] text-right text-xs whitespace-nowrap">금액</TableHead>
+                      <TableHead className="min-w-[100px] text-center text-xs whitespace-nowrap">비교</TableHead>
+                      <TableHead className="w-12 text-center text-xs whitespace-nowrap">삭제</TableHead>
+                      <TableHead className="w-12 text-xs"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {quoteItems.length > 0 ? (
+                      quoteItems.map((item, index) => (
                         <TableRow key={item.id}>
                           <TableCell>
                             <Checkbox
@@ -266,13 +268,38 @@ export function QuotePanel() {
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      ))
+                    ) : (
+                      // 빈 상태 플레이스홀더 행
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-3">
+                            <ShoppingCart className="h-12 w-12 text-slate-300" />
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-slate-600">
+                                검색 결과에서 제품을 선택하여 품목을 추가하세요
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Step 1에서 제품을 검색하고 '품목에 추가'를 눌러 리스트를 만들어 보세요.
+                              </p>
+                            </div>
+                            <Link href="/test/search">
+                              <Button variant="outline" size="sm" className="text-xs mt-2">
+                                <Plus className="h-3 w-3 mr-1" />
+                                검색으로 이동
+                              </Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
+            </div>
 
-              {/* 총합 */}
+            {/* 총합 - 품목이 있을 때만 표시 */}
+            {quoteItems.length > 0 && (
               <div className="flex justify-end pt-2 border-t">
                 <div className="text-right">
                   <div className="text-xs text-slate-500">총합</div>
@@ -281,8 +308,10 @@ export function QuotePanel() {
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* 견적 요청 버튼 */}
+            {/* 견적 요청 버튼 - 품목이 있을 때만 표시 */}
+            {quoteItems.length > 0 && (
               <div className="flex justify-end pt-2">
                 <Link href="/test/quote/request">
                   <Button className="bg-slate-900 text-white hover:bg-slate-800 text-xs h-8">
@@ -291,15 +320,8 @@ export function QuotePanel() {
                   </Button>
                 </Link>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 border border-dashed border-slate-300 rounded-lg">
-              <p className="text-sm text-slate-600 mb-2">아직 추가된 품목이 없습니다.</p>
-              <p className="text-xs text-slate-500">
-                Step 1에서 제품을 검색하고 '품목에 추가'를 눌러 리스트를 만들어 보세요.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 
