@@ -543,6 +543,7 @@ export function SharePanel() {
   const [copied, setCopied] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [localShareLink, setLocalShareLink] = useState<string | null>(providerShareLink || null);
+  const [shareLinkInfo, setShareLinkInfo] = useState<{ publicId: string; expiresAt?: string; isActive: boolean } | null>(null);
 
   // providerShareLink가 변경되면 localShareLink 업데이트
   useEffect(() => {

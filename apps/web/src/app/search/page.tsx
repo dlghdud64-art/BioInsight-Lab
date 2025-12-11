@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchResultList from "./SearchResultList";
 import { SearchInput } from "@/components/SearchInput";
@@ -7,10 +8,37 @@ import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { Search } from "lucide-react";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
 
+  return (
+    <>
+      {q && (
+        <>
+          <h2 className="text-lg font-semibold mb-4">검색 결과</h2>
+          <SearchResultList query={q} />
+        </>
+      )}
+      {!q && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="mb-2">검색어를 입력하세요.</p>
+          <p className="text-sm">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+function SearchInputWrapper() {
+  return (
+    <Suspense fallback={<div className="h-10 w-full bg-slate-100 rounded-md animate-pulse" />}>
+      <SearchInput />
+    </Suspense>
+  );
+}
+
+export default function SearchPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
@@ -24,21 +52,12 @@ export default function SearchPage() {
           />
           
           <div className="mb-6">
-            <SearchInput />
+            <SearchInputWrapper />
           </div>
           
-          {q && (
-            <>
-              <h2 className="text-lg font-semibold mb-4">검색 결과</h2>
-              <SearchResultList query={q} />
-            </>
-          )}
-          {!q && (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="mb-2">검색어를 입력하세요.</p>
-              <p className="text-sm">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
-            </div>
-          )}
+          <Suspense fallback={<div className="text-center py-12">로딩 중...</div>}>
+            <SearchContent />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriceDisplay } from "@/components/products/price-display";
 import { useState, useMemo, useEffect } from "react";
@@ -66,7 +66,7 @@ export default function TestComparePage() {
   useEffect(() => {
     if (allProducts.length > 0) {
       // 제품이 변경되면 순서를 초기화
-      const newOrder = allProducts.map((_, index) => index);
+      const newOrder = allProducts.map((_item: any, index: number) => index);
       setProductOrder(newOrder);
     } else {
       setProductOrder([]);
@@ -91,17 +91,17 @@ export default function TestComparePage() {
 
     // 카테고리 필터
     if (filterCategory !== "all") {
-      filtered = filtered.filter((p) => p.category === filterCategory);
+      filtered = filtered.filter((p: any) => p.category === filterCategory);
     }
 
     // 브랜드 필터
     if (filterBrand !== "all") {
-      filtered = filtered.filter((p) => p.brand === filterBrand);
+      filtered = filtered.filter((p: any) => p.brand === filterBrand);
     }
 
     // 벤더 필터
     if (filterVendor !== "all") {
-      filtered = filtered.filter((p) => 
+      filtered = filtered.filter((p: any) => 
         p.vendors?.some((v: any) => v.vendor?.name === filterVendor)
       );
     }
@@ -148,7 +148,7 @@ export default function TestComparePage() {
   // 브랜드 목록 추출
   const brands = useMemo(() => {
     const brandSet = new Set<string>();
-    allProducts.forEach((p) => {
+    allProducts.forEach((p: any) => {
       if (p.brand) brandSet.add(p.brand);
     });
     return Array.from(brandSet).sort();
@@ -157,7 +157,7 @@ export default function TestComparePage() {
   // 벤더 목록 추출
   const vendors = useMemo(() => {
     const vendorSet = new Set<string>();
-    allProducts.forEach((p) => {
+    allProducts.forEach((p: any) => {
       p.vendors?.forEach((v: any) => {
         if (v.vendor?.name) vendorSet.add(v.vendor.name);
       });
@@ -692,9 +692,13 @@ export default function TestComparePage() {
                     />
                     <Bar 
                       dataKey="leadTime" 
-                      fill={(entry: any) => entry.isAverage ? "#fbbf24" : "#82ca9d"}
+                      fill="#82ca9d"
                       name="납기일"
-                    />
+                    >
+                      {leadTimeChartData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.isAverage ? "#fbbf24" : "#82ca9d"} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
