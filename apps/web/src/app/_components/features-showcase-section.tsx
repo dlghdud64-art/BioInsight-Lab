@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, GitCompare, ShoppingCart, FlaskConical, FileText, BarChart3 } from "lucide-react";
+import { Search, GitCompare, ShoppingCart, FlaskConical, FileText, BarChart3, ClipboardCopy } from "lucide-react";
 
 export function FeaturesShowcaseSection() {
   const features = [
@@ -27,6 +27,13 @@ export function FeaturesShowcaseSection() {
       color: "bg-purple-600",
     },
     {
+      title: "그룹웨어에 바로 붙여넣기",
+      description: "결재 양식에 맞는 표/텍스트 형식으로 품목 리스트를 만들어 줍니다. 복사 한 번으로 회사 전자결재/구매 시스템에 연결할 수 있습니다.",
+      href: "/test/quote/request",
+      icon: ClipboardCopy,
+      color: "bg-amber-600",
+    },
+    {
       title: "프로토콜 분석",
       description: "실험 프로토콜 텍스트에서 필요한 시약을 자동으로 추출합니다.",
       href: "/protocol/bom",
@@ -50,7 +57,7 @@ export function FeaturesShowcaseSection() {
   ];
 
   return (
-    <section id="features-showcase" className="mt-20 space-y-6">
+    <section id="features-showcase" className="mt-12 space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-slate-900">모든 기능 체험하기</h2>
         <p className="text-sm text-slate-600">

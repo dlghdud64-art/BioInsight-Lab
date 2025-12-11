@@ -70,3 +70,76 @@ export async function GET(
 }
 
 // 공유 링크 업데이트 (비활성화, 만료일 변경 등)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ publicId: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { publicId } = await params;
+    const body = await request.json();
+    const { isActive, expiresAt } = body;
+
+    const sharedList = await db.sharedList.findUnique({
+      where: { publicId },
+      include: {
+        quote: {
+          select: {
+            userId: true,
+            organizationId: true,
+          },
+        },
+      },
+    });
+
+    if (!sharedList) {
+      return NextResponse.json(
+        { error: "Shared list not found" },
+        { status: 404 }
+      );
+    }
+
+    // 권한 확인 (생성자 또는 조직 멤버)
+    if (sharedList.createdBy !== session.user.id && sharedList.quote.userId !== session.user.id) {
+      const isOrgMember = await db.organizationMember.findFirst({
+        where: {
+          userId: session.user.id,
+          organizationId: sharedList.quote.organizationId || undefined,
+        },
+      });
+
+      if (!isOrgMember) {
+        return NextResponse.json(
+          { error: "Forbidden" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 업데이트
+    const updated = await db.sharedList.update({
+      where: { id: sharedList.id },
+      data: {
+        ...(isActive !== undefined && { isActive }),
+        ...(expiresAt !== undefined && { expiresAt: expiresAt ? new Date(expiresAt) : null }),
+      },
+    });
+
+    return NextResponse.json({
+      id: updated.id,
+      publicId: updated.publicId,
+      isActive: updated.isActive,
+      expiresAt: updated.expiresAt,
+    });
+  } catch (error) {
+    console.error("Error updating shared list:", error);
+    return NextResponse.json(
+      { error: "Failed to update shared list" },
+      { status: 500 }
+    );
+  }
+}

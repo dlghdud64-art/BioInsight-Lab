@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { QuoteListPreviewCard } from "../_components/quote-list-preview-card";
 import { SearchAnalysisCard } from "../_components/search-analysis-card";
+import { PageHeader } from "@/app/_components/page-header";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -51,8 +52,28 @@ export default function SearchPage() {
 
   return (
     <>
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="제품 검색"
+          description="제품명, 벤더, 카테고리를 입력하고 GPT 기반 검색으로 원하는 제품을 찾아보세요."
+          icon={Search}
+          iconColor="text-blue-600"
+          badge={
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200">
+              <Badge variant="outline" className="text-[10px] bg-blue-100 border-blue-300 text-blue-700 px-1.5 py-0">
+                기능 체험
+              </Badge>
+              <span className="text-[10px] text-blue-700 font-medium whitespace-nowrap">
+                지금은 Beta - 무료로 모든 기능을 체험해 보세요
+              </span>
+            </div>
+          }
+        />
+      </div>
+      
       {/* 3컬럼 레이아웃 */}
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)_260px]">
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)_260px]">
         {/* 좌측: 검색 패널 + 옵션 */}
         <div className="flex flex-col gap-4">
           <SearchPanel />
@@ -96,7 +117,7 @@ export default function SearchPage() {
                               toggleCompare(id);
                             }}
                           >
-                            <span className="text-xs font-medium leading-snug whitespace-normal break-words max-w-[120px] truncate" title={displayName}>
+                            <span className="text-xs font-medium leading-snug whitespace-nowrap max-w-[120px] truncate block" title={displayName}>
                               {displayName}
                             </span>
                             <button
@@ -345,6 +366,7 @@ export default function SearchPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* 삭제 확인 다이얼로그 */}
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>

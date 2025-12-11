@@ -113,10 +113,11 @@ export default function InventoryPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/inventory");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/inventory");
+  //   return null;
+  // }
 
   return (
     <div className="container mx-auto px-4 py-8">

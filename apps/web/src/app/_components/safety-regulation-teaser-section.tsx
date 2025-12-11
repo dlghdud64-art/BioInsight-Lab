@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function SafetyRegulationTeaserSection() {
   return (
-    <section className="mt-20 space-y-4">
+    <section className="mt-12 space-y-4">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
           안전 · 규제 정보도 함께

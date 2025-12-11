@@ -62,7 +62,7 @@ export function ProtocolAnalysisCard({ extractionResult }: ProtocolAnalysisCardP
         </div>
       ) : (
         <p className="text-xs text-muted-foreground text-center py-4">
-          프로토콜 텍스트를 입력하고 "필드 추출 테스트"를 클릭하세요.
+          프로토콜 텍스트를 입력하고 "필드 추출 실행"을 클릭하세요.
         </p>
       )}
     </TestCard>

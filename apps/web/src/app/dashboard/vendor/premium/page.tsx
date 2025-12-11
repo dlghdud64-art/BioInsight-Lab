@@ -53,10 +53,11 @@ export default function VendorPremiumPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/vendor/premium");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/vendor/premium");
+  //   return null;
+  // }
 
   const vendor = data?.vendor;
   const isPremium = vendor?.isPremium || false;

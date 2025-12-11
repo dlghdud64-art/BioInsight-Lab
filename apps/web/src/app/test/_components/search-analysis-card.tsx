@@ -22,7 +22,7 @@ export function SearchAnalysisCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
@@ -43,31 +43,51 @@ export function SearchAnalysisCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">
-              검색어를 분석해서 타깃/실험 유형/카테고리 등을 추출한 결과가 여기에 표시됩니다.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              검색어를 분석하여 <strong>타깃</strong>, <strong>실험 유형</strong>, <strong>카테고리</strong> 등을 자동으로 추출한 결과가 여기에 표시됩니다.
             </p>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-              <p className="text-xs font-medium text-slate-500 mb-2">예시:</p>
-              <div className="space-y-1.5 text-xs text-slate-600">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">·</span>
-                  <span>타깃: <strong className="text-slate-700">Human IL-6</strong></span>
+            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Brain className="h-3.5 w-3.5 text-blue-600" />
+                <p className="text-xs font-semibold text-blue-900">예시 분석 결과</p>
+              </div>
+              <div className="space-y-2.5 text-xs">
+                <div className="bg-white rounded border border-blue-100 p-2.5">
+                  <div className="text-[10px] font-medium text-slate-500 mb-1.5">검색어</div>
+                  <div className="text-xs font-medium text-slate-800">"Human IL-6 Sandwich ELISA kit"</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">·</span>
-                  <span>실험 유형: <strong className="text-slate-700">Sandwich ELISA</strong></span>
+                <div className="space-y-1.5 pt-1.5">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">타깃:</span>
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      Human IL-6
+                    </Badge>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">실험 유형:</span>
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      Sandwich ELISA
+                    </Badge>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">카테고리:</span>
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      ELISA Kit
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">·</span>
-                  <span>카테고리: <strong className="text-slate-700">ELISA Kit</strong></span>
-                </div>
+              </div>
+              <div className="pt-2 border-t border-blue-200">
+                <p className="text-[10px] text-blue-700 leading-relaxed">
+                  💡 검색어에 <strong>제품명</strong>, <strong>타깃</strong>, <strong>실험 유형</strong>을 함께 입력하면 GPT가 자동으로 분석합니다.
+                </p>
               </div>
             </div>
           </div>
@@ -81,7 +101,7 @@ export function SearchAnalysisCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
@@ -109,7 +129,7 @@ export function SearchAnalysisCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
@@ -144,41 +164,46 @@ export function SearchAnalysisCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {queryAnalysis.target && (
-              <Badge variant="outline" className="text-xs">
-                타깃: {queryAnalysis.target}
-              </Badge>
-            )}
-            {queryAnalysis.category && (
-              <Badge variant="outline" className="text-xs">
-                카테고리: {
-                  queryAnalysis.category === "REAGENT" ? "시약" :
-                  queryAnalysis.category === "TOOL" ? "기구" :
-                  queryAnalysis.category === "EQUIPMENT" ? "장비" :
-                  queryAnalysis.category
-                }
-              </Badge>
+              <div className="text-xs">
+                <span className="text-slate-500">타깃:</span>{" "}
+                <strong className="text-slate-700">{queryAnalysis.target}</strong>
+              </div>
             )}
             {queryAnalysis.targetExperiment && (
-              <Badge variant="outline" className="text-xs">
-                실험 유형: {queryAnalysis.targetExperiment}
-              </Badge>
+              <div className="text-xs">
+                <span className="text-slate-500">실험 유형:</span>{" "}
+                <strong className="text-slate-700">{queryAnalysis.targetExperiment}</strong>
+              </div>
+            )}
+            {queryAnalysis.category && (
+              <div className="text-xs">
+                <span className="text-slate-500">카테고리:</span>{" "}
+                <strong className="text-slate-700">
+                  {queryAnalysis.category === "REAGENT" ? "시약" :
+                  queryAnalysis.category === "TOOL" ? "기구" :
+                  queryAnalysis.category === "EQUIPMENT" ? "장비" :
+                  queryAnalysis.category}
+                </strong>
+              </div>
             )}
             {queryAnalysis.properties && queryAnalysis.properties.length > 0 && (
-              <>
-                {queryAnalysis.properties.map((prop: string, idx: number) => (
-                  <Badge key={idx} variant="secondary" className="text-xs">
-                    {prop}
-                  </Badge>
-                ))}
-              </>
+              <div className="pt-2 border-t border-slate-200">
+                <div className="flex flex-wrap gap-1.5">
+                  {queryAnalysis.properties.map((prop: string, idx: number) => (
+                    <Badge key={idx} variant="secondary" className="text-xs">
+                      {prop}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
           {queryAnalysis.purpose && (

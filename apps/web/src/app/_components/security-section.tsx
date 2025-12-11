@@ -3,7 +3,7 @@ import { Shield, Lock, Server } from "lucide-react";
 
 export function SecuritySection() {
   return (
-    <section id="security" className="mt-20 space-y-4">
+    <section id="security" className="mt-12 space-y-4">
       <h2 className="text-lg font-semibold tracking-tight text-slate-900">
         보안 & 프라이버시
       </h2>

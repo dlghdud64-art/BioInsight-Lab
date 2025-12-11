@@ -46,10 +46,11 @@ export default function QuoteDetailPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push(`/auth/signin?callbackUrl=/quotes/${quoteId}`);
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push(`/auth/signin?callbackUrl=/quotes/${quoteId}`);
+  //   return null;
+  // }
 
   if (!quoteData?.quote) {
     return (

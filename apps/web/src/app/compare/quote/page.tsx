@@ -51,12 +51,12 @@ export default function QuotePage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
 
-  // 로그인 확인
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent("/compare/quote")}`);
-    }
-  }, [status, router]);
+  // 로그인 체크 제거 - 로그인 없이도 견적 요청 가능
+  // useEffect(() => {
+  //   if (status === "unauthenticated") {
+  //     router.push(`/auth/signin?callbackUrl=${encodeURIComponent("/compare/quote")}`);
+  //   }
+  // }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,9 +184,10 @@ export default function QuotePage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    return null; // useEffect에서 리다이렉트 처리
-  }
+  // 로그인 체크 제거 - 로그인 없이도 접근 가능
+  // if (status === "unauthenticated") {
+  //   return null;
+  // }
 
   if (productIds.length === 0) {
     return (

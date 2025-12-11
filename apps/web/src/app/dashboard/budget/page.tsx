@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { MainHeader } from "@/app/_components/main-header";
+import { PageHeader } from "@/app/_components/page-header";
+import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 
 interface Budget {
   id: string;
@@ -128,32 +130,34 @@ export default function BudgetPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/budget");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/budget");
+  //   return null;
+  // }
 
   const budgets = data?.budgets || [];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">예산 관리</h1>
-            <p className="text-muted-foreground mt-1">
-              조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다.
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingBudget(null)}>
-                <Plus className="h-4 w-4 mr-2" />
-                예산 추가
-              </Button>
-            </DialogTrigger>
+      <div className="flex">
+        <DashboardSidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+        <PageHeader
+          title="예산 관리"
+          description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
+          icon={DollarSign}
+          actions={
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingBudget(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  예산 추가
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -178,7 +182,8 @@ export default function BudgetPage() {
               />
             </DialogContent>
           </Dialog>
-        </div>
+          }
+        />
 
         {isLoading ? (
           <Card>
@@ -216,6 +221,8 @@ export default function BudgetPage() {
             ))}
           </div>
         )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

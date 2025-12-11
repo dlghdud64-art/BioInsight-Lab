@@ -127,10 +127,11 @@ export default function SharedLinksPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/shared-links");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/shared-links");
+  //   return null;
+  // }
 
   const sharedLinks = data?.sharedLinks || [];
 

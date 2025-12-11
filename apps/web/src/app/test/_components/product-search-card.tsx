@@ -30,7 +30,7 @@ export function ProductSearchCard({
   return (
     <TestCard
       title="제품 검색"
-      subtitle="제품명, 벤더, 카테고리를 입력하고 GPT 기반 검색을 테스트합니다."
+      subtitle="제품명, 벤더, 카테고리를 입력하고 GPT 기반 검색을 체험합니다."
     >
       <Input
         value={searchQuery}

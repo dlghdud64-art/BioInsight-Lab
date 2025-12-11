@@ -81,10 +81,11 @@ export default function VendorQuotesPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/vendor/quotes");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/vendor/quotes");
+  //   return null;
+  // }
 
   return (
     <div className="container mx-auto px-4 py-8">

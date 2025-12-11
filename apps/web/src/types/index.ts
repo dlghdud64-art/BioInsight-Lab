@@ -21,6 +21,8 @@ export interface Product {
   specifications?: Record<string, unknown>;
   datasheetUrl?: string;
   imageUrl?: string;
+  msdsUrl?: string; // MSDS/SDS 문서 URL
+  safetyNote?: string; // 안전 취급 요약/주의사항
   vendors?: ProductVendor[];
   createdAt: Date;
   updatedAt: Date;

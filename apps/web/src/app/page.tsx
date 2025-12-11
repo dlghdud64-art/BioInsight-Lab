@@ -20,7 +20,7 @@ export default function HomePage() {
       <MainHeader />
       {/* 전체 레이아웃 컨테이너 */}
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6 lg:px-8">
-        <div className="space-y-24">
+        <div className="space-y-16">
           <HeroSection />
           <BetaBannerSection />
           <KeyValueSection />

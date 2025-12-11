@@ -3,13 +3,13 @@ import { Search, FileSpreadsheet, Copy, CheckCircle2, XCircle } from "lucide-rea
 
 export function ComparisonSection() {
   return (
-    <section className="mt-20 space-y-6">
+    <section className="mt-12 space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
           기존 방식 vs BioInsight Lab
         </h2>
         <p className="text-sm text-slate-600">
-          복잡하고 시간이 걸리던 견적 준비 과정을 간단하게
+          복잡하고 시간이 걸리던 검색·견적 준비 과정을 간단하게
         </p>
       </div>
 
@@ -34,7 +34,7 @@ export function ComparisonSection() {
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
                   시약몰/벤더 사이트 여러 곳 검색
                 </h4>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   각 벤더 사이트를 하나씩 방문해 제품을 찾아야 합니다.
                 </p>
               </div>
@@ -48,7 +48,7 @@ export function ComparisonSection() {
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
                   엑셀/노션으로 수동 비교표 작성
                 </h4>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   찾은 제품 정보를 수동으로 복사해 비교표를 만들어야 합니다.
                 </p>
               </div>
@@ -62,7 +62,7 @@ export function ComparisonSection() {
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
                   그룹웨어 결재 양식에 다시 표/텍스트 재작성
                 </h4>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   완성된 비교표를 그룹웨어 형식에 맞춰 다시 입력해야 합니다.
                 </p>
               </div>
@@ -90,7 +90,7 @@ export function ComparisonSection() {
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
                   여러 벤더 제품을 한 번에 검색·비교
                 </h4>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   하나의 검색창에서 여러 벤더의 제품을 동시에 검색하고 비교할 수 있습니다.
                 </p>
               </div>
@@ -104,7 +104,7 @@ export function ComparisonSection() {
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
                   품목 리스트 자동 구성
                 </h4>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   선택한 제품들이 자동으로 품목 리스트로 정리되어 수량과 비고만 입력하면 됩니다.
                 </p>
               </div>
@@ -116,10 +116,10 @@ export function ComparisonSection() {
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-slate-900 mb-1">
-                  그룹웨어에 붙여넣을 TSV/테이블 텍스트 자동 생성
+                  견적/구매 요청용 리스트 형식 자동 생성
                 </h4>
-                <p className="text-xs text-slate-600">
-                  완성된 품목 리스트를 클릭 한 번으로 복사해 그룹웨어에 바로 붙여넣을 수 있습니다.
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  완성된 품목 리스트를 바로 공유·첨부할 수 있는 형식으로 자동 생성합니다.
                 </p>
               </div>
             </div>

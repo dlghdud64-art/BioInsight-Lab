@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractReagentsFromProtocol } from "@/lib/ai/protocol-extractor";
 
+// pdf-parse는 Node.js 네이티브 모듈이므로 Node.js 런타임 필요
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -29,8 +32,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error processing protocol:", error);
+    const errorMessage = error?.message || "프로토콜 처리에 실패했습니다.";
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: error?.stack,
+      name: error?.name,
+    });
     return NextResponse.json(
-      { error: error.message || "프로토콜 처리에 실패했습니다." },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }

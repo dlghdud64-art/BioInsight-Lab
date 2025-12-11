@@ -8,7 +8,7 @@ import { FlaskConical, CheckCircle2, Factory, ShoppingCart } from "lucide-react"
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function PersonaSection() {
   return (
-    <section id="personas" className="mt-20 space-y-4">
+    <section id="personas" className="mt-12 space-y-4">
       <h2 className="text-lg font-semibold tracking-tight text-slate-900">
         누가 쓰나요?
       </h2>

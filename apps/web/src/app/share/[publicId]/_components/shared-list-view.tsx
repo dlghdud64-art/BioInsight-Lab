@@ -94,31 +94,51 @@ export function SharedListView({ publicId }: SharedListViewProps) {
         </div>
 
         {/* 비교 정보 요약 */}
-        {snapshot?.comparisonSummary && snapshot.comparisonSummary.hasAlternatives && (
+        {snapshot?.comparisonSummary && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>비교 정보 요약</CardTitle>
               <CardDescription>
-                대체 후보 및 다른 벤더 가격 정보가 포함된 품목이 있습니다.
+                {snapshot.comparisonSummary.hasAlternatives
+                  ? "대체 후보 및 다른 벤더 가격 정보가 포함된 품목이 있습니다."
+                  : "품목 리스트 요약 정보입니다."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">총 품목:</span>{" "}
-                  {snapshot.comparisonSummary.totalItems}개
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <div className="text-xs text-slate-500 mb-1">총 품목</div>
+                  <div className="text-lg font-semibold text-slate-900">
+                    {snapshot.comparisonSummary.totalItems}개
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">총 금액:</span>{" "}
-                  ₩{snapshot.comparisonSummary.totalAmount?.toLocaleString() || 0}
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <div className="text-xs text-slate-500 mb-1">총 금액</div>
+                  <div className="text-lg font-semibold text-slate-900">
+                    ₩{snapshot.comparisonSummary.totalAmount?.toLocaleString() || 0}
+                  </div>
                 </div>
                 {snapshot.comparisonSummary.vendors && snapshot.comparisonSummary.vendors.length > 0 && (
-                  <div>
-                    <span className="font-medium">포함된 벤더:</span>{" "}
-                    {snapshot.comparisonSummary.vendors.join(", ")}
+                  <div className="p-3 bg-slate-50 rounded-lg">
+                    <div className="text-xs text-slate-500 mb-1">포함된 벤더</div>
+                    <div className="text-sm font-medium text-slate-900">
+                      {snapshot.comparisonSummary.vendors.length}개
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1 truncate">
+                      {snapshot.comparisonSummary.vendors.join(", ")}
+                    </div>
                   </div>
                 )}
               </div>
+              {snapshot.comparisonSummary.hasAlternatives && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <div className="text-xs text-blue-800">
+                      💡 이 리스트에는 대체 후보 제품 및 다른 벤더 가격 정보가 포함되어 있습니다. 아래 "대체 후보 및 비교 정보" 섹션에서 확인하세요.
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

@@ -22,7 +22,7 @@ export function ProtocolInputCard({
   return (
     <TestCard
       title="프로토콜 / 데이터시트 텍스트"
-      subtitle="PDF에서 복사한 텍스트를 붙여넣고 필드 추출을 테스트합니다."
+      subtitle="PDF에서 복사한 텍스트를 붙여넣고 필드 추출을 체험합니다."
     >
       <Textarea
         value={protocolText}
@@ -38,10 +38,10 @@ export function ProtocolInputCard({
         disabled={!protocolText || isExtracting}
       >
         <FileText className="h-4 w-4 mr-2" />
-        {isExtracting ? "분석 중..." : "필드 추출 테스트"}
+        {isExtracting ? "분석 중..." : "필드 추출 실행"}
       </Button>
       <p className="text-[10px] text-muted-foreground">
-        * paste-only 모드 테스트용 – 파일 자체는 서버로 전송하지 않습니다.
+        * paste-only 모드 체험용 – 파일 자체는 서버로 전송하지 않습니다.
       </p>
     </TestCard>
   );

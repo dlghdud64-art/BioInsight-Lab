@@ -46,10 +46,11 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/admin");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/admin");
+  //   return null;
+  // }
 
   // 관리자 권한 확인은 서버에서 처리됨
 

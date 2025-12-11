@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 // FinalCTASection 컴포넌트 - 중복 정의 제거
 export function FinalCTASection() {
   return (
-    <section className="mt-20 py-12">
+    <section className="mt-12 py-12">
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
         <h2 className="text-2xl font-bold mb-3 text-slate-900">
           지금 바로 시작해보세요

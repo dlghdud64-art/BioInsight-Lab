@@ -9,7 +9,7 @@ export function TestHeader() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-xs">
-              테스트 환경
+              기능 체험 환경
             </Badge>
             <span className="text-xs text-muted-foreground">local</span>
           </div>

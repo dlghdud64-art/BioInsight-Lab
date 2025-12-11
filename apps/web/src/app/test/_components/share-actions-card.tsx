@@ -258,7 +258,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
   return (
     <TestCard
       title="공유 / 내보내기"
-      subtitle="표 복사, 엑셀 다운로드, 구매담당자용 링크 생성을 테스트합니다."
+      subtitle="표 복사, 엑셀 다운로드, 구매담당자용 링크 생성을 체험합니다."
     >
       <div className="space-y-2">
         <Button

@@ -6,10 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Plus, Users, Mail, UserPlus, Trash2, FileText } from "lucide-react";
+import { Plus, Users, Mail, UserPlus, Trash2, FileText, Building2 } from "lucide-react";
 import { useState } from "react";
 import { ORGANIZATION_ROLES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { MainHeader } from "@/app/_components/main-header";
+import { PageHeader } from "@/app/_components/page-header";
+import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import {
   Select,
   SelectContent,
@@ -69,21 +72,32 @@ export default function OrganizationsPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/organizations");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/organizations");
+  //   return null;
+  // }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">조직 관리</h1>
-          <CreateOrganizationDialog
-            onCreate={(data) => createOrgMutation.mutate(data)}
-            isCreating={createOrgMutation.isPending}
-          />
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <MainHeader />
+      <div className="flex">
+        <DashboardSidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+        <PageHeader
+          title="조직 관리"
+          description="조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다."
+          icon={Building2}
+          iconColor="text-orange-600"
+          actions={
+            <CreateOrganizationDialog
+              onCreate={(data) => createOrgMutation.mutate(data)}
+              isCreating={createOrgMutation.isPending}
+            />
+          }
+        />
 
         {isLoading ? (
           <p className="text-center text-muted-foreground py-8">로딩 중...</p>
@@ -107,6 +121,9 @@ export default function OrganizationsPage() {
             ))}
           </div>
         )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

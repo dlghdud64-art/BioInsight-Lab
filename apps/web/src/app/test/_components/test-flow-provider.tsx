@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCompareStore } from "@/lib/store/compare-store";
+import { useToast } from "@/hooks/use-toast";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 interface TestFlowContextType {
   // 검색 상태
@@ -63,9 +65,10 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
   
   const { productIds, addProduct, removeProduct, clearProducts } = useCompareStore();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // 검색 결과
-  const { data: searchData, isLoading: isSearchLoading } = useQuery({
+  const { data: searchData, isLoading: isSearchLoading, error: searchError } = useQuery({
     queryKey: ["search-products", searchQuery, searchCategory, sortBy, searchTrigger],
     queryFn: async () => {
       if (!searchQuery) return { products: [], total: 0 };
@@ -76,11 +79,26 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         limit: "10",
       });
       const response = await fetch(`/api/products/search?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to search products");
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "검색에 실패했습니다." }));
+        throw new Error(error.error || "검색에 실패했습니다.");
+      }
       return response.json();
     },
     enabled: !!searchQuery && searchTrigger > 0,
+    retry: false,
   });
+
+  // 검색 에러 토스트 표시
+  useEffect(() => {
+    if (searchError && hasSearched) {
+      toast({
+        title: "검색 실패",
+        description: (searchError as Error).message || "제품 검색 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  }, [searchError, hasSearched, toast]);
 
   // 검색 의도 분석 (GPT 분석)
   const { 
@@ -114,8 +132,79 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!response.ok) throw new Error("Failed to extract protocol");
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "프로토콜 분석에 실패했습니다." }));
+        throw new Error(error.error || "프로토콜 분석에 실패했습니다.");
+      }
       return response.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "프로토콜 분석 실패",
+        description: error.message || "프로토콜 분석 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "분석 완료",
+        description: "프로토콜에서 시약 정보를 성공적으로 추출했습니다.",
+      });
+      
+      // 프로토콜 분석 결과를 검색 필터에 자동 반영
+      if (data) {
+        // 타깃이 있으면 검색어에 추가
+        if (data.target) {
+          const currentQuery = searchQuery.trim();
+          const targetQuery = data.target;
+          // 검색어에 타깃이 없으면 추가
+          if (!currentQuery.toLowerCase().includes(targetQuery.toLowerCase())) {
+            setSearchQuery(currentQuery ? `${currentQuery} ${targetQuery}` : targetQuery);
+          }
+        }
+        
+        // 실험 유형이 있으면 검색어에 추가
+        if (data.experimentType) {
+          const currentQuery = searchQuery.trim();
+          const experimentQuery = data.experimentType;
+          if (!currentQuery.toLowerCase().includes(experimentQuery.toLowerCase())) {
+            setSearchQuery(currentQuery ? `${currentQuery} ${experimentQuery}` : experimentQuery);
+          }
+        }
+        
+        // 카테고리가 있으면 필터에 반영
+        if (data.category) {
+          // 카테고리 매핑 (예: "ELISA" -> "REAGENT", "Western Blot" -> "REAGENT" 등)
+          const categoryMap: Record<string, string> = {
+            "ELISA": "REAGENT",
+            "Western Blot": "REAGENT",
+            "PCR": "REAGENT",
+            "Cell Culture": "REAGENT",
+            "시약": "REAGENT",
+            "소모품": "TOOL",
+            "장비": "EQUIPMENT",
+          };
+          
+          const mappedCategory = categoryMap[data.category] || data.category;
+          if (mappedCategory && Object.keys(PRODUCT_CATEGORIES).includes(mappedCategory)) {
+            setSearchCategory(mappedCategory);
+          }
+        }
+        
+        // 추출된 시약이 있으면 검색어에 첫 번째 시약 추가
+        if (data.reagents && data.reagents.length > 0) {
+          const firstReagent = data.reagents[0].name;
+          const currentQuery = searchQuery.trim();
+          if (!currentQuery.toLowerCase().includes(firstReagent.toLowerCase())) {
+            setSearchQuery(currentQuery ? `${currentQuery} ${firstReagent}` : firstReagent);
+          }
+        }
+        
+        // 자동으로 검색 실행
+        setTimeout(() => {
+          runSearch();
+        }, 500);
+      }
     },
   });
 
@@ -216,8 +305,8 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
       });
 
       if (!quoteResponse.ok) {
-        const error = await quoteResponse.json();
-        throw new Error(error.error || "Failed to create quote list");
+        const error = await quoteResponse.json().catch(() => ({ error: "품목 리스트 생성에 실패했습니다." }));
+        throw new Error(error.error || "품목 리스트 생성에 실패했습니다.");
       }
       const quote = await quoteResponse.json();
 
@@ -232,12 +321,24 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         }),
       });
 
-      if (!shareResponse.ok) throw new Error("Failed to create share link");
+      if (!shareResponse.ok) {
+        const error = await shareResponse.json().catch(() => ({ error: "공유 링크 생성에 실패했습니다." }));
+        throw new Error(error.error || "공유 링크 생성에 실패했습니다.");
+      }
       return shareResponse.json();
     },
     onSuccess: (data) => {
       const shareUrl = `${window.location.origin}/share/${data.publicId}`;
       setShareLink(shareUrl);
+      // publicId와 만료일 정보도 함께 저장 (향후 비활성화 기능을 위해)
+      return { shareUrl, publicId: data.publicId, expiresAt: data.expiresAt };
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "공유 링크 생성 실패",
+        description: error.message || "공유 링크 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -247,10 +348,11 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
     }
     // expiresInDays를 mutation에 전달하기 위해 임시로 title에 포함
     // 실제로는 mutation 함수를 수정해야 함
-    await generateShareLinkMutation.mutateAsync({
+    const result = await generateShareLinkMutation.mutateAsync({
       title: title || "품목 리스트",
       expiresInDays: expiresInDays || 30,
     });
+    return result;
   };
 
   const products = searchData?.products || [];

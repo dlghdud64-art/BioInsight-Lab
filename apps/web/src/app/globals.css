@@ -4,6 +4,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 품목 리스트 테이블 세로 표시 방지 - 최우선 적용 (Tailwind 이후) */
+.quote-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+/* No. 컬럼 강제 가로 표시 - 모든 가능한 선택자로 최고 우선순위 */
+.quote-table th.no-column-header,
+.quote-table td.no-column-cell,
+table.quote-table th.no-column-header,
+table.quote-table td.no-column-cell,
+.quote-table thead th.no-column-header,
+.quote-table tbody td.no-column-cell,
+div.quote-table th.no-column-header,
+div.quote-table td.no-column-cell {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow: visible !important;
+  display: table-cell !important;
+  visibility: visible !important;
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+  transform: none !important;
+  rotate: none !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+}
+
+/* No. 컬럼 내부 span 강제 가로 표시 */
+.quote-table th.no-column-header span,
+.quote-table td.no-column-cell span,
+.quote-table th.no-column-header > span,
+.quote-table td.no-column-cell > span {
+  display: inline-block !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: nowrap !important;
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+  transform: none !important;
+}
+
+/* 제품명 컬럼 */
+.quote-table th.product-name-header,
+.quote-table td.product-name-cell {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  display: table-cell !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
+
+/* 모든 quote-table의 th, td에 기본 가로 표시 강제 */
+.quote-table th,
+.quote-table td {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  direction: ltr !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

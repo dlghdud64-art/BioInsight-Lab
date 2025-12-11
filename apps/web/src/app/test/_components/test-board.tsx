@@ -87,7 +87,7 @@ export function TestBoard() {
     <section>
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-slate-700">
-          핵심 기능 테스트
+          핵심 기능 체험
         </h2>
         <p className="text-xs text-slate-500">
           Step 1(입력) → Step 2(AI 처리) → Step 3(결과 & 공유) 순서로 기능을 확인해보세요.
@@ -136,7 +136,7 @@ export function TestBoard() {
         <TestBoardColumn
           step={3}
           title="결과 & 공유"
-          description="제품 후보, 품목 리스트, 그룹웨어 공유 기능을 테스트합니다."
+          description="제품 후보, 품목 리스트, 그룹웨어 공유 기능을 체험합니다."
         >
           <CandidateProductsCard
             products={products}

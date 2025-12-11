@@ -52,11 +52,11 @@ export default function SearchResultList({ query }: { query: string }) {
     // 품목 리스트에 추가하려면 test/quote 페이지로 이동하거나 상태 관리 필요
     toast({
       title: "품목 추가",
-      description: "품목 리스트 기능을 사용하려면 테스트 플로우를 이용해주세요.",
+      description: "품목 리스트 기능을 사용하려면 기능 체험 플로우를 이용해주세요.",
       action: (
         <Link href="/test/search">
           <Button size="sm" variant="outline">
-            테스트 플로우로 이동
+            기능 체험 플로우로 이동
           </Button>
         </Link>
       ),

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroDemoFlowPanel } from "./home/hero-demo-flow-panel";
@@ -19,13 +21,15 @@ export function HeroSection() {
 
           <div className="space-y-3">
             <h1 className="text-3xl font-bold leading-tight text-slate-900 md:text-4xl">
-              바이오 시약·장비 견적 준비,{" "}
-              <span className="whitespace-nowrap">검색 한 번으로 끝내세요.</span>
+              바이오 시약·장비 검색과 비교,{" "}
+              <span className="whitespace-nowrap">한 번에 정리되는 구매 요청 리스트</span>
             </h1>
             <p className="text-sm leading-relaxed text-slate-600 max-w-xl">
-              BioInsight Lab은 연구·QC 현장에서 쓰는 시약/소모품을 한 번에 검색·비교하고,
+              실험에 맞는 후보를 찾고, 스펙·가격 비교로 추리고,
               <br />
-              사내 그룹웨어에 붙여넣을 수 있는 구매요청 리스트를 만들어 주는 베타 SaaS입니다.
+              최종 구매 요청 리스트를 만들어 회사 그룹웨어/전자결재에
+              <br />
+              바로 붙여넣을 수 있는 형식으로 내보내 줍니다.
             </p>
           </div>
 
@@ -35,16 +39,21 @@ export function HeroSection() {
                 검색/비교 시작하기
               </Button>
             </Link>
-            <a href="#flow">
-              <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                3단계 플로우 둘러보기
-              </Button>
-            </a>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.querySelector("#flow-section");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md h-11 px-8 text-sm font-medium border border-slate-300 bg-background text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              3단계 플로우 둘러보기
+            </button>
           </div>
         </div>
 
         {/* 오른쪽: 데모 플로우 패널 */}
-        <div className="w-full max-w-md md:pl-6">
+        <div className="w-full max-w-sm md:justify-self-end">
           <HeroDemoFlowPanel />
         </div>
       </div>

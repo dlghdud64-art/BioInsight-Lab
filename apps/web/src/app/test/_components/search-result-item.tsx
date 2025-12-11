@@ -87,7 +87,7 @@ export function SearchResultItem({
         {/* 좌측: 제품명, 벤더 */}
         <div className="flex-1 min-w-0 space-y-2">
           <div>
-            <h3 className="font-semibold text-sm text-slate-900">
+            <h3 className="font-semibold text-sm text-slate-900 break-words whitespace-normal">
               {product.name}
             </h3>
             {product.vendors?.[0]?.vendor?.name && (

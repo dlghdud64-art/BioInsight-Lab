@@ -28,6 +28,9 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QUOTE_STATUS } from "@/lib/constants";
+import { MainHeader } from "@/app/_components/main-header";
+import { PageHeader } from "@/app/_components/page-header";
+import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -87,10 +90,11 @@ export default function QuotesPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/quotes");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/quotes");
+  //   return null;
+  // }
 
   const quotes: Quote[] = quotesData?.quotes || [];
 
@@ -123,8 +127,13 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50">
+      <MainHeader />
+      <div className="flex">
+        <DashboardSidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto space-y-6">
         {/* 헤더 */}
         <div className="flex items-center justify-between">
           <div>
@@ -303,6 +312,9 @@ export default function QuotesPage() {
             ))}
           </div>
         )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

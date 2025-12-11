@@ -51,10 +51,21 @@ export function SearchPanel() {
                 }
               }}
             />
-            {/* 예제 검색어 칩 */}
+            <p className="text-[10px] text-slate-500 leading-tight">
+              💡 검색어에 제품명, 타깃, 실험 유형 등을 함께 입력하면 GPT가 자동으로 분석합니다.
+              <br />
+              <span className="text-[9px]">예: "Human IL-6 Sandwich ELISA kit"</span>
+            </p>
+            {/* 샘플 검색어 칩 */}
             <div className="flex flex-wrap gap-1.5 pt-1">
-              <span className="text-[10px] text-slate-500">예제:</span>
-              {["Human IL-6 ELISA kit", "PCR Master Mix"].map((example) => (
+              <span className="text-[10px] text-slate-500 font-medium">샘플 검색어:</span>
+              {[
+                "Human IL-6 ELISA kit",
+                "PCR Master Mix",
+                "Western Blot Antibody",
+                "Cell Culture Medium",
+                "DNA Extraction Kit",
+              ].map((example) => (
                 <button
                   key={example}
                   type="button"
@@ -62,7 +73,7 @@ export function SearchPanel() {
                     setSearchQuery(example);
                     setTimeout(() => runSearch(), 100);
                   }}
-                  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                  className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-sm"
                 >
                   {example}
                 </button>

@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -53,8 +53,34 @@ export function QuotePanel() {
   const { toast } = useToast();
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [groupByVendor, setGroupByVendor] = useState(true);
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+
+  // 벤더별 그룹화
+  const groupedByVendor = useMemo(() => {
+    if (!groupByVendor) {
+      return { "전체": quoteItems };
+    }
+
+    const groups: Record<string, typeof quoteItems> = {};
+    quoteItems.forEach((item) => {
+      const vendorName = item.vendorName || "벤더 미지정";
+      if (!groups[vendorName]) {
+        groups[vendorName] = [];
+      }
+      groups[vendorName].push(item);
+    });
+
+    // 벤더별 합계 기준으로 정렬 (합계가 큰 순서)
+    const sortedGroups = Object.entries(groups).sort(([, itemsA], [, itemsB]) => {
+      const sumA = itemsA.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+      const sumB = itemsB.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+      return sumB - sumA;
+    });
+
+    return Object.fromEntries(sortedGroups);
+  }, [quoteItems, groupByVendor]);
 
   // 선택 관련 함수들
   const toggleSelectQuote = (id: string) => {
@@ -118,10 +144,20 @@ export function QuotePanel() {
                 그룹웨어/전자결재에 올릴 최종 품목과 수량을 확인하는 화면입니다.
               </CardDescription>
             </div>
-            <Button variant="secondary" size="sm" className="text-xs" disabled>
-              <Plus className="h-3 w-3 mr-1" />
-              품목 추가
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={groupByVendor ? "default" : "outline"}
+                size="sm"
+                className="text-xs"
+                onClick={() => setGroupByVendor(!groupByVendor)}
+              >
+                {groupByVendor ? "벤더별 그룹화" : "일반 보기"}
+              </Button>
+              <Button variant="secondary" size="sm" className="text-xs" disabled>
+                <Plus className="h-3 w-3 mr-1" />
+                품목 추가
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-4">
@@ -153,9 +189,8 @@ export function QuotePanel() {
             )}
 
             {/* 테이블 - 항상 헤더 표시 */}
-            <div className="overflow-x-auto -mx-4 px-4">
-              <div className="inline-block min-w-full align-middle">
-                <Table className="min-w-[900px]">
+            <div className="w-full overflow-x-auto">
+              <Table className="w-full table-auto quote-table">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12 text-xs">
@@ -173,45 +208,163 @@ export function QuotePanel() {
                           />
                         )}
                       </TableHead>
-                      <TableHead className="w-16 text-xs whitespace-nowrap">No.</TableHead>
-                      <TableHead className="min-w-[200px] text-xs whitespace-nowrap">제품명</TableHead>
-                      <TableHead className="min-w-[120px] text-xs whitespace-nowrap">벤더</TableHead>
-                      <TableHead className="min-w-[100px] text-right text-xs whitespace-nowrap">단가</TableHead>
-                      <TableHead className="min-w-[80px] text-right text-xs whitespace-nowrap">수량</TableHead>
-                      <TableHead className="min-w-[120px] text-right text-xs whitespace-nowrap">금액</TableHead>
-                      <TableHead className="min-w-[100px] text-center text-xs whitespace-nowrap">비교</TableHead>
-                      <TableHead className="w-12 text-center text-xs whitespace-nowrap">삭제</TableHead>
+                      <TableHead 
+                        className="px-1 py-2 text-xs font-medium text-slate-500 text-center whitespace-nowrap no-column-header"
+                        style={{
+                          display: 'table-cell',
+                          writingMode: 'horizontal-tb',
+                          textOrientation: 'mixed',
+                          visibility: 'visible',
+                          direction: 'ltr',
+                          unicodeBidi: 'normal',
+                          transform: 'none',
+                          width: '36px',
+                          minWidth: '36px',
+                          maxWidth: '36px',
+                          padding: '8px 4px'
+                        }}
+                      >
+                        <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>No.</span>
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap product-name-header"
+                        style={{
+                          width: '180px',
+                          minWidth: '180px',
+                          maxWidth: '180px'
+                        }}
+                      >
+                        제품명
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap"
+                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                      >
+                        벤더
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-right whitespace-nowrap"
+                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                      >
+                        단가
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
+                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                      >
+                        수량
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-right whitespace-nowrap"
+                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                      >
+                        금액
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
+                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                      >
+                        비교
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
+                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                      >
+                        구매 완료
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
+                        style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
+                      >
+                        삭제
+                      </TableHead>
                       <TableHead className="w-12 text-xs"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {quoteItems.length > 0 ? (
-                      quoteItems.map((item, index) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedQuoteIds.includes(item.id)}
-                              onCheckedChange={() => toggleSelectQuote(item.id)}
-                            />
+                      (() => {
+                        let globalIndex = 0;
+                        return Object.entries(groupedByVendor).map(([vendorName, items]) => {
+                          const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+                          const vendorItemCount = items.length;
+                          
+                          return (
+                            <React.Fragment key={vendorName}>
+                              {/* 벤더 헤더 행 (그룹화 모드일 때만) */}
+                              {groupByVendor && vendorName !== "전체" && (
+                                <TableRow className="bg-slate-50 hover:bg-slate-100">
+                                  <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700">
+                                    {vendorName}
+                                  </TableCell>
+                                  <TableCell colSpan={5} className="px-3 py-2 text-xs text-slate-600">
+                                    {vendorItemCount}개 품목
+                                  </TableCell>
+                                  <TableCell className="px-3 py-2 text-xs font-semibold text-slate-900 text-right">
+                                    <PriceDisplay price={vendorTotal} currency="KRW" />
+                                  </TableCell>
+                                  <TableCell colSpan={2}></TableCell>
+                                </TableRow>
+                              )}
+                              {/* 품목 행들 */}
+                              {items.map((item) => {
+                                globalIndex++;
+                                return (
+                                  <TableRow key={item.id}>
+                                    <TableCell>
+                                      <Checkbox
+                                        checked={selectedQuoteIds.includes(item.id)}
+                                        onCheckedChange={() => toggleSelectQuote(item.id)}
+                                      />
+                                    </TableCell>
+                                    <TableCell 
+                                      className="px-1 py-2 text-xs text-slate-700 text-center whitespace-nowrap no-column-cell"
+                                      style={{
+                                        display: 'table-cell',
+                                        writingMode: 'horizontal-tb',
+                                        textOrientation: 'mixed',
+                                        visibility: 'visible',
+                                        direction: 'ltr',
+                                        unicodeBidi: 'normal',
+                                        transform: 'none',
+                                        width: '36px',
+                                        minWidth: '36px',
+                                        maxWidth: '36px',
+                                        padding: '8px 4px'
+                                      }}
+                                    >
+                                      <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>{globalIndex}</span>
+                                    </TableCell>
+                          <TableCell 
+                            className="px-2 py-2 text-xs text-slate-700 text-left product-name-cell"
+                            title={item.productName}
+                            style={{
+                              width: '180px',
+                              minWidth: '180px',
+                              maxWidth: '180px'
+                            }}
+                          >
+                            {item.productName}
                           </TableCell>
-                          <TableCell className="font-medium text-xs whitespace-nowrap">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className="text-xs min-w-[200px]">
-                            <div className="max-w-[200px] truncate" title={item.productName}>
-                              {item.productName}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs min-w-[120px] whitespace-nowrap">
+                          <TableCell 
+                            className="px-2 py-2 text-xs text-slate-700 text-left whitespace-nowrap"
+                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                          >
                             {item.vendorName}
                           </TableCell>
-                          <TableCell className="text-right text-xs whitespace-nowrap min-w-[100px]">
+                          <TableCell 
+                            className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
+                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                          >
                             <PriceDisplay
                               price={item.unitPrice || 0}
                               currency={item.currency || "KRW"}
                             />
                           </TableCell>
-                          <TableCell className="text-right whitespace-nowrap min-w-[80px]">
+                          <TableCell 
+                            className="px-2 py-2 text-center"
+                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                          >
                             <Input
                               type="number"
                               min="1"
@@ -224,13 +377,19 @@ export function QuotePanel() {
                               className="w-20 h-7 text-xs"
                             />
                           </TableCell>
-                          <TableCell className="text-right font-medium text-xs whitespace-nowrap min-w-[120px]">
+                          <TableCell 
+                            className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
+                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                          >
                             <PriceDisplay
                               price={item.lineTotal || 0}
                               currency={item.currency || "KRW"}
                             />
                           </TableCell>
-                          <TableCell className="text-center min-w-[100px]">
+                          <TableCell 
+                            className="px-2 py-2 text-center"
+                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                          >
                             <Link href="/test/compare">
                               <Button variant="ghost" size="sm" className="h-7 text-xs">
                                 <GitCompare className="h-3 w-3 mr-1" />
@@ -238,7 +397,24 @@ export function QuotePanel() {
                               </Button>
                             </Link>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell 
+                            className="px-2 py-2 text-center"
+                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-7 text-xs ${item.isPurchased ? 'text-green-600 hover:text-green-700' : 'text-slate-400 hover:text-green-600'}`}
+                              onClick={() => updateQuoteItem(item.id, { isPurchased: !item.isPurchased })}
+                              title={item.isPurchased ? "구매 완료 취소" : "구매 완료 표시"}
+                            >
+                              <CheckCircle2 className={`h-4 w-4 ${item.isPurchased ? 'fill-green-600 text-green-600' : ''}`} />
+                            </Button>
+                          </TableCell>
+                          <TableCell 
+                            className="px-2 py-2 text-center"
+                            style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
+                          >
                             <Button
                               variant="ghost"
                               size="icon"
@@ -268,7 +444,12 @@ export function QuotePanel() {
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))
+                                );
+                              })}
+                            </React.Fragment>
+                          );
+                        });
+                      })()
                     ) : (
                       // 빈 상태 플레이스홀더 행
                       <TableRow>
@@ -295,7 +476,6 @@ export function QuotePanel() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
             </div>
 
             {/* 총합 - 품목이 있을 때만 표시 */}
@@ -359,6 +539,7 @@ export function SharePanel() {
   } = useTestFlow();
   const { toast } = useToast();
   const [shareTitle, setShareTitle] = useState("");
+  const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [copied, setCopied] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [localShareLink, setLocalShareLink] = useState<string | null>(providerShareLink || null);
@@ -381,21 +562,58 @@ export function SharePanel() {
     }
 
     try {
-      await generateShareLink(shareTitle || "품목 리스트", 30);
+      await generateShareLink(shareTitle || "품목 리스트", expiresInDays);
       setIsShareDialogOpen(false);
       // generateShareLink가 성공하면 providerShareLink가 업데이트되므로
       // 잠시 후 localShareLink도 업데이트
       setTimeout(() => {
         setLocalShareLink(providerShareLink);
+        // 링크에서 publicId 추출
+        if (providerShareLink) {
+          const publicId = providerShareLink.split("/share/")[1];
+          if (publicId) {
+            setShareLinkInfo({ publicId, expiresAt: expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString() : undefined, isActive: true });
+          }
+        }
       }, 100);
       toast({
         title: "공유 링크 생성 완료",
-        description: "공유 링크가 생성되었습니다.",
+        description: expiresInDays > 0 
+          ? `공유 링크가 생성되었습니다. ${expiresInDays}일 후 만료됩니다.`
+          : "공유 링크가 생성되었습니다. (만료 없음)",
       });
     } catch (error: any) {
       toast({
         title: "공유 링크 생성 실패",
         description: error.message || "공유 링크를 생성할 수 없습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeactivateLink = async () => {
+    if (!shareLinkInfo?.publicId) return;
+    
+    try {
+      const response = await fetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: false }),
+      });
+
+      if (!response.ok) {
+        throw new Error("링크 비활성화에 실패했습니다.");
+      }
+
+      setShareLinkInfo((prev) => prev ? { ...prev, isActive: false } : null);
+      toast({
+        title: "링크 비활성화 완료",
+        description: "공유 링크가 비활성화되었습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "비활성화 실패",
+        description: error.message || "링크를 비활성화할 수 없습니다.",
         variant: "destructive",
       });
     }
@@ -421,12 +639,125 @@ export function SharePanel() {
     }
   };
 
+  // TSV 내용 생성 (공통 함수)
+  const generateTSVContent = () => {
+    const headers = ["No.", "제품명", "벤더", "수량", "단가", "금액", "비고"];
+    const rows = quoteItems.map((item, index) => [
+      (index + 1).toString(),
+      item.productName || "",
+      item.vendorName || "",
+      (item.quantity || 1).toString(),
+      item.unitPrice ? `₩${item.unitPrice.toLocaleString("ko-KR")}` : "",
+      item.lineTotal ? `₩${item.lineTotal.toLocaleString("ko-KR")}` : "",
+      item.notes || "",
+    ]);
+
+    return [
+      headers.join("\t"),
+      ...rows.map((row) => row.join("\t")),
+    ].join("\n");
+  };
+
+  // TSV 클립보드 복사
+  const handleCopyTSV = async () => {
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "복사할 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const tsvContent = generateTSVContent();
+      await navigator.clipboard.writeText(tsvContent);
+      toast({
+        title: "복사 완료",
+        description: "TSV 형식이 클립보드에 복사되었습니다. 엑셀/그룹웨어에 붙여넣을 수 있습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "복사 실패",
+        description: "클립보드에 복사할 수 없습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // TSV 형식으로 내보내기
+  const handleExportTSV = () => {
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "내보낼 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const tsvContent = generateTSVContent();
+    const blob = new Blob(["\uFEFF" + tsvContent], { type: "text/tab-separated-values;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `품목리스트_${new Date().toISOString().split("T")[0]}.tsv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "내보내기 완료",
+      description: "TSV 파일이 다운로드되었습니다.",
+    });
+  };
+
+  // CSV 형식으로 내보내기
+  const handleExportCSV = () => {
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "내보낼 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = ["No.", "제품명", "벤더", "수량", "단가", "금액", "비고"];
+    const rows = quoteItems.map((item, index) => [
+      (index + 1).toString(),
+      `"${(item.productName || "").replace(/"/g, '""')}"`,
+      `"${(item.vendorName || "").replace(/"/g, '""')}"`,
+      (item.quantity || 1).toString(),
+      item.unitPrice ? `"₩${item.unitPrice.toLocaleString("ko-KR")}"` : '""',
+      item.lineTotal ? `"₩${item.lineTotal.toLocaleString("ko-KR")}"` : '""',
+      `"${(item.notes || "").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `품목리스트_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "내보내기 완료",
+      description: "CSV 파일이 다운로드되었습니다.",
+    });
+  };
+
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">공유</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          품목 리스트를 공유 링크로 공유하세요
+          견적/구매 요청용으로 바로 공유·첨부할 수 있는 리스트 형식으로 정리해서 내보낼 수 있습니다.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -457,19 +788,39 @@ export function SharePanel() {
               </div>
               <p className="text-xs text-slate-500 mt-2">
                 이 링크를 공유하면 다른 사람이 품목 리스트를 볼 수 있습니다.
+                {shareLinkInfo?.expiresAt && (
+                  <span className="block mt-1">
+                    만료일: {new Date(shareLinkInfo.expiresAt).toLocaleDateString("ko-KR")}
+                  </span>
+                )}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setLocalShareLink(null);
-                setShareTitle("");
-              }}
-              className="w-full text-xs"
-            >
-              새 링크 생성
-            </Button>
+            <div className="flex gap-2">
+              {shareLinkInfo?.isActive && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeactivateLink}
+                  className="flex-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Ban className="h-3 w-3 mr-1" />
+                  링크 비활성화
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setLocalShareLink(null);
+                  setShareTitle("");
+                  setShareLinkInfo(null);
+                  setExpiresInDays(30);
+                }}
+                className="flex-1 text-xs"
+              >
+                새 링크 생성
+              </Button>
+            </div>
           </div>
         ) : (
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
@@ -499,8 +850,29 @@ export function SharePanel() {
                     placeholder="품목 리스트"
                   />
                 </div>
-                <div className="text-xs text-slate-500">
-                  공유 링크는 30일 후 자동으로 만료됩니다.
+                <div className="space-y-2">
+                  <Label htmlFor="expires-in-days">만료 기간</Label>
+                  <Select
+                    value={expiresInDays.toString()}
+                    onValueChange={(value) => setExpiresInDays(parseInt(value) || 0)}
+                  >
+                    <SelectTrigger id="expires-in-days">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7일</SelectItem>
+                      <SelectItem value="14">14일</SelectItem>
+                      <SelectItem value="30">30일 (기본)</SelectItem>
+                      <SelectItem value="60">60일</SelectItem>
+                      <SelectItem value="90">90일</SelectItem>
+                      <SelectItem value="0">만료 없음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    {expiresInDays > 0 
+                      ? `링크는 ${expiresInDays}일 후 자동으로 만료됩니다.`
+                      : "링크는 만료되지 않습니다. 수동으로 비활성화할 수 있습니다."}
+                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -520,6 +892,50 @@ export function SharePanel() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* 내보내기 버튼 */}
+        <div className="pt-4 border-t border-slate-200">
+          <Label className="text-xs font-medium text-slate-700 mb-3 block">
+            파일 내보내기
+          </Label>
+          <div className="space-y-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleCopyTSV}
+              disabled={quoteItems.length === 0}
+              className="w-full text-xs bg-slate-900 hover:bg-slate-800"
+            >
+              <Copy className="h-3 w-3 mr-2" />
+              TSV 복사 (그룹웨어 붙여넣기)
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportTSV}
+                disabled={quoteItems.length === 0}
+                className="w-full text-xs"
+              >
+                <Download className="h-3 w-3 mr-2" />
+                TSV 다운로드
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={quoteItems.length === 0}
+                className="w-full text-xs"
+              >
+                <Download className="h-3 w-3 mr-2" />
+                CSV 다운로드
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            <strong>TSV 복사</strong>를 클릭하면 엑셀/그룹웨어에 바로 붙여넣을 수 있습니다. TSV는 엑셀에서 바로 열 수 있고, CSV는 범용적으로 사용할 수 있습니다.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

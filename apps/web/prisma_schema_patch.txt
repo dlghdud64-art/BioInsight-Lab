@@ -1,0 +1,10 @@
+Prisma 스키마에 다음 필드를 추가해야 합니다:
+
+Product 모델의 regulatoryCompliance 필드 다음에 추가:
+
+  // 안전·규제 정보 (P1)
+  msdsUrl               String? // MSDS/SDS 문서 URL
+  safetyNote            String? @db.Text // 안전 취급 요약/주의사항
+
+추가 위치: 175번 라인 (regulatoryCompliance 다음)과 177번 라인 (createdAt 전) 사이
+

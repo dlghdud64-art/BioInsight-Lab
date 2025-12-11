@@ -1,300 +1,229 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Search, GitCompare, ShoppingCart } from "lucide-react";
 
-// HeroDemoFlowPanel 컴포넌트 - 실제 화면 모형 UI 추가
-type HeroStepId = "search" | "compare" | "groupware";
+// HeroDemoFlowPanel 컴포넌트 - 컴팩트 티저 버전 + 예시 UI
+type StepId = "search" | "compare" | "list";
 
-const HERO_STEPS: {
-  id: HeroStepId;
-  badge: string;
-  label: string;
-  title: string;
-  description: string;
-}[] = [
+const HERO_STEPS = [
   {
-    id: "search",
-    badge: "Step 1",
-    label: "검색",
+    id: "search" as const,
+    label: "Step 1 검색",
     title: "검색으로 후보를 한 번에 모으기",
-    description:
-      "제품명, 타깃, 카테고리로 여러 벤더 제품을 한 번에 조회합니다. GPT가 검색어를 이해해 유사 제품 후보를 자동으로 정리해 줍니다.",
+    desc: "제품명, 타깃, 키워드로 여러 벤더 제품을 한 번에 모읍니다.",
   },
   {
-    id: "compare",
-    badge: "Step 2",
-    label: "비교",
-    title: "필요한 제품만 골라서 비교 · 리스트 만들기",
-    description:
-      "선택한 제품들의 벤더, 단가, 규격을 한 화면에서 비교하고, 수량·비고를 입력해 실제 구매에 쓸 품목 리스트를 완성합니다.",
+    id: "compare" as const,
+    label: "Step 2 비교",
+    title: "스펙·가격 기준으로 후보 추리기",
+    desc: "단위, Grade, 가격을 기준으로 후보를 비교하면서 최종 품목을 고릅니다.",
   },
   {
-    id: "groupware",
-    badge: "Step 3",
-    label: "그룹웨어 붙여넣기",
-    title: "그룹웨어 결재 양식에 붙여넣기",
-    description:
-      "완성된 품목 리스트를 TSV/텍스트로 복사해 전자결재·그룹웨어 양식에 그대로 붙여넣습니다. 향후에는 직접 견적 요청/구매까지 확장 예정입니다.",
+    id: "list" as const,
+    label: "Step 3 리스트 정리",
+    title: "구매 요청 리스트로 정리해서 내보내기",
+    desc: "견적/구매 요청용으로 바로 공유·첨부할 수 있는 리스트 형식으로 정리합니다.",
   },
 ];
 
-// 검색 결과 샘플 데이터
+// 샘플 데이터
 const SAMPLE_SEARCH_RESULTS = [
   { name: "Human IL-6 ELISA Kit", vendor: "R&D Systems", price: "₩450,000" },
   { name: "IL-6 Quantikine ELISA", vendor: "Bio-Techne", price: "₩520,000" },
   { name: "Human IL-6 ELISA", vendor: "Abcam", price: "₩380,000" },
 ];
 
-// 품목 리스트 샘플 데이터
+const SAMPLE_COMPARE_DATA = [
+  { label: "제품명", values: ["Human IL-6 ELISA Kit", "IL-6 Quantikine ELISA", "Human IL-6 ELISA"] },
+  { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam"] },
+  { label: "가격", values: ["₩450,000", "₩520,000", "₩380,000"] },
+  { label: "납기", values: ["7일", "5일", "10일"] },
+  { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요"] },
+  { label: "최소주문", values: ["1개", "1개", "2개"] },
+];
+
 const SAMPLE_QUOTE_ITEMS = [
   { no: 1, name: "Human IL-6 ELISA Kit", qty: 2, price: "₩900,000" },
   { no: 2, name: "PCR Master Mix", qty: 1, price: "₩150,000" },
   { no: 3, name: "96 Well Plate", qty: 5, price: "₩375,000" },
-  { no: 4, name: "Trypsin-EDTA 0.25%", qty: 3, price: "₩54,000" },
-  { no: 5, name: "FBS Premium", qty: 1, price: "₩390,000" },
 ];
 
 export function HeroDemoFlowPanel() {
-  const [active, setActive] = useState<HeroStepId>("search");
-  const [searchAnimation, setSearchAnimation] = useState(false);
-  const current = HERO_STEPS.find((s) => s.id === active)!;
+  const [step, setStep] = useState<StepId>("search");
 
-  // 자동 슬라이드 애니메이션
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActive((prev) => {
-        if (prev === "search") return "compare";
-        if (prev === "compare") return "groupware";
-        return "search";
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const current = HERO_STEPS.find((s) => s.id === step)!;
 
-  // 검색 애니메이션
-  useEffect(() => {
-    if (active === "search") {
-      setSearchAnimation(true);
-      const timer = setTimeout(() => setSearchAnimation(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [active]);
-
-  const scrollToDemo = () => {
-    const el = document.getElementById("demo-flow-section");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const scrollToFlowSection = () => {
+    const el = document.querySelector("#flow-section");
+    el?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <aside className="w-full rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-lg">
-      <p className="mb-3 text-xs font-medium text-slate-500">데모 플로우</p>
-
-      {/* Step 토글 버튼들 */}
-      <div className="mb-4 grid grid-cols-3 gap-2 text-xs">
-        {HERO_STEPS.map((step) => {
-          const selected = step.id === active;
-          return (
+    <Card className="w-full max-w-sm shadow-sm border-slate-200">
+      <CardHeader className="pb-3">
+        <p className="text-xs font-medium text-slate-500">데모 플로우</p>
+        <h3 className="text-sm font-semibold text-slate-900">
+          3단계로 끝나는 구매 준비
+        </h3>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Step 탭 */}
+        <div className="flex gap-1 rounded-full bg-slate-50 p-1 text-xs">
+          {HERO_STEPS.map((s) => (
             <button
-              key={step.id}
+              key={s.id}
               type="button"
-              onClick={() => setActive(step.id)}
+              onClick={() => setStep(s.id)}
               className={cn(
-                "flex h-[56px] min-w-0 flex-shrink-0 flex-col items-center justify-center rounded-xl border px-2 py-1.5 text-center transition",
-                selected
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                "flex-1 rounded-full px-2 py-1 text-center transition text-[10px]",
+                s.id === step
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-slate-100"
               )}
             >
-              <span className="block text-[10px] font-semibold uppercase tracking-wide opacity-80 whitespace-nowrap leading-none">
-                {step.badge}
-              </span>
-              <span className="mt-1 block text-xs font-semibold leading-tight whitespace-nowrap">
-                {step.label}
-              </span>
+              {s.label}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      {/* 실제 화면 모형 UI - 고정 높이 */}
-      <div className="mb-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm min-h-[280px]">
-        {active === "search" && (
-          <div className="space-y-3 h-full flex flex-col">
-            {/* 검색창 */}
-            <div className="flex gap-2 flex-shrink-0">
-              <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                Human IL-6 ELISA kit
+        {/* 예시 UI 영역 - 작은 크기 */}
+        <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm min-h-[180px]">
+          {step === "search" && (
+            <div className="space-y-1.5 h-full flex flex-col">
+              {/* 검색창 */}
+              <div className="flex gap-1.5 flex-shrink-0">
+                <div className="flex-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] text-slate-600">
+                  Human IL-6 ELISA kit
+                </div>
+                <button className="rounded bg-blue-600 px-1.5 py-0.5 text-[9px] text-white">
+                  검색
+                </button>
               </div>
-              <button className="rounded-lg bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700">
-                검색
-              </button>
-            </div>
-            
-            {/* 검색 결과 카드 리스트 */}
-            <div className="flex-1 min-h-0">
-              {searchAnimation ? (
-                <div className="space-y-2 h-full overflow-y-auto">
+              
+              {/* 검색 결과 */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="space-y-0.5">
                   {SAMPLE_SEARCH_RESULTS.map((result, idx) => (
                     <div
                       key={idx}
-                      className="rounded-lg border border-slate-200 bg-white p-2.5 animate-in fade-in slide-in-from-top-2"
-                      style={{ animationDelay: `${idx * 200}ms` }}
+                      className="rounded border border-slate-200 bg-white p-1"
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-1">
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-slate-900 truncate">
+                          <p className="text-[9px] font-semibold text-slate-900 truncate leading-tight">
                             {result.name}
                           </p>
-                          <p className="text-[10px] text-slate-500 mt-0.5">
+                          <p className="text-[8px] text-slate-500 mt-0.5 leading-tight">
                             {result.vendor}
                           </p>
                         </div>
-                        <p className="text-xs font-medium text-slate-900 ml-2">
+                        <p className="text-[9px] font-medium text-slate-900 whitespace-nowrap ml-1">
                           {result.price}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-[10px] text-slate-400 h-full flex items-center justify-center">
-                  검색어를 입력하고 검색 버튼을 클릭하세요
-                </div>
-              )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {active === "compare" && (
-          <div className="space-y-3 h-full flex flex-col">
-            {/* 비교 테이블 헤더 */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 border-b border-slate-200 pb-2 flex-shrink-0">
-              <GitCompare className="h-3 w-3" />
-              <span>제품 비교 (3개)</span>
-            </div>
-            
-            {/* 비교 항목 */}
-            <div className="space-y-1.5 flex-1 overflow-y-auto">
-              {[
-                { label: "제품명", values: ["Human IL-6 ELISA Kit", "IL-6 Quantikine ELISA", "Human IL-6 ELISA"] },
-                { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam"] },
-                { label: "가격", values: ["₩450k", "₩520k", "₩380k"] },
-                { label: "납기", values: ["7일", "5일", "10일"] },
-                { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요"] },
-              ].map((row, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-14 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
-                  <div className="flex-1 grid grid-cols-3 gap-1">
-                    {row.values.map((value, colIdx) => (
-                      <div
-                        key={colIdx}
-                        className={`rounded px-1.5 py-0.5 text-[10px] text-slate-600 ${
-                          row.label === "가격" && colIdx === 2 ? "bg-green-50 text-green-700 font-semibold" :
-                          row.label === "납기" && colIdx === 1 ? "bg-blue-50 text-blue-700 font-semibold" :
-                          "bg-slate-50"
-                        }`}
-                        title={value}
-                      >
-                        <span className="truncate block">{value}</span>
-                      </div>
-                    ))}
+          {step === "compare" && (
+            <div className="space-y-2 h-full flex flex-col">
+              {/* 비교 헤더 */}
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
+                <GitCompare className="h-3 w-3" />
+                <span>제품 비교 (3개)</span>
+              </div>
+              
+              {/* 비교 항목 */}
+              <div className="space-y-1 flex-1 overflow-y-auto">
+                {SAMPLE_COMPARE_DATA.map((row, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5 text-[9px]">
+                    <span className="w-12 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
+                    <div className="flex-1 grid grid-cols-3 gap-0.5">
+                      {row.values.map((value, colIdx) => (
+                        <div
+                          key={colIdx}
+                          className={`rounded px-1 py-0.5 text-[9px] text-slate-600 ${
+                            row.label === "가격" && colIdx === 2 ? "bg-green-50 text-green-700 font-semibold" :
+                            row.label === "납기" && colIdx === 1 ? "bg-blue-50 text-blue-700 font-semibold" :
+                            "bg-slate-50"
+                          }`}
+                          title={value}
+                        >
+                          <span className="truncate block">{value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* 하단 추가 정보 */}
-            <div className="pt-2 border-t border-slate-200 flex-shrink-0 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-slate-500">평균 가격</span>
-                <span className="font-semibold text-slate-700">₩450k</span>
+                ))}
               </div>
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-slate-500">최저가</span>
-                <span className="font-semibold text-green-600">₩380k (Abcam)</span>
+            </div>
+          )}
+
+          {step === "list" && (
+            <div className="space-y-2 h-full flex flex-col">
+              {/* 리스트 헤더 */}
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
+                <ShoppingCart className="h-3 w-3" />
+                <span>품목 리스트</span>
               </div>
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-slate-500">최단 납기</span>
-                <span className="font-semibold text-blue-600">5일 (Bio-Techne)</span>
+              
+              {/* 테이블 헤더 */}
+              <div className="grid grid-cols-12 gap-0.5 text-[9px] font-semibold text-slate-600 pb-1 border-b border-slate-100 flex-shrink-0">
+                <div className="col-span-1">No</div>
+                <div className="col-span-6">제품명</div>
+                <div className="col-span-2">수량</div>
+                <div className="col-span-3">금액</div>
               </div>
-              <button className="w-full mt-2 rounded-lg bg-slate-900 px-2 py-1.5 text-[10px] text-white hover:bg-slate-800">
-                품목 리스트로 이동 →
-              </button>
+              
+              {/* 테이블 행 */}
+              <div className="space-y-0.5 flex-1 overflow-y-auto min-h-0">
+                {SAMPLE_QUOTE_ITEMS.map((item) => (
+                  <div
+                    key={item.no}
+                    className="grid grid-cols-12 gap-0.5 text-[9px] text-slate-700 py-0.5 border-b border-slate-50 last:border-0"
+                  >
+                    <div className="col-span-1 font-medium">{item.no}</div>
+                    <div className="col-span-6 truncate">{item.name}</div>
+                    <div className="col-span-2 text-center">{item.qty}</div>
+                    <div className="col-span-3 font-medium text-right">{item.price}</div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* 합계 */}
+              <div className="grid grid-cols-12 gap-0.5 text-[9px] font-semibold text-slate-900 pt-1 border-t border-slate-200 flex-shrink-0">
+                <div className="col-span-9 text-right pr-1">합계</div>
+                <div className="col-span-3 text-right">₩1,425,000</div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {active === "groupware" && (
-          <div className="space-y-3 h-full flex flex-col">
-            {/* 품목 리스트 테이블 */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 border-b border-slate-200 pb-2 flex-shrink-0">
-              <ShoppingCart className="h-3 w-3" />
-              <span>품목 리스트</span>
-            </div>
-            
-            {/* 테이블 헤더 */}
-            <div className="grid grid-cols-12 gap-1 text-[10px] font-semibold text-slate-600 pb-1 border-b border-slate-100 flex-shrink-0">
-              <div className="col-span-1">No</div>
-              <div className="col-span-5">제품명</div>
-              <div className="col-span-2">수량</div>
-              <div className="col-span-4">금액</div>
-            </div>
-            
-            {/* 테이블 행 */}
-            <div className="space-y-0.5 flex-1 overflow-y-auto min-h-0">
-              {SAMPLE_QUOTE_ITEMS.map((item) => (
-                <div
-                  key={item.no}
-                  className="grid grid-cols-12 gap-1 text-[10px] text-slate-700 py-1 border-b border-slate-50 last:border-0"
-                >
-                  <div className="col-span-1 font-medium">{item.no}</div>
-                  <div className="col-span-5 truncate">{item.name}</div>
-                  <div className="col-span-2 text-center">{item.qty}</div>
-                  <div className="col-span-4 font-medium text-right">{item.price}</div>
-                </div>
-              ))}
-            </div>
-            
-            {/* 합계 행 */}
-            <div className="grid grid-cols-12 gap-1 text-[10px] font-semibold text-slate-900 pt-1 border-t border-slate-200 flex-shrink-0">
-              <div className="col-span-8 text-right pr-2">합계</div>
-              <div className="col-span-4 text-right">₩1,869,000</div>
-            </div>
-            
-            {/* 복사 버튼 */}
-            <button className="w-full rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] text-white hover:bg-slate-800 flex-shrink-0">
-              그룹웨어에 복사하기
-            </button>
-          </div>
-        )}
-      </div>
+        {/* 액션 버튼 */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            onClick={scrollToFlowSection}
+            className="text-[11px] text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline"
+          >
+            3단계 플로우 자세히 보기
+          </button>
 
-      {/* 선택된 Step의 요약 설명 */}
-      <div className="mb-3 rounded-xl bg-slate-50 px-3 py-2">
-        <p className="mb-0.5 text-xs font-semibold leading-tight text-slate-900 line-clamp-2">
-          {current.title}
-        </p>
-        <p className="text-[11px] leading-tight text-slate-500 line-clamp-2">
-          {current.description}
-        </p>
-      </div>
-
-      {/* 아래 상세 데모 섹션으로 스크롤 */}
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs border-slate-300 text-slate-700 hover:bg-slate-50"
-          onClick={scrollToDemo}
-        >
-          3단계 플로우 자세히 보기
-        </Button>
-      </div>
-    </aside>
+          <Link href="/test/search">
+            <Button size="sm" variant="outline" className="text-xs">
+              이 플로우 직접 해보기
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

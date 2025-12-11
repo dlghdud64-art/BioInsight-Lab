@@ -4,17 +4,40 @@ import { useTestFlow } from "../_components/test-flow-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2 } from "lucide-react";
+import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriceDisplay } from "@/components/products/price-display";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function TestComparePage() {
   const { compareIds, toggleCompare, clearCompare, addProductToQuote } = useTestFlow();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "price" | "price_high" | "specification" | "leadTime" | "vendorCount">("name");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterBrand, setFilterBrand] = useState<string>("all");
+  const [filterVendor, setFilterVendor] = useState<string>("all");
+  const [productOrder, setProductOrder] = useState<number[]>([]); // 제품 순서 관리
+  const [manualLeadTimes, setManualLeadTimes] = useState<Record<string, number>>(() => {
+    // 로컬 스토리지에서 저장된 납기 정보 불러오기
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("manualLeadTimes") || "{}");
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+  const [editingLeadTime, setEditingLeadTime] = useState<{ productId: string; vendorIndex: number } | null>(null);
+  const [tempLeadTime, setTempLeadTime] = useState<string>("");
 
   // 비교할 제품 데이터 로드
   const { data: compareProductsData, isLoading, error } = useQuery({
@@ -37,7 +60,130 @@ export default function TestComparePage() {
     gcTime: 1000 * 60 * 10, // 10분
   });
 
-  const products = compareProductsData?.products || [];
+  const allProducts = compareProductsData?.products || [];
+
+  // 제품 순서 초기화 (제품이 변경될 때)
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      // 제품이 변경되면 순서를 초기화
+      const newOrder = allProducts.map((_, index) => index);
+      setProductOrder(newOrder);
+    } else {
+      setProductOrder([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProducts.length]);
+
+  // 순서 변경 함수
+  const moveProduct = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === productOrder.length - 1) return;
+    
+    const newOrder = [...productOrder];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+    setProductOrder(newOrder);
+  };
+
+  // 필터링 및 정렬
+  const products = useMemo(() => {
+    let filtered = [...allProducts];
+
+    // 카테고리 필터
+    if (filterCategory !== "all") {
+      filtered = filtered.filter((p) => p.category === filterCategory);
+    }
+
+    // 브랜드 필터
+    if (filterBrand !== "all") {
+      filtered = filtered.filter((p) => p.brand === filterBrand);
+    }
+
+    // 벤더 필터
+    if (filterVendor !== "all") {
+      filtered = filtered.filter((p) => 
+        p.vendors?.some((v: any) => v.vendor?.name === filterVendor)
+      );
+    }
+
+    // 정렬
+    filtered.sort((a, b) => {
+      if (sortBy === "name") {
+        return a.name.localeCompare(b.name, "ko");
+      } else if (sortBy === "price") {
+        const priceA = a.vendors?.[0]?.priceInKRW || 0;
+        const priceB = b.vendors?.[0]?.priceInKRW || 0;
+        return priceA - priceB;
+      } else if (sortBy === "price_high") {
+        const priceA = a.vendors?.[0]?.priceInKRW || 0;
+        const priceB = b.vendors?.[0]?.priceInKRW || 0;
+        return priceB - priceA;
+      } else if (sortBy === "specification") {
+        // 규격/용량 기준 정렬 (숫자 추출하여 비교)
+        const specA = a.specification || "";
+        const specB = b.specification || "";
+        // 숫자 추출 (예: "500mL" -> 500, "1mg" -> 1)
+        const numA = parseFloat(specA.match(/\d+\.?\d*/)?.[0] || "0");
+        const numB = parseFloat(specB.match(/\d+\.?\d*/)?.[0] || "0");
+        return numA - numB;
+      } else if (sortBy === "leadTime") {
+        const leadTimeA = a.vendors?.[0]?.leadTime || 999;
+        const leadTimeB = b.vendors?.[0]?.leadTime || 999;
+        return leadTimeA - leadTimeB;
+      } else if (sortBy === "vendorCount") {
+        return (b.vendors?.length || 0) - (a.vendors?.length || 0);
+      }
+      return 0;
+    });
+
+    // 순서 적용
+    if (productOrder.length === filtered.length && productOrder.length > 0) {
+      const ordered = productOrder.map((orderIndex) => filtered[orderIndex]).filter(Boolean);
+      return ordered.length > 0 ? ordered : filtered;
+    }
+    
+    return filtered;
+  }, [allProducts, filterCategory, filterBrand, filterVendor, sortBy, productOrder]);
+
+  // 브랜드 목록 추출
+  const brands = useMemo(() => {
+    const brandSet = new Set<string>();
+    allProducts.forEach((p) => {
+      if (p.brand) brandSet.add(p.brand);
+    });
+    return Array.from(brandSet).sort();
+  }, [allProducts]);
+
+  // 벤더 목록 추출
+  const vendors = useMemo(() => {
+    const vendorSet = new Set<string>();
+    allProducts.forEach((p) => {
+      p.vendors?.forEach((v: any) => {
+        if (v.vendor?.name) vendorSet.add(v.vendor.name);
+      });
+    });
+    return Array.from(vendorSet).sort();
+  }, [allProducts]);
+
+  // 제품별 평균 납기일 계산 (벤더별 납기일의 평균)
+  const getAverageLeadTime = (product: any) => {
+    if (!product.vendors || product.vendors.length === 0) return 0;
+    
+    const leadTimes: number[] = [];
+    product.vendors.forEach((v: any) => {
+      const vendorKey = `${product.id}_${v.vendor?.id || 0}`;
+      const manual = manualLeadTimes[vendorKey];
+      if (manual) {
+        leadTimes.push(manual);
+      } else if (v.leadTime !== null && v.leadTime !== undefined && v.leadTime > 0) {
+        leadTimes.push(v.leadTime);
+      }
+    });
+    
+    if (leadTimes.length === 0) return 0;
+    const sum = leadTimes.reduce((a, b) => a + b, 0);
+    return Math.round(sum / leadTimes.length);
+  };
 
   // 가격 비교 차트 데이터
   const priceChartData = products.map((product: any) => {
@@ -52,18 +198,57 @@ export default function TestComparePage() {
     };
   });
 
-  // 납기 비교 차트 데이터
+  // 납기 비교 차트 데이터 (실제 납기일 우선, 없으면 평균 납기일 사용)
   const leadTimeChartData = products.map((product: any) => {
+    // 수동 입력한 납기 정보 우선 사용
+    const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
+    const manualLeadTime = manualLeadTimes[vendorKey];
+    
+    if (manualLeadTime) {
+      return {
+        name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
+        fullName: product.name,
+        leadTime: manualLeadTime,
+        isAverage: false,
+      };
+    }
+    
     const minLeadTime = product.vendors?.reduce(
-      (min: number, v: any) => (v.leadTime !== null && (!min || v.leadTime < min) ? v.leadTime : min),
+      (min: number, v: any) => {
+        const vKey = `${product.id}_${v.vendor?.id || 0}`;
+        const manual = manualLeadTimes[vKey];
+        const actualLeadTime = manual || (v.leadTime !== null && v.leadTime > 0 ? v.leadTime : null);
+        if (actualLeadTime !== null && (!min || actualLeadTime < min)) {
+          return actualLeadTime;
+        }
+        return min;
+      },
       null
     );
-    return {
-      name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-      fullName: product.name,
-      leadTime: minLeadTime || 0,
-    };
-  });
+    
+    // 실제 납기일이 있으면 사용
+    if (minLeadTime !== null && minLeadTime > 0) {
+      return {
+        name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
+        fullName: product.name,
+        leadTime: minLeadTime,
+        isAverage: false,
+      };
+    }
+    
+    // 실제 납기일이 없으면 평균 납기일 사용
+    const avgLeadTime = getAverageLeadTime(product);
+    if (avgLeadTime > 0) {
+      return {
+        name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
+        fullName: product.name,
+        leadTime: avgLeadTime,
+        isAverage: true,
+      };
+    }
+    
+    return null;
+  }).filter(Boolean); // 납기 정보가 없는 제품 제외
 
   // 차이점 하이라이트 함수
   const getDifferenceHighlight = (field: string, values: any[]) => {
@@ -168,8 +353,11 @@ export default function TestComparePage() {
   // 비교할 속성들
   const compareFields = [
     { key: "name", label: "제품명" },
+    { key: "catalogNumber", label: "카탈로그 번호" },
     { key: "brand", label: "브랜드" },
     { key: "category", label: "카테고리" },
+    { key: "specification", label: "규격/용량" },
+    { key: "grade", label: "Grade" },
     { key: "price", label: "최저가" },
     { key: "leadTime", label: "납기일" },
     { key: "stockStatus", label: "재고" },
@@ -180,14 +368,14 @@ export default function TestComparePage() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold">제품 비교 ({products.length}개)</h2>
           <p className="text-muted-foreground mt-1">
             여러 제품의 스펙, 가격, 납기를 한눈에 비교하세요
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={() => setShowHighlightDifferences(!showHighlightDifferences)}
@@ -208,6 +396,58 @@ export default function TestComparePage() {
           <Button variant="outline" onClick={clearCompare}>
             전체 삭제
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              products.forEach((product) => addProductToQuote(product));
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            모두 추가
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              // 비교 결과를 CSV로 내보내기
+              const csvHeaders = ["제품명", "카탈로그 번호", "브랜드", "카테고리", "규격/용량", "Grade", "최저가", "납기일", "재고", "최소 주문량", "공급사 수"];
+              const csvRows = products.map((product: any) => {
+                const vendor = product.vendors?.[0];
+                return [
+                  product.name || "",
+                  product.catalogNumber || "",
+                  product.brand || "",
+                  PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] || product.category || "",
+                  product.specification || "",
+                  product.grade || "",
+                  vendor?.priceInKRW ? `₩${vendor.priceInKRW.toLocaleString()}` : "",
+                  vendor?.leadTime ? `${vendor.leadTime}일` : "",
+                  vendor?.stockStatus || "",
+                  vendor?.minOrderQty || "",
+                  product.vendors?.length || 0,
+                ];
+              });
+              
+              const csvContent = [
+                csvHeaders.join(","),
+                ...csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+              ].join("\n");
+              
+              const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+              const link = document.createElement("a");
+              const url = URL.createObjectURL(blob);
+              link.setAttribute("href", url);
+              link.setAttribute("download", `제품비교_${new Date().toISOString().split("T")[0]}.csv`);
+              link.style.visibility = "hidden";
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            CSV 내보내기
+          </Button>
           <Link href="/test/quote">
             <Button>
               <ShoppingCart className="h-4 w-4 mr-2" />
@@ -216,6 +456,85 @@ export default function TestComparePage() {
           </Link>
         </div>
       </div>
+
+      {/* 필터 및 정렬 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">필터 및 정렬</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-700">정렬 기준</label>
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger className="text-xs">
+                  <ArrowUpDown className="h-3 w-3 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">제품명순</SelectItem>
+                  <SelectItem value="price">가격 낮은순</SelectItem>
+                  <SelectItem value="price_high">가격 높은순</SelectItem>
+                  <SelectItem value="specification">규격/용량순</SelectItem>
+                  <SelectItem value="leadTime">납기 빠른순</SelectItem>
+                  <SelectItem value="vendorCount">공급사 많은순</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-700">카테고리</label>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="text-xs">
+                  <Filter className="h-3 w-3 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {Object.entries(PRODUCT_CATEGORIES).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-700">브랜드</label>
+              <Select value={filterBrand} onValueChange={setFilterBrand}>
+                <SelectTrigger className="text-xs">
+                  <Filter className="h-3 w-3 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand} value={brand}>
+                      {brand}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-700">벤더</label>
+              <Select value={filterVendor} onValueChange={setFilterVendor}>
+                <SelectTrigger className="text-xs">
+                  <Filter className="h-3 w-3 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {vendors.map((vendor) => (
+                    <SelectItem key={vendor} value={vendor}>
+                      {vendor}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 비교 제품 관리 리스트 */}
       <Card>
@@ -235,42 +554,64 @@ export default function TestComparePage() {
                   className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900 truncate">
-                      {product.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm text-slate-900 truncate">
+                        {product.name}
+                      </p>
+                      <Link href={`/products/${product.id}`}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-xs"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          상세보기
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {product.brand && (
-                        <span className="text-xs text-slate-500">
+                        <Badge variant="secondary" className="text-xs">
                           {product.brand}
-                        </span>
+                        </Badge>
+                      )}
+                      {product.category && (
+                        <Badge variant="outline" className="text-xs">
+                          {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] || product.category}
+                        </Badge>
                       )}
                       {vendor?.vendor?.name && (
-                        <>
-                          <span className="text-slate-400">·</span>
-                          <span className="text-xs text-slate-500">
-                            {vendor.vendor.name}
-                          </span>
-                        </>
+                        <span className="text-xs text-slate-500">
+                          {vendor.vendor.name}
+                        </span>
                       )}
                       {vendor?.priceInKRW && (
-                        <>
-                          <span className="text-slate-400">·</span>
-                          <span className="text-xs font-medium text-slate-900">
-                            ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
-                          </span>
-                        </>
+                        <span className="text-xs font-medium text-slate-900">
+                          ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
+                        </span>
                       )}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleCompare(product.id)}
-                    className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    제거
-                  </Button>
+                  <div className="flex gap-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addProductToQuote(product)}
+                      className="text-xs"
+                    >
+                      <ShoppingCart className="h-3 w-3 mr-1" />
+                      추가
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleCompare(product.id)}
+                      className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      제거
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -316,38 +657,70 @@ export default function TestComparePage() {
           </Card>
 
           {/* 납기 비교 차트 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                납기 비교
-              </CardTitle>
-              <CardDescription>제품별 최단 납기일 비교</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={leadTimeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 10 }}
-                    interval={0}
-                    angle={-30}
-                    textAnchor="end"
-                    height={50}
-                  />
-                  <YAxis tickFormatter={(value) => `${value}일`} tick={{ fontSize: 10 }} />
-                  <Tooltip
-                    formatter={(value: number, name: string, props: any) => [
-                      `${value}일`,
-                      props.payload.fullName,
-                    ]}
-                  />
-                  <Bar dataKey="leadTime" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          {leadTimeChartData.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  납기 비교
+                </CardTitle>
+                <CardDescription>
+                  제품별 납기일 비교 (실제 납기일 우선, 없으면 평균 납기일 표시)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={leadTimeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10 }}
+                      interval={0}
+                      angle={-30}
+                      textAnchor="end"
+                      height={50}
+                    />
+                    <YAxis tickFormatter={(value) => `${value}일`} tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      formatter={(value: number, name: string, props: any) => {
+                        const isAvg = props.payload.isAverage;
+                        return [
+                          `${value}일${isAvg ? " (평균)" : ""}`,
+                          props.payload.fullName,
+                        ];
+                      }}
+                    />
+                    <Bar 
+                      dataKey="leadTime" 
+                      fill={(entry: any) => entry.isAverage ? "#fbbf24" : "#82ca9d"}
+                      name="납기일"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  납기 비교
+                </CardTitle>
+                <CardDescription>납기 정보가 있는 제품이 없습니다</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-slate-500 text-sm">
+                  <FileText className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                  <p>실제 납기 정보가 있는 제품이 없습니다.</p>
+                  <p className="text-xs mt-2">
+                    "견적 요청" 버튼을 클릭하여 품목 리스트에 추가하고 견적을 요청하세요.
+                    <br />
+                    견적서를 받은 후 납기일을 입력하면 비교 차트가 표시됩니다.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
@@ -366,9 +739,33 @@ export default function TestComparePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="sticky left-0 bg-white z-10 w-[150px]">항목</TableHead>
-                    {products.map((product: any) => (
+                    {products.map((product: any, index: number) => (
                       <TableHead key={product.id} className="min-w-[180px]">
-                        {product.name}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="flex-1 truncate">{product.name}</span>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-5 w-5"
+                              onClick={() => moveProduct(index, "up")}
+                              disabled={index === 0}
+                              title="위로 이동"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-5 w-5"
+                              onClick={() => moveProduct(index, "down")}
+                              disabled={index === products.length - 1}
+                              title="아래로 이동"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
                       </TableHead>
                     ))}
                   </TableRow>
@@ -401,6 +798,15 @@ export default function TestComparePage() {
                         } else if (field.key === "category") {
                           value = PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] || product.category;
                           allValues = products.map((p: any) => PRODUCT_CATEGORIES[p.category as keyof typeof PRODUCT_CATEGORIES] || p.category);
+                        } else if (field.key === "catalogNumber") {
+                          value = product.catalogNumber || "-";
+                          allValues = products.map((p: any) => p.catalogNumber || "-");
+                        } else if (field.key === "specification") {
+                          value = product.specification || "-";
+                          allValues = products.map((p: any) => p.specification || "-");
+                        } else if (field.key === "grade") {
+                          value = product.grade || "-";
+                          allValues = products.map((p: any) => p.grade || "-");
                         } else {
                           value = product[field.key] || "-";
                           allValues = products.map((p: any) => p[field.key] || "-");
@@ -408,12 +814,53 @@ export default function TestComparePage() {
 
                         const cellClassName = `${getDifferenceHighlight(field.key, allValues)} ${getOptimalHighlight(field.key, value, allValues)}`;
 
+                        // 납기일 필드 특별 처리
+                        if (field.key === "leadTime") {
+                          const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
+                          const manualLeadTime = manualLeadTimes[vendorKey];
+                          const actualLeadTime = manualLeadTime || value;
+                          const averageLeadTime = getAverageLeadTime(product);
+                          const displayLeadTime = actualLeadTime > 0 ? actualLeadTime : averageLeadTime;
+                          const isAverage = actualLeadTime === 0 && averageLeadTime > 0;
+                          
+                          return (
+                            <TableCell key={product.id} className={cellClassName}>
+                              <div className="flex items-center gap-2">
+                                {displayLeadTime > 0 ? (
+                                  <>
+                                    <span className={isAverage ? "text-slate-600" : ""}>
+                                      {displayLeadTime}일
+                                      {isAverage && (
+                                        <span className="text-xs text-slate-400 ml-1">(평균)</span>
+                                      )}
+                                    </span>
+                                    {actualLeadTime > 0 && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => {
+                                          setEditingLeadTime({ productId: product.id, vendorIndex: 0 });
+                                          setTempLeadTime(manualLeadTime?.toString() || value?.toString() || "");
+                                        }}
+                                        title="납기일 수정"
+                                      >
+                                        <Edit2 className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-slate-400 text-xs">-</span>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        }
+                        
                         return (
                           <TableCell key={product.id} className={cellClassName}>
                             {field.key === "price" && value > 0 ? (
                               `₩${value.toLocaleString()}`
-                            ) : field.key === "leadTime" && value > 0 ? (
-                              `${value}일`
                             ) : (
                               value
                             )}
@@ -428,6 +875,66 @@ export default function TestComparePage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 납기일 수정 다이얼로그 */}
+      <Dialog open={!!editingLeadTime} onOpenChange={(open) => !open && setEditingLeadTime(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>납기일 입력</DialogTitle>
+            <DialogDescription>
+              견적서를 받은 후 확인한 납기일을 입력하세요. 이 정보는 이 브라우저에만 저장됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="leadTime">납기일 (일)</Label>
+              <Input
+                id="leadTime"
+                type="number"
+                min="0"
+                value={tempLeadTime}
+                onChange={(e) => setTempLeadTime(e.target.value)}
+                placeholder="예: 14"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingLeadTime(null);
+                  setTempLeadTime("");
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingLeadTime) {
+                    const leadTime = parseInt(tempLeadTime) || 0;
+                    const product = products.find((p: any) => p.id === editingLeadTime.productId);
+                    if (product) {
+                      const vendorKey = `${product.id}_${product.vendors?.[editingLeadTime.vendorIndex]?.vendor?.id || 0}`;
+                      setManualLeadTimes((prev) => {
+                        const updated = { ...prev, [vendorKey]: leadTime };
+                        // 로컬 스토리지에 저장
+                        if (typeof window !== "undefined") {
+                          localStorage.setItem("manualLeadTimes", JSON.stringify(updated));
+                        }
+                        return updated;
+                      });
+                    }
+                    setEditingLeadTime(null);
+                    setTempLeadTime("");
+                  }
+                }}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                저장
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

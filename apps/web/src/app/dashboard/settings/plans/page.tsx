@@ -66,10 +66,11 @@ export default function PlansPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/settings/plans");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/settings/plans");
+  //   return null;
+  // }
 
   const organizations = organizationsData?.organizations || [];
 
@@ -77,7 +78,7 @@ export default function PlansPage() {
     {
       id: SubscriptionPlan.FREE,
       name: "Free / Beta",
-      description: "테스트 및 파일럿용 무료 플랜",
+      description: "기능 체험 및 파일럿용 무료 플랜",
       icon: Users,
       price: 0,
       features: PLAN_LIMITS[SubscriptionPlan.FREE],

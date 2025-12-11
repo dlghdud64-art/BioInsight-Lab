@@ -42,10 +42,11 @@ export default function VendorBillingPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/vendor/billing");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard/vendor/billing");
+  //   return null;
+  // }
 
   const records = data?.records || [];
   const stats = data?.stats || {

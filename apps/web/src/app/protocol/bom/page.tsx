@@ -27,7 +27,14 @@ import {
   DollarSign,
   Package,
   AlertCircle,
+  Upload,
+  Clipboard,
+  FlaskConical,
+  Sparkles,
+  FileCheck,
+  X,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +93,115 @@ export default function ProtocolBOMPage() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [editingReagentId, setEditingReagentId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  // 개발 환경에서는 기본적으로 PDF 업로드 활성화
+  const [pdfUploadEnabled, setPdfUploadEnabled] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // PDF 업로드 활성화 여부 확인
+  useQuery({
+    queryKey: ["config"],
+    queryFn: async () => {
+      const res = await fetch("/api/config");
+      const data = await res.json();
+      setPdfUploadEnabled(data.pdfUploadEnabled ?? true); // 기본값을 true로 변경
+      return data;
+    },
+  });
+
+  // 파일 검증 및 설정
+  const handleFile = (file: File | null) => {
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "파일 형식 오류",
+        description: "PDF 파일만 업로드 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "파일 크기 초과",
+        description: "파일 크기는 10MB 이하여야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPdfFile(file);
+    setExtractionResult(null);
+    setReagents([]);
+  };
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFile(file);
+    }
+  };
+
+  // PDF 파일에서 시약 추출
+  const extractFromFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/protocol/extract", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "PDF 분석에 실패했습니다.");
+      }
+
+      return response.json() as Promise<ProtocolExtractionResult>;
+    },
+    onSuccess: (data) => {
+      setExtractionResult(data);
+      const reagentsWithId: ReagentWithMatch[] = data.reagents.map((r, idx) => ({
+        ...r,
+        id: `reagent-${idx}-${Date.now()}`,
+      }));
+      setReagents(reagentsWithId);
+      if (!bomTitle && data.experimentType) {
+        setBomTitle(`${data.experimentType} 프로토콜 BOM`);
+      }
+      toast({
+        title: "PDF 분석 완료",
+        description: `${data.reagents.length}개 항목이 추출되었습니다.`,
+      });
+      matchProductsForReagents(reagentsWithId);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "PDF 분석 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // 프로토콜 텍스트에서 시약 추출
   const extractMutation = useMutation({
@@ -337,18 +453,29 @@ export default function ProtocolBOMPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/protocol/bom");
-    return null;
-  }
+  // 인증 체크 제거 - 로그인 없이도 프로토콜 분석 사용 가능
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/protocol/bom");
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Protocol → BOM 생성</h1>
-          <p className="text-muted-foreground mt-2">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <FlaskConical className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                Protocol → BOM 생성
+                <Sparkles className="h-5 w-5 text-blue-500" />
+              </h1>
+            </div>
+          </div>
+          <p className="text-muted-foreground mt-2 ml-11">
             실험 프로토콜 텍스트를 입력하면 필요한 시약/기구/장비를 자동으로 추출하고 BOM을 생성합니다.
           </p>
         </div>
@@ -359,43 +486,179 @@ export default function ProtocolBOMPage() {
             <CardHeader>
               <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                프로토콜 텍스트 입력
+                프로토콜 입력
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                PDF에서 복사한 프로토콜 텍스트를 붙여넣으세요.
+                PDF 파일을 업로드하거나 텍스트를 붙여넣어 프로토콜을 분석합니다.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="protocol-text" className="text-xs font-medium">
-                  프로토콜 텍스트
-                </Label>
-                <Textarea
-                  id="protocol-text"
-                  value={protocolText}
-                  onChange={(e) => setProtocolText(e.target.value)}
-                  placeholder="프로토콜 또는 실험 절차 텍스트를 붙여넣으세요..."
-                  rows={12}
-                  className="text-sm font-mono"
-                />
-              </div>
-              <Button
-                onClick={handleExtract}
-                disabled={!protocolText.trim() || extractMutation.isPending}
-                className="w-full bg-slate-900 text-white hover:bg-slate-800"
-              >
-                {extractMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    분석 중...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-4 w-4 mr-2" />
-                    시약 추출 실행
-                  </>
+              <Tabs defaultValue={pdfUploadEnabled ? "upload" : "paste"} className="w-full">
+                <TabsList className="grid w-full" style={{ gridTemplateColumns: pdfUploadEnabled ? "1fr 1fr" : "1fr" }}>
+                  {pdfUploadEnabled && (
+                    <TabsTrigger value="upload" className="flex items-center gap-2 text-xs">
+                      <Upload className="h-3 w-3" />
+                      PDF 업로드
+                    </TabsTrigger>
+                  )}
+                  <TabsTrigger value="paste" className="flex items-center gap-2 text-xs">
+                    <Clipboard className="h-3 w-3" />
+                    텍스트 붙여넣기
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* PDF 업로드 탭 */}
+                {pdfUploadEnabled && (
+                  <TabsContent value="upload" className="space-y-4 mt-4">
+                    <div className="space-y-3">
+                      <Label className="text-xs font-medium text-slate-700">
+                        프로토콜 PDF 파일 업로드
+                      </Label>
+                      
+                      {/* 드래그 앤 드롭 영역 */}
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`
+                          relative border-2 border-dashed rounded-lg p-8 text-center transition-all
+                          ${isDragging 
+                            ? "border-blue-500 bg-blue-50" 
+                            : pdfFile 
+                            ? "border-green-500 bg-green-50" 
+                            : "border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100"
+                          }
+                        `}
+                      >
+                        <input
+                          id="protocol-file"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => handleFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                        
+                        {pdfFile ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-center">
+                              <div className="p-3 bg-green-100 rounded-full">
+                                <FileCheck className="h-8 w-8 text-green-600" />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-slate-900">{pdfFile.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setPdfFile(null);
+                                const input = document.getElementById("protocol-file") as HTMLInputElement;
+                                if (input) input.value = "";
+                              }}
+                              className="text-xs text-slate-500 hover:text-slate-700"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              파일 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-center">
+                              <div className={`p-3 rounded-full ${isDragging ? "bg-blue-100" : "bg-slate-200"}`}>
+                                <Upload className={`h-8 w-8 ${isDragging ? "text-blue-600" : "text-slate-500"}`} />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-slate-700">
+                                {isDragging ? "파일을 놓아주세요" : "PDF 파일을 드래그하거나 클릭하여 업로드"}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                최대 10MB까지 업로드 가능
+                              </p>
+                            </div>
+                            <label htmlFor="protocol-file">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="cursor-pointer"
+                                asChild
+                              >
+                                <span>파일 선택</span>
+                              </Button>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={() => {
+                        if (pdfFile) {
+                          extractFromFileMutation.mutate(pdfFile);
+                        }
+                      }}
+                      disabled={!pdfFile || extractFromFileMutation.isPending}
+                      className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                      size="lg"
+                    >
+                      {extractFromFileMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          PDF 분석 중...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          시약 추출 실행
+                        </>
+                      )}
+                    </Button>
+                  </TabsContent>
                 )}
-              </Button>
+
+                {/* 텍스트 붙여넣기 탭 */}
+                <TabsContent value="paste" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="protocol-text" className="text-xs font-medium">
+                      프로토콜 텍스트
+                    </Label>
+                    <Textarea
+                      id="protocol-text"
+                      value={protocolText}
+                      onChange={(e) => {
+                        setProtocolText(e.target.value);
+                        setExtractionResult(null);
+                        setReagents([]);
+                      }}
+                      placeholder="예: 1. 세포 배양액 준비: DMEM 배지에 10% FBS와 1% 페니실린-스트렙토마이신을 첨가합니다. 2. 세포 시딩: 96-well plate에 1×10⁴ cells/well로 시딩합니다. 3. 배양: 37°C, 5% CO₂ 조건에서 24시간 배양합니다."
+                      rows={12}
+                      className="text-sm font-mono"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleExtract}
+                    disabled={!protocolText.trim() || extractMutation.isPending}
+                    className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                  >
+                    {extractMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        분석 중...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4 mr-2" />
+                        시약 추출 실행
+                      </>
+                    )}
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -640,7 +903,7 @@ export default function ProtocolBOMPage() {
                     </div>
                   )}
 
-                  {/* BOM 설정 */}
+                  {/* BOM 설정 및 액션 */}
                   <div className="pt-4 border-t space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="bom-title" className="text-xs font-medium">
@@ -670,23 +933,53 @@ export default function ProtocolBOMPage() {
                         수량은 실험 횟수에 따라 자동으로 계산됩니다. (현재: {experimentRounds}회)
                       </p>
                     </div>
-                    <Button
-                      onClick={handleCreateBOM}
-                      disabled={!bomTitle.trim() || reagents.length === 0 || bomMutation.isPending}
-                      className="w-full bg-slate-900 text-white hover:bg-slate-800"
-                    >
-                      {bomMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          생성 중...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          BOM 생성 및 품목 리스트로 변환
-                        </>
+                    
+                    {/* 액션 버튼들 */}
+                    <div className="space-y-2">
+                      {reagents.length > 0 && (
+                        <Button
+                          onClick={() => {
+                            // 추출된 시약들을 검색어로 변환하여 검색 페이지로 이동
+                            const searchQueries = reagents
+                              .map((r) => r.name)
+                              .filter(Boolean)
+                              .slice(0, 5); // 최대 5개만
+                            const queryString = searchQueries.join(" OR ");
+                            const params = new URLSearchParams({
+                              q: queryString,
+                              ...(extractionResult?.experimentType && { 
+                                category: extractionResult.experimentType.includes("ELISA") ? "REAGENT" : "" 
+                              }),
+                            });
+                            router.push(`/test/search?${params.toString()}`);
+                          }}
+                          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                          variant="default"
+                        >
+                          <Search className="h-4 w-4 mr-2" />
+                          추출된 시약으로 제품 검색하기
+                        </Button>
                       )}
-                    </Button>
+                      
+                      <Button
+                        onClick={handleCreateBOM}
+                        disabled={!bomTitle.trim() || reagents.length === 0 || bomMutation.isPending}
+                        className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                        variant="default"
+                      >
+                        {bomMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            생성 중...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            BOM 생성 및 품목 리스트로 변환
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </>
               ) : (

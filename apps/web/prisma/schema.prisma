@@ -174,9 +174,12 @@ model Product {
   specification         String? // 규격/?�량 (?? 1mg, 500mL, 0.22um ??
   regulatoryCompliance  String? // 규제/?�전 규격 (USP, EP, JP ??
 
+  // 안전·규제 정보 (P1)
+  msdsUrl               String? // MSDS/SDS 문서 URL
+  safetyNote            String? @db.Text // 안전 취급 요약/주의사항
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   // 관�?
   vendors         ProductVendor[]
   comparisons     ComparisonProduct[]

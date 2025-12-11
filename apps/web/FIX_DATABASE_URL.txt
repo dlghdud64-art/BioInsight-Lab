@@ -1,0 +1,23 @@
+.env 파일 수정 방법
+
+1. apps/web/.env 파일을 텍스트 에디터로 엽니다.
+
+2. 다음 줄을 찾습니다:
+   DATABASE_URL="prisma+postgres://localhost:51213/?api_key=..."
+
+3. 다음 형식으로 변경합니다:
+   DATABASE_URL="postgresql://postgres:비밀번호@localhost:5432/ai_biocompare?schema=public"
+
+   예시:
+   - 비밀번호가 "mypassword"인 경우:
+     DATABASE_URL="postgresql://postgres:mypassword@localhost:5432/ai_biocompare?schema=public"
+   
+   - 비밀번호가 "pass@123"인 경우 (특수문자 URL 인코딩):
+     DATABASE_URL="postgresql://postgres:pass%40123@localhost:5432/ai_biocompare?schema=public"
+
+4. 파일을 저장합니다.
+
+5. 다음 명령어로 마이그레이션을 실행합니다:
+   cd apps/web
+   npm run db:migrate
+

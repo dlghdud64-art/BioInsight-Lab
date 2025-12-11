@@ -6,10 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ReorderRecommendations } from "@/components/inventory/reorder-recommendations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package } from "lucide-react";
+import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS, PRODUCT_CATEGORIES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { MainHeader } from "@/app/_components/main-header";
+import { PageHeader } from "@/app/_components/page-header";
+import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { LayoutDashboard } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -48,6 +52,17 @@ export default function DashboardPage() {
     enabled: status === "authenticated",
   });
 
+  // 구매 내역/예산 요약 조회
+  const { data: purchaseSummary, isLoading: purchaseSummaryLoading } = useQuery({
+    queryKey: ["purchase-summary"],
+    queryFn: async () => {
+      const response = await fetch("/api/reports/purchase?period=month");
+      if (!response.ok) throw new Error("Failed to fetch purchase summary");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
   if (status === "loading") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -58,19 +73,89 @@ export default function DashboardPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard");
-    return null;
-  }
+  // 개발 단계: 로그인 체크 제거
+  // if (status === "unauthenticated") {
+  //   router.push("/auth/signin?callbackUrl=/dashboard");
+  //   return null;
+  // }
 
   const quotes = quotesData?.quotes || [];
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">대시보드</h1>
+    <div className="min-h-screen bg-slate-50">
+      <MainHeader />
+      <div className="flex">
+        <DashboardSidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+            <PageHeader
+              title="대시보드"
+              description="견적, 즐겨찾기, 최근 본 제품, 구매 내역 요약을 한눈에 확인합니다."
+              icon={LayoutDashboard}
+            />
+
+        {/* 구매 내역/예산 요약 카드 */}
+        {!purchaseSummaryLoading && purchaseSummary && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">이번 달 구매 금액</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  ₩{purchaseSummary.metrics?.totalAmount?.toLocaleString("ko-KR") || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {purchaseSummary.metrics?.itemCount || 0}개 품목
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">예산 사용률</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {purchaseSummary.budgetUsage[0]?.name || "예산"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">-</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <Link href="/dashboard/budget" className="text-primary hover:underline">
+                        예산 설정하기
+                      </Link>
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">구매 리포트</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/reports">
+                  <Button variant="outline" className="w-full">
+                    상세 리포트 보기
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* 재주문 추천 섹션 (상단에 표시) */}
         <div className="mb-6">
@@ -358,6 +443,9 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
+          </div>
+        </div>
       </div>
     </div>
   );
