@@ -300,6 +300,7 @@ model Quote {
   comparisonId   String? // 비교 ?트 기반 리스?인 경우
   title          String // 리스???목
   description    String?   @db.Text // 리스???명/비고
+  status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
   // 그룹?어 ?동 ?보
   templateId     String? // ?용???플?ID
   templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??

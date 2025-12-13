@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,11 @@ import {
   Clock,
   XCircle,
   ShoppingCart,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS } from "@/lib/constants";
+import { useToast } from "@/hooks/use-toast";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -24,6 +27,8 @@ export default function QuoteDetailPage() {
   const { data: session, status } = useSession();
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const quoteId = params.id as string;
 
   const { data: quoteData, isLoading } = useQuery({
@@ -35,6 +40,43 @@ export default function QuoteDetailPage() {
     },
     enabled: !!quoteId && status === "authenticated",
   });
+
+  // 구매 완료 상태 업데이트
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: QuoteStatus) => {
+      const response = await fetch(`/api/quotes/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!response.ok) throw new Error("Failed to update status");
+      return response.json();
+    },
+    onSuccess: (data, newStatus) => {
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      toast({
+        title: newStatus === "COMPLETED" ? "구매 완료 처리됨" : "상태 업데이트 완료",
+        description: newStatus === "COMPLETED" 
+          ? "구매 내역이 자동으로 기록되었습니다."
+          : "견적 상태가 업데이트되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "업데이트 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleMarkAsCompleted = () => {
+    if (confirm("이 견적을 구매 완료로 표시하시겠습니까? 구매 내역이 자동으로 기록됩니다.")) {
+      updateStatusMutation.mutate("COMPLETED");
+    }
+  };
 
   if (status === "loading" || isLoading) {
     return (
@@ -276,6 +318,22 @@ export default function QuoteDetailPage() {
           <Link href="/quotes">
             <Button variant="outline">목록으로</Button>
           </Link>
+          {quote.status !== "COMPLETED" && (
+            <Button
+              onClick={handleMarkAsCompleted}
+              disabled={updateStatusMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
+            </Button>
+          )}
+          {quote.status === "COMPLETED" && (
+            <Badge variant="default" className="px-3 py-1.5">
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              구매 완료됨
+            </Badge>
+          )}
           <Link href="/compare/quote">
             <Button>
               <ShoppingCart className="h-4 w-4 mr-2" />
