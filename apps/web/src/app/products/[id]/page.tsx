@@ -9,7 +9,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
-import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle } from "lucide-react";
+import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReviewSection } from "@/components/products/review-section";
 import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
@@ -34,6 +34,8 @@ export default function ProductDetailPage() {
   const [showDatasheetSection, setShowDatasheetSection] = useState(false);
   const [copied, setCopied] = useState(false);
   const [msdsLinkStatus, setMsdsLinkStatus] = useState<"checking" | "valid" | "invalid" | null>(null);
+  const [generatedUsage, setGeneratedUsage] = useState<string | null>(null);
+  const [isGeneratingUsage, setIsGeneratingUsage] = useState(false);
   const { toast } = useToast();
 
   const isInCompare = hasProduct(id);
@@ -415,24 +417,67 @@ ${extractedInfo.summary || "N/A"}`;
                   </div>
                 )}
 
-                {/* Grade/규격 상세 */}
-                {product.grade && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-2">Grade/규격</h3>
-                    <p className="text-sm text-slate-700">{product.grade}</p>
-                    {product.specification && (
-                      <p className="text-xs text-slate-500 mt-1">{product.specification}</p>
-                    )}
+                {/* 주요 스펙 요약 카드 */}
+                {(product.grade || product.specification || product.catalogNumber || product.regulatoryCompliance) && (
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="font-semibold text-sm md:text-base mb-3 md:mb-4">주요 스펙</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                      {product.grade && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">Grade</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.grade}</div>
+                        </div>
+                      )}
+                      {product.specification && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">규격/용량</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900 line-clamp-2">{product.specification}</div>
+                        </div>
+                      )}
+                      {product.catalogNumber && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">카탈로그 번호</div>
+                          <div className="text-xs md:text-sm font-mono font-semibold text-slate-900">{product.catalogNumber}</div>
+                        </div>
+                      )}
+                      {product.regulatoryCompliance && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">규제 규격</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.regulatoryCompliance}</div>
+                        </div>
+                      )}
+                      {product.brand && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">브랜드</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.brand}</div>
+                        </div>
+                      )}
+                      {product.category && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">카테고리</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">
+                            {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* 스펙 요약 */}
-                {product.specification && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-2">스펙 요약</h3>
-                    <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                      {product.specification}
-                    </p>
+                {/* 상세 스펙 정보 */}
+                {product.specifications && typeof product.specifications === "object" && (
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="font-semibold text-sm md:text-base mb-3">상세 스펙</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                      {Object.entries(product.specifications as Record<string, any>).map(
+                        ([key, value]) => (
+                          <div key={key} className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="text-[10px] md:text-xs text-slate-500 mb-1">{key}</div>
+                            <div className="text-xs md:text-sm font-semibold text-slate-900">{String(value)}</div>
+                          </div>
+                        )
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -446,22 +491,6 @@ ${extractedInfo.summary || "N/A"}`;
                   </div>
                 )}
 
-                {/* 주의사항 */}
-                {product.specifications && typeof product.specifications === "object" && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-2">주의사항</h3>
-                    <div className="space-y-1 text-sm text-slate-700">
-                      {Object.entries(product.specifications as Record<string, any>).map(
-                        ([key, value]) => (
-                          <div key={key} className="flex justify-between py-1">
-                            <span className="text-slate-500">{key}:</span>
-                            <span className="text-right">{String(value)}</span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* 제조사 페이지 링크 */}
                 {product.vendors?.[0]?.url && (
