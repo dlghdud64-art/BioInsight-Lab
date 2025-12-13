@@ -63,11 +63,11 @@ export function HeroSection() {
               <span className="whitespace-normal md:whitespace-nowrap">한 번에 정리되는 구매 요청 리스트</span>
             </h1>
             <p className="text-[11px] md:text-sm leading-relaxed text-slate-600 max-w-xl">
-              GPT로 의미 분석하여 여러 벤더 제품을 한 번에 검색·비교하고,
+              실험에 맞는 후보를 찾고, 스펙·가격 비교로 추리고,
               <br className="hidden sm:block" />
-              구매 요청 리스트를 TSV/CSV/엑셀로 자동 생성해
+              최종 구매 요청 리스트를 TSV/엑셀로 내보내
               <br className="hidden sm:block" />
-              그룹웨어/전자결재 양식에 바로 붙여넣을 수 있습니다.
+              동료·구매팀과 공유할 수 있습니다.
             </p>
           </div>
 

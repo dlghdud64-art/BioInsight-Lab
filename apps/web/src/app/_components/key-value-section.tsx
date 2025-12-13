@@ -42,10 +42,10 @@ export function KeyValueSection() {
             {/* 텍스트 블록 */}
             <div className="space-y-1 min-w-0 flex-1">
               <h3 className="text-xs md:text-sm font-semibold text-slate-900">
-                품목 리스트 자동 정리 및 그룹웨어 연동
+                품목 리스트 자동 정리
               </h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                담아둔 후보 제품을 비교하고 불필요한 항목은 빼고, 실제로 구매에 쓸 품목 리스트만 남깁니다. TSV/CSV/엑셀 형식으로 내보내 그룹웨어/전자결재 양식에 바로 붙여넣을 수 있습니다.
+                담아둔 후보 제품을 비교하고 불필요한 항목은 빼고, 실제로 구매에 쓸 품목 리스트만 남깁니다. 견적 요청·구매 요청서 작성 시 그대로 활용할 수 있습니다.
               </p>
             </div>
           </CardContent>

@@ -21,9 +21,9 @@ function SearchContent() {
         </>
       )}
       {!q && (
-        <div className="text-center py-8 md:py-12 text-muted-foreground">
+        <div className="text-center py-8 md:py-12 text-slate-500">
           <p className="mb-2 text-xs md:text-sm">검색어를 입력하세요.</p>
-          <p className="text-[10px] md:text-sm">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
+          <p className="text-[10px] md:text-sm px-2">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
         </div>
       )}
     </>
@@ -42,8 +42,8 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="container mx-auto px-3 md:px-4 py-3 md:py-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader
             title="제품 검색"
             description="제품명, 벤더, 카테고리를 입력하여 원하는 제품을 찾아보세요."
