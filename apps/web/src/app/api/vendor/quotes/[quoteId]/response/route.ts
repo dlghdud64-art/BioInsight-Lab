@@ -70,20 +70,14 @@ export async function POST(
     // 견적 요청자에게 이메일 발송
     if (quote?.user?.email) {
       try {
-        // response 객체에 createdAt이 있는지 확인
-        const responseWithDate = await db.quoteResponse.findUnique({
-          where: { id: response.id },
-          select: { createdAt: true, price: true, notes: true },
-        });
-
         const emailTemplate = generateQuoteResponseEmail({
           quoteTitle: quote.title,
           vendorName: vendor.name,
-          totalPrice: response.price || null,
-          currency: "KRW",
-          message: response.notes || null,
+          totalPrice: response.totalPrice,
+          currency: response.currency || "KRW",
+          message: response.message,
           quoteUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quotes/${quoteId}`,
-          responseDate: responseWithDate?.createdAt || new Date(),
+          responseDate: response.createdAt,
         });
 
         await sendEmail({

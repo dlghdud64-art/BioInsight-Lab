@@ -76,10 +76,10 @@ export async function createQuoteResponse(
     data: {
       quoteId,
       vendorId,
-      price,
-      leadTime: data.leadTime,
-      notes: data.notes || data.message, // message를 notes로 매핑
-      // currency와 validUntil은 현재 스키마에 없으므로 notes에 포함하거나 무시
+      totalPrice: data.totalPrice ?? data.price ?? null,
+      currency: data.currency || "KRW",
+      message: data.message || data.notes || null,
+      validUntil: data.validUntil || null,
     },
   });
 }
