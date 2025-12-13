@@ -133,9 +133,9 @@ export default function EnterpriseSettingsPage() {
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
-          <div className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 py-8">
-              <div className="text-center py-12">로딩 중...</div>
+          <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+              <div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>
             </div>
           </div>
         </div>
