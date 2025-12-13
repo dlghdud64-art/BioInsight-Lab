@@ -97,7 +97,7 @@ export function SearchResultItem({
             )}
           </div>
 
-          {/* 중간: 카테고리, Grade/규격, 스펙 요약 */}
+          {/* 중간: 카테고리, Grade/규격, 카탈로그 번호, 스펙 요약 */}
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               {product.category && (
@@ -111,7 +111,7 @@ export function SearchResultItem({
                 </Badge>
               )}
               {product.catalogNumber && (
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px] text-slate-600 font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                   {product.catalogNumber}
                 </span>
               )}

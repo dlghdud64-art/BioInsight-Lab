@@ -459,8 +459,37 @@ ${extractedInfo.summary || "N/A"}`;
                             variant="outline"
                             size="sm"
                             className="text-xs"
-                            onClick={() => {
-                              window.open(product.msdsUrl, "_blank");
+                            onClick={async () => {
+                              try {
+                                // 링크 유효성 검사 (간단한 URL 형식 검사)
+                                const url = product.msdsUrl;
+                                if (!url || (!url.startsWith("http://") && !url.startsWith("https://"))) {
+                                  toast({
+                                    title: "유효하지 않은 링크",
+                                    description: "MSDS/SDS 링크가 올바른 형식이 아닙니다.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+
+                                // 새 창에서 링크 열기
+                                const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+                                
+                                // 새 창이 차단되었는지 확인
+                                if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+                                  toast({
+                                    title: "팝업 차단됨",
+                                    description: "브라우저에서 팝업이 차단되었습니다. 팝업 차단을 해제해주세요.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "링크 열기 실패",
+                                  description: "MSDS/SDS 문서를 열 수 없습니다. 링크를 확인해주세요.",
+                                  variant: "destructive",
+                                });
+                              }
                             }}
                           >
                             <FileText className="h-3 w-3 mr-1.5" />
