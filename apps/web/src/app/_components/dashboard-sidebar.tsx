@@ -72,6 +72,11 @@ const navItems: NavItem[] = [
     icon: Activity,
   },
   {
+    title: "안전 관리",
+    href: "/dashboard/safety",
+    icon: Shield,
+  },
+  {
     title: "공급사",
     href: "/dashboard/supplier",
     icon: Store,

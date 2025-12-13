@@ -24,6 +24,11 @@ export interface Product {
   imageUrl?: string;
   msdsUrl?: string; // MSDS/SDS 문서 URL
   safetyNote?: string; // 안전 취급 요약/주의사항
+  // 안전 필드 구조화 (P2)
+  hazardCodes?: string[]; // 위험 코드 배열 (예: ["H314", "H290"])
+  pictograms?: string[]; // GHS 피크토그램 배열 (예: ["corrosive", "exclamation"])
+  storageCondition?: string; // 보관 조건 (예: "2~8°C 냉장 보관")
+  ppe?: string[]; // 개인보호장비 배열 (예: ["gloves", "goggles"])
   vendors?: ProductVendor[];
   createdAt: Date;
   updatedAt: Date;

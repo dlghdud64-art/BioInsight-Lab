@@ -579,13 +579,90 @@ ${extractedInfo.summary || "N/A"}`;
                 )}
 
                 {/* 안전 · 규제 정보 */}
-                {(product.msdsUrl || product.safetyNote) && (
+                {(product.msdsUrl || product.safetyNote || product.hazardCodes || product.pictograms || product.storageCondition || product.ppe) && (
                   <div className="pt-4 border-t">
                     <div className="flex items-center gap-2 mb-3">
                       <Shield className="h-4 w-4 text-amber-600" />
-                      <h3 className="font-semibold text-sm">안전 · 규제 정보</h3>
+                      <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 md:space-y-4">
+                      {/* 구조화된 안전 필드 (P2) */}
+                      {(product.hazardCodes || product.pictograms || product.ppe) && (
+                        <div className="space-y-2">
+                          {/* 위험 코드 */}
+                          {product.hazardCodes && Array.isArray(product.hazardCodes) && product.hazardCodes.length > 0 && (
+                            <div>
+                              <div className="text-xs md:text-sm text-slate-600 mb-1.5">위험 코드</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {product.hazardCodes.map((code: string, idx: number) => (
+                                  <Badge key={idx} variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] md:text-xs">
+                                    {code}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* GHS 피크토그램 */}
+                          {product.pictograms && Array.isArray(product.pictograms) && product.pictograms.length > 0 && (
+                            <div>
+                              <div className="text-xs md:text-sm text-slate-600 mb-1.5">GHS 피크토그램</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {product.pictograms.map((pictogram: string, idx: number) => {
+                                  const pictogramLabels: Record<string, string> = {
+                                    corrosive: "부식성",
+                                    exclamation: "경고",
+                                    flame: "인화성",
+                                    skull: "독성",
+                                    health: "건강 위험",
+                                    environment: "환경 위험",
+                                    explosive: "폭발성",
+                                    oxidizer: "산화성",
+                                  };
+                                  return (
+                                    <Badge key={idx} variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-[10px] md:text-xs">
+                                      {pictogramLabels[pictogram] || pictogram}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 개인보호장비 */}
+                          {product.ppe && Array.isArray(product.ppe) && product.ppe.length > 0 && (
+                            <div>
+                              <div className="text-xs md:text-sm text-slate-600 mb-1.5">필수 개인보호장비</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {product.ppe.map((item: string, idx: number) => {
+                                  const ppeLabels: Record<string, string> = {
+                                    gloves: "보호장갑",
+                                    goggles: "보안경",
+                                    mask: "마스크",
+                                    labcoat: "실험복",
+                                    respirator: "호흡기",
+                                  };
+                                  return (
+                                    <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] md:text-xs">
+                                      {ppeLabels[item] || item}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 보관 조건 */}
+                          {product.storageCondition && (
+                            <div>
+                              <div className="text-xs md:text-sm text-slate-600 mb-1">보관 조건</div>
+                              <div className="p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                <p className="text-xs md:text-sm text-slate-700">{product.storageCondition}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {/* MSDS/SDS 링크 */}
                       {product.msdsUrl && (
                         <div className="space-y-2">

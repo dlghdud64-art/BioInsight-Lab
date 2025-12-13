@@ -57,11 +57,24 @@ export async function extractReagentsFromProtocol(
   // PDF에서 텍스트 추출
   const pdfText = await extractTextFromPDF(pdfBuffer);
 
+  // 텍스트 전처리: 불필요한 공백/줄바꿈 정리
+  const cleanedText = pdfText
+    .replace(/\s+/g, " ") // 연속된 공백을 하나로
+    .replace(/\n{3,}/g, "\n\n") // 연속된 줄바꿈을 두 개로
+    .trim();
+
   // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
-  const truncatedText = pdfText.slice(0, 10000); // 처음 10,000자만 사용
+  // 표나 리스트가 포함된 경우 더 많은 텍스트 필요
+  const truncatedText = cleanedText.slice(0, 15000); // 처음 15,000자로 증가
 
   // GPT를 사용하여 시약 및 실험 조건 추출
   const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
+
+중요 지침:
+1. 표(table)나 리스트 형식으로 나열된 시약도 모두 추출하세요.
+2. 농도, 부피, 온도, 시간 등 숫자와 단위를 정확하게 추출하세요.
+3. 제품명, 키트명, 브랜드명이 있으면 포함하세요.
+4. 실험 조건은 프로토콜의 각 단계별로 추출하세요.
 
 프로토콜 내용:
 ${truncatedText}
@@ -121,7 +134,8 @@ ${truncatedText}
 }
 
 시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.
-실험 조건은 프로토콜에서 명시된 모든 온도, 시간, 농도, pH 등을 추출해주세요.`;
+실험 조건은 프로토콜에서 명시된 모든 온도, 시간, 농도, pH 등을 추출해주세요.
+표나 리스트 형식의 데이터도 정확하게 파싱하여 추출하세요.`;
 
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
@@ -147,7 +161,8 @@ ${truncatedText}
             content: prompt,
           },
         ],
-        temperature: 0.3,
+        temperature: 0.2, // 더 정확한 추출을 위해 온도 낮춤
+        max_tokens: 2000, // 더 많은 토큰 할당
         response_format: { type: "json_object" },
       }),
     });

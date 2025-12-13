@@ -183,6 +183,12 @@ model Product {
   msdsUrl    String? // MSDS/SDS 문서 URL
   safetyNote String? @db.Text // 안전 취급 요약/주의사항
 
+  // 안전 필드 구조화 (P2)
+  hazardCodes      Json? // 위험 코드 배열 (예: ["H314", "H290"])
+  pictograms       Json? // GHS 피크토그램 배열 (예: ["corrosive", "exclamation"])
+  storageCondition String? @db.Text // 보관 조건 (예: "2~8°C 냉장 보관")
+  ppe              Json? // 개인보호장비 배열 (예: ["gloves", "goggles"])
+
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
   // 관?
