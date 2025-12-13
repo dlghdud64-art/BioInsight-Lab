@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getFrequentlyBoughtTogether } from "@/lib/ai/purchase-pattern-analyzer";
+import { generateCollaborativeRecommendations, generateContextBasedRecommendations } from "@/lib/ai/collaborative-filtering";
 
 // 개인화 추천 API
 export async function GET(request: NextRequest) {
@@ -149,6 +150,110 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error("Error getting purchase pattern recommendations:", error);
         // 실패해도 기존 추천은 반환
+      }
+    }
+
+    // 7. 협업 필터링 기반 추천 추가
+    try {
+      const collaborativeRecs = await generateCollaborativeRecommendations(userId, {
+        limit: 5,
+        minSimilarity: 0.3,
+      });
+
+      if (collaborativeRecs.length > 0) {
+        const collaborativeProductIds = collaborativeRecs.map((r) => r.productId);
+        const collaborativeProducts = await db.product.findMany({
+          where: {
+            id: { in: collaborativeProductIds },
+          },
+          include: {
+            vendors: {
+              include: {
+                vendor: true,
+              },
+              take: 1,
+            },
+          },
+        });
+
+        const existingProductIds = new Set(
+          recommendations.map((r: any) => r.product?.id).filter(Boolean)
+        );
+
+        const newCollaborativeRecs = collaborativeRecs
+          .map((rec) => {
+            const product = collaborativeProducts.find((p: any) => p.id === rec.productId);
+            if (!product || existingProductIds.has(product.id)) return null;
+            return {
+              product,
+              score: rec.score,
+              reason: rec.reason,
+              source: rec.source,
+            };
+          })
+          .filter((r): r is any => r !== null);
+
+        recommendations.push(...newCollaborativeRecs);
+      }
+    } catch (error) {
+      console.error("Error getting collaborative recommendations:", error);
+    }
+
+    // 8. 컨텍스트 기반 추천 추가 (프로젝트/예산 정보가 있는 경우)
+    const contextProjectName = searchParams.get("projectName");
+    const contextBudget = searchParams.get("budget") ? parseFloat(searchParams.get("budget")!) : undefined;
+    const contextCategory = searchParams.get("category") || undefined;
+
+    if (contextProjectName || contextBudget || contextCategory) {
+      try {
+        const contextRecs = await generateContextBasedRecommendations(
+          userId,
+          {
+            projectName: contextProjectName || undefined,
+            budget: contextBudget,
+            category: contextCategory,
+          },
+          { limit: 5 }
+        );
+
+        if (contextRecs.length > 0) {
+          const contextProductIds = contextRecs.map((r) => r.productId);
+          const contextProducts = await db.product.findMany({
+            where: {
+              id: { in: contextProductIds },
+            },
+            include: {
+              vendors: {
+                include: {
+                  vendor: true,
+                },
+                take: 1,
+              },
+            },
+          });
+
+          const existingProductIds = new Set(
+            recommendations.map((r: any) => r.product?.id).filter(Boolean)
+          );
+
+          const newContextRecs = contextRecs
+            .map((rec) => {
+              const product = contextProducts.find((p: any) => p.id === rec.productId);
+              if (!product || existingProductIds.has(product.id)) return null;
+              return {
+                product,
+                score: rec.score,
+                reason: rec.reason,
+                source: rec.source,
+                context: rec.context,
+              };
+            })
+            .filter((r): r is any => r !== null);
+
+          recommendations.push(...newContextRecs);
+        }
+      } catch (error) {
+        console.error("Error getting context-based recommendations:", error);
       }
     }
 
