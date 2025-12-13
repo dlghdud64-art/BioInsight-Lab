@@ -11,8 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MainHeader } from "@/app/_components/main-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
@@ -59,6 +64,48 @@ export default function InventoryPage() {
     (inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock
   );
 
+  // 재고 사용 이력 조회
+  const { data: usageData, isLoading: usageLoading } = useQuery<{
+    records: Array<{
+      id: string;
+      quantity: number;
+      unit: string | null;
+      usageDate: string;
+      notes: string | null;
+      inventory: {
+        id: string;
+        product: {
+          id: string;
+          name: string;
+          brand: string | null;
+          catalogNumber: string | null;
+        };
+      };
+      user: {
+        id: string;
+        name: string | null;
+        email: string;
+      };
+    }>;
+    stats: {
+      totalUsage: number;
+      recordCount: number;
+      uniqueProducts: number;
+      dateRange: { start: string; end: string } | null;
+    };
+  }>({
+    queryKey: ["inventory-usage"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory/usage?limit=100");
+      if (!response.ok) throw new Error("Failed to fetch usage history");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  const usageRecords = usageData?.records || [];
+  const usageStats = usageData?.stats;
+
   const createOrUpdateMutation = useMutation({
     mutationFn: async (data: {
       id?: string;
@@ -102,6 +149,7 @@ export default function InventoryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventories"] });
       queryClient.invalidateQueries({ queryKey: ["reorder-recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-usage"] });
     },
   });
 
@@ -129,10 +177,10 @@ export default function InventoryPage() {
         <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4 md:mb-6">
           <div>
-            <h1 className="text-3xl font-bold">재고 관리</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-xl md:text-3xl font-bold">재고 관리</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
               제품 재고를 관리하고 재주문 시점을 추적합니다.
             </p>
           </div>
@@ -170,14 +218,14 @@ export default function InventoryPage() {
         </div>
 
         {lowStockItems.length > 0 && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-4 md:mb-6">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>재고 부족 알림</AlertTitle>
-            <AlertDescription>
+            <AlertTitle className="text-xs md:text-sm">재고 부족 알림</AlertTitle>
+            <AlertDescription className="text-xs md:text-sm">
               안전 재고 이하인 제품이 {lowStockItems.length}개 있습니다.{" "}
               <Button
                 variant="link"
-                className="p-0 h-auto font-semibold"
+                className="p-0 h-auto font-semibold text-xs md:text-sm"
                 onClick={() => router.push("/dashboard")}
               >
                 재주문 추천 보기
@@ -186,6 +234,23 @@ export default function InventoryPage() {
           </Alert>
         )}
 
+        <Tabs defaultValue="inventory" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6">
+            <TabsTrigger value="inventory" className="text-xs md:text-sm">
+              <Package className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+              재고 목록
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs md:text-sm">
+              <History className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+              사용 이력
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="text-xs md:text-sm">
+              <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+              알림 설정
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="inventory" className="space-y-4 md:space-y-6">
         {isLoading ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -225,6 +290,215 @@ export default function InventoryPage() {
             ))}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4 md:space-y-6">
+            {/* 통계 카드 */}
+            {usageStats && (
+              <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs md:text-sm font-medium">총 사용량</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats.totalUsage.toLocaleString()}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs md:text-sm font-medium">기록 수</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats.recordCount}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs md:text-sm font-medium">제품 수</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats.uniqueProducts}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs md:text-sm font-medium">기간</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {usageStats.dateRange ? (
+                      <div className="text-xs md:text-sm">
+                        {format(new Date(usageStats.dateRange.start), "yyyy.MM.dd", { locale: ko })} ~{" "}
+                        {format(new Date(usageStats.dateRange.end), "yyyy.MM.dd", { locale: ko })}
+                      </div>
+                    ) : (
+                      <div className="text-xs md:text-sm text-muted-foreground">데이터 없음</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* 이력 테이블 */}
+            {usageLoading ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-xs md:text-sm text-muted-foreground">이력 로딩 중...</p>
+                </CardContent>
+              </Card>
+            ) : usageRecords.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <History className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
+                  <p className="text-xs md:text-sm text-muted-foreground mb-2">사용 이력이 없습니다.</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground">
+                    재고 카드에서 "사용 기록" 버튼을 눌러 사용량을 기록하세요.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm md:text-base">사용 이력</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">
+                    최근 100건의 사용 기록을 표시합니다.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs md:text-sm">날짜</TableHead>
+                          <TableHead className="text-xs md:text-sm">제품명</TableHead>
+                          <TableHead className="text-xs md:text-sm">사용량</TableHead>
+                          <TableHead className="text-xs md:text-sm">사용자</TableHead>
+                          <TableHead className="text-xs md:text-sm">비고</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {usageRecords.map((record) => (
+                          <TableRow key={record.id}>
+                            <TableCell className="text-xs md:text-sm">
+                              {format(new Date(record.usageDate), "yyyy.MM.dd HH:mm", { locale: ko })}
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm">
+                              <div>
+                                <div className="font-medium">{record.inventory.product.name}</div>
+                                {record.inventory.product.brand && (
+                                  <div className="text-[10px] md:text-xs text-muted-foreground">
+                                    {record.inventory.product.brand}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm font-medium">
+                              {record.quantity} {record.unit || "개"}
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm">
+                              {record.user.name || record.user.email}
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm text-muted-foreground max-w-[200px] truncate">
+                              {record.notes || "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="alerts" className="space-y-4 md:space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm md:text-base">재고 부족 알림 설정</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
+                  안전 재고 이하로 떨어질 때 알림을 받을 제품을 선택하세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <p className="text-xs md:text-sm text-muted-foreground text-center py-8">로딩 중...</p>
+                ) : inventories.length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
+                    <p className="text-xs md:text-sm text-muted-foreground mb-2">등록된 재고가 없습니다.</p>
+                    <Button onClick={() => setIsDialogOpen(true)} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      재고 추가하기
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {inventories.map((inventory) => {
+                      const hasSafetyStock = inventory.safetyStock !== null && inventory.safetyStock > 0;
+                      const isLowStock = hasSafetyStock && inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock;
+                      
+                      return (
+                        <div
+                          key={inventory.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-xs md:text-sm">{inventory.product.name}</div>
+                            <div className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                              현재: {inventory.currentQuantity} {inventory.unit}
+                              {hasSafetyStock && inventory.safetyStock !== null && (
+                                <> · 안전 재고: {inventory.safetyStock} {inventory.unit}</>
+                              )}
+                            </div>
+                            {isLowStock && (
+                              <Badge variant="destructive" className="mt-1 text-[9px] md:text-xs">
+                                재고 부족
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {!hasSafetyStock && (
+                              <span className="text-[10px] md:text-xs text-muted-foreground">
+                                안전 재고 설정 필요
+                              </span>
+                            )}
+                            {hasSafetyStock && (
+                              <Badge
+                                variant={isLowStock ? "destructive" : "secondary"}
+                                className="text-[9px] md:text-xs"
+                              >
+                                {isLowStock ? "알림 활성" : "정상"}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm md:text-base">알림 이력</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
+                  최근 재고 부족 알림 내역을 확인할 수 있습니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    알림 이력 기능은 곧 제공될 예정입니다.
+                  </p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-2">
+                    재고가 안전 재고 이하로 떨어지면 자동으로 알림이 기록됩니다.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
             </div>
           </div>
         </div>

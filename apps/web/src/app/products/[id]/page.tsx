@@ -11,8 +11,17 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
 import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ReviewSection } from "@/components/products/review-section";
-import { PersonalizedRecommendations } from "@/components/products/personalized-recommendations";
+import dynamic from "next/dynamic";
+
+const ReviewSection = dynamic(() => import("@/components/products/review-section").then((mod) => ({ default: mod.ReviewSection })), {
+  loading: () => <div className="h-32 w-full bg-slate-100 rounded-md animate-pulse" />,
+  ssr: false,
+});
+
+const PersonalizedRecommendations = dynamic(() => import("@/components/products/personalized-recommendations").then((mod) => ({ default: mod.PersonalizedRecommendations })), {
+  loading: () => <div className="h-32 w-full bg-slate-100 rounded-md animate-pulse" />,
+  ssr: false,
+});
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -797,48 +806,94 @@ ${extractedInfo.summary || "N/A"}`;
                       )}
 
                       {/* 국내 규제 포털 링크 */}
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            window.open("https://www.mfds.go.kr", "_blank");
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1.5" />
-                          식약처 포털
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            window.open("https://www.nifds.go.kr", "_blank");
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1.5" />
-                          식약처 안전정보포털
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            window.open("https://www.me.go.kr", "_blank");
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1.5" />
-                          환경부 화학물질안전원
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-slate-700 mb-2">규제 정보 포털</div>
+                        <div className="flex flex-wrap gap-2">
+                          {getRegulationLinksForProduct(
+                            product.name,
+                            product.catalogNumber || undefined,
+                            product.category
+                          ).map((link) => (
+                            <Button
+                              key={link.id}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                window.open(link.url, "_blank");
+                              }}
+                              title={link.description}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1.5" />
+                              {link.name}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
 
-                      {/* 기본 안내 문구 */}
-                      {!product.safetyNote && (
+                      {/* 기본 안내 문구 및 자동 추출 버튼 */}
+                      {!product.safetyNote && product.msdsUrl && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <div className="flex items-start gap-2 mb-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-amber-800 leading-relaxed flex-1">
+                              사용 전, 취급·보관·폐기 정보를 꼭 확인하세요.
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              setIsGeneratingUsage(true);
+                              try {
+                                const response = await fetch(`/api/products/${id}/safety-extract`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ msdsUrl: product.msdsUrl }),
+                                });
+                                if (!response.ok) {
+                                  const error = await response.json();
+                                  throw new Error(error.error || "안전 정보 추출에 실패했습니다.");
+                                }
+                                const data = await response.json();
+                                toast({
+                                  title: "안전 정보 추출 완료",
+                                  description: "MSDS/SDS에서 안전 정보를 자동으로 추출했습니다.",
+                                });
+                                // 페이지 새로고침하여 업데이트된 정보 표시
+                                window.location.reload();
+                              } catch (error: any) {
+                                toast({
+                                  title: "추출 실패",
+                                  description: error.message || "안전 정보 추출 중 오류가 발생했습니다.",
+                                  variant: "destructive",
+                                });
+                              } finally {
+                                setIsGeneratingUsage(false);
+                              }
+                            }}
+                            disabled={isGeneratingUsage}
+                            className="text-xs w-full"
+                          >
+                            {isGeneratingUsage ? (
+                              <>
+                                <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-1 animate-spin" />
+                                추출 중...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                MSDS에서 자동 추출
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                      {!product.safetyNote && !product.msdsUrl && (
                         <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                           <AlertTriangle className="h-4 w-4 text-slate-600 mt-0.5 flex-shrink-0" />
                           <p className="text-xs text-slate-700 leading-relaxed">
-                            사용 전, 취급·보관·폐기 정보를 꼭 확인하세요. MSDS/SDS 문서를 참고하시기 바랍니다.
+                            사용 전, 취급·보관·폐기 정보를 꼭 확인하세요.
                           </p>
                         </div>
                       )}

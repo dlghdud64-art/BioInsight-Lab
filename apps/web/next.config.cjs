@@ -10,10 +10,28 @@ const nextConfig = {
     serverComponentsExternalPackages: ['pdf-parse'],
   },
 
-  // 필요하면 여기 설정 더 넣어줘
-  // images: {
-  //   domains: ['example.com'],
-  // },
+  // 이미지 최적화 설정
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+
+  // 컴파일 최적화
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+
+  // 압축 설정
+  compress: true,
 
   webpack(config) {
     // Vercel 빌드 환경에서 tsconfig path를 자동 인식 못할 수 있음

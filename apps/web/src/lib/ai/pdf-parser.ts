@@ -100,7 +100,10 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     }
     
     // PDF 파싱 실행
-    const data = await pdfParse(pdfBuffer);
+    const data = await pdfParse(pdfBuffer, {
+      // 표 구조 보존을 위한 옵션
+      max: 0, // 모든 페이지 파싱
+    });
     
     if (!data) {
       throw new Error("PDF 파싱 결과가 없습니다.");
@@ -110,7 +113,30 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
       throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 빈 문서이거나 텍스트가 없을 수 있습니다.");
     }
     
-    return data.text;
+    // 텍스트 전처리: 표 구조 개선
+    let processedText = data.text;
+    
+    // 연속된 공백을 하나로 (단, 탭은 보존)
+    processedText = processedText.replace(/[ \t]+/g, (match) => {
+      // 탭이 포함된 경우 탭으로 통일
+      if (match.includes('\t')) {
+        return '\t';
+      }
+      return ' ';
+    });
+    
+    // 표 형식 감지 및 개선 (탭이나 여러 공백으로 구분된 열)
+    // 2개 이상의 연속된 공백이나 탭을 구분자로 인식
+    processedText = processedText.replace(/([^\t\n])\s{2,}([^\t\n])/g, '$1\t$2');
+    
+    // 줄바꿈 정리 (표 구조 보존)
+    processedText = processedText.replace(/\r\n/g, '\n');
+    processedText = processedText.replace(/\r/g, '\n');
+    
+    // 연속된 줄바꿈 정리 (단, 표 구조는 보존)
+    processedText = processedText.replace(/\n{4,}/g, '\n\n\n');
+    
+    return processedText;
   } catch (error: any) {
     console.error("Error parsing PDF:", error);
     const errorMessage = error?.message || "알 수 없는 오류";

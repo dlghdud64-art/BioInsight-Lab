@@ -33,6 +33,8 @@ import {
   Sparkles,
   FileCheck,
   X,
+  Shield,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -102,6 +104,9 @@ interface ProductMatch {
   vendorName: string;
   price: number;
   currency: string;
+  isHighRisk?: boolean; // 고위험군 여부
+  hazardCodes?: string[]; // 위험 코드
+  safetyNote?: string; // 안전 정보
 }
 
 interface ReagentWithMatch extends ExtractedReagent {
@@ -289,6 +294,13 @@ export default function ProtocolBOMPage() {
             if (data.products && data.products.length > 0) {
               const product = data.products[0];
               const vendor = product.vendors?.[0];
+              
+              // 안전 정보 확인 (고위험군 여부)
+              const isHighRisk = 
+                (product.hazardCodes && Array.isArray(product.hazardCodes) && product.hazardCodes.length > 0) ||
+                (product.pictograms && Array.isArray(product.pictograms) && 
+                 product.pictograms.some((p: string) => ["skull", "flame", "corrosive"].includes(p)));
+              
               return {
                 ...reagent,
                 matchedProduct: vendor
@@ -298,6 +310,9 @@ export default function ProtocolBOMPage() {
                       vendorName: vendor.vendor.name,
                       price: vendor.priceInKRW || 0,
                       currency: vendor.currency || "KRW",
+                      isHighRisk,
+                      hazardCodes: product.hazardCodes || [],
+                      safetyNote: product.safetyNote || undefined,
                     }
                   : undefined,
                 isMatching: true,
@@ -740,9 +755,11 @@ export default function ProtocolBOMPage() {
                           <div>
                             <div className="text-xs font-medium text-slate-700 mb-1">온도</div>
                             <div className="space-y-1">
-                              {extractionResult.conditions.temperature.map((temp, idx) => (
-                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2">
-                                  <span className="font-medium">{temp.value}{temp.unit}</span>
+                              {extractionResult.conditions.temperature.map((temp: any, idx: number) => (
+                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium">
+                                    {(temp as any).range || `${temp.value}${temp.unit}`}
+                                  </span>
                                   {temp.duration && (
                                     <span className="text-slate-500">({temp.duration}분)</span>
                                   )}
@@ -760,9 +777,11 @@ export default function ProtocolBOMPage() {
                           <div>
                             <div className="text-xs font-medium text-slate-700 mb-1">시간</div>
                             <div className="space-y-1">
-                              {extractionResult.conditions.time.map((time, idx) => (
-                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2">
-                                  <span className="font-medium">{time.value} {time.unit}</span>
+                              {extractionResult.conditions.time.map((time: any, idx: number) => (
+                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium">
+                                    {(time as any).original || `${time.value} ${time.unit}`}
+                                  </span>
                                   {time.step && (
                                     <span className="text-slate-500">({time.step})</span>
                                   )}
@@ -775,10 +794,10 @@ export default function ProtocolBOMPage() {
                           <div>
                             <div className="text-xs font-medium text-slate-700 mb-1">농도</div>
                             <div className="space-y-1">
-                              {extractionResult.conditions.concentration.map((conc, idx) => (
+                              {extractionResult.conditions.concentration.map((conc: any, idx: number) => (
                                 <div key={idx} className="text-xs text-slate-600">
                                   <span className="font-medium">{conc.reagent}:</span>{" "}
-                                  <span>{conc.value} {conc.unit}</span>
+                                  <span>{(conc as any).original || `${conc.value} ${conc.unit}`}</span>
                                 </div>
                               ))}
                             </div>
@@ -788,9 +807,11 @@ export default function ProtocolBOMPage() {
                           <div>
                             <div className="text-xs font-medium text-slate-700 mb-1">pH</div>
                             <div className="space-y-1">
-                              {extractionResult.conditions.pH.map((pH, idx) => (
+                              {extractionResult.conditions.pH.map((pH: any, idx: number) => (
                                 <div key={idx} className="text-xs text-slate-600">
-                                  <span className="font-medium">pH {pH.value}</span>
+                                  <span className="font-medium">
+                                    pH {(pH as any).range || pH.value}
+                                  </span>
                                   {pH.description && (
                                     <span className="text-slate-500 ml-2">({pH.description})</span>
                                   )}
@@ -835,6 +856,14 @@ export default function ProtocolBOMPage() {
                           <AlertCircle className="h-3 w-3 text-amber-600" />
                           <span className="text-slate-700">미매칭 {unmatchedCount}개</span>
                         </div>
+                        {reagents.filter((r) => r.matchedProduct?.isHighRisk).length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3 text-red-600" />
+                            <span className="text-slate-700 font-semibold text-red-600">
+                              고위험 {reagents.filter((r) => r.matchedProduct?.isHighRisk).length}개
+                            </span>
+                          </div>
+                        )}
                         {estimatedTotal > 0 && (
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3 text-slate-500" />

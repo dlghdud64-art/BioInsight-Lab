@@ -14,7 +14,24 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
             refetchOnWindowFocus: false,
             refetchOnMount: false, // 캐시된 데이터가 있으면 재요청하지 않음
-            retry: 1, // 재시도 횟수 감소
+            retry: (failureCount, error: any) => {
+              // 4xx 에러는 재시도하지 않음
+              if (error?.status >= 400 && error?.status < 500) {
+                return false;
+              }
+              // 최대 1번 재시도
+              return failureCount < 1;
+            },
+            onError: (error: any) => {
+              // 에러 로깅 (향후 Sentry 등으로 전송 가능)
+              console.error("Query error:", error);
+            },
+          },
+          mutations: {
+            onError: (error: any) => {
+              // 에러 로깅
+              console.error("Mutation error:", error);
+            },
           },
         },
       })

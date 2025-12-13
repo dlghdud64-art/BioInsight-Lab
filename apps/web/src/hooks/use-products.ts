@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ProductCategory } from "@/types";
+import { extractApiErrorMessage } from "@/lib/errors";
 
 interface SearchProductsParams {
   query?: string;
@@ -29,7 +30,8 @@ export function useSearchProducts(params: SearchProductsParams) {
 
       const response = await fetch(`/api/products/search?${searchParams.toString()}`);
       if (!response.ok) {
-        throw new Error("Failed to search products");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(extractApiErrorMessage(response, data));
       }
       return response.json();
     },
@@ -42,9 +44,12 @@ export function useProduct(productId: string | undefined) {
   return useQuery({
     queryKey: ["product", productId],
     queryFn: async () => {
-      if (!productId) throw new Error("Product ID is required");
+      if (!productId) throw new Error("제품 ID가 필요합니다.");
       const response = await fetch(`/api/products/${productId}`);
-      if (!response.ok) throw new Error("Failed to fetch product");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(extractApiErrorMessage(response, data));
+      }
       return response.json();
     },
     enabled: !!productId,
@@ -57,7 +62,10 @@ export function useBrands() {
     queryKey: ["brands"],
     queryFn: async () => {
       const response = await fetch("/api/products/brands");
-      if (!response.ok) throw new Error("Failed to fetch brands");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(extractApiErrorMessage(response, data));
+      }
       return response.json();
     },
   });

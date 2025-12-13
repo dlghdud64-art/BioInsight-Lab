@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
-import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download } from "lucide-react";
+import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download, Users, Mail } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -412,40 +413,63 @@ export default function EnterpriseSettingsPage() {
 
                   {/* 권한 관리 탭 */}
                   <TabsContent value="permissions" className="space-y-4">
+                    {/* 역할별 권한 설명 */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm font-semibold">권한 관리</CardTitle>
+                        <CardTitle className="text-sm font-semibold">역할별 권한</CardTitle>
                         <CardDescription>
-                          조직 멤버의 역할과 권한을 관리합니다.
+                          각 역할이 가진 권한을 확인하세요.
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-start gap-2">
-                              <Shield className="h-4 w-4 text-blue-600 mt-0.5" />
-                              <div className="text-sm text-blue-700">
-                                <p className="font-medium mb-1">역할별 권한</p>
-                                <ul className="list-disc list-inside space-y-1 text-xs">
-                                  <li><strong>VIEWER:</strong> 조회만 가능</li>
-                                  <li><strong>REQUESTER:</strong> 견적 요청 및 수정 가능</li>
-                                  <li><strong>APPROVER:</strong> 견적 승인 및 예산 조회 가능</li>
-                                  <li><strong>ADMIN:</strong> 모든 권한</li>
-                                </ul>
-                              </div>
-                            </div>
+                        <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                          <div className="p-3 border rounded-lg">
+                            <div className="font-semibold text-xs md:text-sm mb-2">VIEWER</div>
+                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
+                              <li>✓ 견적 조회</li>
+                              <li>✓ 제품 검색</li>
+                              <li>✓ 비교 테이블 조회</li>
+                            </ul>
                           </div>
-                          <div className="text-sm text-slate-600">
-                            멤버 권한 관리는{" "}
-                            <a
-                              href="/dashboard/organizations"
-                              className="text-blue-600 hover:underline"
-                            >
-                              조직 관리 페이지
-                            </a>
-                            에서 할 수 있습니다.
+                          <div className="p-3 border rounded-lg">
+                            <div className="font-semibold text-xs md:text-sm mb-2">REQUESTER</div>
+                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
+                              <li>✓ VIEWER 권한</li>
+                              <li>✓ 견적 생성/수정</li>
+                              <li>✓ 공유 링크 생성</li>
+                            </ul>
+                          </div>
+                          <div className="p-3 border rounded-lg">
+                            <div className="font-semibold text-xs md:text-sm mb-2">APPROVER</div>
+                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
+                              <li>✓ REQUESTER 권한</li>
+                              <li>✓ 견적 승인</li>
+                              <li>✓ 예산 조회</li>
+                            </ul>
+                          </div>
+                          <div className="p-3 border rounded-lg bg-purple-50">
+                            <div className="font-semibold text-xs md:text-sm mb-2">ADMIN</div>
+                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
+                              <li>✓ 모든 권한</li>
+                              <li>✓ 멤버 관리</li>
+                              <li>✓ SSO 설정</li>
+                              <li>✓ 조직 설정</li>
+                            </ul>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 조직 멤버 목록 */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm font-semibold">조직 멤버 권한 관리</CardTitle>
+                        <CardDescription>
+                          멤버의 역할을 변경하여 권한을 관리합니다.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <OrganizationMembersPermissions organizationId={currentOrg.id} />
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -462,6 +486,169 @@ export default function EnterpriseSettingsPage() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 조직 멤버 권한 관리 컴포넌트
+function OrganizationMembersPermissions({ organizationId }: { organizationId: string }) {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // 조직 멤버 조회
+  const { data: membersData, isLoading } = useQuery({
+    queryKey: ["organization-members", organizationId],
+    queryFn: async () => {
+      const response = await fetch(`/api/organizations/${organizationId}/members`);
+      if (!response.ok) throw new Error("Failed to fetch members");
+      return response.json();
+    },
+    enabled: !!organizationId,
+  });
+
+  const members = membersData?.members || [];
+  const currentUserMember = members.find((m: any) => m.user?.id === session?.user?.id);
+  const isAdmin = currentUserMember?.role === "ADMIN";
+
+  // 역할 업데이트
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
+      const response = await fetch(`/api/organizations/${organizationId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, role }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update role");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-members", organizationId] });
+      toast({
+        title: "역할 변경 완료",
+        description: "멤버의 역할이 성공적으로 변경되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "역할 변경 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const roleLabels: Record<string, string> = {
+    VIEWER: "조회자",
+    REQUESTER: "요청자",
+    APPROVER: "승인자",
+    ADMIN: "관리자",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" />
+      </div>
+    );
+  }
+
+  if (members.length === 0) {
+    return (
+      <div className="text-center py-8 text-slate-500">
+        <Users className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+        <p className="text-xs md:text-sm">멤버가 없습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs md:text-sm">멤버</TableHead>
+              <TableHead className="text-xs md:text-sm">이메일</TableHead>
+              <TableHead className="text-xs md:text-sm">현재 역할</TableHead>
+              <TableHead className="text-xs md:text-sm text-right">액션</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {members.map((member: any) => (
+              <TableRow key={member.id}>
+                <TableCell className="text-xs md:text-sm">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3 w-3 md:h-4 md:w-4 text-slate-400" />
+                    <span className="font-medium">{member.user?.name || "이름 없음"}</span>
+                    {member.user?.id === session?.user?.id && (
+                      <Badge variant="secondary" className="text-[9px] md:text-xs">본인</Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-xs md:text-sm text-slate-600">
+                  {member.user?.email}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={member.role === "ADMIN" ? "default" : "outline"}
+                    className="text-[9px] md:text-xs"
+                  >
+                    {roleLabels[member.role] || member.role}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  {isAdmin && member.user?.id !== session?.user?.id && (
+                    <Select
+                      value={member.role}
+                      onValueChange={(role) =>
+                        updateRoleMutation.mutate({ memberId: member.id, role })
+                      }
+                      disabled={updateRoleMutation.isPending}
+                    >
+                      <SelectTrigger className="w-24 h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(roleLabels).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {member.user?.id === session?.user?.id && (
+                    <span className="text-[10px] md:text-xs text-slate-500">변경 불가</span>
+                  )}
+                  {!isAdmin && (
+                    <span className="text-[10px] md:text-xs text-slate-500">권한 없음</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="text-xs md:text-sm text-slate-600 p-3 bg-slate-50 rounded-lg">
+        <p className="font-medium mb-1">💡 참고</p>
+        <ul className="list-disc list-inside space-y-1 text-[10px] md:text-xs">
+          <li>관리자만 멤버의 역할을 변경할 수 있습니다.</li>
+          <li>본인의 역할은 변경할 수 없습니다.</li>
+          <li>멤버 초대는{" "}
+            <a
+              href="/dashboard/organizations"
+              className="text-blue-600 hover:underline"
+            >
+              조직 관리 페이지
+            </a>
+            에서 할 수 있습니다.
+          </li>
+        </ul>
       </div>
     </div>
   );
