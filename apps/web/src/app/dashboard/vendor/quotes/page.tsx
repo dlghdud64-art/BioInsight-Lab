@@ -27,7 +27,6 @@ export default function VendorQuotesPage() {
   });
 
   // 벤더가 받은 견적 요청 목록 조회
-  // TODO: 실제로는 벤더 ID로 필터링해야 함
   const { data: quotes, isLoading } = useQuery({
     queryKey: ["vendor-quotes"],
     queryFn: async () => {
@@ -55,9 +54,28 @@ export default function VendorQuotesPage() {
     },
   });
 
+  // 벤더 ID 조회
+  const { data: vendorData } = useQuery({
+    queryKey: ["vendor-info"],
+    queryFn: async () => {
+      const response = await fetch("/api/vendor/info");
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
   const handleSubmitResponse = (quoteId: string) => {
-    // TODO: 실제 벤더 ID를 가져와야 함
-    const vendorId = "temp-vendor-id"; // 임시
+    const vendorId = vendorData?.vendor?.id;
+    
+    if (!vendorId) {
+      toast({
+        title: "오류",
+        description: "벤더 정보를 찾을 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     responseMutation.mutate({
       quoteId,

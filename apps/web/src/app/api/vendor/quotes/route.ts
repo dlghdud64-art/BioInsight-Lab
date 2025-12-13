@@ -10,15 +10,94 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: 실제로는 벤더 ID로 필터링해야 함
-    // 현재는 모든 견적 요청을 반환 (개발용)
+    // 사용자의 역할 확인
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true, email: true },
+    });
+
+    // SUPPLIER 역할이 아니면 빈 결과 반환
+    if (user?.role !== "SUPPLIER") {
+      return NextResponse.json({ quotes: [] });
+    }
+
+    // 사용자 이메일로 벤더 찾기 (임시: 실제로는 User-Vendor 관계 테이블이 필요)
+    const vendor = await db.vendor.findFirst({
+      where: {
+        email: user.email || "",
+      },
+    });
+
+    if (!vendor) {
+      // 벤더가 없으면 모든 견적 요청 반환 (개발용)
+      // 실제 운영에서는 벤더 등록 후 사용 가능하도록 해야 함
+      const quotes = await db.quote.findMany({
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  vendors: {
+                    include: {
+                      vendor: true,
+                    },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            include: {
+              vendor: true,
+            },
+          },
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          organization: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 50,
+      });
+      return NextResponse.json({ quotes });
+    }
+
+    // 벤더 ID로 필터링: 견적 요청의 품목 중 이 벤더가 공급하는 제품이 포함된 견적만 조회
     const quotes = await db.quote.findMany({
+      where: {
+        items: {
+          some: {
+            product: {
+              vendors: {
+                some: {
+                  vendorId: vendor.id,
+                },
+              },
+            },
+          },
+        },
+        // 이미 응답한 견적은 제외 (선택사항)
+        // responses: {
+        //   none: {
+        //     vendorId: vendor.id,
+        //   },
+        // },
+      },
       include: {
         items: {
           include: {
             product: {
               include: {
                 vendors: {
+                  where: {
+                    vendorId: vendor.id,
+                  },
                   include: {
                     vendor: true,
                   },
