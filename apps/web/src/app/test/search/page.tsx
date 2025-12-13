@@ -53,11 +53,11 @@ export default function SearchPage() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-3 md:py-6">
         <PageHeader
           title="바이오 시약·장비 검색과 비교, 한 번에 정리되는 구매 요청 리스트"
           description={
-            <div className="space-y-1">
+            <div className="space-y-1 hidden md:block">
               <p>제품명, 벤더, 카테고리를 검색하고 GPT가 관련 제품을 추천해 줍니다.</p>
               <p>검색 결과에서 필요한 제품을 선택하면, 구매 요청 리스트가 자동으로 정리됩니다.</p>
             </div>
@@ -65,11 +65,11 @@ export default function SearchPage() {
           icon={Search}
           iconColor="text-blue-600"
           badge={
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="inline-flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-blue-50 border border-blue-200">
               <Badge variant="outline" className="text-[10px] bg-blue-100 border-blue-300 text-blue-700 px-1.5 py-0">
                 기능 체험
               </Badge>
-              <span className="text-[10px] text-blue-700 font-medium whitespace-nowrap">
+              <span className="text-[10px] text-blue-700 font-medium whitespace-nowrap hidden sm:inline">
                 지금은 Beta - 무료로 모든 기능을 체험해 보세요
               </span>
             </div>
@@ -78,15 +78,25 @@ export default function SearchPage() {
       </div>
       
       {/* 3컬럼 레이아웃 */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)_260px]">
+      <div className="container mx-auto px-4 py-4 md:py-6">
+        <div className="flex flex-col gap-4 md:grid md:gap-6 md:grid-cols-[260px_minmax(0,1fr)_260px]">
         {/* 좌측: 검색 패널 + 옵션 */}
-        <div className="flex flex-col gap-4">
-          <SearchPanel />
-        </div>
+        <aside className="order-1 md:order-none">
+          <div className="flex flex-col gap-4">
+            <SearchPanel />
+          </div>
+        </aside>
+
+        {/* 우측: 검색어 분석 결과 + 품목 리스트 미리보기 (모바일에서는 먼저 표시) */}
+        <aside className="order-2 md:order-none">
+          <div className="flex flex-col gap-4">
+            <SearchAnalysisCard />
+            <QuoteListPreviewCard />
+          </div>
+        </aside>
 
         {/* 가운데: 검색 결과 */}
-        <div className="space-y-4">
+        <section className="order-3 md:order-none space-y-4">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
             <Card className="bg-blue-50 border-blue-200">
@@ -206,13 +216,7 @@ export default function SearchPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-
-        {/* 우측: 검색어 분석 결과 + 품목 리스트 미리보기 */}
-        <div className="flex flex-col gap-4">
-          <SearchAnalysisCard />
-          <QuoteListPreviewCard />
-        </div>
+        </section>
       </div>
 
       {/* 제품 상세 다이얼로그 */}
@@ -412,9 +416,9 @@ export default function SearchPage() {
       </AlertDialog>
 
       {/* 하단 설명 */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-slate-500 text-center px-2">
             정리된 구매 요청 리스트는 TSV/엑셀 파일로 내려받아 이메일로 공유하거나,
             필요하면 사내 그룹웨어·전자결재 양식에 붙여넣어 사용할 수 있습니다.
           </p>

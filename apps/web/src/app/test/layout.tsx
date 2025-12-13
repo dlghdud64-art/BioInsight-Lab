@@ -9,18 +9,25 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
         {/* 공통 상단 헤더 */}
         <MainHeader />
         
-        <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
-          <header className="space-y-2">
-            <span className="inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">
-              기능 체험
-            </span>
-            <h1 className="text-2xl font-bold text-slate-900">기능 체험 · 검색 → 비교 → 품목 리스트</h1>
-            <p className="text-sm text-slate-600">
-              샘플 데이터로 실제 검색/비교/품목 리스트 작성 흐름을 체험해 보세요.
-            </p>
-          </header>
+        <section className="border-b bg-white">
+          <div className="mx-auto max-w-5xl px-4 py-3 md:py-6">
+            <header className="space-y-2">
+              <span className="inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">
+                기능 체험
+              </span>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900">기능 체험 · 검색 → 비교 → 품목 리스트</h1>
+              <p className="mt-2 text-sm text-slate-600 hidden md:block">
+                샘플 데이터로 실제 검색/비교/품목 리스트 작성 흐름을 체험해 보세요.
+              </p>
+            </header>
 
-          <StepNav />
+            <div className="mt-4">
+              <StepNav />
+            </div>
+          </div>
+        </section>
+        
+        <div className="mx-auto max-w-6xl px-4 py-4 md:py-8 space-y-4 md:space-y-6">
           <main>{children}</main>
         </div>
       </div>
