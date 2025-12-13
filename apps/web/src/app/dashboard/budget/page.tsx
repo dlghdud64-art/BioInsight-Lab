@@ -345,6 +345,7 @@ function BudgetForm({
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
+  const { toast } = useToast();
   const [name, setName] = useState(budget?.name || "");
   const [amount, setAmount] = useState(budget?.amount?.toString() || "");
   const [currency, setCurrency] = useState(budget?.currency || "KRW");
@@ -356,17 +357,95 @@ function BudgetForm({
   );
   const [projectName, setProjectName] = useState(budget?.projectName || "");
   const [description, setDescription] = useState(budget?.description || "");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // 금액 포맷팅 (천 단위 구분)
+  const formatAmount = (value: string) => {
+    const numValue = value.replace(/,/g, "");
+    if (!numValue) return "";
+    const num = parseFloat(numValue);
+    if (isNaN(num)) return value;
+    return num.toLocaleString("ko-KR");
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/,/g, "");
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+      if (errors.amount) {
+        setErrors((prev) => ({ ...prev, amount: "" }));
+      }
+    }
+  };
+
+  const handlePeriodStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPeriodStart(value);
+    if (periodEnd && value > periodEnd) {
+      setErrors((prev) => ({ ...prev, periodStart: "시작일은 종료일보다 이전이어야 합니다." }));
+    } else {
+      setErrors((prev) => ({ ...prev, periodStart: "" }));
+    }
+  };
+
+  const handlePeriodEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPeriodEnd(value);
+    if (periodStart && value < periodStart) {
+      setErrors((prev) => ({ ...prev, periodEnd: "종료일은 시작일보다 이후여야 합니다." }));
+    } else {
+      setErrors((prev) => ({ ...prev, periodEnd: "" }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      newErrors.name = "예산 이름을 입력해주세요.";
+    }
+
+    const amountNum = parseFloat(amount.replace(/,/g, ""));
+    if (!amount || isNaN(amountNum) || amountNum <= 0) {
+      newErrors.amount = "올바른 예산 금액을 입력해주세요.";
+    }
+
+    if (!periodStart) {
+      newErrors.periodStart = "시작일을 선택해주세요.";
+    }
+
+    if (!periodEnd) {
+      newErrors.periodEnd = "종료일을 선택해주세요.";
+    }
+
+    if (periodStart && periodEnd && periodStart > periodEnd) {
+      newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validate()) {
+      toast({
+        title: "입력 오류",
+        description: "입력한 정보를 확인해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     onSubmit({
-      name,
-      amount: parseFloat(amount) || 0,
+      name: name.trim(),
+      amount: parseFloat(amount.replace(/,/g, "")) || 0,
       currency,
       periodStart,
       periodEnd,
-      projectName: projectName || undefined,
-      description: description || undefined,
+      projectName: projectName.trim() || undefined,
+      description: description.trim() || undefined,
     });
   };
 
@@ -377,24 +456,41 @@ function BudgetForm({
         <Input
           id="name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (errors.name) {
+              setErrors((prev) => ({ ...prev, name: "" }));
+            }
+          }}
           placeholder="예: 2024년 R&D 예산"
           required
+          className={errors.name ? "border-red-500" : ""}
         />
+        {errors.name && (
+          <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="amount">예산 금액 *</Label>
-          <Input
-            id="amount"
-            type="number"
-            min="0"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          <div className="relative">
+            <Input
+              id="amount"
+              type="text"
+              value={formatAmount(amount)}
+              onChange={handleAmountChange}
+              placeholder="예: 10,000,000"
+              required
+              className={errors.amount ? "border-red-500" : ""}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              {currency}
+            </span>
+          </div>
+          {errors.amount && (
+            <p className="text-xs text-red-500 mt-1">{errors.amount}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="currency">통화 *</Label>
@@ -406,21 +502,26 @@ function BudgetForm({
               <SelectItem value="KRW">KRW (원)</SelectItem>
               <SelectItem value="USD">USD (달러)</SelectItem>
               <SelectItem value="EUR">EUR (유로)</SelectItem>
+              <SelectItem value="JPY">JPY (엔)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="periodStart">기간 시작 *</Label>
           <Input
             id="periodStart"
             type="date"
             value={periodStart}
-            onChange={(e) => setPeriodStart(e.target.value)}
+            onChange={handlePeriodStartChange}
             required
+            className={errors.periodStart ? "border-red-500" : ""}
           />
+          {errors.periodStart && (
+            <p className="text-xs text-red-500 mt-1">{errors.periodStart}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="periodEnd">기간 종료 *</Label>
@@ -428,11 +529,25 @@ function BudgetForm({
             id="periodEnd"
             type="date"
             value={periodEnd}
-            onChange={(e) => setPeriodEnd(e.target.value)}
+            onChange={handlePeriodEndChange}
+            min={periodStart || undefined}
             required
+            className={errors.periodEnd ? "border-red-500" : ""}
           />
+          {errors.periodEnd && (
+            <p className="text-xs text-red-500 mt-1">{errors.periodEnd}</p>
+          )}
         </div>
       </div>
+
+      {periodStart && periodEnd && (
+        <div className="p-3 bg-slate-50 rounded-lg text-xs text-muted-foreground">
+          <Calendar className="h-3 w-3 inline mr-1" />
+          예산 기간: {new Date(periodStart).toLocaleDateString("ko-KR")} ~ {new Date(periodEnd).toLocaleDateString("ko-KR")}
+          {" "}
+          ({Math.ceil((new Date(periodEnd).getTime() - new Date(periodStart).getTime()) / (1000 * 60 * 60 * 24))}일)
+        </div>
+      )}
 
       <div>
         <Label htmlFor="projectName">프로젝트/과제명 (선택)</Label>
@@ -452,15 +567,16 @@ function BudgetForm({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="예산에 대한 추가 설명"
           rows={3}
+          className="resize-none"
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           취소
         </Button>
         <Button type="submit" className="flex-1">
-          저장
+          {budget ? "수정" : "저장"}
         </Button>
       </div>
     </form>

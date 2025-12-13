@@ -14,6 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MainHeader } from "@/app/_components/main-header";
+import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 
 export default function SharedLinksPage() {
   const { data: session, status } = useSession();
@@ -93,12 +95,33 @@ export default function SharedLinksPage() {
     if (selectedLinks.length === 0) return;
     if (!confirm(`선택한 ${selectedLinks.length}개의 링크를 삭제하시겠습니까?`)) return;
 
-    // 일괄 삭제는 API에 추가 필요, 일단 개별 삭제로 처리
-    // TODO: 일괄 삭제 API 추가
-    toast({
-      title: "일괄 삭제",
-      description: "일괄 삭제 기능은 준비 중입니다.",
-    });
+    try {
+      const response = await fetch("/api/shared-lists/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicIds: selectedLinks }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete shared lists");
+      }
+
+      const result = await response.json();
+      toast({
+        title: "삭제 완료",
+        description: `${result.deleted}개의 링크가 삭제되었습니다.`,
+      });
+
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ["shared-links"] });
+    } catch (error: any) {
+      toast({
+        title: "삭제 실패",
+        description: error.message || "링크 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleSelectLink = (publicId: string) => {
