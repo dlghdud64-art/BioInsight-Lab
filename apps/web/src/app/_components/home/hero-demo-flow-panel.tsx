@@ -5,29 +5,47 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Search, GitCompare, ShoppingCart } from "lucide-react";
+import { Search, GitCompare, ShoppingCart, FlaskConical } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // HeroDemoFlowPanel 컴포넌트 - 컴팩트 티저 버전 + 예시 UI
-type StepId = "search" | "compare" | "list";
+type StepId = "search" | "compare" | "list" | "protocol";
 
 const HERO_STEPS = [
   {
     id: "search" as const,
-    label: "Step 1",
+    order: 1,
+    label: "검색",
     title: "검색 & 후보 모으기",
     desc: "제품명, 벤더, 카테고리로 여러 제품을 한 번에 검색하고, 마음에 드는 것만 후보 리스트에 담아보세요.",
   },
   {
     id: "compare" as const,
-    label: "Step 2",
+    order: 2,
+    label: "비교",
     title: "제품 비교 & 대체품 정리",
     desc: "담아둔 후보 제품을 한 화면에서 가격, 규격, Grade 등을 비교하고, 실제로 쓸 제품만 남깁니다.",
   },
   {
     id: "list" as const,
-    label: "Step 3",
+    order: 3,
+    label: "품목 리스트",
     title: "리스트 정리 & 공유",
     desc: "확정된 품목 리스트를 TSV/엑셀로 내보내 동료·구매팀과 공유할 수 있습니다.",
+  },
+  {
+    id: "protocol" as const,
+    order: 4,
+    label: "프로토콜 분석",
+    title: "프로토콜 분석",
+    desc: "실험 프로토콜 텍스트를 붙여넣으면 필요한 시약·장비를 자동으로 추출합니다.",
   },
 ];
 
@@ -52,6 +70,80 @@ const SAMPLE_QUOTE_ITEMS = [
   { no: 2, name: "PCR Master Mix", qty: 1, price: "₩150,000" },
   { no: 3, name: "96 Well Plate", qty: 5, price: "₩375,000" },
 ];
+
+// Step 탭 컴포넌트
+function HeroStepTabs({ activeId, onChange }: { activeId: StepId; onChange: (id: StepId) => void }) {
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {HERO_STEPS.map((step) => {
+        const active = step.id === activeId;
+        return (
+          <button
+            key={step.id}
+            onClick={() => onChange(step.id)}
+            className={cn(
+              "flex flex-col items-center justify-center rounded-full px-2 py-2 text-xs transition-colors",
+              active
+                ? "bg-slate-900 text-white"
+                : "bg-slate-100 text-slate-600"
+            )}
+          >
+            <span className="text-[11px] opacity-80">Step {step.order}</span>
+            <span className="mt-0.5 font-medium text-[10px] leading-tight">{step.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// 단계 안내 Sheet 컴포넌트
+function HeroStepHelp() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors">
+          단계 안내 보기
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[80%] max-w-xs">
+        <SheetHeader>
+          <SheetTitle>기능 체험 단계 안내</SheetTitle>
+          <SheetDescription className="mt-2 text-xs">
+            검색 → 비교 → 품목 리스트 → 프로토콜 분석까지 한 번에 체험해 보세요.
+          </SheetDescription>
+        </SheetHeader>
+
+        <ol className="mt-4 space-y-3 text-sm">
+          <li>
+            <span className="font-semibold">Step 1. 제품 검색</span>
+            <p className="text-xs text-slate-500 mt-1">
+              제품명, 벤더, 카테고리 키워드로 후보를 한 번에 모읍니다.
+            </p>
+          </li>
+          <li>
+            <span className="font-semibold">Step 2. 비교</span>
+            <p className="text-xs text-slate-500 mt-1">
+              스펙·Grade·가격 등을 기준으로 후보를 비교합니다.
+            </p>
+          </li>
+          <li>
+            <span className="font-semibold">Step 3. 품목 리스트</span>
+            <p className="text-xs text-slate-500 mt-1">
+              선택한 제품으로 구매 요청용 품목 리스트를 자동으로 만듭니다.
+            </p>
+          </li>
+          <li>
+            <span className="font-semibold">Step 4. 프로토콜 분석</span>
+            <p className="text-xs text-slate-500 mt-1">
+              실험 프로토콜을 붙여넣으면 필요한 시약·장비를 자동으로 추출합니다.
+            </p>
+          </li>
+        </ol>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export function HeroDemoFlowPanel() {
   const [step, setStep] = useState<StepId>("search");
@@ -97,29 +189,19 @@ export function HeroDemoFlowPanel() {
   return (
     <Card className="w-full max-w-sm shadow-sm border-slate-200">
       <CardHeader className="pb-3">
-        <h3 className="text-sm font-semibold text-slate-900">
-          3단계로 끝나는 구매 준비
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-900">
+            기능 체험
+          </h3>
+          <HeroStepHelp />
+        </div>
+        <p className="text-xs text-slate-500 mt-1">
+          검색 → 비교 → 품목 리스트 → 프로토콜 분석
+        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Step 탭 */}
-        <div className="flex gap-1 rounded-full bg-slate-50 p-1 text-xs">
-          {HERO_STEPS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setStep(s.id)}
-              className={cn(
-                "flex-1 rounded-full px-2 py-1 text-center transition text-[10px]",
-                s.id === step
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <HeroStepTabs activeId={step} onChange={setStep} />
 
         {/* 예시 UI 영역 - 작은 크기 */}
         <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm min-h-[180px]">
@@ -232,6 +314,42 @@ export function HeroDemoFlowPanel() {
               <div className="grid grid-cols-12 gap-0.5 text-[9px] font-semibold text-slate-900 pt-1 border-t border-slate-200 flex-shrink-0">
                 <div className="col-span-9 text-right pr-1">합계</div>
                 <div className="col-span-3 text-right">₩1,425,000</div>
+              </div>
+            </div>
+          )}
+
+          {step === "protocol" && (
+            <div className="space-y-2 h-full flex flex-col">
+              {/* 프로토콜 분석 헤더 */}
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
+                <FlaskConical className="h-3 w-3" />
+                <span>프로토콜 분석</span>
+              </div>
+              
+              {/* 프로토콜 입력 영역 */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="space-y-1.5">
+                  <div className="rounded border border-slate-200 bg-slate-50 p-1.5 text-[9px] text-slate-600">
+                    <p className="font-medium mb-1">프로토콜 텍스트:</p>
+                    <p className="leading-relaxed">
+                      "Add 100μL of blocking buffer...<br />
+                      Incubate with primary antibody..."
+                    </p>
+                  </div>
+                  
+                  {/* 추출된 시약 */}
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-semibold text-slate-700">추출된 시약:</p>
+                    {["Blocking Buffer", "Primary Antibody", "Wash Buffer"].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded border border-slate-200 bg-white p-1"
+                      >
+                        <p className="text-[9px] font-medium text-slate-900">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
