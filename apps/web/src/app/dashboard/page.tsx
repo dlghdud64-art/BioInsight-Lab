@@ -14,6 +14,8 @@ import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { LayoutDashboard } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -69,6 +71,18 @@ export default function DashboardPage() {
     queryFn: async () => {
       const response = await fetch("/api/activity-logs?limit=5");
       if (!response.ok) throw new Error("Failed to fetch activity logs");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 액티비티 로그 통계 조회
+  const [activityPeriod, setActivityPeriod] = useState<string>("month");
+  const { data: activityStats, isLoading: activityStatsLoading } = useQuery({
+    queryKey: ["activity-logs-stats", activityPeriod],
+    queryFn: async () => {
+      const response = await fetch(`/api/activity-logs/stats?period=${activityPeriod}`);
+      if (!response.ok) throw new Error("Failed to fetch activity stats");
       return response.json();
     },
     enabled: status === "authenticated",
@@ -470,6 +484,101 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">
+            {/* 액티비티 통계 */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+                  <div>
+                    <CardTitle>활동 통계</CardTitle>
+                    <CardDescription>
+                      기간별 활동 통계를 확인할 수 있습니다
+                    </CardDescription>
+                  </div>
+                  <Select value={activityPeriod} onValueChange={setActivityPeriod}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">최근 24시간</SelectItem>
+                      <SelectItem value="week">최근 7일</SelectItem>
+                      <SelectItem value="month">이번 달</SelectItem>
+                      <SelectItem value="year">이번 해</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {activityStatsLoading ? (
+                  <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+                ) : activityStats ? (
+                  <div className="space-y-6">
+                    {/* KPI 카드 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="text-xs text-slate-500 mb-1">총 활동 수</div>
+                        <div className="text-2xl font-bold text-slate-900">{activityStats.total || 0}</div>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="text-xs text-slate-500 mb-1">활동 유형</div>
+                        <div className="text-2xl font-bold text-slate-900">{activityStats.activityTypeStats?.length || 0}개</div>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="text-xs text-slate-500 mb-1">엔티티 유형</div>
+                        <div className="text-2xl font-bold text-slate-900">{activityStats.entityTypeStats?.length || 0}개</div>
+                      </div>
+                    </div>
+
+                    {/* 활동 유형별 차트 */}
+                    {activityStats.activityTypeStats && activityStats.activityTypeStats.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">활동 유형별 통계</h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={activityStats.activityTypeStats}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="type" 
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#3b82f6" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* 일별 활동 추이 */}
+                    {activityStats.dailyStats && activityStats.dailyStats.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">일별 활동 추이 (최근 30일)</h3>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={activityStats.dailyStats}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#10b981" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">통계 데이터가 없습니다</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 최근 활동 로그 */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -480,7 +589,7 @@ export default function DashboardPage() {
                     </CardDescription>
                   </div>
                   <Link href="/dashboard/activity-logs">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="text-xs md:text-sm h-8 md:h-10">
                       전체 보기
                     </Button>
                   </Link>
@@ -488,10 +597,10 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 {activityLogsLoading ? (
-                  <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+                  <p className="text-center text-muted-foreground py-8 text-xs md:text-sm">로딩 중...</p>
                 ) : !activityLogsData?.logs || activityLogsData.logs.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">활동 내역이 없습니다</p>
+                    <p className="text-muted-foreground mb-4 text-xs md:text-sm">활동 내역이 없습니다</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -521,18 +630,18 @@ export default function DashboardPage() {
                           key={log.id}
                           className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                         >
-                          <Activity className="h-4 w-4 text-slate-400" />
+                          <Activity className="h-4 w-4 text-slate-400 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-xs md:text-sm font-medium text-slate-900">
                               {label}
                             </div>
                             {log.metadata?.title && (
-                              <div className="text-xs text-slate-500 mt-1">
+                              <div className="text-[10px] md:text-xs text-slate-500 mt-1 truncate">
                                 {log.metadata.title}
                               </div>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400 whitespace-nowrap">
+                          <div className="text-[10px] md:text-xs text-slate-400 whitespace-nowrap flex-shrink-0">
                             {timeAgo}
                           </div>
                         </div>

@@ -29,7 +29,7 @@ const footerColumns = [
       { label: "검색 · AI 분석", href: "/test/search", onClick: null },
       { label: "비교 · 품목 리스트", href: "/test/quote", onClick: null },
       { label: "견적 요청", href: "/test/quote/request", onClick: null },
-      { label: "예산 · 구매 리포트", href: "#", onClick: null }, // TODO: reports
+      { label: "예산 · 구매 리포트", href: "/reports", onClick: null },
     ],
   },
   {
@@ -44,17 +44,17 @@ const footerColumns = [
   {
     title: "회사",
     links: [
-      { label: "서비스 소개", href: "#", onClick: null }, // TODO: /about or Notion link
+      { label: "서비스 소개", href: "/about", onClick: null },
       { label: "피드백 · 문의", href: "mailto:contact@bioinsight.lab", onClick: null },
-      { label: "변경 로그", href: "#", onClick: null }, // TODO: /changelog or Notion
+      { label: "변경 로그", href: "/changelog", onClick: null },
     ],
   },
   {
     title: "리소스",
     links: [
-      { label: "도움말 · 가이드", href: "#", onClick: null }, // TODO: /help
-      { label: "이용 약관", href: "#", onClick: null }, // TODO: /terms
-      { label: "개인정보 처리방침", href: "#", onClick: null }, // TODO: /privacy
+      { label: "도움말 · 가이드", href: "/help", onClick: null },
+      { label: "이용 약관", href: "/terms", onClick: null },
+      { label: "개인정보 처리방침", href: "/privacy", onClick: null },
     ],
   },
 ];
@@ -161,11 +161,11 @@ export function MainFooter() {
           <div className="flex flex-wrap items-center gap-3">
             <span>© {year} BioInsight Lab. All rights reserved.</span>
             <span className="hidden h-3 w-px bg-slate-300 md:inline" />
-            <Link href="#" className="hover:text-slate-900 transition-colors">
+            <Link href="/terms" className="hover:text-slate-900 transition-colors">
               이용 약관
             </Link>
             <span className="h-3 w-px bg-slate-300" />
-            <Link href="#" className="hover:text-slate-900 transition-colors">
+            <Link href="/privacy" className="hover:text-slate-900 transition-colors">
               개인정보 처리방침
             </Link>
           </div>
