@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("quotes");
+  const [activityPeriod, setActivityPeriod] = useState<string>("month");
 
   // 견적 목록 조회
   const { data: quotesData, isLoading: quotesLoading } = useQuery({
