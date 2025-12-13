@@ -154,8 +154,8 @@ export async function PUT(
     // 감사 로그 기록
     const ipAddress = request.headers.get("x-forwarded-for") || 
                      request.headers.get("x-real-ip") || 
-                     null;
-    const userAgent = request.headers.get("user-agent") || null;
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
 
     createAuditLog({
       organizationId: id,
