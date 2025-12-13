@@ -50,37 +50,37 @@ export function FeaturesShowcaseSection() {
   ];
 
   return (
-    <section id="features-showcase" className="mt-12 space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-slate-900">모든 기능 체험하기</h2>
-        <p className="text-sm text-slate-600">
+    <section id="features-showcase" className="mt-12 space-y-4 md:space-y-6">
+      <div className="text-center space-y-1.5 md:space-y-2 px-2">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900">모든 기능 체험하기</h2>
+        <p className="text-xs md:text-sm text-slate-600">
           각 기능을 클릭하여 바로 체험해보세요
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <Link key={feature.href} href={feature.href}>
               <Card className="border border-slate-200 bg-white shadow-sm rounded-xl hover:shadow-md transition-all hover:border-blue-300 cursor-pointer h-full">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`${feature.color} p-2 rounded-lg`}>
-                      <Icon className="h-5 w-5 text-white" />
+                <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+                  <div className="flex items-center gap-2.5 md:gap-3">
+                    <div className={`${feature.color} p-1.5 md:p-2 rounded-lg flex-shrink-0`}>
+                      <Icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
                     </div>
-                    <CardTitle className="text-base font-semibold text-slate-900">
+                    <CardTitle className="text-sm md:text-base font-semibold text-slate-900 min-w-0">
                       {feature.title}
                     </CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm text-slate-600">
+                <CardContent className="p-3 md:p-6 pt-0">
+                  <CardDescription className="text-xs md:text-sm text-slate-600 leading-relaxed">
                     {feature.description}
                   </CardDescription>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-4 w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="mt-3 md:mt-4 w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs md:text-sm h-8 md:h-9"
                   >
                     체험하기 →
                   </Button>

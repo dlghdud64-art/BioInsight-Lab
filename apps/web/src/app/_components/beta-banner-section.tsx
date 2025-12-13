@@ -40,14 +40,15 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
 
   // Compact 버전 (홈페이지용)
   return (
-    <section className="mt-8">
-      <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/50 px-5 py-3">
-        <Sparkles className="h-5 w-5 text-blue-600 flex-shrink-0" />
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">
-            지금은 Beta – 무료로 모든 기능을 체험해 보세요
+    <section className="mt-6 md:mt-8">
+      <div className="flex items-center gap-2 md:gap-3 rounded-lg border border-blue-200 bg-blue-50/50 px-3 md:px-5 py-2.5 md:py-3">
+        <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-blue-600 flex-shrink-0" />
+        <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
+          <span className="text-xs md:text-sm font-semibold text-slate-900">
+            <span className="hidden sm:inline">지금은 Beta – 무료로 모든 기능을 체험해 보세요</span>
+            <span className="sm:hidden">Beta – 무료로 체험</span>
           </span>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 text-xs px-2 py-0.5 flex-shrink-0">
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 flex-shrink-0">
             Beta
           </Badge>
         </div>

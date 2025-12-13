@@ -44,42 +44,43 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="border-b border-slate-100 bg-white py-10">
+    <section className="border-b border-slate-100 bg-white py-6 md:py-10">
       {/* 히어로만 살짝 더 안으로 */}
-      <div className="mx-auto max-w-5xl px-2 md:px-6 lg:px-8 grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-start">
+      <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 grid grid-cols-1 gap-6 md:gap-10 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-start">
         {/* 왼쪽: 제목 / 설명 / 버튼들 */}
-        <div className="space-y-4 md:pr-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600">
-            <span className="mr-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
+        <div className="space-y-3 md:space-y-4 md:pr-6">
+          <div className="inline-flex items-center gap-1.5 md:gap-2 rounded-full border border-slate-200 bg-white px-2.5 md:px-3 py-1 text-[10px] md:text-[11px] font-medium text-slate-600">
+            <span className="mr-1 md:mr-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
             <span>Beta</span>
             <span className="h-3 w-px bg-slate-300" />
-            <span>바이오 시약·장비 견적 준비 도구</span>
+            <span className="hidden sm:inline">바이오 시약·장비 견적 준비 도구</span>
+            <span className="sm:hidden">견적 준비 도구</span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold leading-tight text-slate-900 md:text-4xl">
+          <div className="space-y-2 md:space-y-3">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-slate-900">
               바이오 시약·장비 검색과 비교,{" "}
-              <span className="whitespace-nowrap">한 번에 정리되는 구매 요청 리스트</span>
+              <span className="whitespace-normal md:whitespace-nowrap">한 번에 정리되는 구매 요청 리스트</span>
             </h1>
-            <p className="text-sm leading-relaxed text-slate-600 max-w-xl">
+            <p className="text-xs md:text-sm leading-relaxed text-slate-600 max-w-xl">
               실험에 맞는 후보를 찾고, 스펙·가격 비교로 추리고,
-              <br />
+              <br className="hidden sm:block" />
               최종 구매 요청 리스트를 TSV/엑셀로 내보내
-              <br />
+              <br className="hidden sm:block" />
               동료·구매팀과 공유할 수 있습니다.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/test/search">
-              <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 md:gap-3">
+            <Link href="/test/search" className="flex-1 sm:flex-initial">
+              <Button size="lg" className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 text-sm md:text-base">
                 검색/비교 시작하기
               </Button>
             </Link>
             <button
               type="button"
               onClick={scrollToFlow}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md h-11 px-8 text-sm font-medium border border-slate-300 bg-background text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md h-10 md:h-11 px-6 md:px-8 text-xs md:text-sm font-medium border border-slate-300 bg-background text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               플로우 보기
             </button>

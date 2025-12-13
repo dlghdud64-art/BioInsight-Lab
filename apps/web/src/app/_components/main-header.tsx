@@ -58,31 +58,31 @@ export function MainHeader() {
 
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 md:px-4">
         {/* 좌측: 로고 + 섹션 네비 */}
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex items-center gap-3 md:gap-6 min-w-0">
+          <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
             <BioInsightLogo />
           </Link>
-          <nav className="hidden md:flex items-center gap-4 text-sm text-slate-600">
+          <nav className="hidden lg:flex items-center gap-4 text-sm text-slate-600">
             <button
               type="button"
               onClick={() => scrollToId("features")}
-              className="hover:text-slate-900 transition-colors"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap"
             >
               기능 소개
             </button>
             <button
               type="button"
               onClick={() => scrollToId("flow-section")}
-              className="hover:text-slate-900 transition-colors"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap"
             >
               사용 흐름
             </button>
             <button
               type="button"
               onClick={() => scrollToId("personas")}
-              className="hover:text-slate-900 transition-colors"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap"
             >
               누가 쓰나요?
             </button>
@@ -90,11 +90,11 @@ export function MainHeader() {
         </div>
 
         {/* 우측: CTA/유틸 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
           <button
             type="button"
             onClick={() => scrollToId("pricing")}
-            className="text-xs text-slate-600 hover:text-slate-900 transition-colors"
+            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap"
           >
             요금 & 도입
           </button>
@@ -102,9 +102,10 @@ export function MainHeader() {
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-[10px] md:text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-3 h-8 md:h-9"
               >
-                기능 체험
+                <span className="hidden sm:inline">기능 체험</span>
+                <span className="sm:hidden">체험</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
