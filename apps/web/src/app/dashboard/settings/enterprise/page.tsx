@@ -412,7 +412,7 @@ export default function EnterpriseSettingsPage() {
                   </TabsContent>
 
                   {/* 권한 관리 탭 */}
-                  <TabsContent value="permissions" className="space-y-4">
+                  <TabsContent value="permissions" className="space-y-6 md:space-y-4">
                     {/* 역할별 권한 설명 */}
                     <Card>
                       <CardHeader>
@@ -421,7 +421,7 @@ export default function EnterpriseSettingsPage() {
                           각 역할이 가진 권한을 확인하세요.
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="pb-6 md:pb-4">
                         <div className="grid gap-4 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                           <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">VIEWER</div>
@@ -500,14 +500,14 @@ export default function EnterpriseSettingsPage() {
                     </Card>
 
                     {/* 조직 멤버 목록 */}
-                    <Card>
+                    <Card className="mt-6 md:mt-0">
                       <CardHeader>
                         <CardTitle className="text-sm font-semibold">조직 멤버 권한 관리</CardTitle>
                         <CardDescription>
                           멤버의 역할을 변경하여 권한을 관리합니다.
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="pt-6 md:pt-4">
                         <OrganizationMembersPermissions organizationId={currentOrg.id} />
                       </CardContent>
                     </Card>
