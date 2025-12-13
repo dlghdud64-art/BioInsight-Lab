@@ -93,8 +93,18 @@ export async function GET(request: NextRequest) {
     // 6. 구매 패턴 기반 추천 추가 (특정 제품이 있는 경우)
     if (productId) {
       try {
+        // 사용자의 첫 번째 조직 가져오기
+        let userOrganizationId: string | undefined = undefined;
+        if (session.user.id) {
+          const userOrg = await db.organizationMember.findFirst({
+            where: { userId: session.user.id },
+            select: { organizationId: true },
+          });
+          userOrganizationId = userOrg?.organizationId || undefined;
+        }
+
         const purchasePatternRecs = await getFrequentlyBoughtTogether(productId, {
-          organizationId: session.user.organizationId || undefined,
+          organizationId: userOrganizationId,
           limit: 3,
         });
 
@@ -116,7 +126,7 @@ export async function GET(request: NextRequest) {
           });
 
           const patternRecommendations = purchasePatternRecs.map((rec) => {
-            const product = patternProducts.find((p) => p.id === rec.productId);
+            const product = patternProducts.find((p: any) => p.id === rec.productId);
             return {
               product,
               score: rec.score,

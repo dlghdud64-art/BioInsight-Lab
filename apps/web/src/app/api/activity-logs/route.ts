@@ -117,9 +117,10 @@ export async function GET(request: NextRequest) {
 
 // 액티비티 로그 생성 (내부용, 직접 호출하지 않음)
 export async function POST(request: NextRequest) {
+  let body: any = null;
   try {
     const session = await auth();
-    const body = await request.json();
+    body = await request.json();
     const {
       activityType,
       entityType,
@@ -142,10 +143,20 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get("user-agent") || null;
 
     // 액티비티 로그 생성
+    // organizationId가 제공되지 않은 경우, 사용자의 첫 번째 조직을 찾기
+    let finalOrganizationId = organizationId || null;
+    if (!finalOrganizationId && session?.user?.id) {
+      const userOrg = await db.organizationMember.findFirst({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      finalOrganizationId = userOrg?.organizationId || null;
+    }
+
     const activityLog = await db.activityLog.create({
       data: {
         userId: session?.user?.id || null,
-        organizationId: organizationId || session?.user?.organizationId || null,
+        organizationId: finalOrganizationId,
         activityType,
         entityType,
         entityId: entityId || null,

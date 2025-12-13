@@ -15,8 +15,15 @@ export async function GET(request: NextRequest) {
     const organizationId = searchParams.get("organizationId");
     const limit = parseInt(searchParams.get("limit") || "20");
 
-    // 조직 ID 결정 (세션의 조직 또는 파라미터)
-    let finalOrganizationId = organizationId || session?.user?.organizationId || undefined;
+    // 조직 ID 결정 (파라미터 또는 사용자의 첫 번째 조직)
+    let finalOrganizationId = organizationId || undefined;
+    if (!finalOrganizationId && session?.user?.id) {
+      const userOrg = await db.organizationMember.findFirst({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      finalOrganizationId = userOrg?.organizationId || undefined;
+    }
 
     // 특정 제품과 함께 구매되는 제품 조회
     if (productId) {
@@ -41,7 +48,7 @@ export async function GET(request: NextRequest) {
       });
 
       const recommendationsWithProducts = recommendations.map((rec) => {
-        const product = products.find((p) => p.id === rec.productId);
+        const product = products.find((p: any) => p.id === rec.productId);
         return {
           ...rec,
           product,
@@ -100,7 +107,7 @@ export async function GET(request: NextRequest) {
     const patternsWithProducts = patterns.map((pattern) => ({
       ...pattern,
       products: pattern.productIds
-        .map((id: string) => products.find((p) => p.id === id))
+        .map((id: string) => products.find((p: any) => p.id === id))
         .filter(Boolean),
     }));
 
