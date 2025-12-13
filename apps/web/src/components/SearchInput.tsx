@@ -29,12 +29,12 @@ export function SearchInput() {
           placeholder="제품명, 벤더, 시약명 검색... (예: PBS, FBS, Trypsin, 피펫)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 text-sm md:text-base"
         />
       </div>
-      <Button type="submit">
-        <Search className="h-4 w-4 mr-2" />
-        검색
+      <Button type="submit" className="flex-shrink-0">
+        <Search className="h-4 w-4 md:mr-2" />
+        <span className="hidden md:inline">검색</span>
       </Button>
     </form>
   );
