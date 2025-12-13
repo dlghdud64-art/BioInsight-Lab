@@ -6,19 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2 } from "lucide-react";
+import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2, Download, Settings } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
+import { downloadComparisonAsExcel, exportComparisonToTSV } from "@/lib/utils/export-comparison";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function ComparePage() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showFieldSettings, setShowFieldSettings] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>([
+    "name", "brand", "category", "price", "leadTime", "stockStatus", "minOrderQty", "vendorCount"
+  ]);
   const { toast } = useToast();
 
   // 제품 검색
@@ -298,17 +307,78 @@ export default function ComparePage() {
     );
   }
 
-  // 비교할 속성들 (더 풍부한 스펙)
-  const compareFields = [
+  // 사용 가능한 비교 필드
+  const availableFields = [
     { key: "name", label: "제품명" },
     { key: "brand", label: "브랜드" },
     { key: "category", label: "카테고리" },
+    { key: "catalogNumber", label: "카탈로그 번호" },
     { key: "price", label: "최저가" },
     { key: "leadTime", label: "납기일" },
     { key: "stockStatus", label: "재고" },
     { key: "minOrderQty", label: "최소 주문량" },
     { key: "vendorCount", label: "공급사 수" },
+    { key: "grade", label: "Grade" },
+    { key: "specification", label: "규격" },
+    { key: "description", label: "설명" },
   ];
+
+  // 선택된 필드만 사용
+  const compareFields = availableFields.filter((field) => selectedFields.includes(field.key));
+
+  const handleExport = (format: "csv" | "tsv") => {
+    if (products.length === 0) {
+      toast({
+        title: "내보낼 제품이 없습니다",
+        description: "비교할 제품을 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      if (format === "csv") {
+        downloadComparisonAsExcel(products, selectedFields, `comparison-${Date.now()}`);
+        toast({
+          title: "내보내기 완료",
+          description: "CSV 파일이 다운로드되었습니다.",
+        });
+      } else {
+        const tsv = exportComparisonToTSV(products, selectedFields);
+        const blob = new Blob([tsv], { type: "text/tab-separated-values;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `comparison-${Date.now()}.tsv`);
+        link.style.visibility = "hidden";
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "내보내기 완료",
+          description: "TSV 파일이 다운로드되었습니다.",
+        });
+      }
+      setShowExportDialog(false);
+    } catch (error) {
+      toast({
+        title: "내보내기 실패",
+        description: "파일 내보내기 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleField = (fieldKey: string) => {
+    setSelectedFields((prev) =>
+      prev.includes(fieldKey)
+        ? prev.filter((f) => f !== fieldKey)
+        : [...prev, fieldKey]
+    );
+  };
 
   return (
     <MainLayout>
@@ -470,7 +540,7 @@ export default function ComparePage() {
               여러 제품의 스펙, 가격, 납기를 한눈에 비교하세요
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               onClick={() => setShowHighlightDifferences(!showHighlightDifferences)}
@@ -488,6 +558,73 @@ export default function ComparePage() {
                 </>
               )}
             </Button>
+            <Dialog open={showFieldSettings} onOpenChange={setShowFieldSettings}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  비교 항목 설정
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>비교 항목 선택</DialogTitle>
+                  <DialogDescription>
+                    비교 테이블에 표시할 항목을 선택하세요.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 py-4">
+                  {availableFields.map((field) => (
+                    <div key={field.key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={field.key}
+                        checked={selectedFields.includes(field.key)}
+                        onCheckedChange={() => toggleField(field.key)}
+                      />
+                      <Label
+                        htmlFor={field.key}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {field.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  내보내기
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>비교 결과 내보내기</DialogTitle>
+                  <DialogDescription>
+                    비교 결과를 파일로 다운로드하세요.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 py-4">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleExport("csv")}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV로 내보내기 (Excel 호환)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleExport("tsv")}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    TSV로 내보내기
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" onClick={clearProducts}>
               전체 삭제
             </Button>
