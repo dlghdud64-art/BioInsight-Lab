@@ -5,6 +5,8 @@ import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
+import { sendEmail } from "@/lib/email/sender";
+import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 
 // 특정 견적 조회
 export async function GET(
@@ -160,6 +162,38 @@ export async function PATCH(
         );
 
         console.log(`Created ${purchaseRecords.length} purchase records for quote ${quote.id}`);
+
+        // 구매 완료 이메일 발송
+        try {
+          const user = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { email: true },
+          });
+
+          if (user?.email) {
+            const totalAmount = purchaseRecords.reduce((sum, record) => sum + record.totalAmount, 0);
+            const currency = purchaseRecords[0]?.currency || "KRW";
+            
+            const emailTemplate = generatePurchaseCompleteEmail({
+              quoteTitle: quote.title,
+              totalAmount,
+              currency,
+              itemCount: purchaseRecords.length,
+              purchaseDate: new Date(),
+              quoteUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quotes/${quote.id}`,
+            });
+
+            await sendEmail({
+              to: user.email,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+              text: emailTemplate.text,
+            });
+          }
+        } catch (emailError) {
+          // 이메일 발송 실패는 로깅만 하고 계속 진행
+          console.error("Failed to send purchase complete email:", emailError);
+        }
       } catch (error) {
         console.error("Failed to create purchase records:", error);
         // PurchaseRecord 생성 실패해도 Quote 업데이트는 성공으로 처리
