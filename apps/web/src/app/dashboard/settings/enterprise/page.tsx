@@ -422,38 +422,77 @@ export default function EnterpriseSettingsPage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                          <div className="p-3 border rounded-lg">
-                            <div className="font-semibold text-xs md:text-sm mb-2">VIEWER</div>
-                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
-                              <li>✓ 견적 조회</li>
-                              <li>✓ 제품 검색</li>
-                              <li>✓ 비교 테이블 조회</li>
+                        <div className="grid gap-4 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">VIEWER</div>
+                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>견적 조회</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>제품 검색</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>비교 테이블 조회</span>
+                              </li>
                             </ul>
                           </div>
-                          <div className="p-3 border rounded-lg">
-                            <div className="font-semibold text-xs md:text-sm mb-2">REQUESTER</div>
-                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
-                              <li>✓ VIEWER 권한</li>
-                              <li>✓ 견적 생성/수정</li>
-                              <li>✓ 공유 링크 생성</li>
+                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">REQUESTER</div>
+                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>VIEWER 권한</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>견적 생성/수정</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>공유 링크 생성</span>
+                              </li>
                             </ul>
                           </div>
-                          <div className="p-3 border rounded-lg">
-                            <div className="font-semibold text-xs md:text-sm mb-2">APPROVER</div>
-                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
-                              <li>✓ REQUESTER 권한</li>
-                              <li>✓ 견적 승인</li>
-                              <li>✓ 예산 조회</li>
+                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">APPROVER</div>
+                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>REQUESTER 권한</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>견적 승인</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>예산 조회</span>
+                              </li>
                             </ul>
                           </div>
-                          <div className="p-3 border rounded-lg bg-purple-50">
-                            <div className="font-semibold text-xs md:text-sm mb-2">ADMIN</div>
-                            <ul className="text-[10px] md:text-xs text-slate-600 space-y-1">
-                              <li>✓ 모든 권한</li>
-                              <li>✓ 멤버 관리</li>
-                              <li>✓ SSO 설정</li>
-                              <li>✓ 조직 설정</li>
+                          <div className="p-4 md:p-3 border rounded-lg bg-purple-50 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">ADMIN</div>
+                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>모든 권한</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>멤버 관리</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>SSO 설정</span>
+                              </li>
+                              <li className="flex items-start gap-1.5">
+                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span>조직 설정</span>
+                              </li>
                             </ul>
                           </div>
                         </div>
