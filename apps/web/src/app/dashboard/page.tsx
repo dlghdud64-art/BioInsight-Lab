@@ -19,9 +19,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+const DASHBOARD_TABS = [
+  { id: "quotes", label: "견적" },
+  { id: "favorites", label: "즐겨찾기" },
+  { id: "recent", label: "최근" },
+  { id: "activity", label: "활동" },
+  { id: "inventory", label: "재고" },
+];
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("quotes");
 
   // 견적 목록 조회
   const { data: quotesData, isLoading: quotesLoading } = useQuery({
@@ -79,7 +88,6 @@ export default function DashboardPage() {
   });
 
   // 액티비티 로그 통계 조회
-  const [activityPeriod, setActivityPeriod] = useState<string>("month");
   const { data: activityStats, isLoading: activityStatsLoading } = useQuery({
     queryKey: ["activity-logs-stats", activityPeriod],
     queryFn: async () => {
@@ -109,15 +117,6 @@ export default function DashboardPage() {
   const quotes = quotesData?.quotes || [];
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
-  const [activeTab, setActiveTab] = useState("quotes");
-
-  const DASHBOARD_TABS = [
-    { id: "quotes", label: "견적" },
-    { id: "favorites", label: "즐겨찾기" },
-    { id: "recent", label: "최근" },
-    { id: "activity", label: "활동" },
-    { id: "inventory", label: "재고" },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
