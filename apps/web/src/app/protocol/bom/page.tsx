@@ -123,7 +123,7 @@ export default function ProtocolBOMPage() {
   const [editingReagentId, setEditingReagentId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  // 개발 환경에서는 기본적으로 PDF 업로드 활성화
+  // PDF 업로드 활성화 여부 (기본값: true)
   const [pdfUploadEnabled, setPdfUploadEnabled] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -133,7 +133,8 @@ export default function ProtocolBOMPage() {
     queryFn: async () => {
       const res = await fetch("/api/config");
       const data = await res.json();
-      setPdfUploadEnabled(data.pdfUploadEnabled ?? true); // 기본값을 true로 변경
+      // 환경 변수에 따라 활성화 여부 결정 (기본값: true)
+      setPdfUploadEnabled(data.pdfUploadEnabled ?? true);
       return data;
     },
   });

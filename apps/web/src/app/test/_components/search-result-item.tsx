@@ -15,6 +15,62 @@ interface SearchResultItemProps {
   onClick?: () => void;
 }
 
+// 재고 상태 배지 컴포넌트
+function StockStatusBadge({ stockStatus }: { stockStatus?: string }) {
+  if (!stockStatus) return null;
+
+  const status = stockStatus.toLowerCase();
+  
+  if (status.includes("재고") || status.includes("in stock") || status.includes("available")) {
+    return (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]">
+        재고 있음
+      </Badge>
+    );
+  } else if (status.includes("주문") || status.includes("order") || status.includes("backorder")) {
+    return (
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+        주문 필요
+      </Badge>
+    );
+  } else if (status.includes("품절") || status.includes("out of stock") || status.includes("unavailable")) {
+    return (
+      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
+        품절
+      </Badge>
+    );
+  }
+  
+  return (
+    <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 text-[10px]">
+      {stockStatus}
+    </Badge>
+  );
+}
+
+// 납기 포맷팅 함수
+function formatLeadTime(leadTime?: number | string): string {
+  if (!leadTime) return "";
+
+  const days = typeof leadTime === "string" ? parseInt(leadTime) : leadTime;
+  
+  if (days <= 0) {
+    return "재고 있음";
+  } else if (days === 1) {
+    return "1일";
+  } else if (days < 7) {
+    return `${days}일`;
+  } else if (days < 14) {
+    return "1-2주";
+  } else if (days < 30) {
+    const weeks = Math.ceil(days / 7);
+    return `${weeks}주`;
+  } else {
+    const months = Math.ceil(days / 30);
+    return `${months}개월`;
+  }
+}
+
 // 재고/납기 상태 배지 컴포넌트
 function LeadTimeBadge({ leadTime }: { leadTime?: number | string }) {
   if (!leadTime) return null;
@@ -33,10 +89,16 @@ function LeadTimeBadge({ leadTime }: { leadTime?: number | string }) {
         보통
       </Badge>
     );
-  } else {
+  } else if (days <= 14) {
     return (
       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
         지연 가능
+      </Badge>
+    );
+  } else {
+    return (
+      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
+        장기 지연
       </Badge>
     );
   }
@@ -136,15 +198,23 @@ export function SearchResultItem({
               <div className="text-xs text-slate-400">가격 문의</div>
             )}
             
-            <div className="flex items-center gap-2 justify-end">
-              {leadTime ? (
-                <>
-                  <span className="text-[10px] text-slate-500">{leadTime}일</span>
+            <div className="flex flex-col items-end gap-1">
+              {stockStatus && (
+                <div className="flex items-center gap-1">
+                  <StockStatusBadge stockStatus={stockStatus} />
+                </div>
+              )}
+              {leadTime && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-600 font-medium">
+                    납기: {formatLeadTime(leadTime)}
+                  </span>
                   <LeadTimeBadge leadTime={leadTime} />
-                </>
-              ) : stockStatus ? (
-                <span className="text-[10px] text-slate-500">재고 확인</span>
-              ) : null}
+                </div>
+              )}
+              {!leadTime && !stockStatus && (
+                <span className="text-[10px] text-slate-400">재고/납기 문의</span>
+              )}
             </div>
           </div>
 

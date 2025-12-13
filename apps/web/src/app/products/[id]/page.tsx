@@ -33,6 +33,7 @@ export default function ProductDetailPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showDatasheetSection, setShowDatasheetSection] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [msdsLinkStatus, setMsdsLinkStatus] = useState<"checking" | "valid" | "invalid" | null>(null);
   const { toast } = useToast();
 
   const isInCompare = hasProduct(id);
@@ -487,48 +488,119 @@ ${extractedInfo.summary || "N/A"}`;
                     <div className="space-y-3">
                       {/* MSDS/SDS 링크 */}
                       {product.msdsUrl && (
-                        <div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                            onClick={async () => {
-                              try {
-                                // 링크 유효성 검사 (간단한 URL 형식 검사)
-                                const url = product.msdsUrl;
-                                if (!url || (!url.startsWith("http://") && !url.startsWith("https://"))) {
-                                  toast({
-                                    title: "유효하지 않은 링크",
-                                    description: "MSDS/SDS 링크가 올바른 형식이 아닙니다.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={async () => {
+                                try {
+                                  const url = product.msdsUrl;
+                                  if (!url || (!url.startsWith("http://") && !url.startsWith("https://"))) {
+                                    toast({
+                                      title: "유효하지 않은 링크",
+                                      description: "MSDS/SDS 링크가 올바른 형식이 아닙니다.",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
 
-                                // 새 창에서 링크 열기
-                                const newWindow = window.open(url, "_blank", "noopener,noreferrer");
-                                
-                                // 새 창이 차단되었는지 확인
-                                if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+                                  // 새 창에서 링크 열기
+                                  const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+                                  
+                                  // 새 창이 차단되었는지 확인
+                                  if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+                                    toast({
+                                      title: "팝업 차단됨",
+                                      description: "브라우저에서 팝업이 차단되었습니다. 팝업 차단을 해제해주세요.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
                                   toast({
-                                    title: "팝업 차단됨",
-                                    description: "브라우저에서 팝업이 차단되었습니다. 팝업 차단을 해제해주세요.",
+                                    title: "링크 열기 실패",
+                                    description: "MSDS/SDS 문서를 열 수 없습니다. 링크를 확인해주세요.",
                                     variant: "destructive",
                                   });
                                 }
-                              } catch (error) {
-                                toast({
-                                  title: "링크 열기 실패",
-                                  description: "MSDS/SDS 문서를 열 수 없습니다. 링크를 확인해주세요.",
-                                  variant: "destructive",
-                                });
-                              }
-                            }}
-                          >
-                            <FileText className="h-3 w-3 mr-1.5" />
-                            MSDS / SDS 문서 보기
-                            <ExternalLink className="h-3 w-3 ml-1.5" />
-                          </Button>
+                              }}
+                            >
+                              <FileText className="h-3 w-3 mr-1.5" />
+                              MSDS / SDS 문서 보기
+                              <ExternalLink className="h-3 w-3 ml-1.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs h-8"
+                              onClick={async () => {
+                                const url = product.msdsUrl;
+                                if (!url) return;
+
+                                setMsdsLinkStatus("checking");
+                                try {
+                                  const response = await fetch("/api/validate-link", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ url }),
+                                  });
+
+                                  const data = await response.json();
+
+                                  if (data.valid) {
+                                    setMsdsLinkStatus("valid");
+                                    toast({
+                                      title: "링크 유효",
+                                      description: "MSDS/SDS 링크가 정상적으로 작동합니다.",
+                                    });
+                                  } else {
+                                    setMsdsLinkStatus("invalid");
+                                    toast({
+                                      title: "링크 확인 실패",
+                                      description: data.error || "링크에 접근할 수 없습니다.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
+                                  setMsdsLinkStatus("invalid");
+                                  toast({
+                                    title: "검증 실패",
+                                    description: "링크 검증 중 오류가 발생했습니다.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              disabled={msdsLinkStatus === "checking"}
+                            >
+                              {msdsLinkStatus === "checking" ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                                  확인 중...
+                                </>
+                              ) : msdsLinkStatus === "valid" ? (
+                                <>
+                                  <Check className="h-3 w-3 mr-1.5 text-green-600" />
+                                  유효함
+                                </>
+                              ) : msdsLinkStatus === "invalid" ? (
+                                <>
+                                  <AlertTriangle className="h-3 w-3 mr-1.5 text-red-600" />
+                                  확인 불가
+                                </>
+                              ) : (
+                                <>
+                                  <Shield className="h-3 w-3 mr-1.5" />
+                                  링크 확인
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          {msdsLinkStatus === "invalid" && (
+                            <p className="text-xs text-red-600">
+                              ⚠️ 링크에 접근할 수 없습니다. 링크가 만료되었거나 잘못되었을 수 있습니다.
+                            </p>
+                          )}
                         </div>
                       )}
                       

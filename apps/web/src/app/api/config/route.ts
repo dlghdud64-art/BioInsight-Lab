@@ -5,13 +5,16 @@ import { NextResponse } from "next/server";
  * ë³´ìì ë¯¼ê°íì§ ìì ì¤ì ë§ ë°í
  */
 export async function GET() {
-  // 환경 변수가 없으면 개발 환경에서는 기본적으로 PDF 업로드 활성화
-  const defaultMode = process.env.NODE_ENV === "production" ? "paste-only" : "server-upload";
-  const pdfMode = process.env.PDF_MODE || defaultMode;
+  // PDF_MODE 환경 변수 확인
+  // - "server-upload": PDF 업로드 활성화
+  // - "paste-only": 텍스트 붙여넣기만 가능
+  // - 미설정 시: 기본적으로 활성화 (개발/프로덕션 모두)
+  const pdfMode = process.env.PDF_MODE || "server-upload";
+  const pdfUploadEnabled = pdfMode === "server-upload";
   
   return NextResponse.json({
     pdfMode,
-    pdfUploadEnabled: pdfMode === "server-upload",
+    pdfUploadEnabled,
   });
 }
 
