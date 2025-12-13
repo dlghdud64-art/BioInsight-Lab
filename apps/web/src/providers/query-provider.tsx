@@ -10,8 +10,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes (성능 최적화)
-            gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+            staleTime: 10 * 60 * 1000, // 10 minutes (성능 최적화 - 증가)
+            gcTime: 30 * 60 * 1000, // 30 minutes (formerly cacheTime - 증가)
             refetchOnWindowFocus: false,
             refetchOnMount: false, // 캐시된 데이터가 있으면 재요청하지 않음
             retry: (failureCount, error: any) => {

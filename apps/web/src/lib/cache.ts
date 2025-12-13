@@ -10,7 +10,7 @@ interface CacheEntry<T> {
 class MemoryCache {
   private cache = new Map<string, CacheEntry<any>>();
 
-  set<T>(key: string, data: T, ttl: number = 60000): void {
+  set<T>(key: string, data: T, ttl: number = 300000): void { // 기본 TTL을 5분으로 증가
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

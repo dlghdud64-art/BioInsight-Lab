@@ -40,7 +40,7 @@ export async function searchProducts(params: SearchProductsParams) {
     limit
   );
 
-  // 캐시 확인 (검색 결과는 5분 TTL로 연장)
+  // 캐시 확인 (검색 결과는 10분 TTL로 연장)
   const cached = cache.get(cacheKey);
   if (cached) {
     return cached;
