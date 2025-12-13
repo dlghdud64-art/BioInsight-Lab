@@ -482,15 +482,86 @@ ${extractedInfo.summary || "N/A"}`;
                 )}
 
                 {/* 사용 용도 */}
-                {product.description && (
-                  <div>
-                    <h3 className="font-semibold text-sm mb-2">사용 용도</h3>
-                    <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-sm md:text-base">사용 용도</h3>
+                    {!generatedUsage && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          setIsGeneratingUsage(true);
+                          try {
+                            const response = await fetch(`/api/products/${id}/usage`, {
+                              method: "POST",
+                            });
+
+                            if (response.ok) {
+                              const data = await response.json();
+                              setGeneratedUsage(data.usageDescription);
+                              toast({
+                                title: "사용 용도 생성 완료",
+                                description: "GPT 기반 사용 용도 설명이 생성되었습니다.",
+                              });
+                            } else {
+                              throw new Error("Failed to generate usage description");
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "생성 실패",
+                              description: "사용 용도 설명 생성에 실패했습니다.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsGeneratingUsage(false);
+                          }
+                        }}
+                        disabled={isGeneratingUsage}
+                        className="text-xs h-7 md:h-8"
+                      >
+                        {isGeneratingUsage ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                            생성 중...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-1.5" />
+                            AI로 생성
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  {generatedUsage ? (
+                    <div className="p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap">
+                            {generatedUsage}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setGeneratedUsage(null)}
+                        className="text-xs h-6 text-slate-500 hover:text-slate-700"
+                      >
+                        원래 설명 보기
+                      </Button>
+                    </div>
+                  ) : product.description ? (
+                    <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap">
                       {product.description}
                     </p>
-                  </div>
-                )}
-
+                  ) : (
+                    <p className="text-xs md:text-sm text-slate-400 italic">
+                      사용 용도 정보가 없습니다. "AI로 생성" 버튼을 클릭하여 생성할 수 있습니다.
+                    </p>
+                  )}
+                </div>
 
                 {/* 제조사 페이지 링크 */}
                 {product.vendors?.[0]?.url && (
