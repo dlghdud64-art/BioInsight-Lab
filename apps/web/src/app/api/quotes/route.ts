@@ -4,6 +4,8 @@ import { createQuote } from "@/lib/api/quotes";
 import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors } from "@/lib/email";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
+import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { ActivityType } from "@prisma/client";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
@@ -102,6 +104,30 @@ export async function POST(request: NextRequest) {
       vendorEmails.length > 0 && sendQuoteNotificationToVendors(vendorEmails as string[], quote.title, quote.id),
     ]).catch((error) => {
       console.error("Failed to send quote emails:", error);
+    });
+
+    // 액티비티 로그 기록 (비동기, 실패해도 견적은 생성됨)
+    const ipAddress = request.headers.get("x-forwarded-for") || 
+                     request.headers.get("x-real-ip") || 
+                     null;
+    const userAgent = request.headers.get("user-agent") || null;
+    
+    createActivityLogServer({
+      db,
+      activityType: ActivityType.QUOTE_CREATED,
+      entityType: "quote",
+      entityId: quote.id,
+      userId: session.user.id,
+      organizationId: organizationId || quote.organizationId || undefined,
+      metadata: {
+        title: quote.title,
+        itemCount: quote.items?.length || 0,
+        totalAmount: quote.items?.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0) || 0,
+      },
+      ipAddress,
+      userAgent,
+    }).catch((error) => {
+      console.error("Failed to create activity log:", error);
     });
 
     return NextResponse.json({ quote }, { status: 201 });

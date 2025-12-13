@@ -12,11 +12,40 @@ export interface ExtractedReagent {
   category?: "REAGENT" | "TOOL" | "EQUIPMENT";
 }
 
+export interface ExperimentCondition {
+  temperature?: {
+    value: number;
+    unit: string; // "°C", "K" 등
+    duration?: number; // 분 단위
+    description?: string; // "incubation", "storage" 등
+  }[];
+  time?: {
+    value: number;
+    unit: string; // "min", "hour", "day" 등
+    step?: string; // 단계 설명
+  }[];
+  concentration?: {
+    reagent: string; // 시약명
+    value: number;
+    unit: string; // "M", "mM", "μg/mL", "%" 등
+  }[];
+  pH?: {
+    value: number;
+    description?: string;
+  }[];
+  other?: {
+    key: string;
+    value: string;
+    description?: string;
+  }[];
+}
+
 export interface ProtocolExtractionResult {
   reagents: ExtractedReagent[];
   summary: string;
   experimentType?: string;
   sampleType?: string;
+  conditions?: ExperimentCondition; // 실험 조건
 }
 
 /**
@@ -31,8 +60,8 @@ export async function extractReagentsFromProtocol(
   // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
   const truncatedText = pdfText.slice(0, 10000); // 처음 10,000자만 사용
 
-  // GPT를 사용하여 시약 추출
-  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비를 추출해주세요.
+  // GPT를 사용하여 시약 및 실험 조건 추출
+  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
 
 프로토콜 내용:
 ${truncatedText}
@@ -51,10 +80,48 @@ ${truncatedText}
   ],
   "summary": "프로토콜 요약 (한 문장)",
   "experimentType": "실험 유형 (예: ELISA, qPCR, Western Blot)",
-  "sampleType": "샘플 유형 (예: Serum, Plasma, Cell lysate)"
+  "sampleType": "샘플 유형 (예: Serum, Plasma, Cell lysate)",
+  "conditions": {
+    "temperature": [
+      {
+        "value": 온도 값 (숫자),
+        "unit": "단위 (예: °C, K)",
+        "duration": 지속 시간 (분 단위, 선택사항),
+        "description": "설명 (예: incubation, storage, reaction)"
+      }
+    ],
+    "time": [
+      {
+        "value": 시간 값 (숫자),
+        "unit": "단위 (예: min, hour, day)",
+        "step": "단계 설명 (선택사항)"
+      }
+    ],
+    "concentration": [
+      {
+        "reagent": "시약명",
+        "value": 농도 값 (숫자),
+        "unit": "단위 (예: M, mM, μg/mL, %)"
+      }
+    ],
+    "pH": [
+      {
+        "value": pH 값 (숫자),
+        "description": "설명 (선택사항)"
+      }
+    ],
+    "other": [
+      {
+        "key": "조건 키 (예: rotation speed, pressure)",
+        "value": "값",
+        "description": "설명 (선택사항)"
+      }
+    ]
+  }
 }
 
-시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.`;
+시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.
+실험 조건은 프로토콜에서 명시된 모든 온도, 시간, 농도, pH 등을 추출해주세요.`;
 
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");

@@ -50,11 +50,16 @@ export function QuoteListPreviewCard() {
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-4 w-4 text-slate-700" />
-            <CardTitle className="text-sm font-semibold text-slate-800">
-              품목 리스트
+          <div className="flex-1">
+            <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
+                Step 3
+              </span>
+              <span>구매 요청 리스트 정리</span>
             </CardTitle>
+            <p className="mt-1 text-xs text-slate-500">
+              검색 결과에서 선택한 제품이 이곳에 정리됩니다. TSV/엑셀로 내려받아 공유할 수 있습니다.
+            </p>
           </div>
         </div>
       </CardHeader>
@@ -77,14 +82,12 @@ export function QuoteListPreviewCard() {
                     <TableCell colSpan={4} className="text-center py-8">
                       <div className="space-y-2">
                         <p className="text-xs text-slate-500">
-                          제품을 검색 결과에서 선택하면 이곳에 품목이 추가됩니다.
+                          아직 담긴 제품이 없습니다.
                         </p>
-                        <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400">
-                          <span>비교</span>
-                          <span>·</span>
-                          <span>품목 추가</span>
-                          <span>버튼을 클릭하세요</span>
-                        </div>
+                        <p className="text-xs text-slate-500">
+                          위에서 제품을 검색하고, 결과 카드의{" "}
+                          <span className="font-medium">"리스트에 담기"</span> 버튼을 눌러보세요.
+                        </p>
                       </div>
                     </TableCell>
                   </TableRow>

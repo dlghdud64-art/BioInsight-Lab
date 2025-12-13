@@ -30,7 +30,12 @@ export function SearchPanel() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800">검색 설정</CardTitle>
+          <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
+              Step 1
+            </span>
+            <span>제품 검색</span>
+          </CardTitle>
           <CardDescription className="text-xs text-slate-500">
             제품을 검색하고 후보를 선택합니다.
           </CardDescription>
@@ -44,17 +49,15 @@ export function SearchPanel() {
               id="search-query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="예: Human IL-6 ELISA kit"
+              placeholder="예: Human IL-6 ELISA kit — 제품명이나 벤더 이름을 입력해 보세요"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   runSearch();
                 }
               }}
             />
-            <p className="text-[10px] text-slate-500 leading-tight">
-              💡 검색어에 제품명, 타깃, 실험 유형 등을 함께 입력하면 GPT가 자동으로 분석합니다.
-              <br />
-              <span className="text-[9px]">예: "Human IL-6 Sandwich ELISA kit"</span>
+            <p className="mt-1 text-xs text-slate-500">
+              제품명, 벤더, 카테고리 키워드로 검색하면 GPT가 관련 제품을 추천해 줍니다.
             </p>
             {/* 샘플 검색어 칩 */}
             <div className="flex flex-wrap gap-1.5 pt-1">

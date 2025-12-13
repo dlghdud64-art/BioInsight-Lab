@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { getAppUrl, isDemoMode } from "@/lib/env";
+import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { ActivityType } from "@prisma/client";
 
 // 공유 링크 생성
 export async function POST(request: NextRequest) {
@@ -194,6 +196,31 @@ export async function POST(request: NextRequest) {
         expiresAt,
         isActive: true,
       },
+    });
+
+    // 액티비티 로그 기록 (비동기, 실패해도 공유 링크는 생성됨)
+    const ipAddress = request.headers.get("x-forwarded-for") || 
+                     request.headers.get("x-real-ip") || 
+                     null;
+    const userAgent = request.headers.get("user-agent") || null;
+    
+    createActivityLogServer({
+      db,
+      activityType: ActivityType.QUOTE_SHARED,
+      entityType: "quote",
+      entityId: quote.id,
+      userId: session.user.id,
+      organizationId: quote.organizationId || undefined,
+      metadata: {
+        sharedListId: sharedList.id,
+        publicId: sharedList.publicId,
+        title: sharedList.title,
+        expiresAt: sharedList.expiresAt?.toISOString(),
+      },
+      ipAddress,
+      userAgent,
+    }).catch((error) => {
+      console.error("Failed to create activity log:", error);
     });
 
     return NextResponse.json({

@@ -191,6 +191,11 @@ export function PersonalizedRecommendations({
                       <div className="flex-1">
                         <p className="text-xs font-medium text-blue-900 mb-1">추천 근거</p>
                         <p className="text-xs text-blue-700">{rec.reason}</p>
+                        {(rec as any).source === "purchase_pattern" && (
+                          <Badge variant="outline" className="text-[10px] mt-1 bg-green-50 text-green-700 border-green-200">
+                            구매 패턴 기반
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>

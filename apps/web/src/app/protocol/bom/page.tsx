@@ -60,11 +60,40 @@ interface ExtractedReagent {
   category?: "REAGENT" | "TOOL" | "EQUIPMENT";
 }
 
+interface ExperimentCondition {
+  temperature?: {
+    value: number;
+    unit: string;
+    duration?: number;
+    description?: string;
+  }[];
+  time?: {
+    value: number;
+    unit: string;
+    step?: string;
+  }[];
+  concentration?: {
+    reagent: string;
+    value: number;
+    unit: string;
+  }[];
+  pH?: {
+    value: number;
+    description?: string;
+  }[];
+  other?: {
+    key: string;
+    value: string;
+    description?: string;
+  }[];
+}
+
 interface ProtocolExtractionResult {
   reagents: ExtractedReagent[];
   summary: string;
   experimentType?: string;
   sampleType?: string;
+  conditions?: ExperimentCondition;
 }
 
 interface ProductMatch {
@@ -695,6 +724,99 @@ export default function ProtocolBOMPage() {
                       <p className="text-xs text-slate-600 mt-2">{extractionResult.summary}</p>
                     )}
                   </div>
+
+                  {/* 실험 조건 표시 */}
+                  {extractionResult.conditions && (
+                    <Card className="border-blue-200 bg-blue-50/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                          <FlaskConical className="h-4 w-4 text-blue-600" />
+                          실험 조건
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {extractionResult.conditions.temperature && extractionResult.conditions.temperature.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-slate-700 mb-1">온도</div>
+                            <div className="space-y-1">
+                              {extractionResult.conditions.temperature.map((temp, idx) => (
+                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2">
+                                  <span className="font-medium">{temp.value}{temp.unit}</span>
+                                  {temp.duration && (
+                                    <span className="text-slate-500">({temp.duration}분)</span>
+                                  )}
+                                  {temp.description && (
+                                    <Badge variant="outline" className="text-[10px]">
+                                      {temp.description}
+                                    </Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {extractionResult.conditions.time && extractionResult.conditions.time.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-slate-700 mb-1">시간</div>
+                            <div className="space-y-1">
+                              {extractionResult.conditions.time.map((time, idx) => (
+                                <div key={idx} className="text-xs text-slate-600 flex items-center gap-2">
+                                  <span className="font-medium">{time.value} {time.unit}</span>
+                                  {time.step && (
+                                    <span className="text-slate-500">({time.step})</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {extractionResult.conditions.concentration && extractionResult.conditions.concentration.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-slate-700 mb-1">농도</div>
+                            <div className="space-y-1">
+                              {extractionResult.conditions.concentration.map((conc, idx) => (
+                                <div key={idx} className="text-xs text-slate-600">
+                                  <span className="font-medium">{conc.reagent}:</span>{" "}
+                                  <span>{conc.value} {conc.unit}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {extractionResult.conditions.pH && extractionResult.conditions.pH.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-slate-700 mb-1">pH</div>
+                            <div className="space-y-1">
+                              {extractionResult.conditions.pH.map((pH, idx) => (
+                                <div key={idx} className="text-xs text-slate-600">
+                                  <span className="font-medium">pH {pH.value}</span>
+                                  {pH.description && (
+                                    <span className="text-slate-500 ml-2">({pH.description})</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {extractionResult.conditions.other && extractionResult.conditions.other.length > 0 && (
+                          <div>
+                            <div className="text-xs font-medium text-slate-700 mb-1">기타 조건</div>
+                            <div className="space-y-1">
+                              {extractionResult.conditions.other.map((other, idx) => (
+                                <div key={idx} className="text-xs text-slate-600">
+                                  <span className="font-medium">{other.key}:</span>{" "}
+                                  <span>{other.value}</span>
+                                  {other.description && (
+                                    <span className="text-slate-500 ml-2">({other.description})</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* 통계 및 필터 */}
                   {reagents.length > 0 && (

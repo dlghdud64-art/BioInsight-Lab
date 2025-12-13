@@ -1,18 +1,5 @@
-export interface ExtractedReagent {
-  name: string;
-  description?: string;
-  quantity?: string;
-  unit?: string;
-  estimatedUsage?: number;
-  category?: "REAGENT" | "TOOL" | "EQUIPMENT";
-}
-
-export interface ProtocolExtractionResult {
-  reagents: ExtractedReagent[];
-  summary: string;
-  experimentType?: string;
-  sampleType?: string;
-}
+// protocol-extractor.ts에서 export된 타입 재사용
+export type { ExtractedReagent, ProtocolExtractionResult, ExperimentCondition } from "./protocol-extractor";
 
 /**
  * 텍스트에서 실험 프로토콜을 추출하고 필요한 시약을 GPT로 분석
@@ -38,7 +25,7 @@ async function extractReagentsFromProtocolText(
     throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
   }
 
-  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비를 추출해주세요.
+  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
 
 프로토콜 내용:
 ${text}
@@ -57,10 +44,48 @@ ${text}
   ],
   "summary": "프로토콜 요약 (한 문장)",
   "experimentType": "실험 유형 (예: ELISA, qPCR, Western Blot)",
-  "sampleType": "샘플 유형 (예: Serum, Plasma, Cell lysate)"
+  "sampleType": "샘플 유형 (예: Serum, Plasma, Cell lysate)",
+  "conditions": {
+    "temperature": [
+      {
+        "value": 온도 값 (숫자),
+        "unit": "단위 (예: °C, K)",
+        "duration": 지속 시간 (분 단위, 선택사항),
+        "description": "설명 (예: incubation, storage, reaction)"
+      }
+    ],
+    "time": [
+      {
+        "value": 시간 값 (숫자),
+        "unit": "단위 (예: min, hour, day)",
+        "step": "단계 설명 (선택사항)"
+      }
+    ],
+    "concentration": [
+      {
+        "reagent": "시약명",
+        "value": 농도 값 (숫자),
+        "unit": "단위 (예: M, mM, μg/mL, %)"
+      }
+    ],
+    "pH": [
+      {
+        "value": pH 값 (숫자),
+        "description": "설명 (선택사항)"
+      }
+    ],
+    "other": [
+      {
+        "key": "조건 키 (예: rotation speed, pressure)",
+        "value": "값",
+        "description": "설명 (선택사항)"
+      }
+    ]
+  }
 }
 
-시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.`;
+시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.
+실험 조건은 프로토콜에서 명시된 모든 온도, 시간, 농도, pH 등을 추출해주세요.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {

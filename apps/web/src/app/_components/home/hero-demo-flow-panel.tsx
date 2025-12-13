@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,21 +13,21 @@ type StepId = "search" | "compare" | "list";
 const HERO_STEPS = [
   {
     id: "search" as const,
-    label: "Step 1 검색",
-    title: "검색으로 후보를 한 번에 모으기",
-    desc: "제품명, 타깃, 키워드로 여러 벤더 제품을 한 번에 모읍니다.",
+    label: "Step 1",
+    title: "검색 & 후보 모으기",
+    desc: "제품명, 벤더, 카테고리로 여러 제품을 한 번에 검색하고, 마음에 드는 것만 후보 리스트에 담아보세요.",
   },
   {
     id: "compare" as const,
-    label: "Step 2 비교",
-    title: "스펙·가격 기준으로 후보 추리기",
-    desc: "단위, Grade, 가격을 기준으로 후보를 비교하면서 최종 품목을 고릅니다.",
+    label: "Step 2",
+    title: "제품 비교 & 대체품 정리",
+    desc: "담아둔 후보 제품을 한 화면에서 가격, 규격, Grade 등을 비교하고, 실제로 쓸 제품만 남깁니다.",
   },
   {
     id: "list" as const,
-    label: "Step 3 리스트 정리",
-    title: "구매 요청 리스트로 정리해서 내보내기",
-    desc: "견적/구매 요청용으로 바로 공유·첨부할 수 있는 리스트 형식으로 정리합니다.",
+    label: "Step 3",
+    title: "리스트 정리 & 공유",
+    desc: "확정된 품목 리스트를 TSV/엑셀로 내보내 동료·구매팀과 공유할 수 있습니다.",
   },
 ];
 
@@ -58,15 +58,45 @@ export function HeroDemoFlowPanel() {
 
   const current = HERO_STEPS.find((s) => s.id === step)!;
 
-  const scrollToFlowSection = () => {
-    const el = document.querySelector("#flow-section");
-    el?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToFlowSection = useCallback(() => {
+    if (typeof window === "undefined") return;
+    
+    const el = document.getElementById("flow-section");
+    if (el) {
+      const headerHeight = 56;
+      const elementTop = el.offsetTop;
+      const offsetPosition = elementTop - headerHeight;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    // 요소가 없으면 재시도
+    const scrollToElement = (attempts = 0) => {
+      const element = document.getElementById("flow-section");
+      if (element) {
+        const headerHeight = 56;
+        const elementTop = element.offsetTop;
+        const offsetPosition = elementTop - headerHeight;
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: "smooth",
+        });
+      } else if (attempts < 20) {
+        setTimeout(() => scrollToElement(attempts + 1), 100);
+      }
+    };
+    
+    setTimeout(() => scrollToElement(), 50);
+  }, []);
 
   return (
     <Card className="w-full max-w-sm shadow-sm border-slate-200">
       <CardHeader className="pb-3">
-        <p className="text-xs font-medium text-slate-500">데모 플로우</p>
         <h3 className="text-sm font-semibold text-slate-900">
           3단계로 끝나는 구매 준비
         </h3>
@@ -214,7 +244,7 @@ export function HeroDemoFlowPanel() {
             onClick={scrollToFlowSection}
             className="text-[11px] text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline"
           >
-            3단계 플로우 자세히 보기
+            자세히 보기
           </button>
 
           <Link href="/test/search">

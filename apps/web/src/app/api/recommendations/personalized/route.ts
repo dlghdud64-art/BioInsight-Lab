@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getFrequentlyBoughtTogether } from "@/lib/ai/purchase-pattern-analyzer";
 
 // 개인화 추천 API
 export async function GET(request: NextRequest) {
@@ -88,6 +89,58 @@ export async function GET(request: NextRequest) {
       currentProductId: productId,
       limit,
     });
+
+    // 6. 구매 패턴 기반 추천 추가 (특정 제품이 있는 경우)
+    if (productId) {
+      try {
+        const purchasePatternRecs = await getFrequentlyBoughtTogether(productId, {
+          organizationId: session.user.organizationId || undefined,
+          limit: 3,
+        });
+
+        // 제품 정보 포함
+        if (purchasePatternRecs.length > 0) {
+          const patternProductIds = purchasePatternRecs.map((r) => r.productId);
+          const patternProducts = await db.product.findMany({
+            where: {
+              id: { in: patternProductIds },
+            },
+            include: {
+              vendors: {
+                include: {
+                  vendor: true,
+                },
+                take: 1,
+              },
+            },
+          });
+
+          const patternRecommendations = purchasePatternRecs.map((rec) => {
+            const product = patternProducts.find((p) => p.id === rec.productId);
+            return {
+              product,
+              score: rec.score,
+              reason: rec.reason,
+              source: "purchase_pattern",
+            };
+          });
+
+          // 기존 추천과 합치기 (중복 제거)
+          const existingProductIds = new Set(
+            recommendations.map((r: any) => r.product?.id).filter(Boolean)
+          );
+          
+          const newPatternRecs = patternRecommendations.filter(
+            (r: any) => r.product && !existingProductIds.has(r.product.id)
+          );
+
+          recommendations.push(...newPatternRecs);
+        }
+      } catch (error) {
+        console.error("Error getting purchase pattern recommendations:", error);
+        // 실패해도 기존 추천은 반환
+      }
+    }
 
     return NextResponse.json({ recommendations });
   } catch (error) {

@@ -160,10 +160,10 @@ export function SearchResultItem({
               variant="secondary"
               onClick={onAddToQuote}
               className="text-xs h-8 px-3 bg-slate-900 hover:bg-slate-800 text-white"
-              title="품목 리스트에 추가"
+              title="구매 요청 리스트에 이 제품을 추가합니다."
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              <span>품목 추가</span>
+              <span>리스트에 담기</span>
             </Button>
           </div>
         </div>

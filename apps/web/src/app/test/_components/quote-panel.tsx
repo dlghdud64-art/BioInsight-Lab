@@ -949,7 +949,7 @@ export function QuoteRequestPanel() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [deliveryDateOption, setDeliveryDateOption] = useState<"asap" | "custom" | "">("");
+  const [deliveryDateOption, setDeliveryDateOption] = useState<"asap" | "custom" | "none">("none");
   const [deliveryLocation, setDeliveryLocation] = useState("");
   const [deliveryLocationCustom, setDeliveryLocationCustom] = useState("");
   const [specialNotes, setSpecialNotes] = useState("");
@@ -999,7 +999,7 @@ export function QuoteRequestPanel() {
   }, [quoteItems, message]);
 
   // 납기 희망일 옵션 변경 핸들러
-  const handleDeliveryDateOptionChange = (option: "asap" | "custom" | "") => {
+  const handleDeliveryDateOptionChange = (option: "asap" | "custom" | "none") => {
     setDeliveryDateOption(option);
     if (option === "asap") {
       // 최대한 빨리 = 오늘로부터 7일 후
@@ -1040,7 +1040,7 @@ export function QuoteRequestPanel() {
           notes: Object.fromEntries(
             quoteItems.map((item) => [item.productId, item.notes || ""])
           ),
-          deliveryDate: deliveryDate || undefined,
+          deliveryDate: deliveryDateOption === "none" ? undefined : (deliveryDate || undefined),
           deliveryLocation: deliveryLocation === "custom" ? deliveryLocationCustom : (deliveryLocation || undefined),
           specialNotes: specialNotes || undefined,
         }),
@@ -1114,7 +1114,7 @@ export function QuoteRequestPanel() {
               </Label>
               <Select
                 value={deliveryDateOption}
-                onValueChange={(value: "asap" | "custom" | "") => handleDeliveryDateOptionChange(value)}
+                onValueChange={(value: "asap" | "custom" | "none") => handleDeliveryDateOptionChange(value)}
               >
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="선택" />
@@ -1122,7 +1122,7 @@ export function QuoteRequestPanel() {
                 <SelectContent>
                   <SelectItem value="asap">최대한 빨리 (1주일 이내)</SelectItem>
                   <SelectItem value="custom">직접 입력</SelectItem>
-                  <SelectItem value="">선택 안함</SelectItem>
+                  <SelectItem value="none">선택 안함</SelectItem>
                 </SelectContent>
               </Select>
               {deliveryDateOption === "custom" && (

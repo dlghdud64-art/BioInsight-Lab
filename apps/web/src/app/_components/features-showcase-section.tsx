@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, GitCompare, ShoppingCart, FlaskConical, FileText, BarChart3, ClipboardCopy } from "lucide-react";
+import { Search, GitCompare, ShoppingCart, FlaskConical, BarChart3, Languages } from "lucide-react";
 
 export function FeaturesShowcaseSection() {
   const features = [
@@ -20,18 +20,11 @@ export function FeaturesShowcaseSection() {
       color: "bg-green-600",
     },
     {
-      title: "품목 리스트",
-      description: "선택한 제품들을 구매 요청용 리스트로 자동 정리합니다.",
+      title: "품목 리스트 & 내보내기",
+      description: "선택한 제품들을 구매 요청용 리스트로 정리하고, TSV/엑셀 형식으로 내보내 동료·구매팀과 공유할 수 있습니다.",
       href: "/test/quote",
       icon: ShoppingCart,
       color: "bg-purple-600",
-    },
-    {
-      title: "그룹웨어에 바로 붙여넣기",
-      description: "결재 양식에 맞는 표/텍스트 형식으로 품목 리스트를 만들어 줍니다. 복사 한 번으로 회사 전자결재/구매 시스템에 연결할 수 있습니다.",
-      href: "/test/quote/request",
-      icon: ClipboardCopy,
-      color: "bg-amber-600",
     },
     {
       title: "프로토콜 분석",
@@ -41,11 +34,11 @@ export function FeaturesShowcaseSection() {
       color: "bg-orange-600",
     },
     {
-      title: "일반 검색",
-      description: "간단한 제품 검색으로 빠르게 원하는 제품을 찾습니다.",
-      href: "/search",
-      icon: FileText,
-      color: "bg-indigo-600",
+      title: "자동 번역 & 요약",
+      description: "영문 데이터시트와 제품 설명을 한글로 번역하고 핵심 정보를 요약해 해외 벤더 제품 비교를 쉽게 합니다.",
+      href: "/products/1",
+      icon: Languages,
+      color: "bg-cyan-600",
     },
     {
       title: "대시보드",

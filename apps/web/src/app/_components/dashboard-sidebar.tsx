@@ -15,6 +15,8 @@ import {
   Settings,
   Users,
   Store,
+  Activity,
+  Shield,
 } from "lucide-react";
 
 interface NavItem {
@@ -61,6 +63,11 @@ const navItems: NavItem[] = [
     icon: Link2,
   },
   {
+    title: "활동 로그",
+    href: "/dashboard/activity-logs",
+    icon: Activity,
+  },
+  {
     title: "공급사",
     href: "/dashboard/supplier",
     icon: Store,
@@ -69,6 +76,11 @@ const navItems: NavItem[] = [
     title: "설정",
     href: "/dashboard/settings/plans",
     icon: Settings,
+  },
+  {
+    title: "Enterprise 설정",
+    href: "/dashboard/settings/enterprise",
+    icon: Shield,
   },
 ];
 

@@ -42,6 +42,7 @@ export default function SearchPage() {
     clearCompare,
     removeQuoteItem,
     updateQuoteItem,
+    hasSearched,
   } = useTestFlow();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -54,8 +55,13 @@ export default function SearchPage() {
     <>
       <div className="container mx-auto px-4 py-6">
         <PageHeader
-          title="제품 검색"
-          description="제품명, 벤더, 카테고리를 입력하고 GPT 기반 검색으로 원하는 제품을 찾아보세요."
+          title="바이오 시약·장비 검색과 비교, 한 번에 정리되는 구매 요청 리스트"
+          description={
+            <div className="space-y-1">
+              <p>제품명, 벤더, 카테고리를 검색하고 GPT가 관련 제품을 추천해 줍니다.</p>
+              <p>검색 결과에서 필요한 제품을 선택하면, 구매 요청 리스트가 자동으로 정리됩니다.</p>
+            </div>
+          }
           icon={Search}
           iconColor="text-blue-600"
           badge={
@@ -153,7 +159,9 @@ export default function SearchPage() {
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
                 {products.length > 0
-                  ? `${products.length}개의 제품을 찾았습니다`
+                  ? `${products.length}개의 제품을 찾았습니다. 비교하거나 리스트에 담을 수 있습니다.`
+                  : hasSearched
+                  ? "검색 결과가 없습니다"
                   : "검색어를 입력하고 검색을 실행해주세요"}
               </CardDescription>
             </CardHeader>
@@ -183,8 +191,17 @@ export default function SearchPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-12 text-sm text-slate-500">
-                  검색 결과가 없습니다.
+                <div className="flex h-full flex-col items-center justify-center py-12 text-sm text-slate-500">
+                  {!hasSearched ? (
+                    <p>검색어를 입력하고 <span className="mx-1 font-medium">"검색 실행"</span>을 눌러보세요.</p>
+                  ) : (
+                    <>
+                      <p className="font-medium">검색 결과가 없습니다.</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        검색어를 조금 더 넓게 입력하거나, 제품명 대신 키워드(타겟, 플랫폼 등)로 시도해 보세요.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -393,6 +410,16 @@ export default function SearchPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 하단 설명 */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs text-slate-500 text-center">
+            정리된 구매 요청 리스트는 TSV/엑셀 파일로 내려받아 이메일로 공유하거나,
+            필요하면 사내 그룹웨어·전자결재 양식에 붙여넣어 사용할 수 있습니다.
+          </p>
+        </div>
+      </div>
     </>
   );
 }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ReorderRecommendations } from "@/components/inventory/reorder-recommendations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
+import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS, PRODUCT_CATEGORIES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
@@ -58,6 +58,17 @@ export default function DashboardPage() {
     queryFn: async () => {
       const response = await fetch("/api/reports/purchase?period=month");
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 최근 활동 로그 조회
+  const { data: activityLogsData, isLoading: activityLogsLoading } = useQuery({
+    queryKey: ["activity-logs-recent"],
+    queryFn: async () => {
+      const response = await fetch("/api/activity-logs?limit=5");
+      if (!response.ok) throw new Error("Failed to fetch activity logs");
       return response.json();
     },
     enabled: status === "authenticated",
@@ -185,6 +196,10 @@ export default function DashboardPage() {
             <TabsTrigger value="recent">
               <History className="h-4 w-4 mr-2" />
               최근 본 제품 ({recentProducts.length})
+            </TabsTrigger>
+            <TabsTrigger value="activity">
+              <Activity className="h-4 w-4 mr-2" />
+              최근 활동
             </TabsTrigger>
             <TabsTrigger value="inventory">
               <Package className="h-4 w-4 mr-2" />
@@ -435,6 +450,81 @@ export default function DashboardPage() {
                             </div>
                           </CardContent>
                         </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="activity" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>최근 활동</CardTitle>
+                    <CardDescription>
+                      최근 활동 내역을 확인할 수 있습니다
+                    </CardDescription>
+                  </div>
+                  <Link href="/dashboard/activity-logs">
+                    <Button variant="outline" size="sm">
+                      전체 보기
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {activityLogsLoading ? (
+                  <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+                ) : !activityLogsData?.logs || activityLogsData.logs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">활동 내역이 없습니다</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activityLogsData.logs.slice(0, 5).map((log: any) => {
+                      const activityLabels: Record<string, string> = {
+                        QUOTE_CREATED: "리스트 생성",
+                        QUOTE_UPDATED: "리스트 수정",
+                        QUOTE_DELETED: "리스트 삭제",
+                        QUOTE_SHARED: "리스트 공유",
+                        QUOTE_VIEWED: "리스트 조회",
+                        PRODUCT_COMPARED: "제품 비교",
+                        PRODUCT_VIEWED: "제품 조회",
+                        PRODUCT_FAVORITED: "제품 즐겨찾기",
+                        SEARCH_PERFORMED: "검색 수행",
+                      };
+                      const label = activityLabels[log.activityType] || log.activityType;
+                      const date = new Date(log.createdAt);
+                      const timeAgo = date.toLocaleString("ko-KR", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+
+                      return (
+                        <div
+                          key={log.id}
+                          className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <Activity className="h-4 w-4 text-slate-400" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-slate-900">
+                              {label}
+                            </div>
+                            {log.metadata?.title && (
+                              <div className="text-xs text-slate-500 mt-1">
+                                {log.metadata.title}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-400 whitespace-nowrap">
+                            {timeAgo}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 // FlowSection 컴포넌트 - 중복 정의 제거
 export function FlowSection() {
   return (
-    <section id="flow-section" className="mt-12 space-y-4">
+    <section id="flow-section" className="mt-12 space-y-4 scroll-mt-14">
       <h2 className="text-lg font-semibold tracking-tight text-slate-900">
         3단계로 끝나는 구매 준비
       </h2>
@@ -60,7 +60,7 @@ export function FlowSection() {
                 <p className="text-xs leading-relaxed text-slate-500 flex-1">
                   선정된 품목으로 구매 요청 리스트를 만들고,
                   <br />
-                  회사 그룹웨어/전자결재에 붙여넣기 좋은 형식으로 정리해 줍니다.
+                  TSV/엑셀로 내보내 동료·구매팀과 공유할 수 있습니다.
                 </p>
                 <span className="text-xs text-blue-600 mt-2 inline-block">체험하기 →</span>
               </div>

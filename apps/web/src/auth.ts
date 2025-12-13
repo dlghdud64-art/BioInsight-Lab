@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import type { UserRole } from "@/types";
+import { convertSSOConfigToProvider, validateSSOConfig } from "@/lib/auth/sso-config";
 
 // 중복 정의 제거
 export const { handlers, signIn, signOut, auth } = NextAuth({

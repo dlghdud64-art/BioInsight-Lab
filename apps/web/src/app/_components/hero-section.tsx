@@ -1,11 +1,48 @@
 "use client";
 
+import { useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroDemoFlowPanel } from "./home/hero-demo-flow-panel";
 
 // HeroSection 컴포넌트 - 중복 정의 및 import 제거
 export function HeroSection() {
+  const scrollToFlow = useCallback(() => {
+    if (typeof window === "undefined") return;
+    
+    const el = document.getElementById("flow-section");
+    if (el) {
+      const headerHeight = 56;
+      const elementTop = el.offsetTop;
+      const offsetPosition = elementTop - headerHeight;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    // 요소가 없으면 재시도
+    const scrollToElement = (attempts = 0) => {
+      const element = document.getElementById("flow-section");
+      if (element) {
+        const headerHeight = 56;
+        const elementTop = element.offsetTop;
+        const offsetPosition = elementTop - headerHeight;
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: "smooth",
+        });
+      } else if (attempts < 20) {
+        setTimeout(() => scrollToElement(attempts + 1), 100);
+      }
+    };
+    
+    setTimeout(() => scrollToElement(), 50);
+  }, []);
+
   return (
     <section className="border-b border-slate-100 bg-white py-10">
       {/* 히어로만 살짝 더 안으로 */}
@@ -27,9 +64,9 @@ export function HeroSection() {
             <p className="text-sm leading-relaxed text-slate-600 max-w-xl">
               실험에 맞는 후보를 찾고, 스펙·가격 비교로 추리고,
               <br />
-              최종 구매 요청 리스트를 만들어 회사 그룹웨어/전자결재에
+              최종 구매 요청 리스트를 TSV/엑셀로 내보내
               <br />
-              바로 붙여넣을 수 있는 형식으로 내보내 줍니다.
+              동료·구매팀과 공유할 수 있습니다.
             </p>
           </div>
 
@@ -41,18 +78,15 @@ export function HeroSection() {
             </Link>
             <button
               type="button"
-              onClick={() => {
-                const el = document.querySelector("#flow-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={scrollToFlow}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md h-11 px-8 text-sm font-medium border border-slate-300 bg-background text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
-              3단계 플로우 둘러보기
+              플로우 보기
             </button>
           </div>
         </div>
 
-        {/* 오른쪽: 데모 플로우 패널 */}
+        {/* 오른쪽: 플로우 패널 */}
         <div className="w-full max-w-sm md:justify-self-end">
           <HeroDemoFlowPanel />
         </div>

@@ -4,9 +4,10 @@ import { Search, FileSpreadsheet, Users } from "lucide-react";
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function KeyValueSection() {
   return (
-    <section id="features" className="mt-12 space-y-4">
+    <section id="features" className="mt-12 space-y-4 scroll-mt-14">
       <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-        연구·QC 현장의 시약·장비를 한 번에 검색·비교하고, 사내 그룹웨어에 붙여넣을 수 있는 구매 준비 도구입니다.
+        연구·QC 현장의 시약·장비를 한 번에 검색·비교하고,
+        구매 요청에 쓸 품목 리스트까지 정리할 수 있는 구매 준비 도구입니다.
       </h2>
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border border-slate-200 bg-white shadow-sm rounded-xl">
@@ -18,11 +19,10 @@ export function KeyValueSection() {
             {/* 텍스트 블록 */}
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-slate-900">
-                검색으로 후보를 한 번에 모으기
+                검색 한 번으로 후보를 한 번에 모으기
               </h3>
               <p className="text-xs leading-relaxed text-slate-500">
-                GPT가 검색어를 이해해서 유사 제품들을 자동으로 정리해줍니다.
-                여러 벤더의 제품을 한 번에 조회하고 후보를 모을 수 있습니다.
+                GPT가 검색어를 이해해서 제품명, 벤더, 카테고리를 한 번에 검색합니다. 여러 업체 사이트를 일일이 열지 않고도 후보를 한 번에 모을 수 있습니다.
               </p>
             </div>
           </CardContent>
@@ -40,8 +40,7 @@ export function KeyValueSection() {
                 품목 리스트 자동 정리
               </h3>
               <p className="text-xs leading-relaxed text-slate-500">
-                선택한 제품들을 품목 리스트로 자동 정리합니다.
-                수량, 비고만 입력하면 구매 요청용 리스트가 완성됩니다.
+                담아둔 후보 제품을 비교하고 불필요한 항목은 빼고, 실제로 구매에 쓸 품목 리스트만 남깁니다. 견적 요청·구매 요청서 작성 시 그대로 활용할 수 있습니다.
               </p>
             </div>
           </CardContent>
@@ -56,11 +55,10 @@ export function KeyValueSection() {
             {/* 텍스트 블록 */}
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-slate-900">
-                연구·QC·생산·구매 모두에게 유용한 도구
+                연구·QC·구매 모두에게 유용한 도구
               </h3>
               <p className="text-xs leading-relaxed text-slate-500">
-                연구실, QC 실무자, 구매 담당자 모두 같은 리스트를 기반으로 협업할 수 있습니다.
-                역할에 맞는 필터를 골라서 필요한 정보만 보여줍니다.
+                연구자, QC 담당자, 구매 담당자가 같은 리스트를 공유하면서 소통할 수 있습니다. 반복되는 검색·정리 작업을 줄이고, 협업에 집중할 수 있습니다.
               </p>
             </div>
           </CardContent>

@@ -26,10 +26,10 @@ export default function HomePage() {
           <KeyValueSection />
           <ComparisonSection />
           <FlowSection />
+          <SafetyRegulationTeaserSection />
           <FeaturesShowcaseSection />
           <PersonaSection />
           <AISection />
-          <SafetyRegulationTeaserSection />
           <SecuritySection />
           <PricingSection />
           <FinalCTASection />

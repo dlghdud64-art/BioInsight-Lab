@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +18,29 @@ import { USER_ROLES } from "@/lib/constants";
 export function UserMenu() {
   const { data: session, status } = useSession();
 
-  if (status === "loading") {
-    return <Button variant="ghost" disabled>로딩 중...</Button>;
+  // 로딩 상태는 최대 2초까지만 표시
+  const [showLoading, setShowLoading] = useState(true);
+  
+  useEffect(() => {
+    if (status !== "loading") {
+      setShowLoading(false);
+    } else {
+      // 2초 후에도 로딩 중이면 로딩 표시를 숨김
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
+  if (status === "loading" && showLoading) {
+    return <Button variant="ghost" disabled className="text-xs">로딩 중...</Button>;
   }
 
   if (!session?.user) {
     return (
       <Link href="/auth/signin">
-        <Button variant="ghost">로그인</Button>
+        <Button variant="ghost" className="text-xs">로그인</Button>
       </Link>
     );
   }

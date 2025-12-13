@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
@@ -13,16 +14,47 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, GitCompare, FileText, FlaskConical, ShoppingCart } from "lucide-react";
 
-function scrollToId(id: string) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
-
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function MainHeader() {
   const router = useRouter();
+
+  const scrollToId = useCallback((id: string) => {
+    if (typeof window === "undefined") return;
+    
+    // 즉시 시도
+    const element = document.getElementById(id);
+    if (element) {
+      const headerHeight = 56;
+      const elementTop = element.offsetTop;
+      const offsetPosition = elementTop - headerHeight;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    // 요소가 없으면 잠시 후 재시도
+    const scrollToElement = (attempts = 0) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const headerHeight = 56;
+        const elementTop = el.offsetTop;
+        const offsetPosition = elementTop - headerHeight;
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: "smooth",
+        });
+      } else if (attempts < 20) {
+        setTimeout(() => scrollToElement(attempts + 1), 100);
+      }
+    };
+    
+    // 약간의 지연 후 재시도 (DOM이 완전히 렌더링될 때까지)
+    setTimeout(() => scrollToElement(), 50);
+  }, []);
 
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
@@ -34,18 +66,21 @@ export function MainHeader() {
           </Link>
           <nav className="hidden md:flex items-center gap-4 text-sm text-slate-600">
             <button
+              type="button"
               onClick={() => scrollToId("features")}
               className="hover:text-slate-900 transition-colors"
             >
               기능 소개
             </button>
             <button
-              onClick={() => scrollToId("flow")}
+              type="button"
+              onClick={() => scrollToId("flow-section")}
               className="hover:text-slate-900 transition-colors"
             >
               사용 흐름
             </button>
             <button
+              type="button"
               onClick={() => scrollToId("personas")}
               className="hover:text-slate-900 transition-colors"
             >
@@ -57,6 +92,7 @@ export function MainHeader() {
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => scrollToId("pricing")}
             className="text-xs text-slate-600 hover:text-slate-900 transition-colors"
           >

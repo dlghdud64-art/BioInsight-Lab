@@ -54,6 +54,8 @@ model Organization {
   purchaseRecords PurchaseRecord[]
   budgets         Budget[]
   subscription    Subscription? // 구독 ?�보
+  activityLogs    ActivityLog[]
+  auditLogs       AuditLog[]
 
   @@index([name])
   @@index([plan])
@@ -102,6 +104,8 @@ model User {
   templates           QuoteTemplate[]
   inventories         ProductInventory[]
   inventoryUsage      InventoryUsage[]
+  activityLogs        ActivityLog[]
+  auditLogs           AuditLog[]
 
   @@index([email])
   @@index([role])
@@ -175,11 +179,11 @@ model Product {
   regulatoryCompliance  String? // 규제/?�전 규격 (USP, EP, JP ??
 
   // 안전·규제 정보 (P1)
-  msdsUrl               String? // MSDS/SDS 문서 URL
-  safetyNote            String? @db.Text // 안전 취급 요약/주의사항
+  msdsUrl    String? // MSDS/SDS 문서 URL
+  safetyNote String? @db.Text // 안전 취급 요약/주의사항
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
   // 관�?
   vendors         ProductVendor[]
   comparisons     ComparisonProduct[]
@@ -674,4 +678,87 @@ model Subscription {
 
   @@index([organizationId])
   @@index([status])
+}
+
+// 액티비티 로그 (P1+)
+enum ActivityType {
+  QUOTE_CREATED // 리스트 생성
+  QUOTE_UPDATED // 리스트 수정
+  QUOTE_DELETED // 리스트 삭제
+  QUOTE_SHARED // 리스트 공유
+  QUOTE_VIEWED // 리스트 조회
+  PRODUCT_COMPARED // 제품 비교
+  PRODUCT_VIEWED // 제품 조회
+  PRODUCT_FAVORITED // 제품 즐겨찾기
+  SEARCH_PERFORMED // 검색 수행
+}
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  userId         String? // 사용자 ID (비로그인 사용자는 null)
+  organizationId String? // 조직 ID
+  activityType   ActivityType // 활동 유형
+  entityType     String // 엔티티 유형 (quote, product, search 등)
+  entityId       String? // 엔티티 ID
+  metadata       Json? // 추가 메타데이터 (JSON)
+  ipAddress      String? // IP 주소
+  userAgent      String? // User Agent
+  createdAt      DateTime     @default(now())
+
+  // 관계
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([activityType])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+// 감사 로그 (Enterprise - 액티비티 로그 확장)
+enum AuditEventType {
+  USER_LOGIN // 사용자 로그인
+  USER_LOGOUT // 사용자 로그아웃
+  USER_CREATED // 사용자 생성
+  USER_UPDATED // 사용자 수정
+  USER_DELETED // 사용자 삭제
+  PERMISSION_CHANGED // 권한 변경
+  SETTINGS_CHANGED // 설정 변경
+  DATA_EXPORTED // 데이터 내보내기
+  DATA_IMPORTED // 데이터 가져오기
+  SSO_CONFIGURED // SSO 설정
+  ORGANIZATION_CREATED // 조직 생성
+  ORGANIZATION_UPDATED // 조직 수정
+  ORGANIZATION_DELETED // 조직 삭제
+}
+
+model AuditLog {
+  id             String         @id @default(cuid())
+  organizationId String? // 조직 ID (Enterprise)
+  userId         String? // 사용자 ID
+  eventType      AuditEventType // 이벤트 유형
+  entityType     String // 엔티티 유형
+  entityId       String? // 엔티티 ID
+  action         String // 액션 (create, update, delete, view 등)
+  changes        Json? // 변경 사항 (before/after)
+  metadata       Json? // 추가 메타데이터
+  ipAddress      String? // IP 주소
+  userAgent      String? // User Agent
+  success        Boolean        @default(true) // 성공 여부
+  errorMessage   String?        @db.Text // 오류 메시지
+  createdAt      DateTime       @default(now())
+
+  // 관계
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@index([success])
 }
