@@ -18,12 +18,13 @@ export async function GET(request: NextRequest) {
     // 더미 데이터 사용 (임시)
     let results = dummyProducts.filter((p) => {
       if (query) {
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().trim();
         const matches = 
           p.name.toLowerCase().includes(q) ||
           p.vendor.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
-          (p.description?.toLowerCase().includes(q));
+          (p.description?.toLowerCase().includes(q)) ||
+          (p.catalogNumber?.toLowerCase().includes(q)); // Cat.No 검색 추가
         if (!matches) return false;
       }
       if (category && category !== "all") {
@@ -31,6 +32,37 @@ export async function GET(request: NextRequest) {
       }
       return true;
     });
+
+    // Cat.No로 검색한 경우, 정확히 일치하는 제품을 우선순위로 정렬
+    if (query) {
+      const q = query.toLowerCase().trim();
+      const exactCatalogMatch = results.find((p) => 
+        p.catalogNumber?.toLowerCase() === q
+      );
+      
+      if (exactCatalogMatch) {
+        // 정확히 일치하는 제품을 맨 앞으로
+        results = results.filter((p) => p.id !== exactCatalogMatch.id);
+        results.unshift(exactCatalogMatch);
+        
+        // 같은 Cat.No를 가진 다른 제품들도 함께 표시 (같은 Cat.No를 가진 제품이 여러 개일 수 있음)
+        const sameCatalogProducts = dummyProducts.filter((p) => 
+          p.catalogNumber?.toLowerCase() === q && p.id !== exactCatalogMatch.id
+        );
+        if (sameCatalogProducts.length > 0) {
+          results = [exactCatalogMatch, ...sameCatalogProducts, ...results];
+        }
+      } else {
+        // 부분 일치하는 Cat.No 제품을 우선순위로
+        const catalogMatches = results.filter((p) => 
+          p.catalogNumber?.toLowerCase().includes(q)
+        );
+        const otherMatches = results.filter((p) => 
+          !p.catalogNumber?.toLowerCase().includes(q)
+        );
+        results = [...catalogMatches, ...otherMatches];
+      }
+    }
 
     // 정렬
     if (sortBy === "price_low") {

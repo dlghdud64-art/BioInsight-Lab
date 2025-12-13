@@ -63,12 +63,13 @@ export async function searchProducts(params: SearchProductsParams) {
   let vectorSearchProductIds: string[] = [];
   
   if (query) {
-    // 텍스트 검색 조건
+    // 텍스트 검색 조건 (Cat.No 검색 포함)
     where.OR = [
       { name: { contains: query, mode: "insensitive" } },
       { nameEn: { contains: query, mode: "insensitive" } },
       { description: { contains: query, mode: "insensitive" } },
       { descriptionEn: { contains: query, mode: "insensitive" } },
+      { catalogNumber: { contains: query, mode: "insensitive" } }, // Cat.No 검색 추가
     ];
 
     // 벡터 검색 시도 (pgvector가 활성화된 경우)
@@ -215,15 +216,44 @@ export async function searchProducts(params: SearchProductsParams) {
         },
       ];
 
-      // 검색어 필터링
+      // 검색어 필터링 (Cat.No 검색 포함)
       if (query) {
-        const lowerQuery = query.toLowerCase();
+        const lowerQuery = query.toLowerCase().trim();
         products = sampleProducts.filter(p => 
           p.name.toLowerCase().includes(lowerQuery) ||
           p.nameEn.toLowerCase().includes(lowerQuery) ||
           p.description?.toLowerCase().includes(lowerQuery) ||
-          p.descriptionEn?.toLowerCase().includes(lowerQuery)
+          p.descriptionEn?.toLowerCase().includes(lowerQuery) ||
+          p.catalogNumber?.toLowerCase().includes(lowerQuery) // Cat.No 검색 추가
         );
+        
+        // Cat.No로 검색한 경우, 정확히 일치하는 제품을 우선순위로 정렬
+        const exactCatalogMatch = products.find((p) => 
+          p.catalogNumber?.toLowerCase() === lowerQuery
+        );
+        
+        if (exactCatalogMatch) {
+          // 정확히 일치하는 제품을 맨 앞으로
+          products = products.filter((p) => p.id !== exactCatalogMatch.id);
+          products.unshift(exactCatalogMatch);
+          
+          // 같은 Cat.No를 가진 다른 제품들도 함께 표시
+          const sameCatalogProducts = sampleProducts.filter((p) => 
+            p.catalogNumber?.toLowerCase() === lowerQuery && p.id !== exactCatalogMatch.id
+          );
+          if (sameCatalogProducts.length > 0) {
+            products = [exactCatalogMatch, ...sameCatalogProducts, ...products];
+          }
+        } else {
+          // 부분 일치하는 Cat.No 제품을 우선순위로
+          const catalogMatches = products.filter((p) => 
+            p.catalogNumber?.toLowerCase().includes(lowerQuery)
+          );
+          const otherMatches = products.filter((p) => 
+            !p.catalogNumber?.toLowerCase().includes(lowerQuery)
+          );
+          products = [...catalogMatches, ...otherMatches];
+        }
       } else {
         products = sampleProducts;
       }
@@ -290,6 +320,55 @@ export async function searchProducts(params: SearchProductsParams) {
           console.error(`Failed to convert price for ${vendor.id}:`, error);
         }
       }
+    }
+  }
+
+  // Cat.No로 검색한 경우, 정확히 일치하는 제품을 우선순위로 정렬
+  if (query) {
+    const lowerQuery = query.toLowerCase().trim();
+    const exactCatalogMatch = products.find((p) => 
+      p.catalogNumber?.toLowerCase() === lowerQuery
+    );
+    
+    if (exactCatalogMatch) {
+      // 정확히 일치하는 제품을 맨 앞으로
+      products = products.filter((p) => p.id !== exactCatalogMatch.id);
+      products.unshift(exactCatalogMatch);
+      
+      // 같은 Cat.No를 가진 다른 제품들도 함께 조회
+      try {
+        const sameCatalogProducts = await db.product.findMany({
+          where: {
+            catalogNumber: { equals: exactCatalogMatch.catalogNumber, mode: "insensitive" },
+            id: { not: exactCatalogMatch.id },
+          },
+          include: {
+            vendors: {
+              include: {
+                vendor: true,
+              },
+            },
+          },
+          take: 10, // 최대 10개까지만
+        });
+        
+        if (sameCatalogProducts.length > 0) {
+          // 같은 Cat.No를 가진 제품들을 정확히 일치하는 제품 뒤에 추가
+          products = [exactCatalogMatch, ...sameCatalogProducts, ...products];
+          total += sameCatalogProducts.length; // total도 업데이트
+        }
+      } catch (error) {
+        console.warn("Failed to fetch same catalog number products:", error);
+      }
+    } else {
+      // 부분 일치하는 Cat.No 제품을 우선순위로
+      const catalogMatches = products.filter((p) => 
+        p.catalogNumber?.toLowerCase().includes(lowerQuery)
+      );
+      const otherMatches = products.filter((p) => 
+        !p.catalogNumber?.toLowerCase().includes(lowerQuery)
+      );
+      products = [...catalogMatches, ...otherMatches];
     }
   }
 
