@@ -56,9 +56,9 @@ export function FlowSection() {
               </div>
               {/* 텍스트 블록 */}
               <div className="space-y-1 flex-1 flex flex-col min-w-0 overflow-hidden">
-                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">구매 요청 리스트 정리</h3>
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">구매 요청 리스트 정리 및 내보내기</h3>
                 <p className="text-[11px] md:text-xs leading-relaxed text-slate-500 flex-1 break-words">
-                  선정된 품목으로 구매 요청 리스트를 만들고, TSV/엑셀로 내보내 동료·구매팀과 공유할 수 있습니다.
+                  선정된 품목으로 구매 요청 리스트를 만들고, TSV/CSV/엑셀 형식으로 내보내 그룹웨어/전자결재 양식에 바로 붙여넣을 수 있습니다.
                 </p>
                 <span className="text-[10px] md:text-xs text-blue-600 mt-2 inline-block">체험하기 →</span>
               </div>

@@ -31,8 +31,8 @@ export function PersonaSection() {
             <CardContent className="p-3 md:p-6 pt-0">
               <CardDescription className="text-xs md:text-sm text-slate-500">
                 <ul className="space-y-2 list-disc list-inside">
-                  <li>실험 프로토콜에서 필요한 시약을 자동으로 추출</li>
-                  <li>스펙 중심으로 제품 비교 및 대체품 검토</li>
+                  <li>신규 실험 설계, 시약/키트 비교, Pilot 구매</li>
+                  <li>스펙/성능 중심의 비교, 비슷한 타깃/용도의 제품 추천</li>
                   <li>영문 데이터시트를 한글로 요약/번역</li>
                   <li>연구실 예산 내에서 최적의 제품 선택</li>
                 </ul>
@@ -52,10 +52,10 @@ export function PersonaSection() {
             <CardContent className="p-3 md:p-6 pt-0">
               <CardDescription className="text-xs md:text-sm text-slate-500">
                 <ul className="space-y-2 list-disc list-inside">
-                  <li>동일 Grade/규격 유지가 중요한 대체품 검토</li>
+                  <li>시험법에 맞는 시약/Reference, 장비 유지 관리</li>
+                  <li>동일 규격/대체품 비교, 규격/Grade/제조사 신뢰성</li>
                   <li>GMP, 분석용 등급 정보 중심 비교</li>
                   <li>규격 준수 여부 빠른 확인</li>
-                  <li>품질 기준에 맞는 제품만 필터링</li>
                 </ul>
               </CardDescription>
             </CardContent>
@@ -73,8 +73,8 @@ export function PersonaSection() {
             <CardContent className="p-3 md:p-6 pt-0">
               <CardDescription className="text-xs md:text-sm text-slate-500">
                 <ul className="space-y-2 list-disc list-inside">
-                  <li>대량 구매 시 가격·납기 중심 비교</li>
-                  <li>재고 관리 및 자동 재주문 추천</li>
+                  <li>공정용 소모품/장비·부품 구매</li>
+                  <li>카탈로그 번호, 호환 장비, 납기/안정공급 확인</li>
                   <li>프로젝트별 구매 내역 리포트</li>
                   <li>예산 대비 사용률 추적</li>
                 </ul>
@@ -94,10 +94,10 @@ export function PersonaSection() {
             <CardContent className="p-3 md:p-6 pt-0">
               <CardDescription className="text-xs md:text-sm text-slate-500">
                 <ul className="space-y-2 list-disc list-inside">
-                  <li>팀에서 요청한 품목 리스트를 한 번에 확인</li>
-                  <li>벤더별 가격·납기 비교 및 견적 요청</li>
+                  <li>연구/생산 측에서 올라온 리스트를 예산/계약 관점에서 검토</li>
+                  <li>벤더/카테고리/기간별 집계, 예산 대비 사용 확인</li>
+                  <li>위험물/규제 물질 관리</li>
                   <li>기간별/프로젝트별 구매 리포트 생성</li>
-                  <li>예산 책정 및 사용률 관리</li>
                 </ul>
               </CardDescription>
             </CardContent>
