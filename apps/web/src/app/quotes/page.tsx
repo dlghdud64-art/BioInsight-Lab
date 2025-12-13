@@ -131,43 +131,44 @@ export default function QuotesPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+            <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">견적 요청 관리</h1>
-            <p className="text-muted-foreground mt-1">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-3xl font-bold">견적 요청 관리</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
               견적 요청과 응답을 한 곳에서 관리하세요
             </p>
           </div>
-          <Link href="/compare/quote">
-            <Button>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              새 견적 요청
+          <Link href="/compare/quote" className="w-full md:w-auto">
+            <Button size="sm" className="w-full md:w-auto text-xs md:text-sm h-8 md:h-10">
+              <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">새 견적 요청</span>
+              <span className="sm:hidden">새 요청</span>
             </Button>
           </Link>
         </div>
 
         {/* 필터 및 검색 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
+        <Card className="p-3 md:p-6">
+          <CardContent className="px-0 pt-0 pb-0">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4" />
                   <Input
                     placeholder="견적 제목 또는 제품명으로 검색..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-8 md:pl-10 text-xs md:text-sm h-8 md:h-10"
                   />
                 </div>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-full md:w-[180px] text-xs md:text-sm h-8 md:h-10">
+                  <Filter className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                   <SelectValue placeholder="상태 필터" />
                 </SelectTrigger>
                 <SelectContent>
@@ -180,7 +181,7 @@ export default function QuotesPage() {
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[180px] text-xs md:text-sm h-8 md:h-10">
                   <SelectValue placeholder="정렬" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,14 +219,14 @@ export default function QuotesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {filteredQuotes.map((quote) => (
-              <Card key={quote.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-lg">{quote.title}</CardTitle>
+              <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 mb-2">
+                        <CardTitle className="text-sm md:text-lg truncate">{quote.title}</CardTitle>
                         <Badge
                           variant={
                             quote.status === "COMPLETED"
@@ -234,79 +235,78 @@ export default function QuotesPage() {
                               ? "secondary"
                               : "outline"
                           }
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 text-[10px] md:text-xs flex-shrink-0"
                         >
-                          {getStatusIcon(quote.status)}
+                          <span className="hidden md:inline">{getStatusIcon(quote.status)}</span>
                           {QUOTE_STATUS[quote.status]}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                          <Calendar className="h-3 w-3 flex-shrink-0" />
                           {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
                         </span>
                         {quote.deliveryDate && (
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            납기 희망: {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span className="hidden sm:inline">납기 희망: </span>
+                            {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
                           </span>
                         )}
                         {quote.deliveryLocation && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {quote.deliveryLocation}
+                          <span className="flex items-center gap-1 truncate">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{quote.deliveryLocation}</span>
                           </span>
                         )}
                       </div>
                     </div>
-                    <Link href={`/quotes/${quote.id}`}>
-                      <Button variant="outline" size="sm">
-                        <ExternalLink className="h-4 w-4 mr-1" />
+                    <Link href={`/quotes/${quote.id}`} className="w-full md:w-auto">
+                      <Button variant="outline" size="sm" className="w-full md:w-auto text-xs md:text-sm h-7 md:h-9">
+                        <ExternalLink className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                         상세보기
                       </Button>
                     </Link>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* 제품 목록 */}
+                <CardContent className="px-0 pb-0 space-y-2 md:space-y-3">
+                  {/* 제품 목록 */}
+                  <div>
+                    <p className="text-xs md:text-sm font-medium mb-1.5 md:mb-2">요청 제품 ({quote.items.length}개)</p>
+                    <div className="space-y-1">
+                      {quote.items.slice(0, 3).map((item) => (
+                        <div key={item.id} className="text-xs md:text-sm text-muted-foreground truncate">
+                          • {item.product.name} × {item.quantity}
+                        </div>
+                      ))}
+                      {quote.items.length > 3 && (
+                        <div className="text-xs md:text-sm text-muted-foreground">
+                          + {quote.items.length - 3}개 더
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 응답 상태 */}
+                  {quote.responses && quote.responses.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium mb-2">요청 제품 ({quote.items.length}개)</p>
-                      <div className="space-y-1">
-                        {quote.items.slice(0, 3).map((item) => (
-                          <div key={item.id} className="text-sm text-muted-foreground">
-                            • {item.product.name} × {item.quantity}
-                          </div>
+                      <p className="text-xs md:text-sm font-medium mb-1.5 md:mb-2">
+                        응답 받음 ({quote.responses.length}개 공급사)
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 md:gap-2">
+                        {quote.responses.map((response) => (
+                          <Badge key={response.id} variant="outline" className="text-[10px] md:text-xs">
+                            {response.vendor.name}
+                            {response.totalPrice && (
+                              <span className="ml-1 font-semibold">
+                                ₩{response.totalPrice.toLocaleString()}
+                              </span>
+                            )}
+                          </Badge>
                         ))}
-                        {quote.items.length > 3 && (
-                          <div className="text-sm text-muted-foreground">
-                            + {quote.items.length - 3}개 더
-                          </div>
-                        )}
                       </div>
                     </div>
-
-                    {/* 응답 상태 */}
-                    {quote.responses && quote.responses.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-2">
-                          응답 받음 ({quote.responses.length}개 공급사)
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {quote.responses.map((response) => (
-                            <Badge key={response.id} variant="outline" className="text-xs">
-                              {response.vendor.name}
-                              {response.totalPrice && (
-                                <span className="ml-1 font-semibold">
-                                  ₩{response.totalPrice.toLocaleString()}
-                                </span>
-                              )}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

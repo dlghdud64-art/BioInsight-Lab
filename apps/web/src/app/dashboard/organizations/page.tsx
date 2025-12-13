@@ -83,8 +83,8 @@ export default function OrganizationsPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
+        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
         <PageHeader
           title="조직 관리"
@@ -100,13 +100,13 @@ export default function OrganizationsPage() {
         />
 
         {isLoading ? (
-          <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+          <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">로딩 중...</p>
         ) : organizations.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">소속된 조직이 없습니다</p>
+          <Card className="p-3 md:p-6">
+            <CardContent className="px-0 pt-0 pb-0">
+              <div className="text-center py-6 md:py-8">
+                <Building2 className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
+                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">소속된 조직이 없습니다</p>
                 <CreateOrganizationDialog
                   onCreate={(data) => createOrgMutation.mutate(data)}
                   isCreating={createOrgMutation.isPending}
@@ -115,7 +115,7 @@ export default function OrganizationsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {organizations.map((org: any) => (
               <OrganizationCard key={org.id} organization={org} />
             ))}

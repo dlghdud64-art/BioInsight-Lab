@@ -61,21 +61,21 @@ export function SharedListView({ publicId }: SharedListViewProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 max-w-6xl">
         {/* 헤더 */}
-        <div className="mb-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">{data.title || snapshot?.title}</h1>
+        <div className="mb-4 md:mb-6 space-y-2">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-2xl font-bold truncate">{data.title || snapshot?.title}</h1>
               {data.description && (
-                <p className="text-sm text-muted-foreground mt-1">{data.description}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 break-words">{data.description}</p>
               )}
             </div>
             <Link
               href="/"
-              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              className="text-xs md:text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3 w-3 md:h-4 md:w-4" />
               BioInsight Lab
             </Link>
           </div>

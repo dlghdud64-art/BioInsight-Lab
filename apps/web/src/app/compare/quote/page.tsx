@@ -191,15 +191,15 @@ export default function QuotePage() {
 
   if (productIds.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground py-8">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <Card className="p-3 md:p-6">
+          <CardContent className="px-0 pt-0 pb-0">
+            <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
               비교할 제품이 없습니다
             </p>
             <div className="text-center">
               <Link href="/search">
-                <Button>제품 검색하기</Button>
+                <Button size="sm" className="text-xs md:text-sm h-8 md:h-10">제품 검색하기</Button>
               </Link>
             </div>
           </CardContent>
@@ -209,64 +209,69 @@ export default function QuotePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">견적 요청</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">견적 요청</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>요청 정보</CardTitle>
-              <CardDescription>
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <Card className="p-3 md:p-6">
+            <CardHeader className="px-0 pt-0 pb-3">
+              <CardTitle className="text-sm md:text-lg">요청 정보</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 견적을 요청할 제품 정보를 확인하고 요청 내용을 작성해주세요
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">견적 제목</label>
+                <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block">견적 제목</label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="예: PCR 시약 견적 요청"
                   required
+                  className="text-xs md:text-sm h-8 md:h-10"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">요청 내용</label>
+                <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block">요청 내용</label>
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="기본 요청 사항을 작성해주세요"
                   rows={4}
+                  className="text-xs md:text-sm"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">납기 희망일</label>
+                <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block">납기 희망일</label>
                 <Input
                   type="date"
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
+                  className="text-xs md:text-sm h-8 md:h-10"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">납품 장소</label>
+                <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block">납품 장소</label>
                 <Input
                   value={deliveryLocation}
                   onChange={(e) => setDeliveryLocation(e.target.value)}
                   placeholder="예: 서울대학교 생명과학관 101호"
+                  className="text-xs md:text-sm h-8 md:h-10"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">특이사항</label>
+                <label className="text-xs md:text-sm font-medium mb-1.5 md:mb-2 block">특이사항</label>
                 <Textarea
                   value={specialNotes}
                   onChange={(e) => setSpecialNotes(e.target.value)}
                   placeholder="특별한 요구사항이나 주의사항을 작성해주세요"
                   rows={3}
+                  className="text-xs md:text-sm"
                 />
               </div>
 

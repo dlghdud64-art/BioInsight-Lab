@@ -122,19 +122,19 @@ export default function QuoteDetailPage() {
   }[quoteStatus];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold">{quote.title}</h1>
-              <div className="flex items-center gap-3 mt-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-3xl font-bold truncate">{quote.title}</h1>
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 mt-2">
                 <Badge
                   variant={
                     quote.status === "COMPLETED"
@@ -143,12 +143,12 @@ export default function QuoteDetailPage() {
                       ? "secondary"
                       : "outline"
                   }
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 text-xs md:text-sm"
                 >
                   {statusIcon}
                   {QUOTE_STATUS[quoteStatus]}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs md:text-sm text-muted-foreground">
                   {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
                     year: "numeric",
                     month: "long",
@@ -163,15 +163,15 @@ export default function QuoteDetailPage() {
         </div>
 
         {/* 기본 정보 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>견적 정보</CardTitle>
+        <Card className="p-3 md:p-6">
+          <CardHeader className="px-0 pt-0 pb-3">
+            <CardTitle className="text-sm md:text-lg">견적 정보</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
             {quote.deliveryDate && (
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
+                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs md:text-sm">
                   <strong>납기 희망일:</strong>{" "}
                   {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
                 </span>
@@ -179,32 +179,32 @@ export default function QuoteDetailPage() {
             )}
             {quote.deliveryLocation && (
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
+                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs md:text-sm truncate">
                   <strong>납품 장소:</strong> {quote.deliveryLocation}
                 </span>
               </div>
             )}
             {quote.message && (
               <div>
-                <strong className="text-sm">요청 메시지:</strong>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                <strong className="text-xs md:text-sm">요청 메시지:</strong>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
                   {quote.message}
                 </p>
               </div>
             )}
             {quote.messageEn && (
               <div>
-                <strong className="text-sm">요청 메시지 (영문):</strong>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                <strong className="text-xs md:text-sm">요청 메시지 (영문):</strong>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
                   {quote.messageEn}
                 </p>
               </div>
             )}
             {quote.specialNotes && (
               <div>
-                <strong className="text-sm">특이사항:</strong>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                <strong className="text-xs md:text-sm">특이사항:</strong>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
                   {quote.specialNotes}
                 </p>
               </div>
@@ -213,35 +213,40 @@ export default function QuoteDetailPage() {
         </Card>
 
         {/* 요청 제품 목록 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>요청 제품 ({quote.items?.length || 0}개)</CardTitle>
+        <Card className="p-3 md:p-6">
+          <CardHeader className="px-0 pt-0 pb-3">
+            <CardTitle className="text-sm md:text-lg">요청 제품 ({quote.items?.length || 0}개)</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-3 font-semibold">제품명</th>
-                    <th className="text-left p-3 font-semibold">수량</th>
-                    <th className="text-left p-3 font-semibold">비고</th>
-                    <th className="text-left p-3 font-semibold">상세</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">제품명</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">비고</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">상세</th>
                   </tr>
                 </thead>
                 <tbody>
                   {quote.items?.map((item: any) => (
                     <tr key={item.id} className="border-b hover:bg-muted/30">
-                      <td className="p-3 font-medium">
-                        {item.product?.name || "제품 정보 없음"}
+                      <td className="p-2 md:p-3 font-medium text-xs md:text-sm min-w-[120px]">
+                        <div className="truncate">{item.product?.name || "제품 정보 없음"}</div>
+                        {item.notes && (
+                          <div className="md:hidden text-[10px] text-muted-foreground mt-1 truncate">
+                            {item.notes}
+                          </div>
+                        )}
                       </td>
-                      <td className="p-3">{item.quantity}</td>
-                      <td className="p-3 text-muted-foreground">
+                      <td className="p-2 md:p-3 text-xs md:text-sm">{item.quantity}</td>
+                      <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground hidden md:table-cell">
                         {item.notes || "-"}
                       </td>
-                      <td className="p-3">
+                      <td className="p-2 md:p-3">
                         {item.product?.id && (
                           <Link href={`/products/${item.product.id}`}>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-xs md:text-sm h-7 md:h-9">
                               상세보기
                             </Button>
                           </Link>
@@ -257,50 +262,50 @@ export default function QuoteDetailPage() {
 
         {/* 응답 목록 */}
         {quote.responses && quote.responses.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>공급사 응답 ({quote.responses.length}개)</CardTitle>
-              <CardDescription>
+          <Card className="p-3 md:p-6">
+            <CardHeader className="px-0 pt-0 pb-3">
+              <CardTitle className="text-sm md:text-lg">공급사 응답 ({quote.responses.length}개)</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 공급사로부터 받은 견적 응답입니다
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-0 pb-0">
+              <div className="space-y-3 md:space-y-4">
                 {quote.responses.map((response: any) => (
-                  <Card key={response.id} className="border-l-4 border-l-blue-500">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
+                  <Card key={response.id} className="border-l-4 border-l-blue-500 p-3 md:p-6">
+                    <CardHeader className="px-0 pt-0 pb-2">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
+                        <CardTitle className="text-sm md:text-lg">
                           {response.vendor?.name || "공급사 정보 없음"}
                         </CardTitle>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-[10px] md:text-xs">
                           {new Date(response.createdAt).toLocaleDateString("ko-KR")}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="px-0 pb-0 space-y-2 md:space-y-3">
                       {response.totalPrice && (
                         <div>
-                          <strong className="text-lg text-green-600">
+                          <strong className="text-base md:text-lg text-green-600">
                             ₩{response.totalPrice.toLocaleString()}
                           </strong>
                           {response.currency && response.currency !== "KRW" && (
-                            <span className="text-sm text-muted-foreground ml-2">
+                            <span className="text-xs md:text-sm text-muted-foreground ml-2">
                               ({response.currency})
                             </span>
                           )}
                         </div>
                       )}
                       {response.validUntil && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs md:text-sm text-muted-foreground">
                           <strong>유효기간:</strong>{" "}
                           {new Date(response.validUntil).toLocaleDateString("ko-KR")}
                         </div>
                       )}
                       {response.message && (
                         <div>
-                          <strong className="text-sm">응답 메시지:</strong>
-                          <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                          <strong className="text-xs md:text-sm">응답 메시지:</strong>
+                          <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
                             {response.message}
                           </p>
                         </div>
@@ -314,30 +319,33 @@ export default function QuoteDetailPage() {
         )}
 
         {/* 액션 버튼 */}
-        <div className="flex gap-2">
-          <Link href="/quotes">
-            <Button variant="outline">목록으로</Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link href="/quotes" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
+              목록으로
+            </Button>
           </Link>
           {quote.status !== "COMPLETED" && (
             <Button
               onClick={handleMarkAsCompleted}
               disabled={updateStatusMutation.isPending}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
             >
-              <Package className="h-4 w-4 mr-2" />
+              <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
             </Button>
           )}
           {quote.status === "COMPLETED" && (
-            <Badge variant="default" className="px-3 py-1.5">
-              <CheckCircle2 className="h-4 w-4 mr-1" />
+            <Badge variant="default" className="px-3 py-1.5 text-xs md:text-sm w-full sm:w-auto justify-center">
+              <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               구매 완료됨
             </Badge>
           )}
-          <Link href="/compare/quote">
-            <Button>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              새 견적 요청
+          <Link href="/compare/quote" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
+              <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">새 견적 요청</span>
+              <span className="sm:hidden">새 요청</span>
             </Button>
           </Link>
         </div>

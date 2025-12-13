@@ -472,10 +472,10 @@ export default function ProtocolBOMPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <MainHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">로딩 중...</p>
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <div className="text-center py-8 md:py-12">
+            <Loader2 className="h-6 w-6 md:h-8 md:w-8 animate-spin mx-auto mb-3 md:mb-4" />
+            <p className="text-xs md:text-sm text-muted-foreground">로딩 중...</p>
           </div>
         </div>
       </div>
@@ -491,37 +491,37 @@ export default function ProtocolBOMPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <FlaskConical className="h-6 w-6 text-blue-600" />
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 max-w-7xl">
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg">
+              <FlaskConical className="h-4 w-4 md:h-6 md:w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+              <h1 className="text-lg md:text-3xl font-bold text-slate-900 flex items-center gap-1.5 md:gap-2 flex-wrap">
                 Protocol → BOM 생성
-                <Sparkles className="h-5 w-5 text-blue-500" />
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
               </h1>
             </div>
           </div>
-          <p className="text-muted-foreground mt-2 ml-11">
+          <p className="text-xs md:text-sm text-muted-foreground mt-2 ml-8 md:ml-11">
             실험 프로토콜 텍스트를 입력하면 필요한 시약/기구/장비를 자동으로 추출하고 BOM을 생성합니다.
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr,1.5fr]">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-[1fr,1.5fr]">
           {/* 좌측: 프로토콜 입력 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+          <Card className="p-3 md:p-6">
+            <CardHeader className="px-0 pt-0 pb-3">
+              <CardTitle className="text-xs md:text-sm font-semibold text-slate-900 flex items-center gap-1.5 md:gap-2">
+                <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 프로토콜 입력
               </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
+              <CardDescription className="text-[10px] md:text-xs text-slate-500">
                 PDF 파일을 업로드하거나 텍스트를 붙여넣어 프로토콜을 분석합니다.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
               <Tabs defaultValue={pdfUploadEnabled ? "upload" : "paste"} className="w-full">
                 <TabsList className="grid w-full" style={{ gridTemplateColumns: pdfUploadEnabled ? "1fr 1fr" : "1fr" }}>
                   {pdfUploadEnabled && (

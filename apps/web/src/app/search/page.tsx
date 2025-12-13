@@ -16,14 +16,14 @@ function SearchContent() {
     <>
       {q && (
         <>
-          <h2 className="text-lg font-semibold mb-4">검색 결과</h2>
+          <h2 className="text-sm md:text-lg font-semibold mb-3 md:mb-4">검색 결과</h2>
           <SearchResultList query={q} />
         </>
       )}
       {!q && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="mb-2">검색어를 입력하세요.</p>
-          <p className="text-sm">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
+        <div className="text-center py-8 md:py-12 text-muted-foreground">
+          <p className="mb-2 text-xs md:text-sm">검색어를 입력하세요.</p>
+          <p className="text-[10px] md:text-sm">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
         </div>
       )}
     </>
@@ -42,7 +42,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-7xl mx-auto">
           <PageHeader
             title="제품 검색"
@@ -51,11 +51,11 @@ export default function SearchPage() {
             iconColor="text-blue-600"
           />
           
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <SearchInputWrapper />
           </div>
           
-          <Suspense fallback={<div className="text-center py-12">로딩 중...</div>}>
+          <Suspense fallback={<div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>}>
             <SearchContent />
           </Suspense>
         </div>

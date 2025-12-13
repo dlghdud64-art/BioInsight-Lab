@@ -117,8 +117,8 @@ export default function ReportsPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto py-8 px-4">
+        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="container mx-auto py-4 md:py-8 px-3 md:px-4">
             <div className="max-w-7xl mx-auto">
         <PageHeader
           title="구매 리포트"
@@ -128,34 +128,36 @@ export default function ReportsPage() {
         />
 
       {/* 필터 */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>필터</CardTitle>
+      <Card className="mb-4 md:mb-6 p-3 md:p-6">
+        <CardHeader className="px-0 pt-0 pb-3">
+          <CardTitle className="text-sm md:text-lg">필터</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <CardContent className="px-0 pb-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             <div>
-              <Label htmlFor="startDate">시작일</Label>
+              <Label htmlFor="startDate" className="text-xs md:text-sm">시작일</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="text-xs md:text-sm h-8 md:h-10"
               />
             </div>
             <div>
-              <Label htmlFor="endDate">종료일</Label>
+              <Label htmlFor="endDate" className="text-xs md:text-sm">종료일</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className="text-xs md:text-sm h-8 md:h-10"
               />
             </div>
             <div>
-              <Label htmlFor="category">카테고리</Label>
+              <Label htmlFor="category" className="text-xs md:text-sm">카테고리</Label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category">
+                <SelectTrigger id="category" className="text-xs md:text-sm h-8 md:h-10">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,27 +171,29 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="team">팀/조직</Label>
+              <Label htmlFor="team" className="text-xs md:text-sm">팀/조직</Label>
               <Input
                 id="team"
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
                 placeholder="전체"
+                className="text-xs md:text-sm h-8 md:h-10"
               />
             </div>
             <div>
-              <Label htmlFor="vendor">벤더</Label>
+              <Label htmlFor="vendor" className="text-xs md:text-sm">벤더</Label>
               <Input
                 id="vendor"
                 value={selectedVendor}
                 onChange={(e) => setSelectedVendor(e.target.value)}
                 placeholder="전체"
+                className="text-xs md:text-sm h-8 md:h-10"
               />
             </div>
             <div>
-              <Label htmlFor="budget">예산</Label>
+              <Label htmlFor="budget" className="text-xs md:text-sm">예산</Label>
               <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-                <SelectTrigger id="budget">
+                <SelectTrigger id="budget" className="text-xs md:text-sm h-8 md:h-10">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,45 +215,45 @@ export default function ReportsPage() {
         <div className="text-center py-8">Loading...</div>
       ) : reportData ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 구매 금액</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">총 구매 금액</CardTitle>
+                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg md:text-2xl font-bold break-words">
                   ₩{reportData.totalAmount?.toLocaleString("ko-KR") || 0}
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 구매 건수</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">총 구매 건수</CardTitle>
+                <Package className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{reportData.totalCount || 0}</div>
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg md:text-2xl font-bold">{reportData.totalCount || 0}</div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">평균 단가</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">평균 단가</CardTitle>
+                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg md:text-2xl font-bold break-words">
                   ₩{reportData.averagePrice?.toLocaleString("ko-KR") || 0}
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">벤더 수</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">벤더 수</CardTitle>
+                <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{reportData.vendorCount || 0}</div>
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg md:text-2xl font-bold">{reportData.vendorCount || 0}</div>
               </CardContent>
             </Card>
           </div>

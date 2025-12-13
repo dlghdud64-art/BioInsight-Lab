@@ -163,41 +163,41 @@ export default function ComparePage() {
     return (
       <MainLayout>
         <MainHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto space-y-6">
-            <h1 className="text-3xl font-bold mb-6">제품 비교</h1>
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+            <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">제품 비교</h1>
           
           {/* 검색 섹션 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>제품 검색 및 추가</CardTitle>
-              <CardDescription>
+          <Card className="p-3 md:p-6">
+            <CardHeader className="px-0 pt-0 pb-3">
+              <CardTitle className="text-sm md:text-lg">제품 검색 및 추가</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 비교할 제품을 검색하고 추가하세요 (최대 5개)
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleSearch} className="flex gap-2">
+            <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
+              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4" />
                   <Input
-                    placeholder="제품명, 벤더, 시약명 검색... (예: PBS, FBS, Trypsin)"
+                    placeholder="제품명, 벤더, 시약명 검색..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
                       setShowSearchResults(false);
                     }}
-                    className="pl-10"
+                    className="pl-8 md:pl-10 text-xs md:text-sm h-8 md:h-10"
                   />
                 </div>
-                <Button type="submit" disabled={!searchQuery.trim() || isSearching}>
+                <Button type="submit" disabled={!searchQuery.trim() || isSearching} className="text-xs md:text-sm h-8 md:h-10">
                   {isSearching ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 animate-spin" />
                       검색 중...
                     </>
                   ) : (
                     <>
-                      <Search className="h-4 w-4 mr-2" />
+                      <Search className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                       검색
                     </>
                   )}
@@ -313,8 +313,8 @@ export default function ComparePage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 비교 제품 관리 리스트 - 위로 이동 */}
         <Card id="compare-list-section">
           <CardHeader>

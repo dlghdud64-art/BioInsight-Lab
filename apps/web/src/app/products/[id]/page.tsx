@@ -222,46 +222,46 @@ ${extractedInfo.summary || "N/A"}`;
   const recommendations = product.recommendations || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-4">
-          <Link href="/search" className="text-sm text-muted-foreground hover:underline">
+        <div className="mb-3 md:mb-4">
+          <Link href="/search" className="text-xs md:text-sm text-muted-foreground hover:underline">
             ← 검색으로 돌아가기
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* 제품 정보 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
             {/* 상단: 제품명, 벤더, 카테고리, Grade/규격 배지 */}
-            <Card>
-              <CardHeader>
+            <Card className="p-3 md:p-6">
+              <CardHeader className="px-0 pt-0 pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-3xl mb-2">{product.name}</CardTitle>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-xl md:text-3xl mb-2 break-words">{product.name}</CardTitle>
                     {product.nameEn && (
-                      <CardDescription className="text-base">{product.nameEn}</CardDescription>
+                      <CardDescription className="text-sm md:text-base break-words">{product.nameEn}</CardDescription>
                     )}
                     {product.vendors?.[0]?.vendor?.name && (
-                      <p className="text-sm text-slate-600 mt-1">
+                      <p className="text-xs md:text-sm text-slate-600 mt-1">
                         {product.vendors[0].vendor.name}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">
                   {product.category && (
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className="text-[10px] md:text-sm">
                       {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
                     </Badge>
                   )}
                   {product.grade && (
-                    <Badge variant="secondary" className="text-sm">
+                    <Badge variant="secondary" className="text-[10px] md:text-sm">
                       {product.grade}
                     </Badge>
                   )}
                   {product.brand && (
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant="outline" className="text-[10px] md:text-sm">
                       {product.brand}
                     </Badge>
                   )}
@@ -270,11 +270,11 @@ ${extractedInfo.summary || "N/A"}`;
             </Card>
 
             {/* 실험/제품 정보 블록 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">실험/제품 정보</CardTitle>
+            <Card className="p-3 md:p-6">
+              <CardHeader className="px-0 pt-0 pb-3">
+                <CardTitle className="text-sm md:text-lg">실험/제품 정보</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="px-0 pb-0 space-y-4 md:space-y-6">
                 {product.imageUrl && (
                   <div className="w-full aspect-square max-w-md mx-auto">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -290,12 +290,12 @@ ${extractedInfo.summary || "N/A"}`;
 
                 {product.description && (
                   <div>
-                    <h3 className="font-semibold mb-2">설명</h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
+                    <h3 className="font-semibold mb-2 text-xs md:text-sm">설명</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-wrap break-words">
                       {product.description}
                     </p>
                     {product.descriptionTranslated && (
-                      <p className="text-muted-foreground whitespace-pre-wrap mt-2 text-sm italic">
+                      <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-wrap mt-2 italic break-words">
                         {product.descriptionTranslated}
                       </p>
                     )}

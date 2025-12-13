@@ -148,9 +148,9 @@ export default function EnterpriseSettingsPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+            <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
               <PageHeader
                 title="Enterprise 설정"
                 description="SSO 연동, 감사 로그, 권한 관리 등 Enterprise 기능을 설정합니다."
