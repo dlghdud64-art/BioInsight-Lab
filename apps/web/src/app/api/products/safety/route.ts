@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         // 고위험군 필터링 (발암성, 독성, 인화성 등)
         // PostgreSQL JSONB 연산자 사용
         try {
-          const highRiskResults = await db.$queryRawUnsafe<Array<{ id: string }>>(`
+          const highRiskResults = await db.$queryRawUnsafe(`
             SELECT id FROM "Product"
             WHERE 
               ("pictograms"::jsonb @> '["skull"]'::jsonb OR
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
                "pictograms"::jsonb @> '["corrosive"]'::jsonb OR
                "hazardCodes"::jsonb @> '["H350"]'::jsonb OR
                "hazardCodes"::jsonb @> '["H300"]'::jsonb)
-          `);
-          productIds = highRiskResults.map((r) => r.id);
+          `) as Array<{ id: string }>;
+          productIds = highRiskResults.map((r: { id: string }) => r.id);
         } catch (error) {
           console.error("Error querying high-risk products:", error);
           // 에러 발생 시 빈 결과 반환
@@ -68,11 +68,11 @@ export async function GET(request: NextRequest) {
         // 특정 위험 코드 포함
         if (hazardCode) {
           try {
-            const hazardResults = await db.$queryRawUnsafe<Array<{ id: string }>>(
+            const hazardResults = await db.$queryRawUnsafe(
               `SELECT id FROM "Product" WHERE "hazardCodes"::jsonb @> $1::jsonb`,
               JSON.stringify([hazardCode])
-            );
-            productIds = hazardResults.map((r) => r.id);
+            ) as Array<{ id: string }>;
+            productIds = hazardResults.map((r: { id: string }) => r.id);
           } catch (error) {
             console.error("Error querying hazard code products:", error);
             return NextResponse.json({
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         distinct: ["productId"],
       });
 
-      const productIds = purchaseProductIds.map((p) => p.productId);
+      const productIds = purchaseProductIds.map((p: { productId: string }) => p.productId);
       if (productIds.length > 0) {
         where.id = { in: productIds };
       } else {
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
     });
 
     // JSON 필드를 배열로 변환
-    const formattedProducts = products.map((product) => ({
+    const formattedProducts = products.map((product: any) => ({
       ...product,
       hazardCodes: Array.isArray(product.hazardCodes) ? product.hazardCodes : [],
       pictograms: Array.isArray(product.pictograms) ? product.pictograms : [],
