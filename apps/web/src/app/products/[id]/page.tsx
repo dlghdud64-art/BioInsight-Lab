@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
+import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS, PICTOGRAM_DESCRIPTIONS, PPE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -591,9 +592,22 @@ ${extractedInfo.summary || "N/A"}`;
                 {/* 안전 · 규제 정보 */}
                 {(product.msdsUrl || product.safetyNote || product.hazardCodes || product.pictograms || product.storageCondition || product.ppe) && (
                   <div className="pt-4 border-t">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Shield className="h-4 w-4 text-amber-600" />
-                      <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-amber-600" />
+                        <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
+                      </div>
+                      {(() => {
+                        const safetyLevel = getProductSafetyLevel(product);
+                        return (
+                          <Badge
+                            variant="outline"
+                            className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
+                          >
+                            위험도: {safetyLevel.label}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-3 md:space-y-4">
                       {/* 구조화된 안전 필드 (P2) */}
@@ -605,8 +619,18 @@ ${extractedInfo.summary || "N/A"}`;
                               <div className="text-xs md:text-sm text-slate-600 mb-1.5">위험 코드</div>
                               <div className="flex flex-wrap gap-1.5">
                                 {product.hazardCodes.map((code: string, idx: number) => (
-                                  <Badge key={idx} variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] md:text-xs">
+                                  <Badge
+                                    key={idx}
+                                    variant="outline"
+                                    className="bg-red-50 text-red-700 border-red-200 text-[10px] md:text-xs"
+                                    title={HAZARD_CODE_DESCRIPTIONS[code] || code}
+                                  >
                                     {code}
+                                    {HAZARD_CODE_DESCRIPTIONS[code] && (
+                                      <span className="ml-1 text-[9px] opacity-70">
+                                        ({HAZARD_CODE_DESCRIPTIONS[code]})
+                                      </span>
+                                    )}
                                   </Badge>
                                 ))}
                               </div>
@@ -630,7 +654,12 @@ ${extractedInfo.summary || "N/A"}`;
                                     oxidizer: "산화성",
                                   };
                                   return (
-                                    <Badge key={idx} variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-[10px] md:text-xs">
+                                    <Badge
+                                      key={idx}
+                                      variant="outline"
+                                      className="bg-orange-50 text-orange-700 border-orange-200 text-[10px] md:text-xs"
+                                      title={PICTOGRAM_DESCRIPTIONS[pictogram] || pictogram}
+                                    >
                                       {pictogramLabels[pictogram] || pictogram}
                                     </Badge>
                                   );
@@ -653,8 +682,13 @@ ${extractedInfo.summary || "N/A"}`;
                                     respirator: "호흡기",
                                   };
                                   return (
-                                    <Badge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] md:text-xs">
-                                      {ppeLabels[item] || item}
+                                    <Badge
+                                      key={idx}
+                                      variant="outline"
+                                      className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] md:text-xs"
+                                      title={PPE_DESCRIPTIONS[item] || item}
+                                    >
+                                      {ppeLabels[item] || PPE_DESCRIPTIONS[item] || item}
                                     </Badge>
                                   );
                                 })}

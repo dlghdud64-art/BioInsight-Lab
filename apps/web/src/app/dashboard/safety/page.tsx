@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { getProductSafetyLevel } from "@/lib/utils/safety-visualization";
 
 export default function SafetyManagerPage() {
   const { data: session } = useSession();
@@ -203,10 +204,20 @@ export default function SafetyManagerPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {products.map((product: any) => (
-                          <TableRow key={product.id}>
+                        {products.map((product: any) => {
+                          const safetyLevel = getProductSafetyLevel(product);
+                          return (
+                          <TableRow key={product.id} className={safetyLevel.bgColor}>
                             <TableCell className="text-xs md:text-sm font-medium">
-                              {product.name}
+                              <div className="flex items-center gap-2">
+                                {product.name}
+                                <Badge
+                                  variant="outline"
+                                  className={`${safetyLevel.color} ${safetyLevel.borderColor} text-[9px]`}
+                                >
+                                  {safetyLevel.label}
+                                </Badge>
+                              </div>
                             </TableCell>
                             <TableCell className="text-xs md:text-sm font-mono">
                               {product.catalogNumber || "-"}
@@ -278,7 +289,8 @@ export default function SafetyManagerPage() {
                               </Link>
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
