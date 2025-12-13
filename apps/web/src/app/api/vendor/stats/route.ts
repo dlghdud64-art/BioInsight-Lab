@@ -103,6 +103,95 @@ export async function GET(request: NextRequest) {
       _sum: { totalPrice: true },
     });
 
+    // 카테고리별 견적 통계
+    const quotesByCategory = await db.quote.findMany({
+      where: {
+        items: {
+          some: {
+            product: {
+              vendors: {
+                some: {
+                  vendorId: vendorId,
+                },
+              },
+            },
+          },
+        },
+      },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const categoryStats: Record<string, { quotes: number; responses: number }> = {};
+    quotesByCategory.forEach((quote) => {
+      quote.items.forEach((item) => {
+        const category = item.product?.category || "UNKNOWN";
+        if (!categoryStats[category]) {
+          categoryStats[category] = { quotes: 0, responses: 0 };
+        }
+        categoryStats[category].quotes += 1;
+      });
+    });
+
+    // 응답한 견적의 카테고리별 통계
+    const responsesByCategory = await db.quoteResponse.findMany({
+      where: { vendorId: vendorId },
+      include: {
+        quote: {
+          include: {
+            items: {
+              include: {
+                product: {
+                  select: {
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    responsesByCategory.forEach((response) => {
+      response.quote.items.forEach((item) => {
+        const category = item.product?.category || "UNKNOWN";
+        if (categoryStats[category]) {
+          categoryStats[category].responses += 1;
+        }
+      });
+    });
+
+    // 시간대별 통계 (최근 7일)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const dailyStats = await db.quoteResponse.findMany({
+      where: {
+        vendorId: vendorId,
+        createdAt: { gte: sevenDaysAgo },
+      },
+      select: {
+        createdAt: true,
+        totalPrice: true,
+      },
+    });
+
+    const dailyRevenue: Record<string, number> = {};
+    dailyStats.forEach((response) => {
+      const date = response.createdAt.toISOString().split("T")[0];
+      dailyRevenue[date] = (dailyRevenue[date] || 0) + (response.totalPrice || 0);
+    });
+
     return NextResponse.json({
       totalQuotes,
       totalResponses,
@@ -111,6 +200,8 @@ export async function GET(request: NextRequest) {
       recentResponses,
       avgResponseTime: Math.round(avgResponseTime * 10) / 10,
       totalRevenue: totalRevenue._sum.totalPrice || 0,
+      categoryStats,
+      dailyRevenue,
     });
   } catch (error: any) {
     console.error("Error fetching vendor stats:", error);
