@@ -14,6 +14,17 @@ interface TestFlowContextType {
   setSearchCategory: (category: string) => void;
   sortBy: "relevance" | "price_low" | "price_high" | "lead_time";
   setSortBy: (sort: "relevance" | "price_low" | "price_high" | "lead_time") => void;
+  // 필터 상태
+  minPrice: number | undefined;
+  setMinPrice: (price: number | undefined) => void;
+  maxPrice: number | undefined;
+  setMaxPrice: (price: number | undefined) => void;
+  stockStatus: string | undefined;
+  setStockStatus: (status: string | undefined) => void;
+  leadTime: string | undefined;
+  setLeadTime: (time: string | undefined) => void;
+  grade: string | undefined;
+  setGrade: (grade: string | undefined) => void;
   products: any[];
   isSearchLoading: boolean;
   queryAnalysis: any;
@@ -56,6 +67,11 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
   const [sortBy, setSortBy] = useState<"relevance" | "price_low" | "price_high" | "lead_time">("relevance");
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [stockStatus, setStockStatus] = useState<string | undefined>(undefined);
+  const [leadTime, setLeadTime] = useState<string | undefined>(undefined);
+  const [grade, setGrade] = useState<string | undefined>(undefined);
   const [protocolText, setProtocolText] = useState("");
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [quoteItems, setQuoteItems] = useState<any[]>([]);
@@ -69,13 +85,18 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
 
   // 검색 결과
   const { data: searchData, isLoading: isSearchLoading, error: searchError } = useQuery({
-    queryKey: ["search-products", searchQuery, searchCategory, sortBy, searchTrigger],
+    queryKey: ["search-products", searchQuery, searchCategory, sortBy, minPrice, maxPrice, stockStatus, leadTime, grade, searchTrigger],
     queryFn: async () => {
       if (!searchQuery) return { products: [], total: 0 };
       const params = new URLSearchParams({
         query: searchQuery,
         ...(searchCategory && { category: searchCategory }),
         sortBy,
+        ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
+        ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
+        ...(stockStatus && { stockStatus }),
+        ...(leadTime && { leadTime }),
+        ...(grade && { grade }),
         limit: "10",
       });
       const response = await fetch(`/api/products/search?${params.toString()}`);
@@ -368,6 +389,16 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         setSearchCategory,
         sortBy,
         setSortBy,
+        minPrice,
+        setMinPrice,
+        maxPrice,
+        setMaxPrice,
+        stockStatus,
+        setStockStatus,
+        leadTime,
+        setLeadTime,
+        grade,
+        setGrade,
         products,
         isSearchLoading,
         queryAnalysis,

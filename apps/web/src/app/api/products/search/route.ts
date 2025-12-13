@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("query") || searchParams.get("q") || "";
     const category = searchParams.get("category");
     const sortBy = (searchParams.get("sortBy") as any) || "relevance";
+    const minPrice = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined;
+    const maxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined;
+    const stockStatus = searchParams.get("stockStatus");
+    const leadTime = searchParams.get("leadTime");
+    const grade = searchParams.get("grade");
     const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
     const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : 20;
 
@@ -30,6 +35,29 @@ export async function GET(request: NextRequest) {
       if (category && category !== "all") {
         if (p.category !== category) return false;
       }
+      
+      // 가격 필터
+      if (minPrice !== undefined && p.price < minPrice) return false;
+      if (maxPrice !== undefined && p.price > maxPrice) return false;
+      
+      // 재고 필터 (더미 데이터에는 stockStatus가 없으므로 임시로 처리)
+      if (stockStatus && stockStatus !== "all") {
+        // 더미 데이터에서는 모든 제품이 재고 있음으로 가정
+        // 실제로는 p.stockStatus를 확인해야 함
+      }
+      
+      // 납기 필터 (더미 데이터에는 leadTime이 없으므로 임시로 처리)
+      if (leadTime && leadTime !== "all") {
+        // 더미 데이터에서는 모든 제품이 1주 이내로 가정
+        // 실제로는 p.leadTime을 확인해야 함
+      }
+      
+      // Grade 필터 (더미 데이터에는 grade가 없으므로 임시로 처리)
+      if (grade && grade !== "all") {
+        // 더미 데이터에서는 모든 제품이 해당 Grade로 가정
+        // 실제로는 p.grade를 확인해야 함
+      }
+      
       return true;
     });
 

@@ -20,6 +20,16 @@ export function SearchPanel() {
     setSearchCategory,
     sortBy,
     setSortBy,
+    minPrice,
+    setMinPrice,
+    maxPrice,
+    setMaxPrice,
+    stockStatus,
+    setStockStatus,
+    leadTime,
+    setLeadTime,
+    grade,
+    setGrade,
     runSearch,
     gptEnabled,
     setGptEnabled,
@@ -89,7 +99,7 @@ export function SearchPanel() {
               <Label htmlFor="category" className="text-xs font-medium">
                 카테고리
               </Label>
-              <Select value={searchCategory} onValueChange={setSearchCategory}>
+              <Select value={searchCategory || "all"} onValueChange={(v) => setSearchCategory(v === "all" ? "" : v)}>
                 <SelectTrigger id="category" className="text-xs">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
@@ -120,6 +130,117 @@ export function SearchPanel() {
                   <SelectItem value="price_low">가격 낮은순</SelectItem>
                   <SelectItem value="price_high">가격 높은순</SelectItem>
                   <SelectItem value="lead_time">납기 빠른순</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* 고급 필터 */}
+          <div className="pt-2 border-t border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-slate-700">고급 필터</Label>
+              {(minPrice !== undefined || maxPrice !== undefined || stockStatus || leadTime || grade) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[10px] h-6 px-2"
+                  onClick={() => {
+                    setMinPrice(undefined);
+                    setMaxPrice(undefined);
+                    setStockStatus(undefined);
+                    setLeadTime(undefined);
+                    setGrade(undefined);
+                  }}
+                >
+                  필터 초기화
+                </Button>
+              )}
+            </div>
+
+            {/* 가격 범위 */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="min-price" className="text-[10px] text-slate-600">
+                  최소 가격 (₩)
+                </Label>
+                <Input
+                  id="min-price"
+                  type="number"
+                  placeholder="0"
+                  value={minPrice || ""}
+                  onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : undefined)}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="max-price" className="text-[10px] text-slate-600">
+                  최대 가격 (₩)
+                </Label>
+                <Input
+                  id="max-price"
+                  type="number"
+                  placeholder="무제한"
+                  value={maxPrice || ""}
+                  onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+
+            {/* 재고 여부 */}
+            <div className="space-y-1">
+              <Label htmlFor="stock-status" className="text-[10px] text-slate-600">
+                재고 여부
+              </Label>
+              <Select value={stockStatus || "all"} onValueChange={(v) => setStockStatus(v === "all" ? undefined : v)}>
+                <SelectTrigger id="stock-status" className="text-xs h-8">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="in_stock">재고 있음</SelectItem>
+                  <SelectItem value="low_stock">재고 부족</SelectItem>
+                  <SelectItem value="out_of_stock">품절</SelectItem>
+                  <SelectItem value="order_required">주문 필요</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 납기 */}
+            <div className="space-y-1">
+              <Label htmlFor="lead-time" className="text-[10px] text-slate-600">
+                납기
+              </Label>
+              <Select value={leadTime || "all"} onValueChange={(v) => setLeadTime(v === "all" ? undefined : v)}>
+                <SelectTrigger id="lead-time" className="text-xs h-8">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="immediate">즉시</SelectItem>
+                  <SelectItem value="within_week">1주 이내</SelectItem>
+                  <SelectItem value="within_month">1개월 이내</SelectItem>
+                  <SelectItem value="over_month">1개월 이상</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Grade */}
+            <div className="space-y-1">
+              <Label htmlFor="grade" className="text-[10px] text-slate-600">
+                Grade
+              </Label>
+              <Select value={grade || "all"} onValueChange={(v) => setGrade(v === "all" ? undefined : v)}>
+                <SelectTrigger id="grade" className="text-xs h-8">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="HPLC">HPLC Grade</SelectItem>
+                  <SelectItem value="GMP">GMP</SelectItem>
+                  <SelectItem value="EP/USP">EP/USP</SelectItem>
+                  <SelectItem value="Cell Culture">Cell Culture Tested</SelectItem>
+                  <SelectItem value="Analytical">Analytical Grade</SelectItem>
                 </SelectContent>
               </Select>
             </div>
