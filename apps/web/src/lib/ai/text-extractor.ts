@@ -1,4 +1,5 @@
 // protocol-extractor.ts에서 export된 타입 재사용
+import type { ProtocolExtractionResult } from "./protocol-extractor";
 export type { ExtractedReagent, ProtocolExtractionResult, ExperimentCondition } from "./protocol-extractor";
 
 /**

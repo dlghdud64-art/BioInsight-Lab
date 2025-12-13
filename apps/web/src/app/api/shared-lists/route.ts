@@ -201,8 +201,8 @@ export async function POST(request: NextRequest) {
     // 액티비티 로그 기록 (비동기, 실패해도 공유 링크는 생성됨)
     const ipAddress = request.headers.get("x-forwarded-for") || 
                      request.headers.get("x-real-ip") || 
-                     null;
-    const userAgent = request.headers.get("user-agent") || null;
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
     
     createActivityLogServer({
       db,

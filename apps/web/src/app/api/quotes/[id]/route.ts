@@ -32,8 +32,8 @@ export async function GET(
     // 액티비티 로그 기록 (비동기, 실패해도 조회는 성공)
     const ipAddress = request.headers.get("x-forwarded-for") || 
                      request.headers.get("x-real-ip") || 
-                     null;
-    const userAgent = request.headers.get("user-agent") || null;
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
     
     createActivityLogServer({
       db,
@@ -101,8 +101,8 @@ export async function PATCH(
     // 액티비티 로그 기록
     const ipAddress = request.headers.get("x-forwarded-for") || 
                      request.headers.get("x-real-ip") || 
-                     null;
-    const userAgent = request.headers.get("user-agent") || null;
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
     
     createActivityLogServer({
       db,
@@ -162,8 +162,8 @@ export async function DELETE(
     // 액티비티 로그 기록 (삭제 전에 기록)
     const ipAddress = request.headers.get("x-forwarded-for") || 
                      request.headers.get("x-real-ip") || 
-                     null;
-    const userAgent = request.headers.get("user-agent") || null;
+                     undefined;
+    const userAgent = request.headers.get("user-agent") || undefined;
     
     createActivityLogServer({
       db,

@@ -38,7 +38,7 @@ export async function analyzePurchasePatterns(params: {
     // 같은 날짜/프로젝트/견적에서 구매된 제품 그룹화
     const purchaseGroups = new Map<string, string[]>();
     
-    purchaseRecords.forEach((record) => {
+    purchaseRecords.forEach((record: any) => {
       if (!record.productId) return;
       
       // 그룹 키 생성 (같은 날짜, 프로젝트, 견적에서 구매된 것들)
@@ -147,12 +147,12 @@ export async function analyzeQuotePatterns(params: {
     const pairFrequency = new Map<string, number>();
     const productFrequency = new Map<string, number>();
 
-    quotes.forEach((quote) => {
-      const productIds = quote.items.map((item) => item.productId);
-      const uniqueIds = Array.from(new Set(productIds));
+    quotes.forEach((quote: any) => {
+      const productIds = quote.items.map((item: any) => item.productId);
+      const uniqueIds = Array.from(new Set(productIds)) as string[];
 
       // 각 제품의 빈도 계산
-      uniqueIds.forEach((id) => {
+      uniqueIds.forEach((id: string) => {
         productFrequency.set(id, (productFrequency.get(id) || 0) + 1);
       });
 
