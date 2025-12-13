@@ -22,16 +22,6 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
               // 최대 1번 재시도
               return failureCount < 1;
             },
-            onError: (error: any) => {
-              // 에러 로깅 (향후 Sentry 등으로 전송 가능)
-              console.error("Query error:", error);
-            },
-          },
-          mutations: {
-            onError: (error: any) => {
-              // 에러 로깅
-              console.error("Mutation error:", error);
-            },
           },
         },
       })
