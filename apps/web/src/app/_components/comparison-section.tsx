@@ -3,17 +3,17 @@ import { Search, FileSpreadsheet, Copy, CheckCircle2, XCircle } from "lucide-rea
 
 export function ComparisonSection() {
   return (
-    <section className="mt-12 space-y-4 md:space-y-6">
-      <div className="text-center space-y-2 px-2">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+    <section className="mt-6 md:mt-12 space-y-3 md:space-y-6">
+      <div className="text-center space-y-1.5 md:space-y-2 px-2">
+        <h2 className="text-base md:text-2xl font-bold tracking-tight text-slate-900">
           기존 방식 vs BioInsight Lab
         </h2>
-        <p className="text-xs md:text-sm text-slate-600">
+        <p className="text-[11px] md:text-sm text-slate-600">
           복잡하고 시간이 걸리던 검색·견적 준비 과정을 간단하게
         </p>
       </div>
 
-      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-6 md:grid-cols-2">
         {/* 기존 방식 */}
         <Card className="border-2 border-red-100 bg-red-50/30">
           <CardHeader className="pb-3">

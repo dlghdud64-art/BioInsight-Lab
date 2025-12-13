@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function PricingSection() {
   return (
-    <section id="pricing" className="mt-12 space-y-3 md:space-y-4 scroll-mt-14">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900">
+    <section id="pricing" className="mt-6 md:mt-12 space-y-2 md:space-y-4 scroll-mt-14">
+      <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900">
         요금 & 도입
       </h2>
       <div className="grid gap-3 md:gap-4 md:grid-cols-3">

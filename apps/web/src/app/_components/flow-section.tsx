@@ -4,8 +4,8 @@ import Link from "next/link";
 // FlowSection 컴포넌트 - 중복 정의 제거
 export function FlowSection() {
   return (
-    <section id="flow-section" className="mt-12 space-y-3 md:space-y-4 scroll-mt-14 overflow-hidden">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 px-1">
+    <section id="flow-section" className="mt-6 md:mt-12 space-y-2 md:space-y-4 scroll-mt-14 overflow-hidden">
+      <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900 px-1">
         3단계로 끝나는 구매 준비
       </h2>
       <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-3 w-full">

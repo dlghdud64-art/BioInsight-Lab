@@ -4,8 +4,8 @@ import { Sparkles, Languages, Lightbulb } from "lucide-react";
 // AISection 컴포넌트 - 중복 정의 제거
 export function AISection() {
   return (
-    <section id="ai" className="mt-12 space-y-3 md:space-y-4">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900">
+    <section id="ai" className="mt-6 md:mt-12 space-y-2 md:space-y-4">
+      <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900">
         GPT 기반 AI 기능
       </h2>
       <div className="grid gap-3 md:gap-4 md:grid-cols-3">

@@ -4,8 +4,8 @@ import { Search, FileSpreadsheet, Users } from "lucide-react";
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function KeyValueSection() {
   return (
-    <section id="features" className="mt-12 space-y-3 md:space-y-4 scroll-mt-14">
-      <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 leading-relaxed">
+    <section id="features" className="mt-6 md:mt-12 space-y-2 md:space-y-4 scroll-mt-14">
+      <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900 leading-relaxed">
         연구·QC 현장의 시약·장비를 한 번에 검색·비교하고,
         구매 요청에 쓸 품목 리스트까지 정리할 수 있는 구매 준비 도구입니다.
       </h2>

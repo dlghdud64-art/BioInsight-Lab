@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 
 export function SafetyRegulationTeaserSection() {
   return (
-    <section className="mt-12 space-y-3 md:space-y-4">
-      <div className="text-center space-y-1.5 md:space-y-2 px-2">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+    <section className="mt-6 md:mt-12 space-y-2 md:space-y-4">
+      <div className="text-center space-y-1 md:space-y-2 px-2">
+        <h2 className="text-base md:text-2xl font-bold tracking-tight text-slate-900">
           안전 · 규제 정보도 함께
         </h2>
-        <p className="text-xs md:text-sm text-slate-600">
+        <p className="text-[11px] md:text-sm text-slate-600">
           제품 사용 전 필수 확인 사항을 한눈에
         </p>
       </div>

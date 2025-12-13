@@ -58,7 +58,7 @@ export function MainHeader() {
 
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-3 md:px-4">
+      <div className="mx-auto flex h-12 md:h-14 max-w-6xl items-center justify-between px-3 md:px-4">
         {/* 좌측: 로고 + 섹션 네비 */}
         <div className="flex items-center gap-3 md:gap-6 min-w-0">
           <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">

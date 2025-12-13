@@ -42,7 +42,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="container mx-auto px-3 md:px-4 py-3 md:py-8">
         <div className="max-w-7xl mx-auto">
           <PageHeader
             title="제품 검색"
