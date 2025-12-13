@@ -117,7 +117,7 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     let processedText = data.text;
     
     // 연속된 공백을 하나로 (단, 탭은 보존)
-    processedText = processedText.replace(/[ \t]+/g, (match) => {
+    processedText = processedText.replace(/[ \t]+/g, (match: string) => {
       // 탭이 포함된 경우 탭으로 통일
       if (match.includes('\t')) {
         return '\t';
