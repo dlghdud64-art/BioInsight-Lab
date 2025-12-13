@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, ShoppingCart, Package } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from "next/link";
 
 interface ReorderRecommendation {
   inventoryId: string;
@@ -64,9 +65,9 @@ export function ReorderRecommendations({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-none shadow-sm">
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">재주문 추천을 불러오는 중...</p>
+          <p className="text-muted-foreground text-sm">재주문 추천을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -74,11 +75,25 @@ export function ReorderRecommendations({
 
   if (recommendations.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>재주문 추천</CardTitle>
-          <CardDescription>안전 재고 이하인 제품이 없습니다.</CardDescription>
+      <Card className="border-none shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold">재주문 추천</CardTitle>
+          <CardDescription className="text-xs text-slate-500">
+            자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
+          </CardDescription>
         </CardHeader>
+        <CardContent className="py-6">
+          <p className="text-center text-sm text-slate-500">
+            아직 재주문 추천이 없습니다.
+            <br />
+            먼저 제품을 검색하고 견적을 받아보세요.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Button size="sm" asChild>
+              <Link href="/test/search">제품 검색하기</Link>
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -87,21 +102,16 @@ export function ReorderRecommendations({
   const highCount = recommendations.filter((r) => r.urgency === "high").length;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <Card className="border-none shadow-sm">
+      <CardHeader className="pb-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle>재주문 추천</CardTitle>
-            <CardDescription>
-              안전 재고 이하인 제품 {recommendations.length}개
-              {urgentCount > 0 && (
-                <span className="ml-2 text-red-600 font-medium">
-                  (긴급: {urgentCount}개)
-                </span>
-              )}
+            <CardTitle className="text-base font-semibold">재주문 추천</CardTitle>
+            <CardDescription className="text-xs text-slate-500">
+              자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
             </CardDescription>
           </div>
-          <Button onClick={handleAddToQuoteList} size="sm">
+          <Button onClick={handleAddToQuoteList} size="sm" className="w-full md:w-auto">
             <ShoppingCart className="h-4 w-4 mr-2" />
             모두 품목 리스트에 추가
           </Button>

@@ -17,6 +17,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { LayoutDashboard } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -108,6 +109,15 @@ export default function DashboardPage() {
   const quotes = quotesData?.quotes || [];
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
+  const [activeTab, setActiveTab] = useState("quotes");
+
+  const DASHBOARD_TABS = [
+    { id: "quotes", label: "견적" },
+    { id: "favorites", label: "즐겨찾기" },
+    { id: "recent", label: "최근" },
+    { id: "activity", label: "활동" },
+    { id: "inventory", label: "재고" },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -184,7 +194,7 @@ export default function DashboardPage() {
         )}
 
         {/* 재주문 추천 섹션 (상단에 표시) */}
-        <div className="mb-6">
+        <section className="mt-4">
           <ReorderRecommendations
             onAddToQuoteList={(recommendations) => {
               // 추천 목록을 품목 리스트에 추가
@@ -196,59 +206,77 @@ export default function DashboardPage() {
               }))))}`);
             }}
           />
+        </section>
+
+        {/* 탭 바 - 칩 스타일 (모바일) */}
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
+          {DASHBOARD_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "whitespace-nowrap rounded-full border px-3 py-1 text-xs transition-colors",
+                activeTab === tab.id
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-600"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <Tabs defaultValue="quotes" className="space-y-3 md:space-y-4">
-          <TabsList className="w-full overflow-x-auto flex md:inline-flex">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4">
+          <TabsList className="hidden md:inline-flex">
             <TabsTrigger value="quotes" className="text-xs md:text-sm whitespace-nowrap">
               <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">견적 요청</span>
-              <span className="sm:hidden">견적</span>
+              <span>견적 요청</span>
               <span className="ml-1">({quotes.length})</span>
             </TabsTrigger>
             <TabsTrigger value="favorites" className="text-xs md:text-sm whitespace-nowrap">
               <Heart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">즐겨찾기</span>
-              <span className="sm:hidden">즐겨</span>
+              <span>즐겨찾기</span>
               <span className="ml-1">({favorites.length})</span>
             </TabsTrigger>
             <TabsTrigger value="recent" className="text-xs md:text-sm whitespace-nowrap">
               <History className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">최근 본 제품</span>
-              <span className="sm:hidden">최근</span>
+              <span>최근 본 제품</span>
               <span className="ml-1">({recentProducts.length})</span>
             </TabsTrigger>
             <TabsTrigger value="activity" className="text-xs md:text-sm whitespace-nowrap">
               <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">최근 활동</span>
-              <span className="sm:hidden">활동</span>
+              <span>최근 활동</span>
             </TabsTrigger>
             <TabsTrigger value="inventory" className="text-xs md:text-sm whitespace-nowrap">
               <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">재고 관리</span>
-              <span className="sm:hidden">재고</span>
+              <span>재고 관리</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="quotes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>견적 요청 현황</CardTitle>
-                <CardDescription>
-                  내가 보낸 견적 요청과 응답 상태를 확인하세요
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {quotesLoading ? (
-                  <p className="text-center text-muted-foreground py-8">로딩 중...</p>
-                ) : quotes.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">견적 요청 내역이 없습니다</p>
-                    <Link href="/search">
-                      <Button>제품 검색하기</Button>
-                    </Link>
-                  </div>
-                ) : (
+            <section className="mt-6">
+              <Card className="border-none shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">견적 요청 현황</CardTitle>
+                  <CardDescription className="text-xs text-slate-500">
+                    내가 보낸 견적 요청과 응답 상태를 한눈에 확인할 수 있습니다.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="py-6">
+                  {quotesLoading ? (
+                    <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
+                  ) : quotes.length === 0 ? (
+                    <>
+                      <div className="text-center text-sm text-slate-500">
+                        아직 보낸 견적 요청이 없습니다.
+                      </div>
+                      <div className="mt-4 flex justify-center">
+                        <Button size="sm" asChild>
+                          <Link href="/test/search">제품 검색하고 견적 받기</Link>
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
                   <div className="space-y-3 md:space-y-4">
                     {quotes.map((quote: any) => (
                       <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
@@ -336,9 +364,10 @@ export default function DashboardPage() {
                       </Card>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-3 md:space-y-4">
