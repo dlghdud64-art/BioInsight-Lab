@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     });
 
     const avgResponseTime = responsesWithTime.length > 0
-      ? responsesWithTime.reduce((sum: number, response) => {
+      ? responsesWithTime.reduce((sum: number, response: typeof responsesWithTime[0]) => {
           const timeDiff = response.createdAt.getTime() - response.quote.createdAt.getTime();
           return sum + timeDiff / (1000 * 60 * 60); // 시간 단위
         }, 0) / responsesWithTime.length
