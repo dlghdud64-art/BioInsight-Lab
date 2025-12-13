@@ -13,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, MessageSquare, Calendar, DollarSign } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function VendorQuotesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
   const [responseForm, setResponseForm] = useState({
     totalPrice: "",
