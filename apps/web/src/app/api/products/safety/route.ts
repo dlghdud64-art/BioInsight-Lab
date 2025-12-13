@@ -21,17 +21,42 @@ export async function GET(request: NextRequest) {
     let where: any = {};
 
     // 필터 타입에 따른 조건 설정
+    // Prisma의 JSON 필드는 raw query를 사용하거나 모든 제품을 가져온 후 필터링
+    // 성능을 위해 raw query 사용
+    let productIds: string[] = [];
+
     switch (filterType) {
       case "high-risk":
         // 고위험군 필터링 (발암성, 독성, 인화성 등)
-        // Prisma JSON 필드는 path를 사용하여 검색
-        where.OR = [
-          { pictograms: { path: ["$"], array_contains: "skull" } }, // 독성
-          { pictograms: { path: ["$"], array_contains: "flame" } }, // 인화성
-          { pictograms: { path: ["$"], array_contains: "corrosive" } }, // 부식성
-          { hazardCodes: { path: ["$"], array_contains: "H350" } }, // 발암성
-          { hazardCodes: { path: ["$"], array_contains: "H300" } }, // 치명적 독성
-        ];
+        // PostgreSQL JSONB 연산자 사용
+        try {
+          const highRiskResults = await db.$queryRawUnsafe<Array<{ id: string }>>(`
+            SELECT id FROM "Product"
+            WHERE 
+              ("pictograms"::jsonb @> '["skull"]'::jsonb OR
+               "pictograms"::jsonb @> '["flame"]'::jsonb OR
+               "pictograms"::jsonb @> '["corrosive"]'::jsonb OR
+               "hazardCodes"::jsonb @> '["H350"]'::jsonb OR
+               "hazardCodes"::jsonb @> '["H300"]'::jsonb)
+          `);
+          productIds = highRiskResults.map((r) => r.id);
+        } catch (error) {
+          console.error("Error querying high-risk products:", error);
+          // 에러 발생 시 빈 결과 반환
+          return NextResponse.json({
+            products: [],
+            total: 0,
+          });
+        }
+        if (productIds.length > 0) {
+          where.id = { in: productIds };
+        } else {
+          // 결과가 없으면 빈 결과 반환
+          return NextResponse.json({
+            products: [],
+            total: 0,
+          });
+        }
         break;
 
       case "no-msds":
@@ -42,7 +67,27 @@ export async function GET(request: NextRequest) {
       case "hazard-code":
         // 특정 위험 코드 포함
         if (hazardCode) {
-          where.hazardCodes = { path: ["$"], array_contains: hazardCode };
+          try {
+            const hazardResults = await db.$queryRawUnsafe<Array<{ id: string }>>(
+              `SELECT id FROM "Product" WHERE "hazardCodes"::jsonb @> $1::jsonb`,
+              JSON.stringify([hazardCode])
+            );
+            productIds = hazardResults.map((r) => r.id);
+          } catch (error) {
+            console.error("Error querying hazard code products:", error);
+            return NextResponse.json({
+              products: [],
+              total: 0,
+            });
+          }
+          if (productIds.length > 0) {
+            where.id = { in: productIds };
+          } else {
+            return NextResponse.json({
+              products: [],
+              total: 0,
+            });
+          }
         }
         break;
 
