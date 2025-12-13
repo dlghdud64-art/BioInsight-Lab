@@ -1,8 +1,36 @@
 /**
- * PDF 버퍼에서 텍스트 추출
- * Next.js 서버 사이드에서만 동작 (Edge Runtime에서는 동작하지 않음)
+ * PDF 파싱 결과 인터페이스
  */
-export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
+export interface PDFParseResult {
+  text: string;
+  metadata?: {
+    title?: string;
+    author?: string;
+    subject?: string;
+    creator?: string;
+    producer?: string;
+    creationDate?: Date;
+    modificationDate?: Date;
+    pages?: number;
+  };
+  tables?: Array<Array<string[]>>; // 추출된 표 데이터
+}
+
+/**
+ * PDF 버퍼에서 텍스트 추출 (개선된 버전)
+ * Next.js 서버 사이드에서만 동작 (Edge Runtime에서는 동작하지 않음)
+ * 
+ * 개선 사항:
+ * - 표 구조 감지 및 보존
+ * - 복잡한 레이아웃 처리 (다단 컬럼)
+ * - PDF 메타데이터 추출
+ */
+export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string>;
+export async function extractTextFromPDF(pdfBuffer: Buffer, options: { includeMetadata?: boolean; detectTables?: boolean }): Promise<PDFParseResult>;
+export async function extractTextFromPDF(
+  pdfBuffer: Buffer,
+  options?: { includeMetadata?: boolean; detectTables?: boolean }
+): Promise<string | PDFParseResult> {
   try {
     // pdf-parse는 CommonJS 모듈이므로 서버 사이드에서 require 사용
     // Next.js는 서버 사이드에서 require를 지원함
@@ -113,8 +141,32 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
       throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 빈 문서이거나 텍스트가 없을 수 있습니다.");
     }
     
-    // 텍스트 전처리: 표 구조 개선
+    // 메타데이터 추출
+    const metadata = options?.includeMetadata ? {
+      title: data.info?.Title || undefined,
+      author: data.info?.Author || undefined,
+      subject: data.info?.Subject || undefined,
+      creator: data.info?.Creator || undefined,
+      producer: data.info?.Producer || undefined,
+      creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
+      modificationDate: data.info?.ModDate ? new Date(data.info.ModDate) : undefined,
+      pages: data.numpages || undefined,
+    } : undefined;
+    
+    // 텍스트 전처리: 표 구조 개선 및 복잡한 레이아웃 처리
     let processedText = data.text;
+    
+    // 다단 컬럼 처리: 연속된 공백이 많은 경우 (다단 레이아웃)
+    // 줄의 시작 부분에 많은 공백이 있으면 다단 컬럼으로 간주
+    processedText = processedText.split('\n').map((line: string) => {
+      // 줄 시작 부분의 공백이 10개 이상이면 다단 컬럼으로 간주하고 탭으로 변환
+      const leadingSpaces = line.match(/^ +/)?.[0] || '';
+      if (leadingSpaces.length >= 10) {
+        // 첫 번째 단어 이후의 공백을 탭으로 변환
+        return line.replace(/^(\S+)\s{3,}/, '$1\t');
+      }
+      return line;
+    }).join('\n');
     
     // 연속된 공백을 하나로 (단, 탭은 보존)
     processedText = processedText.replace(/[ \t]+/g, (match: string) => {
@@ -129,12 +181,61 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     // 2개 이상의 연속된 공백이나 탭을 구분자로 인식
     processedText = processedText.replace(/([^\t\n])\s{2,}([^\t\n])/g, '$1\t$2');
     
+    // 표 구조 감지: 일관된 탭 구분자를 가진 줄들을 표로 인식
+    const lines = processedText.split('\n');
+    const detectedTables: Array<Array<string[]>> = [];
+    
+    if (options?.detectTables) {
+      let currentTable: Array<string[]> = [];
+      let previousColumnCount = 0;
+      
+      for (const line of lines) {
+        const columns = line.split('\t').filter((col: string) => col.trim().length > 0);
+        
+        // 탭으로 구분된 열이 2개 이상이고, 이전 줄과 같은 수의 열을 가지면 표의 일부로 간주
+        if (columns.length >= 2) {
+          if (previousColumnCount === 0 || previousColumnCount === columns.length) {
+            currentTable.push(columns);
+            previousColumnCount = columns.length;
+          } else {
+            // 열 수가 다르면 이전 표를 저장하고 새 표 시작
+            if (currentTable.length >= 2) {
+              detectedTables.push(currentTable);
+            }
+            currentTable = [columns];
+            previousColumnCount = columns.length;
+          }
+        } else {
+          // 표가 끝남
+          if (currentTable.length >= 2) {
+            detectedTables.push(currentTable);
+          }
+          currentTable = [];
+          previousColumnCount = 0;
+        }
+      }
+      
+      // 마지막 표 저장
+      if (currentTable.length >= 2) {
+        detectedTables.push(currentTable);
+      }
+    }
+    
     // 줄바꿈 정리 (표 구조 보존)
     processedText = processedText.replace(/\r\n/g, '\n');
     processedText = processedText.replace(/\r/g, '\n');
     
     // 연속된 줄바꿈 정리 (단, 표 구조는 보존)
     processedText = processedText.replace(/\n{4,}/g, '\n\n\n');
+    
+    // 옵션에 따라 결과 반환
+    if (options?.includeMetadata || options?.detectTables) {
+      return {
+        text: processedText,
+        metadata,
+        tables: options?.detectTables ? detectedTables : undefined,
+      };
+    }
     
     return processedText;
   } catch (error: any) {
