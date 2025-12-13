@@ -38,21 +38,23 @@ export async function DELETE(request: NextRequest) {
     });
 
     // 권한 확인: 본인이 생성한 링크만 삭제 가능
-    const authorizedLists = sharedLists.filter((sharedList) => {
+    const authorizedListIds: string[] = [];
+    for (const sharedList of sharedLists) {
       if (sharedList.createdBy === session.user.id) {
-        return true;
-      }
-      // 조직 멤버인 경우도 확인
-      if (sharedList.quote.organizationId) {
-        return db.organizationMember.findFirst({
+        authorizedListIds.push(sharedList.id);
+      } else if (sharedList.quote.organizationId) {
+        // 조직 멤버인 경우도 확인
+        const member = await db.organizationMember.findFirst({
           where: {
             userId: session.user.id,
             organizationId: sharedList.quote.organizationId,
           },
-        }).then((member) => !!member);
+        });
+        if (member) {
+          authorizedListIds.push(sharedList.id);
+        }
       }
-      return false;
-    });
+    }
 
     if (authorizedListIds.length === 0) {
       return NextResponse.json(
@@ -83,4 +85,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-
