@@ -102,9 +102,9 @@ export default function ActivityLogsPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex-1 overflow-auto min-w-0">
+          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+            <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
               <PageHeader
                 title="활동 로그"
                 description="리스트 생성, 수정, 공유 등 모든 활동 내역을 확인할 수 있습니다."
@@ -113,16 +113,16 @@ export default function ActivityLogsPage() {
               />
 
               {/* 필터 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">필터</CardTitle>
+              <Card className="p-3 md:p-6">
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <CardTitle className="text-xs md:text-sm font-semibold">필터</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4">
+                <CardContent className="px-0 pb-0">
+                  <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                     <div className="flex-1">
-                      <label className="text-xs text-slate-600 mb-1 block">활동 유형</label>
+                      <label className="text-[10px] md:text-xs text-slate-600 mb-1 block">활동 유형</label>
                       <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-xs md:text-sm h-8 md:h-10">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -136,9 +136,9 @@ export default function ActivityLogsPage() {
                       </Select>
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs text-slate-600 mb-1 block">엔티티 유형</label>
+                      <label className="text-[10px] md:text-xs text-slate-600 mb-1 block">엔티티 유형</label>
                       <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-xs md:text-sm h-8 md:h-10">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -177,7 +177,7 @@ export default function ActivityLogsPage() {
                       활동 내역이 없습니다.
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2 md:space-y-3">
                       {logs.map((log: any) => {
                         const Icon = ACTIVITY_TYPE_ICONS[log.activityType] || Activity;
                         const colorClass = ACTIVITY_TYPE_COLORS[log.activityType] || "bg-slate-100 text-slate-700 border-slate-200";
@@ -186,14 +186,14 @@ export default function ActivityLogsPage() {
                         return (
                           <div
                             key={log.id}
-                            className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                            className="flex items-start gap-2 md:gap-4 p-2.5 md:p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                           >
-                            <div className={`p-2 rounded-lg ${colorClass}`}>
-                              <Icon className="h-4 w-4" />
+                            <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${colorClass}`}>
+                              <Icon className="h-3 w-3 md:h-4 md:w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Badge variant="outline" className={`text-xs ${colorClass}`}>
+                              <div className="flex items-center gap-1.5 md:gap-2 mb-1 flex-wrap">
+                                <Badge variant="outline" className={`text-[10px] md:text-xs ${colorClass}`}>
                                   {label}
                                 </Badge>
                                 {log.entityType && (

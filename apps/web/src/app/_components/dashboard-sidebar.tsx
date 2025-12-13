@@ -88,9 +88,9 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-slate-200 flex-shrink-0">
-      <div className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-4">메뉴</h2>
+    <aside className="hidden md:block w-64 min-h-screen bg-white border-r border-slate-200 flex-shrink-0">
+      <div className="p-3 md:p-4">
+        <h2 className="text-xs md:text-sm font-semibold text-slate-900 mb-3 md:mb-4">메뉴</h2>
         <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -101,16 +101,16 @@ export function DashboardSidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors",
                   isActive
                     ? "bg-blue-50 text-blue-700 border border-blue-200"
                     : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-500")} />
-                <span>{item.title}</span>
+                <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
+                <span className="truncate">{item.title}</span>
                 {item.badge && (
-                  <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
                     {item.badge}
                   </span>
                 )}

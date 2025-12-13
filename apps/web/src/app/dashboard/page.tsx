@@ -99,8 +99,8 @@ export default function DashboardPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
+        <div className="flex-1 overflow-auto min-w-0">
+          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
             <PageHeader
               title="대시보드"
@@ -110,40 +110,40 @@ export default function DashboardPage() {
 
         {/* 구매 내역/예산 요약 카드 */}
         {!purchaseSummaryLoading && purchaseSummary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">이번 달 구매 금액</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">이번 달 구매 금액</CardTitle>
+                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-0 pb-0">
+                <div className="text-lg md:text-2xl font-bold">
                   ₩{purchaseSummary.metrics?.totalAmount?.toLocaleString("ko-KR") || 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   {purchaseSummary.metrics?.itemCount || 0}개 품목
                 </p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">예산 사용률</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">예산 사용률</CardTitle>
+                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0 pb-0">
                 {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
                   <>
-                    <div className="text-2xl font-bold">
+                    <div className="text-lg md:text-2xl font-bold">
                       {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       {purchaseSummary.budgetUsage[0]?.name || "예산"}
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">-</div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <div className="text-lg md:text-2xl font-bold">-</div>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                       <Link href="/dashboard/budget" className="text-primary hover:underline">
                         예산 설정하기
                       </Link>
@@ -152,14 +152,14 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">구매 리포트</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <Card className="p-3 md:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                <CardTitle className="text-xs md:text-sm font-medium">구매 리포트</CardTitle>
+                <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0 pb-0">
                 <Link href="/reports">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full text-xs md:text-sm h-8 md:h-10">
                     상세 리포트 보기
                   </Button>
                 </Link>
@@ -183,27 +183,35 @@ export default function DashboardPage() {
           />
         </div>
 
-        <Tabs defaultValue="quotes" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="quotes">
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              견적 요청 ({quotes.length})
+        <Tabs defaultValue="quotes" className="space-y-3 md:space-y-4">
+          <TabsList className="w-full overflow-x-auto flex md:inline-flex">
+            <TabsTrigger value="quotes" className="text-xs md:text-sm whitespace-nowrap">
+              <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">견적 요청</span>
+              <span className="sm:hidden">견적</span>
+              <span className="ml-1">({quotes.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="favorites">
-              <Heart className="h-4 w-4 mr-2" />
-              즐겨찾기 ({favorites.length})
+            <TabsTrigger value="favorites" className="text-xs md:text-sm whitespace-nowrap">
+              <Heart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">즐겨찾기</span>
+              <span className="sm:hidden">즐겨</span>
+              <span className="ml-1">({favorites.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="recent">
-              <History className="h-4 w-4 mr-2" />
-              최근 본 제품 ({recentProducts.length})
+            <TabsTrigger value="recent" className="text-xs md:text-sm whitespace-nowrap">
+              <History className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">최근 본 제품</span>
+              <span className="sm:hidden">최근</span>
+              <span className="ml-1">({recentProducts.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="activity">
-              <Activity className="h-4 w-4 mr-2" />
-              최근 활동
+            <TabsTrigger value="activity" className="text-xs md:text-sm whitespace-nowrap">
+              <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">최근 활동</span>
+              <span className="sm:hidden">활동</span>
             </TabsTrigger>
-            <TabsTrigger value="inventory">
-              <Package className="h-4 w-4 mr-2" />
-              재고 관리
+            <TabsTrigger value="inventory" className="text-xs md:text-sm whitespace-nowrap">
+              <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">재고 관리</span>
+              <span className="sm:hidden">재고</span>
             </TabsTrigger>
           </TabsList>
 
@@ -226,19 +234,19 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {quotes.map((quote: any) => (
-                      <Card key={quote.id} className="hover:shadow-md transition-shadow">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg">{quote.title}</CardTitle>
-                              <CardDescription className="mt-1">
+                      <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
+                        <CardHeader className="px-0 pt-0 pb-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-sm md:text-lg truncate">{quote.title}</CardTitle>
+                              <CardDescription className="mt-1 text-xs md:text-sm">
                                 {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
                               </CardDescription>
                             </div>
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
+                              className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[10px] md:text-xs font-medium flex-shrink-0 ${
                                 quote.status === "COMPLETED"
                                   ? "bg-green-100 text-green-800"
                                   : quote.status === "RESPONDED"
@@ -252,43 +260,48 @@ export default function DashboardPage() {
                             </span>
                           </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="px-0 pb-0 space-y-3">
                           {quote.message && (
-                            <p className="text-sm text-muted-foreground mb-3">{quote.message}</p>
+                            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{quote.message}</p>
                           )}
-                          <div className="space-y-2 text-sm">
+                          <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                             {quote.deliveryDate && (
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <span>납기 희망일: {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}</span>
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">납기: {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}</span>
                               </div>
                             )}
                             {quote.deliveryLocation && (
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span>납품 장소: {quote.deliveryLocation}</span>
+                              <div className="flex items-center gap-1.5 md:gap-2">
+                                <MapPin className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">{quote.deliveryLocation}</span>
                               </div>
                             )}
                           </div>
-                          <div className="mt-4">
-                            <p className="text-sm font-medium mb-2">
+                          <div className="mt-3 md:mt-4">
+                            <p className="text-xs md:text-sm font-medium mb-1.5 md:mb-2">
                               요청 제품 ({quote.items?.length || 0}개)
                             </p>
                             <div className="space-y-1">
-                              {quote.items?.map((item: any) => (
-                                <div key={item.id} className="text-sm text-muted-foreground">
-                                  • {item.product?.name} (수량: {item.quantity})
+                              {quote.items?.slice(0, 3).map((item: any) => (
+                                <div key={item.id} className="text-xs md:text-sm text-muted-foreground truncate">
+                                  • {item.product?.name} (×{item.quantity})
                                 </div>
                               ))}
+                              {quote.items?.length > 3 && (
+                                <div className="text-xs md:text-sm text-muted-foreground">
+                                  + {quote.items.length - 3}개 더
+                                </div>
+                              )}
                             </div>
                           </div>
                           {quote.responses && quote.responses.length > 0 && (
-                            <div className="mt-4 pt-4 border-t">
-                              <p className="text-sm font-medium mb-2">
+                            <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t">
+                              <p className="text-xs md:text-sm font-medium mb-1.5 md:mb-2">
                                 견적 응답 ({quote.responses.length}개)
                               </p>
                               {quote.responses.map((response: any) => (
-                                <div key={response.id} className="text-sm">
+                                <div key={response.id} className="text-xs md:text-sm">
                                   <span className="font-medium">{response.vendor?.name}:</span>{" "}
                                   {response.totalPrice
                                     ? `₩${response.totalPrice.toLocaleString()}`
@@ -297,9 +310,9 @@ export default function DashboardPage() {
                               ))}
                             </div>
                           )}
-                          <div className="mt-4">
-                            <Link href={`/dashboard/quotes/${quote.id}`}>
-                              <Button variant="outline" size="sm">
+                          <div className="mt-3 md:mt-4">
+                            <Link href={`/quotes/${quote.id}`}>
+                              <Button variant="outline" size="sm" className="text-xs md:text-sm h-7 md:h-9 w-full md:w-auto">
                                 상세 보기
                               </Button>
                             </Link>
@@ -313,26 +326,26 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="favorites" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>즐겨찾기 제품</CardTitle>
-                <CardDescription>
+          <TabsContent value="favorites" className="space-y-3 md:space-y-4">
+            <Card className="p-3 md:p-6">
+              <CardHeader className="px-0 pt-0 pb-3">
+                <CardTitle className="text-sm md:text-lg">즐겨찾기 제품</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
                   저장한 제품을 빠르게 확인하세요
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0 pb-0">
                 {favoritesLoading ? (
-                  <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+                  <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">로딩 중...</p>
                 ) : favorites.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">즐겨찾기한 제품이 없습니다</p>
+                  <div className="text-center py-6 md:py-8">
+                    <p className="text-muted-foreground mb-3 md:mb-4 text-xs md:text-sm">즐겨찾기한 제품이 없습니다</p>
                     <Link href="/search">
-                      <Button>제품 검색하기</Button>
+                      <Button size="sm" className="text-xs md:text-sm h-8 md:h-10">제품 검색하기</Button>
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     {favorites.map((favorite: any) => {
                       const product = favorite.product;
                       const minPrice = product?.vendors?.reduce(
@@ -342,40 +355,38 @@ export default function DashboardPage() {
                       );
 
                       return (
-                        <Card key={favorite.id} className="hover:shadow-md transition-shadow">
-                          <CardHeader>
-                            <CardTitle className="text-base">
+                        <Card key={favorite.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
+                          <CardHeader className="px-0 pt-0 pb-2">
+                            <CardTitle className="text-sm md:text-base">
                               <Link
                                 href={`/products/${product.id}`}
-                                className="hover:underline"
+                                className="hover:underline line-clamp-2"
                               >
                                 {product.name}
                               </Link>
                             </CardTitle>
                             {product.brand && (
-                              <CardDescription>{product.brand}</CardDescription>
+                              <CardDescription className="text-xs md:text-sm truncate">{product.brand}</CardDescription>
                             )}
                           </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2">
-                              {product.category && (
-                                <span className="text-xs px-2 py-1 bg-secondary rounded">
-                                  {PRODUCT_CATEGORIES[product.category]}
-                                </span>
-                              )}
-                              {minPrice ? (
-                                <div className="text-lg font-semibold">
-                                  ₩{minPrice.toLocaleString()}
-                                </div>
-                              ) : (
-                                <div className="text-sm text-muted-foreground">가격 문의</div>
-                              )}
-                              <Link href={`/products/${product.id}`}>
-                                <Button size="sm" className="w-full mt-2">
-                                  상세 보기
-                                </Button>
-                              </Link>
-                            </div>
+                          <CardContent className="px-0 pb-0 space-y-2">
+                            {product.category && (
+                              <span className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 bg-secondary rounded">
+                                {PRODUCT_CATEGORIES[product.category]}
+                              </span>
+                            )}
+                            {minPrice ? (
+                              <div className="text-base md:text-lg font-semibold">
+                                ₩{minPrice.toLocaleString()}
+                              </div>
+                            ) : (
+                              <div className="text-xs md:text-sm text-muted-foreground">가격 문의</div>
+                            )}
+                            <Link href={`/products/${product.id}`}>
+                              <Button size="sm" className="w-full mt-2 text-xs md:text-sm h-7 md:h-9">
+                                상세 보기
+                              </Button>
+                            </Link>
                           </CardContent>
                         </Card>
                       );
