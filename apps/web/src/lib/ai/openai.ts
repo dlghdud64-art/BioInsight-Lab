@@ -170,6 +170,85 @@ function analyzeSearchIntentFallback(query: string): SearchIntentResult {
   return result;
 }
 
+/**
+ * 제품 사용 용도 설명 생성 (GPT 기반)
+ */
+export async function generateProductUsageDescription(
+  productName: string,
+  productDescription?: string,
+  productCategory?: string,
+  productSpecification?: string
+): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    // API 키가 없으면 기본 설명 반환
+    return productDescription || "사용 용도 정보를 생성할 수 없습니다.";
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+
+    const prompt = `다음 바이오·제약 제품에 대한 간결하고 실용적인 사용 용도 설명을 한국어로 작성해주세요.
+
+제품명: ${productName}
+${productCategory ? `카테고리: ${productCategory}` : ""}
+${productDescription ? `설명: ${productDescription}` : ""}
+${productSpecification ? `규격: ${productSpecification}` : ""}
+
+요구사항:
+- 2-3문장으로 간결하게 작성
+- 실제 실험/연구에서 어떻게 사용되는지 구체적으로 설명
+- 전문 용어는 그대로 사용하되, 일반 연구자도 이해할 수 있도록 작성
+- 마케팅 문구나 과장된 표현은 피하고, 사실 기반으로 작성
+
+사용 용도 설명만 반환하고 다른 설명은 하지 마세요.`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "당신은 바이오·제약 분야 제품의 사용 용도를 설명하는 전문가입니다. 제품 정보를 바탕으로 실용적이고 정확한 사용 용도 설명을 작성합니다.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 300,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+      );
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error: any) {
+    if (error.name === "AbortError") {
+      throw new Error("요청 시간이 초과되었습니다.");
+    }
+    console.error("Error generating product usage description:", error);
+    throw error;
+  }
+}
+
 // 번역 캐시
 const translationCache = new Map<string, string>();
 const TRANSLATION_CACHE_TTL = 1000 * 60 * 60 * 24; // 24시간
