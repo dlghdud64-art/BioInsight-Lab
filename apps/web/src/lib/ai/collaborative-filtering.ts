@@ -46,7 +46,7 @@ export async function generateCollaborativeRecommendations(
       return [];
     }
 
-    const userProductIds = new Set(userPurchases.map((p) => p.productId));
+    const userProductIds = new Set<string>(userPurchases.map((p: any) => p.productId as string));
 
     // 다른 사용자들의 구매 이력
     const allPurchases = await db.purchaseRecord.findMany({
@@ -64,7 +64,7 @@ export async function generateCollaborativeRecommendations(
 
     // 사용자별 구매 제품 집합
     const userProductMap = new Map<string, Set<string>>();
-    allPurchases.forEach((purchase) => {
+    allPurchases.forEach((purchase: any) => {
       if (!userProductMap.has(purchase.importedBy)) {
         userProductMap.set(purchase.importedBy, new Set());
       }
@@ -114,7 +114,7 @@ export async function generateCollaborativeRecommendations(
     const recommendations: CollaborativeRecommendation[] = Array.from(
       productScores.entries()
     )
-      .map(([productId, { score, purchaseCount }]) => {
+      .map(([productId, { score, purchaseCount }]: [string, { score: number; purchaseCount: number }]) => {
         // 점수 정규화: 유사도 점수 * 구매 빈도 가중치
         const normalizedScore = score * (1 + Math.log(purchaseCount + 1));
         
@@ -125,7 +125,7 @@ export async function generateCollaborativeRecommendations(
           source: "collaborative_filtering" as const,
         };
       })
-      .sort((a, b) => b.score - a.score)
+      .sort((a: CollaborativeRecommendation, b: CollaborativeRecommendation) => b.score - a.score)
       .slice(0, limit);
 
     return recommendations;
@@ -183,12 +183,12 @@ export async function generateContextBasedRecommendations(
 
     // 프로젝트별 구매 패턴
     const projectPurchases = context.projectName
-      ? userPurchases.filter((p) => p.projectName === context.projectName)
+      ? userPurchases.filter((p: any) => p.projectName === context.projectName)
       : userPurchases;
 
     // 카테고리별 선호도 계산
     const categoryPreferences = new Map<string, number>();
-    projectPurchases.forEach((purchase) => {
+    projectPurchases.forEach((purchase: any) => {
       const category = purchase.product?.category || "UNKNOWN";
       const current = categoryPreferences.get(category) || 0;
       categoryPreferences.set(category, current + 1);
@@ -228,7 +228,7 @@ export async function generateContextBasedRecommendations(
 
     // 사용자가 이미 구매한 제품 제외
     const purchasedProductIds = new Set(
-      userPurchases.map((p) => p.productId)
+      userPurchases.map((p: any) => p.productId)
     );
     if (purchasedProductIds.size > 0) {
       where.id = { notIn: Array.from(purchasedProductIds) };
@@ -251,7 +251,7 @@ export async function generateContextBasedRecommendations(
 
     // 점수 계산 및 정렬
     const recommendations: ContextBasedRecommendation[] = products
-      .map((product) => {
+      .map((product: any) => {
         let score = 0.5; // 기본 점수
 
         // 카테고리 선호도 반영
@@ -262,9 +262,9 @@ export async function generateContextBasedRecommendations(
 
         // 가격 적합성
         const minPrice = product.vendors
-          ?.map((v) => v.priceInKRW)
-          .filter((p): p is number => p !== null && p !== undefined)
-          .sort((a, b) => a - b)[0];
+          ?.map((v: any) => v.priceInKRW)
+          .filter((p: any): p is number => p !== null && p !== undefined)
+          .sort((a: number, b: number) => a - b)[0];
 
         if (minPrice && context.budget) {
           const priceRatio = minPrice / context.budget;
@@ -277,7 +277,7 @@ export async function generateContextBasedRecommendations(
 
         // 재고 상태
         const inStock = product.vendors?.some(
-          (v) => v.stockStatus === "재고 있음" || v.stockStatus === "In Stock"
+          (v: any) => v.stockStatus === "재고 있음" || v.stockStatus === "In Stock"
         );
         if (inStock) {
           score += 0.1;
@@ -285,9 +285,9 @@ export async function generateContextBasedRecommendations(
 
         // 납기
         const minLeadTime = product.vendors
-          ?.map((v) => v.leadTime)
-          .filter((t): t is number => t !== null && t !== undefined)
-          .sort((a, b) => a - b)[0];
+          ?.map((v: any) => v.leadTime)
+          .filter((t: any): t is number => t !== null && t !== undefined)
+          .sort((a: number, b: number) => a - b)[0];
 
         if (minLeadTime && minLeadTime <= 7) {
           score += 0.1; // 1주일 이내 납기면 가산점
@@ -320,7 +320,7 @@ export async function generateContextBasedRecommendations(
           },
         };
       })
-      .sort((a, b) => b.score - a.score)
+      .sort((a: ContextBasedRecommendation, b: ContextBasedRecommendation) => b.score - a.score)
       .slice(0, limit);
 
     return recommendations;

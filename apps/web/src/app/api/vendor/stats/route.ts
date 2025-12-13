@@ -132,8 +132,8 @@ export async function GET(request: NextRequest) {
     });
 
     const categoryStats: Record<string, { quotes: number; responses: number }> = {};
-    quotesByCategory.forEach((quote) => {
-      quote.items.forEach((item) => {
+    quotesByCategory.forEach((quote: any) => {
+      quote.items.forEach((item: any) => {
         const category = item.product?.category || "UNKNOWN";
         if (!categoryStats[category]) {
           categoryStats[category] = { quotes: 0, responses: 0 };
@@ -162,8 +162,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    responsesByCategory.forEach((response) => {
-      response.quote.items.forEach((item) => {
+    responsesByCategory.forEach((response: any) => {
+      response.quote.items.forEach((item: any) => {
         const category = item.product?.category || "UNKNOWN";
         if (categoryStats[category]) {
           categoryStats[category].responses += 1;
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
     });
 
     const dailyRevenue: Record<string, number> = {};
-    dailyStats.forEach((response) => {
+    dailyStats.forEach((response: any) => {
       const date = response.createdAt.toISOString().split("T")[0];
       dailyRevenue[date] = (dailyRevenue[date] || 0) + (response.totalPrice || 0);
     });

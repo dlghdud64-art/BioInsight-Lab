@@ -237,7 +237,10 @@ export default function DashboardPage() {
                 </Link>
               </CardContent>
             </Card>
-          </div>
+                  </div>
+                </DraggableWidget>
+              ))}
+          </WidgetGrid>
         )}
 
         {/* 재주문 추천 섹션 (상단에 표시) */}
@@ -426,9 +429,10 @@ export default function DashboardPage() {
                     ))}
                   </div>
                   )}
-                </CardContent>
-              </Card>
-            </section>
+                    </section>
+                  </DraggableWidget>
+                ))}
+            </WidgetGrid>
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-3 md:space-y-4">

@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      products: products.map((pv) => ({
+      products: products.map((pv: any) => ({
         id: pv.id,
         product: pv.product,
         price: pv.price,
