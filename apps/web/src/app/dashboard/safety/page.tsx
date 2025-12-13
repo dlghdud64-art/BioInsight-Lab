@@ -78,7 +78,7 @@ export default function SafetyManagerPage() {
     ]);
 
     const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(","))
       .join("\n");
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

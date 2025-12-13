@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
     // 일별로 그룹화
     const dailyGrouped: Record<string, number> = {};
-    dailyStats.forEach((log) => {
+    dailyStats.forEach((log: { createdAt: Date }) => {
       const date = log.createdAt.toISOString().split("T")[0];
       if (!dailyGrouped[date]) {
         dailyGrouped[date] = 0;
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     // 시간대별로 그룹화
     const hourlyGrouped: Record<number, number> = {};
-    hourlyStats.forEach((log) => {
+    hourlyStats.forEach((log: { createdAt: Date }) => {
       const hour = log.createdAt.getHours();
       if (!hourlyGrouped[hour]) {
         hourlyGrouped[hour] = 0;
@@ -132,11 +132,11 @@ export async function GET(request: NextRequest) {
       total: totalActivities,
       period,
       startDate: startDate.toISOString(),
-      activityTypeStats: activityTypeStats.map((stat) => ({
+      activityTypeStats: activityTypeStats.map((stat: { activityType: string; _count: { id: number } }) => ({
         type: stat.activityType,
         count: stat._count.id,
       })),
-      entityTypeStats: entityTypeStats.map((stat) => ({
+      entityTypeStats: entityTypeStats.map((stat: { entityType: string; _count: { id: number } }) => ({
         type: stat.entityType,
         count: stat._count.id,
       })),
