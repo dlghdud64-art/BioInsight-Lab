@@ -18,6 +18,11 @@ import { LayoutDashboard } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useDashboardWidgets } from "@/lib/store/dashboard-widgets-store";
+import { WidgetGrid } from "@/components/dashboard/widget-grid";
+import { DraggableWidget } from "@/components/dashboard/draggable-widget";
+import { Settings, RotateCcw } from "lucide-react";
+import { useEffect } from "react";
 
 const DASHBOARD_TABS = [
   { id: "quotes", label: "견적" },
@@ -32,6 +37,14 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("quotes");
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
+  const { isEditMode, setEditMode, widgets, resetLayout, loadLayout } = useDashboardWidgets();
+
+  // 레이아웃 로드
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadLayout();
+    }
+  }, [status, loadLayout]);
 
   // 견적 목록 조회
   const { data: quotesData, isLoading: quotesLoading } = useQuery({
@@ -127,15 +140,49 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
-            <PageHeader
-              title="대시보드"
-              description="견적, 즐겨찾기, 최근 본 제품, 구매 내역 요약을 한눈에 확인합니다."
-              icon={LayoutDashboard}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <PageHeader
+                title="대시보드"
+                description="견적, 즐겨찾기, 최근 본 제품, 구매 내역 요약을 한눈에 확인합니다."
+                icon={LayoutDashboard}
+              />
+              <div className="flex gap-2">
+                {isEditMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetLayout}
+                    className="text-xs"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    초기화
+                  </Button>
+                )}
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setEditMode(!isEditMode)}
+                  className="text-xs"
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  {isEditMode ? "완료" : "편집"}
+                </Button>
+              </div>
+            </div>
 
         {/* 구매 내역/예산 요약 카드 */}
         {!purchaseSummaryLoading && purchaseSummary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+          <WidgetGrid>
+            {widgets
+              .filter((w) => w.id === "purchase-summary" && w.visible)
+              .map((widget) => (
+                <DraggableWidget
+                  key={widget.id}
+                  id={widget.id}
+                  title="구매 내역 요약"
+                  defaultSize={widget.size}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             <Card className="p-3 md:p-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
                 <CardTitle className="text-xs md:text-sm font-medium">이번 달 구매 금액</CardTitle>
@@ -194,8 +241,17 @@ export default function DashboardPage() {
         )}
 
         {/* 재주문 추천 섹션 (상단에 표시) */}
-        <section className="mt-4">
-          <ReorderRecommendations
+        <WidgetGrid>
+          {widgets
+            .filter((w) => w.id === "reorder-recommendations" && w.visible)
+            .map((widget) => (
+              <DraggableWidget
+                key={widget.id}
+                id={widget.id}
+                title="재주문 추천"
+                defaultSize={widget.size}
+              >
+                <ReorderRecommendations
             onAddToQuoteList={(recommendations) => {
               // 추천 목록을 품목 리스트에 추가
               const productIds = recommendations.map((r) => r.product.id);
@@ -205,8 +261,10 @@ export default function DashboardPage() {
                 category: r.product.category,
               }))))}`);
             }}
-          />
-        </section>
+                />
+              </DraggableWidget>
+            ))}
+        </WidgetGrid>
 
         {/* 탭 바 - 칩 스타일 (모바일) */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
@@ -254,15 +312,18 @@ export default function DashboardPage() {
           </TabsList>
 
           <TabsContent value="quotes" className="space-y-4">
-            <section className="mt-6">
-              <Card className="border-none shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold">견적 요청 현황</CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
-                    내가 보낸 견적 요청과 응답 상태를 한눈에 확인할 수 있습니다.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="py-6">
+            <WidgetGrid>
+              {widgets
+                .filter((w) => w.id === "quote-status" && w.visible)
+                .map((widget) => (
+                  <DraggableWidget
+                    key={widget.id}
+                    id={widget.id}
+                    title="견적 요청 현황"
+                    description="내가 보낸 견적 요청과 응답 상태를 한눈에 확인할 수 있습니다."
+                    defaultSize={widget.size}
+                  >
+                    <section className="mt-6">
                   {quotesLoading ? (
                     <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
                   ) : quotes.length === 0 ? (
