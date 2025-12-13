@@ -1,6 +1,7 @@
 import { TestFlowProvider } from "./_components/test-flow-provider";
 import { StepNav } from "./_components/step-nav";
 import { MainHeader } from "../_components/main-header";
+import { TestStepHelp } from "./_components/test-step-help";
 
 export default function TestLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,12 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
               <p className="mt-2 text-sm text-slate-600 hidden md:block">
                 샘플 데이터로 실제 검색/비교/품목 리스트 작성 흐름을 체험해 보세요.
               </p>
+              
+              {/* 단계 설명 및 안내 */}
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-slate-500">검색 → 비교 → 품목 리스트 → 프로토콜 분석</span>
+                <TestStepHelp />
+              </div>
             </header>
 
             <div className="mt-4">

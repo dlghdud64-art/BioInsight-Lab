@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 const steps = [
   {
     id: "search",
-    label: "검색/AI 분석",
+    label: "검색",
+    fullLabel: "검색/AI 분석",
     href: "/test/search",
     icon: Search,
     step: 1,
@@ -16,7 +17,8 @@ const steps = [
   },
   {
     id: "compare",
-    label: "제품 비교",
+    label: "비교",
+    fullLabel: "제품 비교",
     href: "/test/compare",
     icon: GitCompare,
     step: 2,
@@ -25,6 +27,7 @@ const steps = [
   {
     id: "quote",
     label: "품목 리스트",
+    fullLabel: "품목 리스트",
     href: "/test/quote",
     icon: FileText,
     step: 3,
@@ -33,6 +36,7 @@ const steps = [
   {
     id: "protocol",
     label: "프로토콜 분석",
+    fullLabel: "프로토콜 분석",
     href: "/protocol/bom",
     icon: FlaskConical,
     step: 4,
@@ -59,8 +63,8 @@ export function StepNav() {
 
   return (
     <nav className="w-full md:w-auto">
-      {/* 모바일: Segmented Control 형태 */}
-      <div className="flex w-full rounded-full bg-slate-100 p-1 text-xs md:hidden">
+      {/* 모바일: Step + Label 형태 */}
+      <div className="grid grid-cols-4 gap-2 md:hidden">
         {steps.map((step) => {
           const isActive = step.match
             ? step.match.test(pathname)
@@ -71,13 +75,14 @@ export function StepNav() {
               key={step.id}
               href={step.href}
               className={cn(
-                "flex-1 rounded-full px-2 py-2 font-medium transition text-center",
+                "flex flex-col items-center justify-center rounded-full px-2 py-2 text-xs transition-colors",
                 isActive
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-600"
               )}
             >
-              {step.step}
+              <span className="text-[11px] opacity-80">Step {step.step}</span>
+              <span className="mt-0.5 font-medium text-[10px] leading-tight text-center">{step.label}</span>
             </Link>
           );
         })}
@@ -119,7 +124,7 @@ export function StepNav() {
                 {step.step}
               </div>
               <Icon className="h-4 w-4" />
-              <span>{step.label}</span>
+              <span>{step.fullLabel}</span>
               {index < steps.length - 1 && (
                 <div
                   className={cn(
