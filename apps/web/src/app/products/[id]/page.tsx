@@ -348,11 +348,11 @@ ${extractedInfo.summary || "N/A"}`;
                 )}
 
 
-                {/* 카탈로그 번호 */}
+                {/* 카탈로그 번호 (Cat.No) */}
                 {product.catalogNumber && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-sm">카탈로그 번호</h3>
+                      <h3 className="font-semibold text-sm">Cat.No (카탈로그 번호)</h3>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -378,6 +378,39 @@ ${extractedInfo.summary || "N/A"}`;
                       </Button>
                     </div>
                     <p className="text-sm text-slate-700 font-mono">{product.catalogNumber}</p>
+                  </div>
+                )}
+
+                {/* Lot 번호 */}
+                {(product as any).lotNumber && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-sm">Lot 번호 (배치 번호)</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText((product as any).lotNumber);
+                            toast({
+                              title: "복사 완료",
+                              description: "Lot 번호가 클립보드에 복사되었습니다.",
+                            });
+                          } catch (error) {
+                            toast({
+                              title: "복사 실패",
+                              description: "Lot 번호 복사에 실패했습니다.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        <ClipboardCopy className="h-3 w-3 mr-1" />
+                        복사
+                      </Button>
+                    </div>
+                    <p className="text-sm text-slate-700 font-mono">{(product as any).lotNumber}</p>
                   </div>
                 )}
 

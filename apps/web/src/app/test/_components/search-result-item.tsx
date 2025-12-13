@@ -112,7 +112,12 @@ export function SearchResultItem({
               )}
               {product.catalogNumber && (
                 <span className="text-[10px] text-slate-600 font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                  {product.catalogNumber}
+                  Cat.No: {product.catalogNumber}
+                </span>
+              )}
+              {product.lotNumber && (
+                <span className="text-[10px] text-slate-500 font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                  Lot: {product.lotNumber}
                 </span>
               )}
             </div>

@@ -18,6 +18,7 @@ export interface Product {
   brand?: string;
   modelNumber?: string;
   catalogNumber?: string;
+  lotNumber?: string; // Lot 번호 (배치 번호)
   specifications?: Record<string, unknown>;
   datasheetUrl?: string;
   imageUrl?: string;
