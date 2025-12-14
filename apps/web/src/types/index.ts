@@ -1,5 +1,5 @@
 // 제품 관련 타입
-export type ProductCategory = "REAGENT" | "TOOL" | "EQUIPMENT";
+export type ProductCategory = "REAGENT" | "TOOL" | "EQUIPMENT" | "RAW_MATERIAL";
 
 export type UserRole = "RESEARCHER" | "BUYER" | "SUPPLIER" | "ADMIN";
 
@@ -29,6 +29,15 @@ export interface Product {
   pictograms?: string[]; // GHS 피크토그램 배열 (예: ["corrosive", "exclamation"])
   storageCondition?: string; // 보관 조건 (예: "2~8°C 냉장 보관")
   ppe?: string[]; // 개인보호장비 배열 (예: ["gloves", "goggles"])
+  
+  // 원료(원부자재) 전용 필드 (P1)
+  coaUrl?: string; // COA (Certificate of Analysis) URL
+  specSheetUrl?: string; // Spec Sheet URL
+  pharmacopoeia?: string; // 규정/표준 (예: "USP", "EP", "JP", "KP")
+  countryOfOrigin?: string; // 원산지
+  manufacturer?: string; // 제조사
+  expiryDate?: Date; // 유효기간
+  
   vendors?: ProductVendor[];
   createdAt: Date;
   updatedAt: Date;

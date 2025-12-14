@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check, Search } from "lucide-react";
+import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check, Search, Sparkles, GitCompare as Compare } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
@@ -360,6 +360,9 @@ export default function TestComparePage() {
   }
 
   // 비교할 속성들
+  // 원료 카테고리인 제품이 있는지 확인
+  const hasRawMaterial = products.some((p: any) => p.category === "RAW_MATERIAL");
+  
   const compareFields = [
     { key: "name", label: "제품명" },
     { key: "catalogNumber", label: "카탈로그 번호" },
@@ -367,6 +370,13 @@ export default function TestComparePage() {
     { key: "category", label: "카테고리" },
     { key: "specification", label: "규격/용량" },
     { key: "grade", label: "Grade" },
+    // 원료 카테고리인 경우 추가 필드
+    ...(hasRawMaterial ? [
+      { key: "pharmacopoeia", label: "규정/표준" },
+      { key: "coaUrl", label: "COA" },
+      { key: "countryOfOrigin", label: "원산지" },
+      { key: "manufacturer", label: "제조사" },
+    ] : []),
     { key: "price", label: "최저가" },
     { key: "leadTime", label: "납기일" },
     { key: "stockStatus", label: "재고" },
@@ -893,6 +903,18 @@ export default function TestComparePage() {
                         } else if (field.key === "grade") {
                           value = product.grade || "-";
                           allValues = products.map((p: any) => p.grade || "-");
+                        } else if (field.key === "pharmacopoeia") {
+                          value = product.pharmacopoeia || "-";
+                          allValues = products.map((p: any) => p.pharmacopoeia || "-");
+                        } else if (field.key === "coaUrl") {
+                          value = product.coaUrl ? "있음" : "-";
+                          allValues = products.map((p: any) => (p.coaUrl ? "있음" : "-"));
+                        } else if (field.key === "countryOfOrigin") {
+                          value = product.countryOfOrigin || "-";
+                          allValues = products.map((p: any) => p.countryOfOrigin || "-");
+                        } else if (field.key === "manufacturer") {
+                          value = product.manufacturer || "-";
+                          allValues = products.map((p: any) => p.manufacturer || "-");
                         } else {
                           value = product[field.key] || "-";
                           allValues = products.map((p: any) => p[field.key] || "-");
@@ -965,6 +987,42 @@ export default function TestComparePage() {
         </Card>
       )}
 
+      {/* 대체품 추천 섹션 */}
+      {products.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              대체품 추천
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              각 제품과 유사한 스펙의 대체품을 추천합니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {products.map((product: any) => (
+                <ProductAlternativesCard
+                  key={product.id}
+                  product={product}
+                  onAddToCompare={(productId) => {
+                    if (compareIds.length >= 5) {
+                      toast({
+                        title: "최대 5개까지만 비교할 수 있습니다",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    toggleCompare(productId);
+                  }}
+                  compareIds={compareIds}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 납기일 수정 다이얼로그 */}
       <Dialog open={!!editingLeadTime} onOpenChange={(open) => !open && setEditingLeadTime(null)}>
         <DialogContent>
@@ -1024,6 +1082,145 @@ export default function TestComparePage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// 제품별 대체품 카드 컴포넌트
+function ProductAlternativesCard({
+  product,
+  onAddToCompare,
+  compareIds,
+}: {
+  product: any;
+  onAddToCompare: (productId: string) => void;
+  compareIds: string[];
+}) {
+  const { data: alternatives, isLoading } = useQuery({
+    queryKey: ["product-alternatives", product.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${product.id}/alternatives?limit=3`);
+      if (!response.ok) return { alternatives: [] };
+      return response.json();
+    },
+    enabled: !!product.id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-4 border rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+          <span className="text-sm font-medium text-slate-700">{product.name}</span>
+        </div>
+        <p className="text-xs text-slate-500">대체품을 찾는 중...</p>
+      </div>
+    );
+  }
+
+  if (!alternatives?.alternatives || alternatives.alternatives.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="p-4 border rounded-lg space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-slate-900">{product.name}</span>
+        <Badge variant="outline" className="text-xs">
+          대체품 {alternatives.alternatives.length}개
+        </Badge>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {alternatives.alternatives.map((alt: any) => {
+          const inCompare = compareIds.includes(alt.id);
+          
+          return (
+            <Card key={alt.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-2">
+                <div className="flex items-start gap-2">
+                  {alt.imageUrl && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={alt.imageUrl}
+                      alt={alt.name}
+                      className="w-12 h-12 object-cover rounded"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm line-clamp-2">
+                      <Link
+                        href={`/products/${alt.id}`}
+                        className="hover:underline"
+                      >
+                        {alt.name}
+                      </Link>
+                    </CardTitle>
+                    {alt.brand && (
+                      <CardDescription className="text-xs mt-0.5">
+                        {alt.brand}
+                      </CardDescription>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                {/* 유사도 및 근거 */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">유사도</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {Math.round(alt.similarity * 100)}%
+                    </Badge>
+                  </div>
+                  {alt.similarityReasons && alt.similarityReasons.length > 0 && (
+                    <div className="space-y-0.5">
+                      {alt.similarityReasons.slice(0, 2).map((reason: string, idx: number) => (
+                        <div key={idx} className="text-xs text-slate-600 flex items-center gap-1">
+                          <Check className="h-3 w-3 text-green-600" />
+                          {reason}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 가격 정보 */}
+                {alt.minPrice !== undefined && (
+                  <div className="text-sm font-semibold">
+                    ₩{alt.minPrice.toLocaleString("ko-KR")}
+                  </div>
+                )}
+
+                {/* 액션 버튼 */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => onAddToCompare(alt.id)}
+                    disabled={inCompare}
+                  >
+                    <Compare className="h-3 w-3 mr-1" />
+                    {inCompare ? "추가됨" : "비교"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    asChild
+                  >
+                    <Link href={`/products/${alt.id}`}>
+                      <Eye className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

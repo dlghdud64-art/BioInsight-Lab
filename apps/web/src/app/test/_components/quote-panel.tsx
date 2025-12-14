@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight } from "lucide-react";
 import { useCompareStore } from "@/lib/store/compare-store";
 import {
   Dialog,
@@ -42,6 +42,7 @@ import Link from "next/link";
 import React, { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 export function QuotePanel() {
   const {
@@ -548,6 +549,90 @@ export function QuotePanel() {
               </div>
             </div>
 
+            {/* 절감 제안 섹션 */}
+            {quoteItems.length > 0 && costOptimization && costOptimization.optimizations.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-900">절감 제안</span>
+                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                    최대 {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원 절감 가능
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {costOptimization.optimizations.slice(0, 3).map((opt: any, idx: number) => (
+                    <div key={idx} className="p-2 bg-white rounded border border-blue-100">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-slate-900 line-clamp-1">
+                            {opt.currentProductName}
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ArrowRight className="h-3 w-3 text-slate-400" />
+                            <span className="text-xs text-slate-600 line-clamp-1">
+                              {opt.alternativeProductName}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-[10px]">
+                              유사도 {Math.round(opt.similarity * 100)}%
+                            </Badge>
+                            {opt.similarityReasons && opt.similarityReasons.length > 0 && (
+                              <span className="text-[10px] text-slate-500">
+                                {opt.similarityReasons[0]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-slate-500 line-through">
+                            ₩{(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}
+                          </div>
+                          <div className="text-sm font-semibold text-green-600">
+                            ₩{(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}
+                          </div>
+                          <div className="text-xs font-medium text-green-700">
+                            -{opt.savingsRate.toFixed(1)}% (₩{opt.totalSavings.toLocaleString("ko-KR")})
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 text-xs h-7"
+                        onClick={() => {
+                          // 제품 교체
+                          const item = quoteItems.find((i) => i.productId === opt.currentProductId);
+                          if (item) {
+                            updateQuoteItem(item.id, {
+                              productId: opt.alternativeProductId,
+                              productName: opt.alternativeProductName,
+                              vendorName: opt.alternativeVendorName,
+                              selectedVendorId: undefined, // 새 제품의 벤더를 찾아야 함
+                              unitPrice: opt.alternativePrice,
+                              lineTotal: opt.alternativePrice * opt.quantity,
+                            });
+                            toast({
+                              title: "제품 교체 완료",
+                              description: `${opt.currentProductName} → ${opt.alternativeProductName}`,
+                            });
+                          }
+                        }}
+                      >
+                        <TrendingDown className="h-3 w-3 mr-1" />
+                        이 제품으로 교체
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {costOptimization.optimizations.length > 3 && (
+                  <div className="text-xs text-center text-slate-500 pt-1">
+                    외 {costOptimization.optimizations.length - 3}개 제안 더 보기
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 총합 - 품목이 있을 때만 표시 */}
             {quoteItems.length > 0 && (
               <div className="flex justify-end pt-2 border-t">
@@ -556,6 +641,11 @@ export function QuotePanel() {
                   <div className="text-lg font-bold text-slate-900">
                     ₩{totalAmount.toLocaleString()}
                   </div>
+                  {costOptimization && costOptimization.summary.totalPotentialSavings > 0 && (
+                    <div className="text-xs text-green-600 mt-1">
+                      절감 가능: ₩{costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

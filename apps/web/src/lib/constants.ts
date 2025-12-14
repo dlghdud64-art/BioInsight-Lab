@@ -3,6 +3,7 @@ export const PRODUCT_CATEGORIES: Record<string, string> = {
   REAGENT: "시약",
   TOOL: "기구",
   EQUIPMENT: "장비",
+  RAW_MATERIAL: "원료(원부자재)",
 };
 
 // 정렬 옵션

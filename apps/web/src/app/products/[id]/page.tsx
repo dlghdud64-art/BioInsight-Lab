@@ -9,7 +9,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
-import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles } from "lucide-react";
+import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles, Package, Save, Eye } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 
@@ -25,7 +25,10 @@ const PersonalizedRecommendations = dynamic(() => import("@/components/products/
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS, PICTOGRAM_DESCRIPTIONS, PPE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
 
@@ -40,13 +43,18 @@ export default function ProductDetailPage() {
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [datasheetText, setDatasheetText] = useState("");
+  const [datasheetUrl, setDatasheetUrl] = useState("");
   const [extractedInfo, setExtractedInfo] = useState<any>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isExtractingFromUrl, setIsExtractingFromUrl] = useState(false);
   const [showDatasheetSection, setShowDatasheetSection] = useState(false);
   const [copied, setCopied] = useState(false);
   const [msdsLinkStatus, setMsdsLinkStatus] = useState<"checking" | "valid" | "invalid" | null>(null);
   const [generatedUsage, setGeneratedUsage] = useState<string | null>(null);
   const [isGeneratingUsage, setIsGeneratingUsage] = useState(false);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({});
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const isInCompare = hasProduct(id);
@@ -201,6 +209,148 @@ ${extractedInfo.summary || "N/A"}`;
         variant: "destructive",
       });
     }
+  };
+
+  const handleExtractFromUrl = async () => {
+    if (!datasheetUrl.trim()) {
+      toast({
+        title: "URL을 입력해주세요",
+        description: "데이터시트 URL을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExtractingFromUrl(true);
+    try {
+      const response = await fetch("/api/datasheet/extract-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: datasheetUrl }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "URL에서 데이터시트를 가져오는데 실패했습니다.");
+      }
+
+      const data = await response.json();
+      setExtractedInfo(data.data);
+      // URL에서 추출한 텍스트를 텍스트 영역에도 표시
+      if (data.data.extractedTextLength) {
+        toast({
+          title: "분석 완료",
+          description: `URL에서 ${data.data.extractedTextLength}자 텍스트를 추출하여 분석했습니다.`,
+        });
+      } else {
+        toast({
+          title: "분석 완료",
+          description: "URL에서 데이터시트를 가져와 제품 정보를 추출했습니다.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "분석 실패",
+        description: error.message || "URL에서 데이터시트를 가져오는 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtractingFromUrl(false);
+    }
+  };
+
+  // 추출된 정보를 제품 필드에 적용
+  const applyExtractedInfoMutation = useMutation({
+    mutationFn: async (fieldsToApply: Record<string, any>) => {
+      const response = await fetch(`/api/products/${id}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fieldsToApply),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "제품 정보 업데이트에 실패했습니다.");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product", id] });
+      toast({
+        title: "적용 완료",
+        description: "추출된 정보가 제품 필드에 반영되었습니다.",
+      });
+      setShowApplyDialog(false);
+      setSelectedFields({});
+    },
+    onError: (error: any) => {
+      toast({
+        title: "적용 실패",
+        description: error.message || "제품 정보 업데이트 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleOpenApplyDialog = () => {
+    if (!extractedInfo) return;
+
+    // 기본적으로 모든 필드를 선택 상태로 설정
+    const fields: Record<string, boolean> = {};
+    if (extractedInfo.name) fields.name = true;
+    if (extractedInfo.nameEn) fields.nameEn = true;
+    if (extractedInfo.description) fields.description = true;
+    if (extractedInfo.descriptionEn) fields.descriptionEn = true;
+    if (extractedInfo.grade) fields.grade = true;
+    if (extractedInfo.specification || extractedInfo.capacity) fields.specification = true;
+    if (extractedInfo.specifications) fields.specifications = true;
+    if (extractedInfo.sourceUrl) fields.datasheetUrl = true;
+
+    setSelectedFields(fields);
+    setShowApplyDialog(true);
+  };
+
+  const handleApplyExtractedInfo = () => {
+    if (!extractedInfo) return;
+
+    const fieldsToApply: Record<string, any> = {};
+
+    if (selectedFields.name && extractedInfo.name) {
+      fieldsToApply.name = extractedInfo.name;
+    }
+    if (selectedFields.nameEn && extractedInfo.nameEn) {
+      fieldsToApply.nameEn = extractedInfo.nameEn;
+    }
+    if (selectedFields.description && extractedInfo.description) {
+      fieldsToApply.description = extractedInfo.description;
+    }
+    if (selectedFields.descriptionEn && extractedInfo.descriptionEn) {
+      fieldsToApply.descriptionEn = extractedInfo.descriptionEn;
+    }
+    if (selectedFields.grade && extractedInfo.grade) {
+      fieldsToApply.grade = extractedInfo.grade;
+    }
+    if (selectedFields.specification) {
+      fieldsToApply.specification = extractedInfo.specification || extractedInfo.capacity;
+    }
+    if (selectedFields.specifications && extractedInfo.specifications) {
+      fieldsToApply.specifications = extractedInfo.specifications;
+    }
+    if (selectedFields.datasheetUrl && extractedInfo.sourceUrl) {
+      fieldsToApply.datasheetUrl = extractedInfo.sourceUrl;
+    }
+
+    if (Object.keys(fieldsToApply).length === 0) {
+      toast({
+        title: "적용할 필드 없음",
+        description: "적용할 필드를 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    applyExtractedInfoMutation.mutate(fieldsToApply);
   };
 
   if (isLoading) {
@@ -487,6 +637,86 @@ ${extractedInfo.summary || "N/A"}`;
                             <div className="text-xs md:text-sm font-semibold text-slate-900">{String(value)}</div>
                           </div>
                         )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 원료(원부자재) 전용 정보 */}
+                {product.category === "RAW_MATERIAL" && (
+                  <div className="mb-4 md:mb-6">
+                    <h3 className="font-semibold text-sm md:text-base mb-3 flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      원료 정보
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                      {product.pharmacopoeia && (
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">규정/표준</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.pharmacopoeia}</div>
+                        </div>
+                      )}
+                      {product.coaUrl && (
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">COA (Certificate of Analysis)</div>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-xs md:text-sm p-0 h-auto font-semibold text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              if (product.coaUrl) {
+                                window.open(product.coaUrl, "_blank", "noopener,noreferrer");
+                              }
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            COA 문서 보기
+                          </Button>
+                        </div>
+                      )}
+                      {product.specSheetUrl && (
+                        <div className="p-2 md:p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">Spec Sheet</div>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-xs md:text-sm p-0 h-auto font-semibold text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              if (product.specSheetUrl) {
+                                window.open(product.specSheetUrl, "_blank", "noopener,noreferrer");
+                              }
+                            }}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Spec Sheet 보기
+                          </Button>
+                        </div>
+                      )}
+                      {product.countryOfOrigin && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">원산지</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.countryOfOrigin}</div>
+                        </div>
+                      )}
+                      {product.manufacturer && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">제조사</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.manufacturer}</div>
+                        </div>
+                      )}
+                      {product.expiryDate && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">유효기간</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">
+                            {new Date(product.expiryDate).toLocaleDateString("ko-KR")}
+                          </div>
+                        </div>
+                      )}
+                      {product.lotNumber && (
+                        <div className="p-2 md:p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="text-[10px] md:text-xs text-slate-500 mb-1">Lot 번호</div>
+                          <div className="text-xs md:text-sm font-semibold text-slate-900">{product.lotNumber}</div>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -954,6 +1184,53 @@ ${extractedInfo.summary || "N/A"}`;
                   
                   {showDatasheetSection && (
                     <div className="space-y-4">
+                      {/* URL 입력 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="datasheet-url" className="text-sm">
+                          데이터시트 URL
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          데이터시트 웹페이지 URL을 입력하면 자동으로 본문을 추출하여 분석합니다.
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            id="datasheet-url"
+                            type="url"
+                            value={datasheetUrl}
+                            onChange={(e) => setDatasheetUrl(e.target.value)}
+                            placeholder="https://example.com/datasheet"
+                            className="text-sm flex-1"
+                          />
+                          <Button
+                            onClick={handleExtractFromUrl}
+                            disabled={isExtractingFromUrl || !datasheetUrl.trim()}
+                            variant="outline"
+                          >
+                            {isExtractingFromUrl ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                추출 중...
+                              </>
+                            ) : (
+                              <>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                URL에서 추출
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-slate-200" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-slate-500">또는</span>
+                        </div>
+                      </div>
+
+                      {/* 텍스트 붙여넣기 */}
                       <div className="space-y-2">
                         <Label htmlFor="datasheet-text" className="text-sm">
                           데이터시트 텍스트 붙여넣기
@@ -993,23 +1270,43 @@ ${extractedInfo.summary || "N/A"}`;
                         <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-4">
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-sm">추출된 정보</h4>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCopyExtractedInfo}
-                            >
-                              {copied ? (
-                                <>
-                                  <Check className="h-3 w-3 mr-1" />
-                                  복사됨
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="h-3 w-3 mr-1" />
-                                  복사
-                                </>
-                              )}
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCopyExtractedInfo}
+                              >
+                                {copied ? (
+                                  <>
+                                    <Check className="h-3 w-3 mr-1" />
+                                    복사됨
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    복사
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={handleOpenApplyDialog}
+                                disabled={applyExtractedInfoMutation.isPending}
+                              >
+                                {applyExtractedInfoMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    적용 중...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="h-3 w-3 mr-1" />
+                                    필드에 적용
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </div>
 
                           <div className="space-y-3 text-sm">
@@ -1093,6 +1390,140 @@ ${extractedInfo.summary || "N/A"}`;
                           </div>
                         </div>
                       )}
+
+                      {/* 필드 적용 다이얼로그 */}
+                      <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>추출된 정보를 제품 필드에 적용</DialogTitle>
+                            <DialogDescription>
+                              적용할 필드를 선택하세요. 선택한 필드만 제품 정보에 반영됩니다.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 py-4">
+                            {extractedInfo.name && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-name"
+                                  checked={selectedFields.name || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, name: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-name" className="text-sm font-normal cursor-pointer">
+                                  제품명: {extractedInfo.name}
+                                </Label>
+                              </div>
+                            )}
+                            {extractedInfo.nameEn && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-nameEn"
+                                  checked={selectedFields.nameEn || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, nameEn: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-nameEn" className="text-sm font-normal cursor-pointer">
+                                  영문 제품명: {extractedInfo.nameEn}
+                                </Label>
+                              </div>
+                            )}
+                            {extractedInfo.description && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-description"
+                                  checked={selectedFields.description || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, description: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-description" className="text-sm font-normal cursor-pointer">
+                                  설명
+                                </Label>
+                              </div>
+                            )}
+                            {extractedInfo.grade && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-grade"
+                                  checked={selectedFields.grade || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, grade: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-grade" className="text-sm font-normal cursor-pointer">
+                                  Grade: {extractedInfo.grade}
+                                </Label>
+                              </div>
+                            )}
+                            {(extractedInfo.specification || extractedInfo.capacity) && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-specification"
+                                  checked={selectedFields.specification || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, specification: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-specification" className="text-sm font-normal cursor-pointer">
+                                  규격/용량: {extractedInfo.specification || extractedInfo.capacity}
+                                </Label>
+                              </div>
+                            )}
+                            {extractedInfo.specifications && Object.keys(extractedInfo.specifications).length > 0 && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-specifications"
+                                  checked={selectedFields.specifications || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, specifications: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-specifications" className="text-sm font-normal cursor-pointer">
+                                  상세 스펙 ({Object.keys(extractedInfo.specifications).length}개 필드)
+                                </Label>
+                              </div>
+                            )}
+                            {extractedInfo.sourceUrl && (
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-datasheetUrl"
+                                  checked={selectedFields.datasheetUrl || false}
+                                  onCheckedChange={(checked) =>
+                                    setSelectedFields({ ...selectedFields, datasheetUrl: checked as boolean })
+                                  }
+                                />
+                                <Label htmlFor="field-datasheetUrl" className="text-sm font-normal cursor-pointer">
+                                  데이터시트 URL
+                                </Label>
+                              </div>
+                            )}
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowApplyDialog(false)}
+                              disabled={applyExtractedInfoMutation.isPending}
+                            >
+                              취소
+                            </Button>
+                            <Button
+                              onClick={handleApplyExtractedInfo}
+                              disabled={applyExtractedInfoMutation.isPending}
+                            >
+                              {applyExtractedInfoMutation.isPending ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  적용 중...
+                                </>
+                              ) : (
+                                "적용"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   )}
                 </div>
@@ -1313,9 +1744,177 @@ ${extractedInfo.summary || "N/A"}`;
       <div className="mt-8">
         <ReviewSection productId={id} />
         
+        {/* 대체품 추천 */}
+        <AlternativeProductsSection productId={id} currentProduct={product} />
+        
         {/* 개인화 추천 제품 */}
         <PersonalizedRecommendations productId={id} currentProduct={product} />
       </div>
+    </div>
+  );
+}
+
+// 대체품 추천 섹션
+function AlternativeProductsSection({ 
+  productId, 
+  currentProduct 
+}: { 
+  productId: string; 
+  currentProduct: any;
+}) {
+  const { data: alternatives, isLoading } = useQuery({
+    queryKey: ["product-alternatives", productId],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${productId}/alternatives?limit=3`);
+      if (!response.ok) return { alternatives: [] };
+      return response.json();
+    },
+    enabled: !!productId,
+  });
+
+  const { addProduct, hasProduct } = useCompareStore();
+  const { toast } = useToast();
+
+  if (isLoading) {
+    return (
+      <div className="mt-8">
+        <Card>
+          <CardContent className="py-8 text-center">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-3 text-slate-400" />
+            <p className="text-sm text-slate-600">대체품을 찾는 중...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!alternatives?.alternatives || alternatives.alternatives.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-blue-600" />
+            대체품 추천
+          </CardTitle>
+          <CardDescription>
+            동일 카테고리 및 유사 스펙의 제품을 추천합니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {alternatives.alternatives.map((alt: any) => {
+              const isInCompare = hasProduct(alt.id);
+              
+              return (
+                <Card key={alt.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3">
+                      {alt.imageUrl && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={alt.imageUrl}
+                          alt={alt.name}
+                          className="w-16 h-16 object-cover rounded"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base">
+                          <Link
+                            href={`/products/${alt.id}`}
+                            className="hover:underline line-clamp-2"
+                          >
+                            {alt.name}
+                          </Link>
+                        </CardTitle>
+                        {alt.brand && (
+                          <CardDescription className="text-xs mt-1">
+                            {alt.brand}
+                          </CardDescription>
+                        )}
+                        {alt.catalogNumber && (
+                          <CardDescription className="text-xs">
+                            Cat.No: {alt.catalogNumber}
+                          </CardDescription>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {/* 유사도 및 근거 */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">유사도</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {Math.round(alt.similarity * 100)}%
+                        </Badge>
+                      </div>
+                      {alt.similarityReasons && alt.similarityReasons.length > 0 && (
+                        <div className="space-y-1">
+                          {alt.similarityReasons.slice(0, 2).map((reason: string, idx: number) => (
+                            <div key={idx} className="text-xs text-slate-600 flex items-center gap-1">
+                              <Check className="h-3 w-3 text-green-600" />
+                              {reason}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 가격 정보 */}
+                    {alt.minPrice !== undefined && (
+                      <div className="text-sm font-semibold">
+                        ₩{alt.minPrice.toLocaleString("ko-KR")}
+                      </div>
+                    )}
+
+                    {/* 액션 버튼 */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          if (isInCompare) {
+                            toast({
+                              title: "이미 비교 목록에 있습니다",
+                              variant: "default",
+                            });
+                          } else {
+                            addProduct(alt.id);
+                            toast({
+                              title: "비교 목록에 추가되었습니다",
+                              description: alt.name,
+                            });
+                          }
+                        }}
+                      >
+                        <Compare className="h-3 w-3 mr-1" />
+                        비교
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                      >
+                        <Link href={`/products/${alt.id}`}>
+                          <Eye className="h-3 w-3 mr-1" />
+                          상세
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

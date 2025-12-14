@@ -155,6 +155,7 @@ enum ProductCategory {
   REAGENT // ?약
   TOOL // 기구
   EQUIPMENT // ?비
+  RAW_MATERIAL // 원료(원부자재)
 }
 
 // ?품
@@ -169,7 +170,7 @@ model Product {
   brand                 String?
   modelNumber           String?
   catalogNumber         String? // 카탈로그 번호 (Cat.No)
-  lotNumber             String? // Lot 번호 (배치 번호)
+  lotNumber             String? // Lot 번호 (배치 번호) - 원료(원부자재) 포함
   specifications        Json? // ?펙 ?보 (JSON)
   datasheetUrl          String?
   imageUrl              String?
@@ -188,6 +189,14 @@ model Product {
   pictograms       Json? // GHS 피크토그램 배열 (예: ["corrosive", "exclamation"])
   storageCondition String? @db.Text // 보관 조건 (예: "2~8°C 냉장 보관")
   ppe              Json? // 개인보호장비 배열 (예: ["gloves", "goggles"])
+
+  // 원료(원부자재) 전용 필드 (P1)
+  coaUrl              String? // COA (Certificate of Analysis) URL
+  specSheetUrl        String? // Spec Sheet URL
+  pharmacopoeia       String? // 규정/표준 (예: "USP", "EP", "JP", "KP")
+  countryOfOrigin     String? // 원산지
+  manufacturer        String? // 제조사
+  expiryDate          DateTime? // 유효기간
 
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
