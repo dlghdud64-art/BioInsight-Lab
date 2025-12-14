@@ -60,10 +60,10 @@ export function ComparisonSection() {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  그룹웨어 결재 양식에 다시 표/텍스트 재작성
+                  견적요청 메일/첨부용 문서로 다시 정리
                 </h4>
                 <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  완성된 비교표를 그룹웨어 형식에 맞춰 다시 입력해야 합니다.
+                  완성된 비교표를 견적요청 메일이나 첨부 문서 형식에 맞춰 다시 정리해야 합니다.
                 </p>
               </div>
             </div>
@@ -116,10 +116,10 @@ export function ComparisonSection() {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  견적/구매 요청용 리스트 형식 자동 생성
+                  견적요청용 리스트/공유 링크 자동 생성
                 </h4>
                 <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  완성된 품목 리스트를 바로 공유·첨부할 수 있는 형식으로 자동 생성합니다.
+                  완성된 품목 리스트를 견적요청용 리스트나 공유 링크로 자동 생성합니다. 회신(가격·납기) 입력 후 비교표로 정리할 수 있습니다.
                 </p>
               </div>
             </div>

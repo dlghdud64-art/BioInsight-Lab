@@ -7,8 +7,7 @@ export function KeyValueSection() {
     <section id="features" className="mt-6 md:mt-12 space-y-2 md:space-y-4 scroll-mt-14">
       <div className="space-y-2 md:space-y-3">
         <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900 leading-relaxed">
-          연구·QC 현장의 시약·장비를 한 번에 검색·비교하고,
-          구매 요청에 쓸 품목 리스트까지 정리할 수 있는 구매 준비 도구입니다.
+          연구·QC 현장의 시약·장비를 한 번에 검색·비교하고, 견적요청/구매요청까지 이어지는 구매 준비 도구입니다.
         </h2>
         <p className="text-[11px] md:text-sm text-slate-600 italic border-l-2 border-blue-200 pl-3 py-1.5 bg-blue-50/30 rounded-r">
           💡 이 서비스는 검색 사이트가 아니라, <span className="font-semibold text-slate-900">연구실/조직의 시약·장비 구매 준비/정리 도구</span>입니다.
@@ -45,7 +44,7 @@ export function KeyValueSection() {
                 품목 리스트 자동 정리
               </h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                담아둔 후보 제품을 비교하고 불필요한 항목은 빼고, 실제로 구매에 쓸 품목 리스트만 남깁니다. 견적 요청·구매 요청서 작성 시 그대로 활용할 수 있습니다.
+                담아둔 후보를 비교해 견적요청에 필요한 품목 리스트로 정리합니다. 회신받은 가격·납기 정보도 같은 리스트에서 비교할 수 있게 구성합니다.
               </p>
             </div>
           </CardContent>
@@ -63,7 +62,7 @@ export function KeyValueSection() {
                 연구·QC·구매 모두에게 유용한 도구
               </h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                연구자, QC 담당자, 구매 담당자가 같은 리스트를 공유하면서 소통할 수 있습니다. 반복되는 검색·정리 작업을 줄이고, 협업에 집중할 수 있습니다.
+                연구–QC–구매가 하나의 품목 리스트로 협업합니다. 견적요청 → 회신 정리 → 구매요청 흐름에서 "버전이 갈라지는 문제"를 줄입니다.
               </p>
             </div>
           </CardContent>

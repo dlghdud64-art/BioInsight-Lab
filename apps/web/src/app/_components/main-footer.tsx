@@ -76,8 +76,7 @@ export function MainFooter() {
               </span>
             </div>
             <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-              연구·QC 현장의 시약·장비를 한 번에 검색·비교하고,
-              사내 그룹웨어에 붙여넣을 수 있는 구매 준비 도구입니다.
+              연구·QC 현장의 시약·장비를 한 번에 검색·비교하고, 견적요청/구매요청용 리스트로 정리해 공유하는 도구입니다.
             </p>
             <div className="flex items-center gap-3 text-slate-600">
               {/* GitHub */}

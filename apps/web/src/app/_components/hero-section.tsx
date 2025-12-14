@@ -59,15 +59,15 @@ export function HeroSection() {
 
           <div className="space-y-1.5 md:space-y-3">
             <h1 className="text-xl md:text-3xl lg:text-4xl font-bold leading-tight text-slate-900">
-              바이오 시약·장비 검색과 비교,{" "}
-              <span className="whitespace-normal md:whitespace-nowrap">한 번에 정리되는 구매 요청 리스트</span>
+              바이오 시약·장비 검색·비교부터 견적요청까지,{" "}
+              <span className="whitespace-normal md:whitespace-nowrap">한 번에 정리</span>
             </h1>
             <p className="text-[11px] md:text-sm leading-relaxed text-slate-600 max-w-xl">
-              실험에 맞는 후보를 찾고, 스펙·가격 비교로 추리고,
+              실험에 맞는 후보를 모으고, 스펙·가격으로 비교해 추립니다.
               <br className="hidden sm:block" />
-              최종 구매 요청 리스트를 TSV/엑셀로 내보내
+              견적요청용 품목 리스트를 바로 만들고 공유 링크/TSV·엑셀로 전달합니다.
               <br className="hidden sm:block" />
-              동료·구매팀과 공유할 수 있습니다.
+              (선택) 회신(가격·납기)은 같은 리스트에서 비교되도록 정리할 수 있습니다.
             </p>
           </div>
 
@@ -77,13 +77,15 @@ export function HeroSection() {
                 검색/비교 시작하기
               </Button>
             </Link>
-            <button
-              type="button"
-              onClick={scrollToFlow}
-              className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md h-9 md:h-11 px-4 md:px-8 text-[11px] md:text-sm font-medium border border-slate-300 bg-background text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-            >
-              플로우 보기
-            </button>
+            <Link href="/protocol/bom" className="flex-1 sm:flex-initial">
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="w-full sm:w-auto text-xs md:text-base h-9 md:h-11 border border-slate-300 bg-background text-slate-700 hover:bg-slate-50"
+              >
+                프로토콜 분석 시작하기
+              </Button>
+            </Link>
           </div>
         </div>
 

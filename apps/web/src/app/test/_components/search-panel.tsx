@@ -44,7 +44,7 @@ export function SearchPanel() {
             <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
               Step 1
             </span>
-            <span>제품 검색</span>
+            <span>검색·AI 분석</span>
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">
             제품을 검색하고 후보를 선택합니다.

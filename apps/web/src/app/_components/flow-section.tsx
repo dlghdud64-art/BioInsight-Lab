@@ -6,7 +6,7 @@ export function FlowSection() {
   return (
     <section id="flow-section" className="mt-6 md:mt-12 space-y-2 md:space-y-4 scroll-mt-14 overflow-hidden">
       <h2 className="text-sm md:text-lg font-semibold tracking-tight text-slate-900 px-1">
-        3단계로 끝나는 구매 준비
+        3단계로 끝나는 견적·구매 준비
       </h2>
       <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-3 w-full">
         <Link href="/test/search">
@@ -56,9 +56,9 @@ export function FlowSection() {
               </div>
               {/* 텍스트 블록 */}
               <div className="space-y-1 flex-1 flex flex-col min-w-0 overflow-hidden">
-                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">구매 요청 리스트 정리</h3>
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">견적요청 & 구매 요청 리스트 정리</h3>
                 <p className="text-[11px] md:text-xs leading-relaxed text-slate-500 flex-1 break-words">
-                  선정된 품목으로 구매 요청 리스트를 만들고, TSV/엑셀로 내보내 동료·구매팀과 공유할 수 있습니다.
+                  선정된 품목으로 견적요청용 리스트를 만들고, 회신(가격·납기)을 정리한 뒤 TSV/엑셀로 공유합니다.
                 </p>
                 <span className="text-[10px] md:text-xs text-blue-600 mt-2 inline-block">체험하기 →</span>
               </div>
