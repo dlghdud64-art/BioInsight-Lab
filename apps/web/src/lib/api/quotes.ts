@@ -13,6 +13,7 @@ export interface CreateQuoteParams {
   productIds: string[];
   quantities?: Record<string, number>;
   notes?: Record<string, string>;
+  vendorIds?: Record<string, string>; // productId -> vendorId 매핑
 }
 
 export async function createQuote(params: CreateQuoteParams) {
@@ -27,6 +28,7 @@ export async function createQuote(params: CreateQuoteParams) {
     productIds,
     quantities = {},
     notes = {},
+    vendorIds = {},
   } = params;
 
   // 메시지 번역 (영문 요청서 생성)
@@ -47,10 +49,6 @@ export async function createQuote(params: CreateQuoteParams) {
         include: {
           vendor: true,
         },
-        orderBy: {
-          priceInKRW: "asc",
-        },
-        take: 1, // 가장 저렴한 벤더 선택
       },
     },
   });
@@ -65,7 +63,11 @@ export async function createQuote(params: CreateQuoteParams) {
       items: {
         create: productIds.map((productId, index) => {
           const product = products.find((p: any) => p.id === productId);
-          const vendor = product?.vendors?.[0];
+          const selectedVendorId = vendorIds[productId];
+          // vendorId가 지정되면 해당 벤더 사용, 없으면 첫 번째 벤더 또는 가장 저렴한 벤더
+          const vendor = selectedVendorId
+            ? product?.vendors?.find((v: any) => v.vendor?.id === selectedVendorId)
+            : product?.vendors?.sort((a: any, b: any) => (a.priceInKRW || 0) - (b.priceInKRW || 0))[0];
           const quantity = quantities[productId] || 1;
           const unitPrice = vendor?.priceInKRW || 0;
           const lineTotal = unitPrice * quantity;

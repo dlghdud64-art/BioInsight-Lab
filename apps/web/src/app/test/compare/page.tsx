@@ -4,7 +4,8 @@ import { useTestFlow } from "../_components/test-flow-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check, Search } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
@@ -19,11 +20,13 @@ import { Label } from "@/components/ui/label";
 
 export default function TestComparePage() {
   const { compareIds, toggleCompare, clearCompare, addProductToQuote } = useTestFlow();
+  const { toast } = useToast();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "price" | "price_high" | "specification" | "leadTime" | "vendorCount">("name");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterBrand, setFilterBrand] = useState<string>("all");
   const [filterVendor, setFilterVendor] = useState<string>("all");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [productOrder, setProductOrder] = useState<number[]>([]); // 제품 순서 관리
   const [manualLeadTimes, setManualLeadTimes] = useState<Record<string, number>>(() => {
     // 로컬 스토리지에서 저장된 납기 정보 불러오기
@@ -165,8 +168,35 @@ export default function TestComparePage() {
     return Array.from(vendorSet).sort();
   }, [allProducts]);
 
-  // 제품별 평균 납기일 계산 (벤더별 납기일의 평균)
+  // 다른 사용자들의 평균 납기일 조회
+  const { data: averageLeadTimesData } = useQuery({
+    queryKey: ["average-lead-times", compareIds],
+    queryFn: async () => {
+      if (compareIds.length === 0) return { averageLeadTimes: {} };
+      const response = await fetch("/api/products/average-lead-time", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: compareIds }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch average lead times");
+      }
+      return response.json();
+    },
+    enabled: compareIds.length > 0,
+    staleTime: 1000 * 60 * 10, // 10분
+  });
+
+  const averageLeadTimes = averageLeadTimesData?.averageLeadTimes || {};
+
+  // 제품별 평균 납기일 계산 (다른 사용자들의 데이터 기반)
   const getAverageLeadTime = (product: any) => {
+    // 다른 사용자들의 평균 납기일 우선 사용
+    if (averageLeadTimes[product.id]) {
+      return averageLeadTimes[product.id];
+    }
+    
+    // 없으면 벤더별 납기일의 평균 사용
     if (!product.vendors || product.vendors.length === 0) return 0;
     
     const leadTimes: number[] = [];
@@ -198,9 +228,9 @@ export default function TestComparePage() {
     };
   });
 
-  // 납기 비교 차트 데이터 (실제 납기일 우선, 없으면 평균 납기일 사용)
+  // 납기 비교 차트 데이터 (다른 사용자들의 평균 납기일 사용)
   const leadTimeChartData = products.map((product: any) => {
-    // 수동 입력한 납기 정보 우선 사용
+    // 수동 입력한 납기 정보가 있으면 우선 사용
     const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
     const manualLeadTime = manualLeadTimes[vendorKey];
     
@@ -210,33 +240,11 @@ export default function TestComparePage() {
         fullName: product.name,
         leadTime: manualLeadTime,
         isAverage: false,
+        isUserAverage: false,
       };
     }
     
-    const minLeadTime = product.vendors?.reduce(
-      (min: number, v: any) => {
-        const vKey = `${product.id}_${v.vendor?.id || 0}`;
-        const manual = manualLeadTimes[vKey];
-        const actualLeadTime = manual || (v.leadTime !== null && v.leadTime > 0 ? v.leadTime : null);
-        if (actualLeadTime !== null && (!min || actualLeadTime < min)) {
-          return actualLeadTime;
-        }
-        return min;
-      },
-      null
-    );
-    
-    // 실제 납기일이 있으면 사용
-    if (minLeadTime !== null && minLeadTime > 0) {
-      return {
-        name: product.name.length > 15 ? product.name.substring(0, 15) + "..." : product.name,
-        fullName: product.name,
-        leadTime: minLeadTime,
-        isAverage: false,
-      };
-    }
-    
-    // 실제 납기일이 없으면 평균 납기일 사용
+    // 다른 사용자들의 평균 납기일 사용
     const avgLeadTime = getAverageLeadTime(product);
     if (avgLeadTime > 0) {
       return {
@@ -244,6 +252,7 @@ export default function TestComparePage() {
         fullName: product.name,
         leadTime: avgLeadTime,
         isAverage: true,
+        isUserAverage: !!averageLeadTimes[product.id],
       };
     }
     
@@ -368,43 +377,52 @@ export default function TestComparePage() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">제품 비교 ({products.length}개)</h2>
-          <p className="text-muted-foreground mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold">제품 비교 ({products.length}개)</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             여러 제품의 스펙, 가격, 납기를 한눈에 비교하세요
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={() => setShowHighlightDifferences(!showHighlightDifferences)}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
+            size="sm"
           >
             {showHighlightDifferences ? (
               <>
-                <EyeOff className="h-4 w-4" />
-                차이점 숨기기
+                <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">차이점 숨기기</span>
+                <span className="sm:hidden">숨기기</span>
               </>
             ) : (
               <>
-                <Eye className="h-4 w-4" />
-                차이점 하이라이트
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">차이점 하이라이트</span>
+                <span className="sm:hidden">하이라이트</span>
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={clearCompare}>
+          <Button variant="outline" onClick={clearCompare} size="sm" className="text-xs sm:text-sm">
             전체 삭제
           </Button>
           <Button
             variant="outline"
             onClick={() => {
               products.forEach((product) => addProductToQuote(product));
+              toast({
+                title: "추가 완료",
+                description: `${products.length}개 제품이 품목 리스트에 추가되었습니다.`,
+              });
             }}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
+            size="sm"
           >
-            <Plus className="h-4 w-4" />
-            모두 추가
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">모두 추가</span>
+            <span className="sm:hidden">추가</span>
           </Button>
           <Button
             variant="outline"
@@ -443,33 +461,47 @@ export default function TestComparePage() {
               link.click();
               document.body.removeChild(link);
             }}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
+            size="sm"
           >
-            <Download className="h-4 w-4" />
-            CSV 내보내기
+            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">CSV 내보내기</span>
+            <span className="sm:hidden">CSV</span>
           </Button>
-          <Link href="/test/quote">
-            <Button>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              품목 리스트로 이동
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Link href="/test/search" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm" size="sm">
+                <Search className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                <span className="hidden sm:inline">검색 페이지로 이동</span>
+                <span className="sm:hidden">검색</span>
+              </Button>
+            </Link>
+            <Link href="/test/quote" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto text-xs sm:text-sm" size="sm">
+                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                <span className="hidden sm:inline">품목 리스트로 이동</span>
+                <span className="sm:hidden">리스트</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* 필터 및 정렬 */}
+      {/* 비교 제품 관리 리스트 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">필터 및 정렬</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">정렬 기준</label>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex-1">
+              <CardTitle className="text-base sm:text-lg">비교 중인 제품 ({compareIds.length}/5)</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                비교할 제품을 추가하거나 제거할 수 있습니다
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger className="text-xs">
-                  <ArrowUpDown className="h-3 w-3 mr-2" />
-                  <SelectValue />
+                <SelectTrigger className="h-8 text-xs w-full sm:w-[140px]">
+                  <ArrowUpDown className="h-3 w-3 mr-1" />
+                  <SelectValue placeholder="정렬" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="name">제품명순</SelectItem>
@@ -480,69 +512,98 @@ export default function TestComparePage() {
                   <SelectItem value="vendorCount">공급사 많은순</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">카테고리</label>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="text-xs">
-                  <Filter className="h-3 w-3 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {Object.entries(PRODUCT_CATEGORIES).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">브랜드</label>
-              <Select value={filterBrand} onValueChange={setFilterBrand}>
-                <SelectTrigger className="text-xs">
-                  <Filter className="h-3 w-3 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand} value={brand}>
-                      {brand}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">벤더</label>
-              <Select value={filterVendor} onValueChange={setFilterVendor}>
-                <SelectTrigger className="text-xs">
-                  <Filter className="h-3 w-3 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {vendors.map((vendor) => (
-                    <SelectItem key={vendor} value={vendor}>
-                      {vendor}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs w-full sm:w-auto">
+                    <Filter className="h-3 w-3 mr-1" />
+                    필터
+                    {(filterCategory !== "all" || filterBrand !== "all" || filterVendor !== "all") && (
+                      <span className="ml-1 text-blue-600">●</span>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-sm">필터 설정</DialogTitle>
+                    <DialogDescription className="text-xs">
+                      비교할 제품을 필터링합니다
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">카테고리</Label>
+                      <Select value={filterCategory} onValueChange={setFilterCategory}>
+                        <SelectTrigger className="text-xs h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체</SelectItem>
+                          {Object.entries(PRODUCT_CATEGORIES).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">브랜드</Label>
+                      <Select value={filterBrand} onValueChange={setFilterBrand}>
+                        <SelectTrigger className="text-xs h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체</SelectItem>
+                          {brands.map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">벤더</Label>
+                      <Select value={filterVendor} onValueChange={setFilterVendor}>
+                        <SelectTrigger className="text-xs h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체</SelectItem>
+                          {vendors.map((vendor) => (
+                            <SelectItem key={vendor} value={vendor}>
+                              {vendor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          setFilterCategory("all");
+                          setFilterBrand("all");
+                          setFilterVendor("all");
+                        }}
+                      >
+                        초기화
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="text-xs bg-slate-900 text-white hover:bg-slate-800"
+                        onClick={() => setIsFilterDialogOpen(false)}
+                      >
+                        적용
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* 비교 제품 관리 리스트 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">비교 중인 제품 ({compareIds.length}/5)</CardTitle>
-          <CardDescription>
-            비교할 제품을 추가하거나 제거할 수 있습니다
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -551,18 +612,18 @@ export default function TestComparePage() {
               return (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm text-slate-900 truncate">
+                  <div className="flex-1 min-w-0 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                      <p className="font-medium text-xs sm:text-sm text-slate-900 truncate w-full sm:w-auto">
                         {product.name}
                       </p>
-                      <Link href={`/products/${product.id}`}>
+                      <Link href={`/products/${product.id}`} className="w-full sm:w-auto">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-6 px-2 text-xs"
+                          className="h-6 px-2 text-xs w-full sm:w-auto"
                           onClick={(e) => e.stopPropagation()}
                         >
                           상세보기
@@ -592,12 +653,18 @@ export default function TestComparePage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 w-full sm:w-auto sm:ml-4">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => addProductToQuote(product)}
-                      className="text-xs"
+                      onClick={() => {
+                        addProductToQuote(product);
+                        toast({
+                          title: "추가 완료",
+                          description: `${product.name}이(가) 품목 리스트에 추가되었습니다.`,
+                        });
+                      }}
+                      className="text-xs flex-1 sm:flex-none"
                     >
                       <ShoppingCart className="h-3 w-3 mr-1" />
                       추가
@@ -606,7 +673,7 @@ export default function TestComparePage() {
                       size="sm"
                       variant="outline"
                       onClick={() => toggleCompare(product.id)}
-                      className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex-1 sm:flex-none"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
@@ -621,7 +688,7 @@ export default function TestComparePage() {
 
       {/* 차트 섹션 */}
       {products.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
           {/* 가격 비교 차트 */}
           <Card>
             <CardHeader>
@@ -665,7 +732,7 @@ export default function TestComparePage() {
                   납기 비교
                 </CardTitle>
                 <CardDescription>
-                  제품별 납기일 비교 (실제 납기일 우선, 없으면 평균 납기일 표시)
+                  제품별 평균 납기일 비교 (다른 사용자들의 실제 구매 데이터 기반)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -684,8 +751,9 @@ export default function TestComparePage() {
                     <Tooltip
                       formatter={(value: number, name: string, props: any) => {
                         const isAvg = props.payload.isAverage;
+                        const isUserAvg = props.payload.isUserAverage;
                         return [
-                          `${value}일${isAvg ? " (평균)" : ""}`,
+                          `${value}일${isAvg ? (isUserAvg ? " (다른 사용자 평균)" : " (벤더 평균)") : ""}`,
                           props.payload.fullName,
                         ];
                       }}
@@ -696,7 +764,13 @@ export default function TestComparePage() {
                       name="납기일"
                     >
                       {leadTimeChartData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.isAverage ? "#fbbf24" : "#82ca9d"} />
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.isAverage 
+                            ? (entry.isUserAverage ? "#3b82f6" : "#fbbf24") 
+                            : "#82ca9d"
+                          } 
+                        />
                       ))}
                     </Bar>
                   </BarChart>
@@ -715,11 +789,11 @@ export default function TestComparePage() {
               <CardContent>
                 <div className="text-center py-8 text-slate-500 text-sm">
                   <FileText className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                  <p>실제 납기 정보가 있는 제품이 없습니다.</p>
+                  <p>평균 납기일 정보가 있는 제품이 없습니다.</p>
                   <p className="text-xs mt-2">
-                    "견적 요청" 버튼을 클릭하여 품목 리스트에 추가하고 견적을 요청하세요.
+                    다른 사용자들의 실제 구매 데이터를 기반으로 평균 납기일이 계산됩니다.
                     <br />
-                    견적서를 받은 후 납기일을 입력하면 비교 차트가 표시됩니다.
+                    데이터가 쌓이면 자동으로 표시됩니다.
                   </p>
                 </div>
               </CardContent>
@@ -738,48 +812,49 @@ export default function TestComparePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky left-0 bg-white z-10 w-[150px]">항목</TableHead>
-                    {products.map((product: any, index: number) => (
-                      <TableHead key={product.id} className="min-w-[180px]">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="flex-1 truncate">{product.name}</span>
-                          <div className="flex flex-col gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-5 w-5"
-                              onClick={() => moveProduct(index, "up")}
-                              disabled={index === 0}
-                              title="위로 이동"
-                            >
-                              <ArrowUp className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-5 w-5"
-                              onClick={() => moveProduct(index, "down")}
-                              disabled={index === products.length - 1}
-                              title="아래로 이동"
-                            >
-                              <ArrowDown className="h-3 w-3" />
-                            </Button>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 bg-white z-10 w-[120px] sm:w-[150px] text-xs sm:text-sm">항목</TableHead>
+                      {products.map((product: any, index: number) => (
+                        <TableHead key={product.id} className="min-w-[150px] sm:min-w-[180px] text-xs sm:text-sm">
+                          <div className="flex items-center justify-between gap-1 sm:gap-2">
+                            <span className="flex-1 truncate text-xs sm:text-sm">{product.name}</span>
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                onClick={() => moveProduct(index, "up")}
+                                disabled={index === 0}
+                                title="위로 이동"
+                              >
+                                <ArrowUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                onClick={() => moveProduct(index, "down")}
+                                disabled={index === products.length - 1}
+                                title="아래로 이동"
+                              >
+                                <ArrowDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {compareFields.map((field) => (
-                    <TableRow key={field.key}>
-                      <TableCell className="sticky left-0 bg-white font-medium w-[150px]">
-                        {field.label}
-                      </TableCell>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {compareFields.map((field) => (
+                      <TableRow key={field.key}>
+                        <TableCell className="sticky left-0 bg-white font-medium w-[120px] sm:w-[150px] text-xs sm:text-sm">
+                          {field.label}
+                        </TableCell>
                       {products.map((product: any) => {
                         let value: any;
                         let allValues: any[] = [];
@@ -788,8 +863,15 @@ export default function TestComparePage() {
                           value = product.vendors?.[0]?.priceInKRW || 0;
                           allValues = products.map((p: any) => p.vendors?.[0]?.priceInKRW || 0);
                         } else if (field.key === "leadTime") {
-                          value = product.vendors?.[0]?.leadTime || 0;
-                          allValues = products.map((p: any) => p.vendors?.[0]?.leadTime || 0);
+                          // 납기일은 평균 납기일 사용
+                          const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
+                          const manualLeadTime = manualLeadTimes[vendorKey];
+                          value = manualLeadTime || getAverageLeadTime(product) || 0;
+                          allValues = products.map((p: any) => {
+                            const pVendorKey = `${p.id}_${p.vendors?.[0]?.vendor?.id || 0}`;
+                            const pManualLeadTime = manualLeadTimes[pVendorKey];
+                            return pManualLeadTime || getAverageLeadTime(p) || 0;
+                          });
                         } else if (field.key === "stockStatus") {
                           value = product.vendors?.[0]?.stockStatus || "-";
                           allValues = products.map((p: any) => p.vendors?.[0]?.stockStatus || "-");
@@ -822,30 +904,32 @@ export default function TestComparePage() {
                         if (field.key === "leadTime") {
                           const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
                           const manualLeadTime = manualLeadTimes[vendorKey];
-                          const actualLeadTime = manualLeadTime || value;
                           const averageLeadTime = getAverageLeadTime(product);
-                          const displayLeadTime = actualLeadTime > 0 ? actualLeadTime : averageLeadTime;
-                          const isAverage = actualLeadTime === 0 && averageLeadTime > 0;
+                          const isUserAverage = !!averageLeadTimes[product.id];
+                          const displayLeadTime = manualLeadTime || averageLeadTime;
+                          const isAverage = !manualLeadTime && averageLeadTime > 0;
                           
-                          return (
-                            <TableCell key={product.id} className={cellClassName}>
-                              <div className="flex items-center gap-2">
-                                {displayLeadTime > 0 ? (
-                                  <>
-                                    <span className={isAverage ? "text-slate-600" : ""}>
-                                      {displayLeadTime}일
-                                      {isAverage && (
-                                        <span className="text-xs text-slate-400 ml-1">(평균)</span>
-                                      )}
-                                    </span>
-                                    {actualLeadTime > 0 && (
+                        return (
+                          <TableCell key={product.id} className={`${cellClassName} text-xs sm:text-sm`}>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
+                              {displayLeadTime > 0 ? (
+                                <>
+                                  <span className={isAverage ? "text-slate-600" : ""}>
+                                    {displayLeadTime}일
+                                    {isAverage && (
+                                      <span className="text-[10px] sm:text-xs text-slate-400 ml-1">
+                                        ({isUserAverage ? "다른 사용자 평균" : "벤더 평균"})
+                                      </span>
+                                    )}
+                                  </span>
+                                    {manualLeadTime > 0 && (
                                       <Button
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6"
                                         onClick={() => {
                                           setEditingLeadTime({ productId: product.id, vendorIndex: 0 });
-                                          setTempLeadTime(manualLeadTime?.toString() || value?.toString() || "");
+                                          setTempLeadTime(manualLeadTime?.toString() || "");
                                         }}
                                         title="납기일 수정"
                                       >
@@ -862,7 +946,7 @@ export default function TestComparePage() {
                         }
                         
                         return (
-                          <TableCell key={product.id} className={cellClassName}>
+                          <TableCell key={product.id} className={`${cellClassName} text-xs sm:text-sm`}>
                             {field.key === "price" && value > 0 ? (
                               `₩${value.toLocaleString()}`
                             ) : (
@@ -873,8 +957,9 @@ export default function TestComparePage() {
                       })}
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </CardContent>
         </Card>

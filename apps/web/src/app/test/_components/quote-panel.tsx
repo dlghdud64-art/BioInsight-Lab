@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
   DropdownMenu,
@@ -16,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2 } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search } from "lucide-react";
+import { useCompareStore } from "@/lib/store/compare-store";
 import {
   Dialog,
   DialogContent,
@@ -49,8 +51,10 @@ export function QuotePanel() {
     shareLink,
     isGeneratingShareLink,
     generateShareLink,
+    products,
   } = useTestFlow();
   const { toast } = useToast();
+  const { addProduct, hasProduct } = useCompareStore();
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [groupByVendor, setGroupByVendor] = useState(true);
@@ -135,8 +139,8 @@ export function QuotePanel() {
       {/* 구매 요청 품목 섹션 */}
       <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex-1">
               <CardTitle className="text-sm font-semibold text-slate-900">
                 구매 요청 품목
               </CardTitle>
@@ -144,16 +148,27 @@ export function QuotePanel() {
                 그룹웨어/전자결재에 올릴 최종 품목과 수량을 확인하는 화면입니다.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={groupByVendor ? "default" : "outline"}
-                size="sm"
-                className="text-xs"
-                onClick={() => setGroupByVendor(!groupByVendor)}
-              >
-                {groupByVendor ? "벤더별 그룹화" : "일반 보기"}
-              </Button>
-              <Button variant="secondary" size="sm" className="text-xs" disabled>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-600">벤더별 그룹화</span>
+                <button
+                  type="button"
+                  onClick={() => setGroupByVendor(!groupByVendor)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
+                    groupByVendor ? "bg-slate-900" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      groupByVendor ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="text-xs text-slate-500">
+                  {groupByVendor ? "켜짐" : "꺼짐"}
+                </span>
+              </div>
+              <Button variant="secondary" size="sm" className="text-xs w-full sm:w-auto" disabled>
                 <Plus className="h-3 w-3 mr-1" />
                 품목 추가
               </Button>
@@ -189,8 +204,9 @@ export function QuotePanel() {
             )}
 
             {/* 테이블 - 항상 헤더 표시 */}
-            <div className="w-full overflow-x-auto">
-              <Table className="w-full table-auto quote-table">
+            <div className="w-full overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                <Table className="w-full table-auto quote-table">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12 text-xs">
@@ -348,9 +364,46 @@ export function QuotePanel() {
                           </TableCell>
                           <TableCell 
                             className="px-2 py-2 text-xs text-slate-700 text-left whitespace-nowrap"
-                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                            style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}
                           >
-                            {item.vendorName}
+                            {(() => {
+                              const product = products?.find((p: any) => p.id === item.productId);
+                              const vendors = product?.vendors || [];
+                              
+                              if (vendors.length <= 1) {
+                                return <span>{item.vendorName}</span>;
+                              }
+                              
+                              return (
+                                <Select
+                                  value={item.vendorId || ""}
+                                  onValueChange={(vendorId) => {
+                                    const selectedVendor = vendors.find((v: any) => v.vendor?.id === vendorId);
+                                    if (selectedVendor) {
+                                      updateQuoteItem(item.id, {
+                                        vendorId: selectedVendor.vendor?.id || "",
+                                        vendorName: selectedVendor.vendor?.name || "",
+                                        unitPrice: selectedVendor.priceInKRW || 0,
+                                        currency: selectedVendor.currency || "KRW",
+                                        lineTotal: (selectedVendor.priceInKRW || 0) * (item.quantity || 1),
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-7 text-xs w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {vendors.map((v: any) => (
+                                      <SelectItem key={v.vendor?.id} value={v.vendor?.id || ""}>
+                                        {v.vendor?.name || ""}
+                                        {v.priceInKRW && ` (₩${v.priceInKRW.toLocaleString()})`}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell 
                             className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
@@ -390,12 +443,28 @@ export function QuotePanel() {
                             className="px-2 py-2 text-center"
                             style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
                           >
-                            <Link href="/test/compare">
-                              <Button variant="ghost" size="sm" className="h-7 text-xs">
-                                <GitCompare className="h-3 w-3 mr-1" />
-                                비교
-                              </Button>
-                            </Link>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                if (hasProduct(item.productId)) {
+                                  toast({
+                                    title: "이미 추가됨",
+                                    description: "이 제품은 이미 비교 목록에 있습니다.",
+                                  });
+                                } else {
+                                  addProduct(item.productId);
+                                  toast({
+                                    title: "추가 완료",
+                                    description: "비교 목록에 추가되었습니다.",
+                                  });
+                                }
+                              }}
+                            >
+                              <GitCompare className="h-3 w-3 mr-1" />
+                              비교
+                            </Button>
                           </TableCell>
                           <TableCell 
                             className="px-2 py-2 text-center"
@@ -476,6 +545,7 @@ export function QuotePanel() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
             </div>
 
             {/* 총합 - 품목이 있을 때만 표시 */}
@@ -950,18 +1020,32 @@ export function QuoteRequestPanel() {
   const [message, setMessage] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryDateOption, setDeliveryDateOption] = useState<"asap" | "custom" | "none">("none");
-  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState<"none" | "saved" | "custom">("none");
   const [deliveryLocationCustom, setDeliveryLocationCustom] = useState("");
+  const [savedDeliveryAddress, setSavedDeliveryAddress] = useState<string>("");
   const [specialNotes, setSpecialNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 기본 납품 장소 목록 (나중에 사용자 설정에서 가져올 수 있음)
-  const defaultLocations = [
-    "본관 1층 창고",
-    "연구동 3층 실험실",
-    "본관 2층 보관실",
-    "연구동 지하 창고",
-  ];
+  // 저장된 납품 주소 불러오기 (localStorage에서)
+  useEffect(() => {
+    const saved = localStorage.getItem("deliveryAddress");
+    if (saved) {
+      setSavedDeliveryAddress(saved);
+    }
+  }, []);
+
+  // 납품 주소 저장
+  const handleSaveDeliveryAddress = () => {
+    if (deliveryLocationCustom.trim()) {
+      localStorage.setItem("deliveryAddress", deliveryLocationCustom.trim());
+      setSavedDeliveryAddress(deliveryLocationCustom.trim());
+      setDeliveryLocation("saved");
+      toast({
+        title: "주소가 저장되었습니다",
+        description: "다음 견적 요청 시 저장된 주소를 사용할 수 있습니다.",
+      });
+    }
+  };
 
   // 제목 자동 생성 (품목명 기반)
   useEffect(() => {
@@ -988,15 +1072,39 @@ export function QuoteRequestPanel() {
     }
   }, [quoteItems, products, title]);
 
-  // 메시지 자동 생성
+  // 벤더별로 그룹화
+  const vendorGroups = useMemo(() => {
+    const groups = new Map<string, typeof quoteItems>();
+    quoteItems.forEach((item) => {
+      const vendorId = item.vendorId || "unknown";
+      if (!groups.has(vendorId)) {
+        groups.set(vendorId, []);
+      }
+      groups.get(vendorId)!.push(item);
+    });
+    return groups;
+  }, [quoteItems]);
+
+  // 메시지 자동 생성 (벤더별로 분리)
   useEffect(() => {
     if (quoteItems.length > 0 && !message) {
-      const productCount = quoteItems.length;
-      const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-      const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
-      setMessage(suggestedMessage);
+      // 벤더가 하나면 하나의 메시지
+      if (vendorGroups.size === 1) {
+        const items = Array.from(vendorGroups.values())[0];
+        const productCount = items.length;
+        const totalAmount = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+        setMessage(suggestedMessage);
+      } else {
+        // 여러 벤더인 경우 - 첫 번째 벤더의 메시지를 기본으로 사용하되, 각 벤더별로 맞춘 메시지 생성
+        const firstVendorItems = Array.from(vendorGroups.values())[0];
+        const productCount = firstVendorItems.length;
+        const totalAmount = firstVendorItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+        setMessage(suggestedMessage);
+      }
     }
-  }, [quoteItems, message]);
+  }, [quoteItems, message, vendorGroups]);
 
   // 납기 희망일 옵션 변경 핸들러
   const handleDeliveryDateOptionChange = (option: "asap" | "custom" | "none") => {
@@ -1032,14 +1140,14 @@ export function QuoteRequestPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title || "견적 요청",
-          message: message || "",
-          productIds: quoteItems.map((item) => item.productId),
-          quantities: Object.fromEntries(
-            quoteItems.map((item) => [item.productId, item.quantity || 1])
-          ),
-          notes: Object.fromEntries(
-            quoteItems.map((item) => [item.productId, item.notes || ""])
-          ),
+          message: message || "", // 기본 메시지 (각 벤더별로 맞춰서 사용)
+          // 벤더별로 그룹화하여 각 벤더에게 별도 견적 요청
+          items: quoteItems.map((item) => ({
+            productId: item.productId,
+            vendorId: item.vendorId,
+            quantity: item.quantity || 1,
+            notes: item.notes || "",
+          })),
           deliveryDate: deliveryDateOption === "none" ? undefined : (deliveryDate || undefined),
           deliveryLocation: deliveryLocation === "custom" ? deliveryLocationCustom : (deliveryLocation || undefined),
           specialNotes: specialNotes || undefined,
@@ -1107,7 +1215,7 @@ export function QuoteRequestPanel() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="delivery-date" className="text-xs font-medium">
                 납기 희망일
@@ -1142,7 +1250,7 @@ export function QuoteRequestPanel() {
               </Label>
               <Select
                 value={deliveryLocation}
-                onValueChange={(value) => {
+                onValueChange={(value: "none" | "saved" | "custom") => {
                   setDeliveryLocation(value);
                   if (value !== "custom") {
                     setDeliveryLocationCustom("");
@@ -1153,22 +1261,39 @@ export function QuoteRequestPanel() {
                   <SelectValue placeholder="납품 장소 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  {defaultLocations.map((location) => (
-                    <SelectItem key={location} value={location}>
-                      {location}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {savedDeliveryAddress && (
+                    <SelectItem value="saved">저장된 주소: {savedDeliveryAddress}</SelectItem>
+                  )}
                   <SelectItem value="custom">직접 입력</SelectItem>
                 </SelectContent>
               </Select>
               {deliveryLocation === "custom" && (
-                <Input
-                  id="delivery-location-custom"
-                  value={deliveryLocationCustom}
-                  onChange={(e) => setDeliveryLocationCustom(e.target.value)}
-                  placeholder="납품 장소를 입력하세요"
-                  className="text-sm mt-2"
-                />
+                <div className="space-y-2 mt-2">
+                  <Input
+                    id="delivery-location-custom"
+                    value={deliveryLocationCustom}
+                    onChange={(e) => setDeliveryLocationCustom(e.target.value)}
+                    placeholder="납품 장소를 입력하세요"
+                    className="text-sm"
+                  />
+                  {deliveryLocationCustom.trim() && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveDeliveryAddress}
+                      className="text-xs w-full"
+                    >
+                      주소 저장하기
+                    </Button>
+                  )}
+                </div>
+              )}
+              {deliveryLocation === "saved" && savedDeliveryAddress && (
+                <div className="text-xs text-slate-500 mt-1 p-2 bg-slate-50 rounded border border-slate-200">
+                  {savedDeliveryAddress}
+                </div>
               )}
             </div>
           </div>
@@ -1201,6 +1326,21 @@ export function QuoteRequestPanel() {
 
 export function QuoteItemsSummaryPanel() {
   const { quoteItems, products } = useTestFlow();
+  
+  // 벤더별로 그룹화
+  const vendorGroups = useMemo(() => {
+    const groups = new Map<string, { vendorName: string; items: typeof quoteItems }>();
+    quoteItems.forEach((item) => {
+      const vendorId = item.vendorId || "unknown";
+      const vendorName = item.vendorName || "알 수 없음";
+      if (!groups.has(vendorId)) {
+        groups.set(vendorId, { vendorName, items: [] });
+      }
+      groups.get(vendorId)!.items.push(item);
+    });
+    return groups;
+  }, [quoteItems]);
+
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
   if (quoteItems.length === 0) {
@@ -1226,37 +1366,64 @@ export function QuoteItemsSummaryPanel() {
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          요청할 품목 {quoteItems.length}개
+          요청할 품목 {quoteItems.length}개 {vendorGroups.size > 1 && `(벤더 ${vendorGroups.size}개)`}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          <div className="max-h-[400px] overflow-y-auto space-y-2">
-            {quoteItems.map((item, index) => {
-              const product = products.find((p) => p.id === item.productId);
+        <div className="space-y-4">
+          <div className="max-h-[400px] overflow-y-auto space-y-4">
+            {Array.from(vendorGroups.entries()).map(([vendorId, { vendorName, items }], vendorIndex) => {
+              const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
               return (
-                <div
-                  key={item.id}
-                  className="flex items-start justify-between gap-2 p-2 rounded-lg border border-slate-100 bg-slate-50"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-slate-900 truncate">
-                      {index + 1}. {product?.name || item.productName || "제품"}
+                <div key={vendorId} className="space-y-2">
+                  {vendorGroups.size > 1 && (
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
+                      <span className="text-xs font-semibold text-slate-700">
+                        {vendorIndex + 1}. {vendorName}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {items.length}개 품목
+                      </Badge>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      수량: {item.quantity} ×{" "}
-                      <PriceDisplay
-                        price={item.unitPrice || 0}
-                        currency={item.currency || "KRW"}
-                      />
+                  )}
+                  <div className="space-y-2">
+                    {items.map((item, itemIndex) => {
+                      const product = products?.find((p) => p.id === item.productId);
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start justify-between gap-2 p-2 rounded-lg border border-slate-100 bg-slate-50"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-slate-900 truncate">
+                              {vendorGroups.size === 1 ? `${itemIndex + 1}. ` : ""}{product?.name || item.productName || "제품"}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                              수량: {item.quantity} ×{" "}
+                              <PriceDisplay
+                                price={item.unitPrice || 0}
+                                currency={item.currency || "KRW"}
+                              />
+                            </div>
+                          </div>
+                          <div className="text-xs font-semibold text-slate-900 whitespace-nowrap">
+                            <PriceDisplay
+                              price={item.lineTotal || 0}
+                              currency={item.currency || "KRW"}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {vendorGroups.size > 1 && (
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <span className="text-xs font-medium text-slate-600">{vendorName} 소계</span>
+                      <span className="text-xs font-semibold text-slate-900">
+                        ₩{vendorTotal.toLocaleString("ko-KR")}
+                      </span>
                     </div>
-                  </div>
-                  <div className="text-xs font-semibold text-slate-900 whitespace-nowrap">
-                    <PriceDisplay
-                      price={item.lineTotal || 0}
-                      currency={item.currency || "KRW"}
-                    />
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -1268,6 +1435,11 @@ export function QuoteItemsSummaryPanel() {
                 ₩{totalAmount.toLocaleString("ko-KR")}
               </span>
             </div>
+            {vendorGroups.size > 1 && (
+              <p className="text-xs text-slate-500 mt-2">
+                각 벤더별로 별도 견적이 요청됩니다.
+              </p>
+            )}
           </div>
         </div>
       </CardContent>

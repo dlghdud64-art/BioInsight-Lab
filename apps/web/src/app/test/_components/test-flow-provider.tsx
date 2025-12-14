@@ -12,6 +12,8 @@ interface TestFlowContextType {
   setSearchQuery: (query: string) => void;
   searchCategory: string;
   setSearchCategory: (category: string) => void;
+  searchBrand: string;
+  setSearchBrand: (brand: string) => void;
   sortBy: "relevance" | "price_low" | "price_high" | "lead_time";
   setSortBy: (sort: "relevance" | "price_low" | "price_high" | "lead_time") => void;
   // 필터 상태
@@ -66,6 +68,7 @@ const TestFlowContext = createContext<TestFlowContextType | undefined>(undefined
 export function TestFlowProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
+  const [searchBrand, setSearchBrand] = useState<string>("");
   const [sortBy, setSortBy] = useState<"relevance" | "price_low" | "price_high" | "lead_time">("relevance");
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
@@ -76,7 +79,7 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [quoteItems, setQuoteItems] = useState<any[]>([]);
   const [shareLink, setShareLink] = useState<string | null>(null);
-  const [gptEnabled, setGptEnabled] = useState(true);
+  const [gptEnabled, setGptEnabled] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   
   const { productIds, addProduct, removeProduct, clearProducts } = useCompareStore();
@@ -85,12 +88,13 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
 
   // 검색 결과
   const { data: searchData, isLoading: isSearchLoading, error: searchError } = useQuery({
-    queryKey: ["search-products", searchQuery, searchCategory, sortBy, minPrice, maxPrice, stockStatus, leadTime, grade, searchTrigger],
+    queryKey: ["search-products", searchQuery, searchCategory, searchBrand, sortBy, minPrice, maxPrice, stockStatus, leadTime, grade, searchTrigger],
     queryFn: async () => {
       if (!searchQuery) return { products: [], total: 0 };
       const params = new URLSearchParams({
         query: searchQuery,
         ...(searchCategory && { category: searchCategory }),
+        ...(searchBrand && { brand: searchBrand }),
         sortBy,
         ...(minPrice !== undefined && { minPrice: minPrice.toString() }),
         ...(maxPrice !== undefined && { maxPrice: maxPrice.toString() }),
@@ -248,30 +252,43 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
     clearProducts();
   };
 
-  const addProductToQuote = (product: any) => {
-    const existingIndex = quoteItems.findIndex((item) => item.productId === product.id);
+  const addProductToQuote = (product: any, vendorId?: string) => {
+    // vendorId가 지정되지 않으면 첫 번째 벤더 사용
+    const selectedVendor = vendorId 
+      ? product.vendors?.find((v: any) => v.vendor?.id === vendorId)
+      : product.vendors?.[0];
+    
+    if (!selectedVendor) {
+      console.warn("No vendor found for product", product.id);
+      return;
+    }
+
+    const existingIndex = quoteItems.findIndex(
+      (item) => item.productId === product.id && item.vendorId === selectedVendor.vendor?.id
+    );
+    
     if (existingIndex >= 0) {
-      // 이미 있으면 수량 증가
+      // 같은 제품, 같은 벤더가 이미 있으면 수량 증가
       setQuoteItems((prev) =>
         prev.map((item, idx) =>
           idx === existingIndex
-            ? { ...item, quantity: (item.quantity || 1) + 1 }
+            ? { ...item, quantity: (item.quantity || 1) + 1, lineTotal: item.unitPrice * ((item.quantity || 1) + 1) }
             : item
         )
       );
     } else {
       // 새로 추가
-      const vendor = product.vendors?.[0];
-      const unitPrice = vendor?.priceInKRW || 0;
+      const unitPrice = selectedVendor?.priceInKRW || 0;
       setQuoteItems((prev) => [
         ...prev,
         {
           id: `item-${Date.now()}-${prev.length}`,
           productId: product.id,
           productName: product.name,
-          vendorName: vendor?.vendor?.name || product.brand || "",
+          vendorId: selectedVendor.vendor?.id || "",
+          vendorName: selectedVendor?.vendor?.name || product.brand || "",
           unitPrice,
-          currency: vendor?.currency || "KRW",
+          currency: selectedVendor?.currency || "KRW",
           quantity: 1,
           lineTotal: unitPrice,
           notes: "",
@@ -387,6 +404,8 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         setSearchQuery,
         searchCategory,
         setSearchCategory,
+        searchBrand,
+        setSearchBrand,
         sortBy,
         setSortBy,
         minPrice,

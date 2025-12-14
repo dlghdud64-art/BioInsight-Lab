@@ -5,8 +5,9 @@ import { useTestFlow } from "./test-flow-provider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Brain, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Brain, Loader2, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 export function SearchAnalysisCard() {
   const [expanded, setExpanded] = useState(false);
@@ -16,7 +17,8 @@ export function SearchAnalysisCard() {
     hasSearched, 
     analysisLoading, 
     analysisError,
-    runSearch 
+    runSearch,
+    searchQuery
   } = useTestFlow();
 
   // 상태 1: GPT 토글 OFF
@@ -215,24 +217,38 @@ export function SearchAnalysisCard() {
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setExpanded((v) => !v)}
-            className="h-7 text-xs"
-          >
-            {expanded ? (
-              <>
-                <ChevronUp className="h-3 w-3 mr-1" />
-                접기
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3 w-3 mr-1" />
-                자세히 보기
-              </>
+          <div className="flex items-center gap-2">
+            {hasSearched && searchQuery && (
+              <Link href={`/test/search/analysis?q=${encodeURIComponent(searchQuery)}`}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  별도 페이지에서 보기
+                </Button>
+              </Link>
             )}
-          </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setExpanded((v) => !v)}
+              className="h-7 text-xs"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                  접기
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                  자세히 보기
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         {expanded && (
           <CardContent className="pt-0">

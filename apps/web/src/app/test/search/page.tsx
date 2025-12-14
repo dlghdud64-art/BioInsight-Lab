@@ -12,8 +12,6 @@ import { PriceDisplay } from "@/components/products/price-display";
 import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
-import { QuoteListPreviewCard } from "../_components/quote-list-preview-card";
-import { SearchAnalysisCard } from "../_components/search-analysis-card";
 import { PageHeader } from "@/app/_components/page-header";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -77,9 +75,9 @@ export default function SearchPage() {
         />
       </div>
       
-      {/* 3컬럼 레이아웃 */}
+      {/* 2컬럼 레이아웃 */}
       <div className="container mx-auto px-4 py-4 md:py-6">
-        <div className="flex flex-col gap-4 md:grid md:gap-6 md:grid-cols-[260px_minmax(0,1fr)_260px]">
+        <div className="flex flex-col gap-4 md:grid md:gap-6 md:grid-cols-[260px_1fr]">
         {/* 좌측: 검색 패널 + 옵션 */}
         <aside className="order-1 md:order-none">
           <div className="flex flex-col gap-4">
@@ -87,27 +85,19 @@ export default function SearchPage() {
           </div>
         </aside>
 
-        {/* 우측: 검색어 분석 결과 + 품목 리스트 미리보기 (모바일에서는 먼저 표시) */}
-        <aside className="order-2 md:order-none">
-          <div className="flex flex-col gap-4">
-            <SearchAnalysisCard />
-            <QuoteListPreviewCard />
-          </div>
-        </aside>
-
         {/* 가운데: 검색 결과 */}
-        <section className="order-3 md:order-none space-y-4">
+        <section className="order-3 md:order-none space-y-4 max-w-3xl mx-auto w-full">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
             <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GitCompare className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">
+              <CardContent className="py-2 sm:py-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <GitCompare className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-blue-900">
                       비교 중인 제품: {compareIds.length}개
                     </span>
-                    <div className="flex items-center gap-1 ml-2 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {compareIds.map((id) => {
                         // products 배열에서 찾기
                         let product = products.find((p) => p.id === id);
@@ -151,8 +141,8 @@ export default function SearchPage() {
                       })}
                     </div>
                   </div>
-                  <Link href="/test/compare">
-                    <Button size="sm" variant="default" className="text-xs bg-blue-600 hover:bg-blue-700">
+                  <Link href="/test/compare" className="w-full sm:w-auto">
+                    <Button size="sm" variant="default" className="w-full sm:w-auto text-xs bg-blue-600 hover:bg-blue-700">
                       비교 보기 →
                     </Button>
                   </Link>
@@ -246,36 +236,36 @@ export default function SearchPage() {
 
       {/* 미니 품목 바 (하단 고정) */}
       {quoteItems.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 z-40 w-full max-w-3xl -translate-x-1/2 px-4">
-          <div className="flex items-center justify-between rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-lg backdrop-blur">
-            <p className="text-xs text-slate-700">
+        <div className="fixed bottom-4 left-1/2 z-40 w-full max-w-3xl -translate-x-1/2 px-2 sm:px-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-slate-200 bg-white/95 px-3 sm:px-4 py-2 shadow-lg backdrop-blur">
+            <p className="text-[10px] sm:text-xs text-slate-700 text-center sm:text-left">
               품목 리스트 {quoteItems.length}개 · 합계 ₩{totalAmount.toLocaleString("ko-KR")}
             </p>
             <Sheet open={isQuoteSheetOpen} onOpenChange={setIsQuoteSheetOpen}>
               <SheetTrigger asChild>
-                <Button size="sm" className="text-xs">
-                  품목 리스트 열기
+                <Button size="sm" className="text-[10px] sm:text-xs w-full sm:w-auto">
+                  품목 리스트 열기({quoteItems.length})
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-lg overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>품목 리스트</SheetTitle>
-                  <SheetDescription>
+              <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+                <SheetHeader className="pb-4">
+                  <SheetTitle className="text-base">품목 리스트</SheetTitle>
+                  <SheetDescription className="text-xs">
                     현재 선택된 품목과 수량을 확인하고, 필요하면 수정을 진행할 수 있습니다.
                   </SheetDescription>
                 </SheetHeader>
-                <div className="mt-4">
+                <div className="mt-2">
                   <div className="space-y-4">
-                    <div className="max-h-[60vh] overflow-y-auto border rounded-lg">
+                    <div className="max-h-[65vh] overflow-y-auto border rounded-lg">
                       <Table>
                         <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                           <TableRow>
-                            <TableHead className="w-12">No.</TableHead>
-                            <TableHead>제품명</TableHead>
-                            <TableHead className="text-right">수량</TableHead>
-                            <TableHead className="text-right">단가</TableHead>
-                            <TableHead className="text-right">금액</TableHead>
-                            <TableHead className="w-10 text-center text-xs text-slate-400"></TableHead>
+                            <TableHead className="w-10 text-xs py-2">No.</TableHead>
+                            <TableHead className="text-xs py-2 min-w-[200px]">제품명</TableHead>
+                            <TableHead className="text-right text-xs py-2 w-24">수량</TableHead>
+                            <TableHead className="text-right text-xs py-2 w-24">단가</TableHead>
+                            <TableHead className="text-right text-xs py-2 w-28">금액</TableHead>
+                            <TableHead className="w-10 text-center text-xs py-2"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -284,29 +274,29 @@ export default function SearchPage() {
                           const vendor = product?.vendors?.[0];
                           return (
                             <TableRow key={item.id}>
-                              <TableCell className="font-medium">{index + 1}</TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium text-sm">
+                              <TableCell className="font-medium text-xs py-3">{index + 1}</TableCell>
+                              <TableCell className="py-3">
+                                <div className="space-y-1">
+                                  <div className="font-medium text-xs leading-snug">
                                     {product?.name || item.productName || "제품"}
                                   </div>
                                   {product?.vendors?.[0]?.vendor?.name && (
-                                    <div className="text-xs text-slate-500">
+                                    <div className="text-[10px] text-slate-500">
                                       {product.vendors[0].vendor.name}
                                     </div>
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right py-3">
                                 <div className="flex items-center justify-end gap-1">
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5"
                                     onClick={() => updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) })}
                                     disabled={(item.quantity || 1) <= 1}
                                   >
-                                    <Minus className="h-3 w-3" />
+                                    <Minus className="h-2.5 w-2.5" />
                                   </Button>
                                   <Input
                                     type="number"
@@ -316,42 +306,42 @@ export default function SearchPage() {
                                       const qty = parseInt(e.target.value) || 1;
                                       updateQuoteItem(item.id, { quantity: Math.max(1, qty) });
                                     }}
-                                    className="h-7 w-14 text-center text-xs p-0"
+                                    className="h-6 w-12 text-center text-[10px] p-0"
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5"
                                     onClick={() => updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 })}
                                   >
-                                    <Plus className="h-3 w-3" />
+                                    <Plus className="h-2.5 w-2.5" />
                                   </Button>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-right text-xs py-3">
                                 {vendor?.priceInKRW ? (
                                   <PriceDisplay price={vendor.priceInKRW} currency={vendor.currency || "KRW"} />
                                 ) : (
                                   "-"
                                 )}
                               </TableCell>
-                              <TableCell className="text-right font-medium">
+                              <TableCell className="text-right font-medium text-xs py-3">
                                 {item.lineTotal ? (
                                   <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
                                 ) : (
                                   "-"
                                 )}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="text-center py-3">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-slate-400 hover:text-red-500"
+                                  className="h-6 w-6 text-slate-400 hover:text-red-500"
                                   onClick={() => setItemToDelete(item.id)}
                                   aria-label="품목 삭제"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -360,22 +350,23 @@ export default function SearchPage() {
                       </TableBody>
                     </Table>
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <span className="font-semibold text-slate-900">총액:</span>
-                      <span className="font-bold text-lg text-slate-900">
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <span className="font-semibold text-sm text-slate-900">총액:</span>
+                      <span className="font-bold text-base text-slate-900">
                         ₩{totalAmount.toLocaleString("ko-KR")}
                       </span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-2">
                       <Button
                         variant="outline"
-                        className="flex-1"
+                        size="sm"
+                        className="flex-1 text-xs"
                         onClick={() => setIsQuoteSheetOpen(false)}
                       >
                         닫기
                       </Button>
                       <Link href="/test/quote" className="flex-1">
-                        <Button className="w-full bg-slate-900 hover:bg-slate-800">
+                        <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800 text-xs">
                           견적 보기 →
                         </Button>
                       </Link>

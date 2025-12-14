@@ -25,38 +25,90 @@ export async function POST(request: NextRequest) {
       deliveryDate,
       deliveryLocation,
       specialNotes,
-      productIds,
+      items, // 새로운 형식: [{ productId, vendorId, quantity, notes }]
+      productIds, // 기존 형식 (하위 호환성)
       quantities,
       notes,
       organizationId,
     } = body;
 
-    if (!title || !productIds || !Array.isArray(productIds) || productIds.length === 0) {
+    // items가 있으면 새로운 형식, 없으면 기존 형식
+    const quoteItems = items || (productIds ? productIds.map((pid: string, idx: number) => ({
+      productId: pid,
+      vendorId: null, // 기존 형식은 vendorId 없음
+      quantity: quantities?.[pid] || 1,
+      notes: notes?.[pid] || "",
+    })) : []);
+
+    if (!title || quoteItems.length === 0) {
       return NextResponse.json(
-        { error: "Title and productIds are required" },
+        { error: "Title and items are required" },
         { status: 400 }
       );
     }
 
-    // 견적 생성
-    const quote = await createQuote({
-      userId: session.user.id,
-      organizationId,
-      title,
-      message,
-      deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
-      deliveryLocation,
-      specialNotes,
-      productIds,
-      quantities,
-      notes,
+    // 벤더별로 그룹화
+    const vendorGroups = new Map<string, typeof quoteItems>();
+    quoteItems.forEach((item: any) => {
+      const vendorId = item.vendorId || "unknown";
+      if (!vendorGroups.has(vendorId)) {
+        vendorGroups.set(vendorId, []);
+      }
+      vendorGroups.get(vendorId)!.push(item);
     });
 
+    // 각 벤더별로 견적 생성
+    const quotes = [];
+    for (const [vendorId, items] of vendorGroups.entries()) {
+      const productIds = items.map((item: any) => item.productId);
+      const quantities = Object.fromEntries(items.map((item: any) => [item.productId, item.quantity || 1]));
+      const itemNotes = Object.fromEntries(items.map((item: any) => [item.productId, item.notes || ""]));
+      const vendorIds = Object.fromEntries(items.map((item: any) => [item.productId, item.vendorId]).filter(([_, vid]: [string, any]) => vid));
+      
+      // 벤더별 제목 생성
+      const vendorTitle = vendorId !== "unknown" 
+        ? `${title} (${items.length}건)`
+        : title;
+
+      // 벤더별 메시지 생성 (각 벤더의 품목 수와 금액에 맞춤)
+      const vendorProductCount = items.length;
+      const vendorTotalAmount = items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0);
+      const vendorMessage = message 
+        ? message.replace(/\d+건/g, `${vendorProductCount}건`)
+                 .replace(/품목 수: \d+개/g, `품목 수: ${vendorProductCount}개`)
+                 .replace(/예상 금액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`)
+                 .replace(/예상 총액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`)
+        : `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+
+      const quote = await createQuote({
+        userId: session.user.id,
+        organizationId,
+        title: vendorTitle,
+        message: vendorMessage,
+        deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
+        deliveryLocation,
+        specialNotes,
+        productIds,
+        quantities,
+        notes: itemNotes,
+        vendorIds,
+      });
+      
+      quotes.push(quote);
+    }
+
+    // 첫 번째 견적을 메인으로 사용 (하위 호환성)
+    const quote = quotes[0];
+
     // 관련 벤더 이메일 수집
+    const vendorIds = Array.from(vendorGroups.keys()).filter(id => id !== "unknown");
     const productVendors = await db.productVendor.findMany({
       where: {
+        vendorId: {
+          in: vendorIds,
+        },
         productId: {
-          in: productIds,
+          in: quoteItems.map((item: any) => item.productId),
         },
       },
       include: {
@@ -67,16 +119,9 @@ export async function POST(request: NextRequest) {
     const vendorEmails = Array.from(
       new Set(
         productVendors
-          // 타입 에러 수정: pv 파라미터에 타입 명시
           .map((pv: any) => pv.vendor.email)
-          // 타입 에러 수정: email 파라미터에 타입 명시
           .filter((email: any): email is string => !!email)
       )
-    );
-
-    const vendorIds = Array.from(
-      // 타입 에러 수정: pv 파라미터에 타입 명시
-      new Set(productVendors.map((pv: any) => pv.vendor.id))
     );
 
     // 리드당 과금 처리 (비동기, 실패해도 견적은 생성됨)
