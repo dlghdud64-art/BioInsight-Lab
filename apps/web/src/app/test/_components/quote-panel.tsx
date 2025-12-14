@@ -62,6 +62,39 @@ export function QuotePanel() {
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
+  // 절감 제안 조회
+  const { data: costOptimization } = useQuery({
+    queryKey: ["cost-optimization", quoteItems.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || 0,
+      lineTotal: item.lineTotal || 0,
+    }))],
+    queryFn: async () => {
+      if (quoteItems.length === 0) return null;
+
+      const response = await fetch("/api/quotes/cost-optimization", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteItems: quoteItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice || 0,
+            lineTotal: item.lineTotal || 0,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch cost optimization");
+      }
+
+      return response.json();
+    },
+    enabled: quoteItems.length > 0,
+  });
+
   // 벤더별 그룹화
   const groupedByVendor = useMemo(() => {
     if (!groupByVendor) {
