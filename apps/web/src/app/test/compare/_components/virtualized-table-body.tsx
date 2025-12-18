@@ -52,7 +52,7 @@ export function VirtualizedTableBody({
   return (
     <>
       {virtualizer.getVirtualItems().map((virtualRow) => {
-        const field = fields[virtualRow.key];
+        const field = fields[Number(virtualRow.key)];
         return (
           <TableRow
             key={virtualRow.key}
