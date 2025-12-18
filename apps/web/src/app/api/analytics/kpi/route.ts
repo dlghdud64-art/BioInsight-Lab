@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       _count: true,
     });
 
-    const returnUsers = recentUsers.filter((u) => (u._count || 0) >= 2).length;
+    const returnUsers = recentUsers.filter((u: { userId: string | null; _count: number }) => (u._count || 0) >= 2).length;
     const returnRate = totalUsers > 0 ? (returnUsers / totalUsers) * 100 : 0;
 
     // KPI 계산
