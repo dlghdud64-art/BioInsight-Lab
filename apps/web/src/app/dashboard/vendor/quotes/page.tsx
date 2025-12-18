@@ -268,7 +268,7 @@ export default function VendorQuotesPage() {
     ]);
 
     const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((row) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
       .join("\n");
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
