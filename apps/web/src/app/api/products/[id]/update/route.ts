@@ -84,9 +84,7 @@ export async function PATCH(
         const afterSafety: Record<string, any> = {};
 
         for (const field of safetyFields) {
-          // @ts-expect-error - Prisma 모델 필드 접근
           beforeSafety[field] = (existingProduct as any)[field] ?? null;
-          // @ts-expect-error - Prisma 모델 필드 접근
           afterSafety[field] = (updatedProduct as any)[field] ?? null;
         }
 
