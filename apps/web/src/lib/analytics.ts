@@ -69,7 +69,6 @@ export interface AnalyticsEventProperties {
   // rfq_*
   rfq_id?: string;
   vendor_count?: number;
-  item_count?: number;
   
   // budget_*
   budget_id?: string;
