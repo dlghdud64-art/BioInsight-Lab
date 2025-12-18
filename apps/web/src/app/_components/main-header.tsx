@@ -134,7 +134,7 @@ export function MainHeader() {
               <DropdownMenuItem asChild>
                 <Link href="/test/quote" className="flex items-center gap-2">
                   <ShoppingCart className="h-4 w-4" />
-                  <span>품목 리스트</span>
+                  <span>견적 요청</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

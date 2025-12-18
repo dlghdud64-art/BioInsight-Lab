@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, GitCompare, FileText, FlaskConical } from "lucide-react";
+import { Search, GitCompare, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
   {
     id: "search",
-    label: "검색",
+    label: "검색/AI 분석",
     fullLabel: "검색/AI 분석",
     href: "/test/search",
     icon: Search,
@@ -17,7 +17,7 @@ const steps = [
   },
   {
     id: "compare",
-    label: "비교",
+    label: "제품 비교",
     fullLabel: "제품 비교",
     href: "/test/compare",
     icon: GitCompare,
@@ -26,21 +26,12 @@ const steps = [
   },
   {
     id: "quote",
-    label: "품목 리스트",
-    fullLabel: "품목 리스트",
+    label: "견적 요청",
+    fullLabel: "견적 요청",
     href: "/test/quote",
     icon: FileText,
     step: 3,
     match: /^\/test\/quote(\/.*)?$/,
-  },
-  {
-    id: "protocol",
-    label: "프로토콜 분석",
-    fullLabel: "프로토콜 분석",
-    href: "/protocol/bom",
-    icon: FlaskConical,
-    step: 4,
-    match: /^\/protocol\/bom(\/.*)?$/,
   },
 ];
 
@@ -64,25 +55,28 @@ export function StepNav() {
   return (
     <nav className="w-full md:w-auto">
       {/* 모바일: Step + Label 형태 */}
-      <div className="grid grid-cols-4 gap-2 md:hidden">
+      <div className="grid grid-cols-3 gap-1.5 md:hidden">
         {steps.map((step) => {
           const isActive = step.match
             ? step.match.test(pathname)
             : pathname === step.href || pathname.startsWith(step.href + "/");
+          
+          // 모바일용 짧은 라벨
+          const mobileLabel = step.id === "search" ? "검색/AI" : step.id === "compare" ? "제품 비교" : step.label;
           
           return (
             <Link
               key={step.id}
               href={step.href}
               className={cn(
-                "flex flex-col items-center justify-center rounded-full px-2 py-2 text-xs transition-colors",
+                "flex flex-col items-center justify-center rounded-full px-1.5 py-2 text-xs transition-colors min-h-[60px]",
                 isActive
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-600"
               )}
             >
-              <span className="text-[11px] opacity-80">Step {step.step}</span>
-              <span className="mt-0.5 font-medium text-[10px] leading-tight text-center">{step.label}</span>
+              <span className="text-[10px] opacity-80 mb-0.5">Step {step.step}</span>
+              <span className="font-medium text-[9px] leading-tight text-center px-0.5 break-words">{mobileLabel}</span>
             </Link>
           );
         })}

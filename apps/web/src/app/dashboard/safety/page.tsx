@@ -191,16 +191,16 @@ export default function SafetyManagerPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table>
+                      <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-xs md:text-sm">제품명</TableHead>
+                            <TableHead className="text-xs md:text-sm">제품명</TableHead>
                           <TableHead className="text-xs md:text-sm">카탈로그 번호</TableHead>
                           <TableHead className="text-xs md:text-sm">위험 코드</TableHead>
                           <TableHead className="text-xs md:text-sm">피크토그램</TableHead>
                           <TableHead className="text-xs md:text-sm">MSDS</TableHead>
                           <TableHead className="text-xs md:text-sm">보관 조건</TableHead>
-                          <TableHead className="text-xs md:text-sm">액션</TableHead>
+                            <TableHead className="text-xs md:text-sm">액션</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -210,7 +210,12 @@ export default function SafetyManagerPage() {
                           <TableRow key={product.id} className={safetyLevel.bgColor}>
                             <TableCell className="text-xs md:text-sm font-medium">
                               <div className="flex items-center gap-2">
-                                {product.name}
+                                <Link
+                                  href={`/products/${product.id}`}
+                                  className="hover:underline"
+                                >
+                                  {product.name}
+                                </Link>
                                 <Badge
                                   variant="outline"
                                   className={`${safetyLevel.color} ${safetyLevel.borderColor} text-[9px]`}

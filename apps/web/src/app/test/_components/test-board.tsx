@@ -136,7 +136,7 @@ export function TestBoard() {
         <TestBoardColumn
           step={3}
           title="결과 & 공유"
-          description="제품 후보, 품목 리스트, 그룹웨어 공유 기능을 체험합니다."
+          description="제품 후보, 견적 요청 리스트, 그룹웨어 공유 기능을 체험합니다."
         >
           <CandidateProductsCard
             products={products}

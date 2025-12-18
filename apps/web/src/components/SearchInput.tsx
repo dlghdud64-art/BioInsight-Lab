@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 export function SearchInput() {
   const router = useRouter();
@@ -18,6 +19,12 @@ export function SearchInput() {
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    
+    // Analytics: search_run 이벤트 추적
+    trackEvent("search_run", {
+      query: query.trim(),
+    });
+    
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 

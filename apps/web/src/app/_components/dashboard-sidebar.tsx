@@ -72,6 +72,11 @@ const navItems: NavItem[] = [
     icon: Activity,
   },
   {
+    title: "KPI 대시보드",
+    href: "/dashboard/analytics",
+    icon: BarChart3,
+  },
+  {
     title: "안전 관리",
     href: "/dashboard/safety",
     icon: Shield,

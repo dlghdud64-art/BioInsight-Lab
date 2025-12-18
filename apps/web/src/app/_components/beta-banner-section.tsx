@@ -26,7 +26,7 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
                   </Badge>
                 </div>
                 <p className="text-sm leading-relaxed text-slate-700">
-                  검색/비교/품목 리스트/복사·다운로드 기능은 현재 Beta 기간 동안 무료로 제공됩니다.
+                  검색/비교/견적 요청 리스트/복사·다운로드 기능은 현재 Beta 기간 동안 무료로 제공됩니다.
                   <br />
                   이후에는 Team/Organization 플랜으로 확장 예정입니다.
                 </p>

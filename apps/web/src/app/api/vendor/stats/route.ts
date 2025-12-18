@@ -12,19 +12,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 벤더 정보 조회
+    // 사용자 정보 조회 (SUPPLIER 역할 + 이메일 기반 벤더 매핑)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: {
-        vendor: true,
+      select: {
+        role: true,
+        email: true,
       },
     });
 
-    if (!user?.vendor) {
+    if (!user || user.role !== "SUPPLIER" || !user.email) {
+      return NextResponse.json({ error: "Not a supplier" }, { status: 403 });
+    }
+
+    // 이메일로 벤더 찾기 (운영 단계에서는 User-Vendor 매핑 테이블 도입 예정)
+    const vendor = await db.vendor.findFirst({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (!vendor) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
 
-    const vendorId = user.vendor.id;
+    const vendorId = vendor.id;
 
     // 견적 요청 통계
     const totalQuotes = await db.quote.count({

@@ -14,11 +14,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const filterType = searchParams.get("filterType"); // "high-risk" | "no-msds" | "hazard-code"
+    const rawFilterType = searchParams.get("filterType") || null; // "high-risk" | "no-msds" | "hazard-code" | ""
     const hazardCode = searchParams.get("hazardCode"); // 특정 위험 코드
     const organizationId = searchParams.get("organizationId"); // 조직 ID (선택)
 
     let where: any = {};
+
+    // UI에서는 filterType을 비워두고 hazardCode만 보낼 수 있으므로,
+    // 이 경우를 "hazard-code" 필터로 간주
+    const filterType =
+      rawFilterType && rawFilterType.length > 0
+        ? rawFilterType
+        : hazardCode
+        ? "hazard-code"
+        : null;
 
     // 필터 타입에 따른 조건 설정
     // Prisma의 JSON 필드는 raw query를 사용하거나 모든 제품을 가져온 후 필터링

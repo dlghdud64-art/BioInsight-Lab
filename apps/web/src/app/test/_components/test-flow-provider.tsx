@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
+import { trackEvent } from "@/lib/analytics";
 
 interface TestFlowContextType {
   // 검색 상태
@@ -37,7 +38,7 @@ interface TestFlowContextType {
   protocolAnalysis: any;
   isExtracting: boolean;
   
-  // 비교/품목 리스트
+  // 비교/견적 요청 리스트
   compareIds: string[];
   quoteItems: any[];
   
@@ -171,6 +172,14 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
       });
     },
     onSuccess: (data: any) => {
+      // Analytics: protocol_extract_run 성공 시 추출된 항목 수 추적
+      const extractedItemCount = data?.reagents?.length || data?.items?.length || 0;
+      trackEvent("protocol_extract_run", {
+        extracted_item_count: extractedItemCount,
+        has_target: !!data?.target,
+        has_experiment_type: !!data?.experimentType,
+      });
+      
       toast({
         title: "분석 완료",
         description: "프로토콜에서 시약 정보를 성공적으로 추출했습니다.",
@@ -317,6 +326,10 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
 
   const runProtocolAnalysis = () => {
     if (protocolText) {
+      // Analytics: protocol_extract_run 이벤트 추적
+      trackEvent("protocol_extract_run", {
+        text_length: protocolText.length,
+      });
       extractProtocolMutation.mutate(protocolText);
     }
   };
@@ -329,7 +342,7 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title || "품목 리스트",
+          title: title || "견적 요청 리스트",
           items: quoteItems.map((item, index) => ({
             productId: item.productId,
             lineNumber: index + 1,
@@ -343,8 +356,8 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
       });
 
       if (!quoteResponse.ok) {
-        const error = await quoteResponse.json().catch(() => ({ error: "품목 리스트 생성에 실패했습니다." }));
-        throw new Error(error.error || "품목 리스트 생성에 실패했습니다.");
+        const error = await quoteResponse.json().catch(() => ({ error: "견적 요청 리스트 생성에 실패했습니다." }));
+        throw new Error(error.error || "견적 요청 리스트 생성에 실패했습니다.");
       }
       const quote = await quoteResponse.json();
 
@@ -382,7 +395,7 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
 
   const generateShareLink = async (title?: string, expiresInDays?: number) => {
     if (quoteItems.length === 0) {
-      throw new Error("품목 리스트가 비어있습니다.");
+      throw new Error("견적 요청 리스트가 비어있습니다.");
     }
     // expiresInDays를 mutation에 전달하기 위해 임시로 title에 포함
     // 실제로는 mutation 함수를 수정해야 함

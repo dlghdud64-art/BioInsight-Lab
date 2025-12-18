@@ -5,18 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check, Search, Sparkles, GitCompare as Compare } from "lucide-react";
+import { X, ShoppingCart, BarChart3, Eye, EyeOff, Loader2, ArrowUpDown, Filter, Download, Plus, ArrowUp, ArrowDown, GripVertical, Edit2, FileText, Check, Search, Sparkles, GitCompare as Compare, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriceDisplay } from "@/components/products/price-display";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { trackEvent } from "@/lib/analytics";
+import { Disclaimer } from "@/components/legal/disclaimer";
 
 export default function TestComparePage() {
   const { compareIds, toggleCompare, clearCompare, addProductToQuote } = useTestFlow();
@@ -76,6 +78,15 @@ export default function TestComparePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allProducts.length]);
+
+  // Analytics: compare_open 이벤트 추적
+  useEffect(() => {
+    if (compareIds.length > 0) {
+      trackEvent("compare_open", {
+        product_count: compareIds.length,
+      });
+    }
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // 순서 변경 함수
   const moveProduct = (index: number, direction: "up" | "down") => {
@@ -363,6 +374,7 @@ export default function TestComparePage() {
   // 원료 카테고리인 제품이 있는지 확인
   const hasRawMaterial = products.some((p: any) => p.category === "RAW_MATERIAL");
   
+  // 원료 카테고리인 경우 원료 필드를 우선 노출
   const compareFields = [
     { key: "name", label: "제품명" },
     { key: "catalogNumber", label: "카탈로그 번호" },
@@ -370,12 +382,12 @@ export default function TestComparePage() {
     { key: "category", label: "카테고리" },
     { key: "specification", label: "규격/용량" },
     { key: "grade", label: "Grade" },
-    // 원료 카테고리인 경우 추가 필드
+    // 원료 카테고리인 경우 원료 필드를 우선 노출 (일반 필드보다 앞에 배치)
     ...(hasRawMaterial ? [
-      { key: "pharmacopoeia", label: "규정/표준" },
-      { key: "coaUrl", label: "COA" },
-      { key: "countryOfOrigin", label: "원산지" },
-      { key: "manufacturer", label: "제조사" },
+      { key: "pharmacopoeia", label: "규정/표준", priority: true },
+      { key: "coaUrl", label: "COA", priority: true },
+      { key: "countryOfOrigin", label: "원산지", priority: true },
+      { key: "manufacturer", label: "제조사", priority: true },
     ] : []),
     { key: "price", label: "최저가" },
     { key: "leadTime", label: "납기일" },
@@ -390,15 +402,18 @@ export default function TestComparePage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="w-full sm:w-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">제품 비교 ({products.length}개)</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center sm:text-left">
-            여러 제품의 스펙, 가격, 납기를 한눈에 비교하세요
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center sm:text-left whitespace-nowrap">
+            스펙·가격·납기를 한눈에 비교하세요
           </p>
+          <div className="mt-2">
+            <Disclaimer type="price" />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-end">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
           <Button
             variant="outline"
             onClick={() => setShowHighlightDifferences(!showHighlightDifferences)}
-            className="gap-2 text-xs sm:text-sm"
+            className="gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm h-7 sm:h-8"
             size="sm"
           >
             {showHighlightDifferences ? (
@@ -415,7 +430,7 @@ export default function TestComparePage() {
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={clearCompare} size="sm" className="text-xs sm:text-sm">
+          <Button variant="outline" onClick={clearCompare} size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8">
             전체 삭제
           </Button>
           <Button
@@ -424,10 +439,10 @@ export default function TestComparePage() {
               products.forEach((product) => addProductToQuote(product));
               toast({
                 title: "추가 완료",
-                description: `${products.length}개 제품이 품목 리스트에 추가되었습니다.`,
+                description: `${products.length}개 제품이 견적 요청 리스트에 추가되었습니다.`,
               });
             }}
-            className="gap-2 text-xs sm:text-sm"
+            className="gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm h-7 sm:h-8"
             size="sm"
           >
             <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -471,29 +486,13 @@ export default function TestComparePage() {
               link.click();
               document.body.removeChild(link);
             }}
-            className="gap-2 text-xs sm:text-sm"
+            className="gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm h-7 sm:h-8"
             size="sm"
           >
             <Download className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">CSV 내보내기</span>
             <span className="sm:hidden">CSV</span>
           </Button>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Link href="/test/search" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm" size="sm">
-                <Search className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                <span className="hidden sm:inline">검색 페이지로 이동</span>
-                <span className="sm:hidden">검색</span>
-              </Button>
-            </Link>
-            <Link href="/test/quote" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto text-xs sm:text-sm" size="sm">
-                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                <span className="hidden sm:inline">품목 리스트로 이동</span>
-                <span className="sm:hidden">리스트</span>
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -626,44 +625,44 @@ export default function TestComparePage() {
                 >
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <p className="font-medium text-xs sm:text-sm text-slate-900 truncate w-full sm:w-auto text-center sm:text-left">
+                      <p className="font-medium text-[11px] sm:text-xs md:text-sm text-slate-900 truncate w-full sm:w-auto text-center sm:text-left">
                         {product.name}
                       </p>
                       <Link href={`/products/${product.id}`} className="w-full sm:w-auto flex justify-center sm:justify-start">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-6 px-2 text-xs w-full sm:w-auto"
+                          className="h-6 px-2 text-[10px] sm:text-xs w-full sm:w-auto"
                           onClick={(e) => e.stopPropagation()}
                         >
                           상세보기
                         </Button>
                       </Link>
                     </div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap justify-center sm:justify-start">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap justify-center sm:justify-start">
                       {product.brand && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
                           {product.brand}
                         </Badge>
                       )}
                       {product.category && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[10px] sm:text-xs">
                           {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] || product.category}
                         </Badge>
                       )}
                       {vendor?.vendor?.name && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-[10px] sm:text-xs text-slate-500">
                           {vendor.vendor.name}
                         </span>
                       )}
                       {vendor?.priceInKRW && (
-                        <span className="text-xs font-medium text-slate-900">
+                        <span className="text-[10px] sm:text-xs font-medium text-slate-900">
                           ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto sm:ml-4 justify-center sm:justify-end">
+                  <div className="flex gap-1.5 sm:gap-2 w-full sm:w-auto sm:ml-4 justify-center sm:justify-end">
                     <Button
                       size="sm"
                       variant="outline"
@@ -671,10 +670,10 @@ export default function TestComparePage() {
                         addProductToQuote(product);
                         toast({
                           title: "추가 완료",
-                          description: `${product.name}이(가) 품목 리스트에 추가되었습니다.`,
+                          description: `${product.name}이(가) 견적 요청 리스트에 추가되었습니다.`,
                         });
                       }}
-                      className="text-xs flex-1 sm:flex-none"
+                      className="text-[10px] sm:text-xs flex-1 sm:flex-none h-7 sm:h-8"
                     >
                       <ShoppingCart className="h-3 w-3 mr-1" />
                       추가
@@ -682,8 +681,14 @@ export default function TestComparePage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => toggleCompare(product.id)}
-                      className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex-1 sm:flex-none"
+                      onClick={() => {
+                        // Analytics: compare_remove_item 이벤트 추적
+                        trackEvent("compare_remove_item", {
+                          product_id: product.id,
+                        });
+                        toggleCompare(product.id);
+                      }}
+                      className="text-[10px] sm:text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex-1 sm:flex-none h-7 sm:h-8"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
@@ -696,20 +701,36 @@ export default function TestComparePage() {
         </CardContent>
       </Card>
 
+      {/* 네비게이션 버튼 */}
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
+        <Link href="/test/search" className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm h-9 sm:h-10" size="sm">
+            <Search className="h-4 w-4 mr-2" />
+            검색 페이지로 이동
+          </Button>
+        </Link>
+        <Link href="/test/quote" className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10" size="sm">
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            견적 요청 리스트로 이동
+          </Button>
+        </Link>
+      </div>
+
       {/* 차트 섹션 */}
       {products.length > 0 && (
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
           {/* 가격 비교 차트 */}
           <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 justify-center sm:justify-start">
-              <BarChart3 className="h-5 w-5" />
-              가격 비교
-            </CardTitle>
-            <CardDescription className="text-center sm:text-left">제품별 최저가 비교</CardDescription>
-          </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 justify-center sm:justify-start text-sm sm:text-base md:text-lg">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                가격 비교
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs text-center sm:text-left">제품별 최저가 비교</CardDescription>
+            </CardHeader>
+            <CardContent className="p-2 sm:p-4">
+              <ResponsiveContainer width="100%" height={180} className="sm:h-[200px]">
                 <BarChart data={priceChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
@@ -736,17 +757,17 @@ export default function TestComparePage() {
           {/* 납기 비교 차트 */}
           {leadTimeChartData.length > 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 justify-center sm:justify-start">
-                  <BarChart3 className="h-5 w-5" />
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-1.5 sm:gap-2 justify-center sm:justify-start text-sm sm:text-base md:text-lg">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
                   납기 비교
                 </CardTitle>
-                <CardDescription className="text-center sm:text-left">
+                <CardDescription className="text-[10px] sm:text-xs text-center sm:text-left">
                   제품별 평균 납기일 비교 (다른 사용자들의 실제 구매 데이터 기반)
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
+              <CardContent className="p-2 sm:p-4">
+                <ResponsiveContainer width="100%" height={180} className="sm:h-[200px]">
                   <BarChart data={leadTimeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
@@ -822,36 +843,36 @@ export default function TestComparePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+            <div className="overflow-x-auto -mx-2 sm:-mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-2 sm:px-4 sm:px-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-white z-10 w-[120px] sm:w-[150px] text-xs sm:text-sm text-center sm:text-left">항목</TableHead>
+                      <TableHead className="sticky left-0 bg-white z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
                       {products.map((product: any, index: number) => (
-                        <TableHead key={product.id} className="min-w-[150px] sm:min-w-[180px] text-xs sm:text-sm">
-                          <div className="flex items-center justify-between gap-1 sm:gap-2">
-                            <span className="flex-1 truncate text-xs sm:text-sm text-center sm:text-left">{product.name}</span>
-                            <div className="flex flex-col gap-1">
+                        <TableHead key={product.id} className="min-w-[120px] sm:min-w-[150px] md:min-w-[180px] text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-4">
+                          <div className="flex items-center justify-between gap-0.5 sm:gap-1 md:gap-2">
+                            <span className="flex-1 truncate text-[10px] sm:text-xs md:text-sm text-center sm:text-left">{product.name}</span>
+                            <div className="flex flex-col gap-0.5 sm:gap-1">
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5"
                                 onClick={() => moveProduct(index, "up")}
                                 disabled={index === 0}
                                 title="위로 이동"
                               >
-                                <ArrowUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                <ArrowUp className="h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3" />
                               </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-4 w-4 sm:h-5 sm:w-5"
+                                className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5"
                                 onClick={() => moveProduct(index, "down")}
                                 disabled={index === products.length - 1}
                                 title="아래로 이동"
                               >
-                                <ArrowDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                <ArrowDown className="h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3" />
                               </Button>
                             </div>
                           </div>
@@ -862,7 +883,7 @@ export default function TestComparePage() {
                   <TableBody>
                     {compareFields.map((field) => (
                       <TableRow key={field.key}>
-                        <TableCell className="sticky left-0 bg-white font-medium w-[120px] sm:w-[150px] text-xs sm:text-sm text-center sm:text-left">
+                        <TableCell className="sticky left-0 bg-white font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">
                           {field.label}
                         </TableCell>
                       {products.map((product: any) => {
@@ -932,14 +953,14 @@ export default function TestComparePage() {
                           const isAverage = !manualLeadTime && averageLeadTime > 0;
                           
                         return (
-                          <TableCell key={product.id} className={`${cellClassName} text-xs sm:text-sm text-center sm:text-left`}>
-                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2">
+                          <TableCell key={product.id} className={`${cellClassName} text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4`}>
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-0.5 sm:gap-1 md:gap-2">
                               {displayLeadTime > 0 ? (
                                 <>
                                   <span className={isAverage ? "text-slate-600" : ""}>
                                     {displayLeadTime}일
                                     {isAverage && (
-                                      <span className="text-[10px] sm:text-xs text-slate-400 ml-1">
+                                      <span className="text-[9px] sm:text-[10px] md:text-xs text-slate-400 ml-0.5 sm:ml-1">
                                         ({isUserAverage ? "다른 사용자 평균" : "벤더 평균"})
                                       </span>
                                     )}
@@ -968,11 +989,11 @@ export default function TestComparePage() {
                         }
                         
                         return (
-                          <TableCell key={product.id} className={`${cellClassName} text-xs sm:text-sm text-center sm:text-left`}>
+                          <TableCell key={product.id} className={`${cellClassName} text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4`}>
                             {field.key === "price" && value > 0 ? (
-                              `₩${value.toLocaleString()}`
+                              <span className="whitespace-nowrap">₩{value.toLocaleString()}</span>
                             ) : (
-                              value
+                              <span className="break-words">{String(value)}</span>
                             )}
                           </TableCell>
                         );
@@ -989,13 +1010,13 @@ export default function TestComparePage() {
 
       {/* 대체품 추천 섹션 */}
       {products.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg flex items-center gap-2 justify-center sm:justify-start">
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+        <Card className="mt-4 sm:mt-6">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-sm sm:text-base md:text-lg flex items-center gap-1.5 sm:gap-2 justify-center sm:justify-start">
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-600" />
               대체품 추천
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm text-center sm:text-left">
+            <CardDescription className="text-[10px] sm:text-xs md:text-sm text-center sm:text-left">
               각 제품과 유사한 스펙의 대체품을 추천합니다.
             </CardDescription>
           </CardHeader>

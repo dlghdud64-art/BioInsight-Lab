@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { trackEvent } from "@/lib/analytics";
 
 interface Budget {
   id: string;
@@ -77,9 +78,17 @@ export default function BudgetPage() {
       if (!response.ok) throw new Error("Failed to save budget");
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      
+      // Analytics: budget_set 이벤트 추적
+      trackEvent("budget_set", {
+        budget_id: data.id,
+        budget_amount: data.amount,
+        currency: data.currency,
+      });
+      
       setIsDialogOpen(false);
       setEditingBudget(null);
       toast({

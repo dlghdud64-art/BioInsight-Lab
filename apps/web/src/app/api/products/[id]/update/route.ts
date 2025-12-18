@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { ActivityType } from "@prisma/client";
+import { createActivityLogServer } from "@/lib/api/activity-logs";
 
 // 제품 정보 업데이트 API (관리자 또는 제품 소유자만 가능)
 export async function PATCH(
@@ -37,8 +39,14 @@ export async function PATCH(
       "specifications",
       "datasheetUrl",
       "imageUrl",
+      // 안전·규제 정보
       "msdsUrl",
       "safetyNote",
+      // 구조화된 안전 필드 (P2)
+      "hazardCodes",
+      "pictograms",
+      "storageCondition",
+      "ppe",
     ];
 
     const updateData: any = {};
@@ -65,6 +73,38 @@ export async function PATCH(
       where: { id },
       data: updateData,
     });
+
+    // 안전 필드 변경 시 액티비티 로그 기록
+    const safetyFields = ["msdsUrl", "safetyNote", "hazardCodes", "pictograms", "storageCondition", "ppe"] as const;
+    const safetyChanged = safetyFields.some((field) => body[field] !== undefined);
+
+    if (safetyChanged) {
+      try {
+        const beforeSafety: Record<string, any> = {};
+        const afterSafety: Record<string, any> = {};
+
+        for (const field of safetyFields) {
+          // @ts-expect-error - Prisma 모델 필드 접근
+          beforeSafety[field] = (existingProduct as any)[field] ?? null;
+          // @ts-expect-error - Prisma 모델 필드 접근
+          afterSafety[field] = (updatedProduct as any)[field] ?? null;
+        }
+
+        await createActivityLogServer({
+          db,
+          activityType: ActivityType.QUOTE_UPDATED,
+          entityType: "product_safety",
+          entityId: id,
+          userId: session.user.id,
+          metadata: {
+            before: beforeSafety,
+            after: afterSafety,
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to create activity log for product safety update:", logError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

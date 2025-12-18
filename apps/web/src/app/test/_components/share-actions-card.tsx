@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 interface ShareActionsCardProps {
   productIds: string[];
@@ -20,6 +21,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [shareTitle, setShareTitle] = useState("");
+  const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const { toast } = useToast();
 
   // 선택된 제품 정보 가져오기
@@ -94,7 +96,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
       setTimeout(() => setCopied(false), 2000);
       toast({
         title: "복사 완료",
-        description: "품목 리스트가 클립보드에 복사되었습니다.",
+        description: "견적 요청 리스트가 클립보드에 복사되었습니다.",
       });
     } catch (error) {
       console.error("Failed to copy:", error);
@@ -171,13 +173,13 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
 
   // 공유 링크 생성
   const createShareLinkMutation = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (title: string, expiresIn: number) => {
       // 먼저 QuoteList 생성
       const quoteResponse = await fetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title || "품목 리스트",
+          title: title || "견적 요청 리스트",
           productIds: productIds,
           quantities: productIds.reduce((acc, id) => {
             acc[id] = 1;
@@ -199,6 +201,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
         body: JSON.stringify({
           quoteId: quote.id,
           title: title || quote.title,
+          expiresInDays: expiresIn,
         }),
       });
 
@@ -208,10 +211,22 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
     onSuccess: (data) => {
       const shareUrl = `${window.location.origin}/share/${data.publicId}`;
       setShareLink(shareUrl);
+      
+      // Analytics: share_link_create 이벤트 추적
+      trackEvent("share_link_create", {
+        share_link_id: data.publicId,
+        item_count: productIds.length,
+        expires_in_days: expiresInDays,
+        is_expired: false,
+      });
+      
       setIsShareDialogOpen(false);
+      const expiresText = data.expiresAt 
+        ? ` (만료일: ${new Date(data.expiresAt).toLocaleDateString("ko-KR")})`
+        : " (만료 없음)";
       toast({
         title: "공유 링크 생성 완료",
-        description: "구매담당자에게 공유할 수 있는 링크가 생성되었습니다.",
+        description: `구매담당자에게 공유할 수 있는 링크가 생성되었습니다.${expiresText}`,
       });
     },
     onError: (error) => {
@@ -312,10 +327,28 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
                   placeholder="예: 2024년 1분기 구매 신청"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="expires-in-days">만료 기간 (일)</Label>
+                <Input
+                  id="expires-in-days"
+                  type="number"
+                  min="0"
+                  value={expiresInDays}
+                  onChange={(e) => setExpiresInDays(parseInt(e.target.value) || 0)}
+                  placeholder="0 입력 시 만료 없음"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {expiresInDays === 0 
+                    ? "만료 없음 (영구 링크)" 
+                    : expiresInDays > 0
+                    ? `${expiresInDays}일 후 만료 (${new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toLocaleDateString("ko-KR")})`
+                    : "유효하지 않은 값입니다"}
+                </p>
+              </div>
               <Button
                 className="w-full"
-                onClick={() => createShareLinkMutation.mutate(shareTitle)}
-                disabled={createShareLinkMutation.isPending}
+                onClick={() => createShareLinkMutation.mutate(shareTitle, expiresInDays)}
+                disabled={createShareLinkMutation.isPending || expiresInDays < 0}
               >
                 {createShareLinkMutation.isPending ? "생성 중..." : "링크 생성"}
               </Button>
@@ -346,7 +379,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
       </div>
       {!hasProducts && (
         <p className="text-xs text-muted-foreground">
-          품목 리스트가 생성되면 사용 가능합니다.
+          견적 요청 리스트가 생성되면 사용 가능합니다.
         </p>
       )}
     </TestCard>

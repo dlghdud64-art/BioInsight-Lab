@@ -51,7 +51,8 @@ export default function SearchPage() {
             iconColor="text-blue-600"
           />
           
-          <div className="mb-4 md:mb-6">
+          {/* 모바일에서 sticky 검색 입력 */}
+          <div className="mb-4 md:mb-6 sticky top-16 md:static z-10 bg-slate-50 pb-2 md:pb-0">
             <SearchInputWrapper />
           </div>
           

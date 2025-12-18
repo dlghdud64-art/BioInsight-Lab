@@ -4,6 +4,8 @@ import { createQuoteResponse } from "@/lib/api/vendor-quotes";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email/sender";
 import { generateQuoteResponseEmail } from "@/lib/email/templates";
+import { ActivityType } from "@prisma/client";
+import { createActivityLogServer } from "@/lib/api/activity-logs";
 
 // 견적 응답 생성/업데이트
 export async function POST(
@@ -90,6 +92,26 @@ export async function POST(
         // 이메일 발송 실패는 로깅만 하고 응답은 정상 반환
         console.error("Failed to send quote response email:", emailError);
       }
+    }
+
+    // 액티비티 로그 기록: 벤더 견적 응답 생성
+    try {
+      await createActivityLogServer({
+        db,
+        activityType: ActivityType.QUOTE_CREATED,
+        entityType: "quote_response_vendor",
+        entityId: response.id,
+        userId: session.user.id,
+        metadata: {
+          quoteId,
+          vendorId: vendor.id,
+          totalPrice: response.totalPrice,
+          currency: response.currency,
+          validUntil: response.validUntil,
+        },
+      });
+    } catch (logError) {
+      console.error("Failed to create activity log for vendor quote response:", logError);
     }
 
     return NextResponse.json({ response }, { status: 201 });

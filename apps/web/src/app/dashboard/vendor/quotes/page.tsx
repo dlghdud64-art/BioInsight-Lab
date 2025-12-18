@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { FileText, MessageSquare, Calendar, DollarSign, TrendingUp, History, BarChart3, Clock, Percent } from "lucide-react";
-import { useState } from "react";
+import { FileText, MessageSquare, Calendar, DollarSign, TrendingUp, History, BarChart3, Clock, Percent, Download, Upload } from "lucide-react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +29,7 @@ export default function VendorQuotesPage() {
     message: "",
     validUntil: "",
   });
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 벤더가 받은 견적 요청 목록 조회
   const { data: quotes, isLoading } = useQuery({
@@ -43,21 +44,32 @@ export default function VendorQuotesPage() {
 
   const responseMutation = useMutation({
     mutationFn: async ({ quoteId, data }: { quoteId: string; data: any }) => {
-      const response = await fetch(`/api/quotes/${quoteId}/responses`, {
+      // 벤더 전용 응답 API 사용 (SUPPLIER 역할 + 벤더 이메일 매핑)
+      const response = await fetch(`/api/vendor/quotes/${quoteId}/response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to submit response");
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "Failed to submit response");
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vendor-quotes"] });
-      setSelectedQuote(null);
-      setResponseForm({ totalPrice: "", currency: "KRW", message: "", validUntil: "" });
       toast({
         title: "견적 응답 완료",
         description: "견적이 성공적으로 제출되었습니다.",
+      });
+      setSelectedQuote(null);
+      setResponseForm({ totalPrice: "", currency: "KRW", message: "", validUntil: "" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "응답 제출 실패",
+        description: error?.message || "견적 응답을 제출하는 중 오류가 발생했습니다.",
+        variant: "destructive",
       });
     },
   });
@@ -120,12 +132,9 @@ export default function VendorQuotesPage() {
   });
 
   const handleSubmitResponse = (quoteId: string) => {
-    const vendorId = vendorData?.vendor?.id;
-    
-    if (!vendorId) {
+    if (!responseForm.totalPrice) {
       toast({
-        title: "오류",
-        description: "벤더 정보를 찾을 수 없습니다.",
+        title: "총 금액을 입력해주세요",
         variant: "destructive",
       });
       return;
@@ -134,13 +143,143 @@ export default function VendorQuotesPage() {
     responseMutation.mutate({
       quoteId,
       data: {
-        vendorId,
-        totalPrice: responseForm.totalPrice ? parseFloat(responseForm.totalPrice) : null,
+        totalPrice: parseFloat(responseForm.totalPrice),
         currency: responseForm.currency,
         message: responseForm.message,
         validUntil: responseForm.validUntil || null,
       },
     });
+  };
+
+  // CSV 업로드: 품목별 단가/수량을 읽어 총액/메시지 자동 채우기
+  const handleUploadCsv = (file: File, quote: any) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result;
+        if (typeof text !== "string") {
+          throw new Error("파일을 읽는 중 오류가 발생했습니다.");
+        }
+
+        const lines = text
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0);
+
+        if (lines.length < 2) {
+          throw new Error("데이터 행이 없습니다.");
+        }
+
+        const [headerLine, ...dataLines] = lines;
+        const headers = headerLine
+          .split(",")
+          .map((h) => h.replace(/^"|"$/g, "").trim().toLowerCase());
+
+        const idx = {
+          unitPrice: headers.indexOf("unit_price"),
+          currency: headers.indexOf("currency"),
+          leadTime: headers.indexOf("lead_time_days"),
+          moq: headers.indexOf("moq"),
+          notes: headers.indexOf("notes"),
+        };
+
+        if (idx.unitPrice === -1) {
+          throw new Error('CSV에 "unit_price" 컬럼이 필요합니다.');
+        }
+
+        let total = 0;
+        const items = quote.items || [];
+
+        dataLines.forEach((line, rowIndex) => {
+          const cols = line
+            .split(",")
+            .map((c) => c.replace(/^"|"$/g, "").trim());
+
+          const quantity = items[rowIndex]?.quantity ?? 1;
+          const unitPriceRaw = cols[idx.unitPrice] || "0";
+          const unitPrice = parseFloat(unitPriceRaw);
+
+          if (!isNaN(unitPrice) && quantity > 0) {
+            total += unitPrice * quantity;
+          }
+        });
+
+        setResponseForm((prev) => ({
+          ...prev,
+          totalPrice: total > 0 ? String(Math.round(total)) : prev.totalPrice,
+          currency:
+            idx.currency !== -1 && dataLines.length > 0
+              ? dataLines[0]
+                  .split(",")
+                  [idx.currency]?.replace(/^"|"$/g, "").trim() || prev.currency
+              : prev.currency,
+        }));
+
+        toast({
+          title: "CSV 업로드 완료",
+          description: `총 ${dataLines.length}개 행을 읽고 총액을 계산했습니다.`,
+        });
+      } catch (error: any) {
+        console.error("Failed to parse CSV:", error);
+        toast({
+          title: "CSV 업로드 실패",
+          description: error?.message || "CSV 파일을 처리하는 중 오류가 발생했습니다.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: "CSV 업로드 실패",
+        description: "파일을 읽는 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    };
+
+    reader.readAsText(file, "utf-8");
+  };
+
+  // CSV 템플릿 다운로드 (품목별 단가/납기/MOQ 입력용)
+  const handleDownloadCsvTemplate = (quote: any) => {
+    const headers = [
+      "line_number",
+      "product_name",
+      "unit_price",
+      "currency",
+      "lead_time_days",
+      "moq",
+      "alt_product_name",
+      "alt_catalog_number",
+      "notes",
+    ];
+
+    const rows = (quote.items || []).map((item: any, index: number) => [
+      index + 1,
+      item.product?.name || "",
+      "", // unit_price
+      "KRW", // 기본 통화
+      "", // lead_time_days
+      "", // moq
+      "", // alt_product_name
+      "", // alt_catalog_number
+      "", // notes
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `quote-${quote.id}-vendor-template.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (status === "loading") {
@@ -153,11 +292,10 @@ export default function VendorQuotesPage() {
     );
   }
 
-  // 개발 단계: 로그인 체크 제거
-  // if (status === "unauthenticated") {
-  //   router.push("/auth/signin?callbackUrl=/dashboard/vendor/quotes");
-  //   return null;
-  // }
+  if (status === "unauthenticated") {
+    router.push("/auth/signin?callbackUrl=/dashboard/vendor/quotes");
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -490,105 +628,153 @@ export default function VendorQuotesPage() {
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
-                            onClick={() => setSelectedQuote(quote.id)}
+                            onClick={() => {
+                              setSelectedQuote(quote.id);
+                              setResponseForm({
+                                totalPrice: "",
+                                currency: "KRW",
+                                message: "",
+                                validUntil: "",
+                              });
+                            }}
                             variant="default"
                           >
                             <MessageSquare className="h-4 w-4 mr-2" />
                             견적 응답하기
                           </Button>
                         </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>견적 응답</DialogTitle>
-                          <DialogDescription>
-                            견적 요청에 대한 가격과 메시지를 입력하세요.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label>총 견적 금액</Label>
-                            <div className="flex gap-2 mt-1">
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>견적 응답</DialogTitle>
+                            <DialogDescription>
+                              견적 요청에 대한 가격과 메시지를 입력하거나, CSV 템플릿을 사용해 품목별 가격을 업로드할 수 있습니다.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                              <div className="text-xs text-muted-foreground">
+                                CSV 템플릿을 다운로드 후, 품목별 단가/납기/MOQ를 입력하고 다시 업로드하면 총액이 자동 계산됩니다.
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadCsvTemplate(quote)}
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  템플릿 다운로드
+                                </Button>
+                                <div>
+                                  <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".csv"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        handleUploadCsv(file, quote);
+                                      }
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                  >
+                                    <Upload className="h-3 w-3 mr-1" />
+                                    CSV 업로드
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <Label>총 견적 금액</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={responseForm.totalPrice}
+                                  onChange={(e) =>
+                                    setResponseForm({
+                                      ...responseForm,
+                                      totalPrice: e.target.value,
+                                    })
+                                  }
+                                />
+                                <select
+                                  className="px-3 py-2 border rounded-md"
+                                  value={responseForm.currency}
+                                  onChange={(e) =>
+                                    setResponseForm({
+                                      ...responseForm,
+                                      currency: e.target.value,
+                                    })
+                                  }
+                                >
+                                  <option value="KRW">KRW</option>
+                                  <option value="USD">USD</option>
+                                  <option value="EUR">EUR</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div>
+                              <Label>유효 기간</Label>
                               <Input
-                                type="number"
-                                placeholder="0"
-                                value={responseForm.totalPrice}
+                                type="date"
+                                value={responseForm.validUntil}
                                 onChange={(e) =>
                                   setResponseForm({
                                     ...responseForm,
-                                    totalPrice: e.target.value,
+                                    validUntil: e.target.value,
                                   })
                                 }
+                                className="mt-1"
                               />
-                              <select
-                                className="px-3 py-2 border rounded-md"
-                                value={responseForm.currency}
+                            </div>
+                            <div>
+                              <Label>메시지</Label>
+                              <Textarea
+                                placeholder="견적에 대한 추가 설명이나 조건을 입력하세요..."
+                                value={responseForm.message}
                                 onChange={(e) =>
                                   setResponseForm({
                                     ...responseForm,
-                                    currency: e.target.value,
+                                    message: e.target.value,
                                   })
                                 }
+                                rows={4}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedQuote(null);
+                                  setResponseForm({
+                                    totalPrice: "",
+                                    currency: "KRW",
+                                    message: "",
+                                    validUntil: "",
+                                  });
+                                }}
                               >
-                                <option value="KRW">KRW</option>
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                              </select>
+                                취소
+                              </Button>
+                              <Button
+                                onClick={() => handleSubmitResponse(quote.id)}
+                                disabled={responseMutation.isPending}
+                              >
+                                {responseMutation.isPending ? "제출 중..." : "견적 제출"}
+                              </Button>
                             </div>
                           </div>
-                          <div>
-                            <Label>유효 기간</Label>
-                            <Input
-                              type="date"
-                              value={responseForm.validUntil}
-                              onChange={(e) =>
-                                setResponseForm({
-                                  ...responseForm,
-                                  validUntil: e.target.value,
-                                })
-                              }
-                              className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label>메시지</Label>
-                            <Textarea
-                              placeholder="견적에 대한 추가 설명이나 조건을 입력하세요..."
-                              value={responseForm.message}
-                              onChange={(e) =>
-                                setResponseForm({
-                                  ...responseForm,
-                                  message: e.target.value,
-                                })
-                              }
-                              rows={4}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedQuote(null);
-                                setResponseForm({
-                                  totalPrice: "",
-                                  currency: "KRW",
-                                  message: "",
-                                  validUntil: "",
-                                });
-                              }}
-                            >
-                              취소
-                            </Button>
-                            <Button
-                              onClick={() => handleSubmitResponse(quote.id)}
-                              disabled={responseMutation.isPending}
-                            >
-                              {responseMutation.isPending ? "제출 중..." : "견적 제출"}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogContent>
+                      </Dialog>
                     )}
                     <Button
                       variant="outline"

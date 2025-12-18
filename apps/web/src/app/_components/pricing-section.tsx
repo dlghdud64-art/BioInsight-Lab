@@ -21,7 +21,7 @@ export function PricingSection() {
           </CardHeader>
           <CardContent className="p-3 md:p-6 pt-0">
             <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-xs text-slate-500 list-disc list-inside">
-              <li>검색, 비교, 품목 리스트 생성</li>
+              <li>검색, 비교, 견적 요청 리스트 생성</li>
               <li>표 복사/다운로드</li>
               <li>공유 링크 (일부 제한)</li>
               <li>로그인 없이 체험 가능</li>

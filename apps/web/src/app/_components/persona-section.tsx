@@ -94,7 +94,7 @@ export function PersonaSection() {
             <CardContent className="p-3 md:p-6 pt-0">
               <CardDescription className="text-xs md:text-sm text-slate-500">
                 <ul className="space-y-2 list-disc list-inside">
-                  <li>팀에서 요청한 품목 리스트를 한 번에 확인</li>
+                  <li>팀에서 요청한 견적 요청 리스트를 한 번에 확인</li>
                   <li>벤더별 가격·납기 비교 및 견적 요청</li>
                   <li>기간별/프로젝트별 구매 리포트 생성</li>
                   <li>예산 책정 및 사용률 관리</li>

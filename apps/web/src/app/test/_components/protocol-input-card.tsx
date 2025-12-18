@@ -4,6 +4,7 @@ import { TestCard } from "./test-card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 interface ProtocolInputCardProps {
   protocolText: string;
@@ -26,7 +27,19 @@ export function ProtocolInputCard({
     >
       <Textarea
         value={protocolText}
-        onChange={(e) => onTextChange(e.target.value)}
+        onChange={(e) => {
+          onTextChange(e.target.value);
+          // Analytics: protocol_paste 이벤트 추적 (텍스트가 입력될 때)
+          if (e.target.value.length > 0 && protocolText.length === 0) {
+            trackEvent("protocol_paste", {
+              text_length: e.target.value.length,
+            });
+          }
+        }}
+        onPaste={() => {
+          // Analytics: protocol_paste 이벤트 추적 (붙여넣기 시)
+          trackEvent("protocol_paste", {});
+        }}
         placeholder="프로토콜 또는 데이터시트 텍스트를 붙여넣으세요..."
         rows={6}
         className="text-sm"

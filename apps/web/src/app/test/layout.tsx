@@ -16,14 +16,14 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
               <span className="inline-flex rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white">
                 기능 체험
               </span>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900">기능 체험 · 검색 → 비교 → 품목 리스트</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900">기능 체험 · 검색/AI 분석 → 제품 비교 → 견적 요청</h1>
               <p className="mt-2 text-sm text-slate-600 hidden md:block">
-                샘플 데이터로 실제 검색/비교/품목 리스트 작성 흐름을 체험해 보세요.
+                샘플 데이터로 실제 검색/AI 분석/제품 비교/견적 요청 작성 흐름을 체험해 보세요.
               </p>
               
               {/* 단계 설명 및 안내 */}
               <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-slate-500">검색 → 비교 → 품목 리스트 → 프로토콜 분석</span>
+                <span className="text-xs text-slate-500">검색/AI 분석 → 제품 비교 → 견적 요청</span>
                 <TestStepHelp />
               </div>
             </header>

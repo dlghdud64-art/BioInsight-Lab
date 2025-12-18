@@ -20,23 +20,23 @@ const HERO_STEPS = [
   {
     id: "search" as const,
     badge: "Step 1",
-    label: "검색",
-    title: "검색·후보 모으기",
+    label: "검색/AI 분석",
+    title: "검색/AI 분석·후보 모으기",
     description: "제품명/벤더/카테고리로 후보를 빠르게 모으고, 필요한 제품을 한 번에 리스트업합니다.",
   },
   {
     id: "compare" as const,
     badge: "Step 2",
-    label: "비교",
-    title: "비교·선정",
+    label: "제품 비교",
+    title: "제품 비교·선정",
     description: "스펙·가격 기준으로 후보를 비교해 추리고, 구매/견적에 필요한 최소 후보만 남깁니다.",
   },
   {
     id: "request" as const,
     badge: "Step 3",
-    label: "견적요청",
-    title: "견적요청·회신정리·공유",
-    description: "선정한 후보로 견적요청용 품목 리스트를 만들고, 회신(가격·납기)을 같은 표에서 정리해 TSV/엑셀·공유 링크로 전달합니다.",
+    label: "견적 요청",
+    title: "견적 요청",
+    description: "선정한 품목으로 견적 요청 리스트를 만들고, 내보내기 또는 견적 요청을 진행합니다.",
   },
 ] as const;
 
@@ -105,27 +105,27 @@ function HeroStepHelp() {
         <SheetHeader>
           <SheetTitle>기능 체험 단계 안내</SheetTitle>
           <SheetDescription className="mt-2 text-xs">
-            검색 → 비교 → 견적요청까지 한 번에 체험해 보세요.
+            검색/AI 분석 → 제품 비교 → 견적 요청까지 한 번에 체험해 보세요.
           </SheetDescription>
         </SheetHeader>
 
         <ol className="mt-4 space-y-3 text-sm">
           <li>
-            <span className="font-semibold">Step 1. 검색·후보 모으기</span>
+            <span className="font-semibold">Step 1. 검색/AI 분석·후보 모으기</span>
             <p className="text-xs text-slate-500 mt-1">
               제품명, 벤더, 카테고리 키워드로 후보를 빠르게 모읍니다.
             </p>
           </li>
           <li>
-            <span className="font-semibold">Step 2. 비교·선정</span>
+            <span className="font-semibold">Step 2. 제품 비교·선정</span>
             <p className="text-xs text-slate-500 mt-1">
               스펙·가격 기준으로 후보를 비교해 추립니다.
             </p>
           </li>
           <li>
-            <span className="font-semibold">Step 3. 견적요청·회신정리·공유</span>
+            <span className="font-semibold">Step 3. 견적 요청·회신정리·공유</span>
             <p className="text-xs text-slate-500 mt-1">
-              선정한 후보로 견적요청용 품목 리스트를 만들고, 회신(가격·납기)을 정리해 TSV/엑셀·공유 링크로 전달합니다.
+              선정한 후보로 견적 요청 리스트를 만들고, 회신(가격·납기)을 정리해 TSV/엑셀·공유 링크로 전달합니다.
             </p>
           </li>
         </ol>
@@ -184,7 +184,7 @@ export function HeroDemoFlowPanel() {
           <HeroStepHelp />
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          검색 → 비교 → 견적요청
+          검색/AI 분석 → 제품 비교 → 견적 요청
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -272,7 +272,7 @@ export function HeroDemoFlowPanel() {
               {/* 리스트 헤더 */}
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
                 <ShoppingCart className="h-3 w-3" />
-                <span>견적요청용 품목 리스트</span>
+                <span>견적 요청 리스트</span>
               </div>
               
               {/* 테이블 헤더 */}
@@ -304,18 +304,14 @@ export function HeroDemoFlowPanel() {
                 <div className="col-span-3 text-right">₩1,425,000</div>
               </div>
               
-              {/* 회신 정리 예시 */}
-              <div className="mt-2 pt-2 border-t border-slate-100">
-                <p className="text-[9px] font-semibold text-slate-700 mb-1">회신 정리:</p>
-                <div className="space-y-0.5">
-                  <div className="flex items-center justify-between text-[9px] text-slate-600">
-                    <span>벤더 A: ₩450,000 (7일)</span>
-                    <span className="text-green-600 font-semibold">선택</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[9px] text-slate-600">
-                    <span>벤더 B: ₩520,000 (5일)</span>
-                  </div>
-                </div>
+              {/* 액션 버튼 */}
+              <div className="mt-2 pt-2 border-t border-slate-100 flex gap-1">
+                <button className="flex-1 rounded bg-slate-100 px-1.5 py-1 text-[9px] text-slate-700 font-medium hover:bg-slate-200 transition-colors">
+                  내보내기
+                </button>
+                <button className="flex-1 rounded bg-blue-600 px-1.5 py-1 text-[9px] text-white font-medium hover:bg-blue-700 transition-colors">
+                  견적 요청
+                </button>
               </div>
             </div>
           )}

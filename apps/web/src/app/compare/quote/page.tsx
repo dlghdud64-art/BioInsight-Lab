@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
-import { ShoppingCart, Languages, Copy, Check } from "lucide-react";
+import { ShoppingCart, Languages, Copy, Check, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Disclaimer } from "@/components/legal/disclaimer";
 
 export default function QuotePage() {
   const { data: session, status } = useSession();
@@ -48,6 +49,7 @@ export default function QuotePage() {
   const products = data?.products || [];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingRFQ, setIsCreatingRFQ] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
 
@@ -174,6 +176,58 @@ export default function QuotePage() {
     }
   };
 
+  const handleCreateRFQ = async () => {
+    if (products.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "견적 요청을 생성할 품목을 먼저 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingRFQ(true);
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title || `견적 요청 - ${products.length}개 품목`,
+          message: message || "견적 요청드립니다.",
+          deliveryDate: deliveryDate || undefined,
+          deliveryLocation,
+          specialNotes,
+          productIds: productIds,
+          quantities,
+          notes: itemNotes,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "견적 요청 생성에 실패했습니다.");
+      }
+
+      const data = await response.json();
+      toast({
+        title: "견적 요청 생성 완료",
+        description: "견적 요청이 생성되었습니다.",
+      });
+      // 견적 요청 상세 페이지로 이동
+      router.push(`/quotes/${data.quote.id}`);
+    } catch (error: any) {
+      toast({
+        title: "견적 요청 생성 실패",
+        description: error.message || "견적 요청 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingRFQ(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -211,9 +265,27 @@ export default function QuotePage() {
   return (
     <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">견적 요청</h1>
+        {/* 헤더 영역 */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="flex-1">
+            <h1 className="text-xl md:text-3xl font-bold">견적 요청</h1>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.
+            </p>
+          </div>
+          <Button
+            onClick={handleCreateRFQ}
+            disabled={isCreatingRFQ || products.length === 0}
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+            title={products.length === 0 ? "품목을 선택해주세요" : "선택한 품목으로 견적 요청을 보냅니다"}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {isCreatingRFQ ? "생성 중..." : "견적 요청 보내기"}
+          </Button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <Disclaimer type="rfq" />
           <Card className="p-3 md:p-6">
             <CardHeader className="px-0 pt-0 pb-3">
               <CardTitle className="text-sm md:text-lg">요청 정보</CardTitle>

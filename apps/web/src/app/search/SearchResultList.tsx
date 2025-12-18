@@ -9,6 +9,7 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { ShoppingCart, GitCompare, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 export default function SearchResultList({ query }: { query: string }) {
   const [results, setResults] = useState<any[]>([]);
@@ -24,7 +25,7 @@ export default function SearchResultList({ query }: { query: string }) {
       .then((data) => setResults(data));
   }, [query]);
 
-  const handleToggleCompare = (productId: string, productName: string) => {
+  const handleToggleCompare = (productId: string, productName: string, vendor?: string) => {
     if (hasProduct(productId)) {
       removeProduct(productId);
       toast({
@@ -41,6 +42,13 @@ export default function SearchResultList({ query }: { query: string }) {
         return;
       }
       addProduct(productId);
+      
+      // Analytics: result_add_to_compare 이벤트 추적
+      trackEvent("result_add_to_compare", {
+        product_id: productId,
+        vendor: vendor,
+      });
+      
       toast({
         title: "비교에 추가",
         description: `${productName}이(가) 비교 목록에 추가되었습니다.`,
@@ -49,10 +57,16 @@ export default function SearchResultList({ query }: { query: string }) {
   };
 
   const handleAddToQuote = (product: any) => {
-    // 품목 리스트에 추가하려면 test/quote 페이지로 이동하거나 상태 관리 필요
+    // Analytics: result_add_to_list 이벤트 추적
+    trackEvent("result_add_to_list", {
+      product_id: product.id,
+      vendor: product.vendor,
+    });
+    
+    // 견적 요청 리스트에 추가하려면 test/quote 페이지로 이동하거나 상태 관리 필요
     toast({
       title: "품목 추가",
-      description: "품목 리스트 기능을 사용하려면 기능 체험 플로우를 이용해주세요.",
+      description: "견적 요청 리스트 기능을 사용하려면 기능 체험 플로우를 이용해주세요.",
       action: (
         <Link href="/test/search">
           <Button size="sm" variant="outline">
@@ -132,7 +146,7 @@ export default function SearchResultList({ query }: { query: string }) {
                   <Button
                     size="sm"
                     variant={isInCompare ? "default" : "outline"}
-                    onClick={() => handleToggleCompare(p.id, p.name)}
+                    onClick={() => handleToggleCompare(p.id, p.name, p.vendor)}
                     className={`text-xs md:text-sm h-8 md:h-9 ${isInCompare ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
                   >
                     <GitCompare className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />

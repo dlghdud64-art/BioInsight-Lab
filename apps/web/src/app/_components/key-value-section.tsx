@@ -41,10 +41,10 @@ export function KeyValueSection() {
             {/* 텍스트 블록 */}
             <div className="space-y-1 min-w-0 flex-1">
               <h3 className="text-xs md:text-sm font-semibold text-slate-900">
-                품목 리스트 자동 정리
+                견적 요청 리스트 자동 정리
               </h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                담아둔 후보를 비교해 견적요청에 필요한 품목 리스트로 정리합니다. 회신받은 가격·납기 정보도 같은 리스트에서 비교할 수 있게 구성합니다.
+                담아둔 후보를 비교해 견적 요청에 필요한 리스트로 정리합니다. 회신받은 가격·납기 정보도 같은 리스트에서 비교할 수 있게 구성합니다.
               </p>
             </div>
           </CardContent>
@@ -62,7 +62,7 @@ export function KeyValueSection() {
                 연구·QC·구매 모두에게 유용한 도구
               </h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                연구–QC–구매가 하나의 품목 리스트로 협업합니다. 견적요청 → 회신 정리 → 구매요청 흐름에서 "버전이 갈라지는 문제"를 줄입니다.
+                연구–QC–구매가 하나의 견적 요청 리스트로 협업합니다. 견적 요청 → 회신 정리 → 구매요청 흐름에서 "버전이 갈라지는 문제"를 줄입니다.
               </p>
             </div>
           </CardContent>

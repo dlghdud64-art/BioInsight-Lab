@@ -102,10 +102,10 @@ export function ComparisonSection() {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  품목 리스트 자동 구성
+                  견적 요청 리스트 자동 구성
                 </h4>
                 <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  선택한 제품들이 자동으로 품목 리스트로 정리되어 수량과 비고만 입력하면 됩니다.
+                  선택한 제품들이 자동으로 견적 요청 리스트로 정리되어 수량과 비고만 입력하면 됩니다.
                 </p>
               </div>
             </div>
@@ -119,7 +119,7 @@ export function ComparisonSection() {
                   견적요청용 리스트/공유 링크 자동 생성
                 </h4>
                 <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  완성된 품목 리스트를 견적요청용 리스트나 공유 링크로 자동 생성합니다. 회신(가격·납기) 입력 후 비교표로 정리할 수 있습니다.
+                  완성된 견적 요청 리스트를 공유 링크로 자동 생성합니다. 회신(가격·납기) 입력 후 비교표로 정리할 수 있습니다.
                 </p>
               </div>
             </div>

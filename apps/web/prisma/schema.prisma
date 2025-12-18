@@ -320,6 +320,11 @@ model Quote {
   templateId     String? // ?용???플?ID
   templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
   exportedAt     DateTime? // ?보?기 ?점
+  // 버전 관리 (P1)
+  version        Int       @default(1) // 버전 번호
+  parentQuoteId  String? // 원본 리스트 ID (버전이 있는 경우)
+  isSnapshot     Boolean   @default(false) // 스냅샷 여부
+  snapshotNote   String?   @db.Text // 스냅샷 메모
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -327,6 +332,8 @@ model Quote {
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  parentQuote     Quote?           @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
+  versions        Quote[]          @relation("QuoteVersions") // 버전 리스트
   items           QuoteListItem[] // QuoteItem ???QuoteListItem ?용
   quoteItems      QuoteItem[] // ?거???환??
   // 기존 ?환?을 ?해 QuoteResponse ?? (?후 ?거 가??
@@ -337,6 +344,8 @@ model Quote {
   @@index([userId])
   @@index([organizationId])
   @@index([templateId])
+  @@index([parentQuoteId])
+  @@index([version])
 }
 
 // ?목 리스???플?(조직??도?컬럼 ?트)

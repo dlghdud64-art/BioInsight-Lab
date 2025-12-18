@@ -31,7 +31,7 @@ export function SecuritySection() {
             <div className="space-y-1 min-w-0 flex-1">
               <h3 className="text-xs md:text-sm font-semibold text-slate-900">공유 링크 보안</h3>
               <p className="text-[11px] md:text-xs leading-relaxed text-slate-500">
-                암호화 기반 공유 링크로 안전하게 품목 리스트를 공유합니다.
+                암호화 기반 공유 링크로 안전하게 견적 요청 리스트를 공유합니다.
                 검색엔진에 노출되지 않으며 만료/비활성화 기능을 제공합니다.
               </p>
             </div>

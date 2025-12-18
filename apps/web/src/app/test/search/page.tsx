@@ -53,11 +53,11 @@ export default function SearchPage() {
     <>
       <div className="container mx-auto px-4 py-3 md:py-6">
         <PageHeader
-          title="바이오 시약·장비 검색과 비교, 한 번에 정리되는 구매 요청 리스트"
+          title="바이오 시약·장비 검색과 비교, 한 번에 정리되는 견적 요청 리스트"
           description={
             <div className="space-y-1 hidden md:block">
               <p>제품명, 벤더, 카테고리를 검색하고 GPT가 관련 제품을 추천해 줍니다.</p>
-              <p>검색 결과에서 필요한 제품을 선택하면, 구매 요청 리스트가 자동으로 정리됩니다.</p>
+              <p>검색 결과에서 필요한 제품을 선택하면, 견적 요청 리스트가 자동으로 정리됩니다.</p>
             </div>
           }
           icon={Search}
@@ -239,17 +239,17 @@ export default function SearchPage() {
         <div className="fixed bottom-4 left-1/2 z-40 w-full max-w-3xl -translate-x-1/2 px-2 sm:px-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-slate-200 bg-white/95 px-3 sm:px-4 py-2 shadow-lg backdrop-blur">
             <p className="text-[10px] sm:text-xs text-slate-700 text-center sm:text-left">
-              품목 리스트 {quoteItems.length}개 · 합계 ₩{totalAmount.toLocaleString("ko-KR")}
+              견적 요청 리스트 {quoteItems.length}개 · 합계 ₩{totalAmount.toLocaleString("ko-KR")}
             </p>
             <Sheet open={isQuoteSheetOpen} onOpenChange={setIsQuoteSheetOpen}>
               <SheetTrigger asChild>
                 <Button size="sm" className="text-[10px] sm:text-xs w-full sm:w-auto">
-                  품목 리스트 열기({quoteItems.length})
+                  견적 요청 리스트 열기({quoteItems.length})
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
                 <SheetHeader className="pb-4">
-                  <SheetTitle className="text-base">품목 리스트</SheetTitle>
+                  <SheetTitle className="text-base">견적 요청 리스트</SheetTitle>
                   <SheetDescription className="text-xs">
                     현재 선택된 품목과 수량을 확인하고, 필요하면 수정을 진행할 수 있습니다.
                   </SheetDescription>
@@ -410,7 +410,7 @@ export default function SearchPage() {
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-xs text-slate-500 text-center px-2">
-            정리된 구매 요청 리스트는 TSV/엑셀 파일로 내려받아 이메일로 공유하거나,
+            정리된 견적 요청 리스트는 TSV/엑셀 파일로 내려받아 이메일로 공유하거나,
             필요하면 사내 그룹웨어·전자결재 양식에 붙여넣어 사용할 수 있습니다.
           </p>
         </div>

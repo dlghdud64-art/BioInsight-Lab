@@ -20,8 +20,8 @@ export function FeaturesShowcaseSection() {
       color: "bg-green-600",
     },
     {
-      title: "견적요청용 품목 리스트 & 내보내기",
-      description: "선택한 제품을 견적요청/구매요청용 리스트로 정리하고, TSV/엑셀·공유 링크로 전달합니다.",
+      title: "견적 요청 리스트 & 내보내기",
+      description: "선택한 제품을 견적 요청 리스트로 정리하고, TSV/엑셀·공유 링크로 전달합니다.",
       href: "/test/quote",
       icon: ShoppingCart,
       color: "bg-purple-600",

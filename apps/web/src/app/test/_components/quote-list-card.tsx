@@ -14,8 +14,8 @@ export function QuoteListCard({ productCount = 0 }: QuoteListCardProps) {
 
   return (
     <TestCard
-      title="품목 리스트 (견적/구매신청용)"
-      subtitle="그룹웨어 양식에 붙여넣을 품목 리스트를 확인합니다."
+      title="견적 요청 리스트"
+      subtitle="그룹웨어 양식에 붙여넣을 견적 요청 리스트를 확인합니다."
     >
       {productCount > 0 ? (
         <div className="text-xs text-muted-foreground space-y-2">
@@ -26,7 +26,7 @@ export function QuoteListCard({ productCount = 0 }: QuoteListCardProps) {
             className="w-full"
             onClick={() => router.push("/search")}
           >
-            품목 리스트 만들기
+            견적 요청 리스트 만들기
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>

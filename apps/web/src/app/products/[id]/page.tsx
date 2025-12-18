@@ -9,7 +9,7 @@ import { useProduct } from "@/hooks/use-products";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
-import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles, Package, Save, Eye } from "lucide-react";
+import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles, Package, Save, Eye, Upload, X, Pencil } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 
@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS, PICTOGRAM_DESCRIPTIONS, PPE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
+import { Disclaimer } from "@/components/legal/disclaimer";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -44,9 +45,11 @@ export default function ProductDetailPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [datasheetText, setDatasheetText] = useState("");
   const [datasheetUrl, setDatasheetUrl] = useState("");
+  const [datasheetPdfFile, setDatasheetPdfFile] = useState<File | null>(null);
   const [extractedInfo, setExtractedInfo] = useState<any>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isExtractingFromUrl, setIsExtractingFromUrl] = useState(false);
+  const [isExtractingFromPdf, setIsExtractingFromPdf] = useState(false);
   const [showDatasheetSection, setShowDatasheetSection] = useState(false);
   const [copied, setCopied] = useState(false);
   const [msdsLinkStatus, setMsdsLinkStatus] = useState<"checking" | "valid" | "invalid" | null>(null);
@@ -54,10 +57,84 @@ export default function ProductDetailPage() {
   const [isGeneratingUsage, setIsGeneratingUsage] = useState(false);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [selectedFields, setSelectedFields] = useState<Record<string, boolean>>({});
+  const [isSafetyEditing, setIsSafetyEditing] = useState(false);
+  const [safetyForm, setSafetyForm] = useState<{
+    hazardCodes: string;
+    pictograms: string;
+    ppe: string;
+    storageCondition: string;
+    safetyNote: string;
+  } | null>(null);
+  const [isSavingSafety, setIsSavingSafety] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const isInCompare = hasProduct(id);
+
+  const startSafetyEdit = () => {
+    if (!product) return;
+    setSafetyForm({
+      hazardCodes: Array.isArray(product.hazardCodes) ? product.hazardCodes.join(", ") : "",
+      pictograms: Array.isArray(product.pictograms) ? product.pictograms.join(", ") : "",
+      ppe: Array.isArray(product.ppe) ? product.ppe.join(", ") : "",
+      storageCondition: product.storageCondition || "",
+      safetyNote: product.safetyNote || "",
+    });
+    setIsSafetyEditing(true);
+  };
+
+  const saveSafetyInfo = async () => {
+    if (!safetyForm) return;
+    setIsSavingSafety(true);
+    try {
+      const parseList = (value: string) =>
+        value
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0);
+
+      const payload: any = {
+        storageCondition: safetyForm.storageCondition || null,
+        safetyNote: safetyForm.safetyNote || null,
+      };
+
+      const hazardCodes = parseList(safetyForm.hazardCodes);
+      const pictograms = parseList(safetyForm.pictograms);
+      const ppe = parseList(safetyForm.ppe);
+
+      payload.hazardCodes = hazardCodes.length > 0 ? hazardCodes : null;
+      payload.pictograms = pictograms.length > 0 ? pictograms : null;
+      payload.ppe = ppe.length > 0 ? ppe : null;
+
+      const response = await fetch(`/api/products/${id}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "안전 정보를 저장하는 데 실패했습니다.");
+      }
+
+      toast({
+        title: "안전 정보 저장 완료",
+        description: "제품의 안전 · 규제 정보가 업데이트되었습니다.",
+      });
+
+      // 제품 데이터 새로고침
+      queryClient.invalidateQueries({ queryKey: ["product", id] });
+      setIsSafetyEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "저장 실패",
+        description: error?.message || "안전 정보를 저장하는 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingSafety(false);
+    }
+  };
 
   // 제품 조회 기록
   useEffect(() => {
@@ -257,6 +334,80 @@ ${extractedInfo.summary || "N/A"}`;
     } finally {
       setIsExtractingFromUrl(false);
     }
+  };
+
+  const handleExtractFromPdf = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "PDF 파일만 업로드 가능합니다",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "파일 크기는 10MB 이하여야 합니다",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDatasheetPdfFile(file);
+    setIsExtractingFromPdf(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/datasheet/extract-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "PDF 분석에 실패했습니다.");
+      }
+
+      const data = await response.json();
+      setExtractedInfo(data.data);
+
+      toast({
+        title: "PDF 분석 완료",
+        description: data.data.extractedTextLength 
+          ? `PDF에서 ${data.data.extractedTextLength}자 텍스트를 추출하여 분석했습니다.`
+          : "PDF에서 제품 정보를 추출했습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "PDF 분석 실패",
+        description: error.message || "PDF를 분석하는 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+      setDatasheetPdfFile(null);
+    } finally {
+      setIsExtractingFromPdf(false);
+    }
+  };
+
+  const handlePdfFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleExtractFromPdf(file);
+    }
+  };
+
+  const handlePdfDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleExtractFromPdf(file);
+    }
+  };
+
+  const handlePdfDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
   // 추출된 정보를 제품 필드에 적용
@@ -827,17 +978,29 @@ ${extractedInfo.summary || "N/A"}`;
                         <Shield className="h-4 w-4 text-amber-600" />
                         <h3 className="font-semibold text-sm md:text-base">안전 · 규제 정보</h3>
                       </div>
-                      {(() => {
-                        const safetyLevel = getProductSafetyLevel(product);
-                        return (
-                          <Badge
-                            variant="outline"
-                            className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
-                          >
-                            위험도: {safetyLevel.label}
-                          </Badge>
-                        );
-                      })()}
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const safetyLevel = getProductSafetyLevel(product);
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={`${safetyLevel.bgColor} ${safetyLevel.color} ${safetyLevel.borderColor} border-2 font-semibold text-xs`}
+                            >
+                              위험도: {safetyLevel.label}
+                            </Badge>
+                          );
+                        })()}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={startSafetyEdit}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          안전 정보 편집
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-3 md:space-y-4">
                       {/* 구조화된 안전 필드 (P2) */}
@@ -1096,6 +1259,9 @@ ${extractedInfo.summary || "N/A"}`;
                         </div>
                       </div>
 
+                      {/* 면책 고지 */}
+                      <Disclaimer type="safety" className="mt-4" />
+
                       {/* 기본 안내 문구 및 자동 추출 버튼 */}
                       {!product.safetyNote && product.msdsUrl && (
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -1166,6 +1332,105 @@ ${extractedInfo.summary || "N/A"}`;
                   </div>
                 )}
 
+                {/* 안전 필드 편집 모달 */}
+                {isSafetyEditing && safetyForm && (
+                  <Dialog open={isSafetyEditing} onOpenChange={(open) => !open && setIsSafetyEditing(false)}>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>안전 · 규제 정보 편집</DialogTitle>
+                        <DialogDescription>
+                          위험 코드, 피크토그램, 개인보호장비는 콤마(,)로 구분해 입력하세요. 예: H300, H314
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-2">
+                        <div>
+                          <Label className="text-xs">위험 코드 (예: H300, H314)</Label>
+                          <Input
+                            value={safetyForm.hazardCodes}
+                            onChange={(e) =>
+                              setSafetyForm({
+                                ...safetyForm,
+                                hazardCodes: e.target.value,
+                              })
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">GHS 피크토그램 (예: skull, flame, corrosive)</Label>
+                          <Input
+                            value={safetyForm.pictograms}
+                            onChange={(e) =>
+                              setSafetyForm({
+                                ...safetyForm,
+                                pictograms: e.target.value,
+                              })
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">필수 개인보호장비 (예: gloves, goggles, labcoat)</Label>
+                          <Input
+                            value={safetyForm.ppe}
+                            onChange={(e) =>
+                              setSafetyForm({
+                                ...safetyForm,
+                                ppe: e.target.value,
+                              })
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">보관 조건</Label>
+                          <Textarea
+                            rows={2}
+                            value={safetyForm.storageCondition}
+                            onChange={(e) =>
+                              setSafetyForm({
+                                ...safetyForm,
+                                storageCondition: e.target.value,
+                              })
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">안전 취급 요약</Label>
+                          <Textarea
+                            rows={3}
+                            value={safetyForm.safetyNote}
+                            onChange={(e) =>
+                              setSafetyForm({
+                                ...safetyForm,
+                                safetyNote: e.target.value,
+                              })
+                            }
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter className="mt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsSafetyEditing(false)}
+                        >
+                          취소
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={saveSafetyInfo}
+                          disabled={isSavingSafety}
+                        >
+                          {isSavingSafety ? "저장 중..." : "저장"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {/* 데이터시트 텍스트 붙여넣기 섹션 */}
                 <div className="pt-4 border-t">
                   <div className="flex items-center justify-between mb-3">
@@ -1230,6 +1495,77 @@ ${extractedInfo.summary || "N/A"}`;
                         </div>
                       </div>
 
+                      {/* PDF 업로드 */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">데이터시트 PDF 업로드</Label>
+                        <p className="text-xs text-muted-foreground">
+                          PDF 파일을 업로드하면 자동으로 텍스트를 추출하여 분석합니다.
+                        </p>
+                        <div
+                          onDrop={handlePdfDrop}
+                          onDragOver={handlePdfDragOver}
+                          className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer"
+                        >
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handlePdfFileChange}
+                            className="hidden"
+                            id="datasheet-pdf-upload"
+                            disabled={isExtractingFromPdf}
+                          />
+                          <label
+                            htmlFor="datasheet-pdf-upload"
+                            className="cursor-pointer flex flex-col items-center gap-2"
+                          >
+                            {isExtractingFromPdf ? (
+                              <>
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <span className="text-sm text-muted-foreground">PDF 분석 중...</span>
+                              </>
+                            ) : datasheetPdfFile ? (
+                              <>
+                                <FileText className="h-8 w-8 text-primary" />
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">{datasheetPdfFile.name}</span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDatasheetPdfFile(null);
+                                    }}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-8 w-8 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">
+                                  PDF 파일을 드래그하거나 클릭하여 업로드
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  최대 10MB
+                                </span>
+                              </>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-slate-200" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-slate-500">또는</span>
+                        </div>
+                      </div>
+
                       {/* 텍스트 붙여넣기 */}
                       <div className="space-y-2">
                         <Label htmlFor="datasheet-text" className="text-sm">
@@ -1268,6 +1604,7 @@ ${extractedInfo.summary || "N/A"}`;
 
                       {extractedInfo && (
                         <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-4">
+                          <Disclaimer type="datasheet" className="mb-4" />
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-sm">추출된 정보</h4>
                             <div className="flex gap-2">
@@ -1698,7 +2035,7 @@ ${extractedInfo.summary || "N/A"}`;
                     variant="outline"
                     className="w-full"
                     onClick={async () => {
-                      // 품목 리스트에 추가 (TestFlowProvider 사용)
+                      // 견적 요청 리스트에 추가 (TestFlowProvider 사용)
                       try {
                         const response = await fetch(`/api/products/${id}`);
                         if (response.ok) {
@@ -1707,7 +2044,7 @@ ${extractedInfo.summary || "N/A"}`;
                           // 직접 quote에 추가하는 로직이 필요할 수 있음
                           toast({
                             title: "품목 추가",
-                            description: "품목이 리스트에 추가되었습니다.",
+                            description: "품목이 견적 요청 리스트에 추가되었습니다.",
                           });
                         }
                       } catch (error) {
@@ -1720,7 +2057,7 @@ ${extractedInfo.summary || "N/A"}`;
                     }}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    품목 리스트에 추가
+                    견적 요청 리스트에 추가
                   </Button>
                   <Button
                     variant="outline"

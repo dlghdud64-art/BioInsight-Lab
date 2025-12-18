@@ -65,7 +65,7 @@ export function HeroSection() {
             <p className="text-[11px] md:text-sm leading-relaxed text-slate-600 max-w-xl">
               실험에 맞는 후보를 모으고, 스펙·가격으로 비교해 추립니다.
               <br className="hidden sm:block" />
-              견적요청용 품목 리스트를 바로 만들고 공유 링크/TSV·엑셀로 전달합니다.
+              견적 요청 리스트를 바로 만들고 공유 링크/TSV·엑셀로 전달합니다.
               <br className="hidden sm:block" />
               (선택) 회신(가격·납기)은 같은 리스트에서 비교되도록 정리할 수 있습니다.
             </p>

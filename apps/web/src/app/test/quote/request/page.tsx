@@ -13,7 +13,7 @@ export default function QuoteRequestPage() {
         <Link href="/test/quote">
           <Button variant="outline" size="sm" className="text-xs h-8 sm:h-9">
             <ArrowLeft className="h-3 w-3 mr-2" />
-            <span className="hidden sm:inline">품목 리스트로 돌아가기</span>
+            <span className="hidden sm:inline">견적 요청 리스트로 돌아가기</span>
             <span className="sm:hidden">돌아가기</span>
           </Button>
         </Link>
@@ -26,7 +26,7 @@ export default function QuoteRequestPage() {
           <QuoteRequestPanel />
         </div>
 
-        {/* 우측: 구매 요청 품목 요약 패널 */}
+        {/* 우측: 견적 요청 품목 요약 패널 */}
         <div className="w-full order-1 lg:order-2">
           <QuoteItemsSummaryPanel />
         </div>

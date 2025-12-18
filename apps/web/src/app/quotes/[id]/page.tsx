@@ -7,6 +7,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   Calendar,
@@ -16,10 +19,22 @@ import {
   XCircle,
   ShoppingCart,
   Package,
+  FileText,
+  Inbox,
+  Download,
+  Save,
+  GitCompare,
 } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -30,6 +45,7 @@ export default function QuoteDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const quoteId = params.id as string;
+  const [activeTab, setActiveTab] = useState("items");
 
   const { data: quoteData, isLoading } = useQuery({
     queryKey: ["quote", quoteId],
@@ -212,111 +228,216 @@ export default function QuoteDetailPage() {
           </CardContent>
         </Card>
 
-        {/* 요청 제품 목록 */}
+        {/* 견적 요청 품목 테이블 */}
         <Card className="p-3 md:p-6">
           <CardHeader className="px-0 pt-0 pb-3">
-            <CardTitle className="text-sm md:text-lg">요청 제품 ({quote.items?.length || 0}개)</CardTitle>
+            <CardTitle className="text-sm md:text-lg">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
+            <CardDescription className="text-xs md:text-sm mt-1">
+              견적 요청 생성 시점의 품목 스냅샷입니다.
+            </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="overflow-x-auto">
+            {/* 모바일: 카드 리스트 형태 */}
+            <div className="md:hidden space-y-3">
+              {quote.items?.map((item: any) => {
+                const vendor = item.product?.vendors?.[0]?.vendor;
+                return (
+                  <Card key={item.id} className="p-3 border">
+                    <div className="space-y-2">
+                      <div className="font-medium text-sm">{item.product?.name || "제품 정보 없음"}</div>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        {vendor?.name && <div>벤더: {vendor.name}</div>}
+                        {item.product?.spec && <div>규격: {item.product.spec}</div>}
+                        <div>수량: {item.quantity}</div>
+                        {item.notes && <div>비고: {item.notes}</div>}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+            {/* 데스크톱: 테이블 형태 */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">제품명</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">벤더</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">규격</th>
                     <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">비고</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">상세</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">비고</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {quote.items?.map((item: any) => (
-                    <tr key={item.id} className="border-b hover:bg-muted/30">
-                      <td className="p-2 md:p-3 font-medium text-xs md:text-sm min-w-[120px]">
-                        <div className="truncate">{item.product?.name || "제품 정보 없음"}</div>
-                        {item.notes && (
-                          <div className="md:hidden text-[10px] text-muted-foreground mt-1 truncate">
-                            {item.notes}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-2 md:p-3 text-xs md:text-sm">{item.quantity}</td>
-                      <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground hidden md:table-cell">
-                        {item.notes || "-"}
-                      </td>
-                      <td className="p-2 md:p-3">
-                        {item.product?.id && (
-                          <Link href={`/products/${item.product.id}`}>
-                            <Button variant="ghost" size="sm" className="text-xs md:text-sm h-7 md:h-9">
-                              상세보기
-                            </Button>
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {quote.items?.map((item: any) => {
+                    const vendor = item.product?.vendors?.[0]?.vendor;
+                    return (
+                      <tr key={item.id} className="border-b hover:bg-muted/30">
+                        <td className="p-2 md:p-3 font-medium text-xs md:text-sm min-w-[120px]">
+                          <div className="truncate">{item.product?.name || "제품 정보 없음"}</div>
+                        </td>
+                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
+                          {vendor?.name || "-"}
+                        </td>
+                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
+                          {item.product?.spec || "-"}
+                        </td>
+                        <td className="p-2 md:p-3 text-xs md:text-sm">{item.quantity}</td>
+                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
+                          {item.notes || "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
 
-        {/* 응답 목록 */}
-        {quote.responses && quote.responses.length > 0 && (
-          <Card className="p-3 md:p-6">
-            <CardHeader className="px-0 pt-0 pb-3">
-              <CardTitle className="text-sm md:text-lg">공급사 응답 ({quote.responses.length}개)</CardTitle>
-              <CardDescription className="text-xs md:text-sm">
-                공급사로부터 받은 견적 응답입니다
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              <div className="space-y-3 md:space-y-4">
-                {quote.responses.map((response: any) => (
-                  <Card key={response.id} className="border-l-4 border-l-blue-500 p-3 md:p-6">
-                    <CardHeader className="px-0 pt-0 pb-2">
-                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
-                        <CardTitle className="text-sm md:text-lg">
-                          {response.vendor?.name || "공급사 정보 없음"}
-                        </CardTitle>
-                        <Badge variant="outline" className="text-[10px] md:text-xs">
-                          {new Date(response.createdAt).toLocaleDateString("ko-KR")}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="px-0 pb-0 space-y-2 md:space-y-3">
-                      {response.totalPrice && (
-                        <div>
-                          <strong className="text-base md:text-lg text-green-600">
-                            ₩{response.totalPrice.toLocaleString()}
-                          </strong>
-                          {response.currency && response.currency !== "KRW" && (
-                            <span className="text-xs md:text-sm text-muted-foreground ml-2">
-                              ({response.currency})
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {response.validUntil && (
-                        <div className="text-xs md:text-sm text-muted-foreground">
-                          <strong>유효기간:</strong>{" "}
-                          {new Date(response.validUntil).toLocaleDateString("ko-KR")}
-                        </div>
-                      )}
-                      {response.message && (
-                        <div>
-                          <strong className="text-xs md:text-sm">응답 메시지:</strong>
-                          <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
-                            {response.message}
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* 탭 구조: 회신 입력, 회신 수신함 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="items" className="text-xs md:text-sm">
+              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              회신 입력
+            </TabsTrigger>
+            <TabsTrigger value="inbox" className="text-xs md:text-sm">
+              <Inbox className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              회신 수신함
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 회신 입력 탭 */}
+          <TabsContent value="items" className="mt-4 md:mt-6">
+            <Card className="p-3 md:p-6">
+              <CardHeader className="px-0 pt-0 pb-3">
+                <CardTitle className="text-sm md:text-lg">회신 입력</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
+                  견적서는 검토 후 수동으로 입력하세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">벤더명</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">품목명</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">단가</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">통화</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">납기</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">MOQ</th>
+                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">비고</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {quote.items?.map((item: any, index: number) => (
+                          <tr key={item.id} className="border-b">
+                            <td className="p-2 md:p-3">
+                              <Input
+                                placeholder="벤더명"
+                                className="text-xs md:text-sm h-8 md:h-10"
+                              />
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <div className="text-xs md:text-sm font-medium">
+                                {item.product?.name || "제품 정보 없음"}
+                              </div>
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <Input
+                                type="number"
+                                placeholder="수량"
+                                defaultValue={item.quantity}
+                                className="text-xs md:text-sm h-8 md:h-10 w-20"
+                              />
+                            </td>
+                            <td className="p-2 md:p-3">
+                              <Input
+                                type="number"
+                                placeholder="단가"
+                                className="text-xs md:text-sm h-8 md:h-10 w-24"
+                              />
+                            </td>
+                            <td className="p-2 md:p-3 hidden md:table-cell">
+                              <Select defaultValue="KRW">
+                                <SelectTrigger className="text-xs md:text-sm h-8 md:h-10 w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="KRW">KRW</SelectItem>
+                                  <SelectItem value="USD">USD</SelectItem>
+                                  <SelectItem value="EUR">EUR</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="p-2 md:p-3 hidden md:table-cell">
+                              <Input
+                                placeholder="납기"
+                                className="text-xs md:text-sm h-8 md:h-10 w-24"
+                              />
+                            </td>
+                            <td className="p-2 md:p-3 hidden md:table-cell">
+                              <Input
+                                type="number"
+                                placeholder="MOQ"
+                                className="text-xs md:text-sm h-8 md:h-10 w-20"
+                              />
+                            </td>
+                            <td className="p-2 md:p-3 hidden md:table-cell">
+                              <Textarea
+                                placeholder="비고"
+                                rows={1}
+                                className="text-xs md:text-sm"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <Button className="w-full sm:w-auto">
+                      <Save className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      회신 저장
+                    </Button>
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      <GitCompare className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      비교에 반영
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 회신 수신함 탭 */}
+          <TabsContent value="inbox" className="mt-4 md:mt-6">
+            <Card className="p-3 md:p-6">
+              <CardHeader className="px-0 pt-0 pb-3">
+                <CardTitle className="text-sm md:text-lg">회신 수신함</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
+                  첨부된 견적서는 자동 반영되지 않습니다.
+                  <br />
+                  검토 후 회신 입력 화면에서 정리하세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                <div className="space-y-3">
+                  {/* 샘플 데이터 - 실제로는 API에서 가져와야 함 */}
+                  <div className="text-center py-8 text-muted-foreground text-xs md:text-sm">
+                    수신된 회신이 없습니다.
+                  </div>
+                  {/* 향후 구현: 이메일 회신 리스트 */}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
 
         {/* 액션 버튼 */}
         <div className="flex flex-col sm:flex-row gap-2">

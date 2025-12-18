@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2 } from "lucide-react";
+import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
 import {
   Dialog,
@@ -43,6 +44,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { trackEvent } from "@/lib/analytics";
 
 export function QuotePanel() {
   const {
@@ -59,6 +61,17 @@ export function QuotePanel() {
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [groupByVendor, setGroupByVendor] = useState(true);
+  const [showAdvancedOptimization, setShowAdvancedOptimization] = useState(false);
+  const [optimizationConstraints, setOptimizationConstraints] = useState({
+    grade: "",
+    brand: "",
+    maxLeadTime: "",
+    budgetLimit: "",
+    optimizeFor: "balanced" as "cost" | "leadTime" | "balanced",
+    requireSameVendor: false,
+  });
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationResult, setOptimizationResult] = useState<any>(null);
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
@@ -170,16 +183,16 @@ export function QuotePanel() {
 
   return (
     <div className="space-y-6">
-      {/* 구매 요청 품목 섹션 */}
+      {/* 견적 요청 섹션 */}
       <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1">
               <CardTitle className="text-sm font-semibold text-slate-900">
-                구매 요청 품목
+                견적 요청
               </CardTitle>
               <CardDescription className="text-xs text-slate-500 mt-1">
-                그룹웨어/전자결재에 올릴 최종 품목과 수량을 확인하는 화면입니다.
+                선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
@@ -344,8 +357,8 @@ export function QuotePanel() {
                               {/* 벤더 헤더 행 (그룹화 모드일 때만) */}
                               {groupByVendor && vendorName !== "전체" && (
                                 <TableRow className="bg-slate-50 hover:bg-slate-100">
-                                  <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700">
-                                    {vendorName}
+                                  <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                                    <span className="truncate block" title={vendorName}>{vendorName}</span>
                                   </TableCell>
                                   <TableCell colSpan={5} className="px-3 py-2 text-xs text-slate-600">
                                     {vendorItemCount}개 품목
@@ -405,7 +418,7 @@ export function QuotePanel() {
                               const vendors = product?.vendors || [];
                               
                               if (vendors.length <= 1) {
-                                return <span>{item.vendorName}</span>;
+                                return <span className="truncate block" title={item.vendorName}>{item.vendorName}</span>;
                               }
                               
                               return (
@@ -585,12 +598,23 @@ export function QuotePanel() {
             {/* 절감 제안 섹션 */}
             {quoteItems.length > 0 && costOptimization && costOptimization.optimizations.length > 0 && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-semibold text-blue-900">절감 제안</span>
-                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                    최대 {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원 절감 가능
-                  </Badge>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-semibold text-blue-900">절감 제안</span>
+                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                      최대 {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원 절감 가능
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setShowAdvancedOptimization(true)}
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    고급 최적화
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   {costOptimization.optimizations.slice(0, 3).map((opt: any, idx: number) => (
@@ -718,6 +742,273 @@ export function QuotePanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 고급 최적화 다이얼로그 */}
+      <Dialog open={showAdvancedOptimization} onOpenChange={setShowAdvancedOptimization}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              제약조건 기반 조합 최적화
+            </DialogTitle>
+            <DialogDescription>
+              Grade, 브랜드, 납기, 예산 등 제약조건을 설정하여 최적의 제품 조합을 찾습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="opt-grade" className="text-xs">Grade 제약조건</Label>
+                <Input
+                  id="opt-grade"
+                  placeholder="예: HPLC grade, GMP"
+                  value={optimizationConstraints.grade}
+                  onChange={(e) => setOptimizationConstraints({ ...optimizationConstraints, grade: e.target.value })}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="opt-brand" className="text-xs">브랜드 제약조건</Label>
+                <Input
+                  id="opt-brand"
+                  placeholder="예: Sigma, Thermo"
+                  value={optimizationConstraints.brand}
+                  onChange={(e) => setOptimizationConstraints({ ...optimizationConstraints, brand: e.target.value })}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="opt-leadtime" className="text-xs">최대 납기일 (일)</Label>
+                <Input
+                  id="opt-leadtime"
+                  type="number"
+                  placeholder="예: 30"
+                  value={optimizationConstraints.maxLeadTime}
+                  onChange={(e) => setOptimizationConstraints({ ...optimizationConstraints, maxLeadTime: e.target.value })}
+                  className="text-xs h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="opt-budget" className="text-xs">예산 한도 (원)</Label>
+                <Input
+                  id="opt-budget"
+                  type="number"
+                  placeholder="예: 1000000"
+                  value={optimizationConstraints.budgetLimit}
+                  onChange={(e) => setOptimizationConstraints({ ...optimizationConstraints, budgetLimit: e.target.value })}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">최적화 목표</Label>
+              <Select
+                value={optimizationConstraints.optimizeFor}
+                onValueChange={(value: "cost" | "leadTime" | "balanced") =>
+                  setOptimizationConstraints({ ...optimizationConstraints, optimizeFor: value })
+                }
+              >
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cost">비용 최소화</SelectItem>
+                  <SelectItem value="leadTime">납기 최소화</SelectItem>
+                  <SelectItem value="balanced">균형 (비용+납기)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="opt-same-vendor"
+                checked={optimizationConstraints.requireSameVendor}
+                onCheckedChange={(checked) =>
+                  setOptimizationConstraints({ ...optimizationConstraints, requireSameVendor: checked as boolean })
+                }
+              />
+              <Label htmlFor="opt-same-vendor" className="text-xs cursor-pointer">
+                동일 벤더에서 구매 필수
+              </Label>
+            </div>
+            <Button
+              className="w-full"
+              onClick={async () => {
+                setIsOptimizing(true);
+                try {
+                  const response = await fetch("/api/quotes/optimize-combination", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      items: quoteItems.map((item) => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                      })),
+                      globalConstraints: {
+                        ...(optimizationConstraints.grade && { grade: optimizationConstraints.grade }),
+                        ...(optimizationConstraints.brand && { brand: optimizationConstraints.brand }),
+                        ...(optimizationConstraints.maxLeadTime && {
+                          maxLeadTime: parseInt(optimizationConstraints.maxLeadTime),
+                        }),
+                        requireSameVendor: optimizationConstraints.requireSameVendor,
+                      },
+                      ...(optimizationConstraints.budgetLimit && {
+                        budgetLimit: parseInt(optimizationConstraints.budgetLimit),
+                      }),
+                      optimizeFor: optimizationConstraints.optimizeFor,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || "최적화 실패");
+                  }
+
+                  const result = await response.json();
+                  setOptimizationResult(result);
+                  toast({
+                    title: "최적화 완료",
+                    description: result.allConstraintsSatisfied
+                      ? `₩${result.totalSavings.toLocaleString("ko-KR")} 절감 가능`
+                      : "일부 제약조건을 만족하지 못했습니다.",
+                  });
+                } catch (error: any) {
+                  toast({
+                    title: "최적화 실패",
+                    description: error.message || "최적화 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsOptimizing(false);
+                }
+              }}
+              disabled={isOptimizing || quoteItems.length === 0}
+            >
+              {isOptimizing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  최적화 중...
+                </>
+              ) : (
+                <>
+                  <Target className="h-4 w-4 mr-2" />
+                  최적 조합 찾기
+                </>
+              )}
+            </Button>
+
+            {/* 최적화 결과 */}
+            {optimizationResult && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-green-900">최적화 결과</div>
+                    <div className="text-xs text-green-700">
+                      총 비용: ₩{optimizationResult.totalCost.toLocaleString("ko-KR")}
+                      {optimizationResult.totalSavings > 0 && (
+                        <span className="ml-2">
+                          (절감: ₩{optimizationResult.totalSavings.toLocaleString("ko-KR")})
+                        </span>
+                      )}
+                    </div>
+                    {optimizationResult.averageLeadTime && (
+                      <div className="text-xs text-green-700">
+                        평균 납기: {optimizationResult.averageLeadTime.toFixed(1)}일
+                      </div>
+                    )}
+                  </div>
+                  {optimizationResult.allConstraintsSatisfied ? (
+                    <Badge variant="default" className="bg-green-600">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      제약조건 충족
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive">
+                      <Ban className="h-3 w-3 mr-1" />
+                      제약조건 미충족
+                    </Badge>
+                  )}
+                </div>
+                {optimizationResult.constraintViolations.length > 0 && (
+                  <div className="text-xs text-red-600 space-y-1">
+                    {optimizationResult.constraintViolations.map((violation: string, idx: number) => (
+                      <div key={idx}>• {violation}</div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {optimizationResult.items.map((item: any, idx: number) => (
+                    <div key={idx} className="p-2 bg-white rounded border border-green-100">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-slate-900">
+                            {item.originalProductName}
+                          </div>
+                          {item.selectedProductId !== item.originalProductId && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <ArrowRight className="h-3 w-3 text-slate-400" />
+                              <span className="text-xs text-slate-600">{item.selectedProductName}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-500">{item.selectedVendorName}</span>
+                            {item.leadTime && (
+                              <Badge variant="outline" className="text-[10px]">
+                                납기 {item.leadTime}일
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-green-600">
+                            ₩{item.totalPrice.toLocaleString("ko-KR")}
+                          </div>
+                          {item.selectedProductId !== item.originalProductId && (
+                            <div className="text-xs text-slate-500">
+                              유사도 {Math.round(item.similarity * 100)}%
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {item.selectedProductId !== item.originalProductId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-2 text-xs h-7"
+                          onClick={() => {
+                            const quoteItem = quoteItems.find((i) => i.productId === item.originalProductId);
+                            if (quoteItem) {
+                              updateQuoteItem(quoteItem.id, {
+                                productId: item.selectedProductId,
+                                productName: item.selectedProductName,
+                                vendorName: item.selectedVendorName,
+                                unitPrice: item.unitPrice,
+                                lineTotal: item.totalPrice,
+                              });
+                              toast({
+                                title: "제품 교체 완료",
+                                description: `${item.originalProductName} → ${item.selectedProductName}`,
+                              });
+                              setShowAdvancedOptimization(false);
+                            }
+                          }}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          이 조합 적용
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdvancedOptimization(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -756,7 +1047,7 @@ export function SharePanel() {
     }
 
     try {
-      await generateShareLink(shareTitle || "품목 리스트", expiresInDays);
+      await generateShareLink(shareTitle || "견적 요청 리스트", expiresInDays);
       setIsShareDialogOpen(false);
       // generateShareLink가 성공하면 providerShareLink가 업데이트되므로
       // 잠시 후 localShareLink도 업데이트
@@ -866,6 +1157,13 @@ export function SharePanel() {
     try {
       const tsvContent = generateTSVContent();
       await navigator.clipboard.writeText(tsvContent);
+      
+      // Analytics: list_export_tsv 이벤트 추적
+      trackEvent("list_export_tsv", {
+        item_count: quoteItems.length,
+        total_amount: totalAmount,
+      });
+      
       toast({
         title: "복사 완료",
         description: "TSV 형식이 클립보드에 복사되었습니다. 엑셀/그룹웨어에 붙여넣을 수 있습니다.",
@@ -898,6 +1196,12 @@ export function SharePanel() {
     link.download = `품목리스트_${new Date().toISOString().split("T")[0]}.tsv`;
     link.click();
     URL.revokeObjectURL(url);
+
+    // Analytics: list_export_tsv 이벤트 추적
+    trackEvent("list_export_tsv", {
+      item_count: quoteItems.length,
+      total_amount: totalAmount,
+    });
 
     toast({
       title: "내보내기 완료",
@@ -940,6 +1244,12 @@ export function SharePanel() {
     link.click();
     URL.revokeObjectURL(url);
 
+    // Analytics: list_export_csv 이벤트 추적
+    trackEvent("list_export_csv", {
+      item_count: quoteItems.length,
+      total_amount: totalAmount,
+    });
+
     toast({
       title: "내보내기 완료",
       description: "CSV 파일이 다운로드되었습니다.",
@@ -981,7 +1291,7 @@ export function SharePanel() {
                 </Button>
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                이 링크를 공유하면 다른 사람이 품목 리스트를 볼 수 있습니다.
+                이 링크를 공유하면 다른 사람이 견적 요청 리스트를 볼 수 있습니다.
                 {shareLinkInfo?.expiresAt && (
                   <span className="block mt-1">
                     만료일: {new Date(shareLinkInfo.expiresAt).toLocaleDateString("ko-KR")}
@@ -1031,7 +1341,7 @@ export function SharePanel() {
               <DialogHeader>
                 <DialogTitle>공유 링크 생성</DialogTitle>
                 <DialogDescription>
-                  품목 리스트를 공유할 수 있는 링크를 생성합니다.
+                  견적 요청 리스트를 공유할 수 있는 링크를 생성합니다.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -1041,7 +1351,7 @@ export function SharePanel() {
                     id="share-title"
                     value={shareTitle}
                     onChange={(e) => setShareTitle(e.target.value)}
-                    placeholder="품목 리스트"
+                    placeholder="견적 요청 리스트"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1501,7 +1811,7 @@ export function QuoteItemsSummaryPanel() {
                 <div key={vendorId} className="space-y-2">
                   {vendorGroups.size > 1 && (
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-xs font-semibold text-slate-700 whitespace-nowrap truncate" title={vendorName}>
                         {vendorIndex + 1}. {vendorName}
                       </span>
                       <Badge variant="outline" className="text-xs">

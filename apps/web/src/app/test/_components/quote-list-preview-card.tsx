@@ -55,10 +55,10 @@ export function QuoteListPreviewCard() {
               <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
                 Step 3
               </span>
-              <span>구매 요청 리스트 정리</span>
+              <span>견적 요청 리스트 정리</span>
             </CardTitle>
             <p className="mt-1 text-xs text-slate-500">
-              검색 결과에서 선택한 제품이 이곳에 정리됩니다. TSV/엑셀로 내려받아 공유할 수 있습니다.
+              선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요. TSV/엑셀로 내려받아 공유할 수 있습니다.
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export function QuoteListPreviewCard() {
           <div className="mt-3 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-600">
-                품목 리스트 ({quoteItems.length}개)
+                견적 요청 리스트 ({quoteItems.length}개)
               </span>
               <span className="font-semibold text-slate-900">
                 합계 ₩{totalAmount.toLocaleString("ko-KR")}

@@ -27,7 +27,7 @@ const footerColumns = [
     title: "기능",
     links: [
       { label: "검색 · AI 분석", href: "/test/search", onClick: null },
-      { label: "비교 · 품목 리스트", href: "/test/quote", onClick: null },
+      { label: "비교 · 견적 요청", href: "/test/quote", onClick: null },
       { label: "견적 요청", href: "/test/quote/request", onClick: null },
       { label: "예산 · 구매 리포트", href: "/reports", onClick: null },
     ],

@@ -56,9 +56,9 @@ export function FlowSection() {
               </div>
               {/* 텍스트 블록 */}
               <div className="space-y-1 flex-1 flex flex-col min-w-0 overflow-hidden">
-                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">견적요청 & 구매 요청 리스트 정리</h3>
+                <h3 className="text-xs md:text-sm font-semibold text-slate-900 break-words">리스트</h3>
                 <p className="text-[11px] md:text-xs leading-relaxed text-slate-500 flex-1 break-words">
-                  선정된 품목으로 견적요청용 리스트를 만들고, 회신(가격·납기)을 정리한 뒤 TSV/엑셀로 공유합니다.
+                  선정된 품목으로 구매요청 리스트를 만들고, 내보내기 또는 견적 요청을 진행합니다.
                 </p>
                 <span className="text-[10px] md:text-xs text-blue-600 mt-2 inline-block">체험하기 →</span>
               </div>
