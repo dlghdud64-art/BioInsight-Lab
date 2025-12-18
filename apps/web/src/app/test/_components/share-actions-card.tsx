@@ -173,7 +173,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
 
   // 공유 링크 생성
   const createShareLinkMutation = useMutation({
-    mutationFn: async (title: string, expiresIn: number) => {
+    mutationFn: async ({ title, expiresIn }: { title: string; expiresIn: number }) => {
       // 먼저 QuoteList 생성
       const quoteResponse = await fetch("/api/quotes", {
         method: "POST",
@@ -347,7 +347,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
               </div>
               <Button
                 className="w-full"
-                onClick={() => createShareLinkMutation.mutate(shareTitle, expiresInDays)}
+                onClick={() => createShareLinkMutation.mutate({ title: shareTitle, expiresIn: expiresInDays })}
                 disabled={createShareLinkMutation.isPending || expiresInDays < 0}
               >
                 {createShareLinkMutation.isPending ? "생성 중..." : "링크 생성"}
