@@ -1,5 +1,4 @@
 import { extractTextFromPDF } from "./pdf-parser";
-import { openai } from "./openai";
 
 // OpenAI API 키 확인
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -84,17 +83,36 @@ If information is not found, use null or omit the field. Be accurate and only ex
   const userPrompt = `Extract quote information from this PDF text:\n\n${cleanedText}`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      }),
     });
 
-    const responseText = completion.choices[0]?.message?.content;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+      );
+    }
+
+    const data = await response.json();
+    const responseText = data.choices[0]?.message?.content;
     if (!responseText) {
       throw new Error("GPT 응답이 없습니다.");
     }

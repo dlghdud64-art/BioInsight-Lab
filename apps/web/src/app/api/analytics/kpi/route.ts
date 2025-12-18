@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       _count: true,
     });
 
-    const totalSessions = userSessions.reduce((sum, u) => sum + (u._count || 0), 0);
+    const totalSessions = userSessions.reduce((sum: number, u) => sum + (u._count || 0), 0);
     const avgSessionsPerUser = totalUsers > 0 ? totalSessions / totalUsers : 0;
 
     // 재방문 사용자 (7일 내 2회 이상 활동)
