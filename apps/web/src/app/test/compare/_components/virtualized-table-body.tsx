@@ -156,7 +156,7 @@ export function VirtualizedTableBody({
                             className="cursor-pointer hover:bg-slate-50 p-1 rounded"
                             onClick={() => onLeadTimeEdit(product.id, 0)}
                           >
-                            {displayLeadTime > 0 ? `${displayLeadTime}일` : "-"}
+                            {displayLeadTime && displayLeadTime > 0 ? `${displayLeadTime}일` : "-"}
                             {!manualLeadTime && averageLeadTime && (
                               <span className="text-[9px] text-slate-500 ml-1">(평균)</span>
                             )}
