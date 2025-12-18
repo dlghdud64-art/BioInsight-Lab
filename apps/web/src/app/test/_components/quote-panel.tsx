@@ -1029,6 +1029,8 @@ export function SharePanel() {
   const [localShareLink, setLocalShareLink] = useState<string | null>(providerShareLink || null);
   const [shareLinkInfo, setShareLinkInfo] = useState<{ publicId: string; expiresAt?: string; isActive: boolean } | null>(null);
 
+  const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+
   // providerShareLink가 변경되면 localShareLink 업데이트
   useEffect(() => {
     if (providerShareLink) {
