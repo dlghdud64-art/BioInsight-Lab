@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { matchPurchaseToProduct, createHazardSnapshot } from "@/lib/matching/purchase-matcher";
 
 // CSV 파일 업로드 및 실제 구매 데이터 Import
 export async function POST(request: NextRequest) {
@@ -149,20 +150,31 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // 제품 찾기 (이름으로 검색)
-        let productId: string | null = null;
+        // 카탈로그 번호 추출 (notes 또는 productName에서)
+        let catalogNumber: string | undefined;
         if (productName) {
-          const product = await db.product.findFirst({
-            where: {
-              OR: [
-                { name: { contains: productName, mode: "insensitive" } },
-                { nameEn: { contains: productName, mode: "insensitive" } },
-              ],
-            },
-          });
-          if (product) {
-            productId = product.id;
+          // Cat.No 패턴 찾기
+          const catNoMatch = productName.match(/[Cc]at[.\s]*[Nn]o[.\s]*:?\s*([A-Z0-9-]+)/i);
+          if (catNoMatch) {
+            catalogNumber = catNoMatch[1];
           }
+        }
+
+        // 자동 매칭 시도
+        const matchResult = await matchPurchaseToProduct({
+          productName: productName || undefined,
+          catalogNumber,
+          vendorId: vendorId || null,
+          vendorName: vendorName || null,
+        });
+
+        let productId: string | null = matchResult.productId;
+        let matchType: "CATALOG" | "FUZZY" | null = matchResult.matchType as "CATALOG" | "FUZZY" | null;
+        let hazardSnapshot: any = null;
+
+        // 매칭 성공 시 위험 정보 스냅샷 생성
+        if (productId) {
+          hazardSnapshot = await createHazardSnapshot(productId);
         }
 
         // PurchaseRecord 생성
@@ -172,6 +184,8 @@ export async function POST(request: NextRequest) {
             projectName: projectName || null,
             vendorId,
             productId,
+            matchType: matchType || null,
+            hazardSnapshot,
             externalDocId: externalDocIdStr || null,
             purchaseDate,
             quantity,
@@ -180,7 +194,7 @@ export async function POST(request: NextRequest) {
             totalAmount,
             category: categoryStr || null,
             importedBy: session.user.id,
-            notes: `CSV Import: ${vendorName || ""} ${productName || ""}`.trim(),
+            notes: `CSV Import: ${vendorName || ""} ${productName || ""}${matchResult.reason ? ` (${matchResult.reason})` : ""}`.trim(),
           },
         });
 

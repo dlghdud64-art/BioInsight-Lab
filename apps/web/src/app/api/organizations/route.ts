@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { createOrganization } from "@/lib/api/organizations";
 
 // ì¬ì©ìê° ììë ì¡°ì§ ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
@@ -33,6 +34,39 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching organizations:", error);
     return NextResponse.json(
       { error: "Failed to fetch organizations" },
+      { status: 500 }
+    );
+  }
+}
+
+// 새 조직 생성
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { name, description } = body;
+
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Organization name is required" },
+        { status: 400 }
+      );
+    }
+
+    const organization = await createOrganization(session.user.id, {
+      name: name.trim(),
+      description: description?.trim(),
+    });
+
+    return NextResponse.json({ organization }, { status: 201 });
+  } catch (error: any) {
+    console.error("Error creating organization:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create organization" },
       { status: 500 }
     );
   }

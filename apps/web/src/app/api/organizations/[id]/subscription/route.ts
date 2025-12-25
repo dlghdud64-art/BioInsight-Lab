@@ -59,3 +59,108 @@ export async function GET(
 }
 
 // 구독 업그레이드/변경
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { plan, periodMonths = 1 } = body;
+
+    if (!plan || !Object.values(SubscriptionPlan).includes(plan)) {
+      return NextResponse.json(
+        { error: "Invalid plan" },
+        { status: 400 }
+      );
+    }
+
+    // 조직 확인
+    const organization = await db.organization.findUnique({
+      where: { id },
+      include: {
+        members: true,
+        subscription: true,
+      },
+    });
+
+    if (!organization) {
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 }
+      );
+    }
+
+    // 관리자 권한 확인
+    const membership = await db.organizationMember.findFirst({
+      where: {
+        userId: session.user.id,
+        organizationId: id,
+        role: "ADMIN",
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    // 구독 업데이트 또는 생성
+    const planExpiresAt = plan !== SubscriptionPlan.FREE
+      ? new Date(Date.now() + periodMonths * 30 * 24 * 60 * 60 * 1000)
+      : null;
+
+    // Organization 업데이트
+    const updatedOrg = await db.organization.update({
+      where: { id },
+      data: {
+        plan: plan as SubscriptionPlan,
+        planExpiresAt,
+      },
+    });
+
+    // Subscription 업데이트 또는 생성
+    let subscription;
+    if (organization.subscription) {
+      subscription = await db.subscription.update({
+        where: { id: organization.subscription.id },
+        data: {
+          plan: plan as SubscriptionPlan,
+          status: "active",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: planExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          cancelAtPeriodEnd: false,
+        },
+      });
+    } else {
+      subscription = await db.subscription.create({
+        data: {
+          organizationId: id,
+          plan: plan as SubscriptionPlan,
+          status: "active",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: planExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          cancelAtPeriodEnd: false,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      organization: updatedOrg,
+      subscription,
+    });
+  } catch (error: any) {
+    console.error("Error updating subscription:", error);
+    return NextResponse.json(
+      { error: "Failed to update subscription" },
+      { status: 500 }
+    );
+  }
+}

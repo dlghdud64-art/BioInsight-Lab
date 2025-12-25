@@ -31,6 +31,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { getRegulationLinksForProduct } from "@/lib/regulation/links";
 import { getProductSafetyLevel, HAZARD_CODE_DESCRIPTIONS, PICTOGRAM_DESCRIPTIONS, PPE_DESCRIPTIONS } from "@/lib/utils/safety-visualization";
+import { filterComplianceLinksForProduct, getRuleDescription, type ComplianceLink } from "@/lib/compliance-links";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Disclaimer } from "@/components/legal/disclaimer";
 
 export default function ProductDetailPage() {
@@ -66,10 +68,55 @@ export default function ProductDetailPage() {
     safetyNote: string;
   } | null>(null);
   const [isSavingSafety, setIsSavingSafety] = useState(false);
+  const [showMoreComplianceLinks, setShowMoreComplianceLinks] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const isInCompare = hasProduct(id);
+
+  // 조직 목록 조회 (compliance links용)
+  const { data: organizationsData } = useQuery({
+    queryKey: ["user-organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/organizations");
+      if (!response.ok) return { organizations: [] };
+      return response.json();
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const organizations = organizationsData?.organizations || [];
+  const currentOrg = organizations[0]; // 첫 번째 조직 사용
+
+  // Compliance Links 조회
+  const { data: complianceLinksData } = useQuery({
+    queryKey: ["compliance-links", currentOrg?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (currentOrg?.id) {
+        params.append("organizationId", currentOrg.id);
+      }
+      const response = await fetch(`/api/compliance-links?${params}`);
+      if (!response.ok) return { links: [] };
+      return response.json();
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const allComplianceLinks = (complianceLinksData?.links || []) as ComplianceLink[];
+  const filteredComplianceLinks = product
+    ? filterComplianceLinksForProduct(allComplianceLinks, product, currentOrg?.id)
+    : [];
+
+  // 링크 타입별로 그룹화
+  const officialLinks = filteredComplianceLinks.filter((link) => link.linkType === "official");
+  const organizationLinks = filteredComplianceLinks.filter((link) => link.linkType === "organization");
+
+  // 관리자 여부 확인 (규칙 설명 표시용)
+  const isAdmin = session?.user?.role === "ADMIN" || 
+    currentOrg?.members?.some(
+      (m: any) => m.userId === session?.user?.id && (m.role === "ADMIN" || m.role === "VIEWER")
+    );
 
   const startSafetyEdit = () => {
     if (!product) return;
@@ -1230,6 +1277,95 @@ ${extractedInfo.summary || "N/A"}`;
                               </p>
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                      {/* 규제/절차 링크 */}
+                      {(officialLinks.length > 0 || organizationLinks.length > 0) && (
+                        <div className="space-y-4">
+                          {/* 공식 링크 */}
+                          {officialLinks.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-xs font-semibold text-slate-700 mb-2">공식 링크</div>
+                              <div className="space-y-2">
+                                {(showMoreComplianceLinks ? officialLinks : officialLinks.slice(0, 3)).map((link) => (
+                                  <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-start gap-2 p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors group"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mt-0.5 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs font-medium text-slate-900">{link.title}</div>
+                                      {link.description && (
+                                        <div className="text-xs text-slate-600 mt-0.5">{link.description}</div>
+                                      )}
+                                      {isAdmin && link.rules && (
+                                        <div className="text-xs text-slate-400 mt-1">
+                                          조건: {getRuleDescription(link.rules)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 우리 조직 절차 */}
+                          {organizationLinks.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-xs font-semibold text-slate-700 mb-2">우리 조직 절차</div>
+                              <div className="space-y-2">
+                                {(showMoreComplianceLinks ? organizationLinks : organizationLinks.slice(0, 3)).map((link) => (
+                                  <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-start gap-2 p-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors group"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mt-0.5 text-blue-400 group-hover:text-blue-600 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs font-medium text-blue-900">{link.title}</div>
+                                      {link.description && (
+                                        <div className="text-xs text-blue-700 mt-0.5">{link.description}</div>
+                                      )}
+                                      {isAdmin && link.rules && (
+                                        <div className="text-xs text-blue-400 mt-1">
+                                          조건: {getRuleDescription(link.rules)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 더보기 버튼 */}
+                          {(officialLinks.length > 3 || organizationLinks.length > 3) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs w-full"
+                              onClick={() => setShowMoreComplianceLinks(!showMoreComplianceLinks)}
+                            >
+                              {showMoreComplianceLinks ? (
+                                <>
+                                  <ChevronUp className="h-3 w-3 mr-1" />
+                                  접기
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-3 w-3 mr-1" />
+                                  더보기 ({officialLinks.length + organizationLinks.length - 3}개)
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       )}
 

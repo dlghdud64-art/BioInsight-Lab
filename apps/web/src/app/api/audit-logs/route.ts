@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const entityId = searchParams.get("entityId");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const search = searchParams.get("search");
     const limit = parseInt(searchParams.get("limit") || "100");
     const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
       entityId: entityId || undefined,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
+      search: search || undefined,
       limit,
       offset,
     });

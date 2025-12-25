@@ -35,16 +35,17 @@ enum SubscriptionPlan {
 
 // 조직/?크?페?스
 model Organization {
-  id                String           @id @default(cuid())
-  name              String
-  description       String?          @db.Text
-  plan              SubscriptionPlan @default(FREE) // 구독 ?랜
-  planExpiresAt     DateTime? // ?랜 만료??
-  maxMembers        Int? // 최? 멤버 ??(?랜??한)
-  maxQuotesPerMonth Int? // ?별 최? ?목 리스????
-  maxSharedLinks    Int? // 최? 공유 링크 ??
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id                  String           @id @default(cuid())
+  name                String
+  description         String?          @db.Text
+  plan                SubscriptionPlan @default(FREE) // 구독 ?랜
+  planExpiresAt       DateTime? // ?랜 만료??
+  maxMembers          Int? // 최? 멤버 ??(?랜??한)
+  maxQuotesPerMonth   Int? // ?별 최? ?목 리스????
+  maxSharedLinks      Int? // 최? 공유 링크 ??
+  allowedEmailDomains Json? // 허용된 이메일 도메인 목록 (Enterprise)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   // 관?
   members         OrganizationMember[]
@@ -56,6 +57,8 @@ model Organization {
   subscription    Subscription? // 구독 ?보
   activityLogs    ActivityLog[]
   auditLogs       AuditLog[]
+  sdsDocuments    SDSDocument[]
+  complianceLinks ComplianceLink[]
 
   @@index([name])
   @@index([plan])
@@ -191,12 +194,12 @@ model Product {
   ppe              Json? // 개인보호장비 배열 (예: ["gloves", "goggles"])
 
   // 원료(원부자재) 전용 필드 (P1)
-  coaUrl              String? // COA (Certificate of Analysis) URL
-  specSheetUrl        String? // Spec Sheet URL
-  pharmacopoeia       String? // 규정/표준 (예: "USP", "EP", "JP", "KP")
-  countryOfOrigin     String? // 원산지
-  manufacturer        String? // 제조사
-  expiryDate          DateTime? // 유효기간
+  coaUrl          String? // COA (Certificate of Analysis) URL
+  specSheetUrl    String? // Spec Sheet URL
+  pharmacopoeia   String? // 규정/표준 (예: "USP", "EP", "JP", "KP")
+  countryOfOrigin String? // 원산지
+  manufacturer    String? // 제조사
+  expiryDate      DateTime? // 유효기간
 
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
@@ -212,9 +215,41 @@ model Product {
   inventories     ProductInventory[]
   purchaseRecords PurchaseRecord[]
 
+  // 관계
+  sdsDocuments SDSDocument[]
+
   @@index([category])
   @@index([brand])
   @@index([name])
+}
+
+// SDS/MSDS 문서
+model SDSDocument {
+  id               String   @id @default(cuid())
+  productId        String
+  organizationId   String? // 워크스페이스별 SDS (nullable이면 벤더 제공 공용 SDS)
+  source           String // "vendor" | "uploaded"
+  fileName         String
+  contentType      String // "application/pdf" 등
+  sizeBytes        Int
+  bucket           String? // Supabase Storage bucket 이름
+  path             String? // Storage 내 파일 경로
+  extractedText    String?  @db.Text // 추출된 텍스트 (옵션)
+  // AI 추출 작업 상태
+  extractionStatus String? // "queued" | "processing" | "done" | "failed"
+  extractionResult Json? // 추출 결과 (hazardCodes, pictograms, storageCondition, ppe, summary)
+  extractionJobId  String? // 작업 ID (취소용)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // 관계
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([organizationId])
+  @@index([source])
+  @@index([extractionStatus])
 }
 
 // 벤더/공급??
@@ -309,31 +344,24 @@ model ComparisonProduct {
 
 // 그룹?어???목 리스??(기존 Quote 모델 ???되, 개념???목 리스?로 ?장)
 model Quote {
-  id             String    @id @default(cuid())
+  id             String      @id @default(cuid())
   userId         String
   organizationId String? // 조직 ?위 리스?인 경우
   comparisonId   String? // 비교 ?트 기반 리스?인 경우
   title          String // 리스???목
-  description    String?   @db.Text // 리스???명/비고
+  description    String?     @db.Text // 리스???명/비고
   status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
   // 그룹?어 ?동 ?보
   templateId     String? // ?용???플?ID
   templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
   exportedAt     DateTime? // ?보?기 ?점
-  // 버전 관리 (P1)
-  version        Int       @default(1) // 버전 번호
-  parentQuoteId  String? // 원본 리스트 ID (버전이 있는 경우)
-  isSnapshot     Boolean   @default(false) // 스냅샷 여부
-  snapshotNote   String?   @db.Text // 스냅샷 메모
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   // 관?
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  parentQuote     Quote?           @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
-  versions        Quote[]          @relation("QuoteVersions") // 버전 리스트
   items           QuoteListItem[] // QuoteItem ???QuoteListItem ?용
   quoteItems      QuoteItem[] // ?거???환??
   // 기존 ?환?을 ?해 QuoteResponse ?? (?후 ?거 가??
@@ -344,8 +372,6 @@ model Quote {
   @@index([userId])
   @@index([organizationId])
   @@index([templateId])
-  @@index([parentQuoteId])
-  @@index([version])
 }
 
 // ?목 리스???플?(조직??도?컬럼 ?트)
@@ -423,22 +449,50 @@ enum QuoteStatus {
 
 // 견적 ?답
 model QuoteResponse {
-  id         String    @id @default(cuid())
-  quoteId    String
-  vendorId   String
-  totalPrice Float?
-  currency   String    @default("KRW")
-  message    String?   @db.Text
-  validUntil DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  quoteId          String
+  vendorId         String
+  totalPrice       Float?
+  currency         String    @default("KRW")
+  message          String?   @db.Text
+  validUntil       DateTime?
+  // AI 추출 작업 상태
+  extractionStatus String? // "queued" | "processing" | "done" | "failed"
+  extractionResult Json? // 추출된 품목 리스트
+  extractionJobId  String? // 작업 ID
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // 관?
-  quote  Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  quote     Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vendor    Vendor          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  lineItems ReplyLineItem[] // 회신 품목 리스트
 
   @@index([quoteId])
   @@index([vendorId])
+}
+
+// 견적 회신 품목 (AI 추출 또는 수동 입력)
+model ReplyLineItem {
+  id            String   @id @default(cuid())
+  responseId    String
+  productName   String? // 품목명
+  catalogNumber String? // Cat.No
+  unitPrice     Float? // 단가
+  leadTime      Int? // 납기 (일)
+  minOrderQty   Int? // MOQ
+  quantity      Int? // 수량
+  notes         String?  @db.Text // 비고
+  confidence    Float? // AI 추출 신뢰도 (0-1)
+  isSelected    Boolean  @default(false) // 견적요청서에 반영 여부
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 관계
+  response QuoteResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+
+  @@index([responseId])
+  @@index([isSelected])
 }
 
 // 벤더 과금 기록
@@ -631,26 +685,36 @@ model SharedList {
   @@index([isActive])
 }
 
+// 구매 매칭 타입
+enum PurchaseMatchType {
+  QUOTE // Quote에서 생성
+  CATALOG // 카탈로그 번호 매칭
+  FUZZY // Fuzzy 매칭
+  MANUAL // 수동 매칭
+}
+
 // ?제 구매?역 (CSV Import??
 model PurchaseRecord {
-  id             String   @id @default(cuid())
+  id             String             @id @default(cuid())
   quoteId        String? // BioInsight Lab?서 ?성??리스?? ?결
   organizationId String? // 조직/?
   projectName    String? // ?로?트/과제?
   vendorId       String? // 벤더
   productId      String? // ?품
+  matchType      PurchaseMatchType? // 매칭 타입
+  hazardSnapshot Json? // 위험 정보 스냅샷 (집계 최적화용)
   externalDocId  String? // ?? 문서 번호 (그룹?어/ERP)
   purchaseDate   DateTime // 구매??
   quantity       Int
   unitPrice      Float
-  currency       String   @default("KRW")
+  currency       String             @default("KRW")
   totalAmount    Float // 총액 (?금, 배송??함 ????notes??
   category       String? // 카테고리
-  notes          String?  @db.Text // 비고 (?금 ?함 ??, 배송???
-  importedAt     DateTime @default(now()) // Import ?점
+  notes          String?            @db.Text // 비고 (?금 ?함 ??, 배송???
+  importedAt     DateTime           @default(now()) // Import ?점
   importedBy     String? // Import???용??
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   // 관?
   quote        Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
@@ -664,6 +728,9 @@ model PurchaseRecord {
   @@index([productId])
   @@index([purchaseDate])
   @@index([category])
+  @@index([organizationId, purchaseDate])
+  @@index([organizationId, productId])
+  @@index([organizationId, vendorId])
 }
 
 // ?산 관?(P2)
@@ -787,4 +854,38 @@ model AuditLog {
   @@index([entityId])
   @@index([createdAt])
   @@index([success])
+}
+
+// 규제/절차 링크 (Compliance Links)
+model ComplianceLink {
+  id          String   @id @default(cuid())
+  organizationId String? // 조직별 링크 (null이면 공통 링크)
+  title       String // 링크 제목
+  url         String // 링크 URL
+  description String? @db.Text // 설명
+  priority    Int      @default(0) // 우선순위 (높을수록 먼저 표시)
+  enabled     Boolean  @default(true) // 활성화 여부
+  linkType    String   @default("official") // "official" | "organization" (공식 링크 | 조직 절차)
+  tags        Json? // 태그 배열 (예: ["SDS", "규제", "안전"])
+  
+  // Rules (규칙) - JSON 형식으로 저장
+  rules       Json? // 규칙 객체
+  // 예시 구조:
+  // {
+  //   hazardCodesAny: ["H300", "H314"],
+  //   pictogramsAny: ["corrosive", "skull"],
+  //   categoryIn: ["REAGENT", "RAW_MATERIAL"],
+  //   missingSds: true
+  // }
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 관계
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([enabled])
+  @@index([priority])
+  @@index([linkType])
 }

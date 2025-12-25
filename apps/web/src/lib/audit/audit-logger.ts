@@ -63,6 +63,7 @@ export async function getAuditLogs(params: {
   entityId?: string;
   startDate?: Date;
   endDate?: Date;
+  search?: string;
   limit?: number;
   offset?: number;
 }) {
@@ -74,6 +75,7 @@ export async function getAuditLogs(params: {
     entityId,
     startDate,
     endDate,
+    search,
     limit = 100,
     offset = 0,
   } = params;
@@ -108,6 +110,24 @@ export async function getAuditLogs(params: {
     if (endDate) {
       where.createdAt.lte = endDate;
     }
+  }
+
+  // 검색 기능: 사용자 이름, 이메일, 액션, 엔티티 타입 검색
+  if (search && search.trim()) {
+    const searchTerm = search.trim().toLowerCase();
+    where.OR = [
+      { action: { contains: searchTerm, mode: "insensitive" } },
+      { entityType: { contains: searchTerm, mode: "insensitive" } },
+      { entityId: { contains: searchTerm, mode: "insensitive" } },
+      {
+        user: {
+          OR: [
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { email: { contains: searchTerm, mode: "insensitive" } },
+          ],
+        },
+      },
+    ];
   }
 
   const [logs, total] = await Promise.all([

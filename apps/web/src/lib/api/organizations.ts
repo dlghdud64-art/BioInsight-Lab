@@ -72,6 +72,43 @@ export async function leaveOrganization(organizationId: string, userId: string) 
   });
 }
 
+// 조직 생성
+export async function createOrganization(
+  userId: string,
+  data: {
+    name: string;
+    description?: string;
+  }
+) {
+  return await db.organization.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      plan: "FREE",
+      members: {
+        create: {
+          userId,
+          role: "ADMIN",
+        },
+      },
+    },
+    include: {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
+        },
+      },
+      subscription: true,
+    },
+  });
+}
+
 // 조직 정보 업데이트
 export async function updateOrganization(
   organizationId: string,

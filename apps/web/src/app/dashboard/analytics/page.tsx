@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Target className="h-4 w-4 text-red-600" />
-                  RFQ 생성률
+                  견적 요청 생성률
                 </CardTitle>
               </CardHeader>
               <CardContent>

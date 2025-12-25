@@ -15,8 +15,11 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const guestKey = request.headers.get("x-guest-key");
+
+    // 로그인 또는 guestKey 중 하나는 필요
+    if (!session?.user?.id && !guestKey) {
+      return NextResponse.json({ error: "Unauthorized: Login or guest key required" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -26,8 +29,13 @@ export async function GET(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    // 본인의 견적만 조회 가능
-    if (quote.userId !== session.user.id) {
+    // 본인의 견적만 조회 가능 (userId 또는 guestKey 일치 확인)
+    // userId와 guestKey가 모두 없는 경우(공개 quote)는 누구나 접근 가능
+    const isOwner = (session?.user?.id && quote.userId === session.user.id) ||
+                    (guestKey && quote.guestKey === guestKey) ||
+                    (!quote.userId && !quote.guestKey);
+    
+    if (!isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -37,21 +45,23 @@ export async function GET(
                      undefined;
     const userAgent = request.headers.get("user-agent") || undefined;
     
-    createActivityLogServer({
-      db,
-      activityType: ActivityType.QUOTE_VIEWED,
-      entityType: "quote",
-      entityId: quote.id,
-      userId: session.user.id,
-      organizationId: quote.organizationId || undefined,
-      metadata: {
-        title: quote.title,
-      },
-      ipAddress,
-      userAgent,
-    }).catch((error) => {
-      console.error("Failed to create activity log:", error);
-    });
+    if (session?.user?.id) {
+      createActivityLogServer({
+        db,
+        activityType: ActivityType.QUOTE_VIEWED,
+        entityType: "quote",
+        entityId: quote.id,
+        userId: session.user.id,
+        organizationId: quote.organizationId || undefined,
+        metadata: {
+          title: quote.title,
+        },
+        ipAddress,
+        userAgent,
+      }).catch((error) => {
+        console.error("Failed to create activity log:", error);
+      });
+    }
 
     return NextResponse.json({ quote });
   } catch (error) {
@@ -70,13 +80,16 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const guestKey = request.headers.get("x-guest-key");
+
+    // 로그인 또는 guestKey 중 하나는 필요
+    if (!session?.user?.id && !guestKey) {
+      return NextResponse.json({ error: "Unauthorized: Login or guest key required" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, status } = body;
+    const { title, description, status, message, items } = body;
 
     const quote = await db.quote.findUnique({
       where: { id },
@@ -94,20 +107,86 @@ export async function PATCH(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    // 본인의 견적만 수정 가능
-    if (quote.userId !== session.user.id) {
+    // 본인의 견적만 수정 가능 (userId 또는 guestKey 일치 확인)
+    // userId와 guestKey가 모두 없는 경우(공개 quote)는 누구나 수정 가능
+    const isOwner = (session?.user?.id && quote.userId === session.user.id) ||
+                    (guestKey && quote.guestKey === guestKey) ||
+                    (!quote.userId && !quote.guestKey);
+    
+    if (!isOwner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const previousStatus = quote.status;
     const isCompletingPurchase = status === "COMPLETED" && previousStatus !== "COMPLETED";
 
+    // items 업데이트가 있으면 기존 items 삭제 후 새로 생성
+    if (items && Array.isArray(items)) {
+      // Quote.items는 QuoteListItem을 사용하므로 QuoteListItem을 업데이트
+      await db.quoteListItem.deleteMany({
+        where: { quoteId: id },
+      });
+
+      // productId가 DB에 없으면 null로 저장하고 snapshot(name/vendor/brand)로 보존
+      const requestedIds = Array.from(
+        new Set(items.map((it: any) => it.productId).filter((v: any) => !!v))
+      );
+      const existing =
+        requestedIds.length > 0
+          ? await db.product.findMany({
+              where: { id: { in: requestedIds } },
+              select: { id: true },
+            })
+          : [];
+      const existingSet = new Set(existing.map((p: any) => p.id));
+
+      // createMany 대신 개별 create로 snapshot 저장
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        const quantity = item.quantity || 1;
+        const unitPrice = item.unitPrice || 0;
+        const lineTotal = item.lineTotal || unitPrice * quantity;
+        
+        // productSnapshot 생성 (서버에서 계산, 클라 값 신뢰하지 않음)
+        const snapshot = {
+          productName: item.productName || item.name || null,
+          vendorName: item.vendorName || item.vendor || null,
+          brand: item.brand || null,
+          catalogNumber: item.catalogNumber || null,
+          quantity,
+          unitPrice,
+          currency: item.currency || "KRW",
+          lineTotal,
+          notes: item.notes || null,
+          timestamp: new Date().toISOString(),
+        };
+        
+        await db.quoteListItem.create({
+          data: {
+            quoteId: id,
+            productId: item.productId && existingSet.has(item.productId) ? item.productId : null,
+            name: item.productName || item.name || null,
+            vendor: item.vendorName || item.vendor || null,
+            brand: item.brand || null,
+            lineNumber: item.lineNumber || idx + 1,
+            quantity,
+            unitPrice,
+            currency: item.currency || "KRW",
+            lineTotal,
+            notes: item.notes || null,
+            snapshot,
+          },
+        });
+      }
+    }
+
     // 견적 수정
     const updatedQuote = await db.quote.update({
       where: { id },
       data: {
         ...(title && { title }),
-        ...(description && { description }),
+        ...(description !== undefined && { description }),
+        ...(message !== undefined && { description: message }), // message는 description으로 저장
         ...(status && { status }),
       },
       include: {
@@ -119,8 +198,8 @@ export async function PATCH(
       },
     });
 
-    // 구매 완료 시 PurchaseRecord 자동 생성
-    if (isCompletingPurchase && quote.items.length > 0) {
+    // 구매 완료 시 PurchaseRecord 자동 생성 (로그인 사용자만)
+    if (session?.user?.id && isCompletingPurchase && quote.items.length > 0) {
       try {
         // 조직 ID 가져오기
         let finalOrganizationId = quote.organizationId || null;
@@ -141,6 +220,24 @@ export async function PATCH(
               include: { vendor: true },
             });
 
+            // 제품의 위험 정보 스냅샷 생성
+            const product = await db.product.findUnique({
+              where: { id: item.productId },
+              select: {
+                hazardCodes: true,
+                pictograms: true,
+                msdsUrl: true,
+              },
+            });
+
+            const hazardSnapshot = product
+              ? {
+                  hazardCodes: product.hazardCodes || [],
+                  pictograms: product.pictograms || [],
+                  msdsUrl: product.msdsUrl || null,
+                }
+              : null;
+
             return db.purchaseRecord.create({
               data: {
                 quoteId: quote.id,
@@ -148,6 +245,8 @@ export async function PATCH(
                 projectName: quote.description || null,
                 vendorId: productVendor?.vendorId || null,
                 productId: item.productId,
+                matchType: "QUOTE",
+                hazardSnapshot,
                 purchaseDate: new Date(),
                 quantity: item.quantity,
                 unitPrice: item.unitPrice || productVendor?.priceInKRW || 0,
@@ -206,25 +305,27 @@ export async function PATCH(
                      undefined;
     const userAgent = request.headers.get("user-agent") || undefined;
     
-    createActivityLogServer({
-      db,
-      activityType: ActivityType.QUOTE_UPDATED,
-      entityType: "quote",
-      entityId: quote.id,
-      userId: session.user.id,
-      organizationId: quote.organizationId || undefined,
-      metadata: {
-        title: updatedQuote.title,
-        changes: {
-          title: title ? { from: quote.title, to: title } : undefined,
-          description: description ? { from: quote.description, to: description } : undefined,
+    if (session?.user?.id) {
+      createActivityLogServer({
+        db,
+        activityType: ActivityType.QUOTE_UPDATED,
+        entityType: "quote",
+        entityId: quote.id,
+        userId: session.user.id,
+        organizationId: quote.organizationId || undefined,
+        metadata: {
+          title: updatedQuote.title,
+          changes: {
+            title: title ? { from: quote.title, to: title } : undefined,
+            description: description ? { from: quote.description, to: description } : undefined,
+          },
         },
-      },
-      ipAddress,
-      userAgent,
-    }).catch((error) => {
-      console.error("Failed to create activity log:", error);
-    });
+        ipAddress,
+        userAgent,
+      }).catch((error) => {
+        console.error("Failed to create activity log:", error);
+      });
+    }
 
     return NextResponse.json({ quote: updatedQuote });
   } catch (error) {

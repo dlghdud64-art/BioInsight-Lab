@@ -405,11 +405,11 @@ export default function ComparePage() {
               </div>
             ) : error ? (
               <div className="space-y-2">
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800 mb-2">
+                <div className="p-4 bg-slate-50 border border-slate-300 rounded">
+                  <p className="text-sm text-slate-800 mb-2">
                     제품 정보를 불러오는 중 오류가 발생했습니다.
                   </p>
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-slate-600">
                     제품 ID: {productIds.join(", ")}
                   </p>
                 </div>

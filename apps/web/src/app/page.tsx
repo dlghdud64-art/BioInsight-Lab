@@ -44,8 +44,8 @@ export default function HomePage() {
     <MainLayout>
       <MainHeader />
       {/* 전체 레이아웃 컨테이너 */}
-      <div className="mx-auto w-full max-w-6xl px-3 md:px-6 lg:px-8">
-        <div className="space-y-6 md:space-y-16">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
+        <div className="space-y-6 md:space-y-10">
           <HeroSection />
           <BetaBannerSection />
           <KeyValueSection />

@@ -23,6 +23,8 @@ import { WidgetGrid } from "@/components/dashboard/widget-grid";
 import { DraggableWidget } from "@/components/dashboard/draggable-widget";
 import { Settings, RotateCcw } from "lucide-react";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
 
 const DASHBOARD_TABS = [
   { id: "quotes", label: "견적" },
@@ -37,6 +39,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("quotes");
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
+  const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
   const { isEditMode, setEditMode, widgets, resetLayout, loadLayout } = useDashboardWidgets();
 
   // 레이아웃 로드
@@ -80,10 +83,10 @@ export default function DashboardPage() {
   });
 
   // 구매 내역/예산 요약 조회
-  const { data: purchaseSummary, isLoading: purchaseSummaryLoading } = useQuery({
-    queryKey: ["purchase-summary"],
+  const { data: purchaseSummary, isLoading: purchaseSummaryLoading, error: purchaseSummaryError } = useQuery({
+    queryKey: ["purchase-summary", purchasePeriod],
     queryFn: async () => {
-      const response = await fetch("/api/reports/purchase?period=month");
+      const response = await fetch(`/api/reports/purchase?period=${purchasePeriod}`);
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
       return response.json();
     },
@@ -171,77 +174,146 @@ export default function DashboardPage() {
             </div>
 
         {/* 구매 내역/예산 요약 카드 */}
-        {!purchaseSummaryLoading && purchaseSummary && (
-          <WidgetGrid>
-            {widgets
-              .filter((w) => w.id === "purchase-summary" && w.visible)
-              .map((widget) => (
-                <DraggableWidget
-                  key={widget.id}
-                  id={widget.id}
-                  title="구매 내역 요약"
-                  defaultSize={widget.size}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">이번 달 구매 금액</CardTitle>
-                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="text-lg md:text-2xl font-bold">
-                  ₩{purchaseSummary.metrics?.totalAmount?.toLocaleString("ko-KR") || 0}
-                </div>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                  {purchaseSummary.metrics?.itemCount || 0}개 품목
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">예산 사용률</CardTitle>
-                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
-                  <>
-                    <div className="text-lg md:text-2xl font-bold">
-                      {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
-                    </div>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                      {purchaseSummary.budgetUsage[0]?.name || "예산"}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-lg md:text-2xl font-bold">-</div>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                      <Link href="/dashboard/budget" className="text-primary hover:underline">
-                        예산 설정하기
-                      </Link>
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">구매 리포트</CardTitle>
-                <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <Link href="/reports">
-                  <Button variant="outline" className="w-full text-xs md:text-sm h-8 md:h-10">
-                    상세 리포트 보기
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+        <WidgetGrid>
+          {widgets
+            .filter((w) => w.id === "purchase-summary" && w.visible)
+            .map((widget) => (
+              <DraggableWidget
+                key={widget.id}
+                id={widget.id}
+                title="구매 내역 요약"
+                defaultSize={widget.size}
+              >
+                <div className="space-y-3 md:space-y-4">
+                  {/* 기간 선택 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs md:text-sm text-slate-600">기간 선택</span>
+                    <Select value={purchasePeriod} onValueChange={setPurchasePeriod}>
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="month">이번 달</SelectItem>
+                        <SelectItem value="quarter">이번 분기</SelectItem>
+                        <SelectItem value="year">이번 해</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </DraggableWidget>
-              ))}
-          </WidgetGrid>
-        )}
+
+                  {/* 로딩 상태 */}
+                  {purchaseSummaryLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                      {[1, 2, 3].map((i) => (
+                        <Card key={i} className="p-3 md:p-6">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-4 rounded" />
+                          </CardHeader>
+                          <CardContent className="px-0 pb-0">
+                            <Skeleton className="h-8 w-32 mt-2" />
+                            <Skeleton className="h-3 w-20 mt-2" />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 에러 상태 */}
+                  {purchaseSummaryError && !purchaseSummaryLoading && (
+                    <Card className="p-3 md:p-6">
+                      <CardContent className="flex flex-col items-center justify-center py-6">
+                        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                        <p className="text-sm text-red-600 mb-2">데이터를 불러오는 중 오류가 발생했습니다.</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                          className="text-xs"
+                        >
+                          다시 시도
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* 빈 상태 */}
+                  {!purchaseSummaryLoading && !purchaseSummaryError && (!purchaseSummary || purchaseSummary.metrics?.itemCount === 0) && (
+                    <Card className="p-3 md:p-6">
+                      <CardContent className="flex flex-col items-center justify-center py-6">
+                        <Package className="h-8 w-8 text-slate-400 mb-2" />
+                        <p className="text-sm text-slate-500 mb-2">구매 내역이 없습니다.</p>
+                        <Link href="/dashboard/purchases">
+                          <Button variant="outline" size="sm" className="text-xs">
+                            구매내역 추가하기
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* 데이터 표시 */}
+                  {!purchaseSummaryLoading && !purchaseSummaryError && purchaseSummary && purchaseSummary.metrics?.itemCount > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                      <Card className="p-3 md:p-6">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                          <CardTitle className="text-xs md:text-sm font-medium">구매 금액</CardTitle>
+                          <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className="px-0 pb-0">
+                          <div className="text-lg md:text-2xl font-bold">
+                            ₩{purchaseSummary.metrics?.totalAmount?.toLocaleString("ko-KR") || 0}
+                          </div>
+                          <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                            {purchaseSummary.metrics?.itemCount || 0}개 품목
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card className="p-3 md:p-6">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                          <CardTitle className="text-xs md:text-sm font-medium">예산 사용률</CardTitle>
+                          <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className="px-0 pb-0">
+                          {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
+                            <>
+                              <div className="text-lg md:text-2xl font-bold">
+                                {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
+                              </div>
+                              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                                {purchaseSummary.budgetUsage[0]?.name || "예산"}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-lg md:text-2xl font-bold">-</div>
+                              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                                <Link href="/dashboard/budget" className="text-primary hover:underline">
+                                  예산 설정하기
+                                </Link>
+                              </p>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                      <Card className="p-3 md:p-6">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
+                          <CardTitle className="text-xs md:text-sm font-medium">구매 리포트</CardTitle>
+                          <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent className="px-0 pb-0">
+                          <Link href="/dashboard/purchases">
+                            <Button variant="outline" className="w-full text-xs md:text-sm h-8 md:h-10 whitespace-nowrap">
+                              구매내역 보기
+                            </Button>
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+              </DraggableWidget>
+            ))}
+        </WidgetGrid>
 
         {/* 재주문 추천 섹션 (상단에 표시) */}
         <WidgetGrid>
