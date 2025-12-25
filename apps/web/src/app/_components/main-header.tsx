@@ -72,7 +72,7 @@ export function MainHeader() {
             <button
               type="button"
               onClick={() => scrollToId("features")}
-              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
               aria-label="기능 소개 섹션으로 이동"
             >
               기능 소개
@@ -80,7 +80,7 @@ export function MainHeader() {
             <button
               type="button"
               onClick={() => scrollToId("flow-section")}
-              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
               aria-label="사용 흐름 섹션으로 이동"
             >
               사용 흐름
@@ -88,7 +88,7 @@ export function MainHeader() {
             <button
               type="button"
               onClick={() => scrollToId("personas")}
-              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+              className="hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
               aria-label="누가 쓰나요 섹션으로 이동"
             >
               누가 쓰나요?
@@ -101,7 +101,7 @@ export function MainHeader() {
           <button
             type="button"
             onClick={() => scrollToId("pricing")}
-            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
             aria-label="요금 및 도입 섹션으로 이동"
           >
             요금 & 도입
@@ -110,7 +110,7 @@ export function MainHeader() {
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="text-[10px] md:text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-3 h-8 md:h-9"
+                className="text-[10px] md:text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 md:px-3 h-8 md:h-9"
                 aria-label="기능 체험 메뉴 열기"
                 aria-haspopup="true"
               >

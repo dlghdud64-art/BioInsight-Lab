@@ -1,130 +1,96 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FileSpreadsheet, Copy, CheckCircle2, XCircle } from "lucide-react";
+import { Search, FileSpreadsheet, Copy, ArrowRight } from "lucide-react";
 
 export function ComparisonSection() {
   return (
-    <section className="mt-6 md:mt-12 space-y-3 md:space-y-6">
-      <div className="text-center space-y-1.5 md:space-y-2 px-2">
-        <h2 className="text-base md:text-2xl font-bold tracking-tight text-slate-900">
-          기존 방식 vs BioInsight Lab
-        </h2>
-        <p className="text-[11px] md:text-sm text-slate-600">
-          복잡하고 시간이 걸리던 검색·견적 준비 과정을 간단하게
-        </p>
-      </div>
+    <section className="py-10 md:py-14 border-b border-slate-200">
+      <div className="mx-auto max-w-5xl px-4 md:px-6">
+        <div className="text-center space-y-1 md:space-y-2 mb-6 md:mb-8">
+          <h2 className="text-lg md:text-xl font-semibold tracking-tight text-slate-900">
+            작업 방식 비교
+          </h2>
+          <p className="text-xs md:text-sm text-slate-500">
+            수동 작업 → 자동 정리
+          </p>
+        </div>
 
-      <div className="grid gap-3 md:gap-6 md:grid-cols-2">
-        {/* 기존 방식 */}
-        <Card className="border-2 border-red-100 bg-red-50/30">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 md:h-5 md:w-5 text-red-600 flex-shrink-0" />
-              <CardTitle className="text-base md:text-lg text-slate-900">기존 방식</CardTitle>
+        {/* 비교 테이블 형태 */}
+        <div className="border border-slate-200 rounded-md overflow-hidden bg-white">
+          {/* 헤더 */}
+          <div className="grid grid-cols-[1fr_auto_1fr] bg-slate-50 border-b border-slate-200">
+            <div className="px-4 py-2 text-xs font-semibold text-slate-500 text-center">
+              기존 방식
             </div>
-            <CardDescription className="text-[11px] md:text-xs text-slate-600 mt-1">
-              여러 단계를 거쳐 수동으로 작업
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 md:space-y-4 pt-0">
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-red-100 flex-shrink-0">
-                <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  시약몰/벤더 사이트 여러 곳 검색
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  각 벤더 사이트를 하나씩 방문해 제품을 찾아야 합니다.
-                </p>
-              </div>
+            <div className="px-2 py-2 flex items-center justify-center">
+              <ArrowRight className="h-3 w-3 text-slate-400" strokeWidth={1.5} />
             </div>
+            <div className="px-4 py-2 text-xs font-semibold text-indigo-600 text-center">
+              BioInsight Lab
+            </div>
+          </div>
 
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-red-100 flex-shrink-0">
-                <FileSpreadsheet className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  엑셀/노션으로 수동 비교표 작성
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  찾은 제품 정보를 수동으로 복사해 비교표를 만들어야 합니다.
-                </p>
+          {/* 검색 단계 */}
+          <div className="grid grid-cols-[1fr_auto_1fr] border-b border-slate-100">
+            <div className="px-4 py-3 flex items-start gap-2">
+              <Search className="h-3.5 w-3.5 text-slate-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">벤더 사이트 개별 검색</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">각 사이트 방문 → 수동 복사</p>
               </div>
             </div>
+            <div className="flex items-center justify-center px-2">
+              <ArrowRight className="h-3 w-3 text-slate-300" strokeWidth={1.5} />
+            </div>
+            <div className="px-4 py-3 flex items-start gap-2">
+              <Search className="h-3.5 w-3.5 text-indigo-500 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">통합 검색</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">한 번에 여러 벤더 검색</p>
+              </div>
+            </div>
+          </div>
 
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-red-100 flex-shrink-0">
-                <Copy className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  견적요청 메일/첨부용 문서로 다시 정리
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  완성된 비교표를 견적요청 메일이나 첨부 문서 형식에 맞춰 다시 정리해야 합니다.
-                </p>
+          {/* 비교 단계 */}
+          <div className="grid grid-cols-[1fr_auto_1fr] border-b border-slate-100">
+            <div className="px-4 py-3 flex items-start gap-2">
+              <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">엑셀/노션 비교표</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">수동 정리 필요</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-center px-2">
+              <ArrowRight className="h-3 w-3 text-slate-300" strokeWidth={1.5} />
+            </div>
+            <div className="px-4 py-3 flex items-start gap-2">
+              <FileSpreadsheet className="h-3.5 w-3.5 text-indigo-500 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">자동 비교표</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">스펙·가격 자동 정렬</p>
+              </div>
+            </div>
+          </div>
 
-        {/* BioInsight Lab 사용 시 */}
-        <Card className="border-2 border-green-200 bg-green-50/30">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-600 flex-shrink-0" />
-              <CardTitle className="text-base md:text-lg text-slate-900">BioInsight Lab 사용 시</CardTitle>
-            </div>
-            <CardDescription className="text-[11px] md:text-xs text-slate-600 mt-1">
-              한 번의 검색으로 모든 과정 자동화
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 md:space-y-4 pt-0">
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-green-100 flex-shrink-0">
-                <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  여러 벤더 제품을 한 번에 검색·비교
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  하나의 검색창에서 여러 벤더의 제품을 동시에 검색하고 비교할 수 있습니다.
-                </p>
+          {/* 견적 단계 */}
+          <div className="grid grid-cols-[1fr_auto_1fr]">
+            <div className="px-4 py-3 flex items-start gap-2">
+              <Copy className="h-3.5 w-3.5 text-slate-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">메일 첨부 문서 작성</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">형식 변환 필요</p>
               </div>
             </div>
-
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-green-100 flex-shrink-0">
-                <FileSpreadsheet className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  견적 요청 리스트 자동 구성
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  선택한 제품들이 자동으로 견적 요청 리스트로 정리되어 수량과 비고만 입력하면 됩니다.
-                </p>
+            <div className="flex items-center justify-center px-2">
+              <ArrowRight className="h-3 w-3 text-slate-300" strokeWidth={1.5} />
+            </div>
+            <div className="px-4 py-3 flex items-start gap-2">
+              <Copy className="h-3.5 w-3.5 text-indigo-500 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-xs font-medium text-slate-700">견적 요청 리스트 생성</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">공유링크/TSV/엑셀 내보내기</p>
               </div>
             </div>
-
-            <div className="flex items-start gap-2 md:gap-3">
-              <div className="mt-0.5 flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-green-100 flex-shrink-0">
-                <Copy className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs md:text-sm font-semibold text-slate-900 mb-1">
-                  견적요청용 리스트/공유 링크 자동 생성
-                </h4>
-                <p className="text-[11px] md:text-xs text-slate-600 leading-relaxed">
-                  완성된 견적 요청 리스트를 공유 링크로 자동 생성합니다. 회신(가격·납기) 입력 후 비교표로 정리할 수 있습니다.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </section>
   );
