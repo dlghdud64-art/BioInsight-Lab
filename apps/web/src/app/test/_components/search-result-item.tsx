@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { ShoppingCart, GitCompare } from "lucide-react";
-import Link from "next/link";
+import { ShoppingCart, GitCompare, Thermometer, AlertTriangle, Shield } from "lucide-react";
 
 interface SearchResultItemProps {
   product: any;
@@ -107,7 +106,7 @@ function LeadTimeBadge({ leadTime }: { leadTime?: number | string }) {
 // 스펙 요약 생성 (태그형 한 줄)
 function SpecSummary({ product }: { product: any }) {
   const parts: string[] = [];
-  
+
   if (product.target) parts.push(product.target);
   if (product.category) {
     const categoryName = PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES];
@@ -124,6 +123,47 @@ function SpecSummary({ product }: { product: any }) {
   return (
     <div className="text-xs text-slate-500 truncate">
       {parts.join(" · ")}
+    </div>
+  );
+}
+
+// 도메인 디테일 뱃지 (보관조건, 위험물, PPE)
+function DomainDetailBadges({ product }: { product: any }) {
+  const hasStorageCondition = product.storageCondition;
+  const hasHazardCodes = product.hazardCodes || product.pictograms;
+  const hasPpe = product.ppe;
+
+  if (!hasStorageCondition && !hasHazardCodes && !hasPpe) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+      {hasStorageCondition && (
+        <span
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] text-slate-600"
+          title={`보관: ${product.storageCondition}`}
+        >
+          <Thermometer className="h-2.5 w-2.5 text-indigo-500" strokeWidth={1.5} />
+          <span>{product.storageCondition}</span>
+        </span>
+      )}
+      {hasHazardCodes && (
+        <span
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] text-amber-700"
+          title={`위험물: ${product.hazardCodes || product.pictograms}`}
+        >
+          <AlertTriangle className="h-2.5 w-2.5" strokeWidth={1.5} />
+          <span>{product.hazardCodes || product.pictograms}</span>
+        </span>
+      )}
+      {hasPpe && (
+        <span
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] text-slate-600"
+          title={`PPE: ${product.ppe}`}
+        >
+          <Shield className="h-2.5 w-2.5" strokeWidth={1.5} />
+          <span>{product.ppe}</span>
+        </span>
+      )}
     </div>
   );
 }
@@ -184,6 +224,7 @@ export function SearchResultItem({
               )}
             </div>
             <SpecSummary product={product} />
+            <DomainDetailBadges product={product} />
           </div>
         </div>
 
@@ -224,7 +265,7 @@ export function SearchResultItem({
               size="sm"
               variant={isInCompare ? "default" : "outline"}
               onClick={onToggleCompare}
-              className={`text-xs h-8 px-3 ${isInCompare ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+              className={`text-xs h-8 px-3 ${isInCompare ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
               title={isInCompare ? "비교에서 제거" : "비교에 추가"}
             >
               <GitCompare className="h-3 w-3 mr-1" />

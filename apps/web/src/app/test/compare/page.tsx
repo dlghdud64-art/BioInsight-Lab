@@ -19,9 +19,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { trackEvent } from "@/lib/analytics";
 import { Disclaimer } from "@/components/legal/disclaimer";
+import Image from "next/image";
 
 export default function TestComparePage() {
-  const { compareIds, toggleCompare, clearCompare, addProductToQuote } = useTestFlow();
+  const { compareIds, toggleCompare, clearCompare, addProductToQuote, quoteItems } = useTestFlow();
   const { toast } = useToast();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "price" | "price_high" | "specification" | "leadTime" | "vendorCount">("name");
@@ -396,18 +397,41 @@ export default function TestComparePage() {
     { key: "vendorCount", label: "공급사 수" },
   ];
 
+  const quoteItemsCount = quoteItems.length;
+
   return (
-    <div className="space-y-6 px-2 sm:px-0">
-      {/* 헤더 */}
+      <div className="mx-auto max-w-7xl px-4 md:px-6 space-y-6">
+      {/* 헤더 + 주요 액션 (견적요청서로 이동) */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="w-full">
+            <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">제품 비교 ({products.length}개)</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center sm:text-left">
+              스펙·가격·납기를 한눈에 비교하세요
+            </p>
+            <div className="mt-2">
+              <Disclaimer type="price" />
+            </div>
+          </div>
+          {/* 주요 액션: 견적요청서로 이동 (Primary) */}
+          <div className="flex justify-end">
+            <Link href="/test/quote" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm h-9 sm:h-10 whitespace-nowrap">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                {quoteItemsCount > 0 
+                  ? `견적요청서 보기 (${quoteItemsCount}개)`
+                  : "견적요청서 보기"
+                }
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 비교 도구 버튼 */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="w-full sm:w-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">제품 비교 ({products.length}개)</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center sm:text-left whitespace-nowrap">
-            스펙·가격·납기를 한눈에 비교하세요
-          </p>
-          <div className="mt-2">
-            <Disclaimer type="price" />
-          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">비교 도구</h2>
         </div>
         <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
           <Button
@@ -433,22 +457,22 @@ export default function TestComparePage() {
           <Button variant="outline" onClick={clearCompare} size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8">
             전체 삭제
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              products.forEach((product) => addProductToQuote(product));
-              toast({
-                title: "추가 완료",
-                description: `${products.length}개 제품이 견적 요청 리스트에 추가되었습니다.`,
-              });
-            }}
-            className="gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm h-7 sm:h-8"
-            size="sm"
-          >
-            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">모두 추가</span>
-            <span className="sm:hidden">추가</span>
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                products.forEach((product) => addProductToQuote(product));
+                toast({
+                  title: "추가 완료",
+                  description: `${products.length}개 제품이 견적요청서에 추가되었습니다.`,
+                });
+              }}
+              className="gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 whitespace-nowrap"
+              size="sm"
+            >
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">선택 항목을 견적요청서에 담기</span>
+              <span className="sm:hidden">담기</span>
+            </Button>
           <Button
             variant="outline"
             onClick={() => {
@@ -670,13 +694,14 @@ export default function TestComparePage() {
                         addProductToQuote(product);
                         toast({
                           title: "추가 완료",
-                          description: `${product.name}이(가) 견적 요청 리스트에 추가되었습니다.`,
+                          description: `${product.name}이(가) 견적요청서에 추가되었습니다.`,
                         });
                       }}
-                      className="text-[10px] sm:text-xs flex-1 sm:flex-none h-7 sm:h-8"
+                      className="text-[10px] sm:text-xs flex-1 sm:flex-none h-7 sm:h-8 whitespace-nowrap"
                     >
                       <ShoppingCart className="h-3 w-3 mr-1" />
-                      추가
+                      <span className="hidden sm:inline">견적요청서에 담기</span>
+                      <span className="sm:hidden">담기</span>
                     </Button>
                     <Button
                       size="sm"
@@ -701,21 +726,6 @@ export default function TestComparePage() {
         </CardContent>
       </Card>
 
-      {/* 네비게이션 버튼 */}
-      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
-        <Link href="/test/search" className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800 text-xs sm:text-sm h-9 sm:h-10" size="sm">
-            <Search className="h-4 w-4 mr-2" />
-            검색 페이지로 이동
-          </Button>
-        </Link>
-        <Link href="/test/quote" className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10" size="sm">
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            견적 요청 리스트로 이동
-          </Button>
-        </Link>
-      </div>
 
       {/* 차트 섹션 */}
       {products.length > 0 && (
@@ -843,7 +853,59 @@ export default function TestComparePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto -mx-2 sm:-mx-4 sm:mx-0">
+            {/* 모바일: 카드형 레이아웃 */}
+            <div className="md:hidden space-y-4 p-4">
+              {products.map((product: any, productIndex: number) => (
+                <div key={product.id} className="border border-slate-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-sm text-slate-900 flex-1">{product.name}</h3>
+                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                      제품 {productIndex + 1}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {compareFields.map((field) => {
+                      let value: any;
+                      if (field.key === "price") {
+                        value = product.vendors?.[0]?.priceInKRW || 0;
+                      } else if (field.key === "leadTime") {
+                        const vendorKey = `${product.id}_${product.vendors?.[0]?.vendor?.id || 0}`;
+                        const manualLeadTime = manualLeadTimes[vendorKey];
+                        value = manualLeadTime || getAverageLeadTime(product) || 0;
+                      } else if (field.key === "stockStatus") {
+                        value = product.vendors?.[0]?.stockStatus || "-";
+                      } else if (field.key === "minOrderQty") {
+                        value = product.vendors?.[0]?.minOrderQty || "-";
+                      } else if (field.key === "vendorCount") {
+                        value = product.vendors?.length || 0;
+                      } else if (field.key === "category") {
+                        value = PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES] || product.category;
+                      } else {
+                        value = product[field.key] || "-";
+                      }
+                      
+                      if (field.key === "leadTime" && value === 0) return null;
+                      
+                      return (
+                        <div key={field.key} className="flex items-start justify-between gap-2 py-1 border-b border-slate-100 last:border-0">
+                          <span className="text-xs text-slate-500 font-medium">{field.label}</span>
+                          <span className="text-xs text-slate-900 text-right flex-1">
+                            {field.key === "price" && value > 0 ? (
+                              `₩${value.toLocaleString()}`
+                            ) : (
+                              String(value)
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 데스크톱: 테이블 레이아웃 */}
+            <div className="hidden md:block overflow-x-auto -mx-2 sm:-mx-4 sm:mx-0">
               <div className="inline-block min-w-full align-middle px-2 sm:px-4 sm:px-0">
                 <Table>
                   <TableHeader>
@@ -1159,7 +1221,7 @@ function ProductAlternativesCard({
             <Card key={alt.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-2">
-                  {alt.imageUrl && (
+                  {alt.imageUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={alt.imageUrl}
@@ -1167,6 +1229,14 @@ function ProductAlternativesCard({
                       className="w-12 h-12 object-cover rounded"
                       loading="lazy"
                       decoding="async"
+                    />
+                  ) : (
+                    <Image
+                      src="/brand/bioinsight-icon.PNG"
+                      alt={alt.name}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-cover rounded"
                     />
                   )}
                   <div className="flex-1 min-w-0">

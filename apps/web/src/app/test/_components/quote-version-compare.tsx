@@ -225,7 +225,7 @@ export function QuoteVersionCompare({ quoteId, onVersionCreated }: QuoteVersionC
                 <Label htmlFor="snapshot-note">스냅샷 메모</Label>
                 <Textarea
                   id="snapshot-note"
-                  placeholder="예: RFQ 발송 전, 벤더 A 회신 후, 최종 확정 등"
+                  placeholder="예: 견적 요청 발송 전, 벤더 A 회신 후, 최종 확정 등"
                   value={snapshotNote}
                   onChange={(e) => setSnapshotNote(e.target.value)}
                   rows={2}
