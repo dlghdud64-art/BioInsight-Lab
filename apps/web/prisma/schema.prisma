@@ -307,13 +307,16 @@ model ComparisonProduct {
 // 그룹?어???목 리스??(기존 Quote 모델 ???되, 개념???목 리스?로 ?장)
 model Quote {
   id             String    @id @default(cuid())
-  userId         String
+  userId         String? // Nullable for guest quotes
+  guestKey       String? // Guest key for anonymous access
   organizationId String? // 조직 ?위 리스?인 경우
   workspaceId    String? // Optional workspace association (for gradual migration)
   comparisonId   String? // 비교 ?트 기반 리스?인 경우
   title          String // 리스???목
   description    String?   @db.Text // 리스???명/비고
   status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
+  currency       String    @default("KRW") // Currency for quote totals
+  totalAmount    Int? // Total amount (sum of line totals)
   // 그룹?어 ?동 ?보
   templateId     String? // ?용???플?ID
   templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
@@ -327,23 +330,27 @@ model Quote {
   updatedAt      DateTime  @updatedAt
 
   // 관?
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  workspace       Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  parentQuote     Quote?           @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
-  versions        Quote[]          @relation("QuoteVersions") // 버전 리스트
+  user            User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?          @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  workspace       Workspace?             @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  template        QuoteTemplate?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  parentQuote     Quote?                 @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
+  versions        Quote[]                @relation("QuoteVersions") // 버전 리스트
   items           QuoteListItem[] // QuoteItem ???QuoteListItem ?용
   quoteItems      QuoteItem[] // ?거???환??
+  vendors         QuoteVendor[] // Vendor information for quote
+  vendorRequests  QuoteVendorRequest[] // Vendor quote requests (견적 요청)
   // 기존 ?환?을 ?해 QuoteResponse ?? (?후 ?거 가??
   responses       QuoteResponse[]
   sharedLists     SharedList[] // 공유 링크
+  shares          QuoteShare? // Public share configuration
   purchaseRecords PurchaseRecord[] // ?제 구매?역
   rfqToken        QuoteRfqToken? // RFQ email token
   replies         QuoteReply[] // Email-based vendor replies
   inboundEmails   InboundEmail[] // Matched inbound emails
 
   @@index([userId])
+  @@index([guestKey])
   @@index([organizationId])
   @@index([workspaceId])
   @@index([templateId])
@@ -379,21 +386,27 @@ model QuoteTemplate {
 
 // 그룹?어???목 리스???? (기존 QuoteItem???장)
 model QuoteListItem {
-  id         String   @id @default(cuid())
-  quoteId    String
-  productId  String
-  lineNumber Int // Line No. (그룹?어??
-  quantity   Int      @default(1)
-  unitPrice  Float? // ??
-  currency   String?  @default("KRW")
-  lineTotal  Float? // 금액 (?? × ?량)
-  notes      String?  @db.Text // 비고 (?도/?체품 ??/기존 ?품 코드 ??
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  quoteId       String
+  productId     String? // Nullable for items without existing products
+  lineNumber    Int? // Line No. (그룹?어??
+  name          String? // Product name (denormalized for draft items)
+  brand         String? // Brand (denormalized)
+  catalogNumber String? // Catalog number (denormalized)
+  unit          String?  @default("ea") // Unit (ea, mL, g, etc.)
+  quantity      Int      @default(1)
+  unitPrice     Int? // Unit price (integer for KRW precision)
+  currency      String?  @default("KRW")
+  lineTotal     Int? // Line total (unit price × quantity)
+  notes         String?  @db.Text // 비고 (?도/?체품 ??/기존 ?품 코드 ??
+  raw           Json? // Raw data snapshot (JSONB)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // 관?
-  quote   Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quote           Quote                     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product         Product?                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  vendorResponses QuoteVendorResponseItem[] // Vendor responses for this item
 
   @@index([quoteId])
   @@index([productId])
@@ -995,4 +1008,94 @@ model QuoteReplyAttachment {
   reply QuoteReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
 
   @@index([replyId])
+}
+
+// Vendor information for quotes (optional, can be added later)
+model QuoteVendor {
+  id          String   @id @default(cuid())
+  quoteId     String
+  vendorName  String
+  email       String?
+  country     String?  @default("KR")
+  memo        String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([vendorName])
+}
+
+// Public share configuration for quotes (optional for phase B)
+model QuoteShare {
+  id          String    @id @default(cuid())
+  quoteId     String    @unique // One share per quote
+  shareToken  String    @unique // URL-safe random token for public access
+  expiresAt   DateTime? // Optional expiration
+  enabled     Boolean   @default(true) // Can disable without deleting
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([shareToken])
+  @@index([enabled])
+}
+
+// Vendor request status enum
+enum VendorRequestStatus {
+  SENT       // Initial state after sending
+  RESPONDED  // Vendor has submitted response
+  EXPIRED    // Past expiration date
+  CANCELLED  // Cancelled by internal user
+}
+
+// Vendor request (견적 요청 발송 단위)
+model QuoteVendorRequest {
+  id          String              @id @default(cuid())
+  quoteId     String // FK to Quote (견적요청서)
+  vendorName  String? // Optional vendor name
+  vendorEmail String // Required vendor email
+  message     String?             @db.Text // Request message
+  token       String              @unique // Public access token (32-48 chars random)
+  status      VendorRequestStatus @default(SENT)
+  expiresAt   DateTime // Default 14 days from creation
+  respondedAt DateTime? // When vendor submitted response
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  quote         Quote                      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  responseItems QuoteVendorResponseItem[]
+
+  @@index([quoteId])
+  @@index([token])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// Vendor response item (품목별 회신)
+model QuoteVendorResponseItem {
+  id               String   @id @default(cuid())
+  vendorRequestId  String // FK to QuoteVendorRequest
+  quoteItemId      String // FK to QuoteListItem
+  unitPrice        Int? // Response unit price (KRW precision)
+  currency         String   @default("KRW")
+  leadTimeDays     Int? // Lead time in days
+  moq              Int? // Minimum order quantity (optional)
+  vendorSku        String? // Vendor's SKU/catalog number (optional)
+  notes            String?  @db.Text // Vendor notes (optional)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  vendorRequest QuoteVendorRequest @relation(fields: [vendorRequestId], references: [id], onDelete: Cascade)
+  quoteItem     QuoteListItem      @relation(fields: [quoteItemId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorRequestId, quoteItemId])
+  @@index([vendorRequestId])
+  @@index([quoteItemId])
 }

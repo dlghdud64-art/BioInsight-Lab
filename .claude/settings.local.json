@@ -9,7 +9,13 @@
       "Bash(npm install:*)",
       "Bash(ls:*)",
       "Bash(git worktree:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(set DATABASE_URL=postgresql://user:pass@localhost:5432/dbname)",
+      "Bash(git commit:*)"
     ]
   }
 }
