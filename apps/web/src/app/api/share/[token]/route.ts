@@ -93,7 +93,7 @@ export async function GET(
           increment: 1,
         },
       },
-    }).catch((error) => {
+    }).catch((error: any) => {
       console.error("Failed to increment view count:", error);
     });
 
