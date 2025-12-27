@@ -47,7 +47,11 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { trackEvent } from "@/lib/analytics";
 
-export function QuotePanel() {
+interface QuotePanelProps {
+  onQuoteSaved?: (quoteId: string) => void;
+}
+
+export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   const {
     quoteItems,
     updateQuoteItem,
@@ -230,6 +234,11 @@ export function QuotePanel() {
       const quote = await response.json();
       setSavedQuoteId(quote.id);
       setIsVendorRequestModalOpen(true);
+
+      // Notify parent about saved quote
+      if (onQuoteSaved) {
+        onQuoteSaved(quote.id);
+      }
 
       toast({
         title: "견적 저장 완료",
