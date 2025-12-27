@@ -17,8 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2 } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Mail, Send } from "lucide-react";
 import { QuoteVersionCompare } from "./quote-version-compare";
+import { VendorRequestModal } from "./vendor-request-modal";
 import { useCompareStore } from "@/lib/store/compare-store";
 import {
   Dialog,
@@ -72,6 +73,9 @@ export function QuotePanel() {
   });
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
+  const [isVendorRequestModalOpen, setIsVendorRequestModalOpen] = useState(false);
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+  const [isSavingQuote, setIsSavingQuote] = useState(false);
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
@@ -180,6 +184,67 @@ export function QuotePanel() {
   // 체크박스 상태 계산
   const allSelected = quoteItems.length > 0 && selectedQuoteIds.length === quoteItems.length;
   const someSelected = selectedQuoteIds.length > 0 && selectedQuoteIds.length < quoteItems.length;
+
+  // 견적 저장 및 벤더 요청 모달 열기
+  const handleOpenVendorRequest = async () => {
+    if (quoteItems.length === 0) {
+      toast({
+        title: "품목이 없습니다",
+        description: "견적 요청할 품목을 먼저 추가해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 이미 저장된 견적이 있으면 바로 모달 열기
+    if (savedQuoteId) {
+      setIsVendorRequestModalOpen(true);
+      return;
+    }
+
+    // 견적 저장
+    setIsSavingQuote(true);
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "견적 요청 리스트",
+          items: quoteItems.map((item, index) => ({
+            productId: item.productId,
+            lineNumber: index + 1,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            currency: item.currency,
+            lineTotal: item.lineTotal,
+            notes: item.notes,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "견적 저장에 실패했습니다." }));
+        throw new Error(error.error || "견적 저장에 실패했습니다.");
+      }
+
+      const quote = await response.json();
+      setSavedQuoteId(quote.id);
+      setIsVendorRequestModalOpen(true);
+
+      toast({
+        title: "견적 저장 완료",
+        description: "벤더에게 견적 요청을 보낼 수 있습니다.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "견적 저장 실패",
+        description: error.message || "견적을 저장할 수 없습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingQuote(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -709,7 +774,25 @@ export function QuotePanel() {
 
             {/* 견적 요청 버튼 - 품목이 있을 때만 표시 */}
             {quoteItems.length > 0 && (
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  onClick={handleOpenVendorRequest}
+                  disabled={isSavingQuote}
+                  variant="default"
+                  className="bg-blue-600 text-white hover:bg-blue-700 text-xs h-8"
+                >
+                  {isSavingQuote ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      저장 중...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3 w-3 mr-2" />
+                      견적 요청 보내기
+                    </>
+                  )}
+                </Button>
                 <Link href="/test/quote/request">
                   <Button className="bg-slate-900 text-white hover:bg-slate-800 text-xs h-8">
                     <Plus className="h-3 w-3 mr-2" />
@@ -1009,6 +1092,19 @@ export function QuotePanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 벤더 견적 요청 모달 */}
+      <VendorRequestModal
+        open={isVendorRequestModalOpen}
+        onOpenChange={setIsVendorRequestModalOpen}
+        quoteId={savedQuoteId || undefined}
+        onSuccess={() => {
+          toast({
+            title: "견적 요청 전송 완료",
+            description: "벤더에게 견적 요청이 전송되었습니다.",
+          });
+        }}
+      />
     </div>
   );
 }
