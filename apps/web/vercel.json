@@ -1,11 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "cd ../.. && npm run build",
+  "installCommand": "cd ../.. && npm install",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "PRISMA_GENERATE_DATAPROXY": "false",
-    "NODE_ENV": "development"
+    "PRISMA_GENERATE_DATAPROXY": "false"
   }
 }
 
