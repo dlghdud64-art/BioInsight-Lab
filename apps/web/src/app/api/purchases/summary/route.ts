@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       totalAmount,
-      byMonth: Object.values(byMonth).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth)),
+      byMonth: (Object.values(byMonth) as { yearMonth: string; amount: number }[]).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth)),
       topVendors,
       topCategories,
     });
