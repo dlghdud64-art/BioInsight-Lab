@@ -106,14 +106,14 @@ export async function GET(request: NextRequest) {
 
     if (sortBy === "price_low") {
       sortedProducts.sort((a, b) => {
-        const aPrice = a.vendors[0]?.priceInKRW || 0;
-        const bPrice = b.vendors[0]?.priceInKRW || 0;
+        const aPrice = (a.vendors?.[0] as any)?.priceInKRW || 0;
+        const bPrice = (b.vendors?.[0] as any)?.priceInKRW || 0;
         return aPrice - bPrice;
       });
     } else if (sortBy === "price_high") {
       sortedProducts.sort((a, b) => {
-        const aPrice = a.vendors[0]?.priceInKRW || 0;
-        const bPrice = b.vendors[0]?.priceInKRW || 0;
+        const aPrice = (a.vendors?.[0] as any)?.priceInKRW || 0;
+        const bPrice = (b.vendors?.[0] as any)?.priceInKRW || 0;
         return bPrice - aPrice;
       });
     } else if (sortBy === "name") {
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
 
     // Build response
     const response: SearchResponse = {
-      products: paginatedProducts.map((product) => ({
+      products: paginatedProducts.map((product: any) => ({
         id: product.id,
         name: product.name,
         nameEn: product.nameEn,
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
         imageUrl: product.imageUrl,
         grade: product.grade,
         specification: product.specification,
-        vendors: product.vendors.map((pv) => ({
+        vendors: product.vendors?.map((pv: any) => ({
           id: pv.id,
           vendorId: pv.vendorId,
           vendor: pv.vendor,
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
           stockStatus: pv.stockStatus,
           leadTime: pv.leadTime,
           url: pv.url,
-        })),
+        })) || [],
       })),
       total,
       page,
@@ -165,12 +165,12 @@ export async function GET(request: NextRequest) {
       for (const product of sortedProducts) {
         // Count categories
         categoryCounts.set(
-          product.category,
-          (categoryCounts.get(product.category) || 0) + 1
+          (product as any).category,
+          (categoryCounts.get((product as any).category) || 0) + 1
         );
 
         // Count vendors
-        for (const pv of product.vendors) {
+        for (const pv of (product as any).vendors || []) {
           if (pv.vendor) {
             const existing = vendorCounts.get(pv.vendorId);
             if (existing) {
@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
             resultCount: total,
           },
         })
-        .catch((error) => {
+        .catch((error: any) => {
           logger.error("Failed to save search history", error);
         });
     }

@@ -7,7 +7,7 @@ const logger = createLogger("api/billing/webhook");
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-12-15.clover",
 });
 
 // Force Node.js runtime for raw body access
@@ -62,7 +62,7 @@ async function handleSubscriptionChange(
   const updateData: any = {
     stripeSubscriptionId: subscription.id,
     stripePriceId: subscription.items.data[0]?.price.id,
-    stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
     billingStatus,
   };
 
@@ -152,7 +152,7 @@ async function handleCheckoutCompleted(
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscription.items.data[0]?.price.id,
-      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
       plan: "TEAM",
       billingStatus: subscription.status === "trialing" ? "TRIALING" : "ACTIVE",
     },
@@ -171,7 +171,7 @@ async function handleCheckoutCompleted(
 async function handleInvoicePaymentSucceeded(
   invoice: Stripe.Invoice
 ): Promise<void> {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = (invoice as any).subscription as string;
 
   if (!subscriptionId) {
     return; // Not a subscription invoice
@@ -190,7 +190,7 @@ async function handleInvoicePaymentSucceeded(
     data: {
       billingStatus: "ACTIVE",
       plan: "TEAM",
-      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
     },
   });
 
@@ -207,7 +207,7 @@ async function handleInvoicePaymentSucceeded(
 async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice
 ): Promise<void> {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = (invoice as any).subscription as string;
 
   if (!subscriptionId) {
     return;

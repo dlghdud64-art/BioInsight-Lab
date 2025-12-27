@@ -242,7 +242,7 @@ export async function POST(
     });
 
     // Create QuoteReply in transaction
-    const reply = await db.$transaction(async (tx) => {
+    const reply = await db.$transaction(async (tx: any) => {
       // Create reply
       const newReply = await tx.quoteReply.create({
         data: {

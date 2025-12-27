@@ -45,15 +45,6 @@ export async function GET(
     const vendorRequest = await db.quoteVendorRequest.findUnique({
       where: { token },
       include: {
-        quote: {
-          include: {
-            items: {
-              orderBy: {
-                lineNumber: "asc",
-              },
-            },
-          },
-        },
         responseItems: true,
       },
     });
@@ -81,7 +72,26 @@ export async function GET(
       );
     }
 
-    // Return safe data (no internal info)
+    // Parse snapshot data
+    const snapshot = vendorRequest.snapshot as {
+      quoteId: string;
+      title: string;
+      createdAt: string;
+      items: Array<{
+        quoteItemId: string;
+        lineNumber: number;
+        productName: string;
+        brand: string;
+        catalogNumber: string;
+        quantity: number;
+        unit: string;
+        currentPrice: number | null;
+        packSize: string | null;
+        notes: string | null;
+      }>;
+    };
+
+    // Return safe data from snapshot (frozen at request time)
     return NextResponse.json(
       {
         vendorRequest: {
@@ -91,23 +101,24 @@ export async function GET(
           status: vendorRequest.status,
           expiresAt: vendorRequest.expiresAt,
           respondedAt: vendorRequest.respondedAt,
+          snapshotCreatedAt: vendorRequest.snapshotCreatedAt,
         },
         quote: {
-          id: vendorRequest.quote.id,
-          title: vendorRequest.quote.title,
-          currency: vendorRequest.quote.currency,
+          id: snapshot.quoteId,
+          title: snapshot.title,
+          currency: "KRW", // Default from snapshot
         },
-        items: vendorRequest.quote.items.map((item) => ({
-          id: item.id,
+        items: snapshot.items.map((item) => ({
+          id: item.quoteItemId,
           lineNumber: item.lineNumber,
-          name: item.name,
+          name: item.productName,
           brand: item.brand,
           catalogNumber: item.catalogNumber,
           unit: item.unit,
           quantity: item.quantity,
           // Find existing response for this item
           existingResponse: vendorRequest.responseItems.find(
-            (r) => r.quoteItemId === item.id
+            (r) => r.quoteItemId === item.quoteItemId
           ) || null,
         })),
       },

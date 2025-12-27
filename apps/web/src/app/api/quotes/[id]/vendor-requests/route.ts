@@ -85,6 +85,25 @@ export async function POST(
     // Calculate expiration date
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
+    // Create snapshot of current quote state
+    const snapshot = {
+      quoteId: quote.id,
+      title: quote.title,
+      createdAt: quote.createdAt.toISOString(),
+      items: quote.items.map((item) => ({
+        quoteItemId: item.id,
+        lineNumber: item.lineNumber,
+        productName: item.name || "",
+        brand: item.brand || "",
+        catalogNumber: item.catalogNumber || "",
+        quantity: item.quantity,
+        unit: item.unit || "ea",
+        currentPrice: item.price || null,
+        packSize: item.packSize || null,
+        notes: item.notes || null,
+      })),
+    };
+
     // Create vendor requests
     const createdRequests = [];
     const emailResults = [];
@@ -93,7 +112,7 @@ export async function POST(
       // Generate unique token
       const token = generateVendorRequestToken();
 
-      // Create vendor request
+      // Create vendor request with snapshot
       const vendorRequest = await db.quoteVendorRequest.create({
         data: {
           quoteId: id,
@@ -103,6 +122,7 @@ export async function POST(
           token,
           status: "SENT",
           expiresAt,
+          snapshot,
         },
       });
 
@@ -184,11 +204,7 @@ export async function GET(
     const vendorRequests = await db.quoteVendorRequest.findMany({
       where: { quoteId: id },
       include: {
-        responseItems: {
-          include: {
-            quoteItem: true,
-          },
-        },
+        responseItems: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -197,17 +213,24 @@ export async function GET(
 
     // Check for expired requests and update status
     const now = new Date();
-    for (const request of vendorRequests) {
-      if (request.status === "SENT" && request.expiresAt < now) {
+    for (const vendorRequest of vendorRequests) {
+      if (vendorRequest.status === "SENT" && vendorRequest.expiresAt < now) {
         await db.quoteVendorRequest.update({
-          where: { id: request.id },
+          where: { id: vendorRequest.id },
           data: { status: "EXPIRED" },
         });
-        request.status = "EXPIRED";
+        vendorRequest.status = "EXPIRED";
       }
     }
 
-    return NextResponse.json({ vendorRequests });
+    // Return vendor requests with snapshot info for internal comparison
+    return NextResponse.json({
+      vendorRequests: vendorRequests.map((vr) => ({
+        ...vr,
+        // Include snapshot for internal UI to use frozen item list
+        snapshot: vr.snapshot,
+      })),
+    });
   } catch (error) {
     console.error("Error fetching vendor requests:", error);
     return NextResponse.json(

@@ -34,7 +34,7 @@ export async function GET(
           organizationId: true,
         },
       });
-      organizationIds = memberships.map((m) => m.organizationId);
+      organizationIds = memberships.map((m: any) => m.organizationId);
     }
 
     // SDS 문서 조회

@@ -52,6 +52,20 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
   const vendorRequests = data?.vendorRequests || [];
   const quoteItems = quoteData?.quote?.items || [];
 
+  // Use snapshot items for comparison (first vendor request's snapshot as reference)
+  // All vendor requests for the same quote should have identical snapshots
+  const snapshotItems = vendorRequests.length > 0 && vendorRequests[0].snapshot
+    ? (vendorRequests[0].snapshot as any).items
+    : quoteItems.map((item: any) => ({
+        quoteItemId: item.id,
+        lineNumber: item.lineNumber,
+        productName: item.name,
+        brand: item.brand,
+        catalogNumber: item.catalogNumber,
+        quantity: item.quantity,
+        unit: item.unit,
+      }));
+
   // Filter vendor requests
   const filteredVendors = useMemo(() => {
     let filtered = vendorRequests;
@@ -91,7 +105,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
   };
 
   const handleExportCSV = () => {
-    if (!quoteData?.quote || vendorRequests.length === 0) {
+    if (vendorRequests.length === 0 || snapshotItems.length === 0) {
       toast({
         title: "내보내기 불가",
         description: "내보낼 데이터가 없습니다.",
@@ -100,10 +114,22 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
       return;
     }
 
+    // Use snapshot items for CSV export (frozen at request time)
+    const exportItems = snapshotItems.map((item: any) => ({
+      id: item.quoteItemId,
+      lineNumber: item.lineNumber,
+      name: item.productName,
+      catalogNumber: item.catalogNumber,
+      quantity: item.quantity,
+      unit: item.unit,
+    }));
+
+    const snapshot = vendorRequests[0].snapshot as any;
+
     downloadVendorResponsesCSV({
       quoteId: quoteId,
-      quoteTitle: quoteData.quote.title,
-      items: quoteItems,
+      quoteTitle: snapshot.title || "견적 요청",
+      items: exportItems,
       vendorRequests: vendorRequests,
     });
 
@@ -322,12 +348,12 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
           </Card>
 
           {/* Responses Comparison Table */}
-          {quoteItems.length > 0 && (
+          {snapshotItems.length > 0 && (
             <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm font-semibold text-slate-900">회신 비교</CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  품목별 벤더 회신을 비교합니다.
+                  품목별 벤더 회신을 비교합니다. (요청 당시 기준)
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -370,13 +396,13 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {quoteItems.map((item: any, index: number) => (
-                        <TableRow key={item.id}>
+                      {snapshotItems.map((item: any, index: number) => (
+                        <TableRow key={item.quoteItemId}>
                           <TableCell className="text-xs font-medium sticky left-0 bg-white">
-                            {index + 1}
+                            {item.lineNumber || index + 1}
                           </TableCell>
                           <TableCell className="text-xs sticky left-12 bg-white">
-                            {item.name}
+                            {item.productName}
                           </TableCell>
                           <TableCell className="text-xs text-slate-600">
                             {item.catalogNumber || "—"}
@@ -386,7 +412,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                           </TableCell>
                           {filteredVendors.map((vendor: any) => {
                             const response = vendor.responseItems.find(
-                              (r: any) => r.quoteItemId === item.id
+                              (r: any) => r.quoteItemId === item.quoteItemId
                             );
 
                             const isWaiting = vendor.status !== "RESPONDED";

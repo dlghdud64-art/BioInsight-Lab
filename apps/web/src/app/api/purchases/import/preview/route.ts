@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { parseFileBuffer } from "@/lib/file-parser";
+import { fileCache, cleanupFileCache } from "@/lib/cache/file-cache";
 
 const logger = createLogger("purchases/import/preview");
 
@@ -13,24 +14,9 @@ export interface PreviewResponse {
   fileId: string; // Temporary ID for later commit
 }
 
-// Store parsed data temporarily (in production, use Redis or session storage)
-const fileCache = new Map<string, { rows: any[]; filename: string; timestamp: number }>();
-
-// Clean up old cache entries (older than 30 minutes)
-function cleanupCache() {
-  const now = Date.now();
-  const thirtyMinutes = 30 * 60 * 1000;
-
-  for (const [key, value] of fileCache.entries()) {
-    if (now - value.timestamp > thirtyMinutes) {
-      fileCache.delete(key);
-    }
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
-    cleanupCache();
+    cleanupFileCache();
 
     const scopeKey = request.headers.get("x-guest-key");
     if (!scopeKey) {
@@ -101,6 +87,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error, "purchases/import/preview");
   }
 }
-
-// Export for use in commit endpoint
-export { fileCache };

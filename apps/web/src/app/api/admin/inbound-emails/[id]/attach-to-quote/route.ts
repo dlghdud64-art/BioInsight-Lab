@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 const logger = createLogger("api/admin/inbound-emails/[id]/attach-to-quote");
 
@@ -88,7 +89,7 @@ export async function POST(
     }
 
     // Create QuoteReply and update InboundEmail
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       // Create reply
       const reply = await tx.quoteReply.create({
         data: {

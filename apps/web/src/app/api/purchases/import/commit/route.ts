@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
-import { fileCache } from "../preview/route";
+import { fileCache } from "@/lib/cache/file-cache";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 
 const logger = createLogger("purchases/import/commit");
