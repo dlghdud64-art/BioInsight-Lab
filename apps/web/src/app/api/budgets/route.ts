@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// ìì° ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -13,12 +12,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
 
-    // ìì° ì¡°í (ì¡°ì§ë³ ëë ì¬ì©ìê° ìí ì¡°ì§)
     const userOrganizations = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
-    // 타입 에러 수정 - 파라미터에 타입 명시
     const userOrgIds = userOrganizations.map((m: { organizationId: string }) => m.organizationId);
 
     const budgets = await db.budget.findMany({
@@ -29,42 +26,39 @@ export async function GET(request: NextRequest) {
         ],
       },
       orderBy: {
-        periodStart: "desc",
+        yearMonth: "desc",
       },
     });
 
-    // ê° ìì°ì ì¬ì©ë¥  ê³ì°
     const budgetsWithUsage = await Promise.all(
       budgets.map(async (budget: any) => {
-        // ìì° ê¸°ê° ë´ êµ¬ë§¤ë´ì­ ì¡°í
+        const [year, month] = budget.yearMonth.split("-").map(Number);
+        const periodStart = new Date(year, month - 1, 1);
+        const periodEnd = new Date(year, month, 0, 23, 59, 59);
+
         const purchaseRecords = await db.purchaseRecord.findMany({
           where: {
-            purchaseDate: {
-              gte: budget.periodStart,
-              lte: budget.periodEnd,
+            organizationId: budget.organizationId,
+            purchasedAt: {
+              gte: periodStart,
+              lte: periodEnd,
             },
-            ...(budget.organizationId
-              ? { organizationId: budget.organizationId }
-              : {}),
-            ...(budget.projectName
-              ? { projectName: budget.projectName }
-              : {}),
           },
         });
 
-        // ì´ ì¬ì© ê¸ì¡ ê³ì°
-        // 타입 에러 수정: sum과 record 파라미터에 타입 명시
         const totalSpent = purchaseRecords.reduce(
           (sum: number, record: any) => sum + (record.amount || 0),
           0
         );
 
-        // ì¬ì©ë¥  ê³ì°
         const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
         const remaining = budget.amount - totalSpent;
 
         return {
           ...budget,
+          name: `${budget.yearMonth} Budget`,
+          periodStart: periodStart.toISOString(),
+          periodEnd: periodEnd.toISOString(),
           usage: {
             totalSpent,
             usageRate,
@@ -84,4 +78,73 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ìì° ìì±
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { organizationId, yearMonth, amount, currency, description } = body;
+
+    if (!organizationId || !yearMonth || !amount) {
+      return NextResponse.json(
+        { error: "Missing required fields: organizationId, yearMonth, amount" },
+        { status: 400 }
+      );
+    }
+
+    const yearMonthRegex = /^\d{4}-\d{2}$/;
+    if (!yearMonthRegex.test(yearMonth)) {
+      return NextResponse.json(
+        { error: "Invalid yearMonth format. Use YYYY-MM" },
+        { status: 400 }
+      );
+    }
+
+    const userOrg = await db.organizationMember.findFirst({
+      where: {
+        userId: session.user.id,
+        organizationId,
+        role: { in: ["ADMIN", "APPROVER"] },
+      },
+    });
+
+    if (!userOrg) {
+      return NextResponse.json(
+        { error: "You must be an admin or approver in this organization" },
+        { status: 403 }
+      );
+    }
+
+    const budget = await db.budget.upsert({
+      where: {
+        organizationId_yearMonth: {
+          organizationId,
+          yearMonth,
+        },
+      },
+      create: {
+        organizationId,
+        yearMonth,
+        amount,
+        currency: currency || "KRW",
+        description,
+      },
+      update: {
+        amount,
+        currency: currency || "KRW",
+        description,
+      },
+    });
+
+    return NextResponse.json({ budget });
+  } catch (error) {
+    console.error("Error creating budget:", error);
+    return NextResponse.json(
+      { error: "Failed to create budget" },
+      { status: 500 }
+    );
+  }
+}

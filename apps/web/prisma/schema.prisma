@@ -47,15 +47,13 @@ model Organization {
   updatedAt         DateTime         @updatedAt
 
   // 관?
-  members         OrganizationMember[]
-  quotes          Quote[]
-  templates       QuoteTemplate[]
-  inventories     ProductInventory[]
-  purchaseRecords PurchaseRecord[]
-  budgets         Budget[]
-  subscription    Subscription? // 구독 ?보
-  activityLogs    ActivityLog[]
-  auditLogs       AuditLog[]
+  members      OrganizationMember[]
+  quotes       Quote[]
+  templates    QuoteTemplate[]
+  inventories  ProductInventory[]
+  subscription Subscription? // 구독 ?보
+  activityLogs ActivityLog[]
+  auditLogs    AuditLog[]
 
   @@index([name])
   @@index([plan])
@@ -100,6 +98,7 @@ model User {
   favorites           Favorite[]
   searchHistory       SearchHistory[]
   organizationMembers OrganizationMember[]
+  workspaceMembers    WorkspaceMember[] // Workspace membership
   reviews             Review[]
   templates           QuoteTemplate[]
   inventories         ProductInventory[]
@@ -210,7 +209,6 @@ model Product {
   reviews         Review[]
   quoteListItems  QuoteListItem[]
   inventories     ProductInventory[]
-  purchaseRecords PurchaseRecord[]
 
   @@index([category])
   @@index([brand])
@@ -240,7 +238,6 @@ model Vendor {
   products        ProductVendor[]
   quoteResponses  QuoteResponse[]
   billingRecords  VendorBillingRecord[]
-  purchaseRecords PurchaseRecord[]
 
   @@index([name])
   @@index([isPremium])
@@ -312,6 +309,7 @@ model Quote {
   id             String    @id @default(cuid())
   userId         String
   organizationId String? // 조직 ?위 리스?인 경우
+  workspaceId    String? // Optional workspace association (for gradual migration)
   comparisonId   String? // 비교 ?트 기반 리스?인 경우
   title          String // 리스???목
   description    String?   @db.Text // 리스???명/비고
@@ -331,6 +329,7 @@ model Quote {
   // 관?
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  workspace       Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   template        QuoteTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
   parentQuote     Quote?           @relation("QuoteVersions", fields: [parentQuoteId], references: [id], onDelete: SetNull)
   versions        Quote[]          @relation("QuoteVersions") // 버전 리스트
@@ -340,9 +339,13 @@ model Quote {
   responses       QuoteResponse[]
   sharedLists     SharedList[] // 공유 링크
   purchaseRecords PurchaseRecord[] // ?제 구매?역
+  rfqToken        QuoteRfqToken? // RFQ email token
+  replies         QuoteReply[] // Email-based vendor replies
+  inboundEmails   InboundEmail[] // Matched inbound emails
 
   @@index([userId])
   @@index([organizationId])
+  @@index([workspaceId])
   @@index([templateId])
   @@index([parentQuoteId])
   @@index([version])
@@ -412,13 +415,14 @@ model QuoteItem {
   @@index([productId])
 }
 
-// QuoteStatus enum? 기존 ?환?을 ?해 ?? (?후 ?거 가??
+// QuoteStatus enum
 enum QuoteStatus {
-  PENDING // ???
-  SENT // 발송 ?료
-  RESPONDED // ?답 받음
-  COMPLETED // ?료
-  CANCELLED // 취소
+  PENDING // Pending
+  SENT // Sent
+  RESPONDED // Responded
+  COMPLETED // Completed
+  PURCHASED // Purchased (converted to PurchaseRecord)
+  CANCELLED // Cancelled
 }
 
 // 견적 ?답
@@ -631,60 +635,174 @@ model SharedList {
   @@index([isActive])
 }
 
-// ?제 구매?역 (CSV Import??
+// Purchase record (MVP: guestKey-based scope)
 model PurchaseRecord {
-  id             String   @id @default(cuid())
-  quoteId        String? // BioInsight Lab?서 ?성??리스?? ?결
-  organizationId String? // 조직/?
-  projectName    String? // ?로?트/과제?
-  vendorId       String? // 벤더
-  productId      String? // ?품
-  externalDocId  String? // ?? 문서 번호 (그룹?어/ERP)
-  purchaseDate   DateTime // 구매??
-  quantity       Int
-  unitPrice      Float
-  currency       String   @default("KRW")
-  totalAmount    Float // 총액 (?금, 배송??함 ????notes??
-  category       String? // 카테고리
-  notes          String?  @db.Text // 비고 (?금 ?함 ??, 배송???
-  importedAt     DateTime @default(now()) // Import ?점
-  importedBy     String? // Import???용??
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  scopeKey      String // guestKey for MVP, workspaceId for future
+  workspaceId   String? // Optional workspace association
+  quoteId       String? // Linked quote if source=quote
+  purchasedAt   DateTime // Purchase date
+  vendorName    String // Vendor name
+  category      String? // Product category
+  itemName      String // Item/product name
+  catalogNumber String? // Catalog number
+  unit          String? // Unit (ea, mL, g, etc.)
+  qty           Int // Quantity
+  unitPrice     Int? // Unit price (optional for import)
+  amount        Int // Total amount (required)
+  currency      String   @default("KRW")
+  source        String   @default("import") // "import" or "quote"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // 관?
-  quote        Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  vendor       Vendor?       @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  // Relations (optional)
+  quote     Quote?     @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
+  @@index([scopeKey, purchasedAt])
+  @@index([scopeKey, vendorName])
+  @@index([scopeKey, category])
   @@index([quoteId])
-  @@index([organizationId])
-  @@index([vendorId])
-  @@index([productId])
-  @@index([purchaseDate])
-  @@index([category])
+  @@index([workspaceId])
 }
 
-// ?산 관?(P2)
+// Budget management (MVP: guestKey-based scope)
 model Budget {
-  id             String   @id @default(cuid())
-  organizationId String? // 조직/?
-  projectName    String? // ?로?트/과제?
-  name           String // ?산 ?름
-  amount         Float // ?산 금액
-  currency       String   @default("KRW")
-  periodStart    DateTime // ?산 기간 ?작
-  periodEnd      DateTime // ?산 기간 종료
-  description    String?  @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String   @id @default(cuid())
+  scopeKey    String // guestKey for MVP, workspaceId for future
+  workspaceId String? // Optional workspace association
+  yearMonth   String // Format: "YYYY-MM" (e.g., "2025-01")
+  amount      Int // Budget amount
+  currency    String   @default("KRW")
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // 관?
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  // Relations
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
-  @@index([organizationId])
-  @@index([periodStart, periodEnd])
+  @@unique([scopeKey, yearMonth])
+  @@index([scopeKey])
+  @@index([yearMonth])
+  @@index([workspaceId])
+}
+
+// Import job tracking (for file-based imports)
+enum ImportJobStatus {
+  PENDING // Queued for processing
+  PROCESSING // Currently processing
+  COMPLETED // Successfully completed
+  FAILED // Failed with errors
+  PARTIAL // Partially completed with errors
+}
+
+model ImportJob {
+  id           String          @id @default(cuid())
+  scopeKey     String // guestKey for MVP
+  workspaceId  String? // Optional workspace association
+  type         String // "purchase" (expandable to other types)
+  filename     String // Original filename
+  status       ImportJobStatus @default(PENDING)
+  totalRows    Int             @default(0)
+  successRows  Int             @default(0)
+  errorRows    Int             @default(0)
+  errorSample  Json? // Array of error samples
+  result       Json? // Import result metadata
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([scopeKey])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([workspaceId])
+}
+
+// Workspace (minimal multi-tenant setup)
+enum WorkspacePlan {
+  FREE
+  TEAM
+  ENTERPRISE
+}
+
+enum WorkspaceMemberRole {
+  ADMIN
+  MEMBER
+}
+
+enum BillingStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
+
+model Workspace {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique // URL-friendly identifier
+  plan             WorkspacePlan @default(FREE)
+  lastWorkspaceId  String? // For user's last active workspace
+
+  // Stripe billing fields
+  stripeCustomerId        String? @unique
+  stripeSubscriptionId    String? @unique
+  stripePriceId           String?
+  stripeCurrentPeriodEnd  DateTime?
+  billingStatus           BillingStatus?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  members          WorkspaceMember[]
+  invites          WorkspaceInvite[]
+  purchases        PurchaseRecord[]
+  budgets          Budget[]
+  quotes           Quote[]
+  importJobs       ImportJob[]
+
+  @@index([slug])
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceMemberRole @default(MEMBER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model WorkspaceInvite {
+  id          String    @id @default(cuid())
+  workspaceId String
+  token       String    @unique // Unique invite token
+  email       String
+  role        WorkspaceMemberRole @default(MEMBER)
+  expiresAt   DateTime // Invite expiration
+  acceptedAt  DateTime? // When invite was accepted
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([workspaceId])
+  @@index([email])
 }
 
 // 구독 ?보 (Team/Org ?랜)
@@ -787,4 +905,94 @@ model AuditLog {
   @@index([entityId])
   @@index([createdAt])
   @@index([success])
+}
+
+// RFQ Token for email-based quote replies
+model QuoteRfqToken {
+  id        String    @id @default(cuid())
+  quoteId   String    @unique // One token per quote
+  token     String    @unique // URL-safe random token (32-48 chars)
+  enabled   Boolean   @default(true) // Can disable without deleting
+  expiresAt DateTime? // Optional expiration
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([enabled])
+}
+
+// Inbound email status
+enum InboundEmailStatus {
+  MATCHED // Successfully matched to a quote
+  UNMATCHED // No matching token found
+  FAILED // Processing error
+}
+
+// Inbound email log (for webhook processing)
+model InboundEmail {
+  id              String             @id @default(cuid())
+  provider        String             @default("sendgrid") // Email provider
+  messageId       String             @unique // Email Message-ID for deduplication
+  to              String // Recipient address
+  from            String // Sender address
+  subject         String
+  text            String?            @db.Text // Plain text body
+  html            String?            @db.Text // HTML body
+  rawHeaders      Json? // Raw email headers
+  attachmentsMeta Json? // Attachment metadata
+  matchedQuoteId  String? // Matched quote (if status=MATCHED)
+  status          InboundEmailStatus @default(UNMATCHED)
+  receivedAt      DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations
+  matchedQuote Quote? @relation(fields: [matchedQuoteId], references: [id], onDelete: SetNull)
+
+  @@index([messageId])
+  @@index([status])
+  @@index([matchedQuoteId])
+  @@index([receivedAt])
+}
+
+// Quote reply from vendor (via email)
+model QuoteReply {
+  id          String   @id @default(cuid())
+  quoteId     String
+  vendorName  String? // Nullable, can be extracted from email
+  fromEmail   String // Sender email
+  subject     String
+  receivedAt  DateTime @default(now())
+  bodyText    String?  @db.Text // Plain text body
+  bodyHtml    String?  @db.Text // HTML body
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quote       Quote                 @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  attachments QuoteReplyAttachment[]
+
+  @@index([quoteId])
+  @@index([fromEmail])
+  @@index([receivedAt])
+}
+
+// Attachments for quote replies
+model QuoteReplyAttachment {
+  id          String   @id @default(cuid())
+  replyId     String
+  fileName    String
+  contentType String?
+  sizeBytes   Int
+  bucket      String // Supabase storage bucket name
+  path        String // Storage path
+  createdAt   DateTime @default(now())
+
+  // Relations
+  reply QuoteReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([replyId])
 }

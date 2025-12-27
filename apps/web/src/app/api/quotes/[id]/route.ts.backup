@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getQuoteById } from "@/lib/api/quotes";
-import { db } from "@/lib/db";
+import { db, isPrismaAvailable } from "@/lib/db";
+import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
-import { handleApiError } from "@/lib/api-error-handler";
-import { createLogger } from "@/lib/logger";
-import { markQuoteAsPurchased } from "./markPurchased";
-
-const logger = createLogger("quotes/[id]");
 
 // 특정 견적 조회
 export async function GET(
@@ -54,12 +50,16 @@ export async function GET(
       ipAddress,
       userAgent,
     }).catch((error) => {
-      logger.error("Failed to create activity log", error);
+      console.error("Failed to create activity log:", error);
     });
 
     return NextResponse.json({ quote });
   } catch (error) {
-    return handleApiError(error, "quotes/GET");
+    console.error("Error fetching quote:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch quote" },
+      { status: 500 }
+    );
   }
 }
 
@@ -122,35 +122,68 @@ export async function PATCH(
     // 구매 완료 시 PurchaseRecord 자동 생성 (멱등성 보장)
     if (isCompletingPurchase && quote.items.length > 0) {
       try {
+        // x-guest-key 헤더 가져오기
         const scopeKey = request.headers.get("x-guest-key");
         if (!scopeKey) {
           throw new Error("x-guest-key header is required to create purchase records");
         }
 
-        const purchaseResult = await markQuoteAsPurchased({
-          quoteId: quote.id,
-          scopeKey,
+        // 이미 생성된 PurchaseRecord가 있는지 확인 (멱등성)
+        const existingPurchases = await db.purchaseRecord.findMany({
+          where: { quoteId: quote.id },
         });
 
-        if (!purchaseResult.alreadyPurchased) {
-          logger.info(`Created ${purchaseResult.count} purchase records for quote ${quote.id}`);
+        if (existingPurchases.length === 0) {
+          // 각 아이템에 대해 PurchaseRecord 생성
+          const purchaseRecords = await Promise.all(
+            quote.items.map(async (item: { productId: string; quantity: number; unitPrice: number | null; currency: string | null; notes: string | null; product: { name: string; category: string; catalogNumber: string | null } | null }) => {
+              // 제품의 첫 번째 벤더 정보 가져오기
+              const productVendor = await db.productVendor.findFirst({
+                where: { productId: item.productId },
+                include: { vendor: true },
+              });
 
-          // Send purchase complete email
+              const unitPrice = item.unitPrice || productVendor?.priceInKRW || 0;
+              const amount = Math.round(unitPrice * item.quantity);
+
+              return db.purchaseRecord.create({
+                data: {
+                  scopeKey,
+                  quoteId: quote.id,
+                  purchasedAt: new Date(),
+                  vendorName: productVendor?.vendor?.name || "Unknown Vendor",
+                  category: item.product?.category || null,
+                  itemName: item.product?.name || "Unknown Item",
+                  catalogNumber: item.product?.catalogNumber || null,
+                  unit: "ea",
+                  qty: item.quantity,
+                  unitPrice: Math.round(unitPrice),
+                  amount,
+                  currency: item.currency || productVendor?.currency || "KRW",
+                  source: "quote",
+                },
+              });
+            })
+          );
+
+          console.log(`Created ${purchaseRecords.length} purchase records for quote ${quote.id}`);
+
+          // 구매 완료 이메일 발송
           try {
             const user = await db.user.findUnique({
               where: { id: session.user.id },
               select: { email: true },
             });
 
-            if (user?.email && purchaseResult.purchaseData) {
-              const totalAmount = purchaseResult.purchaseData.reduce((sum, p) => sum + p.amount, 0);
-              const currency = purchaseResult.purchaseData[0]?.currency || "KRW";
+            if (user?.email) {
+              const totalAmount = purchaseRecords.reduce((sum, record) => sum + record.amount, 0);
+              const currency = purchaseRecords[0]?.currency || "KRW";
 
               const emailTemplate = generatePurchaseCompleteEmail({
                 quoteTitle: quote.title,
                 totalAmount,
                 currency,
-                itemCount: purchaseResult.purchaseData.length,
+                itemCount: purchaseRecords.length,
                 purchaseDate: new Date(),
                 quoteUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quotes/${quote.id}`,
               });
@@ -161,15 +194,16 @@ export async function PATCH(
                 html: emailTemplate.html,
                 text: emailTemplate.text,
               });
-
-              logger.info(`Sent purchase complete email to ${user.email}`);
             }
           } catch (emailError) {
-            logger.error("Failed to send purchase complete email", emailError);
+            // 이메일 발송 실패는 로깅만 하고 계속 진행
+            console.error("Failed to send purchase complete email:", emailError);
           }
+        } else {
+          console.log(`Purchase records already exist for quote ${quote.id}, skipping creation`);
         }
       } catch (error) {
-        logger.error("Failed to create purchase records", error);
+        console.error("Failed to create purchase records:", error);
         // PurchaseRecord 생성 실패해도 Quote 업데이트는 성공으로 처리
       }
     }
@@ -197,12 +231,16 @@ export async function PATCH(
       ipAddress,
       userAgent,
     }).catch((error) => {
-      logger.error("Failed to create activity log", error);
+      console.error("Failed to create activity log:", error);
     });
 
     return NextResponse.json({ quote: updatedQuote });
   } catch (error) {
-    return handleApiError(error, "quotes/PATCH");
+    console.error("Error updating quote:", error);
+    return NextResponse.json(
+      { error: "Failed to update quote" },
+      { status: 500 }
+    );
   }
 }
 
@@ -250,18 +288,21 @@ export async function DELETE(
       ipAddress,
       userAgent,
     }).catch((error) => {
-      logger.error("Failed to create activity log", error);
+      console.error("Failed to create activity log:", error);
     });
 
+    // 견적 삭제
     await db.quote.delete({
       where: { id },
     });
 
-    logger.info(`Deleted quote ${id}`);
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    return handleApiError(error, "quotes/DELETE");
+    console.error("Error deleting quote:", error);
+    return NextResponse.json(
+      { error: "Failed to delete quote" },
+      { status: 500 }
+    );
   }
 }
 

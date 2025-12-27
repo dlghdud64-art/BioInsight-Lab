@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma --version)",
+      "Bash(npm run db:migrate:*)",
+      "Bash(npm install)",
+      "Bash(npx prisma generate)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(git worktree:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

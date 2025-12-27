@@ -3,10 +3,11 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
+import { parseFileBuffer, transformPurchaseRow } from "@/lib/file-parser";
 
-const logger = createLogger("purchases/import");
+const logger = createLogger("purchases/import-file");
 
-// Zod schema for purchase row validation
+// Zod schema for purchase row validation (same as JSON import)
 const PurchaseRowSchema = z.object({
   purchasedAt: z.string().min(1, "purchasedAt is required"),
   vendorName: z.string().min(1, "vendorName is required"),
@@ -20,9 +21,8 @@ const PurchaseRowSchema = z.object({
   currency: z.string().default("KRW"),
 });
 
-type PurchaseRow = z.infer<typeof PurchaseRowSchema>;
-
 interface ImportResult {
+  jobId: string;
   totalRows: number;
   successRows: number;
   errorRows: number;
@@ -61,17 +61,54 @@ export async function POST(request: NextRequest) {
       throw new Error("x-guest-key header is required");
     }
 
-    const body = await request.json();
-    const { rows } = body;
+    // Parse multipart form data
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
 
-    if (!Array.isArray(rows) || rows.length === 0) {
-      logger.warn("Invalid rows input", { rows });
-      throw new Error("rows array is required and must not be empty");
+    if (!file) {
+      throw new Error("No file provided");
     }
 
-    logger.info(`Importing ${rows.length} purchase rows for scopeKey: ${scopeKey}`);
+    // Validate file type
+    const filename = file.name;
+    const ext = filename.split(".").pop()?.toLowerCase();
+    if (!ext || !["csv", "xlsx", "xls"].includes(ext)) {
+      throw new Error("Invalid file type. Only CSV and XLSX files are supported.");
+    }
+
+    logger.info(`Processing file import: ${filename} for scopeKey: ${scopeKey}`);
+
+    // Read file buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Parse file to rows
+    const parseResult = parseFileBuffer(buffer, filename);
+    if (parseResult.errors.length > 0) {
+      throw new Error(`File parsing failed: ${parseResult.errors.join(", ")}`);
+    }
+
+    const { rows } = parseResult;
+    if (rows.length === 0) {
+      throw new Error("File contains no data rows");
+    }
+
+    // Create import job
+    const importJob = await db.importJob.create({
+      data: {
+        scopeKey,
+        type: "purchase",
+        filename,
+        status: "PROCESSING",
+        totalRows: rows.length,
+        startedAt: new Date(),
+      },
+    });
+
+    logger.info(`Created import job ${importJob.id} with ${rows.length} rows`);
 
     const result: ImportResult = {
+      jobId: importJob.id,
       totalRows: rows.length,
       successRows: 0,
       errorRows: 0,
@@ -80,12 +117,17 @@ export async function POST(request: NextRequest) {
 
     const successRecords: any[] = [];
 
+    // Process each row
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rowNumber = i + 1;
 
       try {
-        const validated = PurchaseRowSchema.parse(row);
+        // Transform row to standard format
+        const transformed = transformPurchaseRow(row);
+
+        // Validate with Zod
+        const validated = PurchaseRowSchema.parse(transformed);
 
         // Ensure either amount or unitPrice is provided
         if (!validated.amount && !validated.unitPrice) {
@@ -95,6 +137,7 @@ export async function POST(request: NextRequest) {
         const amount = validated.amount || (validated.unitPrice! * validated.qty);
         const purchasedAt = parseDate(validated.purchasedAt);
 
+        // Create purchase record
         const record = await db.purchaseRecord.create({
           data: {
             scopeKey,
@@ -132,13 +175,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    logger.info(`Import completed: ${result.successRows} success, ${result.errorRows} errors`);
+    // Update import job with results
+    const finalStatus =
+      result.errorRows === 0
+        ? "COMPLETED"
+        : result.successRows === 0
+        ? "FAILED"
+        : "PARTIAL";
+
+    await db.importJob.update({
+      where: { id: importJob.id },
+      data: {
+        status: finalStatus,
+        successRows: result.successRows,
+        errorRows: result.errorRows,
+        errorSample: result.errorSample,
+        result: {
+          totalRows: result.totalRows,
+          successRows: result.successRows,
+          errorRows: result.errorRows,
+        },
+        completedAt: new Date(),
+      },
+    });
+
+    logger.info(
+      `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
+    );
 
     return NextResponse.json({
       ...result,
-      records: successRecords.slice(0, 10),
+      records: successRecords.slice(0, 10), // Return first 10 records as sample
     });
   } catch (error) {
-    return handleApiError(error, "purchases/import");
+    return handleApiError(error, "purchases/import-file");
   }
 }
