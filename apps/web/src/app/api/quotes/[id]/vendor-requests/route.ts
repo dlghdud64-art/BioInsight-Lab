@@ -90,7 +90,7 @@ export async function POST(
       quoteId: quote.id,
       title: quote.title,
       createdAt: quote.createdAt.toISOString(),
-      items: quote.items.map((item) => ({
+      items: quote.items.map((item: any) => ({
         quoteItemId: item.id,
         lineNumber: item.lineNumber,
         productName: item.name || "",
@@ -225,7 +225,7 @@ export async function GET(
 
     // Return vendor requests with snapshot info for internal comparison
     return NextResponse.json({
-      vendorRequests: vendorRequests.map((vr) => ({
+      vendorRequests: vendorRequests.map((vr: any) => ({
         ...vr,
         // Include snapshot for internal UI to use frozen item list
         snapshot: vr.snapshot,
