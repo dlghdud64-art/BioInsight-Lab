@@ -76,12 +76,21 @@ export async function POST(
       );
     }
 
-    // Check if already responded (MVP: no re-submission)
-    if (vendorRequest.status === "RESPONDED") {
-      return NextResponse.json(
-        { error: "Response already submitted. Modifications are not allowed." },
-        { status: 409 }
-      );
+    // Check if already responded and handle edit limits
+    const isEdit = vendorRequest.status === "RESPONDED";
+
+    if (isEdit) {
+      // Check if edit limit exceeded
+      if (vendorRequest.responseEditCount >= vendorRequest.responseEditLimit) {
+        return NextResponse.json(
+          {
+            error: "Edit limit exceeded. No further modifications are allowed.",
+            editCount: vendorRequest.responseEditCount,
+            editLimit: vendorRequest.responseEditLimit,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Parse snapshot data
@@ -116,7 +125,27 @@ export async function POST(
       );
     }
 
-    // Create response items
+    // Get existing response items for comparison (if editing)
+    let changedItemCount = 0;
+    if (isEdit) {
+      const existingItems = await db.quoteVendorResponseItem.findMany({
+        where: { vendorRequestId: vendorRequest.id },
+      });
+
+      // Count changed items
+      items.forEach((newItem) => {
+        const existing = existingItems.find((e) => e.quoteItemId === newItem.quoteItemId);
+        if (!existing ||
+            existing.unitPrice !== newItem.unitPrice ||
+            existing.leadTimeDays !== newItem.leadTimeDays ||
+            existing.moq !== newItem.moq ||
+            existing.vendorSku !== newItem.vendorSku) {
+          changedItemCount++;
+        }
+      });
+    }
+
+    // Create/update response items
     await db.$transaction(async (tx: any) => {
       // Upsert response items
       for (const item of items) {
@@ -150,22 +179,44 @@ export async function POST(
       }
 
       // Update vendor request status
-      await tx.quoteVendorRequest.update({
-        where: { id: vendorRequest.id },
-        data: {
-          status: "RESPONDED",
-          respondedAt: new Date(),
-          ...(vendorName && { vendorName }),
-        },
-      });
+      if (isEdit) {
+        // Editing: increment edit count, keep original respondedAt
+        await tx.quoteVendorRequest.update({
+          where: { id: vendorRequest.id },
+          data: {
+            responseEditCount: vendorRequest.responseEditCount + 1,
+            ...(vendorName && { vendorName }),
+          },
+        });
+      } else {
+        // Initial submission: set status and respondedAt
+        await tx.quoteVendorRequest.update({
+          where: { id: vendorRequest.id },
+          data: {
+            status: "RESPONDED",
+            respondedAt: new Date(),
+            ...(vendorName && { vendorName }),
+          },
+        });
+      }
     });
 
-    console.log(`Vendor response submitted for request ${vendorRequest.id}`);
+    if (isEdit) {
+      console.log(`Vendor response edited for request ${vendorRequest.id} (edit ${vendorRequest.responseEditCount + 1}/${vendorRequest.responseEditLimit}, ${changedItemCount} items changed)`);
+    } else {
+      console.log(`Vendor response submitted for request ${vendorRequest.id}`);
+    }
 
     return NextResponse.json({
       ok: true,
-      respondedAt: new Date(),
-      message: "견적 회신이 성공적으로 제출되었습니다.",
+      isEdit,
+      respondedAt: vendorRequest.respondedAt || new Date(),
+      editCount: isEdit ? vendorRequest.responseEditCount + 1 : 0,
+      editLimit: vendorRequest.responseEditLimit,
+      changedItemCount: isEdit ? changedItemCount : items.length,
+      message: isEdit
+        ? `견적 회신이 수정되었습니다. (${vendorRequest.responseEditCount + 1}/${vendorRequest.responseEditLimit}회 수정)`
+        : "견적 회신이 성공적으로 제출되었습니다.",
     });
   } catch (error) {
     console.error("Error submitting vendor response:", error);

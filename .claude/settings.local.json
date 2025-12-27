@@ -17,7 +17,11 @@
       "Bash(set DATABASE_URL=postgresql://user:pass@localhost:5432/dbname)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

@@ -1063,7 +1063,9 @@ model QuoteVendorRequest {
   token             String              @unique // Public access token (32-48 chars random)
   status            VendorRequestStatus @default(SENT)
   expiresAt         DateTime // Default 14 days from creation
-  respondedAt       DateTime? // When vendor submitted response
+  respondedAt       DateTime? // When vendor submitted response (initial submission)
+  responseEditCount Int                 @default(0) // Number of times response was edited
+  responseEditLimit Int                 @default(1) // Maximum allowed edits
   snapshot          Json // Frozen snapshot of quote + items at request time
   snapshotCreatedAt DateTime            @default(now()) // When snapshot was taken
   createdAt         DateTime            @default(now())

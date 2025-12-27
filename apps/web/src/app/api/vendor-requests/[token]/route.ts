@@ -91,6 +91,10 @@ export async function GET(
       }>;
     };
 
+    // Check if editing is allowed
+    const canEdit = vendorRequest.status === "RESPONDED" &&
+                    vendorRequest.responseEditCount < vendorRequest.responseEditLimit;
+
     // Return safe data from snapshot (frozen at request time)
     return NextResponse.json(
       {
@@ -102,6 +106,9 @@ export async function GET(
           expiresAt: vendorRequest.expiresAt,
           respondedAt: vendorRequest.respondedAt,
           snapshotCreatedAt: vendorRequest.snapshotCreatedAt,
+          responseEditCount: vendorRequest.responseEditCount,
+          responseEditLimit: vendorRequest.responseEditLimit,
+          canEdit,
         },
         quote: {
           id: snapshot.quoteId,
