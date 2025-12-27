@@ -19,6 +19,9 @@ interface VendorRequestData {
     status: string;
     expiresAt: string;
     respondedAt?: string;
+    responseEditCount?: number;
+    responseEditLimit?: number;
+    canEdit?: boolean;
   };
   quote: {
     id: string;
@@ -54,6 +57,7 @@ export default function VendorResponsePage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [vendorName, setVendorName] = useState("");
   const [responses, setResponses] = useState<Record<string, any>>({});
@@ -151,8 +155,22 @@ export default function VendorResponsePage() {
       const result = await response.json();
 
       setSubmitted(true);
+      setIsEditing(false);
+
+      // Update data with new edit count
+      if (result.isEdit && data) {
+        setData({
+          ...data,
+          vendorRequest: {
+            ...data.vendorRequest,
+            responseEditCount: result.editCount,
+            canEdit: result.editCount < result.editLimit,
+          },
+        });
+      }
+
       toast({
-        title: "제출 완료",
+        title: result.isEdit ? "수정 완료" : "제출 완료",
         description: result.message || "견적 회신이 성공적으로 제출되었습니다.",
       });
     } catch (err) {
@@ -203,7 +221,11 @@ export default function VendorResponsePage() {
     );
   }
 
-  if (submitted || data.vendorRequest.status === "RESPONDED") {
+  if ((submitted || data.vendorRequest.status === "RESPONDED") && !isEditing) {
+    const canEdit = data.vendorRequest.canEdit || false;
+    const editCount = data.vendorRequest.responseEditCount || 0;
+    const editLimit = data.vendorRequest.responseEditLimit || 1;
+
     return (
       <div className="container mx-auto py-12 max-w-4xl">
         <Card>
@@ -213,7 +235,7 @@ export default function VendorResponsePage() {
             </div>
             <CardTitle className="text-2xl">견적 회신 제출 완료</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>제출 완료</AlertTitle>
@@ -223,9 +245,33 @@ export default function VendorResponsePage() {
                   <> 제출 시간: {new Date(data.vendorRequest.respondedAt).toLocaleString("ko-KR")}</>
                 )}
                 <br />
-                <strong>참고:</strong> 제출 후에는 수정이 불가능합니다.
+                {canEdit ? (
+                  <>
+                    <strong>수정 가능:</strong> 최대 {editLimit}회까지 수정할 수 있습니다. (현재 {editCount}/{editLimit}회 수정함)
+                  </>
+                ) : editCount >= editLimit ? (
+                  <>
+                    <strong>수정 불가:</strong> 최대 수정 횟수({editLimit}회)를 모두 사용했습니다.
+                  </>
+                ) : (
+                  <>
+                    <strong>참고:</strong> 제출 후에는 수정이 제한됩니다.
+                  </>
+                )}
               </AlertDescription>
             </Alert>
+
+            {canEdit && (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  variant="outline"
+                  size="lg"
+                >
+                  회신 수정 ({editLimit - editCount}회 남음)
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
