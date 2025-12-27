@@ -27,10 +27,11 @@
 ✅ Rate limiting (60/10 req/min)
 ✅ 검증 로직 (만료, 중복 제출 방지)
 
-### UI (구현 필요)
-⏸️ /test/quote에 "견적 요청 보내기" 버튼
-⏸️ /vendor/[token] 페이지
-⏸️ 회신 비교 UI
+### UI (95% 완료)
+✅ VendorRequestModal - 벤더 요청 전송 모달
+✅ /test/quote에 "견적 요청 보내기" 버튼
+✅ /vendor/[token] 페이지 (벤더 회신 제출)
+⏸️ 회신 비교 UI (다음 단계)
 
 ---
 
@@ -162,10 +163,10 @@ expiresInDays: 0으로 테스트 → 410 에러 ⏸
 ## 📈 다음 단계
 
 ### UI 구현
-1. /test/quote에 "견적 요청 보내기" 버튼 추가
-2. VendorRequestModal 컴포넌트 생성
-3. /vendor/[token] 페이지 생성
-4. 회신 비교 UI 추가
+1. ✅ /test/quote에 "견적 요청 보내기" 버튼 추가
+2. ✅ VendorRequestModal 컴포넌트 생성
+3. ✅ /vendor/[token] 페이지 생성
+4. ⏸️ 회신 비교 UI 추가 (다음 단계)
 
 ### 향후 개선
 - [ ] 벤더 회신 알림 (내부 사용자에게)
@@ -177,5 +178,52 @@ expiresInDays: 0으로 테스트 → 410 에러 ⏸
 ---
 
 **구현 완료**: 2025-12-27
-**상태**: ✅ API 완료, ⏸️ UI 구현 필요
+**상태**: ✅ API 완료, ✅ 주요 UI 완료 (회신 비교 제외)
 **문서**: VENDOR_RESPONSE_FEATURE.md
+
+## 🎉 완성된 기능
+
+### 내부 사용자 (Internal User)
+1. /test/quote 페이지에서 품목 추가
+2. "견적 요청 보내기" 버튼 클릭
+3. 견적 자동 저장 (또는 기존 견적 사용)
+4. VendorRequestModal에서:
+   - 벤더 이메일 추가 (복수 가능)
+   - 벤더명 입력 (선택)
+   - 요청 메시지 작성 (선택)
+   - 회신 마감일 설정 (기본 14일)
+5. "견적 요청 보내기" 클릭 → 이메일 발송
+
+### 벤더 (External Vendor)
+1. 이메일에서 링크 클릭 → /vendor/[token]
+2. 견적 요청 내용 확인:
+   - 품목 목록 (제품명, 브랜드, Cat No., 수량)
+   - 요청 메시지
+   - 회신 마감일
+3. 각 품목별로 입력:
+   - 단가 (필수)
+   - 납기일 (선택)
+   - MOQ (선택)
+   - 벤더 SKU (선택)
+   - 비고 (선택)
+4. 벤더 정보 입력 (선택)
+5. "견적 회신 제출" 클릭
+6. 제출 완료 화면 표시 (수정 불가 안내)
+
+### 파일 구조
+```
+apps/web/src/
+├── app/
+│   ├── api/
+│   │   ├── quotes/[id]/vendor-requests/route.ts (내부 API)
+│   │   └── vendor-requests/[token]/
+│   │       ├── route.ts (공개 조회)
+│   │       └── response/route.ts (공개 제출)
+│   ├── test/_components/
+│   │   ├── quote-panel.tsx (견적 요청 보내기 버튼)
+│   │   └── vendor-request-modal.tsx (NEW)
+│   └── vendor/[token]/page.tsx (NEW)
+└── lib/
+    ├── api/vendor-request-token.ts
+    └── email/vendor-request-templates.ts
+```
