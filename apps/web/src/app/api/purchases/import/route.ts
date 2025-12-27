@@ -1,221 +1,144 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { z } from "zod";
 import { db } from "@/lib/db";
-import { matchPurchaseToProduct, createHazardSnapshot } from "@/lib/matching/purchase-matcher";
+import { handleApiError } from "@/lib/api-error-handler";
+import { createLogger } from "@/lib/logger";
 
-// CSV 파일 업로드 및 실제 구매 데이터 Import
+const logger = createLogger("purchases/import");
+
+// Zod schema for purchase row validation
+const PurchaseRowSchema = z.object({
+  purchasedAt: z.string().min(1, "purchasedAt is required"),
+  vendorName: z.string().min(1, "vendorName is required"),
+  category: z.string().optional(),
+  itemName: z.string().min(1, "itemName is required"),
+  catalogNumber: z.string().optional(),
+  unit: z.string().optional(),
+  qty: z.number().int().positive("qty must be positive"),
+  unitPrice: z.number().int().optional(),
+  amount: z.number().int().optional(),
+  currency: z.string().default("KRW"),
+});
+
+type PurchaseRow = z.infer<typeof PurchaseRowSchema>;
+
+interface ImportResult {
+  totalRows: number;
+  successRows: number;
+  errorRows: number;
+  errorSample: Array<{ row: number; errors: string[] }>;
+  records?: any[];
+}
+
+function parseDate(dateStr: string): Date {
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  const patterns = [
+    /^(\d{4})-(\d{2})-(\d{2})$/,
+    /^(\d{4})\/(\d{2})\/(\d{2})$/,
+    /^(\d{4})\.(\d{2})\.(\d{2})$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = dateStr.match(pattern);
+    if (match) {
+      const [, year, month, day] = match;
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  }
+
+  throw new Error(`Invalid date format: ${dateStr}`);
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const scopeKey = request.headers.get("x-guest-key");
+    if (!scopeKey) {
+      logger.warn("Missing x-guest-key header");
+      throw new Error("x-guest-key header is required");
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const organizationId = formData.get("organizationId") as string | null;
-    const projectName = formData.get("projectName") as string | null;
-    const mapping = JSON.parse((formData.get("mapping") as string) || "{}");
+    const body = await request.json();
+    const { rows } = body;
 
-    if (!file) {
-      return NextResponse.json(
-        { error: "CSV 파일이 필요합니다." },
-        { status: 400 }
-      );
+    if (!Array.isArray(rows) || rows.length === 0) {
+      logger.warn("Invalid rows input", { rows });
+      throw new Error("rows array is required and must not be empty");
     }
 
-    // CSV 파일 읽기
-    const text = await file.text();
-    const lines = text.split("\n").filter((line) => line.trim());
+    logger.info(`Importing ${rows.length} purchase rows for scopeKey: ${scopeKey}`);
 
-    if (lines.length < 2) {
-      return NextResponse.json(
-        { error: "CSV 파일에 헤더와 데이터가 필요합니다." },
-        { status: 400 }
-      );
-    }
-
-    // 헤더 파싱
-    const headers = lines[0]
-      .split(",")
-      .map((h) => h.trim().replace(/^"|"$/g, ""));
-    
-    // 기본 매핑 (사용자가 제공하지 않은 경우)
-    const defaultMapping = {
-      date: mapping.date || headers.find((h) => 
-        /날짜|date|구매일|purchase.*date/i.test(h)
-      ) || "",
-      vendor: mapping.vendor || headers.find((h) => 
-        /벤더|vendor|공급사|supplier/i.test(h)
-      ) || "",
-      product: mapping.product || headers.find((h) => 
-        /제품|product|품목|item|name/i.test(h)
-      ) || "",
-      quantity: mapping.quantity || headers.find((h) => 
-        /수량|quantity|qty/i.test(h)
-      ) || "",
-      unitPrice: mapping.unitPrice || headers.find((h) => 
-        /단가|unit.*price|price|가격/i.test(h)
-      ) || "",
-      totalAmount: mapping.totalAmount || headers.find((h) => 
-        /총액|total|amount|금액/i.test(h)
-      ) || "",
-      currency: mapping.currency || headers.find((h) => 
-        /통화|currency/i.test(h)
-      ) || "",
-      category: mapping.category || headers.find((h) => 
-        /카테고리|category|분류/i.test(h)
-      ) || "",
-      externalDocId: mapping.externalDocId || headers.find((h) => 
-        /문서|doc|번호|number|id/i.test(h)
-      ) || "",
+    const result: ImportResult = {
+      totalRows: rows.length,
+      successRows: 0,
+      errorRows: 0,
+      errorSample: [],
     };
 
-    // 데이터 파싱 및 저장
-    const records = [];
-    const errors = [];
+    const successRecords: any[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line.trim()) continue;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNumber = i + 1;
 
-      const values = line.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
-      
       try {
-        // 매핑된 컬럼에서 값 추출
-        const getValue = (key: string) => {
-          const headerIndex = headers.indexOf(defaultMapping[key as keyof typeof defaultMapping]);
-          return headerIndex >= 0 ? values[headerIndex] : "";
-        };
+        const validated = PurchaseRowSchema.parse(row);
 
-        const dateStr = getValue("date");
-        const vendorName = getValue("vendor");
-        const productName = getValue("product");
-        const quantityStr = getValue("quantity");
-        const unitPriceStr = getValue("unitPrice");
-        const totalAmountStr = getValue("totalAmount");
-        const currencyStr = getValue("currency");
-        const categoryStr = getValue("category");
-        const externalDocIdStr = getValue("externalDocId");
-
-        // 필수 필드 검증
-        if (!dateStr || !totalAmountStr) {
-          errors.push(`행 ${i + 1}: 날짜와 총액은 필수입니다.`);
-          continue;
+        // Ensure either amount or unitPrice is provided
+        if (!validated.amount && !validated.unitPrice) {
+          throw new Error("Either amount or unitPrice is required");
         }
 
-        // 날짜 파싱
-        let purchaseDate: Date;
-        try {
-          purchaseDate = new Date(dateStr);
-          if (isNaN(purchaseDate.getTime())) {
-            // 다른 날짜 형식 시도
-            const [year, month, day] = dateStr.split(/[-/.]/);
-            purchaseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-          }
-        } catch {
-          errors.push(`행 ${i + 1}: 날짜 형식이 올바르지 않습니다: ${dateStr}`);
-          continue;
-        }
+        const amount = validated.amount || (validated.unitPrice! * validated.qty);
+        const purchasedAt = parseDate(validated.purchasedAt);
 
-        // 숫자 파싱
-        const quantity = quantityStr ? parseInt(quantityStr) || 1 : 1;
-        const unitPrice = unitPriceStr ? parseFloat(unitPriceStr.replace(/,/g, "")) || 0 : 0;
-        const totalAmount = parseFloat(totalAmountStr.replace(/,/g, "")) || 0;
-        const currency = currencyStr || "KRW";
-
-        // 벤더 찾기 또는 생성
-        let vendorId: string | null = null;
-        if (vendorName) {
-          const vendor = await db.vendor.findFirst({
-            where: {
-              OR: [
-                { name: { contains: vendorName, mode: "insensitive" } },
-                { nameEn: { contains: vendorName, mode: "insensitive" } },
-              ],
-            },
-          });
-
-          if (vendor) {
-            vendorId = vendor.id;
-          } else {
-            // 벤더가 없으면 생성
-            const newVendor = await db.vendor.create({
-              data: {
-                name: vendorName,
-                currency: currency,
-              },
-            });
-            vendorId = newVendor.id;
-          }
-        }
-
-        // 카탈로그 번호 추출 (notes 또는 productName에서)
-        let catalogNumber: string | undefined;
-        if (productName) {
-          // Cat.No 패턴 찾기
-          const catNoMatch = productName.match(/[Cc]at[.\s]*[Nn]o[.\s]*:?\s*([A-Z0-9-]+)/i);
-          if (catNoMatch) {
-            catalogNumber = catNoMatch[1];
-          }
-        }
-
-        // 자동 매칭 시도
-        const matchResult = await matchPurchaseToProduct({
-          productName: productName || undefined,
-          catalogNumber,
-          vendorId: vendorId || null,
-          vendorName: vendorName || null,
-        });
-
-        let productId: string | null = matchResult.productId;
-        let matchType: "CATALOG" | "FUZZY" | null = matchResult.matchType as "CATALOG" | "FUZZY" | null;
-        let hazardSnapshot: any = null;
-
-        // 매칭 성공 시 위험 정보 스냅샷 생성
-        if (productId) {
-          hazardSnapshot = await createHazardSnapshot(productId);
-        }
-
-        // PurchaseRecord 생성
         const record = await db.purchaseRecord.create({
           data: {
-            organizationId: organizationId || null,
-            projectName: projectName || null,
-            vendorId,
-            productId,
-            matchType: matchType || null,
-            hazardSnapshot,
-            externalDocId: externalDocIdStr || null,
-            purchaseDate,
-            quantity,
-            unitPrice: unitPrice || totalAmount / quantity,
-            currency,
-            totalAmount,
-            category: categoryStr || null,
-            importedBy: session.user.id,
-            notes: `CSV Import: ${vendorName || ""} ${productName || ""}${matchResult.reason ? ` (${matchResult.reason})` : ""}`.trim(),
+            scopeKey,
+            purchasedAt,
+            vendorName: validated.vendorName,
+            category: validated.category || null,
+            itemName: validated.itemName,
+            catalogNumber: validated.catalogNumber || null,
+            unit: validated.unit || null,
+            qty: validated.qty,
+            unitPrice: validated.unitPrice || null,
+            amount,
+            currency: validated.currency,
+            source: "import",
           },
         });
 
-        records.push(record);
+        successRecords.push(record);
+        result.successRows++;
       } catch (error: any) {
-        errors.push(`행 ${i + 1}: ${error.message || "처리 중 오류 발생"}`);
+        result.errorRows++;
+        const errors: string[] = [];
+
+        if (error instanceof z.ZodError) {
+          errors.push(...error.errors.map((e) => `${e.path.join(".")}: ${e.message}`));
+        } else {
+          errors.push(error.message || "Unknown error");
+        }
+
+        if (result.errorSample.length < 10) {
+          result.errorSample.push({ row: rowNumber, errors });
+        }
+
+        logger.debug(`Row ${rowNumber} validation failed`, { errors });
       }
     }
 
+    logger.info(`Import completed: ${result.successRows} success, ${result.errorRows} errors`);
+
     return NextResponse.json({
-      success: true,
-      imported: records.length,
-      errors: errors.length > 0 ? errors : undefined,
-      records: records.slice(0, 10), // 처음 10개만 반환
+      ...result,
+      records: successRecords.slice(0, 10),
     });
-  } catch (error: any) {
-    console.error("Error importing CSV:", error);
-    return NextResponse.json(
-      { error: error.message || "CSV Import에 실패했습니다." },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error, "purchases/import");
   }
 }
-

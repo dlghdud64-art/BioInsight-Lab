@@ -21,6 +21,7 @@ import {
   Shield,
   Menu,
   X,
+  Receipt,
 } from "lucide-react";
 
 interface NavItem {
@@ -40,6 +41,11 @@ const navItems: NavItem[] = [
     title: "견적 관리",
     href: "/quotes",
     icon: ShoppingCart,
+  },
+  {
+    title: "구매 내역",
+    href: "/dashboard/purchases",
+    icon: Receipt,
   },
   {
     title: "구매 리포트",

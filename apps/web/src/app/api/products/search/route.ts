@@ -1,182 +1,232 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchProducts } from "@/lib/api/products";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { dummyProducts } from "@/data/dummy-products";
+import { handleApiError } from "@/lib/api-error-handler";
+import { createLogger } from "@/lib/logger";
+import { expandQueryWithSynonyms } from "@/lib/search/synonyms";
+import { buildSearchQuery, sortByRelevance } from "@/lib/search/ranking";
+import { Prisma, ProductCategory } from "@prisma/client";
+
+const logger = createLogger("products/search");
+
+export interface SearchResponse {
+  products: any[];
+  total: number;
+  page: number;
+  limit: number;
+  facets?: {
+    vendorCounts: Array<{ vendorId: string; vendorName: string; count: number }>;
+    categoryCounts: Array<{ category: ProductCategory; count: number }>;
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     const searchParams = request.nextUrl.searchParams;
-    
-    const query = searchParams.get("query") || searchParams.get("q") || "";
-    const category = searchParams.get("category");
-    const sortBy = (searchParams.get("sortBy") as any) || "relevance";
-    const minPrice = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined;
-    const maxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined;
-    const stockStatus = searchParams.get("stockStatus");
-    const leadTime = searchParams.get("leadTime");
-    const grade = searchParams.get("grade");
-    const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
-    const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : 20;
 
-    // 더미 데이터 사용 (임시)
-    let results = dummyProducts.filter((p) => {
-      if (query) {
-        const q = query.toLowerCase().trim();
-        const matches = 
-          p.name.toLowerCase().includes(q) ||
-          p.vendor.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.description?.toLowerCase().includes(q)) ||
-          (p.catalogNumber?.toLowerCase().includes(q)); // Cat.No 검색 추가
-        if (!matches) return false;
-      }
-      if (category && category !== "all") {
-        if (p.category !== category) return false;
-      }
-      
-      // 가격 필터
-      if (minPrice !== undefined && p.price < minPrice) return false;
-      if (maxPrice !== undefined && p.price > maxPrice) return false;
-      
-      // 재고 필터 (더미 데이터에는 stockStatus가 없으므로 임시로 처리)
-      if (stockStatus && stockStatus !== "all") {
-        // 더미 데이터에서는 모든 제품이 재고 있음으로 가정
-        // 실제로는 p.stockStatus를 확인해야 함
-      }
-      
-      // 납기 필터 (더미 데이터에는 leadTime이 없으므로 임시로 처리)
-      if (leadTime && leadTime !== "all") {
-        // 더미 데이터에서는 모든 제품이 1주 이내로 가정
-        // 실제로는 p.leadTime을 확인해야 함
-      }
-      
-      // Grade 필터 (더미 데이터에는 grade가 없으므로 임시로 처리)
-      if (grade && grade !== "all") {
-        // 더미 데이터에서는 모든 제품이 해당 Grade로 가정
-        // 실제로는 p.grade를 확인해야 함
-      }
-      
-      return true;
+    // Parse search parameters
+    const query = searchParams.get("query") || searchParams.get("q") || "";
+    const vendorId = searchParams.get("vendorId") || undefined;
+    const category = searchParams.get("category") as ProductCategory | undefined;
+    const minPrice = searchParams.get("minPrice")
+      ? Number(searchParams.get("minPrice"))
+      : undefined;
+    const maxPrice = searchParams.get("maxPrice")
+      ? Number(searchParams.get("maxPrice"))
+      : undefined;
+    const sortBy = searchParams.get("sortBy") || "relevance";
+    const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+    const limit = Math.min(
+      searchParams.get("limit") ? Number(searchParams.get("limit")) : 20,
+      100 // Max 100 per page
+    );
+    const includeFacets = searchParams.get("facets") === "true";
+
+    if (!query || query.trim().length === 0) {
+      return NextResponse.json({
+        products: [],
+        total: 0,
+        page,
+        limit,
+      });
+    }
+
+    logger.info(`Search query: "${query}"`, { vendorId, category, page });
+
+    // Expand query with synonyms (max 3 variants)
+    const expandedQueries = expandQueryWithSynonyms(query);
+    logger.debug("Expanded queries", { original: query, expanded: expandedQueries });
+
+    // Build search query with filters
+    const { where } = buildSearchQuery({
+      query,
+      expandedQueries,
+      vendorId,
+      category,
+      minPrice,
+      maxPrice,
     });
 
-    // Cat.No로 검색한 경우, 정확히 일치하는 제품을 우선순위로 정렬
-    if (query) {
-      const q = query.toLowerCase().trim();
-      const exactCatalogMatch = results.find((p) => 
-        p.catalogNumber?.toLowerCase() === q
-      );
-      
-      if (exactCatalogMatch) {
-        // 정확히 일치하는 제품을 맨 앞으로
-        results = results.filter((p) => p.id !== exactCatalogMatch.id);
-        results.unshift(exactCatalogMatch);
-        
-        // 같은 Cat.No를 가진 다른 제품들도 함께 표시 (같은 Cat.No를 가진 제품이 여러 개일 수 있음)
-        const sameCatalogProducts = dummyProducts.filter((p) => 
-          p.catalogNumber?.toLowerCase() === q && p.id !== exactCatalogMatch.id
-        );
-        if (sameCatalogProducts.length > 0) {
-          results = [exactCatalogMatch, ...sameCatalogProducts, ...results];
-        }
-      } else {
-        // 부분 일치하는 Cat.No 제품을 우선순위로
-        const catalogMatches = results.filter((p) => 
-          p.catalogNumber?.toLowerCase().includes(q)
-        );
-        const otherMatches = results.filter((p) => 
-          !p.catalogNumber?.toLowerCase().includes(q)
-        );
-        results = [...catalogMatches, ...otherMatches];
-      }
-    }
-
-    // 정렬
-    if (sortBy === "price_low") {
-      results.sort((a, b) => a.price - b.price);
-    } else if (sortBy === "price_high") {
-      results.sort((a, b) => b.price - a.price);
-    }
-
-    // 페이지네이션
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedResults = results.slice(start, end);
-
-    // API 형식에 맞게 변환
-    const result = {
-      products: paginatedResults.map((p) => ({
-        id: p.id,
-        name: p.name,
-        brand: p.vendor,
-        category: p.category,
-        catalogNumber: p.catalogNumber,
-        description: p.description,
-        vendors: [{
-          id: `${p.id}-vendor`,
-          vendor: {
-            id: p.vendor.toLowerCase().replace(/\s+/g, "-"),
-            name: p.vendor,
+    // Fetch products with vendors (for scoring and display)
+    const products = await db.product.findMany({
+      where,
+      include: {
+        vendors: {
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
-          priceInKRW: p.price,
-          currency: "KRW",
-        }],
+          where: {
+            AND: [
+              ...(minPrice !== undefined ? [{ priceInKRW: { gte: minPrice } }] : []),
+              ...(maxPrice !== undefined ? [{ priceInKRW: { lte: maxPrice } }] : []),
+            ],
+          },
+          orderBy: {
+            priceInKRW: "asc",
+          },
+          take: 5, // Max 5 vendors per product
+        },
+      },
+      take: 1000, // Fetch more for ranking, will paginate after scoring
+    });
+
+    logger.info(`Found ${products.length} candidate products`);
+
+    // Score and sort by relevance
+    const scored = sortByRelevance(products, query, vendorId);
+
+    // Apply custom sorting if specified
+    let sortedProducts = scored.map((s) => s.product);
+
+    if (sortBy === "price_low") {
+      sortedProducts.sort((a, b) => {
+        const aPrice = a.vendors[0]?.priceInKRW || 0;
+        const bPrice = b.vendors[0]?.priceInKRW || 0;
+        return aPrice - bPrice;
+      });
+    } else if (sortBy === "price_high") {
+      sortedProducts.sort((a, b) => {
+        const aPrice = a.vendors[0]?.priceInKRW || 0;
+        const bPrice = b.vendors[0]?.priceInKRW || 0;
+        return bPrice - aPrice;
+      });
+    } else if (sortBy === "name") {
+      sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    // else: relevance (already sorted by score)
+
+    const total = sortedProducts.length;
+
+    // Paginate
+    const start = (page - 1) * limit;
+    const paginatedProducts = sortedProducts.slice(start, start + limit);
+
+    // Build response
+    const response: SearchResponse = {
+      products: paginatedProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        nameEn: product.nameEn,
+        description: product.description,
+        category: product.category,
+        brand: product.brand,
+        catalogNumber: product.catalogNumber,
+        imageUrl: product.imageUrl,
+        grade: product.grade,
+        specification: product.specification,
+        vendors: product.vendors.map((pv) => ({
+          id: pv.id,
+          vendorId: pv.vendorId,
+          vendor: pv.vendor,
+          price: pv.price,
+          priceInKRW: pv.priceInKRW,
+          currency: pv.currency,
+          stockStatus: pv.stockStatus,
+          leadTime: pv.leadTime,
+          url: pv.url,
+        })),
       })),
-      total: results.length,
+      total,
       page,
       limit,
     };
 
-    // 기존 코드 (주석 처리)
-    /*
-    const params = {
-      query: searchParams.get("q") || undefined,
-      category: searchParams.get("category") as any,
-      brand: searchParams.get("brand") || undefined,
-      minPrice: searchParams.get("minPrice")
-        ? Number(searchParams.get("minPrice"))
-        : undefined,
-      maxPrice: searchParams.get("maxPrice")
-        ? Number(searchParams.get("maxPrice"))
-        : undefined,
-      sortBy: (searchParams.get("sortBy") as any) || "relevance",
-      page: searchParams.get("page")
-        ? Number(searchParams.get("page"))
-        : 1,
-      limit: searchParams.get("limit")
-        ? Number(searchParams.get("limit"))
-        : 20,
-    };
+    // Calculate facets if requested
+    if (includeFacets) {
+      const vendorCounts = new Map<string, { name: string; count: number }>();
+      const categoryCounts = new Map<ProductCategory, number>();
 
-    const result = await searchProducts(params);
-    */
+      for (const product of sortedProducts) {
+        // Count categories
+        categoryCounts.set(
+          product.category,
+          (categoryCounts.get(product.category) || 0) + 1
+        );
 
-    // 검색 기록 저장 (비동기, 에러가 나도 검색 결과는 반환)
-    if (query && session?.user?.id) {
-      try {
-        await db.searchHistory.create({
-          data: {
-            userId: session.user.id,
-            query: query,
-            category: category || null,
-            filters: null, // 더미 데이터에서는 필터 없음
-            // 타입 에러 수정: result가 products 속성을 가지는지 확인
-            resultCount: (result as any).products?.length || 0,
-          },
-        });
-      } catch (error) {
-        // 검색 기록 저장 실패는 무시
-        console.warn("Failed to save search history:", error);
+        // Count vendors
+        for (const pv of product.vendors) {
+          if (pv.vendor) {
+            const existing = vendorCounts.get(pv.vendorId);
+            if (existing) {
+              existing.count++;
+            } else {
+              vendorCounts.set(pv.vendorId, {
+                name: pv.vendor.name,
+                count: 1,
+              });
+            }
+          }
+        }
       }
+
+      response.facets = {
+        vendorCounts: Array.from(vendorCounts.entries())
+          .map(([vendorId, { name, count }]) => ({
+            vendorId,
+            vendorName: name,
+            count,
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 20), // Top 20 vendors
+
+        categoryCounts: Array.from(categoryCounts.entries())
+          .map(([category, count]) => ({ category, count }))
+          .sort((a, b) => b.count - a.count),
+      };
     }
 
-    return NextResponse.json(result);
+    // Save search history (async, non-blocking)
+    if (query && session?.user?.id) {
+      db.searchHistory
+        .create({
+          data: {
+            userId: session.user.id,
+            query,
+            category: category || null,
+            filters: {
+              vendorId,
+              minPrice,
+              maxPrice,
+              sortBy,
+            },
+            resultCount: total,
+          },
+        })
+        .catch((error) => {
+          logger.error("Failed to save search history", error);
+        });
+    }
+
+    logger.info(`Returning ${paginatedProducts.length} products (total: ${total})`);
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("Error searching products:", error);
-    return NextResponse.json(
-      { error: "Failed to search products" },
-      { status: 500 }
-    );
+    return handleApiError(error, "products/search");
   }
 }

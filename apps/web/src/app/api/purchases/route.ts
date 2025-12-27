@@ -1,109 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { handleApiError } from "@/lib/api-error-handler";
+import { createLogger } from "@/lib/logger";
+import { getScope, buildScopeWhere } from "@/lib/auth/scope";
 
-// 구매내역 조회 (페이지네이션 지원)
+const logger = createLogger("purchases");
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Get scope (workspace or guest)
+    const scope = await getScope(request);
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
-    const period = searchParams.get("period") || "month";
-    const vendorId = searchParams.get("vendorId");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const vendor = searchParams.get("vendor");
     const category = searchParams.get("category");
-    const organizationId = searchParams.get("organizationId");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
-    // 기간 계산
-    let dateStart: Date;
-    let dateEnd: Date = new Date();
+    logger.debug("Fetching purchases", {
+      scope: scope.type,
+      workspaceId: scope.workspaceId,
+      guestKey: scope.guestKey?.substring(0, 8),
+      from,
+      to,
+      vendor,
+      category,
+      page,
+      limit
+    });
 
-    switch (period) {
-      case "month":
-        dateStart = new Date();
-        dateStart.setMonth(dateStart.getMonth() - 1);
-        break;
-      case "quarter":
-        dateStart = new Date();
-        dateStart.setMonth(dateStart.getMonth() - 3);
-        break;
-      case "year":
-        dateStart = new Date();
-        dateStart.setFullYear(dateStart.getFullYear() - 1);
-        break;
-      default:
-        dateStart = new Date();
-        dateStart.setMonth(dateStart.getMonth() - 1);
+    // Build where clause with scope
+    const where: any = buildScopeWhere(scope);
+
+    if (from || to) {
+      where.purchasedAt = {};
+      if (from) where.purchasedAt.gte = new Date(from);
+      if (to) where.purchasedAt.lte = new Date(to);
     }
 
-    // 필터 조건
-    const where: any = {
-      purchaseDate: {
-        gte: dateStart,
-        lte: dateEnd,
-      },
-    };
-
-    if (vendorId) {
-      where.vendorId = vendorId;
+    if (vendor) {
+      where.vendorName = { contains: vendor, mode: "insensitive" };
     }
 
     if (category) {
-      where.category = category;
+      where.category = { contains: category, mode: "insensitive" };
     }
 
-    // 조직 필터 (사용자의 조직만)
-    if (organizationId) {
-      where.organizationId = organizationId;
-    } else {
-      // 사용자의 조직 ID 가져오기
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
-      });
-      if (userOrg?.organizationId) {
-        where.organizationId = userOrg.organizationId;
-      }
-    }
+    const [items, totalCount] = await Promise.all([
+      db.purchaseRecord.findMany({
+        where,
+        orderBy: { purchasedAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.purchaseRecord.count({ where }),
+    ]);
 
-    // 총 개수 조회
-    const total = await db.purchaseRecord.count({ where });
-
-    // 페이지네이션 적용하여 조회
-    const records = await db.purchaseRecord.findMany({
-      where,
-      include: {
-        vendor: true,
-        product: true,
-        organization: true,
-      },
-      orderBy: {
-        purchaseDate: "desc",
-      },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+    logger.info(`Found ${items.length} purchases (total: ${totalCount}) for scope ${scope.type}`);
 
     return NextResponse.json({
-      records,
-      total,
+      items,
+      totalCount,
       page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
     });
   } catch (error) {
-    console.error("Error fetching purchases:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch purchases" },
-      { status: 500 }
-    );
+    return handleApiError(error, "purchases");
   }
 }
-
-
-
-

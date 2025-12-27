@@ -1,0 +1,9 @@
+purchasedAt,vendorName,category,itemName,catalogNumber,unit,qty,unitPrice,amount,currency
+2025-01-15,Sigma-Aldrich,REAGENT,Tris-HCl Buffer,T1503,L,5,45000,225000,KRW
+2025-01-15,Sigma-Aldrich,REAGENT,EDTA Solution,E9884,mL,500,120,60000,KRW
+2025-01-18,Thermo Fisher,EQUIPMENT,Centrifuge 5424R,5428000410,ea,1,3500000,3500000,KRW
+2025-01-20,Merck,REAGENT,HPLC Grade Acetonitrile,1000291000,L,4,85000,340000,KRW
+2025-01-22,VWR,TOOL,Micropipette 10-100uL,613-5831,ea,3,280000,840000,KRW
+2025-01-25,Corning,RAW_MATERIAL,Cell Culture Flask T75,430641,ea,50,12000,600000,KRW
+2025-01-28,Sigma-Aldrich,REAGENT,Trypsin-EDTA,T4049,mL,100,450,45000,KRW
+2025-01-30,Millipore,EQUIPMENT,Water Purification System,ZRQSVP3WW,ea,1,8500000,8500000,KRW
