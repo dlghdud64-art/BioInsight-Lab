@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return validation.response;
     }
 
-    const { title, message, items } = validation.data;
+    const { title, message, items = [] } = validation.data;
 
     // QuoteList 생성 + items createMany
     const quoteList = await db.quoteList.create({
