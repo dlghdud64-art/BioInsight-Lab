@@ -25,6 +25,7 @@ export interface CreateQuoteParams {
     productName?: string;
     vendorName?: string;
     brand?: string;
+    catalogNumber?: string;
     lineNumber?: number;
     quantity?: number;
     unitPrice?: number;
