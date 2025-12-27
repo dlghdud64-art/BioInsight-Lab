@@ -1055,17 +1055,19 @@ enum VendorRequestStatus {
 
 // Vendor request (견적 요청 발송 단위)
 model QuoteVendorRequest {
-  id          String              @id @default(cuid())
-  quoteId     String // FK to Quote (견적요청서)
-  vendorName  String? // Optional vendor name
-  vendorEmail String // Required vendor email
-  message     String?             @db.Text // Request message
-  token       String              @unique // Public access token (32-48 chars random)
-  status      VendorRequestStatus @default(SENT)
-  expiresAt   DateTime // Default 14 days from creation
-  respondedAt DateTime? // When vendor submitted response
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id                String              @id @default(cuid())
+  quoteId           String // FK to Quote (견적요청서)
+  vendorName        String? // Optional vendor name
+  vendorEmail       String // Required vendor email
+  message           String?             @db.Text // Request message
+  token             String              @unique // Public access token (32-48 chars random)
+  status            VendorRequestStatus @default(SENT)
+  expiresAt         DateTime // Default 14 days from creation
+  respondedAt       DateTime? // When vendor submitted response
+  snapshot          Json // Frozen snapshot of quote + items at request time
+  snapshotCreatedAt DateTime            @default(now()) // When snapshot was taken
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   // Relations
   quote         Quote                      @relation(fields: [quoteId], references: [id], onDelete: Cascade)

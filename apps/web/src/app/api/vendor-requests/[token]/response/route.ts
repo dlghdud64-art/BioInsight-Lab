@@ -54,13 +54,6 @@ export async function POST(
     // Find vendor request
     const vendorRequest = await db.quoteVendorRequest.findUnique({
       where: { token },
-      include: {
-        quote: {
-          include: {
-            items: true,
-          },
-        },
-      },
     });
 
     if (!vendorRequest) {
@@ -91,6 +84,14 @@ export async function POST(
       );
     }
 
+    // Parse snapshot data
+    const snapshot = vendorRequest.snapshot as {
+      quoteId: string;
+      items: Array<{
+        quoteItemId: string;
+      }>;
+    };
+
     // Parse and validate request body
     const body = await request.json();
     const validation = SubmitResponseSchema.safeParse(body);
@@ -104,19 +105,19 @@ export async function POST(
 
     const { items, vendorName } = validation.data;
 
-    // Validate all quote item IDs
-    const quoteItemIds = vendorRequest.quote.items.map((item) => item.id);
-    const invalidItems = items.filter((item) => !quoteItemIds.includes(item.quoteItemId));
+    // Validate all quote item IDs against snapshot (not live quote)
+    const snapshotItemIds = snapshot.items.map((item) => item.quoteItemId);
+    const invalidItems = items.filter((item) => !snapshotItemIds.includes(item.quoteItemId));
 
     if (invalidItems.length > 0) {
       return NextResponse.json(
-        { error: "Invalid quote item IDs", invalidItems },
+        { error: "Invalid quote item IDs. Items do not match the original request.", invalidItems },
         { status: 400 }
       );
     }
 
     // Create response items
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: any) => {
       // Upsert response items
       for (const item of items) {
         await tx.quoteVendorResponseItem.upsert({
