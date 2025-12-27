@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, { yearMonth: string; amount: number }>);
 
     const topVendors = Object.values(
-      purchases.reduce((acc, p) => {
+      purchases.reduce((acc: any, p: any) => {
         if (!acc[p.vendorName]) {
           acc[p.vendorName] = { vendorName: p.vendorName, amount: 0 };
         }
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       .slice(0, 10);
 
     const topCategories = Object.values(
-      purchases.reduce((acc, p) => {
+      purchases.reduce((acc: any, p: any) => {
         const cat = p.category || "Uncategorized";
         if (!acc[cat]) {
           acc[cat] = { category: cat, amount: 0 };
