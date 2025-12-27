@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const totalAmount = purchases.reduce((sum, p) => sum + p.amount, 0);
+    const totalAmount = purchases.reduce((sum: number, p: any) => sum + p.amount, 0);
 
     const byMonth = purchases.reduce((acc: any, p: any) => {
       const yearMonth = p.purchasedAt.toISOString().substring(0, 7);
