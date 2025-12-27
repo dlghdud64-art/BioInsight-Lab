@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // notes에서 품목명과 CatNo 추출 시도
-    const formattedRecords = records.map((record) => {
+    const formattedRecords = records.map((record: any) => {
       let productName = record.notes || "";
       let catalogNumber = "";
 
