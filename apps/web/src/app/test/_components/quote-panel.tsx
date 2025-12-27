@@ -52,7 +52,11 @@ import { getGuestKey } from "@/lib/guest-key";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 
-export function QuotePanel() {
+interface QuotePanelProps {
+  onQuoteSaved?: (quoteId: string) => void;
+}
+
+export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   const {
     quoteItems,
     updateQuoteItem,
