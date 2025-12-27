@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/table";
 import { Loader2, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getGuestKey } from "@/lib/guest-key";
 import Link from "next/link";
 
 interface Quote {
@@ -49,9 +48,7 @@ export default function QuotesPage() {
   const loadQuotes = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/quotes", {
-        headers: addGuestKeyHeader(),
-      });
+      const response = await fetch("/api/quotes");
 
       if (!response.ok) {
         throw new Error("Failed to load quotes");
