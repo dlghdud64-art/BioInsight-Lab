@@ -5,6 +5,11 @@ import Stripe from "stripe";
 
 const logger = createLogger("api/billing/webhook");
 
+// Extended Stripe Subscription type with current_period_end
+interface StripeSubscriptionExtended extends Stripe.Subscription {
+  current_period_end: number;
+}
+
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
@@ -62,7 +67,7 @@ async function handleSubscriptionChange(
   const updateData: any = {
     stripeSubscriptionId: subscription.id,
     stripePriceId: subscription.items.data[0]?.price.id,
-    stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+    stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
     billingStatus,
   };
 
@@ -152,7 +157,7 @@ async function handleCheckoutCompleted(
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscription.items.data[0]?.price.id,
-      stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
       plan: "TEAM",
       billingStatus: subscription.status === "trialing" ? "TRIALING" : "ACTIVE",
     },
@@ -190,7 +195,7 @@ async function handleInvoicePaymentSucceeded(
     data: {
       billingStatus: "ACTIVE",
       plan: "TEAM",
-      stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
     },
   });
 
