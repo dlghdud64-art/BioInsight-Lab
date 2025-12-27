@@ -15,7 +15,9 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(set DATABASE_URL=postgresql://user:pass@localhost:5432/dbname)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
