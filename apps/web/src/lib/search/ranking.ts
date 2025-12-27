@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, ProductCategory } from "@prisma/client";
 import { normalizeQuery, tokenizeQuery } from "./synonyms";
 
 /**
@@ -51,7 +51,7 @@ export interface SearchQueryOptions {
   query: string;
   expandedQueries?: string[]; // Synonym expansions
   vendorId?: string;
-  category?: string;
+  category?: ProductCategory;
   minPrice?: number;
   maxPrice?: number;
   page?: number;

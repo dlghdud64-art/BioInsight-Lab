@@ -142,12 +142,9 @@ export function buildScopeWhere(scope: Scope): {
   }
 
   if (scope.type === "guest" && scope.guestKey) {
-    // For guest scope, we need to check both scopeKey (old data) and potentially null workspaceId
+    // For guest scope, we use scopeKey
     return {
-      AND: [
-        { scopeKey: scope.guestKey },
-        { workspaceId: null }, // Ensure we don't accidentally access workspace data
-      ],
+      scopeKey: scope.guestKey,
     };
   }
 
@@ -219,7 +216,7 @@ export async function getUserWorkspaces(userId: string) {
     },
   });
 
-  return members.map((m) => ({
+  return members.map((m: any) => ({
     ...m.workspace,
     role: m.role,
     joinedAt: m.createdAt,

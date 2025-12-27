@@ -24,7 +24,7 @@ export function handleApiError(error: unknown, context?: string): NextResponse {
   }
 
   if (error instanceof Error) {
-    logger.error(`${errorContext} Error:`, error.message, error.stack);
+    logger.error(`${errorContext} Error: ${error.message}`, error.stack);
     
     // 인증 에러
     if (error.message.includes("Unauthorized") || error.message.includes("401")) {
