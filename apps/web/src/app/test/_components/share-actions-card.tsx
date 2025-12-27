@@ -209,7 +209,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
       return shareResponse.json();
     },
     onSuccess: (data) => {
-      const shareUrl = `${window.location.origin}/share/${data.publicId}`;
+      const shareUrl = `${window.location.origin}/shared-list/${data.publicId}`;
       setShareLink(shareUrl);
       
       // Analytics: share_link_create 이벤트 추적

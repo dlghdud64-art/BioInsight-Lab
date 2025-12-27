@@ -58,7 +58,7 @@ export default function SharedLinksPage() {
   });
 
   const handleCopyLink = async (publicId: string) => {
-    const shareUrl = `${window.location.origin}/share/${publicId}`;
+    const shareUrl = `${window.location.origin}/shared-list/${publicId}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast({
@@ -257,7 +257,7 @@ export default function SharedLinksPage() {
                   </TableHeader>
                   <TableBody>
                     {sharedLinks.map((link: any) => {
-                      const shareUrl = `${window.location.origin}/share/${link.publicId}`;
+                      const shareUrl = `${window.location.origin}/shared-list/${link.publicId}`;
                       const isExpired = link.expiresAt && new Date(link.expiresAt) < new Date();
                       const isActive = link.isActive && !isExpired;
 

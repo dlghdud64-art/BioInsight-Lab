@@ -379,7 +379,7 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
       return shareResponse.json();
     },
     onSuccess: (data) => {
-      const shareUrl = `${window.location.origin}/share/${data.publicId}`;
+      const shareUrl = `${window.location.origin}/shared-list/${data.publicId}`;
       setShareLink(shareUrl);
       // publicId와 만료일 정보도 함께 저장 (향후 비활성화 기능을 위해)
       return { shareUrl, publicId: data.publicId, expiresAt: data.expiresAt };

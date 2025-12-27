@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       id: sharedList.id,
       publicId: sharedList.publicId,
-      shareUrl: `${getAppUrl()}/share/${sharedList.publicId}`,
+      shareUrl: `${getAppUrl()}/shared-list/${sharedList.publicId}`,
       expiresAt: sharedList.expiresAt,
     });
   } catch (error) {
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         id: `demo-${Date.now()}`,
         publicId: demoPublicId,
-        shareUrl: `${getAppUrl()}/share/${demoPublicId}`,
+        shareUrl: `${getAppUrl()}/shared-list/${demoPublicId}`,
         expiresAt: expiresAtValue,
         demo: true,
         message: "데모 환경에서는 실제 저장되지 않습니다.",

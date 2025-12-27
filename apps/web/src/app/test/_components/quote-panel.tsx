@@ -1879,7 +1879,7 @@ export function QuoteRequestPanel() {
       }
 
       const data = await response.json();
-      const shareUrl = `${window.location.origin}/share/${data.publicId}`;
+      const shareUrl = `${window.location.origin}/shared-list/${data.publicId}`;
       setShareLink(shareUrl);
       setShareLinkInfo({
         publicId: data.publicId,
