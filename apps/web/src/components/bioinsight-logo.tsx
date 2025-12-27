@@ -15,7 +15,7 @@ export function BioInsightLogo({
     <div className={cn("flex items-center gap-2", className)}>
       {/* 아이콘: 이미지 파일 사용 */}
       <Image
-        src="/brand/bioinsight-icon.PNG"
+        src="/brand/bioinsight-icon.svg"
         alt="BioInsight Lab"
         width={40}
         height={40}

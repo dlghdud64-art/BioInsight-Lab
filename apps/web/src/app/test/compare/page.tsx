@@ -1232,7 +1232,7 @@ function ProductAlternativesCard({
                     />
                   ) : (
                     <Image
-                      src="/brand/bioinsight-icon.PNG"
+                      src="/brand/bioinsight-icon.svg"
                       alt={alt.name}
                       width={48}
                       height={48}
