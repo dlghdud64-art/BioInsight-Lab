@@ -101,6 +101,3 @@ export async function POST(request: NextRequest) {
     return handleApiError(error, "purchases/import/preview");
   }
 }
-
-// Export for use in commit endpoint
-export { fileCache };

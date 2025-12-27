@@ -18,7 +18,6 @@ import { Loader2, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getGuestKey, addGuestKeyHeader } from "@/lib/guest-key";
 import Link from "next/link";
-import { useState } from "react";
 
 interface Quote {
   id: string;
