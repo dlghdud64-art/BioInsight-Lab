@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {} as Record<string, { yearMonth: string; amount: number }>);
 
-    const topVendors = Object.values(
+    const topVendors = (Object.values(
       purchases.reduce((acc: any, p: any) => {
         if (!acc[p.vendorName]) {
           acc[p.vendorName] = { vendorName: p.vendorName, amount: 0 };
@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
         acc[p.vendorName].amount += p.amount;
         return acc;
       }, {} as Record<string, { vendorName: string; amount: number }>)
-    )
+    ) as { vendorName: string; amount: number }[])
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 10);
 
-    const topCategories = Object.values(
+    const topCategories = (Object.values(
       purchases.reduce((acc: any, p: any) => {
         const cat = p.category || "Uncategorized";
         if (!acc[cat]) {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         acc[cat].amount += p.amount;
         return acc;
       }, {} as Record<string, { category: string; amount: number }>)
-    )
+    ) as { category: string; amount: number }[])
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 10);
 
