@@ -67,7 +67,7 @@ async function handleSubscriptionChange(
   const updateData: any = {
     stripeSubscriptionId: subscription.id,
     stripePriceId: subscription.items.data[0]?.price.id,
-    stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
+    stripeCurrentPeriodEnd: new Date((subscription as unknown as StripeSubscriptionExtended).current_period_end * 1000),
     billingStatus,
   };
 
@@ -157,7 +157,7 @@ async function handleCheckoutCompleted(
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscription.items.data[0]?.price.id,
-      stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as unknown as StripeSubscriptionExtended).current_period_end * 1000),
       plan: "TEAM",
       billingStatus: subscription.status === "trialing" ? "TRIALING" : "ACTIVE",
     },
@@ -195,7 +195,7 @@ async function handleInvoicePaymentSucceeded(
     data: {
       billingStatus: "ACTIVE",
       plan: "TEAM",
-      stripeCurrentPeriodEnd: new Date((subscription as StripeSubscriptionExtended).current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as unknown as StripeSubscriptionExtended).current_period_end * 1000),
     },
   });
 

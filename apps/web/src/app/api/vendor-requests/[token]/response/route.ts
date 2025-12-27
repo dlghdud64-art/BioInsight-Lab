@@ -133,8 +133,8 @@ export async function POST(
       });
 
       // Count changed items
-      items.forEach((newItem) => {
-        const existing = existingItems.find((e) => e.quoteItemId === newItem.quoteItemId);
+      items.forEach((newItem: any) => {
+        const existing = existingItems.find((e: any) => e.quoteItemId === newItem.quoteItemId);
         if (!existing ||
             existing.unitPrice !== newItem.unitPrice ||
             existing.leadTimeDays !== newItem.leadTimeDays ||
