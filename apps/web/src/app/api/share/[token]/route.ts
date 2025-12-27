@@ -109,7 +109,7 @@ export async function GET(
           status: quote.status,
           currency: quote.currency,
           totalAmount: quote.totalAmount,
-          items: quote.items.map((item) => ({
+          items: quote.items.map((item: any) => ({
             id: item.id,
             lineNumber: item.lineNumber,
             productId: item.productId,
@@ -123,7 +123,7 @@ export async function GET(
             currency: item.currency,
             notes: item.notes,
           })),
-          vendors: quote.vendors?.map((vendor) => ({
+          vendors: quote.vendors?.map((vendor: any) => ({
             id: vendor.id,
             vendorName: vendor.vendorName,
             email: vendor.email,
