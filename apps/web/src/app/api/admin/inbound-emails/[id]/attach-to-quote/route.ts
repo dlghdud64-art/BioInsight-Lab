@@ -88,7 +88,7 @@ export async function POST(
     }
 
     // Create QuoteReply and update InboundEmail
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: any) => {
       // Create reply
       const reply = await tx.quoteReply.create({
         data: {

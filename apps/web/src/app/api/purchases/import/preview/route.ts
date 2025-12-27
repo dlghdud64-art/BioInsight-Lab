@@ -14,7 +14,7 @@ export interface PreviewResponse {
 }
 
 // Store parsed data temporarily (in production, use Redis or session storage)
-const fileCache = new Map<string, { rows: any[]; filename: string; timestamp: number }>();
+export const fileCache = new Map<string, { rows: any[]; filename: string; timestamp: number }>();
 
 // Clean up old cache entries (older than 30 minutes)
 function cleanupCache() {
