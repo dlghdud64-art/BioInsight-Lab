@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 리포트 데이터 구성
-    const reportData = purchaseRecords.map((record) => {
+    const reportData = purchaseRecords.map((record: any) => {
       const hazardCodes = record.hazardSnapshot
         ? (record.hazardSnapshot as any).hazardCodes || []
         : record.product?.hazardCodes || [];
@@ -144,8 +144,8 @@ export async function GET(request: NextRequest) {
       // XLSX 형식은 준비중이므로 CSV로 반환 (임시)
       // TODO: 실제 XLSX 생성 구현 필요
       const headers = Object.keys(reportData[0] || {});
-      const rows = reportData.map((row) =>
-        headers.map((header) => {
+      const rows = reportData.map((row: any) =>
+        headers.map((header: any) => {
           const value = row[header as keyof typeof row];
           if (value === null || value === undefined) return "";
           const stringValue = String(value);
@@ -169,8 +169,8 @@ export async function GET(request: NextRequest) {
 
     // CSV 형식
     const headers = Object.keys(reportData[0] || {});
-    const rows = reportData.map((row) =>
-      headers.map((header) => {
+    const rows = reportData.map((row: any) =>
+      headers.map((header: any) => {
         const value = row[header as keyof typeof row];
         // CSV 이스케이프 처리
         if (value === null || value === undefined) return "";
