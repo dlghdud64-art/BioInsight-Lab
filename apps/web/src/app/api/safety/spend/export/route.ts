@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
         })
       );
 
-      const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+      const csv = [headers.join(","), ...rows.map((row: any) => row.join(","))].join("\n");
       const csvWithBOM = "\uFEFF" + csv;
 
       return new NextResponse(csvWithBOM, {
@@ -182,7 +182,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const csv = [headers.join(","), ...rows.map((row: any) => row.join(","))].join("\n");
     const csvWithBOM = "\uFEFF" + csv; // BOM 추가로 Excel 호환성 향상
 
     return new NextResponse(csvWithBOM, {
