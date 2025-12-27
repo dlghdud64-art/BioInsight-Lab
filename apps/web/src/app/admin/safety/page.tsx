@@ -92,8 +92,9 @@ export default function SafetyAdminPage() {
       return response.json();
     },
     enabled: !!currentOrg?.id && isSafetyAdmin && status === "authenticated",
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // 처리 중인 작업이 있으면 3초마다 갱신
+      const data = query.state.data as any;
       const hasProcessing = data?.documents?.some(
         (doc: any) => doc.extractionStatus === "processing" || doc.extractionStatus === "queued"
       );

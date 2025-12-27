@@ -20,3 +20,13 @@ export function clearGuestKey(): void {
     localStorage.removeItem(GUEST_KEY_STORAGE_KEY);
   }
 }
+
+export function addGuestKeyHeader(): Record<string, string> {
+  const guestKey = getGuestKey();
+  if (!guestKey) {
+    return {};
+  }
+  return {
+    "X-Guest-Key": guestKey,
+  };
+}
