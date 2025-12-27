@@ -54,7 +54,7 @@ export function UpgradeModal({
   const userRole = currentMembership?.role || null;
   const isAdmin = userRole === OrganizationRole.ADMIN;
   const isMember = userRole !== null && !isAdmin;
-  const isGuest = !session || status === "unauthenticated";
+  const isGuest = !session || status !== "authenticated";
 
   const limitMessages = {
     members: {
