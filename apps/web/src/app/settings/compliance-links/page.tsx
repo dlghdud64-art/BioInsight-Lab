@@ -57,7 +57,7 @@ import {
   X,
 } from "lucide-react";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { getRuleDescription, type ComplianceLinkRules } from "@/lib/compliance-links";
+import { getRuleDescription, type ComplianceLinkRules, type ComplianceLink } from "@/lib/compliance-links";
 import { useSearchParams } from "next/navigation";
 
 export default function ComplianceLinksPage() {
