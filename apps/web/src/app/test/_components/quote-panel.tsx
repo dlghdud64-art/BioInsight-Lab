@@ -15,11 +15,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Mail, Send } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
-import { VendorRequestModal } from "./vendor-request-modal";
 import { useCompareStore } from "@/lib/store/compare-store";
 import {
   Dialog,
@@ -43,9 +44,13 @@ import {
 import Link from "next/link";
 import React, { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trackEvent } from "@/lib/analytics";
+import { useSession } from "next-auth/react";
+import { getGuestKey } from "@/lib/guest-key";
+import { formatDistanceToNow } from "date-fns";
+import { ko } from "date-fns/locale";
 
 export function QuotePanel() {
   const {
@@ -61,7 +66,7 @@ export function QuotePanel() {
   const { addProduct, hasProduct } = useCompareStore();
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [groupByVendor, setGroupByVendor] = useState(true);
+  const [groupByVendor, setGroupByVendor] = useState(false);
   const [showAdvancedOptimization, setShowAdvancedOptimization] = useState(false);
   const [optimizationConstraints, setOptimizationConstraints] = useState({
     grade: "",
@@ -73,9 +78,6 @@ export function QuotePanel() {
   });
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
-  const [isVendorRequestModalOpen, setIsVendorRequestModalOpen] = useState(false);
-  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
-  const [isSavingQuote, setIsSavingQuote] = useState(false);
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
@@ -185,71 +187,10 @@ export function QuotePanel() {
   const allSelected = quoteItems.length > 0 && selectedQuoteIds.length === quoteItems.length;
   const someSelected = selectedQuoteIds.length > 0 && selectedQuoteIds.length < quoteItems.length;
 
-  // 견적 저장 및 벤더 요청 모달 열기
-  const handleOpenVendorRequest = async () => {
-    if (quoteItems.length === 0) {
-      toast({
-        title: "품목이 없습니다",
-        description: "견적 요청할 품목을 먼저 추가해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // 이미 저장된 견적이 있으면 바로 모달 열기
-    if (savedQuoteId) {
-      setIsVendorRequestModalOpen(true);
-      return;
-    }
-
-    // 견적 저장
-    setIsSavingQuote(true);
-    try {
-      const response = await fetch("/api/quotes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "견적 요청 리스트",
-          items: quoteItems.map((item, index) => ({
-            productId: item.productId,
-            lineNumber: index + 1,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            currency: item.currency,
-            lineTotal: item.lineTotal,
-            notes: item.notes,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "견적 저장에 실패했습니다." }));
-        throw new Error(error.error || "견적 저장에 실패했습니다.");
-      }
-
-      const quote = await response.json();
-      setSavedQuoteId(quote.id);
-      setIsVendorRequestModalOpen(true);
-
-      toast({
-        title: "견적 저장 완료",
-        description: "벤더에게 견적 요청을 보낼 수 있습니다.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "견적 저장 실패",
-        description: error.message || "견적을 저장할 수 없습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingQuote(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* 견적 요청 섹션 */}
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-lg border border-slate-200 bg-white">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1">
@@ -357,18 +298,24 @@ export function QuotePanel() {
                       <TableHead 
                         className="text-xs font-medium text-slate-500 text-left whitespace-nowrap product-name-header"
                         style={{
-                          width: '180px',
-                          minWidth: '180px',
-                          maxWidth: '180px'
+                          width: '200px',
+                          minWidth: '200px',
+                          maxWidth: '200px'
                         }}
                       >
                         제품명
                       </TableHead>
                       <TableHead 
                         className="text-xs font-medium text-slate-500 text-left whitespace-nowrap"
-                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                        style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}
                       >
                         벤더
+                      </TableHead>
+                      <TableHead 
+                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap"
+                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                      >
+                        Cat.No
                       </TableHead>
                       <TableHead 
                         className="text-xs font-medium text-slate-500 text-right whitespace-nowrap"
@@ -392,13 +339,7 @@ export function QuotePanel() {
                         className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
                         style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
                       >
-                        비교
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
-                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                      >
-                        구매 완료
+                        리드타임
                       </TableHead>
                       <TableHead 
                         className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
@@ -425,13 +366,13 @@ export function QuotePanel() {
                                   <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
                                     <span className="truncate block" title={vendorName}>{vendorName}</span>
                                   </TableCell>
-                                  <TableCell colSpan={5} className="px-3 py-2 text-xs text-slate-600">
+                                  <TableCell colSpan={7} className="px-3 py-2 text-xs text-slate-600">
                                     {vendorItemCount}개 품목
                                   </TableCell>
                                   <TableCell className="px-3 py-2 text-xs font-semibold text-slate-900 text-right">
                                     <PriceDisplay price={vendorTotal} currency="KRW" />
                                   </TableCell>
-                                  <TableCell colSpan={2}></TableCell>
+                                  <TableCell></TableCell>
                                 </TableRow>
                               )}
                               {/* 품목 행들 */}
@@ -496,7 +437,7 @@ export function QuotePanel() {
                                         vendorId: selectedVendor.vendor?.id || "",
                                         vendorName: selectedVendor.vendor?.name || "",
                                         unitPrice: selectedVendor.priceInKRW || 0,
-                                        currency: selectedVendor.currency || "KRW",
+                                        currency: "KRW",
                                         lineTotal: (selectedVendor.priceInKRW || 0) * (item.quantity || 1),
                                       });
                                     }
@@ -509,7 +450,7 @@ export function QuotePanel() {
                                     {vendors.map((v: any) => (
                                       <SelectItem key={v.vendor?.id} value={v.vendor?.id || ""}>
                                         {v.vendor?.name || ""}
-                                        {v.priceInKRW && ` (₩${v.priceInKRW.toLocaleString()})`}
+                                        {v.priceInKRW && ` (${v.priceInKRW.toLocaleString()}원원)`}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -518,12 +459,21 @@ export function QuotePanel() {
                             })()}
                           </TableCell>
                           <TableCell 
+                            className="px-2 py-2 text-xs text-slate-500 font-mono whitespace-nowrap"
+                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
+                          >
+                            {(() => {
+                              const product = products?.find((p: any) => p.id === item.productId);
+                              return product?.catalogNumber || "-";
+                            })()}
+                          </TableCell>
+                          <TableCell 
                             className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
                             style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
                           >
                             <PriceDisplay
                               price={item.unitPrice || 0}
-                              currency={item.currency || "KRW"}
+                              currency="KRW"
                             />
                           </TableCell>
                           <TableCell 
@@ -548,49 +498,19 @@ export function QuotePanel() {
                           >
                             <PriceDisplay
                               price={item.lineTotal || 0}
-                              currency={item.currency || "KRW"}
+                              currency="KRW"
                             />
                           </TableCell>
                           <TableCell 
-                            className="px-2 py-2 text-center"
+                            className="px-2 py-2 text-center text-xs text-slate-600 whitespace-nowrap"
                             style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
                           >
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                if (hasProduct(item.productId)) {
-                                  toast({
-                                    title: "이미 추가됨",
-                                    description: "이 제품은 이미 비교 목록에 있습니다.",
-                                  });
-                                } else {
-                                  addProduct(item.productId);
-                                  toast({
-                                    title: "추가 완료",
-                                    description: "비교 목록에 추가되었습니다.",
-                                  });
-                                }
-                              }}
-                            >
-                              <GitCompare className="h-3 w-3 mr-1" />
-                              비교
-                            </Button>
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-center"
-                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-7 text-xs ${item.isPurchased ? 'text-green-600 hover:text-green-700' : 'text-slate-400 hover:text-green-600'}`}
-                              onClick={() => updateQuoteItem(item.id, { isPurchased: !item.isPurchased })}
-                              title={item.isPurchased ? "구매 완료 취소" : "구매 완료 표시"}
-                            >
-                              <CheckCircle2 className={`h-4 w-4 ${item.isPurchased ? 'fill-green-600 text-green-600' : ''}`} />
-                            </Button>
+                            {(() => {
+                              const product = products?.find((p: any) => p.id === item.productId);
+                              const vendor = product?.vendors?.[0];
+                              const leadTime = vendor?.leadTime;
+                              return leadTime ? `${leadTime}일` : "-";
+                            })()}
                           </TableCell>
                           <TableCell 
                             className="px-2 py-2 text-center"
@@ -614,6 +534,32 @@ export function QuotePanel() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (hasProduct(item.productId)) {
+                                      toast({
+                                        title: "이미 추가됨",
+                                        description: "이 제품은 이미 비교 목록에 있습니다.",
+                                      });
+                                    } else {
+                                      addProduct(item.productId);
+                                      toast({
+                                        title: "추가 완료",
+                                        description: "비교 목록에 추가되었습니다.",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <GitCompare className="h-3 w-3 mr-2" />
+                                  비교 목록에 추가
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => updateQuoteItem(item.id, { isPurchased: !item.isPurchased })}
+                                >
+                                  <CheckCircle2 className="h-3 w-3 mr-2" />
+                                  {item.isPurchased ? "구매 완료 취소" : "구매 완료 표시"}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteItem(item.id)}
                                   className="text-destructive"
@@ -708,13 +654,13 @@ export function QuotePanel() {
                         </div>
                         <div className="text-right">
                           <div className="text-xs text-slate-500 line-through">
-                            ₩{(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}
+{(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
                           <div className="text-sm font-semibold text-green-600">
-                            ₩{(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}
+{(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
                           <div className="text-xs font-medium text-green-700">
-                            -{opt.savingsRate.toFixed(1)}% (₩{opt.totalSavings.toLocaleString("ko-KR")})
+                            -{opt.savingsRate.toFixed(1)}% ({opt.totalSavings.toLocaleString("ko-KR")}원)
                           </div>
                         </div>
                       </div>
@@ -761,11 +707,11 @@ export function QuotePanel() {
                 <div className="text-right">
                   <div className="text-xs text-slate-500">총합</div>
                   <div className="text-lg font-bold text-slate-900">
-                    ₩{totalAmount.toLocaleString()}
+{totalAmount.toLocaleString()}원
                   </div>
                   {costOptimization && costOptimization.summary.totalPotentialSavings > 0 && (
                     <div className="text-xs text-green-600 mt-1">
-                      절감 가능: ₩{costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}
+                      절감 가능: {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원
                     </div>
                   )}
                 </div>
@@ -774,25 +720,7 @@ export function QuotePanel() {
 
             {/* 견적 요청 버튼 - 품목이 있을 때만 표시 */}
             {quoteItems.length > 0 && (
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  onClick={handleOpenVendorRequest}
-                  disabled={isSavingQuote}
-                  variant="default"
-                  className="bg-blue-600 text-white hover:bg-blue-700 text-xs h-8"
-                >
-                  {isSavingQuote ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                      저장 중...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-3 w-3 mr-2" />
-                      견적 요청 보내기
-                    </>
-                  )}
-                </Button>
+              <div className="flex justify-end pt-2">
                 <Link href="/test/quote/request">
                   <Button className="bg-slate-900 text-white hover:bg-slate-800 text-xs h-8">
                     <Plus className="h-3 w-3 mr-2" />
@@ -951,7 +879,7 @@ export function QuotePanel() {
                   toast({
                     title: "최적화 완료",
                     description: result.allConstraintsSatisfied
-                      ? `₩${result.totalSavings.toLocaleString("ko-KR")} 절감 가능`
+                      ? `${result.totalSavings.toLocaleString("ko-KR")} 절감 가능`
                       : "일부 제약조건을 만족하지 못했습니다.",
                   });
                 } catch (error: any) {
@@ -986,10 +914,10 @@ export function QuotePanel() {
                   <div>
                     <div className="text-sm font-semibold text-green-900">최적화 결과</div>
                     <div className="text-xs text-green-700">
-                      총 비용: ₩{optimizationResult.totalCost.toLocaleString("ko-KR")}
+                      총 비용: {optimizationResult.totalCost.toLocaleString("ko-KR")}원
                       {optimizationResult.totalSavings > 0 && (
                         <span className="ml-2">
-                          (절감: ₩{optimizationResult.totalSavings.toLocaleString("ko-KR")})
+                          (절감: {optimizationResult.totalSavings.toLocaleString("ko-KR")}원)
                         </span>
                       )}
                     </div>
@@ -1043,7 +971,7 @@ export function QuotePanel() {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold text-green-600">
-                            ₩{item.totalPrice.toLocaleString("ko-KR")}
+{item.totalPrice.toLocaleString("ko-KR")}원
                           </div>
                           {item.selectedProductId !== item.originalProductId && (
                             <div className="text-xs text-slate-500">
@@ -1092,19 +1020,6 @@ export function QuotePanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* 벤더 견적 요청 모달 */}
-      <VendorRequestModal
-        open={isVendorRequestModalOpen}
-        onOpenChange={setIsVendorRequestModalOpen}
-        quoteId={savedQuoteId || undefined}
-        onSuccess={() => {
-          toast({
-            title: "견적 요청 전송 완료",
-            description: "벤더에게 견적 요청이 전송되었습니다.",
-          });
-        }}
-      />
     </div>
   );
 }
@@ -1230,8 +1145,8 @@ export function SharePanel() {
       item.productName || "",
       item.vendorName || "",
       (item.quantity || 1).toString(),
-      item.unitPrice ? `₩${item.unitPrice.toLocaleString("ko-KR")}` : "",
-      item.lineTotal ? `₩${item.lineTotal.toLocaleString("ko-KR")}` : "",
+      item.unitPrice ? `${item.unitPrice.toLocaleString("ko-KR")}` : "",
+      item.lineTotal ? `${item.lineTotal.toLocaleString("ko-KR")}` : "",
       item.notes || "",
     ]);
 
@@ -1324,8 +1239,8 @@ export function SharePanel() {
       `"${(item.productName || "").replace(/"/g, '""')}"`,
       `"${(item.vendorName || "").replace(/"/g, '""')}"`,
       (item.quantity || 1).toString(),
-      item.unitPrice ? `"₩${item.unitPrice.toLocaleString("ko-KR")}"` : '""',
-      item.lineTotal ? `"₩${item.lineTotal.toLocaleString("ko-KR")}"` : '""',
+      item.unitPrice ? `"${item.unitPrice.toLocaleString("ko-KR")}"` : '""',
+      item.lineTotal ? `"${item.lineTotal.toLocaleString("ko-KR")}"` : '""',
       `"${(item.notes || "").replace(/"/g, '""')}"`,
     ]);
 
@@ -1547,6 +1462,11 @@ export function QuoteRequestPanel() {
   const { quoteItems, products } = useTestFlow();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const quoteId = searchParams.get("quoteId");
+  
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -1556,6 +1476,58 @@ export function QuoteRequestPanel() {
   const [savedDeliveryAddress, setSavedDeliveryAddress] = useState<string>("");
   const [specialNotes, setSpecialNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 저장 상태 관리
+  const [saveStatus, setSaveStatus] = useState<"unsaved" | "saving" | "saved" | "temp_saved">("unsaved");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [guestKey, setGuestKey] = useState<string>("");
+  
+  // 공유 상태 관리
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isShareEnabled, setIsShareEnabled] = useState(false);
+  const [expiresInDays, setExpiresInDays] = useState<number>(30);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [shareLinkInfo, setShareLinkInfo] = useState<{ publicId: string; expiresAt?: string; isActive: boolean } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [isCreatingShareLink, setIsCreatingShareLink] = useState(false);
+
+  // guestKey 초기화
+  useEffect(() => {
+    setGuestKey(getGuestKey());
+  }, []);
+
+  // URL에 quoteId가 있으면 기존 견적 요청 리스트 불러오기
+  const { data: existingQuoteList, isLoading: isLoadingQuoteList } = useQuery({
+    queryKey: ["quote-list", quoteId],
+    queryFn: async () => {
+      if (!quoteId) return null;
+      const response = await fetch(`/api/quote-lists/${quoteId}`, {
+        headers: {
+          "x-guest-key": guestKey,
+        },
+      });
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error("견적 요청 리스트를 불러올 수 없습니다.");
+      }
+      return response.json();
+    },
+    enabled: !!quoteId && !!guestKey,
+  });
+
+  // 기존 견적 요청 리스트 데이터로 폼 채우기
+  useEffect(() => {
+    if (existingQuoteList) {
+      if (existingQuoteList.title) setTitle(existingQuoteList.title);
+      if (existingQuoteList.message) setMessage(existingQuoteList.message);
+      if (existingQuoteList.updatedAt) {
+        setLastSavedAt(new Date(existingQuoteList.updatedAt));
+        setSaveStatus(session?.user ? "saved" : "temp_saved");
+      }
+    }
+  }, [existingQuoteList, session]);
 
   // 저장된 납품 주소 불러오기 (localStorage에서)
   useEffect(() => {
@@ -1624,14 +1596,14 @@ export function QuoteRequestPanel() {
         const items = Array.from(vendorGroups.values())[0];
         const productCount = items.length;
         const totalAmount = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
         setMessage(suggestedMessage);
       } else {
         // 여러 벤더인 경우 - 첫 번째 벤더의 메시지를 기본으로 사용하되, 각 벤더별로 맞춘 메시지 생성
         const firstVendorItems = Array.from(vendorGroups.values())[0];
         const productCount = firstVendorItems.length;
         const totalAmount = firstVendorItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ₩${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+        const suggestedMessage = `안녕하세요.\n\n아래 품목 ${productCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${productCount}개\n예상 금액: ${totalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
         setMessage(suggestedMessage);
       }
     }
@@ -1650,6 +1622,98 @@ export function QuoteRequestPanel() {
     } else {
       setDeliveryDate("");
     }
+  };
+
+  // 저장 함수 (임시 저장 또는 저장)
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!guestKey) {
+        throw new Error("guestKey가 없습니다.");
+      }
+
+      const items = quoteItems.map((item) => ({
+        productId: item.productId || undefined,
+        name: item.productName || "제품명 없음",
+        vendor: item.vendorName || undefined,
+        brand: undefined,
+        catalogNumber: undefined,
+        unitPrice: item.unitPrice || undefined,
+        quantity: item.quantity || 1,
+        lineTotal: item.lineTotal || undefined,
+        notes: item.notes || undefined,
+        snapshot: undefined,
+      }));
+
+      const url = quoteId ? `/api/quote-lists/${quoteId}` : "/api/quote-lists";
+      const method = quoteId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "x-guest-key": guestKey,
+        },
+        body: JSON.stringify({
+          title: title || "견적 요청서",
+          message: message || "",
+          ...(quoteId ? {} : { items }),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "저장에 실패했습니다.");
+      }
+
+      const result = await response.json();
+      
+      // quoteId가 없었으면 URL에 추가
+      if (!quoteId && result.id) {
+        router.replace(`/test/quote/request?quoteId=${result.id}`, { scroll: false });
+      }
+
+      // items 업데이트 (quoteId가 있을 때)
+      if (quoteId && items.length > 0) {
+        const itemsResponse = await fetch(`/api/quote-lists/${quoteId}/items`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-guest-key": guestKey,
+          },
+          body: JSON.stringify({ items }),
+        });
+
+        if (!itemsResponse.ok) {
+          throw new Error("품목 저장에 실패했습니다.");
+        }
+      }
+
+      return result;
+    },
+    onSuccess: (data) => {
+      setSaveStatus(session?.user ? "saved" : "temp_saved");
+      setLastSavedAt(new Date());
+      queryClient.invalidateQueries({ queryKey: ["quote-list", quoteId || data.id] });
+      toast({
+        title: session?.user ? "저장 완료" : "임시 저장 완료",
+        description: session?.user 
+          ? "견적 요청 리스트가 저장되었습니다."
+          : "견적 요청 리스트가 임시 저장되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      setSaveStatus("unsaved");
+      toast({
+        title: "저장 실패",
+        description: error.message || "저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSave = async () => {
+    setSaveStatus("saving");
+    saveMutation.mutate();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1672,6 +1736,7 @@ export function QuoteRequestPanel() {
         body: JSON.stringify({
           title: title || "견적 요청",
           message: message || "", // 기본 메시지 (각 벤더별로 맞춰서 사용)
+          guestKey: !session?.user ? guestKey : undefined, // 게스트 사용자 인증
           // 벤더별로 그룹화하여 각 벤더에게 별도 견적 요청
           items: quoteItems.map((item) => ({
             productId: item.productId,
@@ -1709,13 +1774,193 @@ export function QuoteRequestPanel() {
     }
   };
 
+  // 저장 상태 텍스트 생성
+  const getSaveStatusText = () => {
+    if (saveStatus === "saving") return "저장중...";
+    if (saveStatus === "saved") {
+      if (lastSavedAt) {
+        const timeAgo = formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: ko });
+        return `저장됨 • ${timeAgo}`;
+      }
+      return "저장됨";
+    }
+    if (saveStatus === "temp_saved") {
+      if (lastSavedAt) {
+        const timeAgo = formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: ko });
+        return `임시저장됨 • ${timeAgo}`;
+      }
+      return "임시저장됨";
+    }
+    return "저장 안됨";
+  };
+
+  if (isLoadingQuoteList) {
+    return (
+      <Card className="rounded-lg border border-slate-200 bg-white">
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+          <span className="ml-2 text-xs text-slate-500">견적 요청 리스트 불러오는 중...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // 공유 링크 생성/업데이트
+  const handleShareToggle = async (enabled: boolean) => {
+    setIsShareEnabled(enabled);
+    
+    if (!enabled) {
+      // 공유 비활성화
+      if (shareLinkInfo?.publicId) {
+        try {
+          const response = await fetch(`/api/shared-lists/${shareLinkInfo.publicId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive: false }),
+          });
+          if (response.ok) {
+            setShareLinkInfo((prev) => prev ? { ...prev, isActive: false } : null);
+            toast({
+              title: "공유 비활성화",
+              description: "공유 링크가 비활성화되었습니다.",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to deactivate share link", error);
+        }
+      }
+      return;
+    }
+
+    // 공유 활성화 - 로그인 확인
+    if (!session?.user) {
+      toast({
+        title: "로그인 필요",
+        description: "공유 링크를 생성하려면 로그인이 필요합니다.",
+        variant: "destructive",
+      });
+      setIsShareEnabled(false);
+      return;
+    }
+
+    // 공유 활성화 - quoteId가 없으면 먼저 저장 필요
+    if (!quoteId) {
+      toast({
+        title: "저장 필요",
+        description: "공유 링크를 생성하려면 먼저 저장해주세요.",
+        variant: "destructive",
+      });
+      setIsShareEnabled(false);
+      return;
+    }
+
+    // 공유 링크 생성
+    setIsCreatingShareLink(true);
+    try {
+      // quote-lists의 ID를 Quote ID로 사용 (나중에 quote-lists용 공유 링크 API 추가 필요)
+      const response = await fetch("/api/shared-lists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId: quoteId,
+          title: title || "견적 요청서",
+          description: message || undefined,
+          expiresInDays: expiresInDays || 30,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "공유 링크 생성에 실패했습니다.");
+      }
+
+      const data = await response.json();
+      const shareUrl = `${window.location.origin}/share/${data.publicId}`;
+      setShareLink(shareUrl);
+      setShareLinkInfo({
+        publicId: data.publicId,
+        expiresAt: expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString() : undefined,
+        isActive: true,
+      });
+      
+      toast({
+        title: "공유 링크 생성 완료",
+        description: expiresInDays > 0 
+          ? `공유 링크가 생성되었습니다. ${expiresInDays}일 후 만료됩니다.`
+          : "공유 링크가 생성되었습니다. (만료 없음)",
+      });
+    } catch (error: any) {
+      setIsShareEnabled(false);
+      toast({
+        title: "공유 링크 생성 실패",
+        description: error.message || "공유 링크를 생성할 수 없습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingShareLink(false);
+    }
+  };
+
+  // 링크 복사
+  const handleCopyLink = async () => {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "복사 완료",
+        description: "공유 링크가 클립보드에 복사되었습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "복사 실패",
+        description: "링크를 복사할 수 없습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold text-slate-900">견적 요청</CardTitle>
-        <CardDescription className="text-xs text-slate-500">
-          벤더에게 견적을 요청하세요
-        </CardDescription>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <CardTitle className="text-sm font-semibold text-slate-900">견적 요청</CardTitle>
+              {quoteId && (
+                <Badge variant="secondary" className="text-xs">
+                  기존 리스트 불러옴
+                </Badge>
+              )}
+            </div>
+            <CardDescription className="text-xs text-slate-500">
+              {(() => {
+                const vendorCount = new Set(quoteItems.map(item => item.vendorId)).size;
+                if (vendorCount > 1) {
+                  return `${vendorCount}개 벤더에 개별 견적 요청`;
+                }
+                return "벤더에게 견적을 요청하세요";
+              })()}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* 저장 상태 표시 */}
+            <div className="text-[10px] text-slate-500 whitespace-nowrap">
+              {getSaveStatusText()}
+            </div>
+            {/* 공유 버튼 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsShareDialogOpen(true)}
+              className="text-xs h-8"
+            >
+              <Share2 className="h-3 w-3 mr-1" />
+              공유
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1726,10 +1971,17 @@ export function QuoteRequestPanel() {
             <Input
               id="quote-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                // 제목 변경 시 저장 상태를 unsaved로 변경
+                if (saveStatus !== "saving") {
+                  setSaveStatus("unsaved");
+                }
+              }}
               placeholder="견적 요청 제목"
               required
               className="text-sm"
+              disabled={!quoteId && isLoadingQuoteList}
             />
           </div>
 
@@ -1842,15 +2094,158 @@ export function QuoteRequestPanel() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-slate-900 text-white hover:bg-slate-800"
-            disabled={isSubmitting || quoteItems.length === 0}
-          >
-            {isSubmitting ? "전송 중..." : "견적 요청하기"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSave}
+              disabled={saveMutation.isPending || !guestKey}
+              className="flex-1"
+            >
+              {saveMutation.isPending ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                  저장 중...
+                </>
+              ) : session?.user ? (
+                "저장"
+              ) : (
+                "임시 저장"
+              )}
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-slate-900 text-white hover:bg-slate-800"
+              disabled={isSubmitting || quoteItems.length === 0}
+            >
+              {isSubmitting ? "전송 중..." : "견적 요청하기"}
+            </Button>
+          </div>
         </form>
       </CardContent>
+
+      {/* 공유 모달 */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>공유 설정</DialogTitle>
+            <DialogDescription>
+              견적 요청 리스트를 공유할 수 있는 링크를 생성합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* 공유 on/off 토글 */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="share-toggle" className="text-sm font-medium">
+                  공유 활성화
+                </Label>
+                <p className="text-xs text-slate-500">
+                  공유 링크를 생성하여 다른 사람과 공유할 수 있습니다.
+                </p>
+              </div>
+              <Switch
+                id="share-toggle"
+                checked={isShareEnabled}
+                onCheckedChange={handleShareToggle}
+                disabled={isCreatingShareLink || !quoteId || !session?.user}
+              />
+            </div>
+
+            {!session?.user && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs text-amber-800">
+                  공유 링크를 생성하려면 로그인이 필요합니다.
+                </p>
+              </div>
+            )}
+            {session?.user && !quoteId && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs text-amber-800">
+                  공유 링크를 생성하려면 먼저 견적 요청 리스트를 저장해주세요.
+                </p>
+              </div>
+            )}
+
+            {/* 만료기간 선택 */}
+            {isShareEnabled && quoteId && (
+              <div className="space-y-2">
+                <Label htmlFor="expires-in-days" className="text-sm font-medium">
+                  만료 기간
+                </Label>
+                <Select
+                  value={expiresInDays.toString()}
+                  onValueChange={(value) => setExpiresInDays(parseInt(value) || 0)}
+                  disabled={isCreatingShareLink}
+                >
+                  <SelectTrigger id="expires-in-days">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7일</SelectItem>
+                    <SelectItem value="14">14일</SelectItem>
+                    <SelectItem value="30">30일 (기본)</SelectItem>
+                    <SelectItem value="60">60일</SelectItem>
+                    <SelectItem value="90">90일</SelectItem>
+                    <SelectItem value="0">만료 없음</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">
+                  {expiresInDays > 0 
+                    ? `링크는 ${expiresInDays}일 후 자동으로 만료됩니다.`
+                    : "링크는 만료되지 않습니다. 수동으로 비활성화할 수 있습니다."}
+                </p>
+              </div>
+            )}
+
+            {/* 공유 링크 표시 */}
+            {shareLink && shareLinkInfo?.isActive && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">공유 링크</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={shareLink}
+                    readOnly
+                    className="flex-1 text-xs font-mono bg-slate-50"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyLink}
+                    className="h-9"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {shareLinkInfo.expiresAt && (
+                  <p className="text-xs text-slate-500">
+                    만료일: {new Date(shareLinkInfo.expiresAt).toLocaleDateString("ko-KR")}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isCreatingShareLink && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                <span className="ml-2 text-xs text-slate-500">공유 링크 생성 중...</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsShareDialogOpen(false)}
+            >
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -1876,7 +2271,7 @@ export function QuoteItemsSummaryPanel() {
 
   if (quoteItems.length === 0) {
     return (
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-lg border border-slate-200 bg-white">
         <CardHeader>
           <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -1897,7 +2292,7 @@ export function QuoteItemsSummaryPanel() {
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
         <CardDescription className="text-xs text-slate-500">
-          요청할 품목 {quoteItems.length}개 {vendorGroups.size > 1 && `(벤더 ${vendorGroups.size}개)`}
+          요청할 품목 {quoteItems.length}개
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -1933,14 +2328,14 @@ export function QuoteItemsSummaryPanel() {
                               수량: {item.quantity} ×{" "}
                               <PriceDisplay
                                 price={item.unitPrice || 0}
-                                currency={item.currency || "KRW"}
+                                currency="KRW"
                               />
                             </div>
                           </div>
                           <div className="text-xs font-semibold text-slate-900 whitespace-nowrap">
                             <PriceDisplay
                               price={item.lineTotal || 0}
-                              currency={item.currency || "KRW"}
+                              currency="KRW"
                             />
                           </div>
                         </div>
@@ -1951,7 +2346,7 @@ export function QuoteItemsSummaryPanel() {
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                       <span className="text-xs font-medium text-slate-600">{vendorName} 소계</span>
                       <span className="text-xs font-semibold text-slate-900">
-                        ₩{vendorTotal.toLocaleString("ko-KR")}
+{vendorTotal.toLocaleString("ko-KR")}
                       </span>
                     </div>
                   )}
@@ -1963,13 +2358,23 @@ export function QuoteItemsSummaryPanel() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-900">총액</span>
               <span className="text-lg font-bold text-slate-900">
-                ₩{totalAmount.toLocaleString("ko-KR")}
+{totalAmount.toLocaleString("ko-KR")}
               </span>
             </div>
             {vendorGroups.size > 1 && (
-              <p className="text-xs text-slate-500 mt-2">
-                각 벤더별로 별도 견적이 요청됩니다.
-              </p>
+              <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-amber-900">
+                      {vendorGroups.size}개 벤더에 별도 견적 요청
+                    </p>
+                    <p className="text-[10px] text-amber-700 mt-0.5">
+                      각 벤더별로 견적 요청이 개별 전송됩니다
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

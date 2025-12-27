@@ -297,7 +297,7 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
           vendorId: selectedVendor.vendor?.id || "",
           vendorName: selectedVendor?.vendor?.name || product.brand || "",
           unitPrice,
-          currency: selectedVendor?.currency || "KRW",
+          currency: "KRW", // priceInKRW를 사용하므로 항상 KRW로 설정
           quantity: 1,
           lineTotal: unitPrice,
           notes: "",

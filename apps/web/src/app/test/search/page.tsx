@@ -51,32 +51,15 @@ export default function SearchPage() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-3 md:py-6">
-        <PageHeader
-          title="바이오 시약·장비 검색과 비교, 한 번에 정리되는 견적 요청 리스트"
-          description={
-            <div className="space-y-1 hidden md:block">
-              <p>제품명, 벤더, 카테고리를 검색하고 GPT가 관련 제품을 추천해 줍니다.</p>
-              <p>검색 결과에서 필요한 제품을 선택하면, 견적 요청 리스트가 자동으로 정리됩니다.</p>
-            </div>
-          }
-          icon={Search}
-          iconColor="text-blue-600"
-          badge={
-            <div className="inline-flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-lg bg-blue-50 border border-blue-200">
-              <Badge variant="outline" className="text-[10px] bg-blue-100 border-blue-300 text-blue-700 px-1.5 py-0">
-                기능 체험
-              </Badge>
-              <span className="text-[10px] text-blue-700 font-medium whitespace-nowrap hidden sm:inline">
-                지금은 Beta - 무료로 모든 기능을 체험해 보세요
-              </span>
-            </div>
-          }
-        />
+      <div className="container mx-auto px-4 py-4 md:py-6">
+        <div className="mb-4">
+          <h1 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">Step 1: 검색</h1>
+          <p className="text-sm text-slate-600">제품명, 벤더, 카테고리로 후보 제품을 검색합니다.</p>
+        </div>
       </div>
       
       {/* 2컬럼 레이아웃 */}
-      <div className="container mx-auto px-4 py-4 md:py-6">
+      <div className="container mx-auto px-4 pb-4 md:pb-6">
         <div className="flex flex-col gap-4 md:grid md:gap-6 md:grid-cols-[260px_1fr]">
         {/* 좌측: 검색 패널 + 옵션 */}
         <aside className="order-1 md:order-none">
@@ -89,12 +72,12 @@ export default function SearchPage() {
         <section className="order-3 md:order-none space-y-4 max-w-3xl mx-auto w-full">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="py-2 sm:py-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+            <Card className="border border-slate-200 bg-white">
+              <CardContent className="py-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <GitCompare className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium text-blue-900">
+                    <GitCompare className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-slate-900">
                       비교 중인 제품: {compareIds.length}개
                     </span>
                     <div className="flex items-center gap-1 flex-wrap">
@@ -117,7 +100,7 @@ export default function SearchPage() {
                           <Badge
                             key={id}
                             variant="secondary"
-                            className="text-[10px] pr-1 cursor-pointer hover:bg-slate-300 transition-colors"
+                            className="text-xs pr-1 cursor-pointer hover:bg-slate-200 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleCompare(id);
@@ -131,7 +114,7 @@ export default function SearchPage() {
                                 e.stopPropagation();
                                 toggleCompare(id);
                               }}
-                              className="ml-1 hover:bg-slate-400 rounded-full p-0.5"
+                              className="ml-1 hover:bg-slate-300 rounded-full p-0.5"
                               aria-label="제거"
                             >
                               <X className="h-2.5 w-2.5" />
@@ -142,7 +125,7 @@ export default function SearchPage() {
                     </div>
                   </div>
                   <Link href="/test/compare" className="w-full sm:w-auto">
-                    <Button size="sm" variant="default" className="w-full sm:w-auto text-xs bg-blue-600 hover:bg-blue-700">
+                    <Button size="sm" variant="default" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
                       비교 보기 →
                     </Button>
                   </Link>
@@ -152,14 +135,14 @@ export default function SearchPage() {
           )}
 
           {/* 검색 결과 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold text-slate-800">
+          <Card className="border border-slate-200 bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-900">
                 검색 결과
               </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
+              <CardDescription className="text-xs text-slate-600">
                 {products.length > 0
-                  ? `${products.length}개의 제품을 찾았습니다. 비교하거나 리스트에 담을 수 있습니다.`
+                  ? `${products.length}개의 제품을 찾았습니다. 비교하거나 견적 요청 리스트에 추가할 수 있습니다.`
                   : hasSearched
                   ? "검색 결과가 없습니다"
                   : "검색어를 입력하고 검색을 실행해주세요"}
@@ -321,14 +304,14 @@ export default function SearchPage() {
                               </TableCell>
                               <TableCell className="text-right text-xs py-3">
                                 {vendor?.priceInKRW ? (
-                                  <PriceDisplay price={vendor.priceInKRW} currency={vendor.currency || "KRW"} />
+                                  <PriceDisplay price={vendor.priceInKRW} currency="KRW" />
                                 ) : (
                                   "-"
                                 )}
                               </TableCell>
                               <TableCell className="text-right font-medium text-xs py-3">
                                 {item.lineTotal ? (
-                                  <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
+                                  <PriceDisplay price={item.lineTotal} currency="KRW" />
                                 ) : (
                                   "-"
                                 )}

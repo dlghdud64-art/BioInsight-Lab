@@ -10,8 +10,8 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
   if (variant === "full") {
     return (
       <section className="mb-6">
-        <Card className="border border-slate-200 bg-slate-50 shadow-sm rounded-md">
-          <CardContent className="p-6">
+        <Card className="border border-slate-200 bg-slate-50 shadow-sm rounded-lg">
+          <CardContent className="p-5">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 mt-1">
                 <Sparkles className="h-5 w-5 text-indigo-600" strokeWidth={1.5} />
@@ -25,7 +25,7 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
                     Beta
                   </Badge>
                 </div>
-                <p className="text-xs leading-relaxed text-slate-600">
+                <p className="text-sm md:text-[15px] leading-snug text-slate-600">
                   검색/비교/견적 요청 리스트 기능은 Beta 기간 동안 무료로 제공됩니다.
                 </p>
               </div>
@@ -38,9 +38,9 @@ export function BetaBannerSection({ variant = "compact" }: BetaBannerSectionProp
 
   // Compact 버전 (홈페이지용)
   return (
-    <section className="py-4 md:py-6">
-      <div className="mx-auto max-w-5xl px-4 md:px-6">
-        <div className="flex items-center gap-2 md:gap-3 rounded-md border border-slate-200 bg-white px-3 md:px-4 py-2 md:py-2.5">
+    <section className="py-2 md:py-3">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5">
           <Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4 text-indigo-600 flex-shrink-0" strokeWidth={1.5} />
           <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
             <span className="text-xs md:text-sm font-medium text-slate-700">

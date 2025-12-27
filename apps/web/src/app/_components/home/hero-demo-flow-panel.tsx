@@ -1,339 +1,134 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Search, GitCompare, ShoppingCart } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Thermometer, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
 
-// HeroDemoFlowPanel 컴포넌트 - 컴팩트 티저 버전 + 예시 UI
-const HERO_STEPS = [
+// 견적 시트 미리보기용 샘플 데이터 - 실무 필드 포함 (메인 화면용)
+const SAMPLE_QUOTE_SHEET = [
   {
-    id: "search" as const,
-    badge: "Step 1",
-    label: "검색/AI 분석",
-    title: "검색/AI 분석·후보 모으기",
-    description: "제품명/벤더/카테고리로 후보를 빠르게 모으고, 필요한 제품을 한 번에 리스트업합니다.",
+    name: "Human IL-6 ELISA Kit",
+    vendor: "R&D Systems",
+    catNo: "D6050",
+    unitPrice: "₩450,000",
+    leadTime: "7일",
+    storage: "2-8°C",
+    hazard: null,
+    status: "Verified",
   },
   {
-    id: "compare" as const,
-    badge: "Step 2",
-    label: "제품 비교",
-    title: "제품 비교·선정",
-    description: "스펙·가격 기준으로 후보를 비교해 추리고, 구매/견적에 필요한 최소 후보만 남깁니다.",
+    name: "PCR Master Mix 2X",
+    vendor: "Thermo Fisher",
+    catNo: "K0171",
+    unitPrice: "₩150,000",
+    leadTime: "3일",
+    storage: "-20°C",
+    hazard: null,
+    status: "Verified",
   },
   {
-    id: "request" as const,
-    badge: "Step 3",
-    label: "견적 요청",
-    title: "견적 요청",
-    description: "선정한 품목으로 견적 요청 리스트를 만들고, 내보내기 또는 견적 요청을 진행합니다.",
+    name: "Trypsin-EDTA 0.25%",
+    vendor: "Gibco",
+    catNo: "25200-056",
+    unitPrice: "₩85,000",
+    leadTime: "5일",
+    storage: "-20°C",
+    hazard: "GHS07",
+    status: "Draft",
   },
-] as const;
-
-type HeroStepId = (typeof HERO_STEPS)[number]["id"];
-
-// 샘플 데이터
-const SAMPLE_SEARCH_RESULTS = [
-  { name: "Human IL-6 ELISA Kit", vendor: "R&D Systems", price: "₩450,000" },
-  { name: "IL-6 Quantikine ELISA", vendor: "Bio-Techne", price: "₩520,000" },
-  { name: "Human IL-6 ELISA", vendor: "Abcam", price: "₩380,000" },
+  {
+    name: "DMEM High Glucose",
+    vendor: "Sigma-Aldrich",
+    catNo: "D6429",
+    unitPrice: "₩120,000",
+    leadTime: "4일",
+    storage: "2-8°C",
+    hazard: null,
+    status: "Verified",
+  },
 ];
-
-const SAMPLE_COMPARE_DATA = [
-  { label: "제품명", values: ["Human IL-6 ELISA Kit", "IL-6 Quantikine ELISA", "Human IL-6 ELISA"] },
-  { label: "벤더", values: ["R&D Systems", "Bio-Techne", "Abcam"] },
-  { label: "가격", values: ["₩450,000", "₩520,000", "₩380,000"] },
-  { label: "납기", values: ["7일", "5일", "10일"] },
-  { label: "재고", values: ["재고 있음", "재고 있음", "주문 필요"] },
-  { label: "최소주문", values: ["1개", "1개", "2개"] },
-];
-
-const SAMPLE_QUOTE_ITEMS = [
-  { no: 1, name: "Human IL-6 ELISA Kit", qty: 2, price: "₩900,000" },
-  { no: 2, name: "PCR Master Mix", qty: 1, price: "₩150,000" },
-  { no: 3, name: "96 Well Plate", qty: 5, price: "₩375,000" },
-];
-
-// Step 탭 컴포넌트
-function HeroStepTabs({ activeId, onChange }: { activeId: HeroStepId; onChange: (id: HeroStepId) => void }) {
-  return (
-    <div className="grid grid-cols-3 gap-1.5">
-      {HERO_STEPS.map((step) => {
-        const active = step.id === activeId;
-        return (
-          <button
-            key={step.id}
-            onClick={() => onChange(step.id)}
-            className={cn(
-              "flex items-center gap-1 rounded-lg border px-2 py-1.5 text-left transition",
-              active
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
-            )}
-          >
-            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-80">
-              {step.badge}
-            </span>
-            <span className="text-[10px] font-semibold leading-tight">{step.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// 단계 안내 Sheet 컴포넌트
-function HeroStepHelp() {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <button className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors">
-          단계 안내 보기
-        </button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[80%] max-w-xs">
-        <SheetHeader>
-          <SheetTitle>기능 체험 단계 안내</SheetTitle>
-          <SheetDescription className="mt-2 text-xs">
-            검색/AI 분석 → 제품 비교 → 견적 요청까지 한 번에 체험해 보세요.
-          </SheetDescription>
-        </SheetHeader>
-
-        <ol className="mt-4 space-y-3 text-sm">
-          <li>
-            <span className="font-semibold">Step 1. 검색/AI 분석·후보 모으기</span>
-            <p className="text-xs text-slate-500 mt-1">
-              제품명, 벤더, 카테고리 키워드로 후보를 빠르게 모읍니다.
-            </p>
-          </li>
-          <li>
-            <span className="font-semibold">Step 2. 제품 비교·선정</span>
-            <p className="text-xs text-slate-500 mt-1">
-              스펙·가격 기준으로 후보를 비교해 추립니다.
-            </p>
-          </li>
-          <li>
-            <span className="font-semibold">Step 3. 견적 요청·회신정리·공유</span>
-            <p className="text-xs text-slate-500 mt-1">
-              선정한 후보로 견적 요청 리스트를 만들고, 회신(가격·납기)을 정리해 TSV/엑셀·공유 링크로 전달합니다.
-            </p>
-          </li>
-        </ol>
-      </SheetContent>
-    </Sheet>
-  );
-}
 
 export function HeroDemoFlowPanel() {
-  const [active, setActive] = useState<HeroStepId>("search");
-  const current = HERO_STEPS.find((s) => s.id === active)!;
-
-  const scrollToFlowSection = useCallback(() => {
-    if (typeof window === "undefined") return;
-    
-    const el = document.getElementById("flow-section");
-    if (el) {
-      const headerHeight = 56;
-      const elementTop = el.offsetTop;
-      const offsetPosition = elementTop - headerHeight;
-
-      window.scrollTo({
-        top: Math.max(0, offsetPosition),
-        behavior: "smooth",
-      });
-      return;
-    }
-
-    // 요소가 없으면 재시도
-    const scrollToElement = (attempts = 0) => {
-      const element = document.getElementById("flow-section");
-      if (element) {
-        const headerHeight = 56;
-        const elementTop = element.offsetTop;
-        const offsetPosition = elementTop - headerHeight;
-
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: "smooth",
-        });
-      } else if (attempts < 20) {
-        setTimeout(() => scrollToElement(attempts + 1), 100);
-      }
-    };
-    
-    setTimeout(() => scrollToElement(), 50);
-  }, []);
-
   return (
-    <Card className="w-full max-w-sm shadow-sm border-slate-200">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900">
-            기능 체험
-          </h3>
-          <HeroStepHelp />
+    <div className="w-full border border-slate-200 bg-white rounded-lg overflow-hidden">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-1.5">
+        <div className="flex items-center gap-2">
+          <FileText className="h-3.5 w-3.5 text-slate-600" strokeWidth={1.5} />
+          <span className="text-xs font-semibold text-slate-900 tracking-tight">견적 요청 시트</span>
         </div>
-        <p className="text-xs text-slate-500 mt-1">
-          검색/AI 분석 → 제품 비교 → 견적 요청
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Step 탭 */}
-        <HeroStepTabs activeId={active} onChange={setActive} />
+        <span className="text-[10px] text-slate-500">4개 품목</span>
+      </div>
 
-        {/* 예시 UI 영역 - 작은 크기 */}
-        <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm min-h-[180px]">
-          {active === "search" && (
-            <div className="space-y-1.5 h-full flex flex-col">
-              {/* 검색창 */}
-              <div className="flex gap-1.5 flex-shrink-0">
-                <div className="flex-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] text-slate-600">
-                  Human IL-6 ELISA kit
-                </div>
-                <button className="rounded bg-blue-600 px-1.5 py-0.5 text-[9px] text-white">
-                  검색
-                </button>
-              </div>
-              
-              {/* 검색 결과 */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="space-y-0.5">
-                  {SAMPLE_SEARCH_RESULTS.map((result, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded border border-slate-200 bg-white p-1"
-                    >
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-semibold text-slate-900 truncate leading-tight">
-                            {result.name}
-                          </p>
-                          <p className="text-[8px] text-slate-500 mt-0.5 leading-tight">
-                            {result.vendor}
-                          </p>
-                        </div>
-                        <p className="text-[9px] font-medium text-slate-900 whitespace-nowrap ml-1">
-                          {result.price}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+      {/* 테이블 */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-[9px] leading-tight">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/50">
+              <th className="px-2 py-1 text-left font-semibold text-slate-600 whitespace-nowrap">제품명</th>
+              <th className="px-2 py-1 text-left font-semibold text-slate-600 whitespace-nowrap">벤더</th>
+              <th className="px-2 py-1 text-left font-semibold text-slate-600 whitespace-nowrap">Cat.No</th>
+              <th className="px-2 py-1 text-right font-semibold text-slate-600 whitespace-nowrap">단가</th>
+              <th className="px-2 py-1 text-center font-semibold text-slate-600 whitespace-nowrap">리드타임</th>
+              <th className="px-2 py-1 text-center font-semibold text-slate-600 whitespace-nowrap">보관</th>
+              <th className="px-2 py-1 text-center font-semibold text-slate-600 whitespace-nowrap">위험</th>
+              <th className="px-2 py-1 text-center font-semibold text-slate-600 whitespace-nowrap">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SAMPLE_QUOTE_SHEET.map((item, idx) => (
+              <tr key={idx} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                <td className="px-2 py-1 text-slate-900 font-medium whitespace-nowrap max-w-[100px] truncate" title={item.name}>
+                  {item.name}
+                </td>
+                <td className="px-2 py-1 text-slate-600 whitespace-nowrap">{item.vendor}</td>
+                <td className="px-2 py-1 text-slate-500 font-mono whitespace-nowrap">{item.catNo}</td>
+                <td className="px-2 py-1 text-right text-slate-900 font-medium whitespace-nowrap">{item.unitPrice}</td>
+                <td className="px-2 py-1 text-center text-slate-600 whitespace-nowrap">{item.leadTime}</td>
+                <td className="px-2 py-1 text-center whitespace-nowrap">
+                  <span className="inline-flex items-center gap-0.5 text-slate-600">
+                    <Thermometer className="h-2.5 w-2.5 text-indigo-500" strokeWidth={1.5} />
+                    <span>{item.storage}</span>
+                  </span>
+                </td>
+                <td className="px-2 py-1 text-center whitespace-nowrap">
+                  {item.hazard ? (
+                    <span className="inline-flex items-center gap-0.5 text-amber-600" title={item.hazard}>
+                      <AlertTriangle className="h-2.5 w-2.5" strokeWidth={1.5} />
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">-</span>
+                  )}
+                </td>
+                <td className="px-2 py-1 text-center whitespace-nowrap">
+                  {item.status === "Verified" ? (
+                    <span className="inline-flex items-center gap-0.5 text-indigo-600">
+                      <CheckCircle2 className="h-2.5 w-2.5" strokeWidth={1.5} />
+                      <span className="text-[8px]">확인됨</span>
+                    </span>
+                  ) : (
+                    <span className="text-[8px] text-slate-400">작성중</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          {active === "compare" && (
-            <div className="space-y-2 h-full flex flex-col">
-              {/* 비교 헤더 */}
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
-                <GitCompare className="h-3 w-3" />
-                <span>제품 비교 (3개)</span>
-              </div>
-              
-              {/* 비교 항목 */}
-              <div className="space-y-1 flex-1 overflow-y-auto">
-                {SAMPLE_COMPARE_DATA.map((row, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 text-[9px]">
-                    <span className="w-12 text-slate-500 flex-shrink-0 text-right pr-1">{row.label}</span>
-                    <div className="flex-1 grid grid-cols-3 gap-0.5">
-                      {row.values.map((value, colIdx) => (
-                        <div
-                          key={colIdx}
-                          className={`rounded px-1 py-0.5 text-[9px] text-slate-600 ${
-                            row.label === "가격" && colIdx === 2 ? "bg-green-50 text-green-700 font-semibold" :
-                            row.label === "납기" && colIdx === 1 ? "bg-blue-50 text-blue-700 font-semibold" :
-                            "bg-slate-50"
-                          }`}
-                          title={value}
-                        >
-                          <span className="truncate block">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {active === "request" && (
-            <div className="space-y-2 h-full flex flex-col">
-              {/* 리스트 헤더 */}
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-700 border-b border-slate-200 pb-1.5 flex-shrink-0">
-                <ShoppingCart className="h-3 w-3" />
-                <span>견적 요청 리스트</span>
-              </div>
-              
-              {/* 테이블 헤더 */}
-              <div className="grid grid-cols-12 gap-0.5 text-[9px] font-semibold text-slate-600 pb-1 border-b border-slate-100 flex-shrink-0">
-                <div className="col-span-1">No</div>
-                <div className="col-span-6">제품명</div>
-                <div className="col-span-2">수량</div>
-                <div className="col-span-3">금액</div>
-              </div>
-              
-              {/* 테이블 행 */}
-              <div className="space-y-0.5 flex-1 overflow-y-auto min-h-0">
-                {SAMPLE_QUOTE_ITEMS.map((item) => (
-                  <div
-                    key={item.no}
-                    className="grid grid-cols-12 gap-0.5 text-[9px] text-slate-700 py-0.5 border-b border-slate-50 last:border-0"
-                  >
-                    <div className="col-span-1 font-medium">{item.no}</div>
-                    <div className="col-span-6 truncate">{item.name}</div>
-                    <div className="col-span-2 text-center">{item.qty}</div>
-                    <div className="col-span-3 font-medium text-right">{item.price}</div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* 합계 */}
-              <div className="grid grid-cols-12 gap-0.5 text-[9px] font-semibold text-slate-900 pt-1 border-t border-slate-200 flex-shrink-0">
-                <div className="col-span-9 text-right pr-1">합계</div>
-                <div className="col-span-3 text-right">₩1,425,000</div>
-              </div>
-              
-              {/* 액션 버튼 */}
-              <div className="mt-2 pt-2 border-t border-slate-100 flex gap-1">
-                <button className="flex-1 rounded bg-slate-100 px-1.5 py-1 text-[9px] text-slate-700 font-medium hover:bg-slate-200 transition-colors">
-                  내보내기
-                </button>
-                <button className="flex-1 rounded bg-blue-600 px-1.5 py-1 text-[9px] text-white font-medium hover:bg-blue-700 transition-colors">
-                  견적 요청
-                </button>
-              </div>
-            </div>
-          )}
+      {/* 푸터 - 출처 표시 예시 */}
+      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-3 py-1">
+        <div className="flex items-center gap-1">
+          <span className="text-[8px] text-slate-400">출처:</span>
+          <span className="text-[8px] px-1 py-0.5 bg-slate-100 rounded text-slate-500">datasheet</span>
+          <span className="text-[8px] px-1 py-0.5 bg-slate-100 rounded text-slate-500">vendor catalog</span>
         </div>
-
-        {/* 액션 버튼 */}
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="button"
-            onClick={scrollToFlowSection}
-            className="text-[11px] text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline"
-          >
-            자세히 보기
-          </button>
-
-          <Link href="/test/search">
-            <Button size="sm" variant="outline" className="text-xs">
-              이 플로우 직접 해보기
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        <Link href="/test/search">
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-slate-200 text-indigo-600 hover:bg-indigo-50">
+            직접 만들기 →
+          </Button>
+        </Link>
+      </div>
+    </div>
   );
 }

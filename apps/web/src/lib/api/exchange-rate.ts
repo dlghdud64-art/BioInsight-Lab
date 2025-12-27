@@ -90,7 +90,7 @@ export async function convertToKRW(amount: number, fromCurrency: string): Promis
 // 가격 포맷팅
 export function formatPrice(amount: number, currency: string = "KRW"): string {
   if (currency === "KRW") {
-    return `₩${amount.toLocaleString()}`;
+    return `${amount.toLocaleString()}원`;
   }
   return `${currency} ${amount.toLocaleString()}`;
 }

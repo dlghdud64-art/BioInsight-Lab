@@ -20,3 +20,4 @@ export function clearGuestKey(): void {
     localStorage.removeItem(GUEST_KEY_STORAGE_KEY);
   }
 }
+

@@ -28,7 +28,7 @@ export function PriceDisplay({
     return (
       <div className="space-y-1">
         <div className="font-semibold text-lg">
-          ₩{Math.round(priceInKRW).toLocaleString()}
+          {Math.round(priceInKRW).toLocaleString()}원
         </div>
         <div className="text-sm text-muted-foreground">
           {formatPrice(price, currency)} (원가)

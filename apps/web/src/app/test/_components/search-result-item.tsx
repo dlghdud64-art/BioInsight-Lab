@@ -22,26 +22,26 @@ function StockStatusBadge({ stockStatus }: { stockStatus?: string }) {
   
   if (status.includes("재고") || status.includes("in stock") || status.includes("available")) {
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]">
+      <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px]">
         재고 있음
       </Badge>
     );
   } else if (status.includes("주문") || status.includes("order") || status.includes("backorder")) {
     return (
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
         주문 필요
       </Badge>
     );
   } else if (status.includes("품절") || status.includes("out of stock") || status.includes("unavailable")) {
     return (
-      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
+      <Badge variant="outline" className="bg-white text-slate-500 border-slate-300 text-[10px]">
         품절
       </Badge>
     );
   }
   
   return (
-    <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 text-[10px]">
+    <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px]">
       {stockStatus}
     </Badge>
   );
@@ -78,26 +78,26 @@ function LeadTimeBadge({ leadTime }: { leadTime?: number | string }) {
   
   if (days <= 2) {
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]">
-        빠른 출고
+      <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px] font-medium">
+        빠름
       </Badge>
     );
   } else if (days <= 7) {
     return (
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
+      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
         보통
       </Badge>
     );
   } else if (days <= 14) {
     return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
-        지연 가능
+      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
+        지연
       </Badge>
     );
   } else {
     return (
-      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
-        장기 지연
+      <Badge variant="outline" className="bg-white text-slate-500 border-slate-300 text-[10px]">
+        장기
       </Badge>
     );
   }
@@ -139,28 +139,28 @@ function DomainDetailBadges({ product }: { product: any }) {
     <div className="flex items-center gap-1.5 flex-wrap mt-1">
       {hasStorageCondition && (
         <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] text-slate-600"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-[9px] text-slate-600"
           title={`보관: ${product.storageCondition}`}
         >
-          <Thermometer className="h-2.5 w-2.5 text-indigo-500" strokeWidth={1.5} />
+          <Thermometer className="h-2.5 w-2.5 text-slate-500" strokeWidth={1.5} />
           <span>{product.storageCondition}</span>
         </span>
       )}
       {hasHazardCodes && (
         <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] text-amber-700"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-300 bg-white text-[9px] text-slate-700"
           title={`위험물: ${product.hazardCodes || product.pictograms}`}
         >
-          <AlertTriangle className="h-2.5 w-2.5" strokeWidth={1.5} />
+          <AlertTriangle className="h-2.5 w-2.5 text-slate-600" strokeWidth={1.5} />
           <span>{product.hazardCodes || product.pictograms}</span>
         </span>
       )}
       {hasPpe && (
         <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] text-slate-600"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-[9px] text-slate-600"
           title={`PPE: ${product.ppe}`}
         >
-          <Shield className="h-2.5 w-2.5" strokeWidth={1.5} />
+          <Shield className="h-2.5 w-2.5 text-slate-500" strokeWidth={1.5} />
           <span>{product.ppe}</span>
         </span>
       )}
@@ -233,7 +233,7 @@ export function SearchResultItem({
           <div className="text-right space-y-1">
             {unitPrice > 0 ? (
               <div className="text-sm font-semibold text-slate-900">
-                <PriceDisplay price={unitPrice} currency={vendor?.currency || "KRW"} />
+                <PriceDisplay price={unitPrice} currency="KRW" />
               </div>
             ) : (
               <div className="text-xs text-slate-400">가격 문의</div>

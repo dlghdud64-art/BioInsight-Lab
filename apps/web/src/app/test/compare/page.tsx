@@ -400,27 +400,27 @@ export default function TestComparePage() {
   const quoteItemsCount = quoteItems.length;
 
   return (
-      <div className="mx-auto max-w-7xl px-4 md:px-6 space-y-6">
-      {/* 헤더 + 주요 액션 (견적요청서로 이동) */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-4">
-        <div className="flex flex-col gap-3 sm:gap-4">
-          <div className="w-full">
-            <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">제품 비교 ({products.length}개)</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 text-center sm:text-left">
-              스펙·가격·납기를 한눈에 비교하세요
+      <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-4">
+      {/* 헤더 + 주요 액션 */}
+      <div className="border-b border-slate-200 pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">Step 2: 비교</h1>
+            <p className="text-sm text-slate-600">
+              스펙·가격·납기를 한눈에 비교하세요 ({products.length}개)
             </p>
             <div className="mt-2">
               <Disclaimer type="price" />
             </div>
           </div>
-          {/* 주요 액션: 견적요청서로 이동 (Primary) */}
+          {/* 주요 액션: 견적 요청 리스트로 이동 */}
           <div className="flex justify-end">
             <Link href="/test/quote" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm h-9 sm:h-10 whitespace-nowrap">
+              <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white whitespace-nowrap">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {quoteItemsCount > 0 
-                  ? `견적요청서 보기 (${quoteItemsCount}개)`
-                  : "견적요청서 보기"
+                  ? `견적 요청 리스트 보기 (${quoteItemsCount}개)`
+                  : "견적 요청 리스트 보기"
                 }
               </Button>
             </Link>
@@ -429,11 +429,11 @@ export default function TestComparePage() {
       </div>
 
       {/* 비교 도구 버튼 */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="w-full sm:w-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">비교 도구</h2>
+          <h2 className="text-base font-semibold text-slate-900">비교 도구</h2>
         </div>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
             onClick={() => setShowHighlightDifferences(!showHighlightDifferences)}
@@ -649,7 +649,7 @@ export default function TestComparePage() {
                 >
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <p className="font-medium text-[11px] sm:text-xs md:text-sm text-slate-900 truncate w-full sm:w-auto text-center sm:text-left">
+                      <p className="font-medium text-[11px] sm:text-xs md:text-sm text-slate-900 w-full sm:w-auto text-center sm:text-left break-words">
                         {product.name}
                       </p>
                       <Link href={`/products/${product.id}`} className="w-full sm:w-auto flex justify-center sm:justify-start">
@@ -740,16 +740,16 @@ export default function TestComparePage() {
               <CardDescription className="text-[10px] sm:text-xs text-center sm:text-left">제품별 최저가 비교</CardDescription>
             </CardHeader>
             <CardContent className="p-2 sm:p-4">
-              <ResponsiveContainer width="100%" height={180} className="sm:h-[200px]">
-                <BarChart data={priceChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height={240} className="sm:h-[260px]">
+                <BarChart data={priceChartData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 9 }}
                     interval={0}
-                    angle={-30}
+                    angle={-45}
                     textAnchor="end"
-                    height={50}
+                    height={80}
                   />
                   <YAxis tickFormatter={(value) => `₩${value.toLocaleString()}`} tick={{ fontSize: 10 }} />
                   <Tooltip
@@ -777,16 +777,16 @@ export default function TestComparePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-2 sm:p-4">
-                <ResponsiveContainer width="100%" height={180} className="sm:h-[200px]">
-                  <BarChart data={leadTimeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height={240} className="sm:h-[260px]">
+                  <BarChart data={leadTimeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 10 }}
+                      tick={{ fontSize: 9 }}
                       interval={0}
-                      angle={-30}
+                      angle={-45}
                       textAnchor="end"
-                      height={50}
+                      height={80}
                     />
                     <YAxis tickFormatter={(value) => `${value}일`} tick={{ fontSize: 10 }} />
                     <Tooltip
@@ -913,8 +913,8 @@ export default function TestComparePage() {
                       <TableHead className="sticky left-0 bg-white z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
                       {products.map((product: any, index: number) => (
                         <TableHead key={product.id} className="min-w-[120px] sm:min-w-[150px] md:min-w-[180px] text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-4">
-                          <div className="flex items-center justify-between gap-0.5 sm:gap-1 md:gap-2">
-                            <span className="flex-1 truncate text-[10px] sm:text-xs md:text-sm text-center sm:text-left">{product.name}</span>
+                          <div className="flex items-start justify-between gap-0.5 sm:gap-1 md:gap-2">
+                            <span className="flex-1 text-[10px] sm:text-xs md:text-sm text-center sm:text-left break-words leading-tight">{product.name}</span>
                             <div className="flex flex-col gap-0.5 sm:gap-1">
                               <Button
                                 size="icon"

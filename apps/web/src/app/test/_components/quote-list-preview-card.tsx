@@ -47,7 +47,7 @@ export function QuoteListPreviewCard() {
   };
 
   return (
-    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <Card className="rounded-lg border border-slate-200 bg-white">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -140,7 +140,7 @@ export function QuoteListPreviewCard() {
                         </TableCell>
                         <TableCell className="text-[11px] p-2 text-right font-medium">
                           {item.lineTotal ? (
-                            <PriceDisplay price={item.lineTotal} currency={vendor?.currency || "KRW"} />
+                            <PriceDisplay price={item.lineTotal} currency="KRW" />
                           ) : (
                             "-"
                           )}
@@ -162,7 +162,7 @@ export function QuoteListPreviewCard() {
                 견적 요청 리스트 ({quoteItems.length}개)
               </span>
               <span className="font-semibold text-slate-900">
-                합계 ₩{totalAmount.toLocaleString("ko-KR")}
+                합계 {totalAmount.toLocaleString("ko-KR")}원
               </span>
             </div>
             <Link href="/test/quote">

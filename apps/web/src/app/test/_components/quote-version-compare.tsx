@@ -342,13 +342,13 @@ export function QuoteVersionCompare({ quoteId, onVersionCreated }: QuoteVersionC
                                       <div>
                                         단가:{" "}
                                         {item.v1.unitPrice
-                                          ? `₩${item.v1.unitPrice.toLocaleString()}`
+                                          ? `${item.v1.unitPrice.toLocaleString()}원`
                                           : "-"}
                                       </div>
                                       <div>
                                         합계:{" "}
                                         {item.v1.lineTotal
-                                          ? `₩${item.v1.lineTotal.toLocaleString()}`
+                                          ? `${item.v1.lineTotal.toLocaleString()}원`
                                           : "-"}
                                       </div>
                                     </div>
@@ -363,13 +363,13 @@ export function QuoteVersionCompare({ quoteId, onVersionCreated }: QuoteVersionC
                                       <div>
                                         단가:{" "}
                                         {item.v2.unitPrice
-                                          ? `₩${item.v2.unitPrice.toLocaleString()}`
+                                          ? `${item.v2.unitPrice.toLocaleString()}원`
                                           : "-"}
                                       </div>
                                       <div>
                                         합계:{" "}
                                         {item.v2.lineTotal
-                                          ? `₩${item.v2.lineTotal.toLocaleString()}`
+                                          ? `${item.v2.lineTotal.toLocaleString()}원`
                                           : "-"}
                                       </div>
                                     </div>

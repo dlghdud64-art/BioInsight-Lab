@@ -179,7 +179,7 @@ export function SearchPanel() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor="min-price" className="text-[10px] text-slate-600">
-                      최소 가격 (₩)
+                      최소 가격 ()
                     </Label>
                     <Input
                       id="min-price"
@@ -192,7 +192,7 @@ export function SearchPanel() {
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="max-price" className="text-[10px] text-slate-600">
-                      최대 가격 (₩)
+                      최대 가격 ()
                     </Label>
                     <Input
                       id="max-price"

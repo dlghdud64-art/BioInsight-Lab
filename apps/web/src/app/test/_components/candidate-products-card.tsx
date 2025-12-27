@@ -61,7 +61,7 @@ export function CandidateProductsCard({
                         </Badge>
                       )}
                       {minPrice && (
-                        <span className="text-muted-foreground">₩{minPrice.toLocaleString()}</span>
+                        <span className="text-muted-foreground">{minPrice.toLocaleString()}원</span>
                       )}
                     </div>
                   </div>
