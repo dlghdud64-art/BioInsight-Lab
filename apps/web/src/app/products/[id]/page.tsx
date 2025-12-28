@@ -13,14 +13,14 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
 import { ShoppingCart, GitCompare as Compare, ExternalLink, Heart, ThumbsUp, ThumbsDown, Languages, Loader2, FileText, Copy, Check, ClipboardCopy, Shield, AlertTriangle, Sparkles, Package, Save, Eye, Upload, X, Pencil } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 
-const ReviewSection = dynamic(() => import("@/components/products/review-section").then((mod) => ({ default: mod.ReviewSection })), {
+const ReviewSection = dynamicImport(() => import("@/components/products/review-section").then((mod) => ({ default: mod.ReviewSection })), {
   loading: () => <div className="h-32 w-full bg-slate-100 rounded-md animate-pulse" />,
   ssr: false,
 });
 
-const PersonalizedRecommendations = dynamic(() => import("@/components/products/personalized-recommendations").then((mod) => ({ default: mod.PersonalizedRecommendations })), {
+const PersonalizedRecommendations = dynamicImport(() => import("@/components/products/personalized-recommendations").then((mod) => ({ default: mod.PersonalizedRecommendations })), {
   loading: () => <div className="h-32 w-full bg-slate-100 rounded-md animate-pulse" />,
   ssr: false,
 });
