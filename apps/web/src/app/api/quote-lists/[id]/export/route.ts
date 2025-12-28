@@ -67,21 +67,22 @@ export async function GET(
     const dateStr = format(new Date(), "yyyyMMdd");
     const baseFilename = `bioinsight_submit_${id}_${dateStr}`;
 
-    // 품목 데이터 변환
-    const exportItems = quoteList.items.map((item) => ({
+    // 품목 데이터 변환 (QuoteListItem 모델 필드에 맞춤)
+    type QuoteListItemType = (typeof quoteList.items)[number];
+    const exportItems = quoteList.items.map((item: QuoteListItemType) => ({
       id: item.id,
-      productName: item.productName,
-      catalogNumber: item.catalogNumber,
+      productName: item.name || item.product?.name || "",
+      catalogNumber: item.catalogNumber || item.product?.catalogNumber,
       vendor: item.product?.vendors?.[0]?.vendor?.name,
-      specification: item.specification,
+      specification: item.product?.description,
       unit: item.unit,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
-      leadTime: item.leadTime,
+      leadTime: null, // QuoteListItem doesn't have leadTime field
       notes: item.notes,
-      selectedVendor: item.selectedVendor,
-      selectedPrice: item.selectedPrice,
-      selectedLeadTime: item.selectedLeadTime,
+      selectedVendor: null, // Selection fields not in QuoteListItem
+      selectedPrice: null,
+      selectedLeadTime: null,
     }));
 
     const exportData = {
@@ -127,7 +128,8 @@ export async function GET(
           "Content-Disposition",
           `attachment; filename="${baseFilename}_pack.zip"`
         );
-        return new NextResponse(zipBuffer, { headers });
+        // Convert Buffer to Uint8Array for NextResponse compatibility
+        return new NextResponse(new Uint8Array(zipBuffer), { headers });
       }
 
       default:

@@ -179,8 +179,8 @@ function BillingPageContent() {
             {organizations.length > 1 && (
               <div className="mb-4">
                 <WorkspaceSwitcher
-                  value={currentOrg.id}
-                  onValueChange={(id) => {
+                  currentOrganizationId={currentOrg.id}
+                  onOrganizationChange={(id: string) => {
                     setSelectedOrgId(id);
                     router.push(`/settings/billing?org=${id}`);
                   }}

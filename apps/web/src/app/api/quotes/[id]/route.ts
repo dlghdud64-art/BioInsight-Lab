@@ -143,7 +143,7 @@ export async function PATCH(
             });
 
             if (user?.email && purchaseResult.purchaseData) {
-              const totalAmount = purchaseResult.purchaseData.reduce((sum, p) => sum + p.amount, 0);
+              const totalAmount = purchaseResult.purchaseData.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0);
               const currency = purchaseResult.purchaseData[0]?.currency || "KRW";
 
               const emailTemplate = generatePurchaseCompleteEmail({

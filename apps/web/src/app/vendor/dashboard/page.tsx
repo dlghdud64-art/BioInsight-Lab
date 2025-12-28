@@ -15,13 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VendorSidebar } from "../_components/vendor-sidebar";
-import { 
-  TrendingUp, 
-  Clock, 
-  CheckCircle, 
+import {
+  TrendingUp,
+  Clock,
+  CheckCircle,
   DollarSign,
   Loader2,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";

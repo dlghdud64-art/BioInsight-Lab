@@ -45,7 +45,7 @@ function SearchContent() {
   const availableGrades: string[] = [];
 
   const filterProps = {
-    categories: PRODUCT_CATEGORIES,
+    categories: Object.keys(PRODUCT_CATEGORIES),
     selectedCategories,
     onCategoriesChange: setSelectedCategories,
     inStockOnly,

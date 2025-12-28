@@ -4,6 +4,136 @@ import { format } from "date-fns";
 // UTF-8 BOM (엑셀 한글 깨짐 방지)
 const UTF8_BOM = "\uFEFF";
 
+// ===============================
+// Share 페이지용 Quote Export Types
+// ===============================
+
+export interface QuoteExportItem {
+  id: string;
+  lineNumber?: number | null;
+  name?: string | null;
+  brand?: string | null;
+  catalogNumber?: string | null;
+  unit?: string | null;
+  quantity: number;
+  unitPrice?: number | null;
+  lineTotal?: number | null;
+  currency?: string | null;
+  notes?: string | null;
+}
+
+export interface QuoteExportData {
+  title: string;
+  description?: string | null;
+  status: string;
+  currency: string;
+  totalAmount?: number | null;
+  items: QuoteExportItem[];
+  createdAt: string;
+}
+
+/**
+ * Quote를 TSV로 내보내기 (클라이언트용 - 다운로드 트리거)
+ */
+export function exportQuoteAsTSV(data: QuoteExportData): void {
+  const headers = [
+    "No",
+    "제품명",
+    "브랜드",
+    "CatNo",
+    "단위",
+    "수량",
+    "단가",
+    "금액",
+    "비고",
+  ];
+
+  const rows = data.items.map((item, index) => {
+    const unitPrice = item.unitPrice || 0;
+    const lineTotal = item.lineTotal || item.quantity * unitPrice;
+
+    return [
+      String(index + 1),
+      item.name || "",
+      item.brand || "",
+      item.catalogNumber || "",
+      item.unit || "",
+      String(item.quantity),
+      unitPrice > 0 ? String(unitPrice) : "",
+      lineTotal > 0 ? String(lineTotal) : "",
+      item.notes || "",
+    ];
+  });
+
+  const tsvContent = UTF8_BOM + [headers, ...rows]
+    .map((row) => row.join("\t"))
+    .join("\n");
+
+  // 다운로드 트리거
+  const blob = new Blob([tsvContent], { type: "text/tab-separated-values;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${data.title.replace(/[^a-zA-Z0-9가-힣]/g, "_")}_${format(new Date(), "yyyyMMdd")}.tsv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Quote를 CSV로 내보내기 (클라이언트용 - 다운로드 트리거)
+ */
+export function exportQuoteAsCSV(data: QuoteExportData): void {
+  const headers = [
+    "No",
+    "제품명",
+    "브랜드",
+    "CatNo",
+    "단위",
+    "수량",
+    "단가",
+    "금액",
+    "비고",
+  ];
+
+  const rows = data.items.map((item, index) => {
+    const unitPrice = item.unitPrice || 0;
+    const lineTotal = item.lineTotal || item.quantity * unitPrice;
+
+    return [
+      String(index + 1),
+      item.name || "",
+      item.brand || "",
+      item.catalogNumber || "",
+      item.unit || "",
+      String(item.quantity),
+      unitPrice > 0 ? String(unitPrice) : "",
+      lineTotal > 0 ? String(lineTotal) : "",
+      item.notes || "",
+    ];
+  });
+
+  const csvContent = UTF8_BOM + [headers, ...rows]
+    .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  // 다운로드 트리거
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${data.title.replace(/[^a-zA-Z0-9가-힣]/g, "_")}_${format(new Date(), "yyyyMMdd")}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ===============================
+// QuoteList Export Types (기존)
+// ===============================
+
 interface QuoteListItem {
   id: string;
   productName: string;

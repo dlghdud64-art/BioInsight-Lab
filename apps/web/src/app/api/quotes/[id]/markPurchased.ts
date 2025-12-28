@@ -1,6 +1,12 @@
 import { db } from "@/lib/db";
 import { createLogger } from "@/lib/logger";
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+// Transaction client type for Prisma interactive transactions
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 const logger = createLogger("quotes/markPurchased");
 
@@ -21,7 +27,7 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey }: MarkPurchasedP
 
   // Prisma Interactive Transaction으로 Race Condition 방지
   return await db.$transaction(
-    async (tx) => {
+    async (tx: TransactionClient) => {
       // Check idempotency: prevent duplicate purchase creation (트랜잭션 내에서 체크)
       const existingPurchases = await tx.purchaseRecord.findFirst({
         where: { quoteId },

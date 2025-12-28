@@ -21,7 +21,8 @@ interface UpgradeModalProps {
   onUpgrade?: () => void;
 }
 
-const PLAN_FEATURES = {
+const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
+  [SubscriptionPlan.FREE]: [],
   [SubscriptionPlan.TEAM]: [
     "멤버 20명까지",
     "월 100개 견적 요청",
