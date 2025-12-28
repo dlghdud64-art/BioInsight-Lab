@@ -1,29 +1,126 @@
 ﻿"use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchResultList from "./SearchResultList";
 import { SearchInput } from "@/components/SearchInput";
+import { SearchFilters } from "@/components/search/search-filters";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { Search } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
 
+  // 필터 상태
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedPurities, setSelectedPurities] = useState<string[]>([]);
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+
+  // TODO: 실제 데이터에서 추출
+  const availableBrands = [
+    "Thermo Fisher Scientific",
+    "Sigma-Aldrich",
+    "Corning",
+    "BD Biosciences",
+    "Bio-Rad",
+    "Invitrogen",
+    "Millipore",
+    "Promega",
+  ];
+  const availablePurities: string[] = [];
+  const availableGrades: string[] = [];
+
+  const filterProps = {
+    categories: PRODUCT_CATEGORIES,
+    selectedCategories,
+    onCategoriesChange: setSelectedCategories,
+    inStockOnly,
+    onInStockOnlyChange: setInStockOnly,
+    brands: availableBrands,
+    selectedBrands,
+    onBrandsChange: setSelectedBrands,
+    purities: availablePurities,
+    selectedPurities,
+    onPuritiesChange: setSelectedPurities,
+    grades: availableGrades,
+    selectedGrades,
+    onGradesChange: setSelectedGrades,
+  };
+
   return (
     <>
       {q && (
         <>
-          <h2 className="text-sm md:text-lg font-semibold mb-3 md:mb-4">검색 결과</h2>
-          <SearchResultList query={q} />
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-sm md:text-lg font-semibold">검색 결과</h2>
+            {/* 모바일 필터 버튼 */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="md:hidden">
+                  <Filter className="h-4 w-4 mr-2" />
+                  필터
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle>필터</SheetTitle>
+                  <SheetDescription>
+                    검색 결과를 필터링하세요.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6">
+                  <SearchFilters {...filterProps} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <div className="flex gap-6">
+            {/* 데스크탑 필터 사이드바 */}
+            <aside className="hidden md:block w-64 flex-shrink-0">
+              <div className="sticky top-20 bg-white border border-slate-200 shadow-sm rounded-lg p-4">
+                <SearchFilters {...filterProps} />
+              </div>
+            </aside>
+
+            {/* 검색 결과 */}
+            <div className="flex-1 min-w-0">
+              <SearchResultList
+                query={q}
+                filters={{
+                  categories: selectedCategories,
+                  inStockOnly,
+                  brands: selectedBrands,
+                  purities: selectedPurities,
+                  grades: selectedGrades,
+                }}
+              />
+            </div>
+          </div>
         </>
       )}
       {!q && (
         <div className="text-center py-8 md:py-12 text-slate-500">
           <p className="mb-2 text-xs md:text-sm">검색어를 입력하세요.</p>
-          <p className="text-[10px] md:text-sm px-2">예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
+          <p className="text-[10px] md:text-sm px-2">
+            예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비
+          </p>
+          <p className="text-[10px] md:text-xs px-2 mt-2 text-slate-400">
+            CAS 번호 형식(예: 67-64-1)으로도 검색할 수 있습니다.
+          </p>
         </div>
       )}
     </>
@@ -46,7 +143,7 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader
             title="제품 검색"
-            description="제품명, 벤더, 카테고리를 입력하여 원하는 제품을 찾아보세요."
+            description="제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 원하는 제품을 찾아보세요."
             icon={Search}
             iconColor="text-blue-600"
           />
