@@ -77,3 +77,4 @@ DIRECT_URL="postgresql://postgres.xhidynwpkqeaojuudhsw:Ghdud902490@aws-1-ap-nort
 
 
 
+

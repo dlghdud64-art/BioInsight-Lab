@@ -8,15 +8,10 @@ import Stripe from "stripe";
 
 const logger = createLogger("api/billing/portal");
 
-// Initialize Stripe lazily to avoid build-time errors
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-15.clover" as any,
-  });
-}
+// Initialize Stripe - use dummy key during build time
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
+  apiVersion: "2025-12-15.clover" as any,
+});
 
 const portalSchema = z.object({
   workspaceId: z.string().min(1),
@@ -77,8 +72,6 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       customerId: workspace.stripeCustomerId,
     });
-
-    const stripe = getStripe();
 
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({

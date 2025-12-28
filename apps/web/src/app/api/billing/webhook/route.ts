@@ -10,15 +10,10 @@ interface StripeSubscriptionExtended extends Stripe.Subscription {
   current_period_end: number;
 }
 
-// Initialize Stripe lazily to avoid build-time errors
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is not configured");
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-15.clover" as any,
-  });
-}
+// Initialize Stripe - use dummy key during build time
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
+  apiVersion: "2025-12-15.clover" as any,
+});
 
 // Force Node.js runtime for raw body access
 export const runtime = "nodejs";
@@ -153,7 +148,6 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
   // Update workspace with subscription info
@@ -188,7 +182,6 @@ async function handleInvoicePaymentSucceeded(
     return; // Not a subscription invoice
   }
 
-  const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const workspaceId = subscription.metadata.workspaceId;
 
@@ -225,7 +218,6 @@ async function handleInvoicePaymentFailed(
     return;
   }
 
-  const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const workspaceId = subscription.metadata.workspaceId;
 
@@ -267,7 +259,6 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook signature
     let event: Stripe.Event;
-    const stripe = getStripe();
     try {
       event = stripe.webhooks.constructEvent(
         body,
