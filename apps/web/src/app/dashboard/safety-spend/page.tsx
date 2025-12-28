@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +63,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ToastAction } from "@/components/ui/toast";
 import { useSearchParams } from "next/navigation";
 
-export default function SafetySpendPage() {
+function SafetySpendPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -789,6 +789,14 @@ export default function SafetySpendPage() {
         onConfirm={confirmMatchAction}
       />
     </div>
+  );
+}
+
+export default function SafetySpendPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SafetySpendPageContent />
+    </Suspense>
   );
 }
 

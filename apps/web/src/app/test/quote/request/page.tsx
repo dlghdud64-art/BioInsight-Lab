@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from "react";
 import { QuoteRequestPanel, QuoteItemsSummaryPanel } from "../../_components/quote-panel";
 import { QuoteRepliesPanel } from "../../_components/quote-replies-panel";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-export default function QuoteRequestPage() {
+function QuoteRequestPageContent() {
   return (
     <div className="space-y-4 md:space-y-6 px-3 sm:px-4">
       {/* 뒤로가기 버튼 */}
@@ -51,5 +52,13 @@ export default function QuoteRequestPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function QuoteRequestPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <QuoteRequestPageContent />
+    </Suspense>
   );
 }

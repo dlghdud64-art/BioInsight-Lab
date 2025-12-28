@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +62,7 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { getRuleDescription, type ComplianceLinkRules, type ComplianceLink } from "@/lib/compliance-links";
 import { useSearchParams } from "next/navigation";
 
-export default function ComplianceLinksPage() {
+function ComplianceLinksPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -768,6 +768,14 @@ export default function ComplianceLinksPage() {
         onConfirm={confirmDelete}
       />
     </div>
+  );
+}
+
+export default function ComplianceLinksPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ComplianceLinksPageContent />
+    </Suspense>
   );
 }
 

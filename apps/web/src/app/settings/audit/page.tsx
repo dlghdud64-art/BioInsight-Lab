@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,7 @@ import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { OrganizationRole, AuditEventType } from "@prisma/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function AuditLogsPage() {
+function AuditLogsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -500,6 +500,14 @@ export default function AuditLogsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuditLogsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuditLogsPageContent />
+    </Suspense>
   );
 }
 

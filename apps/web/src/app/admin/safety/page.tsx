@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,7 +44,7 @@ import { OrganizationRole } from "@prisma/client";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function SafetyAdminPage() {
+function SafetyAdminPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -571,6 +571,11 @@ function ExtractionResultSheet({
   );
 }
 
-
-
+export default function SafetyAdminPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SafetyAdminPageContent />
+    </Suspense>
+  );
+}
 

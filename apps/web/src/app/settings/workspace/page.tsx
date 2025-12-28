@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function WorkspaceSettingsPage() {
+function WorkspaceSettingsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -768,6 +768,14 @@ export default function WorkspaceSettingsPage() {
         onConfirm={confirmAction}
       />
     </div>
+  );
+}
+
+export default function WorkspaceSettingsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WorkspaceSettingsPageContent />
+    </Suspense>
   );
 }
 

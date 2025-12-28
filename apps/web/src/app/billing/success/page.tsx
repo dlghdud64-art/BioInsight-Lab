@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +15,7 @@ import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
 import { SubscriptionPlan } from "@/lib/plans";
 
-export default function BillingSuccessPage() {
+function BillingSuccessPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,7 +175,11 @@ export default function BillingSuccessPage() {
   );
 }
 
-
-
-
+export default function BillingSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BillingSuccessPageContent />
+    </Suspense>
+  );
+}
 
