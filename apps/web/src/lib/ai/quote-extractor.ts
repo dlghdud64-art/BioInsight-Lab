@@ -35,19 +35,29 @@ export interface QuoteExtractionResult {
  * 견적서 PDF에서 제품 정보를 추출
  * @param pdfBuffer PDF 파일 버퍼
  * @returns 추출된 견적서 정보
+ *
+ * ZDR (Zero Data Retention) 준수:
+ * - 모든 텍스트 변수는 함수 종료 시 명시적으로 null 처리
+ * - 에러 로깅 시 민감 데이터 제외
  */
 export async function extractQuoteFromPDF(pdfBuffer: Buffer): Promise<QuoteExtractionResult> {
-  // PDF에서 텍스트 추출
-  const pdfText = await extractTextFromPDF(pdfBuffer);
-  
-  // 텍스트 정리 (너무 긴 경우 앞부분만 사용)
-  let cleanedText = pdfText;
-  if (cleanedText.length > 15000) {
-    cleanedText = cleanedText.substring(0, 15000) + "...";
-  }
+  // ZDR: 민감 데이터를 담는 변수들 (함수 종료 시 null 처리)
+  let pdfText: string | null = null;
+  let cleanedText: string | null = null;
+  let userPrompt: string | null = null;
 
-  // GPT로 견적서 정보 추출
-  const systemPrompt = `You are an expert at extracting information from quote/quotation PDFs. 
+  try {
+    // PDF에서 텍스트 추출
+    pdfText = await extractTextFromPDF(pdfBuffer);
+
+    // 텍스트 정리 (너무 긴 경우 앞부분만 사용)
+    cleanedText = pdfText;
+    if (cleanedText.length > 15000) {
+      cleanedText = cleanedText.substring(0, 15000) + "...";
+    }
+
+    // GPT로 견적서 정보 추출
+    const systemPrompt = `You are an expert at extracting information from quote/quotation PDFs.
 Extract the following information from the provided text:
 - Product items (product name, catalog number, quantity, unit price, total price, lead time, MOQ, notes)
 - Vendor information (name, email, phone)
@@ -80,9 +90,8 @@ Return the result as a JSON object with this structure:
 
 If information is not found, use null or omit the field. Be accurate and only extract information that is clearly present in the text.`;
 
-  const userPrompt = `Extract quote information from this PDF text:\n\n${cleanedText}`;
+    userPrompt = `Extract quote information from this PDF text:\n\n${cleanedText}`;
 
-  try {
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
     }
@@ -118,7 +127,7 @@ If information is not found, use null or omit the field. Be accurate and only ex
     }
 
     const extracted = JSON.parse(responseText) as QuoteExtractionResult;
-    
+
     // 기본값 설정
     if (!extracted.currency) {
       extracted.currency = "KRW";
@@ -129,8 +138,13 @@ If information is not found, use null or omit the field. Be accurate and only ex
 
     return extracted;
   } catch (error: any) {
-    console.error("Error extracting quote from PDF:", error);
-    throw new Error(`견적서 정보 추출에 실패했습니다: ${error.message}`);
+    // ZDR: 에러 로깅 시 민감 데이터 제외 (타임스탬프만 기록)
+    console.error("[Quote Extractor] Extraction failed at:", new Date().toISOString());
+    throw new Error("견적서 정보 추출에 실패했습니다.");
+  } finally {
+    // ZDR: 민감 데이터 명시적 null 처리 (메모리 휘발성 보장)
+    pdfText = null;
+    cleanedText = null;
+    userPrompt = null;
   }
 }
-

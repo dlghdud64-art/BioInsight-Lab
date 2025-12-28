@@ -79,9 +79,36 @@ export async function PATCH(
       );
     }
 
+    // OrganizationRole enum 유효성 검증
+    const validRoles = Object.values(OrganizationRole);
+    if (!validRoles.includes(role as OrganizationRole)) {
+      return NextResponse.json(
+        { error: `Invalid role. Valid roles: ${validRoles.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    // 보안: 대상 멤버가 해당 조직에 속하는지 검증 (Cross-Organization Attack 방지)
+    const targetMember = await db.organizationMember.findFirst({
+      where: {
+        id: memberId,
+        organizationId: id, // 조직 ID 검증 추가
+      },
+    });
+
+    if (!targetMember) {
+      return NextResponse.json(
+        { error: "Member not found in this organization" },
+        { status: 404 }
+      );
+    }
+
     // 역할 변경
     const updatedMember = await db.organizationMember.update({
-      where: { id: memberId },
+      where: {
+        id: memberId,
+        organizationId: id, // 조직 ID 추가 검증
+      },
       data: { role: role as OrganizationRole },
       include: {
         user: {
@@ -142,12 +169,23 @@ export async function DELETE(
       );
     }
 
-    // 자기 자신은 삭제 불가
-    const memberToDelete = await db.organizationMember.findUnique({
-      where: { id: memberId },
+    // 보안: 대상 멤버가 해당 조직에 속하는지 검증 (Cross-Organization Attack 방지)
+    const memberToDelete = await db.organizationMember.findFirst({
+      where: {
+        id: memberId,
+        organizationId: id, // 조직 ID 검증 추가
+      },
     });
 
-    if (memberToDelete?.userId === session.user.id) {
+    if (!memberToDelete) {
+      return NextResponse.json(
+        { error: "Member not found in this organization" },
+        { status: 404 }
+      );
+    }
+
+    // 자기 자신은 삭제 불가
+    if (memberToDelete.userId === session.user.id) {
       return NextResponse.json(
         { error: "Cannot remove yourself" },
         { status: 400 }
@@ -156,7 +194,10 @@ export async function DELETE(
 
     // 멤버 삭제
     await db.organizationMember.delete({
-      where: { id: memberId },
+      where: {
+        id: memberId,
+        organizationId: id, // 조직 ID 추가 검증
+      },
     });
 
     return NextResponse.json({ success: true });

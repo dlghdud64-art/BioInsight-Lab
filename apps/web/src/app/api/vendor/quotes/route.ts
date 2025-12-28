@@ -29,43 +29,17 @@ export async function GET(request: NextRequest) {
     });
 
     if (!vendor) {
-      // 벤더가 없으면 모든 견적 요청 반환 (개발용)
-      // 실제 운영에서는 벤더 등록 후 사용 가능하도록 해야 함
-      const quotes = await db.quote.findMany({
-        include: {
-          items: {
-            include: {
-              product: {
-                include: {
-                  vendors: {
-                    include: {
-                      vendor: true,
-                    },
-                    take: 1,
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            include: {
-              vendor: true,
-            },
-          },
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
-          organization: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 50,
+      // 보안 강화: 등록되지 않은 벤더는 빈 결과 반환
+      // 개발 환경에서만 경고 로그 출력
+      if (process.env.NODE_ENV === "development") {
+        console.warn(
+          `[Vendor Portal] Unregistered vendor attempted access: ${user.email}`
+        );
+      }
+      return NextResponse.json({
+        quotes: [],
+        message: "벤더 등록이 필요합니다. 관리자에게 문의하세요.",
       });
-      return NextResponse.json({ quotes });
     }
 
     // 벤더 ID로 필터링: 견적 요청의 품목 중 이 벤더가 공급하는 제품이 포함된 견적만 조회

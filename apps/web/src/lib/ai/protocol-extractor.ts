@@ -50,40 +50,51 @@ export interface ProtocolExtractionResult {
 
 /**
  * PDF에서 실험 프로토콜을 추출하고 필요한 시약을 GPT로 분석
+ *
+ * ZDR (Zero Data Retention) 준수:
+ * - 모든 텍스트 변수는 함수 종료 시 명시적으로 null 처리
+ * - 에러 로깅 시 민감 데이터 제외
  */
 export async function extractReagentsFromProtocol(
   pdfBuffer: Buffer
 ): Promise<ProtocolExtractionResult> {
-  // PDF에서 텍스트 추출
-  const pdfText = await extractTextFromPDF(pdfBuffer);
+  // ZDR: 민감 데이터를 담는 변수들 (함수 종료 시 null 처리)
+  let pdfText: string | null = null;
+  let cleanedText: string | null = null;
+  let truncatedText: string | null = null;
+  let prompt: string | null = null;
 
-  // 텍스트 전처리: 표 구조 보존하면서 정리
-  // 탭 문자는 표 구분자로 사용되므로 보존
-  let cleanedText = pdfText;
-  
-  // 연속된 공백을 하나로 (단, 탭은 보존)
-  cleanedText = cleanedText.replace(/[ \t]+/g, (match) => {
-    if (match.includes('\t')) {
-      return '\t';
-    }
-    return ' ';
-  });
-  
-  // 줄바꿈 정리
-  cleanedText = cleanedText.replace(/\r\n/g, '\n');
-  cleanedText = cleanedText.replace(/\r/g, '\n');
-  
-  // 연속된 줄바꿈 정리 (표 구조는 보존)
-  cleanedText = cleanedText.replace(/\n{4,}/g, '\n\n\n');
-  
-  cleanedText = cleanedText.trim();
+  try {
+    // PDF에서 텍스트 추출
+    pdfText = await extractTextFromPDF(pdfBuffer);
 
-  // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
-  // 표나 리스트가 포함된 경우 더 많은 텍스트 필요
-  const truncatedText = cleanedText.slice(0, 15000); // 처음 15,000자로 증가
+    // 텍스트 전처리: 표 구조 보존하면서 정리
+    // 탭 문자는 표 구분자로 사용되므로 보존
+    cleanedText = pdfText;
 
-  // GPT를 사용하여 시약 및 실험 조건 추출
-  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
+    // 연속된 공백을 하나로 (단, 탭은 보존)
+    cleanedText = cleanedText.replace(/[ \t]+/g, (match) => {
+      if (match.includes("\t")) {
+        return "\t";
+      }
+      return " ";
+    });
+
+    // 줄바꿈 정리
+    cleanedText = cleanedText.replace(/\r\n/g, "\n");
+    cleanedText = cleanedText.replace(/\r/g, "\n");
+
+    // 연속된 줄바꿈 정리 (표 구조는 보존)
+    cleanedText = cleanedText.replace(/\n{4,}/g, "\n\n\n");
+
+    cleanedText = cleanedText.trim();
+
+    // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
+    // 표나 리스트가 포함된 경우 더 많은 텍스트 필요
+    truncatedText = cleanedText.slice(0, 15000); // 처음 15,000자로 증가
+
+    // GPT를 사용하여 시약 및 실험 조건 추출
+    prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
 
 중요 지침:
 1. 표(table)나 리스트 형식으로 나열된 시약도 모두 추출하세요.
@@ -175,11 +186,10 @@ ${truncatedText}
 - 시간 단위 변환: 1시간=60분, 1일=1440분
 - 농도 비율 표현 (예: "1:1000")은 value에 분자값, unit에 "ratio" 저장`;
 
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
-  }
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
+    }
 
-  try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -230,7 +240,14 @@ ${truncatedText}
 
     return result;
   } catch (error) {
-    console.error("Error extracting reagents from protocol:", error);
+    // ZDR: 에러 로깅 시 민감 데이터 제외 (타임스탬프만 기록)
+    console.error("[Protocol Extractor] Extraction failed at:", new Date().toISOString());
     throw new Error("프로토콜 분석에 실패했습니다.");
+  } finally {
+    // ZDR: 민감 데이터 명시적 null 처리 (메모리 휘발성 보장)
+    pdfText = null;
+    cleanedText = null;
+    truncatedText = null;
+    prompt = null;
   }
 }

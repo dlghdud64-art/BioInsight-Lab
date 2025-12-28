@@ -7,6 +7,10 @@ import { parseFileBuffer, transformPurchaseRow } from "@/lib/file-parser";
 
 const logger = createLogger("purchases/import-file");
 
+// 파일 업로드 제한 상수 (DoS 방지)
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (10MB에서 축소)
+const MAX_ROWS = 10000; // 최대 행 수 제한
+
 // Zod schema for purchase row validation (same as JSON import)
 const PurchaseRowSchema = z.object({
   purchasedAt: z.string().min(1, "purchasedAt is required"),
@@ -76,7 +80,14 @@ export async function POST(request: NextRequest) {
       throw new Error("Invalid file type. Only CSV and XLSX files are supported.");
     }
 
-    logger.info(`Processing file import: ${filename} for scopeKey: ${scopeKey}`);
+    // 파일 크기 제한 (DoS 방지)
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(
+        `File size exceeds limit. Maximum allowed: ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      );
+    }
+
+    logger.info(`Processing file import: ${filename} (${file.size} bytes) for scopeKey: ${scopeKey}`);
 
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -91,6 +102,13 @@ export async function POST(request: NextRequest) {
     const { rows } = parseResult;
     if (rows.length === 0) {
       throw new Error("File contains no data rows");
+    }
+
+    // 행 수 제한 (DoS 방지)
+    if (rows.length > MAX_ROWS) {
+      throw new Error(
+        `Too many rows. Maximum allowed: ${MAX_ROWS}. Your file has ${rows.length} rows.`
+      );
     }
 
     // Create import job

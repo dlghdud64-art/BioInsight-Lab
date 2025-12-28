@@ -4,29 +4,47 @@ export type { ExtractedReagent, ProtocolExtractionResult, ExperimentCondition } 
 
 /**
  * 텍스트에서 실험 프로토콜을 추출하고 필요한 시약을 GPT로 분석
+ *
+ * ZDR (Zero Data Retention) 준수:
+ * - 모든 텍스트 변수는 함수 종료 시 명시적으로 null 처리
+ * - 에러 로깅 시 민감 데이터 제외
  */
 export async function extractReagentsFromText(
   text: string
 ): Promise<ProtocolExtractionResult> {
-  // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
-  const truncatedText = text.slice(0, 10000); // 처음 10,000자만 사용
+  // ZDR: 민감 데이터 변수
+  let truncatedText: string | null = null;
 
-  return extractReagentsFromProtocolText(truncatedText);
+  try {
+    // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
+    truncatedText = text.slice(0, 10000); // 처음 10,000자만 사용
+
+    return await extractReagentsFromProtocolText(truncatedText);
+  } finally {
+    // ZDR: 민감 데이터 명시적 null 처리
+    truncatedText = null;
+  }
 }
 
 /**
  * 텍스트에서 직접 시약 추출 (PDF 파싱 없이)
+ *
+ * ZDR (Zero Data Retention) 준수
  */
 async function extractReagentsFromProtocolText(
   text: string
 ): Promise<ProtocolExtractionResult> {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  // ZDR: 민감 데이터를 담는 변수들
+  let prompt: string | null = null;
 
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
-  }
+  try {
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-  const prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
+    }
+
+    prompt = `다음은 실험 프로토콜 문서입니다. 이 프로토콜에서 필요한 시약, 기구, 장비와 실험 조건(온도, 시간, 농도 등)을 추출해주세요.
 
 프로토콜 내용:
 ${text}
@@ -88,7 +106,6 @@ ${text}
 시약명은 정확하게 추출하고, 가능하면 제품명이나 키트명을 포함해주세요.
 실험 조건은 프로토콜에서 명시된 모든 온도, 시간, 농도, pH 등을 추출해주세요.`;
 
-  try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -138,7 +155,11 @@ ${text}
 
     return result;
   } catch (error) {
-    console.error("Error extracting reagents from text:", error);
+    // ZDR: 에러 로깅 시 민감 데이터 제외 (타임스탬프만 기록)
+    console.error("[Text Extractor] Extraction failed at:", new Date().toISOString());
     throw new Error("프로토콜 분석에 실패했습니다.");
+  } finally {
+    // ZDR: 민감 데이터 명시적 null 처리 (메모리 휘발성 보장)
+    prompt = null;
   }
 }

@@ -1,4 +1,8 @@
 import { db } from "@/lib/db";
+import { UserRole } from "@prisma/client";
+
+// 유효한 UserRole 값 목록 (Role Escalation 방지)
+const VALID_USER_ROLES = Object.values(UserRole);
 
 // 관리자 통계 조회
 export async function getAdminStats() {
@@ -149,10 +153,23 @@ export async function createProduct(data: {
   });
 }
 
-// 사용자 역할 업데이트
+/**
+ * 사용자 역할 업데이트
+ *
+ * Role Escalation 방지:
+ * - UserRole enum 유효성 검증
+ * - 유효하지 않은 role 값 거부
+ */
 export async function updateUserRole(userId: string, role: string) {
+  // Role Escalation 방지: Enum 유효성 검증
+  if (!VALID_USER_ROLES.includes(role as UserRole)) {
+    throw new Error(
+      `Invalid role: ${role}. Valid roles are: ${VALID_USER_ROLES.join(", ")}`
+    );
+  }
+
   return await db.user.update({
     where: { id: userId },
-    data: { role },
+    data: { role: role as UserRole },
   });
 }
