@@ -1,50 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractReagentsFromProtocol } from "@/lib/ai/protocol-extractor";
+import { z } from "zod";
 
-// pdf-parse는 Node.js 네이티브 모듈이므로 Node.js 런타임 필요
-export const runtime = "nodejs";
+const extractSchema = z.object({
+  text: z.string().min(1),
+});
 
+/**
+ * POST /api/protocol/extract
+ * Extract items from protocol text
+ */
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const body = await request.json();
+    const { text } = extractSchema.parse(body);
 
-    if (!file) {
-      return NextResponse.json({ error: "파일이 없습니다." }, { status: 400 });
-    }
+    console.log("Extracting protocol text, length:", text.length);
 
-    if (file.type !== "application/pdf") {
-      return NextResponse.json({ error: "PDF 파일만 업로드 가능합니다." }, { status: 400 });
-    }
+    // TODO: Implement actual AI extraction logic
+    // Mock data for now
+    const mockResult = {
+      items: [
+        {
+          id: "ext-1",
+          name: "PBS Buffer",
+          category: "시약",
+          quantity: "5",
+          unit: "ml",
+          confidence: "high" as const,
+          evidence: "Add 5ml of PBS buffer to the cell culture.",
+        },
+        {
+          id: "ext-2",
+          name: "Trypsin-EDTA Solution",
+          category: "시약",
+          quantity: "2",
+          unit: "ml",
+          confidence: "high" as const,
+          evidence: "Add trypsin-EDTA solution and incubate.",
+        },
+        {
+          id: "ext-3",
+          name: "Cell Culture Plate",
+          category: "소모품",
+          confidence: "medium" as const,
+          evidence: "Transfer cells to culture plate.",
+        },
+        {
+          id: "ext-4",
+          name: "Unknown Reagent",
+          category: "시약",
+          confidence: "low" as const,
+          evidence: "Add reagent X (unclear specification).",
+        },
+      ],
+      summary: "Cell culture protocol requiring PBS buffer, trypsin-EDTA, and culture plates.",
+    };
 
-    // 파일 크기 제한 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 400 });
-    }
+    // Simulate processing time
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // File을 Buffer로 변환
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // 프로토콜에서 시약 추출
-    const result = await extractReagentsFromProtocol(buffer);
-
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("Error processing protocol:", error);
-    const errorMessage = error?.message || "프로토콜 처리에 실패했습니다.";
-    console.error("Error details:", {
-      message: errorMessage,
-      stack: error?.stack,
-      name: error?.name,
-    });
+    return NextResponse.json(mockResult);
+  } catch (error) {
+    console.error("Extract error:", error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
-      },
+      { error: "Failed to extract protocol" },
       { status: 500 }
     );
   }
 }
-
