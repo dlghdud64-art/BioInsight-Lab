@@ -11,10 +11,12 @@ export interface PlanLimits {
   maxQuotesPerMonth: number | null;
   maxSharedLinks: number | null;
   features: {
+    exportPack: boolean;
     advancedReports: boolean;
     budgetManagement: boolean;
     autoReorder: boolean;
     vendorPortal: boolean;
+    inboundEmail: boolean;
     sso: boolean;
     onPremise: boolean;
     prioritySupport: boolean;
@@ -27,10 +29,12 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxQuotesPerMonth: 10,
     maxSharedLinks: 5,
     features: {
+      exportPack: false,
       advancedReports: false,
       budgetManagement: false,
       autoReorder: false,
       vendorPortal: false,
+      inboundEmail: false,
       sso: false,
       onPremise: false,
       prioritySupport: false,
@@ -41,10 +45,12 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxQuotesPerMonth: 100,
     maxSharedLinks: 50,
     features: {
+      exportPack: true,
       advancedReports: true,
       budgetManagement: true,
       autoReorder: true,
       vendorPortal: false,
+      inboundEmail: true,
       sso: false,
       onPremise: false,
       prioritySupport: false,
@@ -55,10 +61,12 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxQuotesPerMonth: null, // 무제한
     maxSharedLinks: null, // 무제한
     features: {
+      exportPack: true,
       advancedReports: true,
       budgetManagement: true,
       autoReorder: true,
       vendorPortal: true,
+      inboundEmail: true,
       sso: true,
       onPremise: true,
       prioritySupport: true,
