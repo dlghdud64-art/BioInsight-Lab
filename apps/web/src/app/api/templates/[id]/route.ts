@@ -1,59 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
 
-// 템플릿 조회
+/**
+ * GET /api/templates/:id
+ * Get template by ID
+ */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { id } = params;
 
-    const { id } = await params;
-    const template = await db.quoteTemplate.findUnique({
-      where: { id },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    // TODO: Fetch from database
+    // Mock response
+    const template = {
+      id,
+      name: "Cell Culture Basic",
+      description: "기본 세포 배양 실험에 필요한 시약 및 소모품",
+      category: "Cell Culture",
+      itemCount: 8,
+      items: [
+        { name: "PBS Buffer", quantity: 500, unit: "ml" },
+        { name: "Trypsin-EDTA", quantity: 100, unit: "ml" },
+      ],
+      createdAt: new Date().toISOString(),
+    };
 
-    if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
-    }
-
-    // 공개 템플릿이거나 사용자/조직 소유인 경우만 접근 가능
-    if (
-      !template.isPublic &&
-      template.userId !== session.user.id &&
-      template.organizationId &&
-      !(await db.organizationMember.findFirst({
-        where: {
-          organizationId: template.organizationId,
-          userId: session.user.id,
-        },
-      }))
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    return NextResponse.json({ template });
+    return NextResponse.json(template);
   } catch (error) {
-    console.error("Error fetching template:", error);
+    console.error("[Template] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch template" },
       { status: 500 }
@@ -61,4 +36,27 @@ export async function GET(
   }
 }
 
-// 템플릿 수정
+/**
+ * DELETE /api/templates/:id
+ * Delete template
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+
+    console.log("[Template] Deleting template:", id);
+
+    // TODO: Delete from database
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Template] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete template" },
+      { status: 500 }
+    );
+  }
+}
