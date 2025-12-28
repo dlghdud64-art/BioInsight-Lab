@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { QuoteRequestPanel, QuoteItemsSummaryPanel } from "../../_components/quote-panel";
 import { QuoteRepliesPanel } from "../../_components/quote-replies-panel";
 import Link from "next/link";
