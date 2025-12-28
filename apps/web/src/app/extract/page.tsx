@@ -35,10 +35,29 @@ export default function ExtractPage() {
   const { toast } = useToast();
 
   const handleExtract = async () => {
+    // Input validation
     if (!protocolText.trim()) {
       toast({
-        title: "오류",
+        title: "입력 오류",
         description: "프로토콜 텍스트를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (protocolText.length < 10) {
+      toast({
+        title: "입력 오류",
+        description: "프로토콜 텍스트는 최소 10자 이상이어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (protocolText.length > 50000) {
+      toast({
+        title: "입력 오류",
+        description: "프로토콜 텍스트는 최대 50,000자까지 입력 가능합니다.",
         variant: "destructive",
       });
       return;
@@ -46,21 +65,53 @@ export default function ExtractPage() {
 
     try {
       setIsExtracting(true);
+      setExtractionResult(null); // Clear previous results
+
       const response = await fetch("/api/protocol/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: protocolText }),
       });
 
-      if (!response.ok) throw new Error("Extraction failed");
+      // Handle HTTP errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "프로토콜 분석에 실패했습니다.");
+      }
 
-      const data = await response.json();
+      // Parse and validate response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Response parse error:", parseError);
+        throw new Error("서버 응답을 처리할 수 없습니다.");
+      }
+
+      // Validate response format
+      if (!data || !Array.isArray(data.items)) {
+        console.error("Invalid response format:", data);
+        throw new Error("서버 응답 형식이 올바르지 않습니다.");
+      }
+
       setExtractionResult(data);
+
+      // Show success toast
+      toast({
+        title: "분석 완료",
+        description: `${data.items.length}개의 품목이 추출되었습니다.`,
+      });
     } catch (error) {
       console.error("Extraction error:", error);
+      
+      // User-friendly error message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "프로토콜 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      
       toast({
-        title: "오류",
-        description: "프로토콜 분석에 실패했습니다.",
+        title: "분석 실패",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -110,14 +161,14 @@ export default function ExtractPage() {
               <Textarea
                 value={protocolText}
                 onChange={(e) => setProtocolText(e.target.value)}
+                disabled={isExtracting}
                 placeholder="실험 프로토콜 텍스트를 붙여넣으세요...
 
 예:
 1. Add 5ml of PBS buffer to the cell culture.
 2. Incubate at 37°C for 30 minutes.
 3. Add trypsin-EDTA solution..."
-                rows={16}
-                className="text-sm font-mono resize-none"
+                className="min-h-[400px] text-sm font-mono resize-y"
               />
               <Button
                 onClick={handleExtract}
