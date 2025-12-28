@@ -8,10 +8,15 @@ import Stripe from "stripe";
 
 const logger = createLogger("api/billing/checkout");
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover" as any,
-});
+// Initialize Stripe lazily to avoid build-time errors
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-12-15.clover" as any,
+  });
+}
 
 const checkoutSchema = z.object({
   workspaceId: z.string().min(1),
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Get or create Stripe customer
     let customerId = workspace.stripeCustomerId;
+    const stripe = getStripe();
 
     if (!customerId) {
       const customer = await stripe.customers.create({
