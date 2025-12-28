@@ -212,8 +212,12 @@ export default function VendorDashboardPage() {
               </div>
             ) : requests.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-sm text-slate-500">
-                  {statusFilter === "PENDING" ? "대기 중인 요청이 없습니다." : "요청이 없습니다."}
+                <FileText className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+                <p className="text-sm font-medium text-slate-900 mb-1">
+                  {statusFilter === "PENDING" ? "대기 중인 요청이 없습니다" : "요청이 없습니다"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  새로운 견적 요청이 들어오면 여기에 표시됩니다.
                 </p>
               </div>
             ) : (

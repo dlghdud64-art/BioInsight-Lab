@@ -1830,7 +1830,7 @@ export function QuoteRequestPanel() {
             });
           }
         } catch (error) {
-          console.error("Failed to deactivate share link", error);
+          // Failed to deactivate share link
         }
       }
       return;

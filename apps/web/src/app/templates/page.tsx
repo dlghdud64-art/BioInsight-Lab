@@ -46,7 +46,6 @@ export default function TemplatesPage() {
       const data = await response.json();
       setTemplates(data.templates || []);
     } catch (error) {
-      console.error("Fetch templates error:", error);
       toast({
         title: "불러오기 실패",
         description: "템플릿 목록을 불러올 수 없습니다.",
@@ -66,7 +65,6 @@ export default function TemplatesPage() {
         description: `${template.name} (${template.itemCount}개 품목)이 목록에 추가되었습니다.`,
       });
     } catch (error) {
-      console.error("Add to list error:", error);
       toast({
         title: "추가 실패",
         description: "목록에 추가할 수 없습니다.",
@@ -95,7 +93,6 @@ export default function TemplatesPage() {
         description: "템플릿이 엑셀 파일로 다운로드되었습니다.",
       });
     } catch (error) {
-      console.error("Export error:", error);
       toast({
         title: "내보내기 실패",
         description: "파일을 생성할 수 없습니다.",
@@ -119,7 +116,6 @@ export default function TemplatesPage() {
         description: "템플릿이 삭제되었습니다.",
       });
     } catch (error) {
-      console.error("Delete error:", error);
       toast({
         title: "삭제 실패",
         description: "템플릿을 삭제할 수 없습니다.",

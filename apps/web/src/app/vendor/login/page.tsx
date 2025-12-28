@@ -38,7 +38,6 @@ export default function VendorLoginPage() {
       });
       setEmail("");
     } catch (error) {
-      console.error("Send link error:", error);
       toast({
         title: "오류",
         description: "로그인 링크 발송에 실패했습니다.",

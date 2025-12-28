@@ -99,7 +99,6 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
         description: "견적 요청 리스트가 클립보드에 복사되었습니다.",
       });
     } catch (error) {
-      console.error("Failed to copy:", error);
       toast({
         title: "복사 실패",
         description: "클립보드 복사에 실패했습니다.",

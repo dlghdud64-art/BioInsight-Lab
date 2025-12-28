@@ -114,7 +114,6 @@ export function ExportModal({
       });
       onOpenChange(false);
     } catch (error) {
-      console.error("Export error:", error);
       toast({
         title: "내보내기 실패",
         description: "파일 생성 중 오류가 발생했습니다.",
@@ -185,7 +184,6 @@ export function ExportModal({
       });
       onOpenChange(false);
     } catch (error) {
-      console.error("Custom export error:", error);
       toast({
         title: "내보내기 실패",
         description: "파일 생성 중 오류가 발생했습니다.",

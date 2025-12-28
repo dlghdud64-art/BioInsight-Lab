@@ -181,7 +181,6 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
         );
       }
     } catch (error: any) {
-      console.error("Failed to create BOM:", error);
       alert(error.message || "BOM 생성 중 오류가 발생했습니다.");
     }
   };

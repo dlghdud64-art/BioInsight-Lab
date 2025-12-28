@@ -120,7 +120,6 @@ export function QuoteListTable({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy:", error);
       alert("클립보드 복사에 실패했습니다.");
     }
   };

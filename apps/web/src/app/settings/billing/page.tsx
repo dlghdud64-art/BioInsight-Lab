@@ -83,7 +83,6 @@ function BillingPageContent() {
         window.location.href = url;
       }
     } catch (error) {
-      console.error("Upgrade error:", error);
       toast({
         title: "오류",
         description: "업그레이드 프로세스를 시작할 수 없습니다.",
@@ -115,7 +114,6 @@ function BillingPageContent() {
         window.location.href = url;
       }
     } catch (error) {
-      console.error("Portal error:", error);
       toast({
         title: "오류",
         description: "결제 관리 포털을 열 수 없습니다.",

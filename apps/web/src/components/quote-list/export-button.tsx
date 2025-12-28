@@ -71,7 +71,6 @@ export function ExportButton({
         description: `${filename} 파일이 다운로드되었습니다.`,
       });
     } catch (error) {
-      console.error("Export error:", error);
       toast({
         title: "오류",
         description: "파일 내보내기에 실패했습니다.",

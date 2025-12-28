@@ -84,13 +84,11 @@ export default function ExtractPage() {
       try {
         data = await response.json();
       } catch (parseError) {
-        console.error("Response parse error:", parseError);
         throw new Error("서버 응답을 처리할 수 없습니다.");
       }
 
       // Validate response format
       if (!data || !Array.isArray(data.items)) {
-        console.error("Invalid response format:", data);
         throw new Error("서버 응답 형식이 올바르지 않습니다.");
       }
 
@@ -102,8 +100,6 @@ export default function ExtractPage() {
         description: `${data.items.length}개의 품목이 추출되었습니다.`,
       });
     } catch (error) {
-      console.error("Extraction error:", error);
-      
       // User-friendly error message
       const errorMessage = error instanceof Error 
         ? error.message 

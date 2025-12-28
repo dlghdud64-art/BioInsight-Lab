@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { ProductCard } from "@/components/search/product-card";
+import { Search, FileText } from "lucide-react";
 
 interface SearchFilters {
   categories: string[];
@@ -99,8 +100,25 @@ export default function SearchResultList({
     });
   };
 
-  if (!query) return <p className="text-muted-foreground">검색어를 입력하세요.</p>;
-  if (results.length === 0) return <p className="text-muted-foreground">검색 결과가 없습니다.</p>;
+  if (!query) {
+    return (
+      <div className="text-center py-12 text-slate-500">
+        <Search className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+        <p className="text-sm font-medium text-slate-900 mb-1">검색어를 입력하세요</p>
+        <p className="text-xs text-slate-500">제품명, 벤더, 카테고리를 검색할 수 있습니다.</p>
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <div className="text-center py-12 text-slate-500">
+        <FileText className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+        <p className="text-sm font-medium text-slate-900 mb-1">검색 결과가 없습니다</p>
+        <p className="text-xs text-slate-500">다른 검색어로 다시 시도해보세요.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 md:space-y-4">
