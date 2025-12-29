@@ -977,11 +977,11 @@ async function main() {
   // 8. 주문 내역 생성 (최근 6개월)
   const now = new Date();
   const purchaseRecords = await Promise.all([
-    // 1월 데이터
+    // 7월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 0, 5), // 2025-01-05
+        purchasedAt: new Date(2025, 6, 5), // 2025-07-05
         vendorName: "Thermo Fisher Scientific",
         category: "REAGENT",
         itemName: "Fetal Bovine Serum (FBS)",
@@ -997,7 +997,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 0, 12), // 2025-01-12
+        purchasedAt: new Date(2025, 6, 12), // 2025-07-12
         vendorName: "한국바이오텍",
         category: "REAGENT",
         itemName: "PBS (Phosphate Buffered Saline)",
@@ -1013,7 +1013,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 0, 20), // 2025-01-20
+        purchasedAt: new Date(2025, 6, 20), // 2025-07-20
         vendorName: "Sigma-Aldrich",
         category: "REAGENT",
         itemName: "Anti-GAPDH Antibody",
@@ -1026,11 +1026,11 @@ async function main() {
         source: "import",
       },
     }),
-    // 2월 데이터
+    // 8월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 1, 3), // 2025-02-03
+        purchasedAt: new Date(2025, 7, 3), // 2025-08-03
         vendorName: "Thermo Fisher Scientific",
         category: "REAGENT",
         itemName: "DMEM (High Glucose)",
@@ -1046,7 +1046,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 1, 15), // 2025-02-15
+        purchasedAt: new Date(2025, 7, 15), // 2025-08-15
         vendorName: "한국바이오텍",
         category: "TOOL",
         itemName: "50mL Conical Tube",
@@ -1062,7 +1062,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 1, 25), // 2025-02-25
+        purchasedAt: new Date(2025, 7, 25), // 2025-08-25
         vendorName: "Sigma-Aldrich",
         category: "REAGENT",
         itemName: "Anti-β-Actin Antibody",
@@ -1075,11 +1075,11 @@ async function main() {
         source: "import",
       },
     }),
-    // 3월 데이터
+    // 9월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 2, 8), // 2025-03-08
+        purchasedAt: new Date(2025, 8, 8), // 2025-09-08
         vendorName: "Thermo Fisher Scientific",
         category: "TOOL",
         itemName: "96-Well Cell Culture Plate",
@@ -1095,7 +1095,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 2, 18), // 2025-03-18
+        purchasedAt: new Date(2025, 8, 18), // 2025-09-18
         vendorName: "Bio-Rad",
         category: "TOOL",
         itemName: "Serological Pipette 10mL",
@@ -1111,7 +1111,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 2, 25), // 2025-03-25
+        purchasedAt: new Date(2025, 8, 25), // 2025-09-25
         vendorName: "Thermo Fisher Scientific",
         category: "REAGENT",
         itemName: "Fetal Bovine Serum (FBS)",
@@ -1124,11 +1124,11 @@ async function main() {
         source: "import",
       },
     }),
-    // 4월 데이터
+    // 10월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 3, 5), // 2025-04-05
+        purchasedAt: new Date(2025, 9, 5), // 2025-10-05
         vendorName: "한국바이오텍",
         category: "REAGENT",
         itemName: "PBS (Phosphate Buffered Saline)",
@@ -1144,7 +1144,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 3, 15), // 2025-04-15
+        purchasedAt: new Date(2025, 9, 15), // 2025-10-15
         vendorName: "Thermo Fisher Scientific",
         category: "REAGENT",
         itemName: "DMEM (High Glucose)",
@@ -1157,11 +1157,11 @@ async function main() {
         source: "import",
       },
     }),
-    // 5월 데이터
+    // 11월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 4, 10), // 2025-05-10
+        purchasedAt: new Date(2025, 10, 10), // 2025-11-10
         vendorName: "Sigma-Aldrich",
         category: "REAGENT",
         itemName: "Taq DNA Polymerase",
@@ -1177,7 +1177,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 4, 22), // 2025-05-22
+        purchasedAt: new Date(2025, 10, 22), // 2025-11-22
         vendorName: "Bio-Rad",
         category: "EQUIPMENT",
         itemName: "Real-time PCR System",
@@ -1190,11 +1190,11 @@ async function main() {
         source: "import",
       },
     }),
-    // 6월 데이터
+    // 12월 데이터
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 5, 5), // 2025-06-05
+        purchasedAt: new Date(2025, 11, 5), // 2025-12-05
         vendorName: "Thermo Fisher Scientific",
         category: "REAGENT",
         itemName: "Fetal Bovine Serum (FBS)",
@@ -1210,7 +1210,7 @@ async function main() {
     prisma.purchaseRecord.create({
       data: {
         scopeKey: "guest-demo",
-        purchasedAt: new Date(2025, 5, 18), // 2025-06-18
+        purchasedAt: new Date(2025, 11, 18), // 2025-12-18
         vendorName: "한국바이오텍",
         category: "TOOL",
         itemName: "50mL Conical Tube",
@@ -1230,69 +1230,69 @@ async function main() {
   // 9. 예산 설정 (2025년 월별)
   const budgets = await Promise.all([
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-01" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-07" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-01",
+        yearMonth: "2025-07",
         amount: 3000000,
         currency: "KRW",
-        description: "1월 연구 예산",
+        description: "7월 연구 예산",
       },
     }),
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-02" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-08" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-02",
+        yearMonth: "2025-08",
         amount: 3000000,
         currency: "KRW",
-        description: "2월 연구 예산",
+        description: "8월 연구 예산",
       },
     }),
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-03" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-09" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-03",
+        yearMonth: "2025-09",
         amount: 5000000,
         currency: "KRW",
-        description: "3월 연구 예산 (증액)",
+        description: "9월 연구 예산 (증액)",
       },
     }),
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-04" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-10" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-04",
+        yearMonth: "2025-10",
         amount: 3000000,
         currency: "KRW",
-        description: "4월 연구 예산",
+        description: "10월 연구 예산",
       },
     }),
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-05" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-11" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-05",
+        yearMonth: "2025-11",
         amount: 35000000,
         currency: "KRW",
-        description: "5월 연구 예산 (장비 구매)",
+        description: "11월 연구 예산 (장비 구매)",
       },
     }),
     prisma.budget.upsert({
-      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-06" } },
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-12" } },
       update: {},
       create: {
         scopeKey: "guest-demo",
-        yearMonth: "2025-06",
+        yearMonth: "2025-12",
         amount: 3000000,
         currency: "KRW",
-        description: "6월 연구 예산",
+        description: "12월 연구 예산",
       },
     }),
   ]);
