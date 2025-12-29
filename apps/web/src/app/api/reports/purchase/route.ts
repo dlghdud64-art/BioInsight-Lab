@@ -62,32 +62,41 @@ export async function GET(request: NextRequest) {
     }
 
     // QuoteList 기반 데이터 조회 (로그인된 경우에만)
-    const quotes = userId ? await db.quote.findMany({
-      where: {
-        userId: userId,
-        createdAt: {
-          gte: dateStart,
-          lte: dateEnd,
-        },
-        ...(organizationId && { organizationId }),
-      },
-      include: {
-        organization: true,
-        items: {
+    // DB 스키마 불일치 문제 대비 try-catch 처리
+    let quotes: any[] = [];
+    if (userId) {
+      try {
+        quotes = await db.quote.findMany({
+          where: {
+            userId: userId,
+            createdAt: {
+              gte: dateStart,
+              lte: dateEnd,
+            },
+            ...(organizationId && { organizationId }),
+          },
           include: {
-            product: {
+            organization: true,
+            items: {
               include: {
-                vendors: {
+                product: {
                   include: {
-                    vendor: true,
+                    vendors: {
+                      include: {
+                        vendor: true,
+                      },
+                    },
                   },
                 },
               },
             },
           },
-        },
-      },
-    }) : [];
+        });
+      } catch (quoteError) {
+        console.error("[Purchase API] Quote query failed:", quoteError);
+        quotes = [];
+      }
+    }
 
     // 실제 구매내역 조회 (PurchaseRecord)
     console.log("[Purchase API] Querying purchase records with:", {
