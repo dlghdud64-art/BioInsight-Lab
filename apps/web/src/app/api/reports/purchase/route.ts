@@ -86,16 +86,15 @@ export async function GET(request: NextRequest) {
     });
 
     // 실제 구매내역 조회 (PurchaseRecord)
-    // scopeKey 기반으로 조회 (guestKey 또는 workspaceId)
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
+        scopeKey: "guest-demo", // MVP: guest-demo scope
+        ...(vendorId && { vendorName: vendorId }),
         purchasedAt: {
           gte: dateStart,
           lte: dateEnd,
         },
         ...(category && { category }),
-        // scopeKey는 세션 기반으로 처리 (향후 workspaceId로 확장)
-        // 현재는 모든 구매 내역 조회
       },
       orderBy: {
         purchasedAt: "desc",
@@ -176,43 +175,36 @@ export async function GET(request: NextRequest) {
       amount,
     }));
 
-    // 예산 정보 조회 및 사용률 계산
-    // scopeKey 기반으로 조회 (향후 workspaceId로 확장)
+    // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
     const budgets = await db.budget.findMany({
       where: {
-        yearMonth: {
-          gte: dateStart.toISOString().substring(0, 7),
-          lte: dateEnd.toISOString().substring(0, 7),
-        },
+        scopeKey: "guest-demo", // MVP: guest-demo scope
+      },
+      include: {
+        workspace: true,
       },
     });
 
     // 타입 에러 수정: budget 파라미터에 타입 명시
     const budgetUsage = budgets.map((budget: any) => {
-      // 해당 예산 기간 내의 실제 사용 금액 계산
+      // yearMonth에 해당하는 사용 금액 계산
+      const budgetMonth = budget.yearMonth; // "YYYY-MM" 형식
       let usedAmount = 0;
 
       // QuoteList 기반 계산
-      // 타입 에러 수정: quote 파라미터에 타입 명시
-    quotes.forEach((quote: any) => {
-        if (
-          (!budget.organizationId || quote.organizationId === budget.organizationId) &&
-          quote.createdAt >= budget.periodStart &&
-          quote.createdAt <= budget.periodEnd
-        ) {
-          // 타입 에러 수정: item 파라미터에 타입 명시
-      quote.items.forEach((item: any) => {
+      quotes.forEach((quote: any) => {
+        const quoteMonth = quote.createdAt.toISOString().substring(0, 7);
+        if (quoteMonth === budgetMonth) {
+          quote.items.forEach((item: any) => {
             usedAmount += (item.unitPrice || 0) * item.quantity;
           });
         }
       });
 
       // PurchaseRecord 기반 계산
-      // 타입 에러 수정: record 파라미터에 타입 명시
-      const budgetYearMonth = budget.yearMonth;
       purchaseRecords.forEach((record: any) => {
-        const recordYearMonth = record.purchasedAt.toISOString().substring(0, 7);
-        if (recordYearMonth === budgetYearMonth) {
+        const purchaseMonth = record.purchasedAt.toISOString().substring(0, 7);
+        if (purchaseMonth === budgetMonth) {
           usedAmount += record.amount;
         }
       });
@@ -222,15 +214,14 @@ export async function GET(request: NextRequest) {
 
       return {
         id: budget.id,
-        name: budget.description || `예산 ${budget.yearMonth}`,
+        name: budget.description || budgetMonth,
         organization: "-",
         projectName: "-",
         budgetAmount: budget.amount,
         usedAmount,
         remaining,
         usageRate,
-        periodStart: new Date(`${budget.yearMonth}-01`),
-        periodEnd: new Date(`${budget.yearMonth}-31`),
+        yearMonth: budget.yearMonth,
       };
     });
 
@@ -264,7 +255,7 @@ export async function GET(request: NextRequest) {
       details.push({
         id: record.id,
         date: record.purchasedAt.toISOString().split("T")[0],
-        organization: "-", // scopeKey 기반이므로 조직 정보 없음
+        organization: "-",
         project: "-",
         vendor: record.vendorName || "-",
         category: record.category || "-",

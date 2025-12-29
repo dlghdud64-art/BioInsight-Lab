@@ -1,4 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load .env file
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const prisma = new PrismaClient();
 
@@ -621,6 +626,678 @@ async function main() {
   ]);
 
   console.log(`✅ ${organizations.length}개 조직 생성 완료`);
+
+  // 5. 실제 연구실 제품 추가
+  const bioProducts = await Promise.all([
+    // Cell Culture Media & Sera
+    prisma.product.upsert({
+      where: { id: "product-fbs" },
+      update: {},
+      create: {
+        id: "product-fbs",
+        name: "Fetal Bovine Serum (FBS)",
+        nameEn: "Fetal Bovine Serum",
+        description: "세포 배양용 태아 소 혈청 - South America Origin",
+        descriptionEn: "Premium quality fetal bovine serum for cell culture",
+        category: "REAGENT",
+        brand: "Gibco",
+        modelNumber: "10270-106",
+        catalogNumber: "10270-106",
+        grade: "Cell Culture Tested",
+        specification: "500mL",
+        specifications: {
+          volume: "500mL",
+          origin: "South America",
+          endotoxin: "<10 EU/mL",
+          hemoglobin: "<25 mg/dL",
+        },
+        storageCondition: "-20°C 동결 보관",
+        safetyNote: "동결 보관, 해동 후 빠른 사용 권장",
+        imageUrl: "https://via.placeholder.com/300x300?text=FBS",
+      },
+    }),
+    prisma.product.upsert({
+      where: { id: "product-dmem" },
+      update: {},
+      create: {
+        id: "product-dmem",
+        name: "DMEM (High Glucose)",
+        nameEn: "DMEM, high glucose",
+        description: "세포 배양 배지 - High Glucose, with L-Glutamine",
+        descriptionEn: "Dulbecco's Modified Eagle Medium for cell culture",
+        category: "REAGENT",
+        brand: "Gibco",
+        modelNumber: "11965-092",
+        catalogNumber: "11965-092",
+        grade: "Cell Culture Grade",
+        specification: "500mL",
+        specifications: {
+          volume: "500mL",
+          glucose: "4.5 g/L",
+          glutamine: "with L-Glutamine",
+          phenolRed: "with Phenol Red",
+        },
+        storageCondition: "2-8°C 냉장 보관",
+        safetyNote: "냉장 보관, 오염 방지 주의",
+        imageUrl: "https://via.placeholder.com/300x300?text=DMEM",
+      },
+    }),
+    prisma.product.upsert({
+      where: { id: "product-pbs" },
+      update: {},
+      create: {
+        id: "product-pbs",
+        name: "PBS (Phosphate Buffered Saline)",
+        nameEn: "PBS",
+        description: "인산완충식염수 - 1X, pH 7.4",
+        descriptionEn: "Sterile phosphate buffered saline",
+        category: "REAGENT",
+        brand: "Welgene",
+        modelNumber: "LB001-02",
+        catalogNumber: "LB001-02",
+        grade: "Cell Culture Grade",
+        specification: "500mL",
+        specifications: {
+          volume: "500mL",
+          pH: "7.4",
+          sterile: "Yes",
+        },
+        storageCondition: "실온 보관",
+        imageUrl: "https://via.placeholder.com/300x300?text=PBS",
+      },
+    }),
+    // Antibodies
+    prisma.product.upsert({
+      where: { id: "product-gapdh-ab" },
+      update: {},
+      create: {
+        id: "product-gapdh-ab",
+        name: "Anti-GAPDH Antibody",
+        nameEn: "Anti-GAPDH Antibody",
+        description: "GAPDH Loading Control Antibody (Mouse Monoclonal)",
+        descriptionEn: "Mouse monoclonal antibody for GAPDH detection",
+        category: "REAGENT",
+        brand: "Cell Signaling Technology",
+        modelNumber: "2118S",
+        catalogNumber: "2118S",
+        grade: "Research Grade",
+        specification: "100μL",
+        specifications: {
+          volume: "100μL",
+          host: "Mouse",
+          reactivity: "Human, Mouse, Rat",
+          application: "WB, IP",
+        },
+        storageCondition: "-20°C 동결 보관",
+        imageUrl: "https://via.placeholder.com/300x300?text=GAPDH+Ab",
+      },
+    }),
+    prisma.product.upsert({
+      where: { id: "product-beta-actin-ab" },
+      update: {},
+      create: {
+        id: "product-beta-actin-ab",
+        name: "Anti-β-Actin Antibody",
+        nameEn: "Anti-β-Actin Antibody",
+        description: "β-Actin Loading Control Antibody (Rabbit Polyclonal)",
+        descriptionEn: "Rabbit polyclonal antibody for β-actin detection",
+        category: "REAGENT",
+        brand: "Abcam",
+        modelNumber: "ab8227",
+        catalogNumber: "ab8227",
+        grade: "Research Grade",
+        specification: "100μg",
+        specifications: {
+          amount: "100μg",
+          host: "Rabbit",
+          reactivity: "Human, Mouse, Rat",
+          application: "WB, ICC, IHC",
+        },
+        storageCondition: "-20°C 동결 보관",
+        imageUrl: "https://via.placeholder.com/300x300?text=Beta-Actin+Ab",
+      },
+    }),
+    // Lab Plasticware
+    prisma.product.upsert({
+      where: { id: "product-conical-50ml" },
+      update: {},
+      create: {
+        id: "product-conical-50ml",
+        name: "50mL Conical Tube",
+        nameEn: "50mL Conical Tube",
+        description: "멸균 원심분리관 50mL (Polypropylene)",
+        descriptionEn: "Sterile centrifuge tube 50mL",
+        category: "TOOL",
+        brand: "SPL Life Sciences",
+        modelNumber: "50050",
+        catalogNumber: "50050",
+        grade: "Sterile",
+        specification: "50mL, 25개/rack, 500개/case",
+        specifications: {
+          volume: "50mL",
+          material: "Polypropylene",
+          sterile: "Yes",
+          packaging: "25/rack, 500/case",
+        },
+        imageUrl: "https://via.placeholder.com/300x300?text=50mL+Tube",
+      },
+    }),
+    prisma.product.upsert({
+      where: { id: "product-plate-96well" },
+      update: {},
+      create: {
+        id: "product-plate-96well",
+        name: "96-Well Cell Culture Plate",
+        nameEn: "96-Well Plate",
+        description: "세포 배양용 96웰 플레이트 (Flat Bottom, TC-Treated)",
+        descriptionEn: "96-well cell culture plate for tissue culture",
+        category: "TOOL",
+        brand: "Corning",
+        modelNumber: "3599",
+        catalogNumber: "3599",
+        grade: "Tissue Culture Treated",
+        specification: "96 wells, Flat Bottom",
+        specifications: {
+          wells: "96",
+          bottomType: "Flat",
+          treatment: "TC-Treated",
+          sterile: "Yes",
+        },
+        imageUrl: "https://via.placeholder.com/300x300?text=96-Well+Plate",
+      },
+    }),
+    prisma.product.upsert({
+      where: { id: "product-serological-pipette" },
+      update: {},
+      create: {
+        id: "product-serological-pipette",
+        name: "Serological Pipette 10mL",
+        nameEn: "Serological Pipette 10mL",
+        description: "멸균 혈청 피펫 10mL (Individually Wrapped)",
+        descriptionEn: "Sterile serological pipette 10mL",
+        category: "TOOL",
+        brand: "Falcon",
+        modelNumber: "357551",
+        catalogNumber: "357551",
+        grade: "Sterile",
+        specification: "10mL, 200개/case",
+        specifications: {
+          volume: "10mL",
+          sterile: "Yes",
+          packaging: "Individually wrapped, 200/case",
+        },
+        imageUrl: "https://via.placeholder.com/300x300?text=Pipette+10mL",
+      },
+    }),
+  ]);
+
+  console.log(`✅ ${bioProducts.length}개 바이오 제품 생성 완료`);
+
+  // 6. 제품-벤더 연결 (바이오 제품)
+  await Promise.all([
+    prisma.productVendor.upsert({
+      where: { id: "pv-fbs-1" },
+      update: {},
+      create: {
+        id: "pv-fbs-1",
+        productId: "product-fbs",
+        vendorId: "vendor-thermo",
+        price: 420.0,
+        currency: "USD",
+        priceInKRW: 546000,
+        stockStatus: "In Stock",
+        leadTime: 7,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-dmem-1" },
+      update: {},
+      create: {
+        id: "pv-dmem-1",
+        productId: "product-dmem",
+        vendorId: "vendor-thermo",
+        price: 45.0,
+        currency: "USD",
+        priceInKRW: 58500,
+        stockStatus: "In Stock",
+        leadTime: 5,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-pbs-1" },
+      update: {},
+      create: {
+        id: "pv-pbs-1",
+        productId: "product-pbs",
+        vendorId: "vendor-korea",
+        price: 12000,
+        currency: "KRW",
+        priceInKRW: 12000,
+        stockStatus: "In Stock",
+        leadTime: 2,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-gapdh-1" },
+      update: {},
+      create: {
+        id: "pv-gapdh-1",
+        productId: "product-gapdh-ab",
+        vendorId: "vendor-sigma",
+        price: 280.0,
+        currency: "USD",
+        priceInKRW: 364000,
+        stockStatus: "In Stock",
+        leadTime: 10,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-beta-actin-1" },
+      update: {},
+      create: {
+        id: "pv-beta-actin-1",
+        productId: "product-beta-actin-ab",
+        vendorId: "vendor-sigma",
+        price: 320.0,
+        currency: "USD",
+        priceInKRW: 416000,
+        stockStatus: "Low Stock",
+        leadTime: 14,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-conical-1" },
+      update: {},
+      create: {
+        id: "pv-conical-1",
+        productId: "product-conical-50ml",
+        vendorId: "vendor-korea",
+        price: 85000,
+        currency: "KRW",
+        priceInKRW: 85000,
+        stockStatus: "In Stock",
+        leadTime: 2,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-plate-1" },
+      update: {},
+      create: {
+        id: "pv-plate-1",
+        productId: "product-plate-96well",
+        vendorId: "vendor-thermo",
+        price: 95.0,
+        currency: "USD",
+        priceInKRW: 123500,
+        stockStatus: "In Stock",
+        leadTime: 7,
+        minOrderQty: 1,
+      },
+    }),
+    prisma.productVendor.upsert({
+      where: { id: "pv-pipette-1" },
+      update: {},
+      create: {
+        id: "pv-pipette-1",
+        productId: "product-serological-pipette",
+        vendorId: "vendor-bio-rad",
+        price: 120.0,
+        currency: "USD",
+        priceInKRW: 156000,
+        stockStatus: "In Stock",
+        leadTime: 5,
+        minOrderQty: 1,
+      },
+    }),
+  ]);
+
+  console.log("✅ 바이오 제품-벤더 연결 완료");
+
+  // 7. 사용자 생성 (테스트용)
+  const testUser = await prisma.user.upsert({
+    where: { id: "user-test-1" },
+    update: {},
+    create: {
+      id: "user-test-1",
+      email: "researcher@bioinsight.com",
+      name: "김연구",
+      role: "RESEARCHER",
+      organization: "서울대학교 생명과학부",
+    },
+  });
+
+  console.log("✅ 테스트 사용자 생성 완료");
+
+  // 8. 주문 내역 생성 (최근 6개월)
+  const now = new Date();
+  const purchaseRecords = await Promise.all([
+    // 1월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 0, 5), // 2025-01-05
+        vendorName: "Thermo Fisher Scientific",
+        category: "REAGENT",
+        itemName: "Fetal Bovine Serum (FBS)",
+        catalogNumber: "10270-106",
+        unit: "ea",
+        qty: 2,
+        unitPrice: 546000,
+        amount: 1092000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 0, 12), // 2025-01-12
+        vendorName: "한국바이오텍",
+        category: "REAGENT",
+        itemName: "PBS (Phosphate Buffered Saline)",
+        catalogNumber: "LB001-02",
+        unit: "ea",
+        qty: 5,
+        unitPrice: 12000,
+        amount: 60000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 0, 20), // 2025-01-20
+        vendorName: "Sigma-Aldrich",
+        category: "REAGENT",
+        itemName: "Anti-GAPDH Antibody",
+        catalogNumber: "2118S",
+        unit: "ea",
+        qty: 1,
+        unitPrice: 364000,
+        amount: 364000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    // 2월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 1, 3), // 2025-02-03
+        vendorName: "Thermo Fisher Scientific",
+        category: "REAGENT",
+        itemName: "DMEM (High Glucose)",
+        catalogNumber: "11965-092",
+        unit: "ea",
+        qty: 10,
+        unitPrice: 58500,
+        amount: 585000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 1, 15), // 2025-02-15
+        vendorName: "한국바이오텍",
+        category: "TOOL",
+        itemName: "50mL Conical Tube",
+        catalogNumber: "50050",
+        unit: "case",
+        qty: 2,
+        unitPrice: 85000,
+        amount: 170000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 1, 25), // 2025-02-25
+        vendorName: "Sigma-Aldrich",
+        category: "REAGENT",
+        itemName: "Anti-β-Actin Antibody",
+        catalogNumber: "ab8227",
+        unit: "ea",
+        qty: 1,
+        unitPrice: 416000,
+        amount: 416000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    // 3월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 2, 8), // 2025-03-08
+        vendorName: "Thermo Fisher Scientific",
+        category: "TOOL",
+        itemName: "96-Well Cell Culture Plate",
+        catalogNumber: "3599",
+        unit: "ea",
+        qty: 20,
+        unitPrice: 123500,
+        amount: 2470000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 2, 18), // 2025-03-18
+        vendorName: "Bio-Rad",
+        category: "TOOL",
+        itemName: "Serological Pipette 10mL",
+        catalogNumber: "357551",
+        unit: "case",
+        qty: 1,
+        unitPrice: 156000,
+        amount: 156000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 2, 25), // 2025-03-25
+        vendorName: "Thermo Fisher Scientific",
+        category: "REAGENT",
+        itemName: "Fetal Bovine Serum (FBS)",
+        catalogNumber: "10270-106",
+        unit: "ea",
+        qty: 3,
+        unitPrice: 546000,
+        amount: 1638000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    // 4월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 3, 5), // 2025-04-05
+        vendorName: "한국바이오텍",
+        category: "REAGENT",
+        itemName: "PBS (Phosphate Buffered Saline)",
+        catalogNumber: "LB001-02",
+        unit: "ea",
+        qty: 10,
+        unitPrice: 12000,
+        amount: 120000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 3, 15), // 2025-04-15
+        vendorName: "Thermo Fisher Scientific",
+        category: "REAGENT",
+        itemName: "DMEM (High Glucose)",
+        catalogNumber: "11965-092",
+        unit: "ea",
+        qty: 15,
+        unitPrice: 58500,
+        amount: 877500,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    // 5월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 4, 10), // 2025-05-10
+        vendorName: "Sigma-Aldrich",
+        category: "REAGENT",
+        itemName: "Taq DNA Polymerase",
+        catalogNumber: "EP0402",
+        unit: "ea",
+        qty: 2,
+        unitPrice: 195000,
+        amount: 390000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 4, 22), // 2025-05-22
+        vendorName: "Bio-Rad",
+        category: "EQUIPMENT",
+        itemName: "Real-time PCR System",
+        catalogNumber: "CFX96",
+        unit: "ea",
+        qty: 1,
+        unitPrice: 32500000,
+        amount: 32500000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    // 6월 데이터
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 5, 5), // 2025-06-05
+        vendorName: "Thermo Fisher Scientific",
+        category: "REAGENT",
+        itemName: "Fetal Bovine Serum (FBS)",
+        catalogNumber: "10270-106",
+        unit: "ea",
+        qty: 2,
+        unitPrice: 546000,
+        amount: 1092000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+    prisma.purchaseRecord.create({
+      data: {
+        scopeKey: "guest-demo",
+        purchasedAt: new Date(2025, 5, 18), // 2025-06-18
+        vendorName: "한국바이오텍",
+        category: "TOOL",
+        itemName: "50mL Conical Tube",
+        catalogNumber: "50050",
+        unit: "case",
+        qty: 3,
+        unitPrice: 85000,
+        amount: 255000,
+        currency: "KRW",
+        source: "import",
+      },
+    }),
+  ]);
+
+  console.log(`✅ ${purchaseRecords.length}개 구매 기록 생성 완료`);
+
+  // 9. 예산 설정 (2025년 월별)
+  const budgets = await Promise.all([
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-01" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-01",
+        amount: 3000000,
+        currency: "KRW",
+        description: "1월 연구 예산",
+      },
+    }),
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-02" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-02",
+        amount: 3000000,
+        currency: "KRW",
+        description: "2월 연구 예산",
+      },
+    }),
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-03" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-03",
+        amount: 5000000,
+        currency: "KRW",
+        description: "3월 연구 예산 (증액)",
+      },
+    }),
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-04" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-04",
+        amount: 3000000,
+        currency: "KRW",
+        description: "4월 연구 예산",
+      },
+    }),
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-05" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-05",
+        amount: 35000000,
+        currency: "KRW",
+        description: "5월 연구 예산 (장비 구매)",
+      },
+    }),
+    prisma.budget.upsert({
+      where: { scopeKey_yearMonth: { scopeKey: "guest-demo", yearMonth: "2025-06" } },
+      update: {},
+      create: {
+        scopeKey: "guest-demo",
+        yearMonth: "2025-06",
+        amount: 3000000,
+        currency: "KRW",
+        description: "6월 연구 예산",
+      },
+    }),
+  ]);
+
+  console.log(`✅ ${budgets.length}개 예산 설정 완료`);
 
   console.log("🎉 시드 데이터 생성 완료!");
 }
