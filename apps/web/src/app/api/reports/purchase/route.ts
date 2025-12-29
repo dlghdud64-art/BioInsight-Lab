@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     const session = await auth();
 
     // 게스트 키가 있거나 세션이 있으면 인증 통과
-    // 개발 단계에서는 guest-demo를 기본값으로 사용
-    const scopeKey = guestKey || (session?.user?.id ? `user-${session.user.id}` : "guest-demo");
+    // 개발 단계에서는 모든 사용자에게 guest-demo 데이터 표시
+    const scopeKey = guestKey || "guest-demo";
     const userId = session?.user?.id;
 
     const { searchParams } = new URL(request.url);
