@@ -88,18 +88,12 @@ export async function GET(request: NextRequest) {
     // 실제 구매내역 조회 (PurchaseRecord)
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
-        ...(organizationId && { organizationId }),
-        ...(vendorId && { vendorId }),
-        purchaseDate: {
+        ...(vendorId && { vendorName: vendorId }),
+        purchasedAt: {
           gte: dateStart,
           lte: dateEnd,
         },
         ...(category && { category }),
-      },
-      include: {
-        vendor: true,
-        product: true,
-        organization: true,
       },
     });
 
@@ -140,22 +134,22 @@ export async function GET(request: NextRequest) {
     // PurchaseRecord 기반 계산 (실제 구매액)
       // 타입 에러 수정: record 파라미터에 타입 명시
       purchaseRecords.forEach((record: any) => {
-      actualAmount += record.totalAmount;
-      totalAmount += record.totalAmount;
-      if (record.vendor) {
+      actualAmount += record.amount;
+      totalAmount += record.amount;
+      if (record.vendorName) {
         vendorMap.set(
-          record.vendor.name,
-          (vendorMap.get(record.vendor.name) || 0) + record.totalAmount
+          record.vendorName,
+          (vendorMap.get(record.vendorName) || 0) + record.amount
         );
       }
       if (record.category) {
         categoryMap.set(
           record.category,
-          (categoryMap.get(record.category) || 0) + record.totalAmount
+          (categoryMap.get(record.category) || 0) + record.amount
         );
       }
-      const month = record.purchaseDate.toISOString().substring(0, 7);
-      monthlyMap.set(month, (monthlyMap.get(month) || 0) + record.totalAmount);
+      const month = record.purchasedAt.toISOString().substring(0, 7);
+      monthlyMap.set(month, (monthlyMap.get(month) || 0) + record.amount);
     });
 
     // 월별 데이터 정렬
@@ -177,47 +171,37 @@ export async function GET(request: NextRequest) {
       amount,
     }));
 
-    // 예산 정보 조회 및 사용률 계산
+    // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
     const budgets = await db.budget.findMany({
       where: {
-        ...(organizationId && { organizationId }),
-        periodStart: { lte: dateEnd },
-        periodEnd: { gte: dateStart },
+        scopeKey: session.user.id, // guest-demo 대신 user id 사용
       },
       include: {
-        organization: true,
+        workspace: true,
       },
     });
 
     // 타입 에러 수정: budget 파라미터에 타입 명시
     const budgetUsage = budgets.map((budget: any) => {
-      // 해당 예산 기간 내의 실제 사용 금액 계산
+      // yearMonth에 해당하는 사용 금액 계산
+      const budgetMonth = budget.yearMonth; // "YYYY-MM" 형식
       let usedAmount = 0;
 
       // QuoteList 기반 계산
-      // 타입 에러 수정: quote 파라미터에 타입 명시
-    quotes.forEach((quote: any) => {
-        if (
-          (!budget.organizationId || quote.organizationId === budget.organizationId) &&
-          quote.createdAt >= budget.periodStart &&
-          quote.createdAt <= budget.periodEnd
-        ) {
-          // 타입 에러 수정: item 파라미터에 타입 명시
-      quote.items.forEach((item: any) => {
+      quotes.forEach((quote: any) => {
+        const quoteMonth = quote.createdAt.toISOString().substring(0, 7);
+        if (quoteMonth === budgetMonth) {
+          quote.items.forEach((item: any) => {
             usedAmount += (item.unitPrice || 0) * item.quantity;
           });
         }
       });
 
       // PurchaseRecord 기반 계산
-      // 타입 에러 수정: record 파라미터에 타입 명시
       purchaseRecords.forEach((record: any) => {
-        if (
-          (!budget.organizationId || record.organizationId === budget.organizationId) &&
-          record.purchaseDate >= budget.periodStart &&
-          record.purchaseDate <= budget.periodEnd
-        ) {
-          usedAmount += record.totalAmount;
+        const purchaseMonth = record.purchasedAt.toISOString().substring(0, 7);
+        if (purchaseMonth === budgetMonth) {
+          usedAmount += record.amount;
         }
       });
 
@@ -226,15 +210,14 @@ export async function GET(request: NextRequest) {
 
       return {
         id: budget.id,
-        name: budget.name,
-        organization: budget.organization?.name || "-",
-        projectName: budget.projectName || "-",
+        name: budget.description || budgetMonth,
+        organization: "-",
+        projectName: "-",
         budgetAmount: budget.amount,
         usedAmount,
         remaining,
         usageRate,
-        periodStart: budget.periodStart,
-        periodEnd: budget.periodEnd,
+        yearMonth: budget.yearMonth,
       };
     });
 
@@ -267,14 +250,14 @@ export async function GET(request: NextRequest) {
       purchaseRecords.forEach((record: any) => {
       details.push({
         id: record.id,
-        date: record.purchaseDate.toISOString().split("T")[0],
-        organization: record.organization?.name || "-",
-        project: record.projectName || "-",
-        vendor: record.vendor?.name || "-",
+        date: record.purchasedAt.toISOString().split("T")[0],
+        organization: "-",
+        project: "-",
+        vendor: record.vendorName || "-",
         category: record.category || "-",
-        productName: record.product?.name || record.productName || "-",
-        amount: record.totalAmount,
-        notes: record.notes || "-",
+        productName: record.itemName || "-",
+        amount: record.amount,
+        notes: "-",
         type: "purchase",
       });
     });
