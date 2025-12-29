@@ -86,6 +86,14 @@ export async function GET(request: NextRequest) {
     });
 
     // 실제 구매내역 조회 (PurchaseRecord)
+    console.log("[Purchase API] Querying purchase records with:", {
+      scopeKey: "guest-demo",
+      dateStart,
+      dateEnd,
+      vendorId,
+      category
+    });
+
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
         scopeKey: "guest-demo", // MVP: guest-demo scope
@@ -100,6 +108,8 @@ export async function GET(request: NextRequest) {
         purchasedAt: "desc",
       },
     });
+
+    console.log("[Purchase API] Found purchase records:", purchaseRecords.length);
 
     // 메트릭 계산
     let totalAmount = 0;
@@ -176,6 +186,8 @@ export async function GET(request: NextRequest) {
     }));
 
     // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
+    console.log("[Purchase API] Querying budgets with scopeKey: guest-demo");
+
     const budgets = await db.budget.findMany({
       where: {
         scopeKey: "guest-demo", // MVP: guest-demo scope
@@ -184,6 +196,8 @@ export async function GET(request: NextRequest) {
         workspace: true,
       },
     });
+
+    console.log("[Purchase API] Found budgets:", budgets.length);
 
     // 타입 에러 수정: budget 파라미터에 타입 명시
     const budgetUsage = budgets.map((budget: any) => {
