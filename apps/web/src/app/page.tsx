@@ -2,6 +2,7 @@ import { MainLayout } from "./_components/main-layout";
 import { MainHeader } from "./_components/main-header";
 import { MainFooter } from "./_components/main-footer";
 import { HeroSection } from "./_components/hero-section";
+import { Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load below-the-fold sections for better initial page load
@@ -47,7 +48,12 @@ export default function HomePage() {
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
         <div className="space-y-0">
           <HeroSection />
-          <BetaBannerSection />
+          <div className="h-8 md:h-12 lg:h-16 flex items-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-emerald-50 border border-emerald-200 rounded-full text-xs md:text-sm font-semibold text-emerald-700">
+              <Sparkles className="h-3 w-3 md:h-3.5 md:w-3.5" />
+              Beta 기간 무료 체험
+            </div>
+          </div>
           <FlowSection />
           <ComparisonSection />
           <KeyValueSection />
