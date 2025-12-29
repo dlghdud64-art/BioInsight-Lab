@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
     // 실제 구매내역 조회 (PurchaseRecord)
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
+        scopeKey: "guest-demo", // MVP: guest-demo scope
         ...(vendorId && { vendorName: vendorId }),
         purchasedAt: {
           gte: dateStart,
@@ -174,7 +175,7 @@ export async function GET(request: NextRequest) {
     // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
     const budgets = await db.budget.findMany({
       where: {
-        scopeKey: session.user.id, // guest-demo 대신 user id 사용
+        scopeKey: "guest-demo", // MVP: guest-demo scope
       },
       include: {
         workspace: true,
