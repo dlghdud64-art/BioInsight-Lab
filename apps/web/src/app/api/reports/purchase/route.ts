@@ -5,10 +5,14 @@ import { db } from "@/lib/db";
 // 구매내역 리포트 조회
 export async function GET(request: NextRequest) {
   try {
+    // x-guest-key 헤더 또는 세션 인증 지원
+    const guestKey = request.headers.get("x-guest-key");
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+
+    // 게스트 키가 있거나 세션이 있으면 인증 통과
+    // 개발 단계에서는 guest-demo를 기본값으로 사용
+    const scopeKey = guestKey || (session?.user?.id ? `user-${session.user.id}` : "guest-demo");
+    const userId = session?.user?.id;
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "month";
@@ -57,10 +61,10 @@ export async function GET(request: NextRequest) {
       where.organizationId = organizationId;
     }
 
-    // QuoteList 기반 데이터 조회
-    const quotes = await db.quote.findMany({
+    // QuoteList 기반 데이터 조회 (로그인된 경우에만)
+    const quotes = userId ? await db.quote.findMany({
       where: {
-        userId: session.user.id,
+        userId: userId,
         createdAt: {
           gte: dateStart,
           lte: dateEnd,
@@ -83,11 +87,11 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) : [];
 
     // 실제 구매내역 조회 (PurchaseRecord)
     console.log("[Purchase API] Querying purchase records with:", {
-      scopeKey: "guest-demo",
+      scopeKey: scopeKey,
       dateStart,
       dateEnd,
       vendorId,
@@ -96,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
-        scopeKey: "guest-demo", // MVP: guest-demo scope
+        scopeKey: scopeKey,
         ...(vendorId && { vendorName: vendorId }),
         purchasedAt: {
           gte: dateStart,
@@ -186,11 +190,11 @@ export async function GET(request: NextRequest) {
     }));
 
     // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
-    console.log("[Purchase API] Querying budgets with scopeKey: guest-demo");
+    console.log("[Purchase API] Querying budgets with scopeKey:", scopeKey);
 
     const budgets = await db.budget.findMany({
       where: {
-        scopeKey: "guest-demo", // MVP: guest-demo scope
+        scopeKey: scopeKey,
       },
       include: {
         workspace: true,
