@@ -18,6 +18,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { getGuestKey } from "@/lib/guest-key";
 import {
   Table,
   TableBody,
@@ -69,39 +70,119 @@ export default function PurchasesPage() {
 
   const { from, to } = getDateRange();
 
+  const guestKey = getGuestKey();
+
   const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ["purchase-summary", selectedOrganization, dateRange],
+    queryKey: ["purchase-summary", guestKey, dateRange],
     queryFn: async () => {
-      if (!selectedOrganization) return null;
       const params = new URLSearchParams({
-        organizationId: selectedOrganization,
         from: from.toISOString(),
         to: to.toISOString(),
       });
-      const response = await fetch(`/api/purchases/summary?${params}`);
+      const response = await fetch(`/api/purchases/summary?${params}`, {
+        headers: {
+          "x-guest-key": guestKey,
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
       return response.json();
     },
-    enabled: !!selectedOrganization,
+    enabled: !!guestKey,
   });
 
+  // TSV/CSV 파싱 함수
+  const parseTsvToRows = (text: string): any[] => {
+    const lines = text.trim().split("\n");
+    if (lines.length < 2) {
+      throw new Error("At least 2 lines required (header + data)");
+    }
+
+    // 헤더 파싱
+    const headerLine = lines[0];
+    const delimiter = headerLine.includes("\t") ? "\t" : ",";
+    const headers = headerLine.split(delimiter).map((h) => h.trim());
+
+    // 컬럼 매핑 (한글/영문 헤더 지원)
+    const columnMap: Record<string, string> = {
+      "구매일": "purchasedAt",
+      "purchasedAt": "purchasedAt",
+      "date": "purchasedAt",
+      "벤더": "vendorName",
+      "vendorName": "vendorName",
+      "vendor": "vendorName",
+      "카테고리": "category",
+      "category": "category",
+      "품목명": "itemName",
+      "itemName": "itemName",
+      "item": "itemName",
+      "품목": "itemName",
+      "수량": "qty",
+      "qty": "qty",
+      "quantity": "qty",
+      "단가": "unitPrice",
+      "unitPrice": "unitPrice",
+      "price": "unitPrice",
+      "금액": "amount",
+      "amount": "amount",
+      "total": "amount",
+      "통화": "currency",
+      "currency": "currency",
+      "카탈로그번호": "catalogNumber",
+      "catalogNumber": "catalogNumber",
+      "catalog": "catalogNumber",
+      "단위": "unit",
+      "unit": "unit",
+    };
+
+    const mappedHeaders = headers.map((h) => columnMap[h] || h.toLowerCase());
+
+    // 데이터 행 파싱
+    const rows: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(delimiter).map((v) => v.trim());
+      if (values.length !== headers.length) continue;
+
+      const row: any = {};
+      headers.forEach((header, idx) => {
+        const mappedKey = mappedHeaders[idx];
+        const value = values[idx];
+
+        if (mappedKey === "qty" || mappedKey === "unitPrice" || mappedKey === "amount") {
+          row[mappedKey] = value ? parseInt(value.replace(/,/g, "")) : undefined;
+        } else {
+          row[mappedKey] = value || undefined;
+        }
+      });
+
+      // 필수 필드 확인
+      if (row.purchasedAt && row.vendorName && row.itemName && row.qty) {
+        rows.push(row);
+      }
+    }
+
+    return rows;
+  };
+
   const importMutation = useMutation({
-    mutationFn: async (data: { csvText: string; organizationId: string }) => {
+    mutationFn: async (rows: any[]) => {
       const response = await fetch("/api/purchases/import", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          "x-guest-key": guestKey,
+        },
+        body: JSON.stringify({ rows }),
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to import CSV");
+        throw new Error(error.error || "Failed to import");
       }
       return response.json();
     },
     onSuccess: (data) => {
       toast({
         title: "Import successful",
-        description: `${data.successCount} rows imported successfully. ${data.errorCount} errors.`,
+        description: `${data.successRows} rows imported successfully. ${data.errorRows} errors.`,
       });
       setCsvText("");
       queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
@@ -119,20 +200,25 @@ export default function PurchasesPage() {
     if (!csvText.trim()) {
       toast({
         title: "Error",
-        description: "Please paste CSV data",
+        description: "Please paste TSV/CSV data",
         variant: "destructive",
       });
       return;
     }
-    if (!selectedOrganization) {
+
+    try {
+      const rows = parseTsvToRows(csvText);
+      if (rows.length === 0) {
+        throw new Error("No valid rows found");
+      }
+      importMutation.mutate(rows);
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Please select an organization",
+        title: "Parse error",
+        description: error.message,
         variant: "destructive",
       });
-      return;
     }
-    importMutation.mutate({ csvText, organizationId: selectedOrganization });
   };
 
   const formatCurrency = (amount: number, currency: string = "KRW") => {
@@ -154,29 +240,8 @@ export default function PurchasesPage() {
             icon={Download}
           />
           <main className="container mx-auto p-6 space-y-6">
-            {/* Organization Selector */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Select Organization</CardTitle>
-                <CardDescription>Choose the organization for purchase tracking</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Select value={selectedOrganization} onValueChange={setSelectedOrganization}>
-                  <SelectTrigger className="w-full md:w-[300px]">
-                    <SelectValue placeholder="Select organization" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizations?.map((org: any) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-
-            {selectedOrganization && (
+            {/* Purchase Summary - Always visible with guest-key */}
+            {guestKey && (
               <>
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
