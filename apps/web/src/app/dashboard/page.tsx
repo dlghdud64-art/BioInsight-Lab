@@ -19,6 +19,8 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { LayoutDashboard } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useDashboardWidgets } from "@/lib/store/dashboard-widgets-store";
 import { WidgetGrid } from "@/components/dashboard/widget-grid";
@@ -42,6 +44,8 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("quotes");
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
   const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
   const { isEditMode, setEditMode, widgets, resetLayout, loadLayout } = useDashboardWidgets();
 
   // 레이아웃 로드
@@ -86,13 +90,17 @@ export default function DashboardPage() {
 
   // 구매 내역/예산 요약 조회
   const { data: purchaseSummary, isLoading: purchaseSummaryLoading, error: purchaseSummaryError } = useQuery({
-    queryKey: ["purchase-summary", purchasePeriod],
+    queryKey: ["purchase-summary", purchasePeriod, customStartDate, customEndDate],
     queryFn: async () => {
-      const response = await fetch(`/api/reports/purchase?period=${purchasePeriod}`);
+      let url = `/api/reports/purchase?period=${purchasePeriod}`;
+      if (purchasePeriod === "custom" && customStartDate && customEndDate) {
+        url = `/api/reports/purchase?startDate=${customStartDate}&endDate=${customEndDate}`;
+      }
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: status === "authenticated" && (purchasePeriod !== "custom" || (customStartDate !== "" && customEndDate !== "")),
   });
 
   // 최근 활동 로그 조회
@@ -188,18 +196,47 @@ export default function DashboardPage() {
               >
                 <div className="space-y-3 md:space-y-4">
                   {/* 기간 선택 */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs md:text-sm text-slate-600">기간 선택</span>
-                    <Select value={purchasePeriod} onValueChange={setPurchasePeriod}>
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="month">이번 달</SelectItem>
-                        <SelectItem value="quarter">이번 분기</SelectItem>
-                        <SelectItem value="year">이번 해</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs md:text-sm text-slate-600">기간 선택</span>
+                      <Select value={purchasePeriod} onValueChange={setPurchasePeriod}>
+                        <SelectTrigger className="w-[140px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="month">이번 달</SelectItem>
+                          <SelectItem value="quarter">이번 분기</SelectItem>
+                          <SelectItem value="year">이번 해</SelectItem>
+                          <SelectItem value="custom">직접 선택</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {/* 직접 선택 시 날짜 입력 */}
+                    {purchasePeriod === "custom" && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          <Label htmlFor="startDate" className="text-xs text-slate-500">시작</Label>
+                          <Input
+                            id="startDate"
+                            type="date"
+                            value={customStartDate}
+                            onChange={(e) => setCustomStartDate(e.target.value)}
+                            className="w-[130px] h-8 text-xs"
+                          />
+                        </div>
+                        <span className="text-xs text-slate-400">~</span>
+                        <div className="flex items-center gap-1">
+                          <Label htmlFor="endDate" className="text-xs text-slate-500">종료</Label>
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={customEndDate}
+                            onChange={(e) => setCustomEndDate(e.target.value)}
+                            className="w-[130px] h-8 text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* 로딩 상태 */}
