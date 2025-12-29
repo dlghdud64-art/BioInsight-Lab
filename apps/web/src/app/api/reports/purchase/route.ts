@@ -86,20 +86,19 @@ export async function GET(request: NextRequest) {
     });
 
     // 실제 구매내역 조회 (PurchaseRecord)
+    // scopeKey 기반으로 조회 (guestKey 또는 workspaceId)
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
-        ...(organizationId && { organizationId }),
-        ...(vendorId && { vendorId }),
-        purchaseDate: {
+        purchasedAt: {
           gte: dateStart,
           lte: dateEnd,
         },
         ...(category && { category }),
+        // scopeKey는 세션 기반으로 처리 (향후 workspaceId로 확장)
+        // 현재는 모든 구매 내역 조회
       },
-      include: {
-        vendor: true,
-        product: true,
-        organization: true,
+      orderBy: {
+        purchasedAt: "desc",
       },
     });
 
@@ -140,22 +139,22 @@ export async function GET(request: NextRequest) {
     // PurchaseRecord 기반 계산 (실제 구매액)
       // 타입 에러 수정: record 파라미터에 타입 명시
       purchaseRecords.forEach((record: any) => {
-      actualAmount += record.totalAmount;
-      totalAmount += record.totalAmount;
-      if (record.vendor) {
+      actualAmount += record.amount;
+      totalAmount += record.amount;
+      if (record.vendorName) {
         vendorMap.set(
-          record.vendor.name,
-          (vendorMap.get(record.vendor.name) || 0) + record.totalAmount
+          record.vendorName,
+          (vendorMap.get(record.vendorName) || 0) + record.amount
         );
       }
       if (record.category) {
         categoryMap.set(
           record.category,
-          (categoryMap.get(record.category) || 0) + record.totalAmount
+          (categoryMap.get(record.category) || 0) + record.amount
         );
       }
-      const month = record.purchaseDate.toISOString().substring(0, 7);
-      monthlyMap.set(month, (monthlyMap.get(month) || 0) + record.totalAmount);
+      const month = record.purchasedAt.toISOString().substring(0, 7);
+      monthlyMap.set(month, (monthlyMap.get(month) || 0) + record.amount);
     });
 
     // 월별 데이터 정렬
@@ -178,14 +177,13 @@ export async function GET(request: NextRequest) {
     }));
 
     // 예산 정보 조회 및 사용률 계산
+    // scopeKey 기반으로 조회 (향후 workspaceId로 확장)
     const budgets = await db.budget.findMany({
       where: {
-        ...(organizationId && { organizationId }),
-        periodStart: { lte: dateEnd },
-        periodEnd: { gte: dateStart },
-      },
-      include: {
-        organization: true,
+        yearMonth: {
+          gte: dateStart.toISOString().substring(0, 7),
+          lte: dateEnd.toISOString().substring(0, 7),
+        },
       },
     });
 
@@ -211,13 +209,11 @@ export async function GET(request: NextRequest) {
 
       // PurchaseRecord 기반 계산
       // 타입 에러 수정: record 파라미터에 타입 명시
+      const budgetYearMonth = budget.yearMonth;
       purchaseRecords.forEach((record: any) => {
-        if (
-          (!budget.organizationId || record.organizationId === budget.organizationId) &&
-          record.purchaseDate >= budget.periodStart &&
-          record.purchaseDate <= budget.periodEnd
-        ) {
-          usedAmount += record.totalAmount;
+        const recordYearMonth = record.purchasedAt.toISOString().substring(0, 7);
+        if (recordYearMonth === budgetYearMonth) {
+          usedAmount += record.amount;
         }
       });
 
@@ -226,15 +222,15 @@ export async function GET(request: NextRequest) {
 
       return {
         id: budget.id,
-        name: budget.name,
-        organization: budget.organization?.name || "-",
-        projectName: budget.projectName || "-",
+        name: budget.description || `예산 ${budget.yearMonth}`,
+        organization: "-",
+        projectName: "-",
         budgetAmount: budget.amount,
         usedAmount,
         remaining,
         usageRate,
-        periodStart: budget.periodStart,
-        periodEnd: budget.periodEnd,
+        periodStart: new Date(`${budget.yearMonth}-01`),
+        periodEnd: new Date(`${budget.yearMonth}-31`),
       };
     });
 
@@ -267,14 +263,14 @@ export async function GET(request: NextRequest) {
       purchaseRecords.forEach((record: any) => {
       details.push({
         id: record.id,
-        date: record.purchaseDate.toISOString().split("T")[0],
-        organization: record.organization?.name || "-",
-        project: record.projectName || "-",
-        vendor: record.vendor?.name || "-",
+        date: record.purchasedAt.toISOString().split("T")[0],
+        organization: "-", // scopeKey 기반이므로 조직 정보 없음
+        project: "-",
+        vendor: record.vendorName || "-",
         category: record.category || "-",
-        productName: record.product?.name || record.productName || "-",
-        amount: record.totalAmount,
-        notes: record.notes || "-",
+        productName: record.itemName || "-",
+        amount: record.amount,
+        notes: "-",
         type: "purchase",
       });
     });
