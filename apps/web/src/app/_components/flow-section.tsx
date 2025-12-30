@@ -42,7 +42,7 @@ export function FlowSection() {
             검색부터 견적 요청까지, 모든 과정을 한 곳에서 처리하세요
           </p>
         </div>
-        <div className="grid gap-3 md:gap-6 lg:gap-8 grid-cols-1 md:grid-cols-3 w-full">
+        <div className="grid gap-2 md:gap-6 lg:gap-8 grid-cols-3 md:grid-cols-3 w-full">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const colorClasses = {
@@ -58,23 +58,23 @@ export function FlowSection() {
             
             return (
               <Link key={step.href} href={step.href} className="relative z-10">
-                <Card className={`h-full border-2 border-slate-200 bg-white rounded-xl ${hoverClasses[step.color as keyof typeof hoverClasses]} transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 group`}>
-                  <CardContent className="flex flex-col items-center text-center p-3 md:p-6 lg:p-8 h-full">
-                    <div className={`relative mb-2 md:mb-4 w-12 h-12 md:w-16 md:h-16 rounded-2xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                      <Icon className="h-5 w-5 md:h-7 md:w-7 text-white" strokeWidth={2} />
-                      <div className={`absolute -top-1.5 -right-1.5 md:-top-2 md:-right-2 w-5 h-5 md:w-7 md:h-7 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-xs font-bold text-white`}>
+                <Card className={`h-full border-2 border-slate-200 bg-white rounded-lg md:rounded-xl ${hoverClasses[step.color as keyof typeof hoverClasses]} transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 group`}>
+                  <CardContent className="flex flex-col items-center text-center p-2 md:p-6 lg:p-8 h-full">
+                    <div className={`relative mb-1.5 md:mb-4 w-8 h-8 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                      <Icon className="h-3.5 w-3.5 md:h-7 md:w-7 text-white" strokeWidth={2} />
+                      <div className={`absolute -top-1 -right-1 md:-top-2 md:-right-2 w-4 h-4 md:w-7 md:h-7 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-[10px] md:text-xs font-bold text-white`}>
                         {step.number}
                       </div>
                     </div>
-                    <div className="space-y-1.5 md:space-y-3 flex-1">
-                      <h3 className="text-base md:text-xl font-bold text-slate-900">{step.title}</h3>
-                      <p className="text-xs md:text-base leading-relaxed text-slate-700">
+                    <div className="space-y-1 md:space-y-3 flex-1 w-full">
+                      <h3 className="text-[11px] md:text-xl font-bold text-slate-900 leading-tight">{step.title}</h3>
+                      <p className="hidden md:block text-base leading-relaxed text-slate-700">
                         {step.description}
                       </p>
                     </div>
-                    <div className="mt-3 md:mt-6 flex items-center gap-2 text-xs md:text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
+                    <div className="hidden md:flex mt-6 items-center gap-2 text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
                       시작하기
-                      <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </CardContent>
                 </Card>

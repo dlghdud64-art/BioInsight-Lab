@@ -21,7 +21,7 @@ export function ComparisonSection() {
             <div className="absolute -top-2 left-2 md:-top-3 md:left-4 z-10">
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 md:gap-1.5 md:px-3 md:py-1 bg-slate-100 border border-slate-300 rounded-full text-[10px] md:text-xs font-semibold text-slate-700">
                 <Clock className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                <span className="hidden sm:inline">기존 방식</span>
+                <span>기존</span>
               </span>
             </div>
             <div className="border-2 border-slate-200 bg-white rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-lg h-full">
@@ -80,7 +80,8 @@ export function ComparisonSection() {
             <div className="absolute -top-2 right-2 md:-top-3 md:left-4 z-10">
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 md:gap-1.5 md:px-3 md:py-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full text-[10px] md:text-xs font-semibold shadow-md">
                 <Zap className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                <span className="hidden sm:inline">BioInsight Lab</span>
+                <span className="hidden md:inline">BioInsight Lab</span>
+                <span className="md:hidden">자동화</span>
               </span>
             </div>
             <div className="border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-xl h-full relative overflow-hidden">

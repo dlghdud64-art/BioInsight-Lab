@@ -28,16 +28,16 @@ export function SafetyRegulationTeaserSection() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" className="text-[10px] md:text-xs h-7 md:h-8 px-2 border-slate-200" disabled>
-                    <FileText className="h-3 w-3 mr-1" />
-                    <span>MSDS/SDS</span>
-                    <span className="ml-1 text-[9px] text-slate-400">(준비 중)</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="text-[10px] md:text-xs h-7 md:h-8 px-2 md:px-3 border-slate-200 flex-shrink-0" disabled>
+                    <FileText className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="whitespace-nowrap">MSDS/SDS</span>
+                    <span className="ml-1 text-[9px] text-slate-400 hidden md:inline">(준비 중)</span>
                   </Button>
-                  <Button variant="outline" size="sm" className="text-[10px] md:text-xs h-7 md:h-8 px-2 border-slate-200" disabled>
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    <span>규제 정보</span>
-                    <span className="ml-1 text-[9px] text-slate-400">(준비 중)</span>
+                  <Button variant="outline" size="sm" className="text-[10px] md:text-xs h-7 md:h-8 px-2 md:px-3 border-slate-200 flex-shrink-0" disabled>
+                    <ExternalLink className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="whitespace-nowrap">규제 정보</span>
+                    <span className="ml-1 text-[9px] text-slate-400 hidden md:inline">(준비 중)</span>
                   </Button>
                 </div>
               </div>

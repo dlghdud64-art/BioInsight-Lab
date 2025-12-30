@@ -14,14 +14,14 @@ export function PersonaSection() {
           누가 쓰나요?
         </h2>
         <Tabs defaultValue="rnd" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1">
-            <TabsTrigger value="rnd" className="text-xs px-3">R&D 연구자</TabsTrigger>
-            <TabsTrigger value="qc" className="text-xs px-3">QC·QA 실무자</TabsTrigger>
-            <TabsTrigger value="production" className="text-xs px-3">생산 엔지니어</TabsTrigger>
-            <TabsTrigger value="buyer" className="text-xs px-3">구매 담당자</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 gap-1 overflow-x-auto">
+            <TabsTrigger value="rnd" className="text-[10px] md:text-xs px-1.5 md:px-3 whitespace-nowrap">R&D 연구자</TabsTrigger>
+            <TabsTrigger value="qc" className="text-[10px] md:text-xs px-1.5 md:px-3 whitespace-nowrap">QC·QA</TabsTrigger>
+            <TabsTrigger value="production" className="text-[10px] md:text-xs px-1.5 md:px-3 whitespace-nowrap">생산</TabsTrigger>
+            <TabsTrigger value="buyer" className="text-[10px] md:text-xs px-1.5 md:px-3 whitespace-nowrap">구매</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rnd" className="mt-3">
+          <TabsContent value="rnd" className="mt-4">
             <Card className="border border-slate-200 bg-white rounded-lg">
               <CardHeader className="p-3">
                 <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export function PersonaSection() {
                   <CardTitle className="text-sm text-slate-900">R&D 연구자</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
+              <CardContent className="p-3 pt-2">
                 <CardDescription className="text-xs text-slate-600 leading-snug">
                   <ul className="space-y-1 list-disc list-inside">
                     <li>실험 프로토콜에서 필요한 시약을 자동으로 추출</li>
@@ -44,7 +44,7 @@ export function PersonaSection() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="qc" className="mt-3">
+          <TabsContent value="qc" className="mt-4">
             <Card className="border border-slate-200 bg-white rounded-lg">
               <CardHeader className="p-3">
                 <div className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export function PersonaSection() {
                   <CardTitle className="text-sm text-slate-900">QC/QA 실무자</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
+              <CardContent className="p-3 pt-2">
                 <CardDescription className="text-xs text-slate-600 leading-snug">
                   <ul className="space-y-1 list-disc list-inside">
                     <li>동일 Grade/규격 유지가 중요한 대체품 검토</li>
@@ -67,7 +67,7 @@ export function PersonaSection() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="production" className="mt-3">
+          <TabsContent value="production" className="mt-4">
             <Card className="border border-slate-200 bg-white rounded-lg">
               <CardHeader className="p-3">
                 <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function PersonaSection() {
                   <CardTitle className="text-sm text-slate-900">생산 엔지니어</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
+              <CardContent className="p-3 pt-2">
                 <CardDescription className="text-xs text-slate-600 leading-snug">
                   <ul className="space-y-1 list-disc list-inside">
                     <li>대량 구매 시 가격·납기 중심 비교</li>
@@ -90,7 +90,7 @@ export function PersonaSection() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="buyer" className="mt-3">
+          <TabsContent value="buyer" className="mt-4">
             <Card className="border border-slate-200 bg-white rounded-lg">
               <CardHeader className="p-3">
                 <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function PersonaSection() {
                   <CardTitle className="text-sm text-slate-900">구매 담당자</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
+              <CardContent className="p-3 pt-2">
                 <CardDescription className="text-xs text-slate-600 leading-snug">
                   <ul className="space-y-1 list-disc list-inside">
                     <li>팀에서 요청한 견적 요청 리스트를 한 번에 확인</li>
