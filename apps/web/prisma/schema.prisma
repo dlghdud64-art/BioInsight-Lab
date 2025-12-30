@@ -818,23 +818,105 @@ model WorkspaceInvite {
   @@index([email])
 }
 
-// 구독 ?보 (Team/Org ?랜)
+// 구독 정보 (Team/Org 플랜) - Production Level
 model Subscription {
-  id                 String           @id @default(cuid())
-  organizationId     String           @unique
-  plan               SubscriptionPlan @default(FREE)
-  status             String           @default("active") // active, cancelled, expired
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  cancelAtPeriodEnd  Boolean          @default(false)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                   String           @id @default(cuid())
+  organizationId       String?          @unique // 조직 기반 구독
+  userId               String?          @unique // 개인 사용자 기반 구독
+  workspaceId          String?          @unique // 워크스페이스 기반 구독
+  plan                 SubscriptionPlan @default(FREE)
+  status               String           @default("active") // active, trialing, past_due, canceled, unpaid
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean          @default(false)
+  trialEndsAt          DateTime? // 체험판 종료일
+  // Stripe 연동 필드
+  stripeCustomerId     String? // Stripe 고객 ID
+  stripeSubscriptionId String? // Stripe 구독 ID
+  stripePriceId        String? // Stripe 가격 ID
+  // 사용량 추적
+  currentSeats         Int              @default(1) // 현재 시트 수
+  maxSeats             Int? // 최대 시트 수 (플랜별 제한)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 
-  // 관?
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // 관계
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices       Invoice[] // 청구 내역
+  paymentMethods PaymentMethod[] // 결제 수단
 
   @@index([organizationId])
+  @@index([userId])
+  @@index([workspaceId])
   @@index([status])
+  @@index([stripeCustomerId])
+}
+
+// 결제 수단 (카드 정보)
+model PaymentMethod {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  // Stripe 연동 필드
+  stripePaymentMethodId String? @unique // Stripe PaymentMethod ID
+  // 카드 정보 (표시용 - 실제 카드번호는 Stripe에 저장)
+  brand          String? // visa, mastercard, amex 등
+  last4          String? // 카드 마지막 4자리
+  expMonth       Int? // 만료 월
+  expYear        Int? // 만료 년
+  // 상태
+  isDefault      Boolean  @default(false) // 기본 결제 수단 여부
+  isValid        Boolean  @default(true) // 유효 여부
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // 관계
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([isDefault])
+}
+
+// 청구서/인보이스
+enum InvoiceStatus {
+  DRAFT // 초안
+  OPEN // 발행됨 (미결제)
+  PAID // 결제 완료
+  VOID // 취소됨
+  UNCOLLECTIBLE // 수금 불가
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  // Stripe 연동 필드
+  stripeInvoiceId String?      @unique // Stripe Invoice ID
+  // 청구 정보
+  number         String? // 청구서 번호 (예: INV-2024-001)
+  status         InvoiceStatus @default(DRAFT)
+  amountDue      Int // 청구 금액 (원)
+  amountPaid     Int           @default(0) // 결제된 금액
+  currency       String        @default("KRW")
+  // 기간 정보
+  periodStart    DateTime // 청구 기간 시작
+  periodEnd      DateTime // 청구 기간 종료
+  dueDate        DateTime? // 결제 기한
+  paidAt         DateTime? // 결제 완료 시점
+  // 상세 내역
+  description    String?       @db.Text // 청구 설명
+  lineItems      Json? // 세부 항목 [{description, quantity, unitPrice, amount}]
+  // PDF 영수증
+  invoicePdfUrl  String? // PDF 다운로드 URL
+  hostedInvoiceUrl String? // Stripe 호스팅 인보이스 URL
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // 관계
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([periodStart])
+  @@index([stripeInvoiceId])
 }
 
 // 액티비티 로그 (P1+)

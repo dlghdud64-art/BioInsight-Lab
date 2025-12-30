@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Receipt,
+  CreditCard,
 } from "lucide-react";
 
 interface NavItem {
@@ -92,15 +93,19 @@ const navItems: NavItem[] = [
     href: "/dashboard/supplier",
     icon: Store,
   },
+];
+
+// 하단 메뉴 (결제/설정)
+const bottomNavItems: NavItem[] = [
   {
-    title: "설정",
-    href: "/dashboard/settings/plans",
-    icon: Settings,
+    title: "청구 및 구독",
+    href: "/billing",
+    icon: CreditCard,
   },
   {
-    title: "Enterprise 설정",
-    href: "/dashboard/settings/enterprise",
-    icon: Shield,
+    title: "설정",
+    href: "/dashboard/settings",
+    icon: Settings,
   },
 ];
 
@@ -128,7 +133,7 @@ export function DashboardSidebar() {
   }, [isMobileOpen]);
 
   const SidebarContent = () => (
-    <div className="p-3 md:p-4">
+    <div className="p-3 md:p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3 md:mb-4 md:hidden">
         <h2 className="text-xs font-semibold text-slate-900">메뉴</h2>
         <Button
@@ -141,11 +146,13 @@ export function DashboardSidebar() {
         </Button>
       </div>
       <h2 className="hidden md:block text-xs md:text-sm font-semibold text-slate-900 mb-3 md:mb-4">메뉴</h2>
-      <nav className="space-y-1">
+
+      {/* 메인 네비게이션 */}
+      <nav className="space-y-1 flex-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
-          
+
           return (
             <Link
               key={item.href}
@@ -169,6 +176,33 @@ export function DashboardSidebar() {
           );
         })}
       </nav>
+
+      {/* 하단 메뉴 (결제/설정) - 구분선 */}
+      <div className="border-t border-slate-200 pt-3 mt-3">
+        <nav className="space-y-1">
+          {bottomNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                )}
+              >
+                <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
+                <span className="truncate">{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 
