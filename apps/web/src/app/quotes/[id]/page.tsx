@@ -299,14 +299,16 @@ export default function QuoteDetailPage() {
 
         {/* 탭 구조: 회신 입력, 회신 수신함 */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="items" className="text-xs md:text-sm">
-              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              회신 입력
+          <TabsList className="grid w-full grid-cols-2 gap-1">
+            <TabsTrigger value="items" className="text-xs md:text-sm whitespace-nowrap">
+              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">회신 입력</span>
+              <span className="sm:hidden">입력</span>
             </TabsTrigger>
-            <TabsTrigger value="inbox" className="text-xs md:text-sm">
-              <Inbox className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              회신 수신함
+            <TabsTrigger value="inbox" className="text-xs md:text-sm whitespace-nowrap">
+              <Inbox className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">회신 수신함</span>
+              <span className="sm:hidden">수신함</span>
             </TabsTrigger>
           </TabsList>
 

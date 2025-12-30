@@ -26,9 +26,12 @@ function QuoteRequestPageContent() {
 
       {/* 탭 */}
       <Tabs defaultValue="request" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="request">견적 요청</TabsTrigger>
-          <TabsTrigger value="replies">회신</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 gap-1">
+          <TabsTrigger value="request" className="text-xs md:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">견적 요청</span>
+            <span className="sm:hidden">견적</span>
+          </TabsTrigger>
+          <TabsTrigger value="replies" className="text-xs md:text-sm whitespace-nowrap">회신</TabsTrigger>
         </TabsList>
 
         {/* 견적 요청 탭 */}
