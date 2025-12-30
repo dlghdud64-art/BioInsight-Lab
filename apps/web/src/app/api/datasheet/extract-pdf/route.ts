@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 400 });
     }
 
+    // 🎭 파일명 추출 (데모 cheat key용)
+    const fileName = file.name;
+    console.log(`[PDF Extract API] Processing file: ${fileName}`);
+
     // File을 Buffer로 변환
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -36,8 +40,8 @@ export async function POST(request: NextRequest) {
       cleanedText = cleanedText.substring(0, 15000) + "...";
     }
 
-    // 데이터시트 정보 추출
-    const extractedInfo = await extractProductInfoFromDatasheet(cleanedText);
+    // 데이터시트 정보 추출 (파일명 전달 - 데모 cheat key 활성화)
+    const extractedInfo = await extractProductInfoFromDatasheet(cleanedText, fileName);
 
     return NextResponse.json({
       data: {

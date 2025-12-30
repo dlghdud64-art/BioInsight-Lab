@@ -25,10 +25,11 @@ import { cn } from "@/lib/utils";
 import { useDashboardWidgets } from "@/lib/store/dashboard-widgets-store";
 import { WidgetGrid } from "@/components/dashboard/widget-grid";
 import { DraggableWidget } from "@/components/dashboard/draggable-widget";
-import { Settings, RotateCcw } from "lucide-react";
+import { Settings, RotateCcw, Save } from "lucide-react";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const DASHBOARD_TABS = [
   { id: "quotes", label: "견적" },
@@ -46,14 +47,39 @@ export default function DashboardPage() {
   const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
-  const { isEditMode, setEditMode, widgets, resetLayout, loadLayout } = useDashboardWidgets();
+  const { isEditMode, setEditMode, widgets, resetLayout, loadLayout, saveLayout } = useDashboardWidgets();
+  const { toast } = useToast();
 
-  // 레이아웃 로드
+  // 레이아웃 로드 (페이지 마운트 시)
   useEffect(() => {
-    if (status === "authenticated") {
-      loadLayout();
+    loadLayout();
+  }, [loadLayout]);
+
+  // [저장] 버튼 클릭 핸들러
+  const handleSaveLayout = () => {
+    const success = saveLayout();
+    if (success) {
+      toast({
+        title: "저장 완료",
+        description: "대시보드 설정이 저장되었습니다.",
+      });
+    } else {
+      toast({
+        title: "저장 실패",
+        description: "설정 저장에 실패했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
     }
-  }, [status, loadLayout]);
+  };
+
+  // [초기화] 버튼 클릭 핸들러
+  const handleResetLayout = () => {
+    resetLayout();
+    toast({
+      title: "초기화 완료",
+      description: "대시보드 설정이 기본값으로 초기화되었습니다.",
+    });
+  };
 
   // 견적 목록 조회
   const { data: quotesData, isLoading: quotesLoading } = useQuery({
@@ -161,18 +187,29 @@ export default function DashboardPage() {
               />
               <div className="flex gap-2">
                 {isEditMode && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resetLayout}
-                    className="text-xs"
-                  >
-                    <RotateCcw className="h-3 w-3 mr-1" />
-                    초기화
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetLayout}
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      초기화
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSaveLayout}
+                      className="text-xs bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="h-3 w-3 mr-1" />
+                      저장
+                    </Button>
+                  </>
                 )}
                 <Button
-                  variant={isEditMode ? "default" : "outline"}
+                  variant={isEditMode ? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setEditMode(!isEditMode)}
                   className="text-xs"

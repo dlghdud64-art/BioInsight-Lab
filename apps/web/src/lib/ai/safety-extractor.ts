@@ -1,4 +1,5 @@
 // MSDS/SDS에서 안전 취급 요약 자동 추출
+import { parseAiJsonResponse } from "./json-cleaner";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -67,7 +68,7 @@ ${truncatedText}
           {
             role: "system",
             content:
-              "당신은 MSDS/SDS 문서를 분석하여 안전 취급 정보를 추출하는 전문가입니다. 문서에서 위험 코드, 피크토그램, 보관 조건, PPE, 취급 주의사항 등을 정확하게 추출합니다.",
+              "당신은 MSDS/SDS 문서를 분석하여 안전 취급 정보를 추출하는 전문가입니다. 문서에서 위험 코드, 피크토그램, 보관 조건, PPE, 취급 주의사항 등을 정확하게 추출합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
           },
           {
             role: "user",
@@ -91,7 +92,11 @@ ${truncatedText}
       throw new Error("GPT 응답이 비어있습니다.");
     }
 
-    const result = JSON.parse(content) as SafetySummary;
+    // JSON 클리닝 및 파싱 (마크다운 코드블록 등 제거)
+    const result = parseAiJsonResponse<SafetySummary>(
+      content,
+      "Safety Extractor"
+    );
     return result;
   } catch (error) {
     console.error("Error extracting safety info from MSDS:", error);
