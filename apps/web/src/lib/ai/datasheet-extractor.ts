@@ -1,4 +1,5 @@
 // 데이터시트 텍스트에서 제품 정보 추출
+import { parseAiJsonResponse } from "./json-cleaner";
 
 export interface ExtractedProductInfo {
   name?: string;
@@ -77,7 +78,7 @@ JSON만 반환하고 다른 설명은 하지 마세요.`;
           {
             role: "system",
             content:
-              "당신은 바이오·제약 제품 데이터시트를 분석하는 전문가입니다. 데이터시트에서 제품 정보를 정확하게 추출하고 한글로 요약합니다.",
+              "당신은 바이오·제약 제품 데이터시트를 분석하는 전문가입니다. 데이터시트에서 제품 정보를 정확하게 추출하고 한글로 요약합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
           },
           {
             role: "user",
@@ -104,7 +105,11 @@ JSON만 반환하고 다른 설명은 하지 마세요.`;
       throw new Error("GPT 응답이 비어있습니다.");
     }
 
-    const result = JSON.parse(content) as ExtractedProductInfo;
+    // JSON 클리닝 및 파싱 (마크다운 코드블록 등 제거)
+    const result = parseAiJsonResponse<ExtractedProductInfo>(
+      content,
+      "Datasheet Extractor"
+    );
 
     return result;
   } catch (error: any) {

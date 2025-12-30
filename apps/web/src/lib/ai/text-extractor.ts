@@ -1,5 +1,6 @@
 // protocol-extractor.ts에서 export된 타입 재사용
 import type { ProtocolExtractionResult } from "./protocol-extractor";
+import { parseAiJsonResponse } from "./json-cleaner";
 export type { ExtractedReagent, ProtocolExtractionResult, ExperimentCondition } from "./protocol-extractor";
 
 /**
@@ -118,7 +119,7 @@ ${text}
           {
             role: "system",
             content:
-              "당신은 생명과학 실험 프로토콜을 분석하는 전문가입니다. 프로토콜에서 필요한 시약, 기구, 장비를 정확하게 추출합니다.",
+              "당신은 생명과학 실험 프로토콜을 분석하는 전문가입니다. 프로토콜에서 필요한 시약, 기구, 장비를 정확하게 추출합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
           },
           {
             role: "user",
@@ -141,7 +142,11 @@ ${text}
       throw new Error("GPT 응답이 비어있습니다.");
     }
 
-    const result = JSON.parse(content) as ProtocolExtractionResult;
+    // JSON 클리닝 및 파싱 (마크다운 코드블록 등 제거)
+    const result = parseAiJsonResponse<ProtocolExtractionResult>(
+      content,
+      "Text Extractor"
+    );
 
     // 소비량 기반 예상 주문량 계산
     result.reagents = result.reagents.map((reagent) => {
