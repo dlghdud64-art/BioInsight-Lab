@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Calendar, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -357,15 +358,28 @@ function BudgetForm({
   onCancel: () => void;
 }) {
   const { toast } = useToast();
+  
+  // 기본값 설정: 시작일 = 오늘, 종료일 = 올해 12월 31일
+  const getDefaultStartDate = (): Date => {
+    if (budget?.periodStart) {
+      return new Date(budget.periodStart);
+    }
+    return new Date();
+  };
+
+  const getDefaultEndDate = (): Date => {
+    if (budget?.periodEnd) {
+      return new Date(budget.periodEnd);
+    }
+    const now = new Date();
+    return new Date(now.getFullYear(), 11, 31); // 12월 31일 (월은 0-based)
+  };
+
   const [name, setName] = useState(budget?.name || "");
   const [amount, setAmount] = useState(budget?.amount?.toString() || "");
   const [currency, setCurrency] = useState(budget?.currency || "KRW");
-  const [periodStart, setPeriodStart] = useState(
-    budget?.periodStart ? new Date(budget.periodStart).toISOString().split("T")[0] : ""
-  );
-  const [periodEnd, setPeriodEnd] = useState(
-    budget?.periodEnd ? new Date(budget.periodEnd).toISOString().split("T")[0] : ""
-  );
+  const [periodStart, setPeriodStart] = useState<Date | null>(getDefaultStartDate());
+  const [periodEnd, setPeriodEnd] = useState<Date | null>(getDefaultEndDate());
   const [projectName, setProjectName] = useState(budget?.projectName || "");
   const [description, setDescription] = useState(budget?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -389,20 +403,26 @@ function BudgetForm({
     }
   };
 
-  const handlePeriodStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPeriodStart(value);
-    if (periodEnd && value > periodEnd) {
+  const handlePeriodStartChange = (date: Date | undefined) => {
+    if (!date) {
+      setPeriodStart(null);
+      return;
+    }
+    setPeriodStart(date);
+    if (periodEnd && date > periodEnd) {
       setErrors((prev) => ({ ...prev, periodStart: "시작일은 종료일보다 이전이어야 합니다." }));
     } else {
       setErrors((prev) => ({ ...prev, periodStart: "" }));
     }
   };
 
-  const handlePeriodEndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPeriodEnd(value);
-    if (periodStart && value < periodStart) {
+  const handlePeriodEndChange = (date: Date | undefined) => {
+    if (!date) {
+      setPeriodEnd(null);
+      return;
+    }
+    setPeriodEnd(date);
+    if (periodStart && date < periodStart) {
       setErrors((prev) => ({ ...prev, periodEnd: "종료일은 시작일보다 이후여야 합니다." }));
     } else {
       setErrors((prev) => ({ ...prev, periodEnd: "" }));
@@ -429,7 +449,7 @@ function BudgetForm({
       newErrors.periodEnd = "종료일을 선택해주세요.";
     }
 
-    if (periodStart && periodEnd && periodStart > periodEnd) {
+    if (periodStart && periodEnd && periodStart.getTime() > periodEnd.getTime()) {
       newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
     }
 
@@ -453,8 +473,8 @@ function BudgetForm({
       name: name.trim(),
       amount: parseFloat(amount.replace(/,/g, "")) || 0,
       currency,
-      periodStart,
-      periodEnd,
+      periodStart: periodStart ? periodStart.toISOString().split("T")[0] : "",
+      periodEnd: periodEnd ? periodEnd.toISOString().split("T")[0] : "",
       projectName: projectName.trim() || undefined,
       description: description.trim() || undefined,
     });
@@ -522,12 +542,11 @@ function BudgetForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="periodStart">기간 시작 *</Label>
-          <Input
-            id="periodStart"
-            type="date"
-            value={periodStart}
-            onChange={handlePeriodStartChange}
-            required
+          <DatePicker
+            date={periodStart || undefined}
+            onDateChange={handlePeriodStartChange}
+            placeholder="날짜를 선택하세요"
+            maxDate={periodEnd || undefined}
             className={errors.periodStart ? "border-red-500" : ""}
           />
           {errors.periodStart && (
@@ -536,13 +555,11 @@ function BudgetForm({
         </div>
         <div>
           <Label htmlFor="periodEnd">기간 종료 *</Label>
-          <Input
-            id="periodEnd"
-            type="date"
-            value={periodEnd}
-            onChange={handlePeriodEndChange}
-            min={periodStart || undefined}
-            required
+          <DatePicker
+            date={periodEnd || undefined}
+            onDateChange={handlePeriodEndChange}
+            placeholder="날짜를 선택하세요"
+            minDate={periodStart || undefined}
             className={errors.periodEnd ? "border-red-500" : ""}
           />
           {errors.periodEnd && (
@@ -554,9 +571,9 @@ function BudgetForm({
       {periodStart && periodEnd && (
         <div className="p-3 bg-slate-50 rounded-lg text-xs text-muted-foreground">
           <Calendar className="h-3 w-3 inline mr-1" />
-          예산 기간: {new Date(periodStart).toLocaleDateString("ko-KR")} ~ {new Date(periodEnd).toLocaleDateString("ko-KR")}
+          예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")}
           {" "}
-          ({Math.ceil((new Date(periodEnd).getTime() - new Date(periodStart).getTime()) / (1000 * 60 * 60 * 24))}일)
+          ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
         </div>
       )}
 

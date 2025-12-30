@@ -179,32 +179,50 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 gap-2">
               <PageHeader
                 title="대시보드"
                 description="견적, 즐겨찾기, 최근 본 제품, 구매 내역 요약을 한눈에 확인합니다."
                 icon={LayoutDashboard}
               />
-              <div className="flex gap-2">
+              <div className="flex gap-1 md:gap-2 flex-shrink-0">
                 {isEditMode && (
                   <>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleResetLayout}
-                      className="text-xs"
+                      className="text-xs md:inline-flex hidden"
                     >
                       <RotateCcw className="h-3 w-3 mr-1" />
                       초기화
                     </Button>
                     <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetLayout}
+                      className="md:hidden p-2"
+                      title="초기화"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                    <Button
                       variant="default"
                       size="sm"
                       onClick={handleSaveLayout}
-                      className="text-xs bg-green-600 hover:bg-green-700"
+                      className="text-xs bg-green-600 hover:bg-green-700 md:inline-flex hidden"
                     >
                       <Save className="h-3 w-3 mr-1" />
                       저장
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveLayout}
+                      className="md:hidden p-2 bg-green-50 hover:bg-green-100 text-green-700"
+                      title="저장"
+                    >
+                      <Save className="h-4 w-4" />
                     </Button>
                   </>
                 )}
@@ -212,10 +230,19 @@ export default function DashboardPage() {
                   variant={isEditMode ? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setEditMode(!isEditMode)}
-                  className="text-xs"
+                  className="text-xs md:inline-flex hidden"
                 >
-                  <Settings className="h-3 w-3 mr-1" />
+                  <Settings className="h-3 w-3 mr-1 md:mr-1" />
                   {isEditMode ? "완료" : "편집"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditMode(!isEditMode)}
+                  className="md:hidden p-2"
+                  title={isEditMode ? "완료" : "편집"}
+                >
+                  <Settings className="h-4 w-4" />
                 </Button>
               </div>
             </div>

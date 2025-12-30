@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, Calendar, Filter, FileText } from "lucide-react";
+import { Upload, Download, Calendar, Filter, FileText, ChevronRight, Receipt } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
@@ -229,6 +230,39 @@ export default function PurchasesPage() {
     return `${currency} ${safeAmount.toLocaleString()}`;
   };
 
+  // 구매 내역 리스트 조회
+  const { data: purchasesData, isLoading: purchasesLoading } = useQuery({
+    queryKey: ["purchases-list", guestKey, dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        from: from.toISOString(),
+        to: to.toISOString(),
+      });
+      const response = await fetch(`/api/purchases?${params}`, {
+        headers: {
+          "x-guest-key": guestKey,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch purchases");
+      return response.json();
+    },
+    enabled: !!guestKey,
+  });
+
+  // 상태에 따른 뱃지 스타일 (가상의 상태 - 실제 데이터에 따라 조정 필요)
+  const getStatusBadge = (purchase: any) => {
+    // 실제 데이터에 status 필드가 없으므로, purchasedAt 기준으로 가상 상태 생성
+    const daysAgo = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysAgo > 7) {
+      return { label: "배송완료", className: "bg-green-100 text-green-700" };
+    } else if (daysAgo > 3) {
+      return { label: "배송중", className: "bg-blue-100 text-blue-700" };
+    } else {
+      return { label: "대기", className: "bg-yellow-100 text-yellow-700" };
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <MainHeader />
@@ -246,41 +280,47 @@ export default function PurchasesPage() {
               <>
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">This Month</CardTitle>
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-500">이번 달 총 지출</CardTitle>
+                      <Calendar className="h-4 w-4 text-gray-400" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-3xl font-extrabold text-gray-900">
                         {summaryLoading ? "..." : formatCurrency(summary?.summary?.currentMonthSpending || 0)}
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {summary?.summary?.currentMonthCount || 0}건의 구매
+                      </p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Year to Date</CardTitle>
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-500">연간 누적</CardTitle>
+                      <Calendar className="h-4 w-4 text-gray-400" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-3xl font-extrabold text-gray-900">
                         {summaryLoading ? "..." : formatCurrency(summary?.summary?.yearToDate || 0)}
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        올해 총 구매 금액
+                      </p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Top Vendor</CardTitle>
-                      <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-gray-500">주요 벤더</CardTitle>
+                      <Filter className="h-4 w-4 text-gray-400" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
+                      <div className="text-xl font-bold text-gray-900">
                         {summaryLoading ? "..." : summary?.topVendors?.[0]?.vendorName || "N/A"}
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-gray-600 mt-1">
                         {summary?.topVendors?.[0]
                           ? formatCurrency(summary.topVendors[0].totalAmount)
-                          : ""}
+                          : "데이터 없음"}
                       </p>
                     </CardContent>
                   </Card>
@@ -389,66 +429,227 @@ export default function PurchasesPage() {
                   </CardContent>
                 </Card>
 
+                {/* Purchase History Table */}
+                {purchasesData?.items && purchasesData.items.length > 0 && (
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <CardHeader className="bg-gray-50/50 pb-3">
+                      <CardTitle className="text-lg font-semibold">구매 내역</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        최근 구매 내역을 확인하세요
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                주문 번호
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                날짜
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                벤더
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                품목
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                수량
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                상태
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                금액
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 w-12">
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {purchasesData.items.map((purchase: any, idx: number) => {
+                              const statusBadge = getStatusBadge(purchase);
+                              const orderNumber = purchase.id.slice(-8).toUpperCase();
+                              return (
+                                <TableRow
+                                  key={purchase.id || `purchase-${idx}`}
+                                  className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors cursor-pointer"
+                                >
+                                  <TableCell className="py-4 px-6">
+                                    <span className="font-mono text-sm text-gray-600">
+                                      {orderNumber}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <span className="text-sm text-gray-500">
+                                      {format(new Date(purchase.purchasedAt), "yyyy.MM.dd")}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <span className="text-sm text-gray-900 font-medium">
+                                      {purchase.vendorName || "Unknown"}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <div className="flex flex-col">
+                                      <span className="text-sm text-gray-900 font-medium">
+                                        {purchase.itemName || "Unknown Item"}
+                                      </span>
+                                      {purchase.catalogNumber && (
+                                        <span className="text-xs text-gray-400 font-mono mt-0.5">
+                                          {purchase.catalogNumber}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6 text-right">
+                                    <span className="text-sm text-gray-600">
+                                      {purchase.qty} {purchase.unit || ""}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <Badge
+                                      variant="outline"
+                                      className={`${statusBadge.className} border-0 rounded-full px-3 py-1 text-xs font-medium`}
+                                    >
+                                      {statusBadge.label}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6 text-right">
+                                    <span className="font-bold text-gray-900">
+                                      {formatCurrency(purchase.amount, purchase.currency)}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4 px-6">
+                                    <div className="flex items-center gap-2 justify-end">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                                        title="영수증 다운로드"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toast({
+                                            title: "준비 중",
+                                            description: "영수증 다운로드 기능은 곧 제공될 예정입니다.",
+                                          });
+                                        }}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                      <ChevronRight className="h-4 w-4 text-gray-300" />
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Top Vendors */}
                 {summary?.topVendors && summary.topVendors.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Top Vendors</CardTitle>
-                      <CardDescription>Vendors by total spending</CardDescription>
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardHeader className="bg-gray-50/50 pb-3">
+                      <CardTitle className="text-lg font-semibold">Top Vendors</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        Vendors by total spending
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Vendor</TableHead>
-                            <TableHead className="text-right">Purchases</TableHead>
-                            <TableHead className="text-right">Total Amount</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {summary.topVendors?.map((vendor: any, idx: number) => (
-                            <TableRow key={vendor?.vendorName || `vendor-${idx}`}>
-                              <TableCell className="font-medium">{vendor?.vendorName || "Unknown"}</TableCell>
-                              <TableCell className="text-right">{vendor?.count ?? 0}</TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(vendor?.totalAmount)}
-                              </TableCell>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                Vendor
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                Purchases
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                Total Amount
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {summary.topVendors?.map((vendor: any, idx: number) => (
+                              <TableRow
+                                key={vendor?.vendorName || `vendor-${idx}`}
+                                className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
+                              >
+                                <TableCell className="py-4 px-6 font-medium text-gray-900">
+                                  {vendor?.vendorName || "Unknown"}
+                                </TableCell>
+                                <TableCell className="py-4 px-6 text-right text-gray-600">
+                                  {vendor?.count ?? 0}
+                                </TableCell>
+                                <TableCell className="py-4 px-6 text-right">
+                                  <span className="font-bold text-gray-900">
+                                    {formatCurrency(vendor?.totalAmount)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
 
                 {/* Top Categories */}
                 {summary?.topCategories && summary.topCategories.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Top Categories</CardTitle>
-                      <CardDescription>Categories by total spending</CardDescription>
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardHeader className="bg-gray-50/50 pb-3">
+                      <CardTitle className="text-lg font-semibold">Top Categories</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        Categories by total spending
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Category</TableHead>
-                            <TableHead className="text-right">Purchases</TableHead>
-                            <TableHead className="text-right">Total Amount</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {summary.topCategories?.map((category: any, idx: number) => (
-                            <TableRow key={category?.category || `category-${idx}`}>
-                              <TableCell className="font-medium">{category?.category || "Unknown"}</TableCell>
-                              <TableCell className="text-right">{category?.count ?? 0}</TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(category?.totalAmount)}
-                              </TableCell>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
+                                Category
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                Purchases
+                              </TableHead>
+                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
+                                Total Amount
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {summary.topCategories?.map((category: any, idx: number) => (
+                              <TableRow
+                                key={category?.category || `category-${idx}`}
+                                className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
+                              >
+                                <TableCell className="py-4 px-6 font-medium text-gray-900">
+                                  {category?.category || "Unknown"}
+                                </TableCell>
+                                <TableCell className="py-4 px-6 text-right text-gray-600">
+                                  {category?.count ?? 0}
+                                </TableCell>
+                                <TableCell className="py-4 px-6 text-right">
+                                  <span className="font-bold text-gray-900">
+                                    {formatCurrency(category?.totalAmount)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
