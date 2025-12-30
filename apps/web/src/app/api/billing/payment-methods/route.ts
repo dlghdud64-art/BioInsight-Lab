@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 // GET: 결제 수단 목록
 export async function GET(request: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ paymentMethods: [] });
     }
 
-    const membership = await prisma.organizationMember.findFirst({
+    const membership = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       include: {
         organization: {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       return "unknown";
     };
 
-    const membership = await prisma.organizationMember.findFirst({
+    const membership = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       include: {
         organization: {
@@ -95,14 +95,14 @@ export async function POST(request: NextRequest) {
 
     // 기존 기본 카드 해제 (새 카드가 기본인 경우)
     if (isDefault) {
-      await prisma.paymentMethod.updateMany({
+      await db.paymentMethod.updateMany({
         where: { subscriptionId: membership.organization.subscription.id },
         data: { isDefault: false },
       });
     }
 
     // 결제 수단 생성
-    const paymentMethod = await prisma.paymentMethod.create({
+    const paymentMethod = await db.paymentMethod.create({
       data: {
         subscriptionId: membership.organization.subscription.id,
         brand: getBrand(cardNumber.replace(/\s/g, "")),
@@ -153,7 +153,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 삭제 권한 확인
-    const membership = await prisma.organizationMember.findFirst({
+    const membership = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       include: {
         organization: {
@@ -175,7 +175,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 해당 구독의 결제 수단인지 확인
-    const paymentMethod = await prisma.paymentMethod.findFirst({
+    const paymentMethod = await db.paymentMethod.findFirst({
       where: {
         id: paymentMethodId,
         subscriptionId,
@@ -190,7 +190,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 삭제
-    await prisma.paymentMethod.delete({
+    await db.paymentMethod.delete({
       where: { id: paymentMethodId },
     });
 

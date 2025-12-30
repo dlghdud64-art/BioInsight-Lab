@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 // 데모용 Mock 인보이스 데이터
 const MOCK_INVOICES = [
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const membership = await prisma.organizationMember.findFirst({
+    const membership = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       include: {
         organization: {

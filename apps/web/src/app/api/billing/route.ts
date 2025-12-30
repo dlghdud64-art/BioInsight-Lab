@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 // 플랜 정보 (가격, 기능)
 export const PLAN_INFO = {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id;
 
     // 사용자의 조직 찾기
-    const membership = await prisma.organizationMember.findFirst({
+    const membership = await db.organizationMember.findFirst({
       where: { userId },
       include: {
         organization: {
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     // 구독이 없으면 기본 FREE 구독 생성
     if (!subscription && membership?.organization) {
-      subscription = await prisma.subscription.create({
+      subscription = await db.subscription.create({
         data: {
           organizationId: membership.organization.id,
           plan: "FREE",
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 사용량 계산
-    const quotesCount = await prisma.quote.count({
+    const quotesCount = await db.quote.count({
       where: {
         userId,
         createdAt: {
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     });
 
     const membersCount = membership?.organization
-      ? await prisma.organizationMember.count({
+      ? await db.organizationMember.count({
           where: { organizationId: membership.organization.id },
         })
       : 1;
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 사용자의 조직 찾기
-      const membership = await prisma.organizationMember.findFirst({
+      const membership = await db.organizationMember.findFirst({
         where: { userId: session.user.id },
         include: { organization: { include: { subscription: true } } },
       });
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
       const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
       // 구독 업데이트 또는 생성
-      const subscription = await prisma.subscription.upsert({
+      const subscription = await db.subscription.upsert({
         where: { organizationId: membership.organization.id },
         update: {
           plan: plan as any,
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
 
       // 인보이스 생성 (유료 플랜인 경우)
       if (planInfo.price && planInfo.price > 0) {
-        await prisma.invoice.create({
+        await db.invoice.create({
           data: {
             subscriptionId: subscription.id,
             number: `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${Date.now().toString().slice(-4)}`,
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 조직 플랜도 업데이트
-      await prisma.organization.update({
+      await db.organization.update({
         where: { id: membership.organization.id },
         data: {
           plan: plan as any,
