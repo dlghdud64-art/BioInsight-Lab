@@ -70,35 +70,36 @@ export function FeaturesShowcaseSection() {
             각 기능을 클릭하여 바로 시작하세요
           </p>
         </div>
-        <div className="grid gap-3 md:gap-4 lg:gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 md:gap-4 lg:gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <Link key={feature.href} href={feature.href}>
-                <Card className={`group border-2 border-slate-200 bg-white rounded-xl ${feature.hoverBorder} ${feature.hoverBg} transition-all cursor-pointer h-full hover:shadow-lg hover:-translate-y-1`}>
-                  <CardHeader className="pb-2 p-4 md:p-5">
-                    <div className="flex items-start gap-2.5 md:gap-3">
-                      <div className={`${feature.color} p-2.5 md:p-3 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
-                        <Icon className="h-4 w-4 md:h-5 md:w-5 text-white" strokeWidth={2} />
+                <Card className={`group border-2 border-slate-200 bg-white rounded-lg md:rounded-xl ${feature.hoverBorder} ${feature.hoverBg} transition-all cursor-pointer h-full hover:shadow-lg hover:-translate-y-1`}>
+                  <CardHeader className="pb-1 md:pb-2 p-2 md:p-5">
+                    <div className="flex items-start gap-1.5 md:gap-3">
+                      <div className={`${feature.color} p-1.5 md:p-3 rounded-lg md:rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
+                        <Icon className="h-3 w-3 md:h-5 md:w-5 text-white" strokeWidth={2} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-sm md:text-base font-bold text-slate-900 mb-1">
+                        <CardTitle className="text-[10px] md:text-base font-bold text-slate-900 mb-0.5 md:mb-1 leading-tight">
                           {feature.title}
                         </CardTitle>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 md:p-5 pt-0">
-                    <CardDescription className="text-sm md:text-base leading-relaxed text-slate-700 mb-4 md:mb-5">
+                  <CardContent className="p-2 md:p-5 pt-0">
+                    <CardDescription className="hidden md:block text-base leading-relaxed text-slate-700 mb-4 md:mb-5">
                       {feature.description}
                     </CardDescription>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-sm md:text-base h-9 md:h-10 font-medium group-hover:bg-slate-50 min-h-[44px]"
+                      className="w-full text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-[9px] md:text-base h-7 md:h-10 font-medium group-hover:bg-slate-50 min-h-[28px] md:min-h-[44px]"
                     >
-                      바로 시작하기
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      <span className="hidden md:inline">바로 시작하기</span>
+                      <span className="md:hidden">시작</span>
+                      <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </CardContent>
                 </Card>

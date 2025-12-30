@@ -50,23 +50,23 @@ export function KeyValueSection() {
             검색 사이트가 아니라, 구매 준비/정리 도구입니다
           </p>
         </div>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-3">
+        <div className="grid gap-2 md:gap-6 grid-cols-3 md:grid-cols-3">
           {values.map((value, idx) => {
             const Icon = value.icon;
             return (
               <Card 
                 key={idx} 
-                className={`border-2 ${value.borderColor} bg-gradient-to-br ${value.bgGradient} ${value.hoverBorder} ${value.hoverBg} transition-all hover:shadow-lg hover:-translate-y-1 rounded-xl group`}
+                className={`border-2 ${value.borderColor} bg-gradient-to-br ${value.bgGradient} ${value.hoverBorder} ${value.hoverBg} transition-all hover:shadow-lg hover:-translate-y-1 rounded-lg md:rounded-xl group`}
               >
-                <CardContent className="flex items-start gap-3 md:gap-4 p-4 md:p-6">
-                  <div className={`${value.iconBg} p-2.5 md:p-3 rounded-xl flex-shrink-0 shadow-md group-hover:scale-110 transition-transform`}>
-                    <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" strokeWidth={2} />
+                <CardContent className="flex flex-col items-center text-center gap-2 md:flex-row md:items-start md:text-left md:gap-3 md:gap-4 p-2 md:p-6">
+                  <div className={`${value.iconBg} p-2 md:p-3 rounded-lg md:rounded-xl flex-shrink-0 shadow-md group-hover:scale-110 transition-transform`}>
+                    <Icon className="h-4 w-4 md:h-6 md:w-6 text-white" strokeWidth={2} />
                   </div>
-                  <div className="space-y-1.5 md:space-y-2 min-w-0 flex-1">
-                    <h3 className="text-base md:text-lg font-bold text-slate-900">
+                  <div className="space-y-1 md:space-y-2 min-w-0 flex-1">
+                    <h3 className="text-[10px] md:text-lg font-bold text-slate-900 leading-tight">
                       {value.title}
                     </h3>
-                    <p className="text-sm md:text-base leading-relaxed text-slate-700">
+                    <p className="hidden md:block text-base leading-relaxed text-slate-700">
                       {value.description}
                     </p>
                   </div>
