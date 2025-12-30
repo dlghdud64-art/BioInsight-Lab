@@ -156,13 +156,11 @@ export function DateRangePicker({
               </Button>
             </div>
             <Calendar
-              initialFocus
               mode="range"
               defaultMonth={date?.from}
               selected={date}
               onSelect={handleDateSelect}
               numberOfMonths={2}
-              locale={ko}
               className="rounded-md border-0"
             />
           </div>
