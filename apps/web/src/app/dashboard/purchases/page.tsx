@@ -221,11 +221,12 @@ export default function PurchasesPage() {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = "KRW") => {
+  const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
+    const safeAmount = amount ?? 0;
     if (currency === "KRW") {
-      return `₩${amount.toLocaleString()}`;
+      return `₩${safeAmount.toLocaleString()}`;
     }
-    return `${currency} ${amount.toLocaleString()}`;
+    return `${currency} ${safeAmount.toLocaleString()}`;
   };
 
   return (
@@ -405,12 +406,12 @@ export default function PurchasesPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {summary.topVendors.map((vendor: any) => (
-                            <TableRow key={vendor.vendorName}>
-                              <TableCell className="font-medium">{vendor.vendorName}</TableCell>
-                              <TableCell className="text-right">{vendor.count}</TableCell>
+                          {summary.topVendors?.map((vendor: any, idx: number) => (
+                            <TableRow key={vendor?.vendorName || `vendor-${idx}`}>
+                              <TableCell className="font-medium">{vendor?.vendorName || "Unknown"}</TableCell>
+                              <TableCell className="text-right">{vendor?.count ?? 0}</TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(vendor.totalAmount)}
+                                {formatCurrency(vendor?.totalAmount)}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -437,12 +438,12 @@ export default function PurchasesPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {summary.topCategories.map((category: any) => (
-                            <TableRow key={category.category}>
-                              <TableCell className="font-medium">{category.category}</TableCell>
-                              <TableCell className="text-right">{category.count}</TableCell>
+                          {summary.topCategories?.map((category: any, idx: number) => (
+                            <TableRow key={category?.category || `category-${idx}`}>
+                              <TableCell className="font-medium">{category?.category || "Unknown"}</TableCell>
+                              <TableCell className="text-right">{category?.count ?? 0}</TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(category.totalAmount)}
+                                {formatCurrency(category?.totalAmount)}
                               </TableCell>
                             </TableRow>
                           ))}

@@ -44,11 +44,12 @@ export function FeaturesShowcaseSection() {
     {
       title: "자동 번역 & 요약",
       description: "영문 데이터시트와 제품 설명을 한글로 번역하고 핵심 정보를 요약해 해외 벤더 제품 비교를 쉽게 합니다.",
-      href: "/products/1",
+      href: "/search",
       icon: Languages,
       color: "bg-amber-600",
       hoverBorder: "hover:border-amber-400",
       hoverBg: "hover:bg-amber-50/50",
+      buttonText: "제품 검색하기",
     },
     {
       title: "대시보드",
@@ -97,7 +98,7 @@ export function FeaturesShowcaseSection() {
                       size="sm"
                       className="w-full text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-sm md:text-base h-9 md:h-10 font-medium group-hover:bg-slate-50 min-h-[44px]"
                     >
-                      바로 시작하기
+                      {(feature as any).buttonText || "바로 시작하기"}
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </CardContent>
