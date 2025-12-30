@@ -26,7 +26,7 @@ export function ComparisonSection() {
                 </span>
               </span>
             </div>
-            <div className="border-2 border-slate-200 bg-white rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-lg h-full">
+            <div className="border-2 border-slate-200 bg-white rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-lg h-full pt-4 md:pt-6 lg:pt-8">
               <div className="space-y-1.5 md:space-y-4">
                 {[
                   { 
@@ -88,7 +88,7 @@ export function ComparisonSection() {
                 <span className="text-[8px] md:text-[9px] font-normal opacity-90 leading-tight">BioInsight Lab</span>
               </span>
             </div>
-            <div className="border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-xl h-full relative overflow-hidden">
+            <div className="border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50 rounded-xl md:rounded-2xl p-2 md:p-6 lg:p-8 shadow-xl h-full relative overflow-hidden pt-4 md:pt-6 lg:pt-8">
               {/* 배경 장식 */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-200/20 rounded-full blur-2xl -ml-12 -mb-12"></div>

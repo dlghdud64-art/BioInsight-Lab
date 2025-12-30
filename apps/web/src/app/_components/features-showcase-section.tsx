@@ -93,9 +93,9 @@ export function FeaturesShowcaseSection() {
                       {feature.description}
                     </CardDescription>
                     <Button
-                      variant="ghost"
+                      variant="default"
                       size="sm"
-                      className="w-full text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-[9px] md:text-base h-7 md:h-10 font-medium group-hover:bg-slate-50 min-h-[28px] md:min-h-[44px]"
+                      className={`w-full text-white ${feature.color} hover:opacity-90 text-[9px] md:text-base h-7 md:h-10 font-semibold shadow-md hover:shadow-lg transition-all min-h-[28px] md:min-h-[44px] group-hover:scale-105`}
                     >
                       <span className="hidden md:inline">바로 시작하기</span>
                       <span className="md:hidden">시작</span>
