@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -144,11 +144,11 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   }, [quoteItems, groupByVendor]);
 
   // 선택 관련 함수들
-  const toggleSelectQuote = (id: string) => {
+  const toggleSelectQuote = useCallback((id: string) => {
     setSelectedQuoteIds((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
-  };
+  }, []);
 
   const selectAllQuotes = () => {
     setSelectedQuoteIds(quoteItems.map((item) => item.id));
@@ -190,6 +190,95 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   // 체크박스 상태 계산
   const allSelected = quoteItems.length > 0 && selectedQuoteIds.length === quoteItems.length;
   const someSelected = selectedQuoteIds.length > 0 && selectedQuoteIds.length < quoteItems.length;
+
+  // 테이블 행 데이터 준비 (로직을 컴포넌트 상단으로 이동)
+  const tableRows = useMemo(() => {
+    if (quoteItems.length === 0) return [];
+    
+    let globalIndex = 0;
+    return Object.entries(groupedByVendor).flatMap(([vendorName, items]) => {
+      const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+      const vendorItemCount = items.length;
+      
+      const rows: React.ReactNode[] = [];
+      
+      // 벤더 헤더 행 (그룹화 모드일 때만)
+      if (groupByVendor && vendorName !== "전체") {
+        rows.push(
+          <TableRow key={`vendor-${vendorName}`} className="bg-slate-50 hover:bg-slate-100">
+            <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
+              <span className="truncate block" title={vendorName}>{vendorName}</span>
+            </TableCell>
+            <TableCell colSpan={7} className="px-3 py-2 text-xs text-slate-600">
+              {vendorItemCount}개 품목
+            </TableCell>
+            <TableCell className="px-3 py-2 text-xs font-semibold text-slate-900 text-right">
+              <PriceDisplay price={vendorTotal} currency="KRW" />
+            </TableCell>
+            <TableCell></TableCell>
+          </TableRow>
+        );
+      }
+      
+      // 품목 행들
+      items.forEach((item) => {
+        globalIndex++;
+        const product = products?.find((p: any) => p.id === item.productId);
+        rows.push(
+          <TableRow key={item.id} className="h-14 hover:bg-gray-50">
+            <TableCell>
+              <Checkbox
+                checked={selectedQuoteIds.includes(item.id)}
+                onCheckedChange={() => toggleSelectQuote(item.id)}
+              />
+            </TableCell>
+            <TableCell className="text-center text-sm text-gray-700">
+              {globalIndex}
+            </TableCell>
+            <TableCell className="text-sm text-gray-900 font-medium">
+              {item.productName}
+            </TableCell>
+            <TableCell className="text-sm text-gray-600">
+              {product?.brand || "-"}
+            </TableCell>
+            <TableCell className="text-sm text-gray-600 font-mono">
+              {product?.catalogNumber || "-"}
+            </TableCell>
+            <TableCell>
+              <Input
+                type="number"
+                min="1"
+                value={item.quantity || 1}
+                onChange={(e) =>
+                  updateQuoteItem(item.id, {
+                    quantity: parseInt(e.target.value) || 1,
+                  })
+                }
+                className="w-20 h-9 text-sm"
+              />
+            </TableCell>
+            <TableCell className="text-right text-sm text-gray-900 font-medium">
+              <PriceDisplay
+                price={item.unitPrice || 0}
+                currency="KRW"
+              />
+            </TableCell>
+            <TableCell className="text-right text-sm text-gray-900 font-semibold">
+              <PriceDisplay
+                price={item.lineTotal || 0}
+                currency="KRW"
+              />
+            </TableCell>
+            <TableCell className="text-sm text-gray-500">
+              {item.notes || "-"}
+            </TableCell>
+          </TableRow>
+        );
+      });
+      
+      return rows;
+    });
+  }, [quoteItems, groupedByVendor, groupByVendor, products, selectedQuoteIds, toggleSelectQuote, updateQuoteItem]);
 
   return (
     <div className="space-y-6">
@@ -328,90 +417,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {quoteItems.length > 0 ? (
-                      (() => {
-                        let globalIndex = 0;
-                        return Object.entries(groupedByVendor).map(([vendorName, items]) => {
-                          const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-                          const vendorItemCount = items.length;
-                          
-                          return (
-                            <React.Fragment key={vendorName}>
-                              {/* 벤더 헤더 행 (그룹화 모드일 때만) */}
-                              {groupByVendor && vendorName !== "전체" && (
-                                <TableRow className="bg-slate-50 hover:bg-slate-100">
-                                  <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
-                                    <span className="truncate block" title={vendorName}>{vendorName}</span>
-                                  </TableCell>
-                                  <TableCell colSpan={7} className="px-3 py-2 text-xs text-slate-600">
-                                    {vendorItemCount}개 품목
-                                  </TableCell>
-                                  <TableCell className="px-3 py-2 text-xs font-semibold text-slate-900 text-right">
-                                    <PriceDisplay price={vendorTotal} currency="KRW" />
-                                  </TableCell>
-                                  <TableCell></TableCell>
-                                </TableRow>
-                              )}
-                              {/* 품목 행들 */}
-                              {items.map((item) => {
-                                globalIndex++;
-                                const product = products?.find((p: any) => p.id === item.productId);
-                                return (
-                                  <TableRow key={item.id} className="h-14 hover:bg-gray-50">
-                                    <TableCell>
-                                      <Checkbox
-                                        checked={selectedQuoteIds.includes(item.id)}
-                                        onCheckedChange={() => toggleSelectQuote(item.id)}
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm text-gray-700">
-                                      {globalIndex}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-900 font-medium">
-                                      {item.productName}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-600">
-                                      {product?.brand || "-"}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-600 font-mono">
-                                      {product?.catalogNumber || "-"}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        value={item.quantity || 1}
-                                        onChange={(e) =>
-                                          updateQuoteItem(item.id, {
-                                            quantity: parseInt(e.target.value) || 1,
-                                          })
-                                        }
-                                        className="w-20 h-9 text-sm"
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm text-gray-900 font-medium">
-                                      <PriceDisplay
-                                        price={item.unitPrice || 0}
-                                        currency="KRW"
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-right text-sm text-gray-900 font-semibold">
-                                      <PriceDisplay
-                                        price={item.lineTotal || 0}
-                                        currency="KRW"
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-500">
-                                      {item.notes || "-"}
-                                    </TableCell>
-                        </TableRow>
-                                );
-                              })}
-                            </React.Fragment>
-                          );
-                        });
-                      })()
-                    )}
+                    {tableRows}
                   </TableBody>
                 </Table>
                 </div>
