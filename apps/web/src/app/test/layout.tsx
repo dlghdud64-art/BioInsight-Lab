@@ -10,7 +10,7 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
         <MainHeader />
         <StepNav />
         
-        <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] mx-auto max-w-6xl px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+        <div className="pt-[calc(3.5rem+4rem+1rem)] md:pt-[calc(3.5rem+5rem+1rem)] mx-auto max-w-6xl px-4 py-4 md:py-8 space-y-4 md:space-y-6">
           <main>{children}</main>
         </div>
       </div>
