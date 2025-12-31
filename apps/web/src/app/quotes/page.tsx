@@ -33,6 +33,7 @@ import { QUOTE_STATUS } from "@/lib/constants";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { SearchStepNav } from "@/app/search/_components/search-step-nav";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -129,8 +130,9 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
+      <SearchStepNav />
       <div className="flex">
         <DashboardSidebar />
         <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
@@ -139,8 +141,8 @@ export default function QuotesPage() {
         {/* 헤더 */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-3xl font-bold">견적 요청 관리</h1>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900">견적 요청 관리</h1>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
               견적 요청과 응답을 한 곳에서 관리하세요
             </p>
           </div>
@@ -154,7 +156,7 @@ export default function QuotesPage() {
         </div>
 
         {/* 필터 및 검색 */}
-        <Card className="p-3 md:p-6">
+        <Card className="p-3 md:p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
           <CardContent className="px-0 pt-0 pb-0">
             <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="flex-1">
@@ -198,15 +200,15 @@ export default function QuotesPage() {
 
         {/* 견적 목록 */}
         {isLoading ? (
-          <Card>
+          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground py-8">로딩 중...</p>
+              <p className="text-center text-gray-500 py-8">로딩 중...</p>
             </CardContent>
           </Card>
         ) : filteredQuotes.length === 0 ? (
-          <Card>
+          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
             <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-gray-500 py-8">
                 {searchQuery || statusFilter !== "all"
                   ? "검색 결과가 없습니다"
                   : "견적 요청이 없습니다"}
@@ -223,7 +225,7 @@ export default function QuotesPage() {
         ) : (
           <div className="space-y-3 md:space-y-4">
             {filteredQuotes.map((quote) => (
-              <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
+              <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <CardHeader className="px-0 pt-0 pb-3">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
                     <div className="flex-1 min-w-0">
