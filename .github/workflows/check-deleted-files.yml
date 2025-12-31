@@ -1,0 +1,56 @@
+name: Check Deleted Files
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-deleted-files:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기
+      
+      - name: Check for deleted files
+        run: |
+          echo "🔍 삭제된 파일 검증 중..."
+          
+          # 삭제된 파일 목록
+          DELETED_FILES=(
+            "apps/web/public/brand/bioinsight-icon.PNG"
+            "apps/web/public/brand/bioinsight-icon.svg"
+          )
+          
+          # PR인 경우 base와 head 비교, push인 경우 이전 커밋과 비교
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            DIFF_CMD="git diff --name-only $BASE_SHA $HEAD_SHA"
+          else
+            DIFF_CMD="git diff --name-only HEAD~1 HEAD"
+          fi
+          
+          FAILED=0
+          for file in "${DELETED_FILES[@]}"; do
+            if $DIFF_CMD | grep -q "^$file$"; then
+              echo "❌ ERROR: 삭제된 파일 '$file'이 다시 추가되었습니다!"
+              echo "이 파일은 더 이상 사용되지 않습니다. Bio-Insight.png를 사용하세요."
+              FAILED=1
+            fi
+          done
+          
+          if [ $FAILED -eq 1 ]; then
+            exit 1
+          fi
+          
+          echo "✅ 삭제된 파일 검증 통과"
+

@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# 삭제된 파일 (다시 추가 방지)
+apps/web/public/brand/bioinsight-icon.PNG
+apps/web/public/brand/bioinsight-icon.svg
