@@ -33,7 +33,6 @@ import { QUOTE_STATUS } from "@/lib/constants";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
-import { SearchStepNav } from "@/app/search/_components/search-step-nav";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -132,10 +131,9 @@ export default function QuotesPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
-      <SearchStepNav />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+        <div className="flex-1 overflow-auto min-w-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 헤더 */}
@@ -215,7 +213,7 @@ export default function QuotesPage() {
               </p>
               {!searchQuery && statusFilter === "all" && (
                 <div className="text-center">
-                  <Link href="/compare/quote">
+                  <Link href="/search">
                     <Button>첫 견적 요청하기</Button>
                   </Link>
                 </div>
