@@ -176,17 +176,17 @@ export default function DashboardPage() {
   const userDisplayName = userName.split(" ")[0] || userName;
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 overflow-x-hidden">
       <MainHeader 
         showMenuIcon={true}
         pageTitle="대시보드"
         onMenuClick={() => setIsMobileMenuOpen(true)}
       />
-      <div className="flex">
+      <div className="flex overflow-x-hidden">
         <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
-        <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 pt-16 md:pt-0">
+          <div className="w-full px-3 md:px-4 py-4 md:py-8">
+            <div className="max-w-6xl mx-auto w-full">
             {/* 웰컴 섹션 */}
             <div className="mb-6 md:mb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -542,9 +542,9 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4">
-          <div className="hidden md:block overflow-x-auto pb-1 -mx-1 px-1">
-            <TabsList className="inline-flex min-w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4 w-full">
+          <div className="hidden md:block overflow-x-auto pb-1 -mx-1 px-1 w-full">
+            <TabsList className="inline-flex w-full">
               <TabsTrigger value="quotes" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
                 <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                 <span>견적 요청</span>
