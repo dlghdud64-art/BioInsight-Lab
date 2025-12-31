@@ -144,6 +144,11 @@ export async function GET(request: NextRequest) {
         })
       : 1;
 
+    // 플랜 타입 확인 및 기본값 설정
+    const currentPlan = (subscription?.plan && ["FREE", "TEAM", "ORGANIZATION"].includes(subscription.plan)
+      ? subscription.plan
+      : "FREE") as keyof typeof PLAN_INFO;
+
     return NextResponse.json({
       subscription: subscription || {
         plan: "FREE",
@@ -158,9 +163,9 @@ export async function GET(request: NextRequest) {
       invoices: subscription?.invoices || [],
       usage: {
         quotesUsed: quotesCount,
-        quotesLimit: PLAN_INFO[subscription?.plan || "FREE"].maxQuotesPerMonth,
+        quotesLimit: PLAN_INFO[currentPlan].maxQuotesPerMonth,
         seatsUsed: membersCount,
-        seatsLimit: PLAN_INFO[subscription?.plan || "FREE"].maxSeats,
+        seatsLimit: PLAN_INFO[currentPlan].maxSeats,
       },
     });
   } catch (error) {

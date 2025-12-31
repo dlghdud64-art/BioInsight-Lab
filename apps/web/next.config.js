@@ -3,7 +3,6 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
 
   // pdf-parse는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
   experimental: {
