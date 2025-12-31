@@ -54,16 +54,16 @@ export function FeaturesShowcaseSection() {
   ];
 
   return (
-    <section id="features-showcase" className="py-12 md:py-16 lg:py-20 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50/50">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="text-center space-y-2 mb-10 md:mb-12 lg:mb-16">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">주요 기능</h2>
-          <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">
+    <section id="features-showcase" className="py-6 md:py-12 lg:py-16 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50/50">
+      <div className="mx-auto max-w-7xl px-3 md:px-6">
+        <div className="text-center space-y-1 md:space-y-2 mb-6 md:mb-10 lg:mb-12">
+          <h2 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">주요 기능</h2>
+          <p className="text-xs md:text-sm lg:text-base text-gray-500 max-w-2xl mx-auto">
             각 기능을 클릭하여 바로 시작하세요
           </p>
         </div>
         
-        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
@@ -72,27 +72,27 @@ export function FeaturesShowcaseSection() {
                 href={feature.href}
                 className="group"
               >
-                <div className="bg-white border border-gray-100 rounded-xl p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
+                <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
                   {/* The Jewel Box - 아이콘 컨테이너 */}
-                  <div className="mb-4">
-                    <div className={`w-14 h-14 ${feature.gradient} rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105`}>
-                      <Icon className="h-7 w-7 text-white" strokeWidth={2.5} />
+                  <div className="mb-3 md:mb-4">
+                    <div className={`w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 ${feature.gradient} rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105`}>
+                      <Icon className="h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 text-white" strokeWidth={2.5} />
                     </div>
                   </div>
 
                   {/* 카드 본체 - Minimalist */}
                   <div className="flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-gray-800 transition-colors">
+                    <h3 className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-1.5 md:mb-2 group-hover:text-gray-800 transition-colors">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-500 leading-relaxed mb-4 flex-1">
+                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed mb-3 md:mb-4 flex-1">
                       {feature.description}
                     </p>
                     
                     {/* 텍스트 링크 액션 */}
-                    <div className={`inline-flex items-center gap-1.5 ${feature.linkColor} font-medium text-sm group-hover:gap-2 transition-all`}>
+                    <div className={`inline-flex items-center gap-1.5 ${feature.linkColor} font-medium text-xs md:text-sm group-hover:gap-2 transition-all`}>
                       <span>Explore</span>
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                      <ArrowRight className="h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
                 </div>
