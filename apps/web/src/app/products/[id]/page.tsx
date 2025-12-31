@@ -1039,28 +1039,29 @@ export default function ProductDetailPage() {
           <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
         </div>
         <div className="flex items-center justify-end">
-        <Button
-          className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
-          onClick={async () => {
-            try {
-              const response = await fetch(`/api/products/${id}`);
-              if (response.ok) {
+          <Button
+            className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+            onClick={async () => {
+              try {
+                const response = await fetch(`/api/products/${id}`);
+                if (response.ok) {
+                  toast({
+                    title: "견적 담기 완료",
+                    description: "제품이 견적 요청 리스트에 추가되었습니다.",
+                  });
+                }
+              } catch (error) {
                 toast({
-                  title: "견적 담기 완료",
-                  description: "제품이 견적 요청 리스트에 추가되었습니다.",
+                  title: "추가 실패",
+                  variant: "destructive",
                 });
               }
-            } catch (error) {
-              toast({
-                title: "추가 실패",
-                variant: "destructive",
-              });
-            }
-          }}
-        >
-          <ShoppingCart className="w-5 h-5" />
-          견적 담기
-        </Button>
+            }}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            견적 담기
+          </Button>
+        </div>
       </div>
 
       {/* 안전 필드 편집 모달 */}
