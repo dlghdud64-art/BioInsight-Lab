@@ -10,7 +10,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // 플랜 정보 (가격, 기능)
-export const PLAN_INFO = {
+const PLAN_INFO = {
   FREE: {
     name: "Free",
     nameKo: "무료",
