@@ -38,6 +38,30 @@ interface ExtractedItem {
   isEditing?: boolean;
 }
 
+// 새 API (/api/analyze/pdf) 응답 타입
+interface AnalyzedItemFromAPI {
+  name: string;
+  catalog_number: string | null;
+  specification: string | null;
+  quantity: string;
+  estimated_price: number;
+}
+
+interface APIAnalysisData {
+  title: string;
+  summary: string;
+  items: AnalyzedItemFromAPI[];
+}
+
+interface APIResponse {
+  success: boolean;
+  data?: APIAnalysisData;
+  error?: string;
+  mode?: 'live' | 'mock';
+  raw_text?: string;
+}
+
+// 내부 사용 타입 (변환 후)
 interface AnalysisResult {
   success: boolean;
   analysis_title: string;
@@ -45,6 +69,7 @@ interface AnalysisResult {
   extracted_items: ExtractedItem[];
   raw_text?: string;
   error?: string;
+  mode?: 'live' | 'mock';
 }
 
 export default function ProtocolResultPage() {
@@ -61,38 +86,59 @@ export default function ProtocolResultPage() {
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [showRawText, setShowRawText] = useState(false);
 
-  // PDF 분석 mutation
+  // PDF 분석 mutation - 새 API (/api/analyze/pdf) 사용
   const analyzeMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (file: File): Promise<AnalysisResult> => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/protocol/analyze", {
+      const response = await fetch("/api/analyze/pdf", {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "PDF 분석에 실패했습니다.");
+      const apiResponse: APIResponse = await response.json();
+
+      // API 응답을 내부 형식으로 변환
+      if (apiResponse.success && apiResponse.data) {
+        return {
+          success: true,
+          analysis_title: apiResponse.data.title,
+          summary: apiResponse.data.summary,
+          extracted_items: apiResponse.data.items.map((item, idx) => ({
+            id: `item-${idx}-${Date.now()}`,
+            item_name: item.name,
+            catalog_number: item.catalog_number,
+            spec: item.specification,
+            quantity: item.quantity,
+            estimated_price: item.estimated_price,
+            unit: null,
+            isEditing: false,
+          })),
+          raw_text: apiResponse.raw_text,
+          mode: apiResponse.mode,
+        };
       }
 
-      return response.json() as Promise<AnalysisResult>;
+      // 실패 시
+      return {
+        success: false,
+        analysis_title: file.name.replace('.pdf', ''),
+        summary: apiResponse.error || '분석에 실패했습니다.',
+        extracted_items: [],
+        error: apiResponse.error,
+        mode: apiResponse.mode,
+      };
     },
     onSuccess: (data) => {
       setAnalysisResult(data);
-      // 각 아이템에 고유 ID 부여
-      const itemsWithId = (data.extracted_items || []).map((item, idx) => ({
-        ...item,
-        id: `item-${idx}-${Date.now()}`,
-        isEditing: false,
-      }));
-      setItems(itemsWithId);
+      setItems(data.extracted_items);
 
       if (data.success) {
+        const modeLabel = data.mode === 'mock' ? ' (Demo 모드)' : '';
         toast({
-          title: "분석 완료",
-          description: `${itemsWithId.length}개 항목이 추출되었습니다.`,
+          title: `분석 완료${modeLabel}`,
+          description: `${data.extracted_items.length}개 항목이 추출되었습니다.`,
         });
       } else {
         toast({
@@ -366,7 +412,7 @@ export default function ProtocolResultPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <h2 className="text-xl font-bold text-slate-900 truncate">
                       {analysisResult.analysis_title}
                     </h2>
@@ -379,6 +425,12 @@ export default function ProtocolResultPage() {
                       <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
                         <AlertCircle className="h-3 w-3 mr-1" />
                         부분 분석
+                      </Badge>
+                    )}
+                    {analysisResult.mode === 'mock' && (
+                      <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Demo 모드
                       </Badge>
                     )}
                   </div>
