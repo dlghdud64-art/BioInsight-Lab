@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -261,28 +261,47 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
             )}
 
             {/* 테이블 - 항상 헤더 표시 */}
-            <div className="w-full overflow-x-auto -mx-4 sm:mx-0">
-              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                <Table className="w-full table-auto quote-table">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12 text-xs">
-                        {quoteItems.length > 0 && (
-                          <Checkbox
-                            checked={allSelected || someSelected}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                selectAllQuotes();
-                              } else {
-                                clearSelectedQuotes();
-                              }
-                            }}
-                            className={someSelected && !allSelected ? "opacity-50" : ""}
-                          />
-                        )}
-                      </TableHead>
-                      <TableHead 
-                        className="px-1 py-2 text-xs font-medium text-slate-500 text-center whitespace-nowrap no-column-header"
+            {quoteItems.length === 0 ? (
+              <div className="text-center py-16 md:py-20 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                  <ShoppingCart className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900">견적 바구니가 비어있습니다.</h3>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  비교할 제품을 선택하고 견적 요청 목록에 추가해주세요.
+                </p>
+                <Link href="/test/search">
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Search className="h-5 w-5 mr-2" />
+                    제품 검색하러 가기
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900">요청 제품 ({quoteItems.length}개)</h2>
+                </div>
+                <div className="w-full overflow-x-auto">
+                  <Table className="w-full">
+                    <TableHeader>
+                      <TableRow className="bg-gray-50 hover:bg-gray-50">
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-16">
+                          {quoteItems.length > 0 && (
+                            <Checkbox
+                              checked={allSelected || someSelected}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  selectAllQuotes();
+                                } else {
+                                  clearSelectedQuotes();
+                                }
+                              }}
+                              className={someSelected && !allSelected ? "opacity-50" : ""}
+                            />
+                          )}
+                        </TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-16"
                         style={{
                           display: 'table-cell',
                           writingMode: 'horizontal-tb',
@@ -299,59 +318,13 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                       >
                         <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>No.</span>
                       </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap product-name-header"
-                        style={{
-                          width: '200px',
-                          minWidth: '200px',
-                          maxWidth: '200px'
-                        }}
-                      >
-                        제품명
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap"
-                        style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}
-                      >
-                        벤더
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-left whitespace-nowrap"
-                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                      >
-                        Cat.No
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-right whitespace-nowrap"
-                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                      >
-                        단가
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
-                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                      >
-                        수량
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-right whitespace-nowrap"
-                        style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                      >
-                        금액
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
-                        style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                      >
-                        리드타임
-                      </TableHead>
-                      <TableHead 
-                        className="text-xs font-medium text-slate-500 text-center whitespace-nowrap"
-                        style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
-                      >
-                        삭제
-                      </TableHead>
-                      <TableHead className="w-12 text-xs"></TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase">제품명</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase">브랜드</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase">카탈로그 번호</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-24">수량</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 단가</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 금액</TableHead>
+                        <TableHead className="text-xs font-bold text-gray-500 uppercase">비고</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -382,198 +355,55 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                               {/* 품목 행들 */}
                               {items.map((item) => {
                                 globalIndex++;
+                                const product = products?.find((p: any) => p.id === item.productId);
                                 return (
-                                  <TableRow key={item.id}>
+                                  <TableRow key={item.id} className="h-14 hover:bg-gray-50">
                                     <TableCell>
                                       <Checkbox
                                         checked={selectedQuoteIds.includes(item.id)}
                                         onCheckedChange={() => toggleSelectQuote(item.id)}
                                       />
                                     </TableCell>
-                                    <TableCell 
-                                      className="px-1 py-2 text-xs text-slate-700 text-center whitespace-nowrap no-column-cell"
-                                      style={{
-                                        display: 'table-cell',
-                                        writingMode: 'horizontal-tb',
-                                        textOrientation: 'mixed',
-                                        visibility: 'visible',
-                                        direction: 'ltr',
-                                        unicodeBidi: 'normal',
-                                        transform: 'none',
-                                        width: '36px',
-                                        minWidth: '36px',
-                                        maxWidth: '36px',
-                                        padding: '8px 4px'
-                                      }}
-                                    >
-                                      <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>{globalIndex}</span>
+                                    <TableCell className="text-center text-sm text-gray-700">
+                                      {globalIndex}
                                     </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-xs text-slate-700 text-left product-name-cell"
-                            title={item.productName}
-                            style={{
-                              width: '180px',
-                              minWidth: '180px',
-                              maxWidth: '180px'
-                            }}
-                          >
-                            {item.productName}
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-xs text-slate-700 text-left whitespace-nowrap"
-                            style={{ width: '120px', minWidth: '120px', maxWidth: '120px' }}
-                          >
-                            {(() => {
-                              const product = products?.find((p: any) => p.id === item.productId);
-                              const vendors = product?.vendors || [];
-                              
-                              if (vendors.length <= 1) {
-                                return <span className="truncate block" title={item.vendorName}>{item.vendorName}</span>;
-                              }
-                              
-                              return (
-                                <Select
-                                  value={item.vendorId || ""}
-                                  onValueChange={(vendorId) => {
-                                    const selectedVendor = vendors.find((v: any) => v.vendor?.id === vendorId);
-                                    if (selectedVendor) {
-                                      updateQuoteItem(item.id, {
-                                        vendorId: selectedVendor.vendor?.id || "",
-                                        vendorName: selectedVendor.vendor?.name || "",
-                                        unitPrice: selectedVendor.priceInKRW || 0,
-                                        currency: "KRW",
-                                        lineTotal: (selectedVendor.priceInKRW || 0) * (item.quantity || 1),
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger className="h-7 text-xs w-full">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {vendors.map((v: any) => (
-                                      <SelectItem key={v.vendor?.id} value={v.vendor?.id || ""}>
-                                        {v.vendor?.name || ""}
-                                        {v.priceInKRW && ` (${v.priceInKRW.toLocaleString()}원원)`}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-xs text-slate-500 font-mono whitespace-nowrap"
-                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                          >
-                            {(() => {
-                              const product = products?.find((p: any) => p.id === item.productId);
-                              return product?.catalogNumber || "-";
-                            })()}
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
-                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                          >
-                            <PriceDisplay
-                              price={item.unitPrice || 0}
-                              currency="KRW"
-                            />
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-center"
-                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                          >
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantity || 1}
-                              onChange={(e) =>
-                                updateQuoteItem(item.id, {
-                                  quantity: parseInt(e.target.value) || 1,
-                                })
-                              }
-                              className="w-20 h-7 text-xs"
-                            />
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-xs text-slate-700 text-right whitespace-nowrap"
-                            style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}
-                          >
-                            <PriceDisplay
-                              price={item.lineTotal || 0}
-                              currency="KRW"
-                            />
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-center text-xs text-slate-600 whitespace-nowrap"
-                            style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}
-                          >
-                            {(() => {
-                              const product = products?.find((p: any) => p.id === item.productId);
-                              const vendor = product?.vendors?.[0];
-                              const leadTime = vendor?.leadTime;
-                              return leadTime ? `${leadTime}일` : "-";
-                            })()}
-                          </TableCell>
-                          <TableCell 
-                            className="px-2 py-2 text-center"
-                            style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-slate-400 hover:text-red-500"
-                              onClick={() => handleDeleteItem(item.id)}
-                              aria-label="품목 삭제"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (hasProduct(item.productId)) {
-                                      toast({
-                                        title: "이미 추가됨",
-                                        description: "이 제품은 이미 비교 목록에 있습니다.",
-                                      });
-                                    } else {
-                                      addProduct(item.productId);
-                                      toast({
-                                        title: "추가 완료",
-                                        description: "비교 목록에 추가되었습니다.",
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <GitCompare className="h-3 w-3 mr-2" />
-                                  비교 목록에 추가
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => updateQuoteItem(item.id, { isPurchased: !item.isPurchased })}
-                                >
-                                  <CheckCircle2 className="h-3 w-3 mr-2" />
-                                  {item.isPurchased ? "구매 완료 취소" : "구매 완료 표시"}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteItem(item.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-2" />
-                                  품목 삭제
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                                    <TableCell className="text-sm text-gray-900 font-medium">
+                                      {item.productName}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-gray-600">
+                                      {product?.brand || "-"}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-gray-600 font-mono">
+                                      {product?.catalogNumber || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity || 1}
+                                        onChange={(e) =>
+                                          updateQuoteItem(item.id, {
+                                            quantity: parseInt(e.target.value) || 1,
+                                          })
+                                        }
+                                        className="w-20 h-9 text-sm"
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-right text-sm text-gray-900 font-medium">
+                                      <PriceDisplay
+                                        price={item.unitPrice || 0}
+                                        currency="KRW"
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-right text-sm text-gray-900 font-semibold">
+                                      <PriceDisplay
+                                        price={item.lineTotal || 0}
+                                        currency="KRW"
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-sm text-gray-500">
+                                      {item.notes || "-"}
+                                    </TableCell>
                         </TableRow>
                                 );
                               })}
@@ -581,34 +411,12 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                           );
                         });
                       })()
-                    ) : (
-                      // 빈 상태 플레이스홀더 행
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center py-12">
-                          <div className="flex flex-col items-center gap-3">
-                            <ShoppingCart className="h-12 w-12 text-slate-300" />
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-slate-600">
-                                검색 결과에서 제품을 선택하여 품목을 추가하세요
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                Step 1에서 제품을 검색하고 '품목에 추가'를 눌러 리스트를 만들어 보세요.
-                              </p>
-                            </div>
-                            <Link href="/test/search">
-                              <Button variant="outline" size="sm" className="text-xs mt-2">
-                                <Plus className="h-3 w-3 mr-1" />
-                                검색으로 이동
-                              </Button>
-                            </Link>
-                          </div>
-                        </TableCell>
-                      </TableRow>
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 절감 제안 섹션 */}
             {quoteItems.length > 0 && costOptimization && costOptimization.optimizations.length > 0 && (
@@ -658,10 +466,10 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                         </div>
                         <div className="text-right">
                           <div className="text-xs text-slate-500 line-through">
-{(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}원
+                            {(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
                           <div className="text-sm font-semibold text-green-600">
-{(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}원
+                            {(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
                           <div className="text-xs font-medium text-green-700">
                             -{opt.savingsRate.toFixed(1)}% ({opt.totalSavings.toLocaleString("ko-KR")}원)
@@ -705,30 +513,106 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               </div>
             )}
 
-            {/* 총합 - 품목이 있을 때만 표시 */}
+            {/* 총 예상 견적가 섹션 */}
             {quoteItems.length > 0 && (
-              <div className="flex justify-end pt-2 border-t">
-                <div className="text-right">
-                  <div className="text-xs text-slate-500">총합</div>
-                  <div className="text-lg font-bold text-slate-900">
-{totalAmount.toLocaleString()}원
-                  </div>
-                  {costOptimization && costOptimization.summary.totalPotentialSavings > 0 && (
-                    <div className="text-xs text-green-600 mt-1">
-                      절감 가능: {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원
+              <div className="flex justify-end mt-6">
+                <Card className="w-full md:w-auto min-w-[300px] border-2 border-blue-100 bg-blue-50/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-gray-700">총 예상 견적가:</span>
+                      <span className="text-3xl font-bold text-blue-600">
+                        ₩{totalAmount.toLocaleString()}
+                      </span>
                     </div>
-                  )}
-                </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
-            {/* 견적 요청 버튼 - 품목이 있을 때만 표시 */}
+            {/* 하단 액션 버튼 그룹 */}
             {quoteItems.length > 0 && (
-              <div className="flex justify-end pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const headers = ["No.", "제품명", "브랜드", "카탈로그 번호", "수량", "예상 단가", "예상 금액", "비고"];
+                    const rows = quoteItems.map((item, index) => {
+                      const product = products?.find((p: any) => p.id === item.productId);
+                      return [
+                        (index + 1).toString(),
+                        `"${(item.productName || "").replace(/"/g, '""')}"`,
+                        `"${(product?.brand || "").replace(/"/g, '""')}"`,
+                        `"${(product?.catalogNumber || "").replace(/"/g, '""')}"`,
+                        (item.quantity || 1).toString(),
+                        (item.unitPrice || 0).toString(),
+                        (item.lineTotal || 0).toString(),
+                        `"${(item.notes || "").replace(/"/g, '""')}"`,
+                      ];
+                    });
+                    const csvContent = [
+                      headers.join(","),
+                      ...rows.map((row) => row.join(",")),
+                    ].join("\n");
+                    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `견적요청_${new Date().toISOString().split("T")[0]}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    toast({
+                      title: "내보내기 완료",
+                      description: "CSV 파일이 다운로드되었습니다.",
+                    });
+                  }}
+                  disabled={quoteItems.length === 0}
+                  className="w-full sm:w-auto"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  CSV 다운로드
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    if (quoteItems.length === 0) {
+                      toast({
+                        title: "품목이 없습니다",
+                        description: "공유할 품목을 먼저 추가해주세요.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    try {
+                      await generateShareLink("견적 요청 리스트", 30);
+                      toast({
+                        title: "공유 링크 생성 완료",
+                        description: "공유 링크가 생성되었습니다.",
+                      });
+                    } catch (error: any) {
+                      toast({
+                        title: "공유 링크 생성 실패",
+                        description: error.message || "공유 링크를 생성할 수 없습니다.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={quoteItems.length === 0 || isGeneratingShareLink}
+                  className="w-full sm:w-auto"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  링크 공유
+                </Button>
                 <Link href="/test/quote/request">
-                  <Button className="bg-slate-900 text-white hover:bg-slate-800 text-xs h-8">
-                    <Plus className="h-3 w-3 mr-2" />
-                    견적 요청하기
+                  <Button
+                    type="button"
+                    disabled={quoteItems.length === 0}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8"
+                    size="lg"
+                  >
+                    <FileText className="h-5 w-5 mr-2" />
+                    최종 견적 요청하기
                   </Button>
                 </Link>
               </div>
@@ -2362,7 +2246,7 @@ export function QuoteItemsSummaryPanel() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-900">총액</span>
               <span className="text-lg font-bold text-slate-900">
-{totalAmount.toLocaleString("ko-KR")}
+                {totalAmount.toLocaleString("ko-KR")}
               </span>
             </div>
             {vendorGroups.size > 1 && (
