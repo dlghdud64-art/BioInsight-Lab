@@ -318,14 +318,14 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                       >
                         <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>No.</span>
                       </TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase">제품명</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase">브랜드</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase">카탈로그 번호</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-24">수량</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 단가</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 금액</TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase">비고</TableHead>
-                    </TableRow>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase">제품명</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase">브랜드</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase">카탈로그 번호</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-24">수량</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 단가</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 금액</TableHead>
+                      <TableHead className="text-xs font-bold text-gray-500 uppercase">비고</TableHead>
+                      </TableRow>
                   </TableHeader>
                   <TableBody>
                     {quoteItems.length > 0 ? (
