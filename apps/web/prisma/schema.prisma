@@ -317,6 +317,11 @@ model Quote {
   status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
   currency       String    @default("KRW") // Currency for quote totals
   totalAmount    Int? // Total amount (sum of line totals)
+  vendor         String? // 공급사 이름 (AI 추출)
+  confidence     String? // AI 분석 신뢰도 (high, medium, low)
+  extractionMethod String? // 추출 방법 (pdf-parse, fallback, ocr-required)
+  pdfFileName    String? // 원본 PDF 파일명
+  rawText        String?   @db.Text // 추출된 원본 텍스트 (디버깅용)
   // 그룹?어 ?동 ?보
   templateId     String? // ?용???플?ID
   templateType   String? // ?플????(R&D, QC, ?산 ?? - ?위 ?환??
@@ -398,6 +403,8 @@ model QuoteListItem {
   unitPrice     Int? // Unit price (integer for KRW precision)
   currency      String?  @default("KRW")
   lineTotal     Int? // Line total (unit price × quantity)
+  leadTime      String? // 납기일 (AI 추출)
+  position      Int? // 순서 (AI 추출 시 사용)
   notes         String?  @db.Text // 비고 (?도/?체품 ??/기존 ?품 코드 ??
   raw           Json? // Raw data snapshot (JSONB)
   createdAt     DateTime @default(now())
@@ -431,6 +438,7 @@ model QuoteItem {
 // QuoteStatus enum
 enum QuoteStatus {
   PENDING // Pending
+  PARSED // AI 파싱 완료 (확인 대기)
   SENT // Sent
   RESPONDED // Responded
   COMPLETED // Completed
