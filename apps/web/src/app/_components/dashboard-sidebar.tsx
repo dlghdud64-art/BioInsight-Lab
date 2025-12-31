@@ -181,7 +181,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
               )}
             >
               <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
-              <span className="truncate">{item.title}</span>
+              <span className="truncate whitespace-nowrap">{item.title}</span>
               {item.badge && (
                 <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
                   {item.badge}
@@ -212,7 +212,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 )}
               >
                 <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
-                <span className="truncate">{item.title}</span>
+                <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
             );
           })}
@@ -232,14 +232,14 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
 
       {/* 데스크톱 사이드바 */}
-      <aside className="hidden md:block w-64 min-h-screen bg-white border-r border-slate-200 flex-shrink-0">
+      <aside className="hidden md:block w-64 min-w-[16rem] min-h-screen bg-white border-r border-slate-200 shrink-0">
         <SidebarContent />
       </aside>
 
       {/* 모바일 사이드바 */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 md:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 md:hidden shrink-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
