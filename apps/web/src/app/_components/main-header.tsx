@@ -12,7 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu } from "lucide-react";
+import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu, LayoutDashboard } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface MainHeaderProps {
   onMenuClick?: () => void;
@@ -23,6 +24,7 @@ interface MainHeaderProps {
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const scrollToId = useCallback((id: string) => {
     if (typeof window === "undefined") return;
@@ -147,6 +149,20 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {/* 대시보드 버튼 - 로그인한 사용자에게만 표시 */}
+          {session?.user && (
+            <Link href="/dashboard">
+              <Button
+                size="sm"
+                className="text-[10px] md:text-xs bg-gray-100 text-gray-900 hover:bg-gray-200 px-2 md:px-3 h-8 md:h-9"
+                aria-label="대시보드로 이동"
+              >
+                <LayoutDashboard className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-1.5" />
+                <span className="hidden sm:inline">대시보드</span>
+                <span className="sm:hidden">대시</span>
+              </Button>
+            </Link>
+          )}
           <UserMenu />
         </div>
       </div>

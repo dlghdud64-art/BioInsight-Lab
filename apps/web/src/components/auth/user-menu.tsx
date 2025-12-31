@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { USER_ROLES } from "@/lib/constants";
 
@@ -66,10 +66,16 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <Link href="/dashboard">
+        <Link href="/dashboard/settings">
+          <DropdownMenuItem>
+            <UserCircle className="mr-2 h-4 w-4" />
+            내 정보 수정
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/dashboard/settings">
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
-            대시보드
+            설정
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator />
