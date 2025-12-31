@@ -902,7 +902,7 @@ export default function ProductDetailPage() {
                                 <span className="flex items-center gap-1.5 text-xs text-gray-600">
                                   <Calendar className="w-3 h-3" /> 납기
                                 </span>
-                                <span className="text-xs font-medium text-gray-700">견적 시 안내</span>
+                                <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
                               </div>
                             </div>
                             {pv.url && (
@@ -1016,19 +1016,29 @@ export default function ProductDetailPage() {
       </div>
 
       {/* 모바일 전용 하단 고정 바 */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 flex items-center justify-between lg:hidden shadow-lg">
-        <div className="flex-1 min-w-0 mr-4">
-          {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-gray-900">
-                ₩{vendors[0].priceInKRW.toLocaleString()}
-              </span>
-              <span className="text-sm font-medium text-gray-400">KRW</span>
-            </div>
-          ) : (
-            <div className="text-base font-semibold text-gray-500">가격 문의</div>
-          )}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 lg:hidden shadow-lg">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex-1 min-w-0 mr-4">
+            {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-gray-900">
+                  ₩{vendors[0].priceInKRW.toLocaleString()}
+                </span>
+                <span className="text-sm font-medium text-gray-400">KRW</span>
+              </div>
+            ) : (
+              <div className="text-base font-semibold text-gray-500">가격 문의</div>
+            )}
+          </div>
         </div>
+        {/* 납기 정보 - 아이콘 없이 텍스트만 */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="flex items-center gap-1.5 text-xs text-gray-600">
+            <Calendar className="w-3 h-3" /> 납기
+          </span>
+          <span className="text-xs font-medium text-gray-700 text-right">견적 시 안내</span>
+        </div>
+        <div className="flex items-center justify-end">
         <Button
           className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
           onClick={async () => {
