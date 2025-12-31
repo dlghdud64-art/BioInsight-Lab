@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useToast } from "@/hooks/use-toast";
 import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
+import { SearchStepNav } from "../search/_components/search-step-nav";
 import { downloadComparisonAsExcel, exportComparisonToTSV } from "@/lib/utils/export-comparison";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -172,6 +173,7 @@ export default function ComparePage() {
     return (
       <MainLayout>
         <MainHeader />
+        <SearchStepNav />
         <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">제품 비교</h1>
@@ -383,6 +385,7 @@ export default function ComparePage() {
   return (
     <MainLayout>
       <MainHeader />
+      <SearchStepNav />
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 비교 제품 관리 리스트 - 위로 이동 */}
