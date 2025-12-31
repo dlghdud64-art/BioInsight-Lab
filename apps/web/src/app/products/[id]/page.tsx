@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronRight,
+  ChevronLeft,
   Zap,
   Info,
   Calendar,
@@ -55,6 +56,7 @@ import { Disclaimer } from "@/components/legal/disclaimer";
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const { data: session } = useSession();
   const { data: fetchedProduct, isLoading, error } = useProduct(id);
@@ -292,6 +294,15 @@ export default function ProductDetailPage() {
       {/* 배경 그라데이션 데코레이션 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent -z-10 pointer-events-none" />
       
+      {/* 모바일 뒤로가기 버튼 - 상단 고정 */}
+      <button
+        onClick={() => router.back()}
+        className="fixed top-16 left-4 z-50 md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors bg-white/80 backdrop-blur-md rounded-full shadow-sm"
+        aria-label="뒤로가기"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      
       <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-16 md:pt-6 md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
@@ -313,6 +324,16 @@ export default function ProductDetailPage() {
                 {/* 배경 효과 */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-3xl opacity-50 -mr-16 -mt-16 transition-all group-hover:opacity-70 -z-0" />
                 <CardHeader className="px-0 pt-0 pb-4 relative z-10">
+                  {/* 데스크톱 뒤로가기 링크 */}
+                  <div className="hidden md:block mb-4">
+                    <button
+                      onClick={() => router.back()}
+                      className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      검색 결과 목록
+                    </button>
+                  </div>
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-4">
