@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, GitCompare, FileText } from "lucide-react";
+import { Search, GitCompare, FileText, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -53,83 +53,92 @@ export function StepNav() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full md:w-auto">
-      {/* 모바일: Step + Label 형태 */}
-      <div className="grid grid-cols-3 gap-1.5 md:hidden">
-        {steps.map((step) => {
-          const isActive = step.match
-            ? step.match.test(pathname)
-            : pathname === step.href || pathname.startsWith(step.href + "/");
-          
-          // 모바일용 짧은 라벨
-          const mobileLabel = step.id === "search" ? "검색/AI" : step.id === "compare" ? "제품 비교" : step.label;
-          
-          return (
-            <Link
-              key={step.id}
-              href={step.href}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-full px-1.5 py-2 text-xs transition-colors min-h-[60px]",
-                isActive
-                  ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md"
-                  : "bg-slate-100 text-slate-400"
-              )}
-            >
-              <span className="text-[10px] opacity-80 mb-0.5">Step {step.step}</span>
-              <span className="font-medium text-[9px] leading-tight text-center px-0.5 break-words">{mobileLabel}</span>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* 데스크톱: 기존 형태 */}
-      <div className="hidden md:flex items-center gap-2 border-b border-slate-200 pb-4">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isActive = step.match
-            ? step.match.test(pathname)
-            : pathname === step.href || pathname.startsWith(step.href + "/");
-          const isCompleted = step.step < currentStep;
-          const isCurrent = step.step === currentStep;
-
-          return (
-            <Link
-              key={step.id}
-              href={step.href}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
-                  : isCompleted
-                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-              )}
-            >
-              <div
-                className={cn(
-                  "flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold",
-                  isActive
-                    ? "bg-white text-blue-600"
-                    : isCompleted
-                    ? "bg-slate-200 text-slate-700"
-                    : "bg-slate-200 text-slate-400"
-                )}
-              >
-                {step.step}
-              </div>
-              <Icon className={cn("h-4 w-4", isActive ? "text-white" : "")} />
-              <span className={cn(isActive ? "text-white" : "")}>{step.fullLabel}</span>
-              {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    "ml-2 h-0.5 w-8",
-                    isCompleted ? "bg-slate-300" : "bg-slate-200"
+    <nav className="w-full bg-white border-b border-gray-300 fixed top-14 left-0 right-0 z-[45] shadow-md" style={{ minHeight: '64px' }}>
+      <div className="container mx-auto px-3 md:px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* 모바일: 숫자만 원형 배지 */}
+          <div className="flex items-center justify-center gap-2 py-4 md:hidden">
+            {steps.map((step, index) => {
+              const isActive = step.step === currentStep;
+              const isCompleted = step.step < currentStep;
+              
+              return (
+                <div key={step.id} className="flex items-center">
+                  <Link
+                    href={step.href}
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-all",
+                      isActive
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md scale-105"
+                        : isCompleted
+                        ? "bg-blue-50 text-blue-600"
+                        : "bg-gray-100 text-gray-400"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      step.step
+                    )}
+                  </Link>
+                  {index < steps.length - 1 && (
+                    <div className="h-[2px] w-6 bg-gray-200 mx-1" />
                   )}
-                />
-              )}
-            </Link>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 데스크톱: Glassmorphism Stepper */}
+          <div className="hidden md:flex items-center justify-center gap-0 py-6">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              const isActive = step.step === currentStep;
+              const isCompleted = step.step < currentStep;
+              
+              return (
+                <div key={step.id} className="flex items-center">
+                  <Link
+                    href={step.href}
+                    className={cn(
+                      "flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all relative",
+                      isActive
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md scale-105"
+                        : isCompleted
+                        ? "bg-blue-50 text-blue-600 font-semibold hover:bg-blue-100 cursor-pointer"
+                        : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-500 cursor-pointer"
+                    )}
+                  >
+                    {/* 숫자 또는 체크 아이콘 */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : isCompleted
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-gray-200 text-gray-400"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        step.step
+                      )}
+                    </div>
+                    <Icon className={cn("h-4 w-4", isActive ? "text-white" : "")} />
+                    <span className={cn(isActive ? "font-bold" : "")}>
+                      Step {step.step} {step.label}
+                    </span>
+                  </Link>
+                  {index < steps.length - 1 && (
+                    <div className="h-[2px] w-12 bg-gray-200 mx-1" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </nav>
   );

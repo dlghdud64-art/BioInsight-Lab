@@ -8,16 +8,9 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
       <div className="min-h-screen bg-slate-50">
         {/* 공통 상단 헤더 */}
         <MainHeader />
+        <StepNav />
         
-        <section className="border-b bg-white pt-16 md:pt-0">
-          <div className="mx-auto max-w-6xl px-4 py-2 md:py-3">
-            <div className="mt-2">
-              <StepNav />
-            </div>
-          </div>
-        </section>
-        
-        <div className="mx-auto max-w-6xl px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+        <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] mx-auto max-w-6xl px-4 py-4 md:py-8 space-y-4 md:space-y-6">
           <main>{children}</main>
         </div>
       </div>
