@@ -249,7 +249,9 @@ export default function ProtocolResultPage() {
     setItems((prev) => [...prev, newItem]);
   };
 
-  // 전체 장바구니 담기
+  // 전체 장바구니 담기 → 견적서 생성 API 호출
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleAddAllToCart = async () => {
     if (items.length === 0) {
       toast({
@@ -260,32 +262,69 @@ export default function ProtocolResultPage() {
       return;
     }
 
-    // Quote Draft Store에 아이템 추가
-    resetQuote(); // 기존 항목 초기화
-    setQuoteTitle(analysisResult?.analysis_title || "AI 분석 견적서");
+    setIsSubmitting(true);
 
-    items.forEach((item) => {
-      const qty = parseInt(item.quantity || "1") || 1;
-      addToQuote({
-        id: item.id,
-        productId: `ai-${item.id}`, // AI 추출 제품은 별도 ID
-        productName: item.item_name,
-        brand: item.catalog_number || undefined,
-        quantity: qty,
-        unitPrice: item.estimated_price || undefined,
-        currency: "KRW",
-        lineTotal: item.estimated_price ? item.estimated_price * qty : undefined,
-        notes: item.spec || undefined,
+    try {
+      // 견적서 생성 API 호출
+      const response = await fetch("/api/quote/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: analysisResult?.analysis_title || "AI 분석 견적서",
+          items: items.map((item) => ({
+            name: item.item_name,
+            catalogNumber: item.catalog_number,
+            specification: item.spec,
+            quantity: parseInt(item.quantity || "1") || 1,
+            unitPrice: item.estimated_price,
+            unit: item.unit || "ea",
+          })),
+          totalAmount: totalEstimatedPrice,
+          source: "ai-analysis",
+        }),
       });
-    });
 
-    toast({
-      title: "장바구니에 추가됨",
-      description: `${items.length}개 항목이 장바구니에 추가되었습니다.`,
-    });
+      const result = await response.json();
 
-    // 견적 페이지로 이동
-    router.push("/test/quote");
+      if (result.success && result.quoteId) {
+        // 성공: Quote Draft Store에도 저장 (로컬 캐시용)
+        resetQuote();
+        setQuoteTitle(analysisResult?.analysis_title || "AI 분석 견적서");
+        items.forEach((item) => {
+          const qty = parseInt(item.quantity || "1") || 1;
+          addToQuote({
+            id: item.id,
+            productId: `ai-${item.id}`,
+            productName: item.item_name,
+            brand: item.catalog_number || undefined,
+            quantity: qty,
+            unitPrice: item.estimated_price || undefined,
+            currency: "KRW",
+            lineTotal: item.estimated_price ? item.estimated_price * qty : undefined,
+            notes: item.spec || undefined,
+          });
+        });
+
+        toast({
+          title: "견적서 생성 완료",
+          description: result.message || `${items.length}개 항목이 견적서로 저장되었습니다.`,
+        });
+
+        // 견적서 상세 페이지로 이동
+        router.push(`/compare/quote/${result.quoteId}`);
+      } else {
+        throw new Error(result.error || "견적서 생성에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("[Quote Create] Error:", error);
+      toast({
+        title: "견적서 생성 실패",
+        description: error instanceof Error ? error.message : "일시적인 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 다시 올리기
@@ -688,15 +727,24 @@ export default function ProtocolResultPage() {
                 다시 올리기
               </Button>
 
-              {/* Primary: 전체 장바구니 담기 */}
+              {/* Primary: 견적서 생성 */}
               <Button
                 size="lg"
                 onClick={handleAddAllToCart}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || isSubmitting}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg px-8"
               >
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                전체 장바구니 담기
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    견적서 생성 중...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    견적서 생성
+                  </>
+                )}
               </Button>
             </div>
           </div>
