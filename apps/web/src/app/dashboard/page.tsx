@@ -510,31 +510,33 @@ export default function DashboardPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4">
-          <TabsList className="hidden md:inline-flex">
-            <TabsTrigger value="quotes" className="text-xs md:text-sm whitespace-nowrap">
-              <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span>견적 요청</span>
-              <span className="ml-1">({quotes.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="text-xs md:text-sm whitespace-nowrap">
-              <Heart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span>즐겨찾기</span>
-              <span className="ml-1">({favorites.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="text-xs md:text-sm whitespace-nowrap">
-              <History className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span>최근 본 제품</span>
-              <span className="ml-1">({recentProducts.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs md:text-sm whitespace-nowrap">
-              <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span>최근 활동</span>
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="text-xs md:text-sm whitespace-nowrap">
-              <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span>재고 관리</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="hidden md:block overflow-x-auto pb-1 -mx-1 px-1">
+            <TabsList className="inline-flex min-w-full">
+              <TabsTrigger value="quotes" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
+                <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span>견적 요청</span>
+                <span className="ml-1">({quotes.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
+                <Heart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span>즐겨찾기</span>
+                <span className="ml-1">({favorites.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="recent" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
+                <History className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span>최근 본 제품</span>
+                <span className="ml-1">({recentProducts.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
+                <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span>최근 활동</span>
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="text-xs md:text-sm whitespace-nowrap flex-shrink-0">
+                <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span>재고 관리</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="quotes" className="space-y-4">
             <WidgetGrid>
