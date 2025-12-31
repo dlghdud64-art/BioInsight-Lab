@@ -586,7 +586,8 @@ export default function QuotePage() {
                 <FileText className="h-5 w-5 mr-2" />
                 {isSubmitting ? "처리 중..." : "최종 견적 요청하기"}
               </Button>
-            </div>
+              </div>
+            )}
           </form>
         </div>
       </div>
