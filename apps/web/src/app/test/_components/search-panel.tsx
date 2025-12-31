@@ -37,11 +37,11 @@ export function SearchPanel() {
   } = useTestFlow();
 
   return (
-    <div className="space-y-4">
-      <Card>
+    <div className="space-y-3">
+      <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader>
           <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
+            <span className="inline-flex items-center rounded-full border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700 bg-gradient-to-r from-blue-50 to-indigo-50">
               Step 1
             </span>
             <span>검색·AI 분석</span>
@@ -50,21 +50,24 @@ export function SearchPanel() {
             제품을 검색하고 후보를 선택합니다.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
             <Label htmlFor="search-query" className="text-xs font-medium">
               검색어
             </Label>
             <Input
               id="search-query"
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="예: Human IL-6 ELISA kit — 제품명이나 벤더 이름을 입력해 보세요"
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  e.preventDefault();
                   runSearch();
                 }
               }}
+              className="h-8 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
             />
             <p className="mt-1 text-xs text-slate-500">
               제품명, 벤더, 카테고리 키워드로 검색하면 GPT가 관련 제품을 추천해 줍니다.
@@ -85,13 +88,13 @@ export function SearchPanel() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1.5">
               <Label htmlFor="category" className="text-xs font-medium">
                 카테고리
               </Label>
               <Select value={searchCategory || "all"} onValueChange={(v) => setSearchCategory(v === "all" ? "" : v)}>
-                <SelectTrigger id="category" className="text-xs">
+                <SelectTrigger id="category" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,7 +108,7 @@ export function SearchPanel() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="sort" className="text-xs font-medium">
                 정렬
               </Label>
@@ -113,7 +116,7 @@ export function SearchPanel() {
                 value={sortBy}
                 onValueChange={(v: any) => setSortBy(v)}
               >
-                <SelectTrigger id="sort" className="text-xs">
+                <SelectTrigger id="sort" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,24 +232,34 @@ export function SearchPanel() {
           </div>
 
           <Button
-            onClick={runSearch}
-            className="w-full bg-slate-900 text-white hover:bg-slate-800"
-            disabled={!searchQuery}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("검색 버튼 클릭됨, searchQuery:", searchQuery);
+              if (searchQuery && searchQuery.trim()) {
+                runSearch();
+              } else {
+                console.log("검색어가 비어있어서 검색을 실행하지 않습니다.");
+              }
+            }}
+            type="button"
+            className="w-full h-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
+            disabled={!searchQuery || !searchQuery.trim()}
           >
-            <Search className="h-4 w-4 mr-2" />
+            <Search className="h-3.5 w-3.5 mr-1.5" />
             검색 실행
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-slate-800">옵션</CardTitle>
-          <CardDescription className="text-xs text-slate-500">
+          <CardTitle className="text-xs font-semibold text-slate-800">옵션</CardTitle>
+          <CardDescription className="text-[10px] text-slate-500">
             검색 시 추가로 실행할 옵션을 설정합니다.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 text-xs">
+        <CardContent className="space-y-2 text-xs">
           {/* GPT 분석 옵션 */}
           <div className="space-y-1">
             <label className="flex items-center gap-2 cursor-pointer">

@@ -13,12 +13,12 @@ export default function Error({
 }) {
   useEffect(() => {
     // 에러를 로깅할 수 있습니다
-    console.error("Application error:", error);
+    console.error("Test page error:", error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
-      <div className="max-w-md w-full space-y-4 text-center bg-white p-8 rounded-lg shadow-md">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-4 text-center">
         <div className="flex justify-center">
           <AlertCircle className="h-12 w-12 text-red-500" />
         </div>
@@ -36,3 +36,4 @@ export default function Error({
     </div>
   );
 }
+

@@ -243,9 +243,13 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
   });
 
   const runSearch = () => {
-    if (searchQuery) {
+    const trimmedQuery = searchQuery?.trim();
+    if (trimmedQuery) {
+      console.log("검색 실행:", trimmedQuery);
       setHasSearched(true);
       setSearchTrigger((prev) => prev + 1);
+    } else {
+      console.log("검색어가 비어있습니다.");
     }
   };
 

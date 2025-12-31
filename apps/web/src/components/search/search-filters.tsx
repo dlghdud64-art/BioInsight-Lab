@@ -97,7 +97,7 @@ export function SearchFilters({
     <div className="space-y-6">
       {/* Categories */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">카테고리</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">카테고리</h3>
         <div className="space-y-2">
           {categories.map((category) => (
             <div key={category} className="flex items-center space-x-2">
@@ -105,10 +105,11 @@ export function SearchFilters({
                 id={`category-${category}`}
                 checked={selectedCategories.includes(category)}
                 onCheckedChange={() => handleCategoryToggle(category)}
+                className="rounded focus:ring-2 focus:ring-blue-100"
               />
               <Label
                 htmlFor={`category-${category}`}
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-gray-700 cursor-pointer"
               >
                 {category}
               </Label>
@@ -122,13 +123,13 @@ export function SearchFilters({
       {/* Availability */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-900">재고 상태</h3>
+          <h3 className="text-sm font-bold text-gray-900">재고 상태</h3>
           <Switch
             checked={inStockOnly}
             onCheckedChange={onInStockOnlyChange}
           />
         </div>
-        <Label htmlFor="in-stock-only" className="text-sm text-slate-600 cursor-pointer">
+        <Label htmlFor="in-stock-only" className="text-sm text-gray-600 cursor-pointer">
           재고 있는 제품만 보기
         </Label>
       </div>
@@ -137,7 +138,7 @@ export function SearchFilters({
 
       {/* Brand */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">브랜드</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">브랜드</h3>
         <div className="space-y-2">
           {displayedBrands.map((brand) => (
             <div key={brand} className="flex items-center space-x-2">
@@ -145,10 +146,11 @@ export function SearchFilters({
                 id={`brand-${brand}`}
                 checked={selectedBrands.includes(brand)}
                 onCheckedChange={() => handleBrandToggle(brand)}
+                className="rounded focus:ring-2 focus:ring-blue-100"
               />
               <Label
                 htmlFor={`brand-${brand}`}
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-gray-700 cursor-pointer"
               >
                 {brand}
               </Label>
@@ -172,7 +174,7 @@ export function SearchFilters({
 
       {/* Purity */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">순도</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">순도</h3>
         <div className="space-y-2">
           {COMMON_PURITIES.map((purity) => (
             <div key={purity} className="flex items-center space-x-2">
@@ -180,10 +182,11 @@ export function SearchFilters({
                 id={`purity-${purity}`}
                 checked={selectedPurities.includes(purity)}
                 onCheckedChange={() => handlePurityToggle(purity)}
+                className="rounded focus:ring-2 focus:ring-blue-100"
               />
               <Label
                 htmlFor={`purity-${purity}`}
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-gray-700 cursor-pointer"
               >
                 {purity}
               </Label>
@@ -217,7 +220,7 @@ export function SearchFilters({
 
       {/* Grade */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">등급</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-3">등급</h3>
         <div className="space-y-2">
           {COMMON_GRADES.map((grade) => (
             <div key={grade} className="flex items-center space-x-2">
@@ -225,10 +228,11 @@ export function SearchFilters({
                 id={`grade-${grade}`}
                 checked={selectedGrades.includes(grade)}
                 onCheckedChange={() => handleGradeToggle(grade)}
+                className="rounded focus:ring-2 focus:ring-blue-100"
               />
               <Label
                 htmlFor={`grade-${grade}`}
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-gray-700 cursor-pointer"
               >
                 {grade}
               </Label>

@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/search/product-card";
 import { Search, FileText } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SearchFilters {
   categories: string[];
@@ -20,6 +27,7 @@ export default function SearchResultList({
   filters?: SearchFilters;
 }) {
   const [results, setResults] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState<string>("relevance");
 
   useEffect(() => {
     if (!query) return;
@@ -50,27 +58,55 @@ export default function SearchResultList({
 
   if (!query) {
     return (
-      <div className="text-center py-12 text-slate-500">
-        <Search className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-        <p className="text-sm font-medium text-slate-900 mb-1">검색어를 입력하세요</p>
-        <p className="text-xs text-slate-500">제품명, 벤더, 카테고리를 검색할 수 있습니다.</p>
+      <div className="text-center py-16 md:py-20">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
+          <p className="text-sm text-gray-500">제품명, 벤더, 카테고리를 검색할 수 있습니다.</p>
+        </div>
       </div>
     );
   }
 
   if (results.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500">
-        <FileText className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-        <p className="text-sm font-medium text-slate-900 mb-1">검색 결과가 없습니다</p>
-        <p className="text-xs text-slate-500">다른 검색어로 다시 시도해보세요.</p>
+      <div className="text-center py-16 md:py-20">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <FileText className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
+          <p className="text-sm text-gray-500">다른 검색어로 다시 시도해보세요.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 md:space-y-4">
-      {results.map((p: any) => {
+    <div className="space-y-4 md:space-y-6">
+      {/* 헤더: 검색 결과 개수 & 정렬 */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-gray-600">
+          검색 결과: <span className="font-bold text-gray-900">{results.length}</span>건
+        </div>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-[180px] border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-100">
+            <SelectValue placeholder="정렬 기준" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="relevance">관련도순</SelectItem>
+            <SelectItem value="price_low">가격 낮은 순</SelectItem>
+            <SelectItem value="price_high">가격 높은 순</SelectItem>
+            <SelectItem value="name">이름순</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 상품 카드 리스트 */}
+      <div className="space-y-3">
+        {results.map((p: any) => {
         // 백엔드 데이터를 ProductCard 형식으로 변환
         const productData = {
           id: p.id,
@@ -95,6 +131,7 @@ export default function SearchResultList({
           />
         );
       })}
+      </div>
     </div>
   );
 }

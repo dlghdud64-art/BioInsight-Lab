@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { ShoppingCart, GitCompare, Thermometer, AlertTriangle, Shield } from "lucide-react";
+import { ShoppingCart, GitCompare, Thermometer, AlertTriangle, Shield, Package, Box, Heart, Calendar, Clock } from "lucide-react";
 
 interface SearchResultItemProps {
   product: any;
@@ -14,158 +14,33 @@ interface SearchResultItemProps {
   onClick?: () => void;
 }
 
-// 재고 상태 배지 컴포넌트
-function StockStatusBadge({ stockStatus }: { stockStatus?: string }) {
-  if (!stockStatus) return null;
-
-  const status = stockStatus.toLowerCase();
-  
-  if (status.includes("재고") || status.includes("in stock") || status.includes("available")) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px]">
-        재고 있음
-      </Badge>
-    );
-  } else if (status.includes("주문") || status.includes("order") || status.includes("backorder")) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
-        주문 필요
-      </Badge>
-    );
-  } else if (status.includes("품절") || status.includes("out of stock") || status.includes("unavailable")) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-500 border-slate-300 text-[10px]">
-        품절
-      </Badge>
-    );
-  }
-  
+// 납기 표시 (확실하지 않은 정보는 표시하지 않음)
+function LeadTimeDisplay({ leadTime }: { leadTime?: number | string }) {
+  // 확실하지 않은 정보는 표시하지 않음
+  // 납기일은 항상 "견적 시 안내"로 표시
   return (
-    <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px]">
-      {stockStatus}
-    </Badge>
+    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+      <Calendar className="h-3.5 w-3.5 text-gray-400" />
+      <span>견적 시 안내</span>
+    </div>
   );
 }
 
-// 납기 포맷팅 함수
-function formatLeadTime(leadTime?: number | string): string {
-  if (!leadTime) return "";
-
-  const days = typeof leadTime === "string" ? parseInt(leadTime) : leadTime;
+// 핵심 스펙 추출 (용량, 보관 조건 등)
+function getKeySpecs(product: any) {
+  const specs: { icon: any; label: string; value: string }[] = [];
   
-  if (days <= 0) {
-    return "재고 있음";
-  } else if (days === 1) {
-    return "1일";
-  } else if (days < 7) {
-    return `${days}일`;
-  } else if (days < 14) {
-    return "1-2주";
-  } else if (days < 30) {
-    const weeks = Math.ceil(days / 7);
-    return `${weeks}주`;
-  } else {
-    const months = Math.ceil(days / 30);
-    return `${months}개월`;
-  }
-}
-
-// 재고/납기 상태 배지 컴포넌트
-function LeadTimeBadge({ leadTime }: { leadTime?: number | string }) {
-  if (!leadTime) return null;
-
-  const days = typeof leadTime === "string" ? parseInt(leadTime) : leadTime;
-  
-  if (days <= 2) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 text-[10px] font-medium">
-        빠름
-      </Badge>
-    );
-  } else if (days <= 7) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
-        보통
-      </Badge>
-    );
-  } else if (days <= 14) {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-600 border-slate-300 text-[10px]">
-        지연
-      </Badge>
-    );
-  } else {
-    return (
-      <Badge variant="outline" className="bg-white text-slate-500 border-slate-300 text-[10px]">
-        장기
-      </Badge>
-    );
-  }
-}
-
-// 스펙 요약 생성 (태그형 한 줄)
-function SpecSummary({ product }: { product: any }) {
-  const parts: string[] = [];
-
-  if (product.target) parts.push(product.target);
-  if (product.category) {
-    const categoryName = PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES];
-    if (categoryName) parts.push(categoryName);
-  }
   if (product.specification) {
-    // specification에서 주요 키워드 추출 (예: "96-well", "500mL" 등)
-    const spec = product.specification.substring(0, 20);
-    parts.push(spec);
+    specs.push({ icon: Box, label: "용량", value: product.specification.substring(0, 30) });
+  }
+  
+  if (product.storageCondition) {
+    specs.push({ icon: Thermometer, label: "보관", value: product.storageCondition });
+  } else if (product.grade) {
+    specs.push({ icon: Package, label: "Grade", value: product.grade });
   }
 
-  if (parts.length === 0) return null;
-
-  return (
-    <div className="text-xs md:text-sm text-slate-500 break-words leading-relaxed">
-      {parts.join(" · ")}
-    </div>
-  );
-}
-
-// 도메인 디테일 뱃지 (보관조건, 위험물, PPE)
-function DomainDetailBadges({ product }: { product: any }) {
-  const hasStorageCondition = product.storageCondition;
-  const hasHazardCodes = product.hazardCodes || product.pictograms;
-  const hasPpe = product.ppe;
-
-  if (!hasStorageCondition && !hasHazardCodes && !hasPpe) return null;
-
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap mt-1">
-      {hasStorageCondition && (
-        <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-[9px] text-slate-600"
-          title={`보관: ${product.storageCondition}`}
-        >
-          <Thermometer className="h-2.5 w-2.5 text-slate-500" strokeWidth={1.5} />
-          <span>{product.storageCondition}</span>
-        </span>
-      )}
-      {hasHazardCodes && (
-        <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-300 bg-white text-[9px] text-slate-700"
-          title={`위험물: ${product.hazardCodes || product.pictograms}`}
-        >
-          <AlertTriangle className="h-2.5 w-2.5 text-slate-600" strokeWidth={1.5} />
-          <span>{product.hazardCodes || product.pictograms}</span>
-        </span>
-      )}
-      {hasPpe && (
-        <span
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-[9px] text-slate-600"
-          title={`PPE: ${product.ppe}`}
-        >
-          <Shield className="h-2.5 w-2.5 text-slate-500" strokeWidth={1.5} />
-          <span>{product.ppe}</span>
-        </span>
-      )}
-    </div>
-  );
+  return specs.slice(0, 3); // 최대 3개만 표시
 }
 
 export function SearchResultItem({
@@ -176,111 +51,91 @@ export function SearchResultItem({
   onClick,
 }: SearchResultItemProps) {
   const vendor = product.vendors?.[0];
-  const unitPrice = vendor?.priceInKRW || 0;
-  const leadTime = vendor?.leadTime;
-  const stockStatus = vendor?.stockStatus;
+  // 가격이 null이거나 0이면 표시하지 않음
+  const unitPrice = vendor?.priceInKRW && vendor.priceInKRW > 0 ? vendor.priceInKRW : null;
+  const keySpecs = getKeySpecs(product);
 
   return (
     <div
-      className="p-4 md:p-5 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors cursor-pointer"
+      className="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer"
       onClick={onClick}
     >
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        {/* 좌측: 제품명, 벤더 */}
-        <div className="flex-1 min-w-0 space-y-2.5">
-          <div>
-            <h3 className="font-semibold text-base md:text-lg text-slate-900 break-words leading-snug">
-              {product.name}
-            </h3>
-            {product.vendors?.[0]?.vendor?.name && (
-              <p className="text-xs md:text-sm text-slate-500 mt-1">
-                {product.vendors[0].vendor.name}
-              </p>
-            )}
-          </div>
+      {/* 수직 스택 레이아웃 */}
+      <div className="p-4 space-y-3">
+        {/* 제품명 */}
+        <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+          {product.name}
+        </h3>
 
-          {/* 중간: 카테고리, Grade/규격, 카탈로그 번호, 스펙 요약 */}
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {product.category && (
-                <Badge variant="outline" className="text-[10px] md:text-xs">
-                  {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
-                </Badge>
-              )}
-              {product.grade && (
-                <Badge variant="secondary" className="text-[10px] md:text-xs">
-                  {product.grade}
-                </Badge>
-              )}
-              {product.catalogNumber && (
-                <span className="text-[10px] md:text-xs text-slate-600 font-mono bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                  Cat.No: {product.catalogNumber}
-                </span>
-              )}
-              {product.lotNumber && (
-                <span className="text-[10px] md:text-xs text-slate-500 font-mono bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                  Lot: {product.lotNumber}
-                </span>
-              )}
-            </div>
-            <SpecSummary product={product} />
-            <DomainDetailBadges product={product} />
-          </div>
+        {/* 브랜드/캣넘버 */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          {product.vendors?.[0]?.vendor?.name && (
+            <>
+              <span>{product.vendors[0].vendor.name}</span>
+              {product.catalogNumber && <span>·</span>}
+            </>
+          )}
+          {product.catalogNumber && (
+            <span className="font-mono">Cat. {product.catalogNumber}</span>
+          )}
         </div>
 
-        {/* 우측: 가격, 재고/납기, 액션 */}
-        <div className="flex flex-row md:flex-col md:items-end justify-between md:justify-start gap-3 md:gap-2 md:min-w-[160px]">
-          <div className="text-left md:text-right space-y-1.5">
-            {unitPrice > 0 ? (
-              <div className="text-base md:text-lg font-semibold text-slate-900">
-                <PriceDisplay price={unitPrice} currency="KRW" />
+        {/* 스펙 배지 */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {keySpecs.length > 0 && keySpecs.map((spec, idx) => (
+            <Badge
+              key={idx}
+              variant="outline"
+              className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
+            >
+              {spec.value}
+            </Badge>
+          ))}
+          {product.category && (
+            <Badge variant="outline" className="text-xs px-2 py-0.5">
+              {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
+            </Badge>
+          )}
+        </div>
+
+        {/* 가격 & 액션 */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          {/* 가격 */}
+          <div>
+            {unitPrice && unitPrice > 0 ? (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-blue-600">
+                    <PriceDisplay price={unitPrice} currency="KRW" />
+                  </span>
+                  <span className="text-xs text-gray-400 font-normal">(VAT 별도)</span>
+                </div>
               </div>
             ) : (
-              <div className="text-sm text-slate-400">가격 문의</div>
+              <div className="text-sm font-semibold text-gray-500">가격 문의</div>
             )}
-            
-            <div className="flex flex-col md:items-end gap-1.5">
-              {stockStatus && (
-                <div className="flex items-center gap-1">
-                  <StockStatusBadge stockStatus={stockStatus} />
-                </div>
-              )}
-              {leadTime && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] md:text-xs text-slate-600 font-medium">
-                    납기: {formatLeadTime(leadTime)}
-                  </span>
-                  <LeadTimeBadge leadTime={leadTime} />
-                </div>
-              )}
-              {!leadTime && !stockStatus && (
-                <span className="text-[10px] md:text-xs text-slate-400">재고/납기 문의</span>
-              )}
-            </div>
           </div>
 
-          {/* 퀵 액션 버튼 */}
-          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* 버튼 그룹 */}
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* 비교함 담기 */}
             <Button
+              variant="outline"
               size="sm"
-              variant={isInCompare ? "default" : "outline"}
+              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 w-9 p-0 ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
               onClick={onToggleCompare}
-              className={`text-xs h-8 md:h-9 px-2 md:px-3 ${isInCompare ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
-              title={isInCompare ? "비교에서 제거" : "비교에 추가"}
             >
-              <GitCompare className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-              <span className="hidden sm:inline">비교</span>
+              <GitCompare className="h-4 w-4" />
             </Button>
+
+            {/* 견적 요청 */}
             <Button
               size="sm"
-              variant="secondary"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm"
               onClick={onAddToQuote}
-              className="text-xs h-8 md:h-9 px-2 md:px-3 bg-slate-900 hover:bg-slate-800 text-white"
-              title="구매 요청 리스트에 이 제품을 추가합니다."
             >
-              <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
-              <span className="hidden sm:inline">리스트에 담기</span>
-              <span className="sm:hidden">담기</span>
+              <ShoppingCart className="h-4 w-4 mr-1.5" />
+              견적 담기
             </Button>
           </div>
         </div>

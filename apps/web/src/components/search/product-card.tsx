@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy, Check } from "lucide-react";
+import { ExternalLink, Copy, Check, Package, ShoppingCart, Heart, Plus, Thermometer, Box, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,14 +17,14 @@ interface ProductCardProps {
     unit?: string;
     description?: string;
     catalogNumber?: string;
-    // v3.8 신규 필드
-    purity?: number; // 예: 99.9
-    grade?: string; // 예: "ACS Grade", "HPLC"
-    stockStatus?: "in_stock" | "low_stock" | "out_of_stock" | "custom"; // custom일 경우 stockText 사용
-    stockText?: string; // 예: "2 Weeks"
-    casNumber?: string; // 예: "67-64-1"
+    purity?: number;
+    grade?: string;
+    stockStatus?: "in_stock" | "low_stock" | "out_of_stock" | "custom";
+    stockText?: string;
+    casNumber?: string;
+    specification?: string;
+    storageCondition?: string;
   };
-  // 아래 props는 더 이상 사용되지 않지만 호환성을 위해 유지 (optional)
   isInCompare?: boolean;
   onToggleCompare?: () => void;
   onAddToQuote?: () => void;
@@ -47,146 +47,127 @@ export function ProductCard({
     setTimeout(() => setCasCopied(false), 2000);
   };
 
-  const getStockBadge = () => {
-    if (!product.stockStatus) return null;
+  // 재고 상태는 표시하지 않음 (확실하지 않은 정보)
 
-    if (product.stockStatus === "in_stock") {
-      return (
-        <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5" />
-          In Stock
-        </Badge>
-      );
+  // 핵심 스펙 추출 (용량, 보관 조건 등)
+  const getKeySpecs = () => {
+    const specs: { icon: any; label: string; value: string }[] = [];
+    
+    if (product.specification) {
+      specs.push({ icon: Box, label: "용량", value: product.specification });
+    }
+    
+    if (product.storageCondition) {
+      specs.push({ icon: Thermometer, label: "보관", value: product.storageCondition });
+    } else if (product.grade) {
+      specs.push({ icon: Package, label: "Grade", value: product.grade });
     }
 
-    if (product.stockStatus === "low_stock" || product.stockStatus === "custom") {
-      const text = product.stockText || "Low Stock";
-      return (
-        <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-200">
-          {text}
-        </Badge>
-      );
-    }
-
-    if (product.stockStatus === "out_of_stock") {
-      return (
-        <Badge variant="outline" className="text-slate-500">
-          Out of Stock
-        </Badge>
-      );
-    }
-
-    return null;
+    return specs.slice(0, 3); // 최대 3개만 표시
   };
 
+  const keySpecs = getKeySpecs();
+
   return (
-    <div className="border border-slate-200 rounded-lg p-3 md:p-4 hover:border-slate-300 transition-colors bg-white">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
-        {/* 좌측: 제품 정보 */}
-        <div className="flex-1 min-w-0 space-y-2">
-          <div>
-            <h3 className="font-semibold text-sm md:text-base text-slate-900 break-words mb-1.5">
-              {product.name}
-            </h3>
-            <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-2">
-              {product.vendor && (
-                <span className="text-xs md:text-sm text-slate-600 font-medium">
-                  {product.vendor}
-                </span>
-              )}
-              {product.category && (
-                <>
-                  <span className="text-slate-400 hidden md:inline">·</span>
-                  <Badge variant="outline" className="text-[10px] md:text-xs">
-                    {product.category}
-                  </Badge>
-                </>
-              )}
-            </div>
+    <div className="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
+      {/* 수직 스택 레이아웃 */}
+      <div className="p-4 space-y-3">
+        {/* 제품명 */}
+        <Link href={`/products/${product.id}`} className="block">
+          <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 hover:text-blue-600 transition-colors">
+            {product.name}
+          </h3>
+        </Link>
 
-            {/* 요약 뱃지 그룹 */}
-            <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-              {/* Purity */}
-              {product.purity && (
-                <Badge variant="secondary" className="text-xs">
-                  {product.purity}%
-                </Badge>
-              )}
-
-              {/* Grade */}
-              {product.grade && (
-                <Badge variant="outline" className="text-xs">
-                  {product.grade}
-                </Badge>
-              )}
-
-              {/* Stock Status */}
-              {getStockBadge()}
-
-              {/* CAS Number */}
-              {product.casNumber && (
-                <Badge
-                  variant="outline"
-                  className="text-xs cursor-pointer hover:bg-slate-50 transition-colors"
-                  onClick={handleCopyCAS}
-                >
-                  {casCopied ? (
-                    <>
-                      <Check className="h-3 w-3 mr-1" />
-                      복사됨
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3 mr-1" />
-                      CAS {product.casNumber}
-                    </>
-                  )}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {product.description && (
-            <p className="text-xs md:text-sm text-slate-600 line-clamp-2">
-              {product.description}
-            </p>
+        {/* 브랜드/캣넘버 */}
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          {product.vendor && (
+            <>
+              <span>{product.vendor}</span>
+              {product.catalogNumber && <span>·</span>}
+            </>
           )}
-
-          <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 md:gap-4 text-xs md:text-sm text-slate-500">
-            {product.catalogNumber && (
-              <div>
-                <span className="font-medium">Cat. No:</span> {product.catalogNumber}
-              </div>
-            )}
-          </div>
+          {product.catalogNumber && (
+            <span className="font-mono">Cat. {product.catalogNumber}</span>
+          )}
         </div>
 
-        {/* 우측: 가격 및 액션 버튼 */}
-        <div className="flex flex-row md:flex-col md:items-end justify-between md:justify-start gap-3 md:gap-3 md:min-w-[180px]">
-          {product.price && (
-            <div className="text-left md:text-right">
-              <div className="text-base md:text-lg font-bold text-slate-900">
-                ₩{product.price.toLocaleString("ko-KR")}
-              </div>
-              {product.unit && (
-                <div className="text-[10px] md:text-xs text-slate-500">/ {product.unit}</div>
-              )}
-            </div>
-          )}
-
-          {/* 상세 정보 버튼 - Primary 스타일로 강조 */}
-          <Link href={`/products/${product.id}`} className="block">
-            <Button
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm h-9 md:h-10 px-4 md:px-6 w-full md:w-auto"
+        {/* 스펙 배지 */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {keySpecs.length > 0 && keySpecs.map((spec, idx) => (
+            <Badge
+              key={idx}
+              variant="outline"
+              className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
             >
-              <ExternalLink className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              상세 정보
+              {spec.value}
+            </Badge>
+          ))}
+          {product.purity && (
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">
+              {product.purity}%
+            </Badge>
+          )}
+          {product.category && (
+            <Badge variant="outline" className="text-xs px-2 py-0.5">
+              {product.category}
+            </Badge>
+          )}
+        </div>
+
+        {/* 가격 & 액션 */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          {/* 가격 */}
+          <div>
+            {product.price && product.price > 0 ? (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-blue-600">
+                    ₩{product.price.toLocaleString("ko-KR")}
+                  </span>
+                  <span className="text-xs text-gray-400 font-normal">(VAT 별도)</span>
+                </div>
+                {product.unit && (
+                  <div className="text-xs text-gray-500">/ {product.unit}</div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm font-semibold text-gray-500">가격 문의</div>
+            )}
+          </div>
+
+          {/* 버튼 그룹 */}
+          <div className="flex items-center gap-2">
+            {/* 비교함 담기 */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 w-9 p-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toast({
+                  title: "비교함에 추가됨",
+                  description: "제품이 비교함에 추가되었습니다.",
+                });
+              }}
+            >
+              <Heart className="h-4 w-4" />
             </Button>
-          </Link>
+
+            {/* 견적 요청 */}
+            <Link href={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm"
+              >
+                <ShoppingCart className="h-4 w-4 mr-1.5" />
+                견적 담기
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

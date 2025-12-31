@@ -71,8 +71,8 @@ export function StepNav() {
               className={cn(
                 "flex flex-col items-center justify-center rounded-full px-1.5 py-2 text-xs transition-colors min-h-[60px]",
                 isActive
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md"
+                  : "bg-slate-100 text-slate-400"
               )}
             >
               <span className="text-[10px] opacity-80 mb-0.5">Step {step.step}</span>
@@ -99,17 +99,17 @@ export function StepNav() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-slate-900 text-white"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
                   : isCompleted
                   ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
               )}
             >
               <div
                 className={cn(
                   "flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold",
                   isActive
-                    ? "bg-white text-slate-900"
+                    ? "bg-white text-blue-600"
                     : isCompleted
                     ? "bg-slate-200 text-slate-700"
                     : "bg-slate-200 text-slate-400"
@@ -117,8 +117,8 @@ export function StepNav() {
               >
                 {step.step}
               </div>
-              <Icon className="h-4 w-4" />
-              <span>{step.fullLabel}</span>
+              <Icon className={cn("h-4 w-4", isActive ? "text-white" : "")} />
+              <span className={cn(isActive ? "text-white" : "")}>{step.fullLabel}</span>
               {index < steps.length - 1 && (
                 <div
                   className={cn(

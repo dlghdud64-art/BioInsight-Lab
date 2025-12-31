@@ -44,7 +44,7 @@ export function SearchInput() {
           placeholder={isCasMode ? "CAS 번호로 검색 중..." : "제품명, 벤더, 시약명 검색..."}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={`pl-10 md:pl-12 text-sm md:text-base h-10 md:h-11 ${isCasMode ? "border-blue-300 focus:border-blue-500" : ""}`}
+          className={`pl-10 md:pl-12 text-sm md:text-base h-10 md:h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${isCasMode ? "border-blue-300 focus:border-blue-500" : ""}`}
           aria-label="검색어 입력"
           aria-describedby="search-description"
         />
@@ -60,7 +60,11 @@ export function SearchInput() {
           제품명, 벤더, 시약명 또는 CAS 번호를 입력하여 검색할 수 있습니다.
         </span>
       </div>
-      <Button type="submit" className="flex-shrink-0 h-10 md:h-11 px-3 md:px-4" aria-label="검색 실행">
+      <Button 
+        type="submit" 
+        className="flex-shrink-0 h-10 md:h-11 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
+        aria-label="검색 실행"
+      >
         <Search className="h-4 w-4 md:mr-2" aria-hidden="true" />
         <span className="hidden md:inline">검색</span>
       </Button>

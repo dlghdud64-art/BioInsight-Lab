@@ -65,8 +65,8 @@ function SearchContent() {
     <>
       {q && (
         <>
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <h2 className="text-sm md:text-lg font-semibold">검색 결과</h2>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h2 className="text-xl font-bold text-gray-900">검색 결과</h2>
             {/* 모바일 필터 버튼 */}
             <Sheet>
               <SheetTrigger asChild>
@@ -75,23 +75,25 @@ function SearchContent() {
                   필터
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-white">
                 <SheetHeader>
-                  <SheetTitle>필터</SheetTitle>
-                  <SheetDescription>
+                  <SheetTitle className="text-lg font-bold text-gray-900">필터</SheetTitle>
+                  <SheetDescription className="text-sm text-gray-500">
                     검색 결과를 필터링하세요.
                   </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
-                  <SearchFilters {...filterProps} />
+                  <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                    <SearchFilters {...filterProps} />
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-8">
             {/* 데스크탑 필터 사이드바 */}
-            <aside className="hidden md:block w-64 flex-shrink-0">
-              <div className="sticky top-20 bg-white border border-slate-200 shadow-sm rounded-lg p-4">
+            <aside className="hidden md:block w-56 flex-shrink-0">
+              <div className="sticky top-20 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
                 <SearchFilters {...filterProps} />
               </div>
             </aside>
@@ -113,14 +115,20 @@ function SearchContent() {
         </>
       )}
       {!q && (
-        <div className="text-center py-8 md:py-12 text-slate-500">
-          <p className="mb-2 text-xs md:text-sm">검색어를 입력하세요.</p>
-          <p className="text-[10px] md:text-sm px-2">
-            예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비
-          </p>
-          <p className="text-[10px] md:text-xs px-2 mt-2 text-slate-400">
-            CAS 번호 형식(예: 67-64-1)으로도 검색할 수 있습니다.
-          </p>
+        <div className="text-center py-16 md:py-20">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
+            <p className="text-sm text-gray-500 mb-4 max-w-md">
+              제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 검색할 수 있습니다.
+            </p>
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
+              <p>CAS 번호 형식(예: 67-64-1)으로도 검색할 수 있습니다.</p>
+            </div>
+          </div>
         </div>
       )}
     </>
@@ -137,9 +145,9 @@ function SearchInputWrapper() {
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader
             title="제품 검색"
@@ -149,7 +157,7 @@ export default function SearchPage() {
           />
           
           {/* 모바일에서 sticky 검색 입력 */}
-          <div className="mb-4 md:mb-6 sticky top-16 md:static z-10 bg-slate-50 pb-2 md:pb-0">
+          <div className="mb-4 md:mb-6 sticky top-16 md:static z-10 bg-transparent pb-2 md:pb-0">
             <SearchInputWrapper />
           </div>
           

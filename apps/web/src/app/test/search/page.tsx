@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
@@ -50,7 +50,7 @@ export default function SearchPage() {
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="mb-4">
           <h1 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">Step 1: 검색</h1>
@@ -60,7 +60,7 @@ export default function SearchPage() {
       
       {/* 2컬럼 레이아웃 */}
       <div className="container mx-auto px-4 pb-4 md:pb-6">
-        <div className="flex flex-col gap-4 md:grid md:gap-6 md:grid-cols-[260px_1fr]">
+        <div className="flex flex-col gap-4 md:grid md:gap-8 md:grid-cols-[260px_1fr]">
         {/* 좌측: 검색 패널 + 옵션 */}
         <aside className="order-1 md:order-none">
           <div className="flex flex-col gap-4">
@@ -69,7 +69,7 @@ export default function SearchPage() {
         </aside>
 
         {/* 가운데: 검색 결과 */}
-        <section className="order-3 md:order-none space-y-4 max-w-3xl mx-auto w-full">
+        <section className="order-3 md:order-none space-y-4 max-w-4xl mx-auto w-full">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
             <Card className="border border-slate-200 bg-white">
@@ -135,26 +135,25 @@ export default function SearchPage() {
           )}
 
           {/* 검색 결과 */}
-          <Card className="border border-slate-200 bg-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900">
-                검색 결과
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-600">
-                {products.length > 0
-                  ? `${products.length}개의 제품을 찾았습니다. 비교하거나 견적 요청 리스트에 추가할 수 있습니다.`
-                  : hasSearched
-                  ? "검색 결과가 없습니다"
-                  : "검색어를 입력하고 검색을 실행해주세요"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isSearchLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+          <div className="space-y-4">
+            {/* 헤더: 검색 결과 개수 */}
+            {products.length > 0 && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">검색 결과</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {products.length}개의 제품을 찾았습니다. 스펙을 확인하고 견적 요청 리스트에 담을 수 있습니다.
+                  </p>
                 </div>
-              ) : products.length > 0 ? (
-                <div className="space-y-3">
+              </div>
+            )}
+
+            {isSearchLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+              </div>
+            ) : products.length > 0 ? (
+              <div className="space-y-3">
                   {products.map((product) => {
                     const isInCompare = compareIds.includes(product.id);
 
@@ -172,23 +171,33 @@ export default function SearchPage() {
                       />
                     );
                   })}
-                </div>
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center py-12 text-sm text-slate-500">
+              </div>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center py-16 md:py-20">
                   {!hasSearched ? (
-                    <p>검색어를 입력하고 <span className="mx-1 font-medium">"검색 실행"</span>을 눌러보세요.</p>
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        검색어를 입력하고 <span className="font-medium text-gray-700">"검색 실행"</span>을 눌러보세요.
+                      </p>
+                    </>
                   ) : (
                     <>
-                      <p className="font-medium">검색 결과가 없습니다.</p>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                        <FileText className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
+                      <p className="text-sm text-gray-500">
                         검색어를 조금 더 넓게 입력하거나, 제품명 대신 키워드(타겟, 플랫폼 등)로 시도해 보세요.
                       </p>
                     </>
                   )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </div>
         </section>
       </div>
 
@@ -398,6 +407,6 @@ export default function SearchPage() {
           </p>
         </div>
       </div>
-    </>
+    </div>
   );
 }
