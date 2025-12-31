@@ -68,3 +68,4 @@ postgresql://postgres.xhidynwpkqeaojuudhsw:Ghdud902490@aws-1-ap-northeast-1.pool
 
 
 
+

@@ -25,10 +25,10 @@ const steps = [
   {
     id: "quote",
     label: "견적 요청",
-    href: "/quotes",
+    href: "/compare/quote",
     icon: FileText,
     step: 3,
-    match: /^\/quotes(\/.*)?$/,
+    match: /^\/compare\/quote(\/.*)?$|^\/quotes(\/.*)?$/,
   },
 ];
 

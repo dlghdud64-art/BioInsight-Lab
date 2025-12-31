@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Disclaimer } from "@/components/legal/disclaimer";
+import { SearchStepNav } from "../../search/_components/search-step-nav";
 
 export default function QuotePage() {
   const { data: session, status } = useSession();
@@ -247,11 +248,13 @@ export default function QuotePage() {
 
   if (productIds.length === 0) {
     return (
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-        <Card className="p-3 md:p-6">
-          <CardContent className="px-0 pt-0 pb-0">
-            <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
-              비교할 제품이 없습니다
+      <>
+        <SearchStepNav />
+        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+          <Card className="p-3 md:p-6">
+            <CardContent className="px-0 pt-0 pb-0">
+              <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
+                비교할 제품이 없습니다
             </p>
             <div className="text-center">
               <Link href="/search">
@@ -261,11 +264,14 @@ export default function QuotePage() {
           </CardContent>
         </Card>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+    <>
+      <SearchStepNav />
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 영역 */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
@@ -473,5 +479,6 @@ export default function QuotePage() {
         </form>
       </div>
     </div>
+    </>
   );
 }

@@ -1,4 +1,7 @@
 {
+  "git": {
+    "useWorktrees": false
+  },
   "permissions": {
     "allow": [
       "Bash(npx prisma migrate:*)",
@@ -8,7 +11,6 @@
       "Bash(npx prisma generate)",
       "Bash(npm install:*)",
       "Bash(ls:*)",
-      "Bash(git worktree:*)",
       "Bash(git add:*)",
       "Bash(find:*)",
       "Bash(cat:*)",
@@ -17,7 +19,16 @@
       "Bash(set DATABASE_URL=postgresql://user:pass@localhost:5432/dbname)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx next build)",
+      "Bash(npx next build:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(git pull:*)",
+      "Read(C:/Users/young/ai-biocompare/**)"
     ]
   }
 }
