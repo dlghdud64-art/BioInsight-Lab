@@ -7,6 +7,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { SearchFilters } from "@/components/search/search-filters";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
+import { SearchStepNav } from "./_components/search-step-nav";
 import { Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,6 +148,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
+      <SearchStepNav />
       <div className="container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader
