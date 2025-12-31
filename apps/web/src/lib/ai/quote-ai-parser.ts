@@ -5,6 +5,17 @@
  * - 순수 숫자로 변환 (기호 제거)
  */
 
+// GPT-4가 반환하는 원본 타입 (문자열 가능)
+interface RawQuoteItem {
+  name: string;
+  catalogNumber: string | null;
+  price: string | number | null;
+  leadTime: string | null;
+  quantity: string | number | null;
+  unit: string | null;
+}
+
+// 최종 변환된 타입 (숫자만)
 interface QuoteItem {
   name: string;
   catalogNumber: string | null;
@@ -14,6 +25,16 @@ interface QuoteItem {
   unit: string | null;
 }
 
+// GPT-4 응답 원본 타입
+interface RawQuoteParseResult {
+  vendor: string;
+  items: RawQuoteItem[];
+  totalAmount: string | number | null;
+  currency: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+// 최종 결과 타입
 interface QuoteParseResult {
   vendor: string;
   items: QuoteItem[];
@@ -129,27 +150,33 @@ ${extractedText}
       jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
 
-    const parsed: QuoteParseResult = JSON.parse(jsonText);
+    const rawParsed: RawQuoteParseResult = JSON.parse(jsonText);
 
-    // 가격 숫자 변환 재확인 (혹시 문자열이면 변환)
-    if (parsed.items) {
-      parsed.items = parsed.items.map((item) => ({
-        ...item,
-        price:
-          typeof item.price === 'string'
-            ? parseInt(item.price.replace(/[^0-9]/g, ''), 10) || null
-            : item.price,
-        quantity:
-          typeof item.quantity === 'string'
-            ? parseInt(item.quantity.replace(/[^0-9]/g, ''), 10) || null
-            : item.quantity,
-      }));
-    }
+    // 가격 숫자 변환 (문자열 → 숫자)
+    const normalizedItems: QuoteItem[] = rawParsed.items.map((item) => ({
+      ...item,
+      price:
+        typeof item.price === 'string'
+          ? parseInt(item.price.replace(/[^0-9]/g, ''), 10) || null
+          : item.price,
+      quantity:
+        typeof item.quantity === 'string'
+          ? parseInt(item.quantity.replace(/[^0-9]/g, ''), 10) || null
+          : item.quantity,
+    }));
 
-    if (typeof parsed.totalAmount === 'string') {
-      parsed.totalAmount =
-        parseInt(parsed.totalAmount.replace(/[^0-9]/g, ''), 10) || null;
-    }
+    const normalizedTotalAmount =
+      typeof rawParsed.totalAmount === 'string'
+        ? parseInt(rawParsed.totalAmount.replace(/[^0-9]/g, ''), 10) || null
+        : rawParsed.totalAmount;
+
+    const parsed: QuoteParseResult = {
+      vendor: rawParsed.vendor,
+      items: normalizedItems,
+      totalAmount: normalizedTotalAmount,
+      currency: rawParsed.currency,
+      confidence: rawParsed.confidence,
+    };
 
     console.log('[AI Parser] Success:', {
       vendor: parsed.vendor,
