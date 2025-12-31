@@ -148,10 +148,8 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
-      <div className="pt-14">
-        <SearchStepNav />
-      </div>
-      <div className="container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
+      <SearchStepNav />
+      <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader
             title="제품 검색"

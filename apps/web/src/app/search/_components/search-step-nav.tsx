@@ -49,7 +49,7 @@ export function SearchStepNav() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-14 z-40 shadow-sm">
+    <nav className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 fixed top-14 left-0 right-0 z-40 shadow-sm">
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 모바일: 숫자만 원형 배지 */}

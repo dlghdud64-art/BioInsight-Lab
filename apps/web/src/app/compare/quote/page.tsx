@@ -249,10 +249,8 @@ export default function QuotePage() {
   if (productIds.length === 0) {
     return (
       <>
-        <div className="pt-14">
-          <SearchStepNav />
-        </div>
-        <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <SearchStepNav />
+        <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
           <Card className="p-3 md:p-6">
             <CardContent className="px-0 pt-0 pb-0">
               <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">
@@ -272,10 +270,8 @@ export default function QuotePage() {
 
   return (
     <>
-      <div className="pt-14">
-        <SearchStepNav />
-      </div>
-      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <SearchStepNav />
+      <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 영역 */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
