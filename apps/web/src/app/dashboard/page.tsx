@@ -171,12 +171,18 @@ export default function DashboardPage() {
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <MainHeader />
+      <MainHeader 
+        showMenuIcon={true}
+        pageTitle="대시보드"
+        onMenuClick={() => setIsMobileMenuOpen(true)}
+      />
       <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+        <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
+        <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-4 gap-2">

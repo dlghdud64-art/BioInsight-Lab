@@ -292,7 +292,7 @@ export default function ProductDetailPage() {
       {/* 배경 그라데이션 데코레이션 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent -z-10 pointer-events-none" />
       
-      <div className="container mx-auto px-4 md:px-4 lg:px-8 py-6 md:py-8 relative z-0">
+      <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-16 md:pt-6 md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <div className="mb-6 md:mb-8">

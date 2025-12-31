@@ -109,9 +109,24 @@ const bottomNavItems: NavItem[] = [
   },
 ];
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  isMobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
+}
+
+export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileOpenChange }: DashboardSidebarProps = {}) {
   const pathname = usePathname();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [internalIsMobileOpen, setInternalIsMobileOpen] = useState(false);
+  
+  // 외부에서 제어하는 경우와 내부에서 제어하는 경우를 모두 지원
+  const isMobileOpen = externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen;
+  const setIsMobileOpen = (open: boolean) => {
+    if (onMobileOpenChange) {
+      onMobileOpenChange(open);
+    } else {
+      setInternalIsMobileOpen(open);
+    }
+  };
 
   // 모바일에서 링크 클릭 시 사이드바 닫기
   useEffect(() => {
@@ -208,16 +223,6 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* 모바일 메뉴 버튼 */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed top-20 left-3 z-50 md:hidden mobile-menu-button h-9 w-9 shadow-md"
-        onClick={() => setIsMobileOpen(true)}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
       {/* 모바일 오버레이 */}
       {isMobileOpen && (
         <div

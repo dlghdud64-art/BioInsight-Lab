@@ -9,7 +9,7 @@ export default function TestLayout({ children }: { children: React.ReactNode }) 
         {/* 공통 상단 헤더 */}
         <MainHeader />
         
-        <section className="border-b bg-white">
+        <section className="border-b bg-white pt-16 md:pt-0">
           <div className="mx-auto max-w-6xl px-4 py-2 md:py-3">
             <div className="mt-2">
               <StepNav />

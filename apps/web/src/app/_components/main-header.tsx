@@ -12,10 +12,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, GitCompare, FileText, FlaskConical, ShoppingCart } from "lucide-react";
+import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu } from "lucide-react";
+
+interface MainHeaderProps {
+  onMenuClick?: () => void;
+  pageTitle?: string;
+  showMenuIcon?: boolean;
+}
 
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
-export function MainHeader() {
+export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const router = useRouter();
 
   const scrollToId = useCallback((id: string) => {
@@ -57,13 +63,33 @@ export function MainHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
-      <div className="mx-auto flex h-12 md:h-14 max-w-6xl items-center justify-between px-3 md:px-4">
-        {/* 좌측: 로고 + 섹션 네비 */}
+    <header className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        {/* 좌측: 메뉴 아이콘 (모바일) 또는 로고 */}
         <div className="flex items-center gap-3 md:gap-6 min-w-0">
-          <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-            <BioInsightLogo />
-          </Link>
+          {showMenuIcon && onMenuClick ? (
+            <button
+              onClick={onMenuClick}
+              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors"
+              aria-label="메뉴 열기"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          ) : null}
+          {pageTitle ? (
+            <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate md:hidden">
+              {pageTitle}
+            </h1>
+          ) : (
+            <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+              <BioInsightLogo />
+            </Link>
+          )}
+          {pageTitle && (
+            <Link href="/" className="hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+              <BioInsightLogo />
+            </Link>
+          )}
         </div>
 
         {/* 우측: CTA/유틸 */}
