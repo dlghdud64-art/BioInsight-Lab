@@ -26,6 +26,12 @@ import {
   Download,
   Save,
   GitCompare,
+  Share2,
+  MessageSquare,
+  Copy,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS } from "@/lib/constants";
@@ -48,6 +54,9 @@ export default function QuoteDetailPage() {
   const queryClient = useQueryClient();
   const quoteId = params.id as string;
   const [activeTab, setActiveTab] = useState("items");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const { data: quoteData, isLoading } = useQuery({
     queryKey: ["quote", quoteId],
@@ -90,9 +99,121 @@ export default function QuoteDetailPage() {
     },
   });
 
+  // 아이템 메모 업데이트 mutation
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ itemId, notes }: { itemId: string; notes: string }) => {
+      const response = await fetch(`/api/quote-items/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (!response.ok) throw new Error("Failed to update note");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      setEditingNoteId(null);
+      setNoteText("");
+      toast({
+        title: "메모 저장됨",
+        description: "메모가 성공적으로 저장되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "메모 저장 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleMarkAsCompleted = () => {
     if (confirm("이 견적을 구매 완료로 표시하시겠습니까? 구매 내역이 자동으로 기록됩니다.")) {
       updateStatusMutation.mutate("COMPLETED");
+    }
+  };
+
+  // 메모 편집 시작
+  const handleStartEditNote = (itemId: string, currentNote: string) => {
+    setEditingNoteId(itemId);
+    setNoteText(currentNote || "");
+  };
+
+  // 메모 저장
+  const handleSaveNote = (itemId: string) => {
+    updateNoteMutation.mutate({ itemId, notes: noteText });
+  };
+
+  // 메모 취소
+  const handleCancelNote = () => {
+    setEditingNoteId(null);
+    setNoteText("");
+  };
+
+  // 스마트 공유 - 카카오톡/슬랙 형식으로 복사
+  const handleSmartShare = async () => {
+    if (!quoteData?.quote) return;
+
+    const quote = quoteData.quote;
+    const items = quote.items || [];
+
+    // 날짜 포맷
+    const today = new Date();
+    const weekNum = Math.ceil(today.getDate() / 7);
+    const monthName = today.toLocaleDateString("ko-KR", { month: "long" });
+
+    // 아이템 목록 생성
+    const itemLines = items.map((item: any, index: number) => {
+      const vendor = item.product?.vendors?.[0]?.vendor;
+      const unitPrice = item.unitPrice || 0;
+      const lineTotal = unitPrice * item.quantity;
+
+      let line = `${index + 1}. ${item.product?.name || item.name || "제품명 없음"}`;
+      if (vendor?.name || item.product?.brand) {
+        line += ` (${vendor?.name || item.product?.brand})`;
+      }
+      line += `\n   - 수량: ${item.quantity}개`;
+      if (unitPrice > 0) {
+        line += ` | 가격: ${lineTotal.toLocaleString()}원`;
+      }
+      if (item.notes) {
+        line += `\n   - 💬 메모: ${item.notes}`;
+      }
+      return line;
+    }).join("\n\n");
+
+    // 총액 계산
+    const totalAmount = items.reduce((sum: number, item: any) => {
+      const unitPrice = item.unitPrice || 0;
+      return sum + (unitPrice * item.quantity);
+    }, 0);
+
+    // 공유 URL
+    const shareUrl = `${window.location.origin}/quotes/${quote.id}`;
+
+    // 최종 텍스트 조합
+    const shareText = `🧪 [BioInsight] ${quote.title || `${monthName} ${weekNum}주차 시약 구매 요청`}
+
+${itemLines}
+
+💰 총 예상 금액: ${totalAmount > 0 ? `${totalAmount.toLocaleString()}원` : "미정"}
+🔗 리스트 보러가기: ${shareUrl}`;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "클립보드에 복사됨!",
+        description: "카카오톡이나 슬랙에 붙여넣기 하세요.",
+      });
+    } catch (error) {
+      toast({
+        title: "복사 실패",
+        description: "클립보드 접근에 실패했습니다.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -178,6 +299,24 @@ export default function QuoteDetailPage() {
               </div>
             </div>
           </div>
+          {/* 스마트 공유 버튼 */}
+          <Button
+            onClick={handleSmartShare}
+            variant="outline"
+            className="w-full md:w-auto text-xs md:text-sm h-8 md:h-10"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 text-green-600" />
+                복사됨!
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                공유하기
+              </>
+            )}
+          </Button>
         </div>
 
         {/* 기본 정보 */}
@@ -243,15 +382,57 @@ export default function QuoteDetailPage() {
             <div className="md:hidden space-y-3">
               {quote.items?.map((item: any) => {
                 const vendor = item.product?.vendors?.[0]?.vendor;
+                const isEditing = editingNoteId === item.id;
                 return (
                   <Card key={item.id} className="p-3 border">
                     <div className="space-y-2">
-                      <div className="font-medium text-sm">{item.product?.name || "제품 정보 없음"}</div>
+                      <div className="font-medium text-sm">{item.product?.name || item.name || "제품 정보 없음"}</div>
                       <div className="text-xs text-muted-foreground space-y-1">
-                        {vendor?.name && <div>벤더: {vendor.name}</div>}
+                        {(vendor?.name || item.product?.brand) && <div>벤더: {vendor?.name || item.product?.brand}</div>}
                         {item.product?.spec && <div>규격: {item.product.spec}</div>}
                         <div>수량: {item.quantity}</div>
-                        {item.notes && <div>비고: {item.notes}</div>}
+                      </div>
+                      {/* 메모 영역 */}
+                      <div className="pt-2 border-t">
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              placeholder="메모를 입력하세요..."
+                              className="text-xs min-h-[60px]"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveNote(item.id)}
+                                disabled={updateNoteMutation.isPending}
+                                className="h-7 text-xs"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                저장
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelNote}
+                                className="h-7 text-xs"
+                              >
+                                취소
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => handleStartEditNote(item.id, item.notes || "")}
+                            className="flex items-start gap-2 cursor-pointer hover:bg-muted/50 rounded p-1 -m-1"
+                          >
+                            <MessageSquare className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <span className="text-xs text-muted-foreground">
+                              {item.notes || "메모 추가..."}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </Card>
@@ -267,26 +448,75 @@ export default function QuoteDetailPage() {
                     <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">벤더</th>
                     <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">규격</th>
                     <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">비고</th>
+                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm min-w-[200px]">메모</th>
                   </tr>
                 </thead>
                 <tbody>
                   {quote.items?.map((item: any) => {
                     const vendor = item.product?.vendors?.[0]?.vendor;
+                    const isEditing = editingNoteId === item.id;
                     return (
                       <tr key={item.id} className="border-b hover:bg-muted/30">
                         <td className="p-2 md:p-3 font-medium text-xs md:text-sm min-w-[120px]">
-                          <div className="truncate">{item.product?.name || "제품 정보 없음"}</div>
+                          <div className="truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
                         </td>
                         <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
-                          {vendor?.name || "-"}
+                          {vendor?.name || item.product?.brand || "-"}
                         </td>
                         <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
                           {item.product?.spec || "-"}
                         </td>
                         <td className="p-2 md:p-3 text-xs md:text-sm">{item.quantity}</td>
-                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
-                          {item.notes || "-"}
+                        <td className="p-2 md:p-3 text-xs md:text-sm">
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                placeholder="메모 입력..."
+                                className="h-8 text-xs flex-1"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveNote(item.id);
+                                  if (e.key === "Escape") handleCancelNote();
+                                }}
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveNote(item.id)}
+                                disabled={updateNoteMutation.isPending}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelNote}
+                                className="h-8 w-8 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => handleStartEditNote(item.id, item.notes || "")}
+                              className="flex items-center gap-2 cursor-pointer hover:bg-muted rounded px-2 py-1 -mx-2 -my-1 group"
+                            >
+                              {item.notes ? (
+                                <>
+                                  <MessageSquare className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                                  <span className="text-muted-foreground">{item.notes}</span>
+                                  <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </>
+                              ) : (
+                                <>
+                                  <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
+                                  <span className="text-muted-foreground/50 italic">메모 추가...</span>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

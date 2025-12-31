@@ -44,7 +44,21 @@ export async function PUT(
       return NextResponse.json({ error: "Quote item not found" }, { status: 404 });
     }
 
-    if (existingItem.quote.userId !== session.user.id) {
+    // 팀 기반 권한 체크: 본인 또는 같은 조직 멤버면 수정 가능
+    const isOwner = existingItem.quote.userId === session.user.id;
+    let isTeamMember = false;
+
+    if (!isOwner && existingItem.quote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: {
+          userId: session.user.id,
+          organizationId: existingItem.quote.organizationId,
+        },
+      });
+      isTeamMember = !!membership;
+    }
+
+    if (!isOwner && !isTeamMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -117,7 +131,21 @@ export async function DELETE(
       return NextResponse.json({ error: "Quote item not found" }, { status: 404 });
     }
 
-    if (existingItem.quote.userId !== session.user.id) {
+    // 팀 기반 권한 체크: 본인 또는 같은 조직 멤버면 삭제 가능
+    const isOwner = existingItem.quote.userId === session.user.id;
+    let isTeamMember = false;
+
+    if (!isOwner && existingItem.quote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: {
+          userId: session.user.id,
+          organizationId: existingItem.quote.organizationId,
+        },
+      });
+      isTeamMember = !!membership;
+    }
+
+    if (!isOwner && !isTeamMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -135,6 +163,15 @@ export async function DELETE(
     );
   }
 }
+
+
+
+
+
+
+
+
+
 
 
 
