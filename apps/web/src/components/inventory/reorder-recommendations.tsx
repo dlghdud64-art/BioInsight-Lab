@@ -102,16 +102,16 @@ export function ReorderRecommendations({
   const highCount = recommendations.filter((r) => r.urgency === "high").length;
 
   return (
-    <Card className="border-none shadow-sm">
-      <CardHeader className="pb-2">
+    <Card className="border-none shadow-sm bg-white rounded-2xl">
+      <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-semibold">재주문 추천</CardTitle>
-            <CardDescription className="text-xs text-slate-500">
+            <CardTitle className="text-base md:text-lg font-semibold text-gray-900">재주문 추천</CardTitle>
+            <CardDescription className="text-xs md:text-sm text-gray-500">
               자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
             </CardDescription>
           </div>
-          <Button onClick={handleAddToQuoteList} size="sm" className="w-full md:w-auto">
+          <Button onClick={handleAddToQuoteList} size="sm" className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white">
             <ShoppingCart className="h-4 w-4 mr-2" />
             모두 품목 리스트에 추가
           </Button>
@@ -128,7 +128,71 @@ export function ReorderRecommendations({
           </Alert>
         )}
 
-        <div className="space-y-3">
+        {/* 모바일: 가로 스크롤, 데스크톱: 그리드 */}
+        <div className="md:hidden overflow-x-auto pb-2 -mx-4 px-4">
+          <div className="flex gap-3 min-w-max">
+            {recommendations.map((rec) => {
+              const vendor = rec.product.vendors?.[0];
+              const urgencyColors = {
+                urgent: "border-red-300 bg-red-50",
+                high: "border-orange-300 bg-orange-50",
+                medium: "border-yellow-300 bg-yellow-50",
+              };
+              const urgencyBadgeColors = {
+                urgent: "bg-red-100 text-red-800 border-red-300",
+                high: "bg-orange-100 text-orange-800 border-orange-300",
+                medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
+              };
+
+              return (
+                <div
+                  key={rec.inventoryId}
+                  className={`w-40 flex-shrink-0 p-4 border rounded-2xl shadow-sm ${urgencyColors[rec.urgency]}`}
+                >
+                  <div className="flex flex-col h-full">
+                    <div className="mb-2">
+                      <Badge variant="outline" className={`text-xs mb-2 ${urgencyBadgeColors[rec.urgency]}`}>
+                        {rec.urgency === "urgent" ? "긴급" : rec.urgency === "high" ? "높음" : "보통"}
+                      </Badge>
+                      <h4 className="font-semibold text-sm line-clamp-2 mb-1">{rec.product.name}</h4>
+                      {rec.product.brand && (
+                        <p className="text-xs text-gray-600 mb-2">{rec.product.brand}</p>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1 text-xs mb-3">
+                      <div>
+                        <span className="text-gray-500">추천:</span>
+                        <span className="ml-1 font-semibold text-blue-700">
+                          {rec.recommendedQuantity} {rec.unit}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">현재:</span>
+                        <span className="ml-1">{rec.currentQuantity} {rec.unit}</span>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs h-8"
+                      onClick={() => {
+                        if (onAddToQuoteList) {
+                          onAddToQuoteList([rec]);
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="h-3 w-3 mr-1" />
+                      바로담기
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 데스크톱: 기존 그리드 레이아웃 */}
+        <div className="hidden md:grid md:grid-cols-1 lg:grid-cols-2 gap-4">
           {recommendations.map((rec) => {
             const vendor = rec.product.vendors?.[0];
             const urgencyColors = {
@@ -140,7 +204,7 @@ export function ReorderRecommendations({
             return (
               <div
                 key={rec.inventoryId}
-                className={`p-4 border rounded-lg ${urgencyColors[rec.urgency]}`}
+                className={`p-4 border rounded-2xl shadow-sm ${urgencyColors[rec.urgency]}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">

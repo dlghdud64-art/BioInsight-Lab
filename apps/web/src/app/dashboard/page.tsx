@@ -173,8 +173,11 @@ export default function DashboardPage() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const userName = session?.user?.name || "연구자";
+  const userDisplayName = userName.split(" ")[0] || userName;
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50/50">
       <MainHeader 
         showMenuIcon={true}
         pageTitle="대시보드"
@@ -185,12 +188,21 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-4 gap-2">
-              <PageHeader
-                title="대시보드"
-                description="견적, 즐겨찾기, 최근 본 제품, 구매 내역 요약을 한눈에 확인합니다."
-                icon={LayoutDashboard}
-              />
+            {/* 웰컴 섹션 */}
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                반가워요, <span className="text-blue-600">{userDisplayName}</span> 님! 👋
+              </h1>
+              <p className="text-sm md:text-base text-gray-500">
+                오늘도 성공적인 실험 되세요.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between mb-4 gap-2 md:hidden">
+              <div className="flex items-center gap-2">
+                <LayoutDashboard className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold text-gray-900">대시보드</h2>
+              </div>
               <div className="flex gap-1 md:gap-2 flex-shrink-0">
                 {isEditMode && (
                   <>
@@ -264,7 +276,7 @@ export default function DashboardPage() {
                 title="구매 내역 요약"
                 defaultSize={widget.size}
               >
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-4 md:space-y-6">
                   {/* 기간 선택 */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
@@ -311,9 +323,9 @@ export default function DashboardPage() {
 
                   {/* 로딩 상태 */}
                   {purchaseSummaryLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                       {[1, 2, 3].map((i) => (
-                        <Card key={i} className="p-3 md:p-6">
+                        <Card key={i} className="p-5 rounded-2xl shadow-sm bg-white">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
                             <Skeleton className="h-4 w-24" />
                             <Skeleton className="h-4 w-4 rounded" />
@@ -329,7 +341,7 @@ export default function DashboardPage() {
 
                   {/* 에러 상태 */}
                   {purchaseSummaryError && !purchaseSummaryLoading && (
-                    <Card className="p-3 md:p-6">
+                    <Card className="p-5 rounded-2xl shadow-sm bg-white">
                       <CardContent className="flex flex-col items-center justify-center py-6">
                         <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
                         <p className="text-sm text-red-600 mb-2">데이터를 불러오는 중 오류가 발생했습니다.</p>
@@ -347,7 +359,7 @@ export default function DashboardPage() {
 
                   {/* 빈 상태 */}
                   {!purchaseSummaryLoading && !purchaseSummaryError && (!purchaseSummary || purchaseSummary.metrics?.itemCount === 0) && (
-                    <Card className="p-3 md:p-6">
+                    <Card className="p-5 rounded-2xl shadow-sm bg-white">
                       <CardContent className="flex flex-col items-center justify-center py-6">
                         <Package className="h-8 w-8 text-slate-400 mb-2" />
                         <p className="text-sm text-slate-500 mb-2">구매 내역이 없습니다.</p>
@@ -362,61 +374,90 @@ export default function DashboardPage() {
 
                   {/* 데이터 표시 */}
                   {!purchaseSummaryLoading && !purchaseSummaryError && purchaseSummary && purchaseSummary.metrics?.itemCount > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                      <Card className="p-3 md:p-6">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                          <CardTitle className="text-xs md:text-sm font-medium">구매 금액</CardTitle>
-                          <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent className="px-0 pb-0">
-                          <div className="text-lg md:text-2xl font-bold">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                      {/* 구매 금액 카드 - 파란색 그라데이션 */}
+                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-5 shadow-sm">
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-white/90">구매 금액</span>
+                            <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                              <DollarSign className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
+                          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
                             ₩{purchaseSummary.metrics?.totalAmount?.toLocaleString("ko-KR") || 0}
                           </div>
-                          <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-white/80">
                             {purchaseSummary.metrics?.itemCount || 0}개 품목
                           </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="p-3 md:p-6">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                          <CardTitle className="text-xs md:text-sm font-medium">예산 사용률</CardTitle>
-                          <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent className="px-0 pb-0">
-                          {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
-                            <>
-                              <div className="text-lg md:text-2xl font-bold">
-                                {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
+                        </div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                      </div>
+
+                      {/* 예산 사용률 카드 - 프로그레스 바 */}
+                      <div className="bg-white rounded-2xl shadow-sm p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">예산 사용률</span>
+                          <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                            <TrendingUp className="h-5 w-5 text-orange-600" />
+                          </div>
+                        </div>
+                        {purchaseSummary.budgetUsage && purchaseSummary.budgetUsage.length > 0 ? (
+                          <>
+                            <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                              {purchaseSummary.budgetUsage[0]?.usageRate?.toFixed(1) || 0}%
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                              <div 
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(purchaseSummary.budgetUsage[0]?.usageRate || 0, 100)}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {purchaseSummary.budgetUsage[0]?.name || "예산"}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-2xl md:text-3xl font-bold text-gray-400 mb-3">-</div>
+                            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                              <div className="bg-gray-200 h-2.5 rounded-full w-0" />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              <Link href="/dashboard/budget" className="text-blue-600 hover:underline">
+                                예산 설정하기
+                              </Link>
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* 구매 리포트 카드 - 차트 시각화 */}
+                      <div className="bg-white rounded-2xl shadow-sm p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">구매 리포트</span>
+                          <div className="h-10 w-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                            <BarChart3 className="h-5 w-5 text-purple-600" />
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <div className="flex items-end justify-between gap-2 h-20">
+                            {[65, 80, 45, 70].map((height, idx) => (
+                              <div key={idx} className="flex-1 flex flex-col items-center">
+                                <div 
+                                  className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t-lg transition-all duration-500 hover:opacity-80"
+                                  style={{ height: `${height}%` }}
+                                />
                               </div>
-                              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                                {purchaseSummary.budgetUsage[0]?.name || "예산"}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <div className="text-lg md:text-2xl font-bold">-</div>
-                              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                                <Link href="/dashboard/budget" className="text-primary hover:underline">
-                                  예산 설정하기
-                                </Link>
-                              </p>
-                            </>
-                          )}
-                        </CardContent>
-                      </Card>
-                      <Card className="p-3 md:p-6">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                          <CardTitle className="text-xs md:text-sm font-medium">구매 리포트</CardTitle>
-                          <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent className="px-0 pb-0">
-                          <Link href="/dashboard/purchases">
-                            <Button variant="outline" className="w-full text-xs md:text-sm h-8 md:h-10 whitespace-nowrap">
-                              구매내역 보기
-                            </Button>
-                          </Link>
-                        </CardContent>
-                      </Card>
+                            ))}
+                          </div>
+                        </div>
+                        <Link href="/dashboard/purchases">
+                          <Button variant="outline" className="w-full text-xs md:text-sm h-9 md:h-10 whitespace-nowrap border-purple-200 hover:bg-purple-50 hover:border-purple-300">
+                            구매내역 보기
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
