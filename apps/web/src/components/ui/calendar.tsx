@@ -13,7 +13,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  captionLayout = "dropdown-buttons",
+  captionLayout = "dropdown",
   fromYear = 2020,
   toYear = 2030,
   ...props
