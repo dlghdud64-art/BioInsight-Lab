@@ -182,10 +182,10 @@ export default function DashboardPage() {
         pageTitle="대시보드"
         onMenuClick={() => setIsMobileMenuOpen(true)}
       />
-      <div className="flex overflow-x-hidden">
+      <div className="flex overflow-x-hidden w-full">
         <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 pt-16 md:pt-0">
-          <div className="w-full px-3 md:px-4 py-4 md:py-8">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-16 md:pt-0">
+          <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto w-full">
             {/* 웰컴 섹션 */}
             <div className="mb-6 md:mb-8">
