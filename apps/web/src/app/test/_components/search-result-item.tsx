@@ -122,10 +122,12 @@ export function SearchResultItem({
             <Button
               variant="outline"
               size="sm"
-              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 w-9 p-0 ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
+              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 py-2 px-3 ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
               onClick={onToggleCompare}
             >
-              <GitCompare className="h-4 w-4" />
+              <GitCompare className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">비교함 담기</span>
+              <span className="sm:hidden">비교</span>
             </Button>
 
             {/* 견적 요청 */}
