@@ -49,6 +49,7 @@ export default function DashboardPage() {
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const { isEditMode, setEditMode, widgets, resetLayout, loadLayout, saveLayout } = useDashboardWidgets();
   const { toast } = useToast();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // 레이아웃 로드 (페이지 마운트 시)
   useEffect(() => {
@@ -170,8 +171,6 @@ export default function DashboardPage() {
   const quotes = quotesData?.quotes || [];
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const userName = session?.user?.name || "연구자";
   const userDisplayName = userName.split(" ")[0] || userName;
