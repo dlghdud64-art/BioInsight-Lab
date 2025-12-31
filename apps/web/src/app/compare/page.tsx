@@ -173,7 +173,9 @@ export default function ComparePage() {
     return (
       <MainLayout>
         <MainHeader />
-        <SearchStepNav />
+        <div className="pt-14">
+          <SearchStepNav />
+        </div>
         <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">제품 비교</h1>
@@ -385,7 +387,9 @@ export default function ComparePage() {
   return (
     <MainLayout>
       <MainHeader />
-      <SearchStepNav />
+      <div className="pt-14">
+        <SearchStepNav />
+      </div>
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 비교 제품 관리 리스트 - 위로 이동 */}

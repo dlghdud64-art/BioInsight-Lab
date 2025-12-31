@@ -148,7 +148,9 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
-      <SearchStepNav />
+      <div className="pt-14">
+        <SearchStepNav />
+      </div>
       <div className="container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PageHeader

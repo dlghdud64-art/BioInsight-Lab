@@ -249,7 +249,9 @@ export default function QuotePage() {
   if (productIds.length === 0) {
     return (
       <>
-        <SearchStepNav />
+        <div className="pt-14">
+          <SearchStepNav />
+        </div>
         <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           <Card className="p-3 md:p-6">
             <CardContent className="px-0 pt-0 pb-0">
@@ -270,7 +272,9 @@ export default function QuotePage() {
 
   return (
     <>
-      <SearchStepNav />
+      <div className="pt-14">
+        <SearchStepNav />
+      </div>
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 영역 */}
