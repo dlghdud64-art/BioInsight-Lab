@@ -519,25 +519,16 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               </div>
             )}
 
-            {/* 총 예상 견적가 섹션 */}
-            {quoteItems.length > 0 && (
-              <div className="flex justify-end mt-6">
-                <Card className="w-full md:w-auto min-w-[300px] border-2 border-blue-100 bg-blue-50/50">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-gray-700">총 예상 견적가:</span>
-                      <span className="text-3xl font-bold text-blue-600">
-                        ₩{totalAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
             {/* 하단 액션 버튼 그룹 */}
             {quoteItems.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t mt-6">
+                {/* 총 예상 견적가 - 버튼 왼쪽에 배치 */}
+                <div className="flex items-center gap-3 mr-auto">
+                  <span className="text-sm text-gray-500">총 예상 견적가:</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    ₩{totalAmount.toLocaleString()}
+                  </span>
+                </div>
                 <Button
                   type="button"
                   variant="outline"

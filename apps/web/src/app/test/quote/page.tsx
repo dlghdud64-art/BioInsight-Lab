@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { QuotePanel, SharePanel } from "../_components/quote-panel";
+import { QuotePanel } from "../_components/quote-panel";
 import { VendorResponsesPanel } from "../_components/vendor-responses-panel";
 
 export default function QuotePage() {
@@ -18,11 +18,6 @@ export default function QuotePage() {
       {/* 견적 요청 리스트 */}
       <div className="w-full">
         <QuotePanel onQuoteSaved={setSavedQuoteId} />
-      </div>
-
-      {/* 공유 패널 (내보내기 기능 포함) */}
-      <div className="w-full">
-        <SharePanel />
       </div>
 
       {/* 벤더 회신 패널 - 견적이 저장되었을 때만 표시 */}
