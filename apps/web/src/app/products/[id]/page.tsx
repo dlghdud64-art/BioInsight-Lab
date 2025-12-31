@@ -288,11 +288,11 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-32 relative">
+    <div className="min-h-screen bg-gray-50/50 pb-20 lg:pb-32 relative">
       {/* 배경 그라데이션 데코레이션 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent -z-10 pointer-events-none" />
       
-      <div className="container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8 relative z-0">
+      <div className="container mx-auto px-4 md:px-4 lg:px-8 py-6 md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <div className="mb-6 md:mb-8">
@@ -305,7 +305,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-10">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 lg:gap-10">
             {/* 제품 정보 (8칸) */}
             <div className="lg:col-span-8 space-y-6 md:space-y-8">
               {/* 상단: 제품명, 벤더, 카테고리, Grade/규격 배지 */}
@@ -855,8 +855,8 @@ export default function ProductDetailPage() {
               </Card>
             </div>
 
-            {/* 가격 및 액션 - Sticky Right Panel (4칸) */}
-            <div className="lg:col-span-4">
+            {/* 가격 및 액션 - Sticky Right Panel (4칸) - 데스크톱 전용 */}
+            <div className="hidden lg:block lg:col-span-4">
               <div className="sticky top-24 space-y-6">
                 <Card className="bg-white/90 backdrop-blur-sm shadow-xl shadow-blue-900/5 rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden">
                   {/* 상단 강조 선 */}
@@ -1013,6 +1013,44 @@ export default function ProductDetailPage() {
             <PersonalizedRecommendations productId={id} currentProduct={product} />
           </div>
         </div>
+      </div>
+
+      {/* 모바일 전용 하단 고정 바 */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 flex items-center justify-between lg:hidden shadow-lg">
+        <div className="flex-1 min-w-0 mr-4">
+          {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold text-gray-900">
+                ₩{vendors[0].priceInKRW.toLocaleString()}
+              </span>
+              <span className="text-sm font-medium text-gray-400">KRW</span>
+            </div>
+          ) : (
+            <div className="text-base font-semibold text-gray-500">가격 문의</div>
+          )}
+        </div>
+        <Button
+          className="flex-shrink-0 py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+          onClick={async () => {
+            try {
+              const response = await fetch(`/api/products/${id}`);
+              if (response.ok) {
+                toast({
+                  title: "견적 담기 완료",
+                  description: "제품이 견적 요청 리스트에 추가되었습니다.",
+                });
+              }
+            } catch (error) {
+              toast({
+                title: "추가 실패",
+                variant: "destructive",
+              });
+            }
+          }}
+        >
+          <ShoppingCart className="w-5 h-5" />
+          견적 담기
+        </Button>
       </div>
 
       {/* 안전 필드 편집 모달 */}
