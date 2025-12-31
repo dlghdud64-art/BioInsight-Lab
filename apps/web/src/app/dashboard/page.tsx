@@ -493,20 +493,54 @@ export default function DashboardPage() {
 
         {/* 탭 바 - 칩 스타일 (모바일) */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
-          {DASHBOARD_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "whitespace-nowrap rounded-full border px-3 py-1 text-xs transition-colors",
-                activeTab === tab.id
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-200 bg-white text-slate-600"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {DASHBOARD_TABS.map((tab) => {
+            const getIcon = () => {
+              switch (tab.id) {
+                case "quotes":
+                  return <ShoppingCart className="h-3 w-3 mr-1" />;
+                case "favorites":
+                  return <Heart className="h-3 w-3 mr-1" />;
+                case "recent":
+                  return <History className="h-3 w-3 mr-1" />;
+                case "activity":
+                  return <Activity className="h-3 w-3 mr-1" />;
+                case "inventory":
+                  return <Package className="h-3 w-3 mr-1" />;
+                default:
+                  return null;
+              }
+            };
+            const getCount = () => {
+              switch (tab.id) {
+                case "quotes":
+                  return quotes.length;
+                case "favorites":
+                  return favorites.length;
+                case "recent":
+                  return recentProducts.length;
+                default:
+                  return null;
+              }
+            };
+            const count = getCount();
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "whitespace-nowrap rounded-full border px-3 py-1 text-xs transition-colors flex items-center",
+                  activeTab === tab.id
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-600"
+                )}
+              >
+                {getIcon()}
+                <span>{tab.label}</span>
+                {count !== null && <span className="ml-1">({count})</span>}
+              </button>
+            );
+          })}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4">
