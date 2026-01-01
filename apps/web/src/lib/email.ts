@@ -1,11 +1,37 @@
 // 이메일 발송 유틸리티
+import { Resend } from "resend";
 import { getAppUrl } from "./env";
+import { QuoteReceivedEmail } from "@/emails/quote-received";
+import { QuoteCompletedEmail } from "@/emails/quote-completed";
+
+// RESEND_API_KEY 필요 - 환경변수에 설정해주세요
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@biocompare.kr";
 
 interface EmailOptions {
   to: string | string[];
   subject: string;
   html: string;
   text?: string;
+}
+
+interface SendQuoteReceivedEmailParams {
+  to: string;
+  customerName: string;
+  quoteNumber: string;
+  requestDate: string;
+  itemCount: number;
+  totalAmount?: string;
+}
+
+interface SendQuoteCompletedEmailParams {
+  to: string;
+  customerName: string;
+  quoteNumber: string;
+  completedDate: string;
+  itemCount: number;
+  totalAmount?: string;
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
@@ -114,4 +140,139 @@ export async function sendQuoteNotificationToVendors(
     `,
     text: `새로운 견적 요청 "${quoteTitle}"이(가) 접수되었습니다. 확인: ${quoteUrl}`,
   });
+}
+
+// =====================================================
+// Resend + React Email 기반 이메일 발송 함수들
+// =====================================================
+
+/**
+ * 견적 요청 접수 확인 이메일 발송 (React Email 템플릿 사용)
+ */
+export async function sendQuoteReceivedEmail({
+  to,
+  customerName,
+  quoteNumber,
+  requestDate,
+  itemCount,
+  totalAmount,
+}: SendQuoteReceivedEmailParams) {
+  const appUrl = getAppUrl();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `BioCompare <${FROM_EMAIL}>`,
+      to: [to],
+      subject: `[BioCompare] 견적 요청이 접수되었습니다 (요청번호: #${quoteNumber})`,
+      react: QuoteReceivedEmail({
+        customerName,
+        quoteNumber,
+        requestDate,
+        itemCount,
+        totalAmount,
+        dashboardUrl: `${appUrl}/dashboard/quotes`,
+      }),
+    });
+
+    if (error) {
+      console.error("[Email] Failed to send quote received email:", error);
+      return { success: false, error };
+    }
+
+    console.log("[Email] Quote received email sent successfully:", data?.id);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error("[Email] Error sending quote received email:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 견적 완료 알림 이메일 발송
+ */
+export async function sendQuoteCompletedEmail({
+  to,
+  customerName,
+  quoteNumber,
+  completedDate,
+  itemCount,
+  totalAmount,
+}: SendQuoteCompletedEmailParams) {
+  const appUrl = getAppUrl();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `BioCompare <${FROM_EMAIL}>`,
+      to: [to],
+      subject: `[BioCompare] 견적서가 도착했습니다! (견적번호: #${quoteNumber})`,
+      react: QuoteCompletedEmail({
+        customerName,
+        quoteNumber,
+        completedDate,
+        itemCount,
+        totalAmount,
+        dashboardUrl: `${appUrl}/dashboard/quotes/${quoteNumber}`,
+      }),
+    });
+
+    if (error) {
+      console.error("[Email] Failed to send quote completed email:", error);
+      return { success: false, error };
+    }
+
+    console.log("[Email] Quote completed email sent successfully:", data?.id);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error("[Email] Error sending quote completed email:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 견적 거절 알림 이메일 발송
+ */
+export async function sendQuoteRejectedEmail({
+  to,
+  customerName,
+  quoteNumber,
+  reason,
+}: {
+  to: string;
+  customerName: string;
+  quoteNumber: string;
+  reason?: string;
+}) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `BioCompare <${FROM_EMAIL}>`,
+      to: [to],
+      subject: `[BioCompare] 견적 요청 관련 안내 (요청번호: #${quoteNumber})`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">BioCompare</h2>
+          <p>${customerName} 님, 안녕하세요.</p>
+          <p>요청하신 견적(#${quoteNumber})에 대해 안내드립니다.</p>
+          <p>죄송합니다만, 요청하신 견적을 진행하기 어려운 상황입니다.</p>
+          ${reason ? `<p><strong>사유:</strong> ${reason}</p>` : ""}
+          <p>다른 문의사항이 있으시면 언제든지 연락주세요.</p>
+          <p>감사합니다.</p>
+          <hr style="border-color: #e2e8f0;" />
+          <p style="color: #94a3b8; font-size: 12px;">
+            © ${new Date().getFullYear()} BioCompare. All rights reserved.
+          </p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error("[Email] Failed to send quote rejected email:", error);
+      return { success: false, error };
+    }
+
+    console.log("[Email] Quote rejected email sent successfully:", data?.id);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error("[Email] Error sending quote rejected email:", error);
+    return { success: false, error };
+  }
 }

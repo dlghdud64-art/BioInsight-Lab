@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createQuote } from "@/lib/api/quotes";
-import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors } from "@/lib/email";
+import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors, sendQuoteReceivedEmail } from "@/lib/email";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 이메일 발송 (비동기, 실패해도 견적은 생성됨)
+    // 1. 기존 SendGrid 기반 이메일 (하위 호환성)
     Promise.all([
       sendQuoteConfirmationToUser(
         session.user.email || "",
@@ -148,7 +149,20 @@ export async function POST(request: NextRequest) {
       ),
       vendorEmails.length > 0 && sendQuoteNotificationToVendors(vendorEmails as string[], quote.title, quote.id),
     ]).catch((error) => {
-      console.error("Failed to send quote emails:", error);
+      console.error("Failed to send quote emails (SendGrid):", error);
+    });
+
+    // 2. 새로운 Resend + React Email 기반 이메일 발송
+    const totalAmount = quoteItems.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0);
+    sendQuoteReceivedEmail({
+      to: session.user.email || "",
+      customerName: session.user.name || "고객",
+      quoteNumber: quote.id.slice(-8).toUpperCase(),
+      requestDate: new Date().toLocaleDateString("ko-KR"),
+      itemCount: quoteItems.length,
+      totalAmount: totalAmount > 0 ? `₩${totalAmount.toLocaleString("ko-KR")}` : undefined,
+    }).catch((error) => {
+      console.error("Failed to send quote received email (Resend):", error);
     });
 
     // 액티비티 로그 기록 (비동기, 실패해도 견적은 생성됨)

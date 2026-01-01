@@ -934,6 +934,7 @@ enum ActivityType {
   QUOTE_DELETED // 리스트 삭제
   QUOTE_SHARED // 리스트 공유
   QUOTE_VIEWED // 리스트 조회
+  QUOTE_STATUS_CHANGED // 견적 상태 변경
   PRODUCT_COMPARED // 제품 비교
   PRODUCT_VIEWED // 제품 조회
   PRODUCT_FAVORITED // 제품 즐겨찾기
