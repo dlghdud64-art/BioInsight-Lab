@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
     });
 
     const totalPurchaseAmount = orders.reduce(
-      (sum, order) => sum + order.totalAmount,
+      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
       0
     );
 
     const ordersByStatus = orders.reduce(
-      (acc, order) => {
+      (acc: Record<string, number>, order: { status: string }) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       },
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       (order) => new Date(order.createdAt) >= monthStart
     );
     const thisMonthPurchaseAmount = thisMonthOrders.reduce(
-      (sum, order) => sum + order.totalAmount,
+      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
       0
     );
 
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     });
 
     const quotesByStatus = quotes.reduce(
-      (acc, quote) => {
+      (acc: Record<string, number>, quote: { status: string }) => {
         acc[quote.status] = (acc[quote.status] || 0) + 1;
         return acc;
       },
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       });
 
       const monthAmount = monthOrders.reduce(
-        (sum, order) => sum + order.totalAmount,
+        (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
         0
       );
 
