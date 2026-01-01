@@ -80,7 +80,7 @@ export async function PATCH(
 
     // 총액 재계산
     const totalAmount = updatedItems.reduce(
-      (sum, item) => sum + (item.lineTotal || 0),
+      (sum: number, item) => sum + (item.lineTotal || 0),
       0
     );
 
