@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
       const quote = await tx.quote.findUnique({
         where: { id: quoteId },
         include: {
-          listItems: true,
           items: true,
           order: true,
         },
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
 
       // 주문 금액 계산
       const totalAmount = quote.totalAmount ||
-        quote.listItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+        quote.items.reduce((sum: number, item: { lineTotal: number | null }) => sum + (item.lineTotal || 0), 0);
 
       if (totalAmount <= 0) {
         throw new Error("INVALID_AMOUNT");
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
           shippingAddress,
           notes,
           items: {
-            create: quote.listItems.map((item) => ({
+            create: quote.items.map((item: { productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
               productId: item.productId,
               name: item.name || "Unknown Product",
               brand: item.brand,
