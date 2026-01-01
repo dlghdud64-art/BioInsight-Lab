@@ -10,6 +10,7 @@ import {
   Database,
   Activity,
   Shield,
+  FileText,
 } from "lucide-react";
 
 const ADMIN_MENU_ITEMS = [
@@ -17,6 +18,11 @@ const ADMIN_MENU_ITEMS = [
     title: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Quotes",
+    href: "/admin/quotes",
+    icon: FileText,
   },
   {
     title: "Users",
