@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { QuoteStatus, OrderStatus, ActivityType } from "@prisma/client";
+import { QuoteStatus, OrderStatus, ActivityType, Prisma } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 
 // 주문번호 생성 함수
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 트랜잭션으로 모든 작업 처리
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. 견적 검증
       const quote = await tx.quote.findUnique({
         where: { id: quoteId },
