@@ -9,14 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ArrowLeft } from "lucide-react";
+import { AIInsightCard } from "@/components/ai-insight-card";
 
 export default function SearchPage() {
   const {
@@ -41,13 +42,26 @@ export default function SearchPage() {
     removeQuoteItem,
     updateQuoteItem,
     hasSearched,
+    gptEnabled,
+    searchQuery,
   } = useTestFlow();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isQuoteSheetOpen, setIsQuoteSheetOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [sheetSide, setSheetSide] = useState<"bottom" | "right">("bottom");
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+
+  // 모바일/데스크톱 분기
+  useEffect(() => {
+    const handleResize = () => {
+      setSheetSide(window.innerWidth >= 768 ? "right" : "bottom");
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -70,6 +84,9 @@ export default function SearchPage() {
 
         {/* 가운데: 검색 결과 */}
         <section className="order-3 md:order-none space-y-4 max-w-4xl mx-auto w-full">
+          {/* 상단 고정 검색창 */}
+          <StickySearchBar />
+          
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
             <Card className="border border-slate-200 bg-white">
@@ -149,11 +166,23 @@ export default function SearchPage() {
             )}
 
             {isSearchLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400 mb-3" />
+                <p className="text-sm text-slate-600">
+                  {gptEnabled ? "AI가 실험 데이터를 분석하고 있습니다..." : "검색 중..."}
+                </p>
               </div>
             ) : products.length > 0 ? (
               <div className="space-y-3">
+                  {/* AI 인사이트 카드 */}
+                  {gptEnabled && searchQuery && (
+                    <AIInsightCard 
+                      query={searchQuery}
+                      productCount={products.length}
+                      queryAnalysis={queryAnalysis}
+                    />
+                  )}
+                  
                   {products.map((product) => {
                     const isInCompare = compareIds.includes(product.id);
 
@@ -173,15 +202,15 @@ export default function SearchPage() {
                   })}
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center py-16 md:py-20">
+              <div className="flex h-full flex-col items-center justify-center py-16 md:py-20 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
                     <>
                       <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                         <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        검색어를 입력하고 <span className="font-medium text-gray-700">"검색 실행"</span>을 눌러보세요.
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">AI 분석 준비 완료</h3>
+                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center">
+                        원하는 제품이나 키워드를 검색하면 후보 제품을 자동으로 분석하고 비교해 드립니다.
                       </p>
                     </>
                   ) : (
@@ -190,7 +219,7 @@ export default function SearchPage() {
                         <FileText className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center">
                         검색어를 조금 더 넓게 입력하거나, 제품명 대신 키워드(타겟, 플랫폼 등)로 시도해 보세요.
                       </p>
                     </>
@@ -239,132 +268,148 @@ export default function SearchPage() {
                   견적 요청 리스트 열기({quoteItems.length})
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-                <SheetHeader className="pb-4">
-                  <SheetTitle className="text-base">견적 요청 리스트</SheetTitle>
-                  <SheetDescription className="text-xs">
-                    현재 선택된 품목과 수량을 확인하고, 필요하면 수정을 진행할 수 있습니다.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-2">
-                  <div className="space-y-4">
-                    <div className="max-h-[65vh] overflow-y-auto border rounded-lg">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
-                          <TableRow>
-                            <TableHead className="w-10 text-xs py-2">No.</TableHead>
-                            <TableHead className="text-xs py-2 min-w-[200px]">제품명</TableHead>
-                            <TableHead className="text-right text-xs py-2 w-24">수량</TableHead>
-                            <TableHead className="text-right text-xs py-2 w-24">단가</TableHead>
-                            <TableHead className="text-right text-xs py-2 w-28">금액</TableHead>
-                            <TableHead className="w-10 text-center text-xs py-2"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                        {quoteItems.map((item, index) => {
-                          const product = products.find((p) => p.id === item.productId);
-                          const vendor = product?.vendors?.[0];
-                          return (
-                            <TableRow key={item.id}>
-                              <TableCell className="font-medium text-xs py-3">{index + 1}</TableCell>
-                              <TableCell className="py-3">
-                                <div className="space-y-1">
-                                  <div className="font-medium text-xs leading-snug">
-                                    {product?.name || item.productName || "제품"}
-                                  </div>
-                                  {product?.vendors?.[0]?.vendor?.name && (
-                                    <div className="text-[10px] text-slate-500">
-                                      {product.vendors[0].vendor.name}
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right py-3">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5"
-                                    onClick={() => updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) })}
-                                    disabled={(item.quantity || 1) <= 1}
-                                  >
-                                    <Minus className="h-2.5 w-2.5" />
-                                  </Button>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={item.quantity || 1}
-                                    onChange={(e) => {
-                                      const qty = parseInt(e.target.value) || 1;
-                                      updateQuoteItem(item.id, { quantity: Math.max(1, qty) });
-                                    }}
-                                    className="h-6 w-12 text-center text-[10px] p-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5"
-                                    onClick={() => updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 })}
-                                  >
-                                    <Plus className="h-2.5 w-2.5" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right text-xs py-3">
-                                {vendor?.priceInKRW ? (
-                                  <PriceDisplay price={vendor.priceInKRW} currency="KRW" />
-                                ) : (
-                                  "-"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right font-medium text-xs py-3">
-                                {item.lineTotal ? (
-                                  <PriceDisplay price={item.lineTotal} currency="KRW" />
-                                ) : (
-                                  "-"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center py-3">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-slate-400 hover:text-red-500"
-                                  onClick={() => setItemToDelete(item.id)}
-                                  aria-label="품목 삭제"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+              <SheetContent 
+                side={sheetSide}
+                className={`w-full ${sheetSide === "right" ? "sm:max-w-lg lg:max-w-xl" : ""} flex flex-col p-0 ${sheetSide === "bottom" ? "h-[90vh]" : ""}`}
+              >
+                {/* 헤더 */}
+                <div className="px-6 py-4 border-b">
+                  <SheetHeader>
+                    <SheetTitle className="text-lg font-bold">견적 요청 리스트</SheetTitle>
+                    <SheetDescription className="text-sm text-slate-600">
+                      선택한 품목을 확인하고 수량을 조절할 수 있습니다.
+                    </SheetDescription>
+                  </SheetHeader>
+                </div>
+
+                {/* 스크롤 가능한 아이템 리스트 */}
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                  {quoteItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <Package className="h-12 w-12 text-slate-300 mb-4" />
+                      <p className="text-sm font-medium text-slate-900 mb-1">리스트가 비어있습니다</p>
+                      <p className="text-xs text-slate-500">
+                        제품을 검색하고 "리스트에 담기"를 눌러보세요.
+                      </p>
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="font-semibold text-sm text-slate-900">총액:</span>
-                      <span className="font-bold text-base text-slate-900">
+                  ) : (
+                    quoteItems.map((item) => {
+                      const product = products.find((p) => p.id === item.productId);
+                      const vendor = product?.vendors?.[0];
+                      const unitPrice = vendor?.priceInKRW || 0;
+                      const lineTotal = item.lineTotal || 0;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="relative bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                        >
+                          {/* 삭제 버튼 - 우측 상단 */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-3 right-3 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                            onClick={() => setItemToDelete(item.id)}
+                            aria-label="품목 삭제"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* 제품 정보 - 좌측 */}
+                          <div className="pr-8 mb-3">
+                            <div className="font-semibold text-sm text-slate-900 leading-snug mb-1">
+                              {product?.name || item.productName || "제품"}
+                            </div>
+                            {product?.vendors?.[0]?.vendor?.name && (
+                              <div className="text-xs text-slate-500">
+                                {product.vendors[0].vendor.name}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 수량 조절 및 가격 - 우측 하단 */}
+                          <div className="flex items-center justify-between">
+                            {/* 수량 조절기 */}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 rounded-lg transition-all hover:scale-110 active:scale-95 flex-shrink-0"
+                                onClick={() => {
+                                  updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) });
+                                }}
+                                disabled={(item.quantity || 1) <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantity || 1}
+                                onChange={(e) => {
+                                  const qty = parseInt(e.target.value) || 1;
+                                  updateQuoteItem(item.id, { quantity: Math.max(1, qty) });
+                                }}
+                                className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-300 transition-all focus:ring-2 focus:ring-blue-500"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 rounded-lg transition-all hover:scale-110 active:scale-95 flex-shrink-0"
+                                onClick={() => {
+                                  updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 });
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            {/* 가격 정보 */}
+                            <div className="text-right flex-shrink-0">
+                              {unitPrice > 0 && (
+                                <div className="text-xs text-slate-500 mb-1 whitespace-nowrap">
+                                  단가: <PriceDisplay price={unitPrice} currency="KRW" />
+                                </div>
+                              )}
+                              <div className="font-bold text-base text-blue-600 transition-all duration-200 whitespace-nowrap">
+                                {lineTotal > 0 ? (
+                                  <PriceDisplay price={lineTotal} currency="KRW" />
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* 하단 고정 푸터 */}
+                {quoteItems.length > 0 && (
+                  <div className="border-t bg-white px-6 py-4 space-y-3 sticky bottom-0">
+                    {/* 총액 */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-600">Total</span>
+                      <span className="text-xl font-bold text-blue-600 transition-all duration-200 whitespace-nowrap">
                         ₩{totalAmount.toLocaleString("ko-KR")}
                       </span>
                     </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-xs"
+
+                    {/* 견적서 작성 버튼 */}
+                    <Link href="/test/quote" className="block">
+                      <Button 
+                        size="lg" 
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                         onClick={() => setIsQuoteSheetOpen(false)}
                       >
-                        닫기
+                        견적서 작성하러 가기 →
                       </Button>
-                      <Link href="/test/quote" className="flex-1">
-                        <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800 text-xs">
-                          견적 보기 →
-                        </Button>
-                      </Link>
-                    </div>
+                    </Link>
                   </div>
-                </div>
+                )}
               </SheetContent>
             </Sheet>
           </div>
@@ -402,11 +447,70 @@ export default function SearchPage() {
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-xs text-slate-500 text-center px-2">
-            정리된 견적 요청 리스트는 TSV/엑셀 파일로 내려받아 이메일로 공유하거나,
-            필요하면 사내 그룹웨어·전자결재 양식에 붙여넣어 사용할 수 있습니다.
+            견적 리스트는 엑셀/TSV로 다운로드하여 이메일 공유나 사내 전자결재에 활용할 수 있습니다.
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StickySearchBar() {
+  const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+
+  // 좌측 사이드바의 searchQuery와 동기화
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (localQuery.trim()) {
+      setSearchQuery(localQuery);
+      runSearch();
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalQuery(value);
+    // 좌측 사이드바의 searchQuery도 즉시 업데이트
+    setSearchQuery(value);
+  };
+
+  return (
+    <div className="w-full p-6 border-b bg-white/95 backdrop-blur sticky top-0 z-10 shadow-sm">
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="relative flex items-center w-full">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 z-10" />
+          <input
+            type="text"
+            value={localQuery}
+            onChange={handleChange}
+            placeholder="제품명, 벤더, 키워드를 입력하여 AI 분석 시작"
+            className="w-full h-12 pl-12 pr-24 text-base bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          />
+          <Button
+            type="submit"
+            className="absolute right-2 h-8 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-md shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+            disabled={!localQuery.trim()}
+          >
+            <Search className="h-4 w-4 mr-1.5" />
+            검색
+          </Button>
+        </div>
+      </form>
+      
+      {/* Empty State 안내 문구 */}
+      {!hasSearched && (
+        <div className="mt-10 flex flex-col items-center justify-center text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">AI 분석 준비 완료</h3>
+          <p className="text-sm text-gray-600 leading-relaxed max-w-md">
+            원하는 제품이나 키워드를 검색하면 후보 제품을 자동으로 분석하고 비교해 드립니다.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

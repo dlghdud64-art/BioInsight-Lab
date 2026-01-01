@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { Search, ChevronDown, ChevronUp, Brain, Loader2, AlertCircle, FileText } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Brain, Loader2, AlertCircle, FileText, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -51,42 +51,42 @@ export function SearchPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="search-query" className="text-xs font-medium">
-              검색어
-            </Label>
-            <Input
-              id="search-query"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="예: Human IL-6 ELISA kit — 제품명이나 벤더 이름을 입력해 보세요"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  e.preventDefault();
-                  runSearch();
-                }
-              }}
-              className="h-8 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
-            />
-            <p className="mt-1 text-xs text-slate-500">
-              제품명, 벤더, 카테고리 키워드로 검색하면 GPT가 관련 제품을 추천해 줍니다.
-            </p>
-            {/* 샘플 검색어 칩 */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <span className="text-[10px] text-slate-500 font-medium">샘플 검색어:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("Human IL-6 ELISA kit");
-                  setTimeout(() => runSearch(), 100);
-                }}
-                className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors shadow-sm"
-              >
-                Human IL-6 ELISA kit
-              </button>
+          {/* 현재 검색어 표시 (읽기 전용) */}
+          {searchQuery ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">
+                🔍 현재 검색어
+              </Label>
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-3 py-1.5 font-medium break-all"
+                >
+                  {searchQuery}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                  onClick={() => {
+                    setSearchQuery("");
+                  }}
+                  aria-label="검색어 초기화"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700">
+                검색어
+              </Label>
+              <p className="text-xs text-slate-500">
+                우측 상단 검색창에서 검색어를 입력하세요.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="space-y-1.5">
@@ -230,25 +230,6 @@ export function SearchPanel() {
               </div>
             )}
           </div>
-
-          <Button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("검색 버튼 클릭됨, searchQuery:", searchQuery);
-              if (searchQuery && searchQuery.trim()) {
-                runSearch();
-              } else {
-                console.log("검색어가 비어있어서 검색을 실행하지 않습니다.");
-              }
-            }}
-            type="button"
-            className="w-full h-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
-            disabled={!searchQuery || !searchQuery.trim()}
-          >
-            <Search className="h-3.5 w-3.5 mr-1.5" />
-            검색 실행
-          </Button>
         </CardContent>
       </Card>
 

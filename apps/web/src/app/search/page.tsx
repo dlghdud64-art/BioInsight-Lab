@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import SearchResultList from "./SearchResultList";
 import { SearchInput } from "@/components/SearchInput";
 import { SearchFilters } from "@/components/search/search-filters";
@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -114,24 +115,58 @@ function SearchContent() {
           </div>
         </>
       )}
-      {!q && (
-        <div className="text-center py-16 md:py-20">
-          <div className="flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
-            <p className="text-sm text-gray-500 mb-4 max-w-md">
-              제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 검색할 수 있습니다.
-            </p>
-            <div className="text-xs text-gray-400 space-y-1">
-              <p>예: PBS, FBS, Trypsin, 피펫, 원심분리기, 시약, 소모품, 장비</p>
-              <p>CAS 번호 형식(예: 67-64-1)으로도 검색할 수 있습니다.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {!q && <HeroSearchSection />}
     </>
+  );
+}
+
+function HeroSearchSection() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full px-4 md:px-8">
+      <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto">
+        {/* Hero 검색창 */}
+        <div className="w-full mb-8">
+          <form onSubmit={onSearch} className="w-full">
+            <div className="relative flex items-center w-full max-w-2xl mx-auto">
+              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 md:h-6 md:w-6 z-10" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="제품명, 벤더, 시약명 검색..."
+                className="w-full h-14 md:h-16 pl-14 md:pl-16 pr-32 md:pr-36 text-lg md:text-xl bg-white border-2 border-gray-200 rounded-full shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 hover:shadow-2xl"
+              />
+              <Button
+                type="submit"
+                className="absolute right-2 h-10 md:h-12 px-6 md:px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <Search className="h-5 w-5 md:mr-2" />
+                <span className="hidden md:inline">검색</span>
+              </Button>
+            </div>
+          </form>
+        </div>
+        
+        {/* 안내 문구 */}
+        <div className="w-full max-w-4xl mt-8 text-center">
+          <p className="text-base md:text-lg text-gray-500 break-keep whitespace-pre-wrap leading-relaxed mb-2">
+            제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 검색할 수 있습니다.
+          </p>
+          <p className="text-sm md:text-base text-gray-400 break-keep whitespace-pre-wrap leading-relaxed">
+            예: FBS, Trypsin, 파이펫, 원심분리기, 시약, 소모품, 장비, CAS 번호 등으로 검색할 수 있습니다.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -147,24 +182,42 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
-      <div className="pt-14 container mx-auto px-3 md:px-4 lg:px-8 py-4 md:py-8">
-        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-          <PageHeader
-            title="제품 검색"
-            description="제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 원하는 제품을 찾아보세요."
-            icon={Search}
-            iconColor="text-blue-600"
-          />
-          
-          {/* 모바일에서 sticky 검색 입력 */}
-          <div className="mb-4 md:mb-6 sticky top-16 md:static z-10 bg-transparent pb-2 md:pb-0">
-            <SearchInputWrapper />
-          </div>
-          
-          <Suspense fallback={<div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>}>
-            <SearchContent />
-          </Suspense>
-        </div>
+      <Suspense fallback={<div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>}>
+        <SearchPageContent />
+      </Suspense>
+    </div>
+  );
+}
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") || "";
+  const hasQuery = !!q;
+
+  return (
+    <div className={cn(
+      "pt-14 container mx-auto px-3 md:px-4 lg:px-8",
+      hasQuery ? "py-4 md:py-8" : ""
+    )}>
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        {/* 검색 결과가 있을 때만 상단 헤더와 검색창 표시 */}
+        {hasQuery && (
+          <>
+            <PageHeader
+              title="제품 검색"
+              description="제품명, 벤더, 카테고리 또는 CAS 번호를 입력하여 원하는 제품을 찾아보세요."
+              icon={Search}
+              iconColor="text-blue-600"
+            />
+            
+            {/* 검색 입력창 - PageHeader 아래 */}
+            <div className="mb-4 md:mb-6">
+              <SearchInputWrapper />
+            </div>
+          </>
+        )}
+        
+        <SearchContent />
       </div>
     </div>
   );
