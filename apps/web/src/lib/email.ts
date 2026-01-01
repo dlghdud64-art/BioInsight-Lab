@@ -5,7 +5,7 @@ import { QuoteReceivedEmail } from "@/emails/quote-received";
 import { QuoteCompletedEmail } from "@/emails/quote-completed";
 
 // RESEND_API_KEY 필요 - 환경변수에 설정해주세요
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@biocompare.kr";
 
@@ -157,6 +157,11 @@ export async function sendQuoteReceivedEmail({
   itemCount,
   totalAmount,
 }: SendQuoteReceivedEmailParams) {
+  if (!resend) {
+    console.warn("[Email] RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");
+    return { success: false, error: "RESEND_API_KEY not configured" };
+  }
+
   const appUrl = getAppUrl();
 
   try {
@@ -198,6 +203,11 @@ export async function sendQuoteCompletedEmail({
   itemCount,
   totalAmount,
 }: SendQuoteCompletedEmailParams) {
+  if (!resend) {
+    console.warn("[Email] RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");
+    return { success: false, error: "RESEND_API_KEY not configured" };
+  }
+
   const appUrl = getAppUrl();
 
   try {
@@ -242,6 +252,11 @@ export async function sendQuoteRejectedEmail({
   quoteNumber: string;
   reason?: string;
 }) {
+  if (!resend) {
+    console.warn("[Email] RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");
+    return { success: false, error: "RESEND_API_KEY not configured" };
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: `BioCompare <${FROM_EMAIL}>`,
