@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonthOrders = orders.filter(
-      (order) => new Date(order.createdAt) >= monthStart
+      (order: { createdAt: Date | string }) => new Date(order.createdAt) >= monthStart
     );
     const thisMonthPurchaseAmount = thisMonthOrders.reduce(
       (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
       const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-      const monthOrders = orders.filter((order) => {
+      const monthOrders = orders.filter((order: { createdAt: Date | string }) => {
         const orderDate = new Date(order.createdAt);
         return orderDate >= date && orderDate <= monthEnd;
       });
