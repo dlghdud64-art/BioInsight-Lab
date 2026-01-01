@@ -54,6 +54,8 @@ model Organization {
   subscription Subscription? // 구독 ?보
   activityLogs ActivityLog[]
   auditLogs    AuditLog[]
+  orders       Order[]
+  userBudgets  UserBudget[]
 
   @@index([name])
   @@index([plan])
@@ -105,6 +107,8 @@ model User {
   inventoryUsage      InventoryUsage[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
+  orders              Order[]
+  userBudgets         UserBudget[]
 
   @@index([email])
   @@index([role])
@@ -353,6 +357,7 @@ model Quote {
   rfqToken        QuoteRfqToken? // RFQ email token
   replies         QuoteReply[] // Email-based vendor replies
   inboundEmails   InboundEmail[] // Matched inbound emails
+  order           Order? // 주문 (견적 확정 후 생성)
 
   @@index([userId])
   @@index([guestKey])
@@ -1193,4 +1198,118 @@ model QuoteVendorResponseItem {
   @@unique([vendorRequestId, quoteItemId])
   @@index([vendorRequestId])
   @@index([quoteItemId])
+}
+
+// =====================================================
+// 주문 및 예산 관리 모델
+// =====================================================
+
+// 주문 상태
+enum OrderStatus {
+  ORDERED   // 주문 완료
+  CONFIRMED // 확인됨
+  SHIPPING  // 배송 중
+  DELIVERED // 배송 완료
+  CANCELLED // 취소됨
+}
+
+// 주문 (Order)
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  quoteId        String      @unique // 하나의 견적에 하나의 주문만 가능
+  organizationId String?
+  orderNumber    String      @unique // 주문번호 (ORD-YYYYMMDD-XXXX)
+  totalAmount    Int         // 총 주문 금액 (KRW)
+  status         OrderStatus @default(ORDERED)
+  notes          String?     @db.Text // 주문 메모
+  shippingAddress String?    @db.Text // 배송 주소
+  expectedDelivery DateTime? // 예상 배송일
+  actualDelivery  DateTime?  // 실제 배송일
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quote        Quote         @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  budgetTransaction UserBudgetTransaction?
+
+  @@index([userId])
+  @@index([quoteId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 주문 품목
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String?
+  name        String   // 제품명
+  brand       String?  // 브랜드
+  catalogNumber String? // 카탈로그 번호
+  quantity    Int      @default(1)
+  unitPrice   Int      // 단가
+  lineTotal   Int      // 품목 합계 (단가 x 수량)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// 사용자 예산 (UserBudget) - 연구비 계좌
+model UserBudget {
+  id              String   @id @default(cuid())
+  userId          String
+  organizationId  String?
+  name            String   @default("연구비") // 예산 이름 (예: "2024년 연구비", "실험실 운영비")
+  totalAmount     Int      // 총 예산 (KRW)
+  usedAmount      Int      @default(0) // 사용된 금액
+  remainingAmount Int      // 잔액 (totalAmount - usedAmount)
+  currency        String   @default("KRW")
+  fiscalYear      Int?     // 회계연도 (예: 2024)
+  startDate       DateTime? // 예산 시작일
+  endDate         DateTime? // 예산 종료일
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization  Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  transactions  UserBudgetTransaction[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([fiscalYear])
+}
+
+// 예산 거래 내역
+model UserBudgetTransaction {
+  id          String   @id @default(cuid())
+  budgetId    String
+  orderId     String?  @unique // 주문과 연결된 경우
+  type        String   // "DEBIT" (차감), "CREDIT" (입금/환불)
+  amount      Int      // 거래 금액
+  description String?  // 거래 설명
+  balanceBefore Int    // 거래 전 잔액
+  balanceAfter  Int    // 거래 후 잔액
+  createdAt   DateTime @default(now())
+
+  // Relations
+  budget UserBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  order  Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([budgetId])
+  @@index([orderId])
+  @@index([type])
+  @@index([createdAt])
 }
