@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { getAppUrl } from "./env";
 import { QuoteReceivedEmail } from "@/emails/quote-received";
 import { QuoteCompletedEmail } from "@/emails/quote-completed";
+import { OrderDeliveredEmail } from "@/emails/order-delivered";
 
 // RESEND_API_KEY 필요 - 환경변수에 설정해주세요
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -288,6 +289,62 @@ export async function sendQuoteRejectedEmail({
     return { success: true, messageId: data?.id };
   } catch (error) {
     console.error("[Email] Error sending quote rejected email:", error);
+    return { success: false, error };
+  }
+}
+/**
+ * 주문 배송 완료 알림 이메일 발송
+ */
+export async function sendOrderDeliveredEmail({
+  to,
+  customerName,
+  orderNumber,
+  deliveredDate,
+  itemCount,
+  items,
+}: {
+  to: string;
+  customerName: string;
+  orderNumber: string;
+  deliveredDate: string;
+  itemCount: number;
+  items?: Array<{
+    name: string;
+    quantity: number;
+    brand?: string;
+  }>;
+}) {
+  if (!resend) {
+    console.warn("[Email] RESEND_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");
+    return { success: false, error: "RESEND_API_KEY not configured" };
+  }
+
+  const appUrl = getAppUrl();
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `BioCompare <${FROM_EMAIL}>`,
+      to: [to],
+      subject: `[BioCompare] 배송이 완료되었습니다! (주문번호: ${orderNumber})`,
+      react: OrderDeliveredEmail({
+        customerName,
+        orderNumber,
+        deliveredDate,
+        itemCount,
+        items,
+        inventoryUrl: `${appUrl}/inventory`,
+      }),
+    });
+
+    if (error) {
+      console.error("[Email] Failed to send order delivered email:", error);
+      return { success: false, error };
+    }
+
+    console.log("[Email] Order delivered email sent successfully:", data?.id);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error("[Email] Error sending order delivered email:", error);
     return { success: false, error };
   }
 }

@@ -109,6 +109,7 @@ model User {
   auditLogs           AuditLog[]
   orders              Order[]
   userBudgets         UserBudget[]
+  userInventories     UserInventory[]
 
   @@index([email])
   @@index([role])
@@ -1312,4 +1313,35 @@ model UserBudgetTransaction {
   @@index([orderId])
   @@index([type])
   @@index([createdAt])
+}
+
+// =====================================================
+// 사용자 인벤토리 (주문 기반 자동 입고)
+// =====================================================
+
+// 사용자 인벤토리 (배송 완료 시 자동 등록)
+model UserInventory {
+  id            String    @id @default(cuid())
+  userId        String
+  orderId       String?   // 연결된 주문 ID
+  orderItemId   String?   // 연결된 주문 품목 ID
+  productName   String    // 제품명
+  brand         String?   // 브랜드
+  catalogNumber String?   // 카탈로그 번호
+  quantity      Int       @default(1) // 현재 수량
+  unit          String?   @default("ea") // 단위
+  location      String    @default("미지정") // 보관 위치
+  status        String    @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
+  notes         String?   @db.Text
+  receivedAt    DateTime  @default(now()) // 입고일
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@index([receivedAt])
 }
