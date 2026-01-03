@@ -337,11 +337,13 @@ model Quote {
   organizationId String? // 조직 ?위 리스?인 경우
   workspaceId    String? // Optional workspace association (for gradual migration)
   comparisonId   String? // 비교 ?트 기반 리스?인 경우
+  quoteNumber    String?  @unique // 견적번호 (Q-YYYYMMDD-XXXX)
   title          String // 리스???목
   description    String?   @db.Text // 리스???명/비고
   status         QuoteStatus @default(PENDING) // 견적 상태 (구매 완료 태그 포함)
   currency       String    @default("KRW") // Currency for quote totals
-  totalAmount    Int? // Total amount (sum of line totals)
+  totalAmount    Int? // Total amount
+  validUntil     DateTime? // 견적 유효기간 (기본 30일) (sum of line totals)
   vendor         String? // 공급사 이름 (AI 추출)
   confidence     String? // AI 분석 신뢰도 (high, medium, low)
   extractionMethod String? // 추출 방법 (pdf-parse, fallback, ocr-required)
