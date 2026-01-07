@@ -159,7 +159,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       },
     });
 
-    console.log('[Extract PDF] ✅ Success! Quote created:', quote.id);
+    if (process.env.NODE_ENV === "development") {
+      console.log('[Extract PDF] ✅ Success! Quote created:', quote.id);
+    }
 
     // 7. 성공 응답
     return NextResponse.json({

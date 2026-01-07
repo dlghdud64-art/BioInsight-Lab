@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { AuthSessionProvider } from "@/providers/session-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: {
@@ -77,6 +78,7 @@ export default function RootLayout({
             <QueryProvider>
               {children}
               <Toaster />
+              <Analytics />
             </QueryProvider>
           </AuthSessionProvider>
         </LocaleProvider>

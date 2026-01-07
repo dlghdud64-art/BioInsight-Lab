@@ -16,6 +16,11 @@ class Logger {
   }
 
   private log(level: LogLevel, message: string, data?: any) {
+    // Production 환경에서는 error와 warn만 로깅
+    if (process.env.NODE_ENV === "production" && (level === "info" || level === "debug")) {
+      return;
+    }
+
     const event: LogEvent = {
       level,
       message,
@@ -41,7 +46,9 @@ class Logger {
         }
         break;
       default:
-        console.log(prefix, message, data || "");
+        if (process.env.NODE_ENV === "development") {
+          console.log(prefix, message, data || "");
+        }
     }
   }
 

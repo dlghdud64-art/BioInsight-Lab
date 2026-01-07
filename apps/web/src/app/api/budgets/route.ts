@@ -200,13 +200,15 @@ export async function POST(request: NextRequest) {
     if (description) descriptionParts.push(description);
     const finalDescription = descriptionParts.length > 0 ? descriptionParts.join(' | ') : null;
 
-    console.log("[Budget API] Creating budget:", {
-      scopeKey,
-      yearMonth: finalYearMonth,
-      amount: amountInt,
-      currency: currency || "KRW",
-      description: finalDescription,
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Budget API] Creating budget:", {
+        scopeKey,
+        yearMonth: finalYearMonth,
+        amount: amountInt,
+        currency: currency || "KRW",
+        description: finalDescription,
+      });
+    }
 
     const budget = await db.budget.upsert({
       where: {

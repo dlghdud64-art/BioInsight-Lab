@@ -99,13 +99,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 실제 구매내역 조회 (PurchaseRecord)
-    console.log("[Purchase API] Querying purchase records with:", {
-      scopeKey: scopeKey,
-      dateStart,
-      dateEnd,
-      vendorId,
-      category
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Purchase API] Querying purchase records with:", {
+        scopeKey: scopeKey,
+        dateStart,
+        dateEnd,
+        vendorId,
+        category
+      });
+    }
 
     const purchaseRecords = await db.purchaseRecord.findMany({
       where: {
@@ -122,7 +124,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("[Purchase API] Found purchase records:", purchaseRecords.length);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Purchase API] Found purchase records:", purchaseRecords.length);
+    }
 
     // 메트릭 계산
     let totalAmount = 0;
@@ -199,7 +203,9 @@ export async function GET(request: NextRequest) {
     }));
 
     // 예산 정보 조회 및 사용률 계산 (yearMonth 기반)
-    console.log("[Purchase API] Querying budgets with scopeKey:", scopeKey);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Purchase API] Querying budgets with scopeKey:", scopeKey);
+    }
 
     const budgets = await db.budget.findMany({
       where: {
@@ -210,7 +216,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("[Purchase API] Found budgets:", budgets?.length || 0);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Purchase API] Found budgets:", budgets?.length || 0);
+    }
 
     // 타입 에러 수정: budget 파라미터에 타입 명시
     // budgets가 배열이 아닐 경우 빈 배열로 처리

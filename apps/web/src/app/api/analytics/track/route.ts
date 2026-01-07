@@ -58,13 +58,15 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        // ActivityLog 모델이 없으면 콘솔에만 로그
-        console.log("[Analytics Event]", {
-          event,
-          properties,
-          userId,
-          timestamp: new Date().toISOString(),
-        });
+        // ActivityLog 모델이 없으면 콘솔에만 로그 (development 환경에서만)
+        if (process.env.NODE_ENV === "development") {
+          console.log("[Analytics Event]", {
+            event,
+            properties,
+            userId,
+            timestamp: new Date().toISOString(),
+          });
+        }
       }
     } catch (dbError) {
       // DB 에러는 조용히 무시 (Analytics는 앱 동작에 영향을 주지 않아야 함)

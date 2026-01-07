@@ -262,11 +262,11 @@ export default function InventoryPage() {
     );
   }
 
-  // 개발 단계: 로그인 체크 제거
-  // if (status === "unauthenticated") {
-  //   router.push("/auth/signin?callbackUrl=/dashboard/inventory");
-  //   return null;
-  // }
+  // 프로덕션 환경에서는 인증 체크 필수
+  if (process.env.NODE_ENV === "production" && status === "unauthenticated") {
+    router.push("/auth/signin?callbackUrl=/dashboard/inventory");
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

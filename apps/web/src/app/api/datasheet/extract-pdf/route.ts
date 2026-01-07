@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
 
     // 🎭 파일명 추출 (데모 cheat key용)
     const fileName = file.name;
-    console.log(`[PDF Extract API] Processing file: ${fileName}`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[PDF Extract API] Processing file: ${fileName}`);
+    }
 
     // File을 Buffer로 변환
     const arrayBuffer = await file.arrayBuffer();

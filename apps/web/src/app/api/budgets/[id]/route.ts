@@ -84,11 +84,12 @@ export async function PATCH(
     if (finalDescription) descriptionParts.push(finalDescription);
     const combinedDescription = descriptionParts.length > 0 ? descriptionParts.join(' | ') : budget.description;
 
-    console.log("[Budget API] Updating budget:", {
-      id,
-      yearMonth,
-      amount: amountInt,
-      currency: currency || budget.currency,
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Budget API] Updating budget:", {
+        id,
+        yearMonth,
+        amount: amountInt,
+        currency: currency || budget.currency,
       description: combinedDescription,
     });
 

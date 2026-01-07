@@ -399,13 +399,14 @@ ${itemLines}
   const userTeamRole = userTeam?.role;
   const isMemberOnly = userTeamRole === "MEMBER";
   const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
-  const statusIcon = {
+  const statusIconMap = {
     PENDING: <Clock className="h-4 w-4 text-yellow-500" />,
     SENT: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
     RESPONDED: <CheckCircle2 className="h-4 w-4 text-green-500" />,
     COMPLETED: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
     CANCELLED: <XCircle className="h-4 w-4 text-red-500" />,
-  }[quoteStatus];
+  };
+  const statusIcon = statusIconMap[quoteStatus];
 
   return (
     <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
