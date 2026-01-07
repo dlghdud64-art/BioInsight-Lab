@@ -146,8 +146,8 @@ export default function QuotePage() {
       }
 
       const data = await response.json();
-      // 성공 시 대시보드로 이동
-      window.location.href = `/dashboard/quotes/${data.quote.id}`;
+      // 성공 시 견적서 상세 페이지로 이동
+      router.push(`/quotes/${data.quote.id}`);
     } catch (error: any) {
       alert(error.message || "견적 요청 중 오류가 발생했습니다.");
       console.error("Error submitting quote:", error);
@@ -584,7 +584,7 @@ export default function QuotePage() {
                 size="lg"
               >
                 <FileText className="h-5 w-5 mr-2" />
-                {isSubmitting ? "처리 중..." : "최종 견적 요청하기"}
+                {isSubmitting ? "처리 중..." : "견적서 발행하기"}
               </Button>
               </div>
             )}

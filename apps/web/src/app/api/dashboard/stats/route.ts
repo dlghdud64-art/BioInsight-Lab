@@ -70,6 +70,21 @@ export async function GET(request: NextRequest) {
       0
     );
 
+    // 전월 주문 (증감률 계산용)
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthOrders = orders.filter((order: { createdAt: Date | string }) => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= lastMonthStart && orderDate <= lastMonthEnd;
+    });
+    const lastMonthPurchaseAmount = lastMonthOrders.reduce(
+      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
+      0
+    );
+    const monthOverMonthChange = lastMonthPurchaseAmount > 0
+      ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
+      : 0;
+
     // 3. 견적 통계 조회
     const quotes = await db.quote.findMany({
       where: { userId },
@@ -92,6 +107,12 @@ export async function GET(request: NextRequest) {
     const pendingQuotes = quotesByStatus["PENDING"] || 0;
     const completedQuotes = quotesByStatus["COMPLETED"] || 0;
     const purchasedQuotes = quotesByStatus["PURCHASED"] || 0;
+    const respondedQuotes = quotesByStatus["RESPONDED"] || 0;
+
+    // 진행 중인 견적 금액 (RESPONDED, COMPLETED 상태의 총액)
+    const pendingQuotesAmount = quotes
+      .filter((q: any) => q.status === "RESPONDED" || q.status === "COMPLETED")
+      .reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0);
 
     // 4. 예산 사용률 계산
     const budgetUsageRate = activeBudget && activeBudget.totalAmount > 0
@@ -121,6 +142,71 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // 6. 카테고리별 지출 비중
+    const ordersWithItems = await db.order.findMany({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const categorySpending: Record<string, number> = {};
+    ordersWithItems.forEach((order: any) => {
+      order.items.forEach((item: any) => {
+        const category = item.product?.category || "기타";
+        const amount = (item.unitPrice || 0) * (item.quantity || 0);
+        categorySpending[category] = (categorySpending[category] || 0) + amount;
+      });
+    });
+
+    const categorySpendingArray = Object.entries(categorySpending).map(([category, amount]) => ({
+      category,
+      amount: amount as number,
+    }));
+
+    // 7. 보유 자산 총액 (UserInventory 기반)
+    const userInventories = await db.userInventory.findMany({
+      where: { userId },
+      include: {
+        user: true,
+      },
+    });
+
+    // 주문 아이템과 연결하여 가격 정보 가져오기
+    let totalAssetValue = 0;
+    for (const inventory of userInventories) {
+      if (inventory.orderItemId) {
+        const orderItem = await db.orderItem.findUnique({
+          where: { id: inventory.orderItemId },
+          select: { unitPrice: true },
+        });
+        if (orderItem) {
+          totalAssetValue += (orderItem.unitPrice || 0) * inventory.quantity;
+        }
+      }
+    }
+
+    // 8. 재주문 필요 품목 수
+    const allInventories = await db.productInventory.findMany({
+      where: {
+        OR: [{ userId }, { organizationId: { in: [] } }],
+      },
+    });
+    const reorderNeededCount = allInventories.filter((inv) => {
+      if (inv.safetyStock !== null) {
+        return inv.currentQuantity <= inv.safetyStock;
+      }
+      return inv.currentQuantity <= 0;
+    }).length;
+
     return NextResponse.json({
       // 예산 정보
       budget: activeBudget
@@ -145,6 +231,18 @@ export async function GET(request: NextRequest) {
       // 이번 달 구매 금액
       thisMonthPurchaseAmount,
 
+      // 전월 대비 증감률
+      monthOverMonthChange: monthOverMonthChange.toFixed(1),
+
+      // 보유 자산 총액
+      totalAssetValue,
+
+      // 재주문 필요 품목 수
+      reorderNeededCount,
+
+      // 카테고리별 지출 비중
+      categorySpending: categorySpendingArray,
+
       // 주문 통계
       orderStats: {
         total: orders.length,
@@ -159,6 +257,8 @@ export async function GET(request: NextRequest) {
         pending: pendingQuotes,
         completed: completedQuotes,
         purchased: purchasedQuotes,
+        responded: respondedQuotes,
+        pendingAmount: pendingQuotesAmount, // 진행 중인 견적 금액
       },
 
       // 월별 지출 추이

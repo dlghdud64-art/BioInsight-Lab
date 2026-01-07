@@ -13,9 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -51,6 +52,20 @@ export default function InventoryPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
 
+  // 사용자 팀 목록 조회
+  const { data: teamsData } = useQuery({
+    queryKey: ["user-teams"],
+    queryFn: async () => {
+      const response = await fetch("/api/team");
+      if (!response.ok) throw new Error("Failed to fetch teams");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  const selectedTeam = teamsData?.teams?.[0];
+
+  // 내 인벤토리 조회
   const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
     queryKey: ["inventories"],
     queryFn: async () => {
@@ -58,13 +73,95 @@ export default function InventoryPage() {
       if (!response.ok) throw new Error("Failed to fetch inventories");
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: status === "authenticated" && inventoryView === "my",
   });
 
-  const inventories = data?.inventories || [];
+  // 팀 인벤토리 조회
+  const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{ inventories: any[] }>({
+    queryKey: ["team-inventory", selectedTeam?.id],
+    queryFn: async () => {
+      if (!selectedTeam?.id) return { inventories: [] };
+      const response = await fetch(`/api/team/${selectedTeam.id}/inventory`);
+      if (!response.ok) throw new Error("Failed to fetch team inventory");
+      return response.json();
+    },
+    enabled: status === "authenticated" && !!selectedTeam?.id && inventoryView === "team",
+  });
+
+  const myInventories = data?.inventories || [];
+  const teamInventories = teamInventoryData?.inventories || [];
+  const inventories = inventoryView === "my" ? myInventories : teamInventories;
   const lowStockItems = inventories.filter(
     (inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock
   );
+
+  // 재입고 요청 상태 조회 (각 인벤토리별)
+  const { data: restockStatusData } = useQuery({
+    queryKey: ["restock-status", myInventories.map((inv: any) => inv.id).join(",")],
+    queryFn: async () => {
+      const statuses: Record<string, boolean> = {};
+      await Promise.all(
+        myInventories.map(async (inv: any) => {
+          try {
+            const response = await fetch(`/api/inventory/${inv.id}/restock-request`);
+            if (response.ok) {
+              const data = await response.json();
+              statuses[inv.id] = data.hasRequest || false;
+            }
+          } catch (error) {
+            // 에러는 무시하고 계속 진행
+          }
+        })
+      );
+      return statuses;
+    },
+    enabled: status === "authenticated" && myInventories.length > 0 && inventoryView === "my",
+  });
+
+  // 재구매 추천 목록 조회 (인벤토리 하이라이트용)
+  const { data: reorderRecommendationsData } = useQuery<{ recommendations: Array<{ inventoryId: string }> }>({
+    queryKey: ["reorder-recommendations-for-highlight"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory/reorder-recommendations");
+      if (!response.ok) throw new Error("Failed to fetch recommendations");
+      return response.json();
+    },
+    enabled: status === "authenticated" && inventoryView === "my",
+  });
+
+  const recommendedInventoryIds = new Set(
+    reorderRecommendationsData?.recommendations?.map((r) => r.inventoryId) || []
+  );
+
+  // 재입고 요청 mutation
+  const restockRequestMutation = useMutation({
+    mutationFn: async (inventoryId: string) => {
+      const response = await fetch(`/api/inventory/${inventoryId}/restock-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create restock request");
+      }
+      return response.json();
+    },
+    onSuccess: (data, inventoryId) => {
+      setRestockRequestedIds((prev) => new Set(prev).add(inventoryId));
+      queryClient.invalidateQueries({ queryKey: ["restock-status"] });
+      toast({
+        title: "재입고 요청 완료",
+        description: "관리자에게 구매 요청을 보냈습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "재입고 요청 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // 재고 사용 이력 조회
   const { data: usageData, isLoading: usageLoading } = useQuery<{
@@ -253,45 +350,180 @@ export default function InventoryPage() {
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-4 md:space-y-6">
-        {isLoading ? (
+            {/* 내 자산 / 우리 랩 전체 탭 */}
+            <Tabs value={inventoryView} onValueChange={(v) => setInventoryView(v as "my" | "team")} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="my">
+                  <Package className="h-4 w-4 mr-2" />
+                  내 자산
+                </TabsTrigger>
+                <TabsTrigger value="team" disabled={!selectedTeam}>
+                  <Users className="h-4 w-4 mr-2" />
+                  우리 랩 전체
+                </TabsTrigger>
+              </TabsList>
+              
+              {/* 검색 및 필터 */}
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <Input
+                  placeholder="김 연구원이 가지고 있던 그 항체..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1"
+                />
+                {inventoryView === "team" && (
+                  <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="작성자 필터" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">전체</SelectItem>
+                      {membersData?.members?.map((member: any) => (
+                        <SelectItem key={member.userId} value={member.userId}>
+                          {member.name || member.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <TabsContent value="my" className="mt-0">
+                {isLoading ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
             </CardContent>
           </Card>
-        ) : inventories.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">등록된 재고가 없습니다.</p>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                첫 재고 추가하기
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {inventories.map((inventory) => (
-              <InventoryCard
-                key={inventory.id}
-                inventory={inventory}
-                onEdit={() => {
-                  setEditingInventory(inventory);
-                  setIsDialogOpen(true);
-                }}
-                onRecordUsage={(quantity, notes) => {
-                  recordUsageMutation.mutate({
-                    inventoryId: inventory.id,
-                    quantity,
-                    unit: inventory.unit,
-                    notes,
-                  });
-                }}
-              />
-            ))}
-          </div>
-        )}
+                ) : (inventoryView === "my" ? myInventories : teamInventories).length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        {inventoryView === "my" ? "등록된 재고가 없습니다." : "팀 인벤토리가 비어있습니다."}
+                      </p>
+                      {inventoryView === "my" && (
+                        <Button onClick={() => setIsDialogOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          첫 재고 추가하기
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {(inventoryView === "my" ? myInventories : teamInventories)
+                      .filter((inv) => {
+                        // 검색 필터
+                        if (searchQuery) {
+                          const query = searchQuery.toLowerCase();
+                          const matchesSearch = 
+                            inv.product?.name?.toLowerCase().includes(query) ||
+                            inv.product?.brand?.toLowerCase().includes(query) ||
+                            inv.product?.catalogNumber?.toLowerCase().includes(query);
+                          if (!matchesSearch) return false;
+                        }
+                        return true;
+                      })
+                      .sort((a, b) => {
+                        // 재입고 요청된 아이템을 최상단으로 정렬
+                        const aHasRequest = restockStatusData?.[a.id] || restockRequestedIds.has(a.id);
+                        const bHasRequest = restockStatusData?.[b.id] || restockRequestedIds.has(b.id);
+                        if (aHasRequest && !bHasRequest) return -1;
+                        if (!aHasRequest && bHasRequest) return 1;
+                        return 0;
+                      })
+                      .map((inventory) => {
+                        const hasRequest = restockStatusData?.[inventory.id] || restockRequestedIds.has(inventory.id);
+                        const isRecommended = recommendedInventoryIds.has(inventory.id);
+                        return (
+                          <InventoryCard
+                            key={inventory.id}
+                            inventory={inventory}
+                            onEdit={() => {
+                              setEditingInventory(inventory);
+                              setIsDialogOpen(true);
+                            }}
+                            onRecordUsage={(quantity, notes) => {
+                              recordUsageMutation.mutate({
+                                inventoryId: inventory.id,
+                                quantity,
+                                unit: inventory.unit,
+                                notes,
+                              });
+                            }}
+                            onRestockRequest={() => {
+                              restockRequestMutation.mutate(inventory.id);
+                            }}
+                            isRestockRequested={hasRequest}
+                            isRequestingRestock={restockRequestMutation.isPending && restockRequestMutation.variables === inventory.id}
+                            isRecommended={isRecommended}
+                          />
+                        );
+                      })}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="team" className="mt-0">
+                {isLoadingTeam ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <p className="text-muted-foreground">팀 인벤토리를 불러오는 중...</p>
+                    </CardContent>
+                  </Card>
+                ) : !selectedTeam ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground mb-4">팀에 가입되어 있지 않습니다.</p>
+                      <Button onClick={() => router.push("/team/settings")}>
+                        <Users className="h-4 w-4 mr-2" />
+                        팀 설정으로 이동
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : teamInventories.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground mb-4">팀 인벤토리가 비어있습니다.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {teamInventories
+                      .filter((inv: any) => {
+                        // 검색 필터
+                        if (searchQuery) {
+                          const query = searchQuery.toLowerCase();
+                          const matchesSearch = 
+                            inv.productName?.toLowerCase().includes(query) ||
+                            inv.brand?.toLowerCase().includes(query) ||
+                            inv.catalogNumber?.toLowerCase().includes(query) ||
+                            inv.user?.name?.toLowerCase().includes(query) ||
+                            inv.user?.email?.toLowerCase().includes(query);
+                          if (!matchesSearch) return false;
+                        }
+                        // 작성자 필터
+                        if (ownerFilter && inv.userId !== ownerFilter) {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .map((inventory: any) => (
+                        <TeamInventoryCard
+                          key={inventory.id}
+                          inventory={inventory}
+                          onLocationClick={() => {}}
+                          onQuantityUpdate={() => {}}
+                          onReorder={() => {}}
+                        />
+                      ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 md:space-y-6">
@@ -513,10 +745,16 @@ function InventoryCard({
   inventory,
   onEdit,
   onRecordUsage,
+  onRestockRequest,
+  isRestockRequested = false,
+  isRequestingRestock = false,
 }: {
   inventory: ProductInventory;
   onEdit: () => void;
   onRecordUsage: (quantity: number, notes?: string) => void;
+  onRestockRequest?: () => void;
+  isRestockRequested?: boolean;
+  isRequestingRestock?: boolean;
 }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
   const [usageQuantity, setUsageQuantity] = useState("");
@@ -525,6 +763,7 @@ function InventoryCard({
   const isLowStock =
     inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock;
   const isOutOfStock = inventory.currentQuantity <= 0;
+  const hasRestockRequest = isRestockRequested;
 
   const handleRecordUsage = () => {
     const qty = parseFloat(usageQuantity);
@@ -537,26 +776,83 @@ function InventoryCard({
   };
 
   return (
-    <Card className={isOutOfStock ? "border-red-300 bg-red-50" : isLowStock ? "border-orange-300 bg-orange-50" : ""}>
+    <Card className={
+      hasRestockRequest
+        ? "border-red-500 bg-red-50/50 ring-2 ring-red-200"
+        : isRecommended
+        ? "border-blue-300 bg-blue-50/30 ring-1 ring-blue-200"
+        : isOutOfStock
+        ? "border-red-300 bg-red-50"
+        : isLowStock
+        ? "border-orange-300 bg-orange-50"
+        : ""
+    }>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg">{inventory.product.name}</CardTitle>
+            <div className="flex items-center gap-2 mb-1">
+              <CardTitle className="text-lg">{inventory.product.name}</CardTitle>
+              {isRecommended && (
+                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+                  재구매 추천
+                </Badge>
+              )}
+            </div>
             {inventory.product.brand && (
               <CardDescription>{inventory.product.brand}</CardDescription>
             )}
           </div>
-          {isOutOfStock && (
-            <Badge variant="destructive">품절</Badge>
-          )}
-          {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" className="bg-orange-100 text-orange-800">
-              재고 부족
-            </Badge>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            {hasRestockRequest && (
+              <Badge variant="destructive" className="text-xs">
+                <Check className="h-3 w-3 mr-1" />
+                요청됨
+              </Badge>
+            )}
+            {isOutOfStock && !hasRestockRequest && (
+              <Badge variant="destructive">품절</Badge>
+            )}
+            {isLowStock && !isOutOfStock && !hasRestockRequest && (
+              <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                재고 부족
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* 재입고 요청 버튼 - 가장 눈에 띄게 */}
+        {onRestockRequest && (
+          <Button
+            size="lg"
+            variant={hasRestockRequest ? "secondary" : "default"}
+            onClick={onRestockRequest}
+            disabled={hasRestockRequest || isRequestingRestock}
+            className={`w-full ${
+              hasRestockRequest
+                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-100 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+            }`}
+          >
+            {isRequestingRestock ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                요청 중...
+              </>
+            ) : hasRestockRequest ? (
+              <>
+                <Check className="h-5 w-5 mr-2" />
+                요청됨
+              </>
+            ) : (
+              <>
+                <Zap className="h-5 w-5 mr-2" />
+                재입고 요청
+              </>
+            )}
+          </Button>
+        )}
+
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
             <span className="text-muted-foreground">현재 재고:</span>
@@ -864,5 +1160,145 @@ function InventoryForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+// 팀 인벤토리 카드 컴포넌트 (소유자 정보 표시)
+function TeamInventoryCard({
+  inventory,
+  onLocationClick,
+  onQuantityUpdate,
+  onReorder,
+  isReordering = false,
+  isAddedToCart = false,
+}: {
+  inventory: any;
+  onLocationClick: (inventory: any) => void;
+  onQuantityUpdate: (quantity: number) => void;
+  onReorder: (inventory: any) => void;
+  isReordering?: boolean;
+  isAddedToCart?: boolean;
+}) {
+  const [quantity, setQuantity] = useState(inventory.quantity?.toString() || "0");
+  const isOutOfStock = inventory.quantity === 0;
+  const isLowStock = inventory.status === "LOW_STOCK";
+  const isLocationMissing = inventory.location === "미지정";
+
+  const handleQuantityChange = (value: string) => {
+    setQuantity(value);
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0) {
+      onQuantityUpdate(numValue);
+    }
+  };
+
+  return (
+    <Card
+      className={`transition-all duration-200 hover:shadow-md ${
+        isOutOfStock
+          ? "border-red-300 bg-red-50/50 opacity-75"
+          : isLocationMissing
+          ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
+          : isLowStock
+          ? "border-orange-200 bg-orange-50/30"
+          : "border-gray-200 bg-white"
+      }`}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base font-semibold line-clamp-2">
+              {inventory.productName}
+            </CardTitle>
+            {(inventory.brand || inventory.catalogNumber) && (
+              <CardDescription className="text-xs mt-1">
+                {inventory.brand && <span>{inventory.brand}</span>}
+                {inventory.brand && inventory.catalogNumber && <span> · </span>}
+                {inventory.catalogNumber && (
+                  <span className="font-mono">{inventory.catalogNumber}</span>
+                )}
+              </CardDescription>
+            )}
+            {/* 소유자 정보 */}
+            {inventory.user && (
+              <div className="flex items-center gap-2 mt-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={inventory.user.image || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {inventory.user.name?.[0] || inventory.user.email[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">
+                  {inventory.user.name || inventory.user.email}
+                </span>
+              </div>
+            )}
+          </div>
+          {isOutOfStock && (
+            <Badge variant="destructive" className="flex-shrink-0">
+              품절
+            </Badge>
+          )}
+          {isLowStock && !isOutOfStock && (
+            <Badge variant="outline" className="flex-shrink-0 bg-orange-100 text-orange-800 border-orange-300">
+              부족
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* 수량 정보 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">현재 수량</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-bold">
+                {inventory.quantity || 0}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {inventory.unit || "ea"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 위치 정보 */}
+        <div
+          className={`flex items-center gap-2 text-sm p-2 rounded transition-colors -mx-2 ${
+            isLocationMissing
+              ? "bg-amber-100 border border-amber-300"
+              : "hover:bg-gray-50"
+          }`}
+        >
+          <MapPin
+            className={`h-4 w-4 flex-shrink-0 ${
+              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
+            }`}
+          />
+          <span
+            className={`flex-1 ${
+              isLocationMissing
+                ? "text-amber-700 font-semibold"
+                : "text-gray-700"
+            }`}
+          >
+            {inventory.location || "미지정"}
+          </span>
+          {isLocationMissing && (
+            <Badge variant="outline" className="bg-amber-200 border-amber-400 text-amber-900 text-xs">
+              설정 필요
+            </Badge>
+          )}
+        </div>
+
+        {/* 입고일 */}
+        {inventory.receivedAt && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>입고: {format(new Date(inventory.receivedAt), "yyyy.MM.dd", { locale: ko })}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

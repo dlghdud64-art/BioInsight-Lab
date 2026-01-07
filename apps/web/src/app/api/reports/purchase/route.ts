@@ -210,10 +210,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("[Purchase API] Found budgets:", budgets.length);
+    console.log("[Purchase API] Found budgets:", budgets?.length || 0);
 
     // 타입 에러 수정: budget 파라미터에 타입 명시
-    const budgetUsage = budgets.map((budget: any) => {
+    // budgets가 배열이 아닐 경우 빈 배열로 처리
+    const budgetUsage = (Array.isArray(budgets) ? budgets : []).map((budget: any) => {
       // yearMonth에 해당하는 사용 금액 계산
       const budgetMonth = budget.yearMonth; // "YYYY-MM" 형식
       let usedAmount = 0;
@@ -312,12 +313,16 @@ export async function GET(request: NextRequest) {
       vendorData,
       categoryData,
       details,
-      budgetUsage,
+      budgetUsage: Array.isArray(budgetUsage) ? budgetUsage : [],
     });
   } catch (error) {
     console.error("Error fetching purchase reports:", error);
     return NextResponse.json(
-      { error: "Failed to fetch reports", details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: "Failed to fetch reports", 
+        details: error instanceof Error ? error.message : String(error),
+        budgetUsage: [], // 에러 발생 시에도 빈 배열 반환
+      },
       { status: 500 }
     );
   }

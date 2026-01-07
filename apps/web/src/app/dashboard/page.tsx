@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReorderRecommendations } from "@/components/inventory/reorder-recommendations";
+import { SmartPickWidget } from "@/components/dashboard/smart-pick-widget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity } from "lucide-react";
@@ -25,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { useDashboardWidgets } from "@/lib/store/dashboard-widgets-store";
 import { WidgetGrid } from "@/components/dashboard/widget-grid";
 import { DraggableWidget } from "@/components/dashboard/draggable-widget";
+import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
+import { ExecutiveDashboard } from "@/components/dashboard/executive-dashboard";
 import { Settings, RotateCcw, Save } from "lucide-react";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -184,7 +187,7 @@ export default function DashboardPage() {
       />
       <div className="flex overflow-x-hidden w-full">
         <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-16 md:pt-0">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-14">
           <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto w-full">
             {/* 웰컴 섹션 */}
@@ -263,6 +266,21 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </div>
+
+        {/* Executive Dashboard */}
+        <div className="mb-6">
+          <ExecutiveDashboard />
+        </div>
+
+        {/* Analytics Dashboard */}
+        <div className="mb-6">
+          <AnalyticsDashboard />
+        </div>
+
+        {/* Smart Pick Widget - AI 추천 */}
+        <div className="mb-6">
+          <SmartPickWidget />
+        </div>
 
         {/* 구매 내역/예산 요약 카드 */}
         <WidgetGrid>

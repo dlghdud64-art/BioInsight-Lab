@@ -116,19 +116,19 @@ export function ProductCard({
         </div>
 
         {/* 가격 & 액션 */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 pt-2 border-t border-gray-100">
           {/* 가격 */}
-          <div>
+          <div className="flex-shrink-0">
             {product.price && product.price > 0 ? (
               <div className="flex flex-col gap-0.5">
-                <div className="flex items-baseline gap-1.5">
+                <div className="flex items-baseline gap-1.5 whitespace-nowrap">
                   <span className="text-lg font-bold text-blue-600">
                     ₩{product.price.toLocaleString("ko-KR")}
                   </span>
                   <span className="text-xs text-gray-400 font-normal">(VAT 별도)</span>
                 </div>
                 {product.unit && (
-                  <div className="text-xs text-gray-500">/ {product.unit}</div>
+                  <div className="text-xs text-gray-500 whitespace-nowrap">/ {product.unit}</div>
                 )}
               </div>
             ) : (
@@ -137,7 +137,7 @@ export function ProductCard({
           </div>
 
           {/* 버튼 그룹 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* 비교함 담기 */}
             <Button
               variant="outline"

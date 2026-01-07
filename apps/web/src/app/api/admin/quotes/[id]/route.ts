@@ -41,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    return NextResponse.json(quote);
+    return NextResponse.json({ quote });
   } catch (error) {
     console.error("Error fetching admin quote:", error);
     return NextResponse.json(

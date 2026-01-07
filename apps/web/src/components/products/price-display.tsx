@@ -38,14 +38,14 @@ export function PriceDisplay({
   }
 
   return (
-    <div className="font-semibold">
-      {formatPrice(displayPrice, displayCurrency)}
+    <span className="font-semibold whitespace-nowrap inline-flex items-center gap-2">
+      <span>{formatPrice(displayPrice, displayCurrency)}</span>
       {currency !== "KRW" && priceInKRW && (
-        <Badge variant="outline" className="ml-2 text-xs">
+        <Badge variant="outline" className="text-xs whitespace-nowrap">
           환율 적용
         </Badge>
       )}
-    </div>
+    </span>
   );
 }
 

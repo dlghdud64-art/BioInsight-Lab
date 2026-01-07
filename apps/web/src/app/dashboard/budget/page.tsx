@@ -217,7 +217,7 @@ export default function BudgetPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {budgets.map((budget) => (
+            {Array.isArray(budgets) && budgets.map((budget) => (
               <BudgetCard
                 key={budget.id}
                 budget={budget}

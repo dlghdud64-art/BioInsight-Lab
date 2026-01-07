@@ -99,16 +99,16 @@ export function SearchResultItem({
         </div>
 
         {/* 가격 & 액션 */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-2 border-t border-gray-100">
           {/* 가격 */}
-          <div>
+          <div className="flex-shrink-0">
             {unitPrice && unitPrice > 0 ? (
               <div className="flex flex-col gap-0.5">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-blue-600">
+                <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+                  <span className="text-lg font-bold text-blue-600 whitespace-nowrap">
                     <PriceDisplay price={unitPrice} currency="KRW" />
                   </span>
-                  <span className="text-xs text-gray-400 font-normal">(VAT 별도)</span>
+                  <span className="text-xs text-gray-400 font-normal whitespace-nowrap">(VAT 별도)</span>
                 </div>
               </div>
             ) : (
@@ -116,24 +116,24 @@ export function SearchResultItem({
             )}
           </div>
 
-          {/* 버튼 그룹 */}
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {/* 비교함 담기 */}
+          {/* 버튼 그룹 - 모바일: 세로, 데스크톱: 가로 */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* 비교함 담기 - 모바일: 작게, 데스크톱: 일반 */}
             <Button
               variant="outline"
               size="sm"
-              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 py-2 px-3 ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
+              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
               onClick={onToggleCompare}
             >
-              <GitCompare className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">비교함 담기</span>
-              <span className="sm:hidden">비교</span>
+              <GitCompare className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline">비교함 담기</span>
+              <span className="md:hidden">비교</span>
             </Button>
 
-            {/* 견적 요청 */}
+            {/* 견적 요청 - 모바일: 전체 너비, 데스크톱: 자동 */}
             <Button
               size="sm"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm w-full md:w-auto"
               onClick={onAddToQuote}
             >
               <ShoppingCart className="h-4 w-4 mr-1.5" />

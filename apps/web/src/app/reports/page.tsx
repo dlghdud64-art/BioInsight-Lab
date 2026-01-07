@@ -105,14 +105,19 @@ export default function ReportsPage() {
   // }
 
   // 예산 목록 조회
-  const { data: budgets } = useQuery({
+  const { data: budgetsData, isLoading: isLoadingBudgets } = useQuery({
     queryKey: ["budgets"],
     queryFn: async () => {
       const response = await fetch("/api/budgets");
       if (!response.ok) throw new Error("Failed to fetch budgets");
-      return response.json();
+      const data = await response.json();
+      // API 응답이 { budgets: [...] } 형태이므로 budgets 배열 추출
+      return data?.budgets || [];
     },
   });
+
+  // budgets 배열 추출 (안전하게)
+  const budgets = budgetsData || [];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -200,7 +205,7 @@ export default function ReportsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  {budgets?.map((budget: any) => (
+                  {Array.isArray(budgets) && budgets.map((budget: any) => (
                     <SelectItem key={budget.id} value={budget.id}>
                       {budget.name}
                     </SelectItem>

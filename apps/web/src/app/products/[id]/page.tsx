@@ -290,7 +290,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20 lg:pb-32 relative">
+    <div className="min-h-screen bg-gray-50/50 pb-24 lg:pb-32 relative">
       {/* 배경 그라데이션 데코레이션 */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent -z-10 pointer-events-none" />
       
@@ -303,7 +303,7 @@ export default function ProductDetailPage() {
         <ChevronLeft className="w-6 h-6" />
       </button>
       
-      <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-16 md:pt-6 md:py-8 relative z-0">
+      <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-14 md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <div className="mb-6 md:mb-8">
@@ -384,17 +384,25 @@ export default function ProductDetailPage() {
                 </CardHeader>
                 <CardContent className="px-0 pb-0 space-y-4 md:space-y-6 relative z-10">
                   {product.imageUrl ? (
-                    <div className="w-full aspect-square max-w-md mx-auto">
+                    <div className="w-full max-w-md mx-auto max-h-[400px] md:aspect-video lg:max-h-[400px]">
                       <img
                         src={product.imageUrl}
                         alt={product.name}
                         className="w-full h-full object-contain rounded-lg border border-gray-200"
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.style.display = 'none';
+                          }
+                        }}
                       />
                     </div>
                   ) : (
-                    <div className="w-full aspect-square max-w-md mx-auto bg-gray-100 rounded-xl flex items-center justify-center">
+                    <div className="w-full max-w-md mx-auto max-h-[400px] md:aspect-video lg:max-h-[400px] bg-gray-100 rounded-xl flex items-center justify-center">
                       <Package className="h-16 w-16 text-gray-300" strokeWidth={1.5} />
                     </div>
                   )}
@@ -487,43 +495,43 @@ export default function ProductDetailPage() {
                       <Check className="w-5 h-5 text-blue-600" />
                       <h3 className="text-lg font-bold text-gray-900">상세 스펙 (Specifications)</h3>
                     </div>
-                    <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 bg-white/50 rounded-b-3xl">
+                    <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white/50 rounded-b-3xl">
                       {(product.grade || product.specification || product.catalogNumber || product.regulatoryCompliance || product.brand || product.category) ? (
                         <>
                           {product.grade && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Grade</span>
-                              <span className="text-base md:text-lg font-bold text-gray-900 break-words">{product.grade}</span>
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">Grade</span>
+                              <span className="text-sm md:text-lg font-bold text-gray-900 break-words">{product.grade}</span>
                             </div>
                           )}
                           {product.specification && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
-                              <span className="text-base md:text-lg font-bold text-gray-900 break-words line-clamp-2">{product.specification}</span>
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규격/용량</span>
+                              <span className="text-sm md:text-lg font-bold text-gray-900 break-words line-clamp-2">{product.specification}</span>
                             </div>
                           )}
                           {product.catalogNumber && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">카탈로그 번호</span>
-                              <span className="text-base md:text-lg font-mono font-bold text-gray-900 break-words">{product.catalogNumber}</span>
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">카탈로그 번호</span>
+                              <span className="text-sm md:text-lg font-mono font-bold text-gray-900 break-words">{product.catalogNumber}</span>
                             </div>
                           )}
                           {product.regulatoryCompliance && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
-                              <span className="text-base md:text-lg font-bold text-gray-900 break-words">{product.regulatoryCompliance}</span>
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">규제 규격</span>
+                              <span className="text-sm md:text-lg font-bold text-gray-900 break-words">{product.regulatoryCompliance}</span>
                             </div>
                           )}
                           {product.brand && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">브랜드</span>
-                              <span className="text-base md:text-lg font-bold text-gray-900 break-words">{product.brand}</span>
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">브랜드</span>
+                              <span className="text-sm md:text-lg font-bold text-gray-900 break-words">{product.brand}</span>
                             </div>
                           )}
                           {product.category && (
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">카테고리</span>
-                              <span className="text-base md:text-lg font-bold text-gray-900 break-words">
+                            <div className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                              <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">카테고리</span>
+                              <span className="text-sm md:text-lg font-bold text-gray-900 break-words">
                                 {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
                               </span>
                             </div>
@@ -542,11 +550,11 @@ export default function ProductDetailPage() {
                         <Check className="w-5 h-5 text-blue-600" />
                         <h3 className="text-lg font-bold text-gray-900">추가 스펙 정보</h3>
                       </div>
-                      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-white/50 rounded-b-3xl">
+                      <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-white/50 rounded-b-3xl">
                         {Object.entries(product.specifications as Record<string, any>).map(([key, value]) => (
-                          <div key={key} className="flex flex-col gap-1 p-4 rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{key}</span>
-                            <span className="text-base md:text-lg font-bold text-gray-900 break-words">{String(value)}</span>
+                          <div key={key} className="flex flex-col gap-0.5 p-3 md:p-4 rounded-xl md:rounded-2xl bg-gray-50/80 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100/50">
+                            <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider">{key}</span>
+                            <span className="text-sm md:text-lg font-bold text-gray-900 break-words">{String(value)}</span>
                           </div>
                         ))}
                       </div>
@@ -843,7 +851,7 @@ export default function ProductDetailPage() {
                             <Shield className="h-4 w-4 text-blue-600" />
                             <div className="text-xs font-semibold text-slate-900">국내 규제기관 포털</div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {getRegulationLinksForProduct(
                               product.name,
                               product.catalogNumber || undefined,
@@ -853,14 +861,14 @@ export default function ProductDetailPage() {
                                 key={link.id}
                                 variant="outline"
                                 size="sm"
-                                className="text-xs border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700"
+                                className="text-[10px] md:text-xs border-blue-200 hover:bg-blue-50 hover:border-blue-300 text-blue-700 h-8 md:h-9 lg:h-9 px-2 md:px-3"
                                 onClick={() => {
                                   window.open(link.url, "_blank");
                                 }}
                                 title={link.description}
                               >
-                                <ExternalLink className="h-3 w-3 mr-1.5" />
-                                <span className="truncate">{link.name}</span>
+                                <ExternalLink className="h-3 w-3 mr-1 md:mr-1.5 flex-shrink-0" />
+                                <span className="truncate text-[10px] md:text-xs">{link.name}</span>
                               </Button>
                             ))}
                           </div>
@@ -878,7 +886,7 @@ export default function ProductDetailPage() {
 
             {/* 가격 및 액션 - Sticky Right Panel (4칸) - 데스크톱 전용 */}
             <div className="hidden lg:block lg:col-span-4">
-              <div className="sticky top-24 space-y-6">
+              <div className="sticky top-24 h-fit space-y-6">
                 <Card className="bg-white/90 backdrop-blur-sm shadow-xl shadow-blue-900/5 rounded-3xl p-6 md:p-8 border border-gray-100/50 relative overflow-hidden">
                   {/* 상단 강조 선 */}
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
@@ -1037,7 +1045,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* 모바일 전용 하단 고정 바 */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 lg:hidden shadow-lg">
+      <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur border-t border-gray-200 p-4 z-50 lg:hidden shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex-1 min-w-0 mr-4">
             {vendors.length > 0 && vendors[0].priceInKRW && vendors[0].priceInKRW > 0 ? (

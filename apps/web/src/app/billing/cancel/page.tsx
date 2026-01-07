@@ -12,7 +12,7 @@ export default function BillingCancelPage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="container mx-auto px-4 py-8 md:py-16">
+      <div className="container mx-auto px-4 pt-14 py-8 md:py-16">
         <div className="max-w-2xl mx-auto">
           <Card className="border-red-200 bg-red-50/50">
             <CardHeader className="text-center pb-4">

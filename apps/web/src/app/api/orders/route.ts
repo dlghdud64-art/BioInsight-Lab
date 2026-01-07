@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { QuoteStatus, OrderStatus, ActivityType, Prisma } from "@prisma/client";
+import { QuoteStatus, OrderStatus, ActivityType, Prisma, TeamRole } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 
 // 주문번호 생성 함수
@@ -33,12 +33,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { quoteId, shippingAddress, notes } = body;
+    const { quoteId, shippingAddress, notes, expectedDelivery } = body;
 
     if (!quoteId) {
       return NextResponse.json(
         { error: "quoteId is required" },
         { status: 400 }
+      );
+    }
+
+    // 권한 체크: MEMBER는 직접 주문 불가, 구매 요청만 가능
+    const userTeams = await db.teamMember.findMany({
+      where: { userId: session.user.id },
+    });
+
+    const isMemberOnly = userTeams.every(
+      (tm) => tm.role === TeamRole.MEMBER
+    ) && userTeams.length > 0;
+
+    if (isMemberOnly) {
+      return NextResponse.json(
+        {
+          error: "MEMBER_ROLE_RESTRICTION",
+          message: "일반 멤버는 직접 주문할 수 없습니다. 구매 요청을 보내주세요.",
+        },
+        { status: 403 }
       );
     }
 
@@ -109,6 +128,7 @@ export async function POST(request: NextRequest) {
           status: OrderStatus.ORDERED,
           shippingAddress,
           notes,
+          expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
           items: {
             create: quote.items.map((item: { productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
               productId: item.productId,

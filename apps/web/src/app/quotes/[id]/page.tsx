@@ -32,7 +32,18 @@ import {
   Pencil,
   Check,
   X,
+  Send,
+  CreditCard,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { QUOTE_STATUS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +54,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -57,6 +74,15 @@ export default function QuoteDetailPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [orderForm, setOrderForm] = useState({
+    expectedDelivery: "",
+    paymentMethod: "",
+    notes: "",
+  });
 
   const { data: quoteData, isLoading } = useQuery({
     queryKey: ["quote", quoteId],
@@ -66,6 +92,121 @@ export default function QuoteDetailPage() {
       return response.json();
     },
     enabled: !!quoteId && status === "authenticated",
+  });
+
+  // 사용자 팀 목록 조회
+  const { data: teamsData } = useQuery({
+    queryKey: ["user-teams"],
+    queryFn: async () => {
+      const response = await fetch("/api/team");
+      if (!response.ok) throw new Error("Failed to fetch teams");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 구매 요청 mutation
+  const purchaseRequestMutation = useMutation({
+    mutationFn: async ({ teamId, message }: { teamId: string; message: string }) => {
+      const quote = quoteData?.quote;
+      if (!quote) throw new Error("Quote not found");
+
+      const items = quote.items?.map((item: any) => ({
+        productId: item.productId,
+        name: item.name,
+        brand: item.brand,
+        catalogNumber: item.catalogNumber,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        lineTotal: item.lineTotal,
+      })) || [];
+
+      const response = await fetch("/api/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamId,
+          title: quote.title || "구매 요청",
+          message,
+          items,
+          quoteId: quote.id,
+          totalAmount: quote.totalAmount,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create purchase request");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      setShowRequestDialog(false);
+      setRequestMessage("");
+      toast({
+        title: "구매 요청이 전송되었습니다",
+        description: "관리자의 승인을 기다려주세요.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "구매 요청 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // 주문 생성 mutation
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: {
+      expectedDelivery?: string;
+      paymentMethod?: string;
+      notes?: string;
+    }) => {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId,
+          expectedDelivery: orderData.expectedDelivery || undefined,
+          notes: orderData.notes || (orderData.paymentMethod 
+            ? `결제 방식: ${orderData.paymentMethod}${orderData.notes ? `\n\n전달 사항:\n${orderData.notes}` : ""}`
+            : orderData.notes || undefined),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || error.message || "Failed to create order");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      setShowOrderDialog(false);
+      setOrderForm({
+        expectedDelivery: "",
+        paymentMethod: "",
+        notes: "",
+      });
+      toast({
+        title: "주문이 접수되었습니다",
+        description: "마이페이지 > 주문 내역에서 확인하세요",
+      });
+      // 주문 내역 페이지로 이동하지 않고 현재 페이지에 머무름
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "주문 생성 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // 구매 완료 상태 업데이트
@@ -252,6 +393,12 @@ ${itemLines}
 
   const quote = quoteData.quote;
   const quoteStatus = quote.status as QuoteStatus;
+
+  // 사용자의 팀 역할 확인 (첫 번째 팀 기준)
+  const userTeam = teamsData?.teams?.[0];
+  const userTeamRole = userTeam?.role;
+  const isMemberOnly = userTeamRole === "MEMBER";
+  const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
   const statusIcon = {
     PENDING: <Clock className="h-4 w-4 text-yellow-500" />,
     SENT: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
@@ -680,6 +827,131 @@ ${itemLines}
               목록으로
             </Button>
           </Link>
+          {/* PDF 다운로드 버튼 (향후 구현) */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+                  disabled
+                >
+                  <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  PDF 다운로드
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>PDF 다운로드 기능은 곧 제공됩니다</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {/* 주문 요청하기 버튼 - COMPLETED 상태일 때만 표시 */}
+          {quote.status === "COMPLETED" && !quote.order && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                        주문 요청하기
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>이 견적서대로 주문을 접수하시겠습니까?</DialogTitle>
+                        <DialogDescription>
+                          주문 정보를 입력하고 접수해주세요
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="expectedDelivery">희망 배송일</Label>
+                          <Input
+                            id="expectedDelivery"
+                            type="date"
+                            value={orderForm.expectedDelivery}
+                            onChange={(e) =>
+                              setOrderForm({ ...orderForm, expectedDelivery: e.target.value })
+                            }
+                            min={new Date().toISOString().split("T")[0]}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="paymentMethod">
+                            결제 방식 <span className="text-muted-foreground text-xs">(선택)</span>
+                          </Label>
+                          <Select
+                            value={orderForm.paymentMethod}
+                            onValueChange={(value) =>
+                              setOrderForm({ ...orderForm, paymentMethod: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="결제 방식을 선택하세요" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="research_card">연구비 카드</SelectItem>
+                              <SelectItem value="tax_invoice">세금계산서</SelectItem>
+                              <SelectItem value="bank_transfer">계좌이체</SelectItem>
+                              <SelectItem value="credit_card">신용카드</SelectItem>
+                              <SelectItem value="other">기타</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="orderNotes">전달 사항 <span className="text-muted-foreground text-xs">(선택)</span></Label>
+                          <Textarea
+                            id="orderNotes"
+                            placeholder="추가로 전달할 사항이 있으시면 입력하세요"
+                            value={orderForm.notes}
+                            onChange={(e) =>
+                              setOrderForm({ ...orderForm, notes: e.target.value })
+                            }
+                            rows={4}
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowOrderDialog(false);
+                              setOrderForm({
+                                expectedDelivery: "",
+                                paymentMethod: "",
+                                notes: "",
+                              });
+                            }}
+                            className="flex-1"
+                          >
+                            취소
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              createOrderMutation.mutate({
+                                expectedDelivery: orderForm.expectedDelivery || undefined,
+                                paymentMethod: orderForm.paymentMethod || undefined,
+                                notes: orderForm.notes || undefined,
+                              });
+                            }}
+                            disabled={createOrderMutation.isPending}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                          >
+                            {createOrderMutation.isPending ? "처리 중..." : "주문 접수"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>내부 결재(승인)가 완료되었다면, 클릭 한 번으로 발주하세요.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {quote.status !== "COMPLETED" && (
             <Button
               onClick={handleMarkAsCompleted}
@@ -690,7 +962,102 @@ ${itemLines}
               {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
             </Button>
           )}
-          {quote.status === "COMPLETED" && (
+          {quote.status === "COMPLETED" && !quote.order && canCheckout && (
+            <>
+              {/* 기존 결제하기 버튼은 유지 (하위 호환성) */}
+              <Button
+                onClick={() => createOrderMutation.mutate({})}
+                disabled={createOrderMutation.isPending}
+                variant="outline"
+                className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+              >
+                <CreditCard className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                {createOrderMutation.isPending ? "처리 중..." : "결제하기"}
+              </Button>
+            </>
+          )}
+          {quote.status === "COMPLETED" && !quote.order && !canCheckout && (
+                <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+                    >
+                      <Send className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      구매 요청 보내기
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>구매 요청 보내기</DialogTitle>
+                      <DialogDescription>
+                        관리자에게 구매 승인을 요청합니다.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="team">팀 선택</Label>
+                        <Select
+                          value={selectedTeamId || ""}
+                          onValueChange={setSelectedTeamId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="팀을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teamsData?.teams?.map((team: any) => (
+                              <SelectItem key={team.id} value={team.id}>
+                                {team.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="message">요청 메모 (선택)</Label>
+                        <Textarea
+                          id="message"
+                          placeholder="예: 실험 A에 필요함, 긴급 주문 요청 등"
+                          value={requestMessage}
+                          onChange={(e) => setRequestMessage(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowRequestDialog(false)}
+                          className="flex-1"
+                        >
+                          취소
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            if (!selectedTeamId) {
+                              toast({
+                                title: "팀을 선택해주세요",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            purchaseRequestMutation.mutate({
+                              teamId: selectedTeamId,
+                              message: requestMessage,
+                            });
+                          }}
+                          disabled={purchaseRequestMutation.isPending || !selectedTeamId}
+                          className="flex-1"
+                        >
+                          {purchaseRequestMutation.isPending ? "전송 중..." : "요청 보내기"}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
+          )}
+          {quote.status === "COMPLETED" && quote.order && (
             <Badge variant="default" className="px-3 py-1.5 text-xs md:text-sm w-full sm:w-auto justify-center">
               <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
               구매 완료됨

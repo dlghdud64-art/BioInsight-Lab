@@ -59,12 +59,14 @@ export default function SearchResultList({
   if (!query) {
     return (
       <div className="text-center py-16 md:py-20">
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4">
           <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
-          <p className="text-sm text-gray-500">제품명, 벤더, 카테고리를 검색할 수 있습니다.</p>
+          <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed">
+            제품명, 벤더, 카테고리를 검색할 수 있습니다.
+          </p>
         </div>
       </div>
     );

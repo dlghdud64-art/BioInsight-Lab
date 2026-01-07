@@ -38,8 +38,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // budgets가 배열이 아닐 경우 빈 배열로 처리
+    const budgetsArray = Array.isArray(budgets) ? budgets : [];
     const budgetsWithUsage = await Promise.all(
-      budgets.map(async (budget: any) => {
+      budgetsArray.map(async (budget: any) => {
         const [year, month] = budget.yearMonth.split("-").map(Number);
         const periodStart = new Date(year, month - 1, 1);
         const periodEnd = new Date(year, month, 0, 23, 59, 59);
@@ -95,11 +97,12 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({ budgets: budgetsWithUsage });
+    return NextResponse.json({ budgets: Array.isArray(budgetsWithUsage) ? budgetsWithUsage : [] });
   } catch (error) {
     console.error("[Budget API] Error fetching budgets:", error);
+    // 에러 발생 시에도 빈 배열 반환하여 프론트엔드 크래시 방지
     return NextResponse.json(
-      { error: "Failed to fetch budgets" },
+      { budgets: [], error: "Failed to fetch budgets" },
       { status: 500 }
     );
   }

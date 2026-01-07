@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -281,7 +281,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   }, [quoteItems, groupedByVendor, groupByVendor, products, selectedQuoteIds, toggleSelectQuote, updateQuoteItem]);
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 pb-20 md:pb-0">
       {/* 견적 요청 섹션 */}
       <Card className="rounded-lg border border-slate-200 bg-white">
         <CardHeader className="pb-4">
@@ -371,7 +372,9 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-900">요청 제품 ({quoteItems.length}개)</h2>
                 </div>
-                <div className="w-full overflow-x-auto">
+                
+                {/* 데스크톱: 테이블 뷰 */}
+                <div className="hidden md:block w-full overflow-x-auto">
                   <Table className="w-full">
                     <TableHeader>
                       <TableRow className="bg-gray-50 hover:bg-gray-50">
@@ -420,6 +423,107 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                     {tableRows}
                   </TableBody>
                 </Table>
+                </div>
+
+                {/* 모바일: 카드 리스트 뷰 */}
+                <div className="block md:hidden p-4 space-y-4">
+                  {quoteItems.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">품목이 없습니다.</p>
+                    </div>
+                  ) : (
+                    Object.entries(groupedByVendor).flatMap(([vendorName, items]) => {
+                      let globalIndex = 0;
+                      return items.map((item) => {
+                        globalIndex++;
+                        const product = products?.find((p: any) => p.id === item.productId);
+                        return (
+                          <div
+                            key={item.id}
+                            className="border border-slate-200 rounded-xl p-4 mb-4 bg-white shadow-sm"
+                          >
+                            {/* Header: 체크박스 + 브랜드/Cat.No */}
+                            <div className="flex items-start justify-between mb-3">
+                              <Checkbox
+                                checked={selectedQuoteIds.includes(item.id)}
+                                onCheckedChange={() => toggleSelectQuote(item.id)}
+                                className="h-5 w-5"
+                              />
+                              <div className="text-right text-xs text-gray-500 ml-4">
+                                {product?.brand && <div>{product.brand}</div>}
+                                {product?.catalogNumber && (
+                                  <div className="font-mono mt-0.5">Cat. {product.catalogNumber}</div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Body: 제품명 */}
+                            <div className="mb-4">
+                              <h3 className="font-bold text-lg break-words text-gray-900">
+                                {item.productName}
+                              </h3>
+                            </div>
+
+                            {/* Footer: 수량 + 합계 금액 */}
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                              {/* 수량 조절기 */}
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-9 w-9 rounded-lg"
+                                  onClick={() => {
+                                    updateQuoteItem(item.id, {
+                                      quantity: Math.max(1, (item.quantity || 1) - 1),
+                                    });
+                                  }}
+                                  disabled={(item.quantity || 1) <= 1}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity || 1}
+                                  onChange={(e) => {
+                                    const qty = parseInt(e.target.value) || 1;
+                                    updateQuoteItem(item.id, {
+                                      quantity: Math.max(1, qty),
+                                    });
+                                  }}
+                                  className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-300"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-9 w-9 rounded-lg"
+                                  onClick={() => {
+                                    updateQuoteItem(item.id, {
+                                      quantity: (item.quantity || 1) + 1,
+                                    });
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              {/* 합계 금액 */}
+                              <div className="text-right">
+                                <div className="font-bold text-base text-blue-600 whitespace-nowrap">
+                                  <PriceDisplay price={item.lineTotal || 0} currency="KRW" />
+                                </div>
+                                {item.unitPrice && item.unitPrice > 0 && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    단가: <PriceDisplay price={item.unitPrice} currency="KRW" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })
+                  )}
                 </div>
               </div>
             )}
@@ -519,9 +623,9 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               </div>
             )}
 
-            {/* 하단 액션 버튼 그룹 */}
+            {/* 데스크톱: 하단 액션 버튼 그룹 */}
             {quoteItems.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t mt-6">
+              <div className="hidden md:flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t mt-6">
                 {/* 총 예상 견적가 - 버튼 왼쪽에 배치 */}
                 <div className="flex items-center gap-3 mr-auto">
                   <span className="text-sm text-gray-500">총 예상 견적가:</span>
@@ -617,6 +721,29 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
           </div>
         </CardContent>
       </Card>
+
+      {/* 모바일: 고정 하단 액션 바 */}
+      {quoteItems.length > 0 && (
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 md:hidden flex flex-col gap-2 shadow-lg">
+          <div className="flex items-center justify-end">
+            <span className="text-sm text-gray-600 mr-2">총 견적가:</span>
+            <span className="text-xl font-bold text-blue-600 whitespace-nowrap">
+              ₩{totalAmount.toLocaleString("ko-KR")}
+            </span>
+          </div>
+          <Link href="/test/quote/request" className="block">
+            <Button
+              type="button"
+              disabled={quoteItems.length === 0}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 font-semibold"
+              size="lg"
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              최종 견적 요청하기
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* 삭제 확인 다이얼로그 */}
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
@@ -906,6 +1033,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
 
@@ -1343,7 +1471,15 @@ export function SharePanel() {
   );
 }
 
-export function QuoteRequestPanel() {
+interface QuoteRequestPanelProps {
+  vendorNotes?: Record<string, string>;
+  onVendorNoteChange?: (vendorId: string, note: string) => void;
+}
+
+export function QuoteRequestPanel({ 
+  vendorNotes = {},
+  onVendorNoteChange
+}: QuoteRequestPanelProps = {}) {
   const { quoteItems, products } = useTestFlow();
   const { toast } = useToast();
   const router = useRouter();
@@ -1615,12 +1751,37 @@ export function QuoteRequestPanel() {
 
     setIsSubmitting(true);
     try {
+      // 벤더별 메시지 준비
+      const vendorMessages: Record<string, string> = {};
+      const vendorGroupsForSubmit = new Map<string, typeof quoteItems>();
+      quoteItems.forEach((item) => {
+        const vendorId = item.vendorId || "unknown";
+        if (!vendorGroupsForSubmit.has(vendorId)) {
+          vendorGroupsForSubmit.set(vendorId, []);
+        }
+        vendorGroupsForSubmit.get(vendorId)!.push(item);
+      });
+
+      // 각 벤더별로 공통 메시지와 개별 메시지 합치기
+      vendorGroupsForSubmit.forEach((items, vendorId) => {
+        const globalMessage = message || "";
+        const vendorNote = vendorNotes[vendorId] || "";
+        if (vendorNote) {
+          vendorMessages[vendorId] = globalMessage 
+            ? `${globalMessage}\n\n[개별요청]: ${vendorNote}`
+            : `[개별요청]: ${vendorNote}`;
+        } else {
+          vendorMessages[vendorId] = globalMessage;
+        }
+      });
+
       const response = await fetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title || "견적 요청",
-          message: message || "", // 기본 메시지 (각 벤더별로 맞춰서 사용)
+          message: message || "", // 공통 메시지 (백엔드 호환성)
+          vendorMessages: Object.keys(vendorMessages).length > 0 ? vendorMessages : undefined, // 벤더별 메시지
           guestKey: !session?.user ? guestKey : undefined, // 게스트 사용자 인증
           // 벤더별로 그룹화하여 각 벤더에게 별도 견적 요청
           items: quoteItems.map((item) => ({
@@ -1807,207 +1968,230 @@ export function QuoteRequestPanel() {
   };
 
   return (
-    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-sm font-semibold text-slate-900">견적 요청</CardTitle>
-              {quoteId && (
-                <Badge variant="secondary" className="text-xs">
-                  기존 리스트 불러옴
-                </Badge>
-              )}
-            </div>
-            <CardDescription className="text-xs text-slate-500">
-              {(() => {
-                const vendorCount = new Set(quoteItems.map(item => item.vendorId)).size;
-                if (vendorCount > 1) {
-                  return `${vendorCount}개 벤더에 개별 견적 요청`;
-                }
-                return "벤더에게 견적을 요청하세요";
-              })()}
-            </CardDescription>
+    <div className="space-y-6">
+      {/* 상단 헤더 */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-lg font-semibold text-slate-900">견적 요청 작성</h2>
+            {quoteId && (
+              <Badge variant="secondary" className="text-xs">
+                기존 리스트 불러옴
+              </Badge>
+            )}
           </div>
-          <div className="flex items-center gap-3">
-            {/* 저장 상태 표시 */}
-            <div className="text-[10px] text-slate-500 whitespace-nowrap">
-              {getSaveStatusText()}
-            </div>
-            {/* 공유 버튼 */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-              className="text-xs h-8"
-            >
-              <Share2 className="h-3 w-3 mr-1" />
-              공유
-            </Button>
-          </div>
+          <p className="text-sm text-slate-500">
+            {(() => {
+              const vendorCount = new Set(quoteItems.map(item => item.vendorId)).size;
+              if (vendorCount > 1) {
+                return `${vendorCount}개 벤더에 개별 견적 요청`;
+              }
+              return "벤더에게 견적을 요청하세요";
+            })()}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="quote-title" className="text-xs font-medium">
-              제목 *
-            </Label>
-            <Input
-              id="quote-title"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                // 제목 변경 시 저장 상태를 unsaved로 변경
-                if (saveStatus !== "saving") {
-                  setSaveStatus("unsaved");
-                }
-              }}
-              placeholder="견적 요청 제목"
-              required
-              className="text-sm"
-              disabled={!quoteId && isLoadingQuoteList}
-            />
+        <div className="flex items-center gap-3">
+          {/* 저장 상태 표시 */}
+          <div className="text-xs text-slate-500 whitespace-nowrap">
+            {getSaveStatusText()}
           </div>
+          {/* 공유 버튼 */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsShareDialogOpen(true)}
+            className="text-xs h-8"
+          >
+            <Share2 className="h-3 w-3 mr-1" />
+            공유
+          </Button>
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="quote-message" className="text-xs font-medium">
-              메시지
-            </Label>
-            <Textarea
-              id="quote-message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="벤더에게 전달할 메시지"
-              className="text-sm min-h-[100px]"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form id="quote-request-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Section 1: 기본 정보 */}
+        <Card className="bg-white p-6 rounded-xl border shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="text-base font-semibold">기본 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="delivery-date" className="text-xs font-medium">
-                납기 희망일
+              <Label htmlFor="quote-title" className="text-sm font-medium">
+                제목 *
               </Label>
-              <Select
-                value={deliveryDateOption}
-                onValueChange={(value: "asap" | "custom" | "none") => handleDeliveryDateOptionChange(value)}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asap">최대한 빨리 (1주일 이내)</SelectItem>
-                  <SelectItem value="custom">직접 입력</SelectItem>
-                  <SelectItem value="none">선택 안함</SelectItem>
-                </SelectContent>
-              </Select>
-              {deliveryDateOption === "custom" && (
-                <Input
-                  id="delivery-date"
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="text-sm mt-2"
-                />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="delivery-location" className="text-xs font-medium">
-                납품 장소
-              </Label>
-              <Select
-                value={deliveryLocation}
-                onValueChange={(value: "none" | "saved" | "custom") => {
-                  setDeliveryLocation(value);
-                  if (value !== "custom") {
-                    setDeliveryLocationCustom("");
+              <Input
+                id="quote-title"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  // 제목 변경 시 저장 상태를 unsaved로 변경
+                  if (saveStatus !== "saving") {
+                    setSaveStatus("unsaved");
                   }
                 }}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="납품 장소 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">선택 안함</SelectItem>
-                  {savedDeliveryAddress && (
-                    <SelectItem value="saved">저장된 주소: {savedDeliveryAddress}</SelectItem>
-                  )}
-                  <SelectItem value="custom">직접 입력</SelectItem>
-                </SelectContent>
-              </Select>
-              {deliveryLocation === "custom" && (
-                <div className="space-y-2 mt-2">
-                  <Input
-                    id="delivery-location-custom"
-                    value={deliveryLocationCustom}
-                    onChange={(e) => setDeliveryLocationCustom(e.target.value)}
-                    placeholder="납품 장소를 입력하세요"
-                    className="text-sm"
-                  />
-                  {deliveryLocationCustom.trim() && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSaveDeliveryAddress}
-                      className="text-xs w-full"
-                    >
-                      주소 저장하기
-                    </Button>
-                  )}
-                </div>
-              )}
-              {deliveryLocation === "saved" && savedDeliveryAddress && (
-                <div className="text-xs text-slate-500 mt-1 p-2 bg-slate-50 rounded border border-slate-200">
-                  {savedDeliveryAddress}
-                </div>
-              )}
+                placeholder="견적 요청 제목"
+                required
+                className="text-sm"
+                disabled={!quoteId && isLoadingQuoteList}
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="special-notes" className="text-xs font-medium">
-              특이사항
-            </Label>
-            <Textarea
-              id="special-notes"
-              value={specialNotes}
-              onChange={(e) => setSpecialNotes(e.target.value)}
-              placeholder="특이사항이나 추가 요청사항"
-              className="text-sm min-h-[80px]"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="quote-message" className="text-sm font-medium">
+                📦 배송 및 공통 요청사항 (모든 벤더에게 전송됨)
+              </Label>
+              <Textarea
+                id="quote-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="예: 점심시간(12-1시) 배송 제외, 102호로 배송 부탁드립니다."
+                className="text-sm min-h-[100px]"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSave}
-              disabled={saveMutation.isPending || !guestKey}
-              className="flex-1"
-            >
-              {saveMutation.isPending ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                  저장 중...
-                </>
-              ) : session?.user ? (
-                "저장"
-              ) : (
-                "임시 저장"
-              )}
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-slate-900 text-white hover:bg-slate-800"
-              disabled={isSubmitting || quoteItems.length === 0}
-            >
-              {isSubmitting ? "전송 중..." : "견적 요청하기"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
+        {/* Section 2: 배송 정보 */}
+        <Card className="bg-white p-6 rounded-xl border shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="text-base font-semibold">배송 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="delivery-date" className="text-sm font-medium">
+                  납기 희망일
+                </Label>
+                <Select
+                  value={deliveryDateOption}
+                  onValueChange={(value: "asap" | "custom" | "none") => handleDeliveryDateOptionChange(value)}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asap">최대한 빨리 (1주일 이내)</SelectItem>
+                    <SelectItem value="custom">직접 입력</SelectItem>
+                    <SelectItem value="none">선택 안함</SelectItem>
+                  </SelectContent>
+                </Select>
+                {deliveryDateOption === "custom" && (
+                  <Input
+                    id="delivery-date"
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className="text-sm mt-2"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="delivery-location" className="text-sm font-medium">
+                  납품 장소
+                </Label>
+                <Select
+                  value={deliveryLocation}
+                  onValueChange={(value: "none" | "saved" | "custom") => {
+                    setDeliveryLocation(value);
+                    if (value !== "custom") {
+                      setDeliveryLocationCustom("");
+                    }
+                  }}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="납품 장소 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
+                    {savedDeliveryAddress && (
+                      <SelectItem value="saved">저장된 주소: {savedDeliveryAddress}</SelectItem>
+                    )}
+                    <SelectItem value="custom">직접 입력</SelectItem>
+                  </SelectContent>
+                </Select>
+                {deliveryLocation === "custom" && (
+                  <div className="space-y-2 mt-2">
+                    <Input
+                      id="delivery-location-custom"
+                      value={deliveryLocationCustom}
+                      onChange={(e) => setDeliveryLocationCustom(e.target.value)}
+                      placeholder="납품 장소를 입력하세요"
+                      className="text-sm"
+                    />
+                    {deliveryLocationCustom.trim() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSaveDeliveryAddress}
+                        className="text-xs w-full"
+                      >
+                        주소 저장하기
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {deliveryLocation === "saved" && savedDeliveryAddress && (
+                  <div className="text-xs text-slate-500 mt-1 p-2 bg-slate-50 rounded border border-slate-200">
+                    {savedDeliveryAddress}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 3: 추가 요청 */}
+        <Card className="bg-white p-6 rounded-xl border shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="text-base font-semibold">추가 요청</CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            <div className="space-y-2">
+              <Label htmlFor="special-notes" className="text-sm font-medium">
+                특이사항
+              </Label>
+              <Textarea
+                id="special-notes"
+                value={specialNotes}
+                onChange={(e) => setSpecialNotes(e.target.value)}
+                placeholder="특이사항이나 추가 요청사항"
+                className="text-sm min-h-[80px]"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 저장 버튼 (모바일에서만 표시) */}
+        <div className="lg:hidden space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSave}
+            disabled={saveMutation.isPending || !guestKey}
+            className="w-full"
+          >
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                저장 중...
+              </>
+            ) : session?.user ? (
+              "저장"
+            ) : (
+              "임시 저장"
+            )}
+          </Button>
+          <Button
+            type="submit"
+            className="w-full bg-slate-900 text-white hover:bg-slate-800"
+            disabled={isSubmitting || quoteItems.length === 0}
+          >
+            {isSubmitting ? "전송 중..." : "견적 요청하기"}
+          </Button>
+        </div>
+      </form>
 
       {/* 공유 모달 */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
@@ -2131,12 +2315,22 @@ export function QuoteRequestPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }
 
-export function QuoteItemsSummaryPanel() {
+interface QuoteItemsSummaryPanelProps {
+  vendorNotes?: Record<string, string>;
+  onVendorNoteChange?: (vendorId: string, note: string) => void;
+}
+
+export function QuoteItemsSummaryPanel({ 
+  vendorNotes = {},
+  onVendorNoteChange
+}: QuoteItemsSummaryPanelProps = {}) {
   const { quoteItems, products } = useTestFlow();
+  const { data: session } = useSession();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 벤더별로 그룹화
   const vendorGroups = useMemo(() => {
@@ -2173,97 +2367,145 @@ export function QuoteItemsSummaryPanel() {
   }
 
   return (
-    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
-        <CardDescription className="text-xs text-slate-500">
-          요청할 품목 {quoteItems.length}개
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="max-h-[400px] overflow-y-auto space-y-4">
-            {Array.from(vendorGroups.entries()).map(([vendorId, { vendorName, items }], vendorIndex) => {
-              const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-              return (
-                <div key={vendorId} className="space-y-2">
-                  {vendorGroups.size > 1 && (
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
-                      <span className="text-xs font-semibold text-slate-700 whitespace-nowrap truncate" title={vendorName}>
-                        {vendorIndex + 1}. {vendorName}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {items.length}개 품목
-                      </Badge>
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    {items.map((item, itemIndex) => {
-                      const product = products?.find((p) => p.id === item.productId);
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-start justify-between gap-2 p-2 rounded-lg border border-slate-100 bg-slate-50"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-slate-900 truncate">
-                              {vendorGroups.size === 1 ? `${itemIndex + 1}. ` : ""}{product?.name || item.productName || "제품"}
+    <div className="sticky top-24 h-fit">
+      <Card className="rounded-xl border border-slate-200 bg-white shadow-lg">
+        <CardHeader className="border-b border-slate-200 bg-slate-50/50">
+          <CardTitle className="text-base font-semibold text-slate-900">견적 요약</CardTitle>
+          <CardDescription className="text-xs text-slate-500">
+            요청할 품목 {quoteItems.length}개
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="space-y-4 p-6">
+            {/* 벤더별 품목 리스트 */}
+            <div className="max-h-[400px] overflow-y-auto space-y-4">
+              {Array.from(vendorGroups.entries()).map(([vendorId, { vendorName, items }], vendorIndex) => {
+                const vendorTotal = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+                return (
+                  <div key={vendorId} className="space-y-3">
+                    {vendorGroups.size > 1 && (
+                      <div className="flex items-center gap-2 pb-2 border-b-2 border-blue-200">
+                        <span className="text-sm font-bold text-slate-900 whitespace-nowrap truncate" title={vendorName}>
+                          {vendorIndex + 1}. {vendorName}
+                        </span>
+                        <Badge variant="outline" className="text-xs bg-blue-50">
+                          {items.length}개 품목
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {items.map((item, itemIndex) => {
+                        const product = products?.find((p) => p.id === item.productId);
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-start justify-between gap-2 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-slate-900 truncate">
+                                {vendorGroups.size === 1 ? `${itemIndex + 1}. ` : ""}{product?.name || item.productName || "제품"}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                수량: {item.quantity} ×{" "}
+                                <PriceDisplay
+                                  price={item.unitPrice || 0}
+                                  currency="KRW"
+                                />
+                              </div>
                             </div>
-                            <div className="text-xs text-slate-500 mt-1">
-                              수량: {item.quantity} ×{" "}
+                            <div className="text-sm font-bold text-slate-900 whitespace-nowrap">
                               <PriceDisplay
-                                price={item.unitPrice || 0}
+                                price={item.lineTotal || 0}
                                 currency="KRW"
                               />
                             </div>
                           </div>
-                          <div className="text-xs font-semibold text-slate-900 whitespace-nowrap">
-                            <PriceDisplay
-                              price={item.lineTotal || 0}
-                              currency="KRW"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {vendorGroups.size > 1 && (
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                      <span className="text-xs font-medium text-slate-600">{vendorName} 소계</span>
-                      <span className="text-xs font-semibold text-slate-900">
-{vendorTotal.toLocaleString("ko-KR")}
-                      </span>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    {/* 벤더별 개별 메시지 입력창 */}
+                    {vendorGroups.size > 1 && onVendorNoteChange && (
+                      <div className="mt-3 pt-3 border-t border-slate-200">
+                        <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-700 mb-1 block">
+                          이 벤더에게만 보낼 메시지
+                        </Label>
+                        <Textarea
+                          id={`vendor-note-${vendorId}`}
+                          value={vendorNotes[vendorId] || ""}
+                          onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
+                          placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
+                          className="bg-gray-50 border rounded p-2 text-sm w-full min-h-[60px]"
+                        />
+                      </div>
+                    )}
+                    {vendorGroups.size > 1 && (
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200 bg-slate-50/50 p-2 rounded">
+                        <span className="text-sm font-semibold text-slate-700">{vendorName} 소계</span>
+                        <span className="text-sm font-bold text-slate-900">
+                          ₩{vendorTotal.toLocaleString("ko-KR")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="pt-3 border-t border-slate-200">
+          
+          {/* 총계 및 액션 */}
+          <div className="border-t-2 border-slate-200 bg-slate-50/50 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-900">총액</span>
-              <span className="text-lg font-bold text-slate-900">
-                {totalAmount.toLocaleString("ko-KR")}
+              <span className="text-base font-semibold text-slate-700">총 예상 금액</span>
+              <span className="text-3xl font-bold text-blue-600">
+                ₩{totalAmount.toLocaleString("ko-KR")}
               </span>
             </div>
+            
             {vendorGroups.size > 1 && (
-              <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-amber-900">
-                      {vendorGroups.size}개 벤더에 별도 견적 요청
-                    </p>
-                    <p className="text-[10px] text-amber-700 mt-0.5">
-                      각 벤더별로 견적 요청이 개별 전송됩니다
+                    <p className="text-xs font-medium text-blue-900">
+                      효율적인 처리를 위해 {vendorGroups.size}개의 견적서로 나뉘어 발송됩니다.
                     </p>
                   </div>
                 </div>
               </div>
             )}
+            
+            {/* 액션 버튼 */}
+            <div className="space-y-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  const form = document.getElementById('quote-request-form') as HTMLFormElement;
+                  if (form) {
+                    setIsSubmitting(true);
+                    form.requestSubmit();
+                    // form 제출 후 상태 리셋은 form의 onsubmit에서 처리됨
+                    setTimeout(() => setIsSubmitting(false), 3000);
+                  }
+                }}
+                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
+                disabled={isSubmitting || quoteItems.length === 0}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    전송 중...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-5 w-5 mr-2" />
+                    견적 요청하기
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

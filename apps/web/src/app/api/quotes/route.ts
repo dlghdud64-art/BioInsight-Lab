@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     const {
       title,
       message,
+      vendorMessages, // 벤더별 개별 메시지: { [vendorId]: string }
       deliveryDate,
       deliveryLocation,
       specialNotes,
@@ -70,15 +71,26 @@ export async function POST(request: NextRequest) {
         ? `${title} (${items.length}건)`
         : title;
 
-      // 벤더별 메시지 생성 (각 벤더의 품목 수와 금액에 맞춤)
+      // 벤더별 메시지 생성 (개별 메시지가 있으면 우선 사용)
       const vendorProductCount = items.length;
       const vendorTotalAmount = items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0);
-      const vendorMessage = message 
-        ? message.replace(/\d+건/g, `${vendorProductCount}건`)
+      
+      let vendorMessage = "";
+      if (vendorMessages && vendorMessages[vendorId]) {
+        // 벤더별 개별 메시지가 있으면 사용 (이미 공통 메시지와 합쳐져 있음)
+        vendorMessage = vendorMessages[vendorId];
+        // 품목 정보 추가
+        vendorMessage += `\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`;
+      } else if (message) {
+        // 공통 메시지만 있는 경우
+        vendorMessage = message.replace(/\d+건/g, `${vendorProductCount}건`)
                  .replace(/품목 수: \d+개/g, `품목 수: ${vendorProductCount}개`)
                  .replace(/예상 금액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`)
-                 .replace(/예상 총액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`)
-        : `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+                 .replace(/예상 총액: ₩[\d,]+/g, `예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}`);
+      } else {
+        // 기본 메시지
+        vendorMessage = `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
+      }
 
       const quote = await createQuote({
         userId: session.user.id,

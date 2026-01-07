@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { QuoteRequestPanel, QuoteItemsSummaryPanel } from "../../_components/quote-panel";
 import { QuoteRepliesPanel } from "../../_components/quote-replies-panel";
 import Link from "next/link";
@@ -11,6 +11,15 @@ import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function QuoteRequestPageContent() {
+  const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
+
+  const handleVendorNoteChange = (vendorId: string, note: string) => {
+    setVendorNotes((prev) => ({
+      ...prev,
+      [vendorId]: note,
+    }));
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 px-3 sm:px-4">
       {/* 뒤로가기 버튼 */}
@@ -36,15 +45,15 @@ function QuoteRequestPageContent() {
 
         {/* 견적 요청 탭 */}
         <TabsContent value="request" className="mt-4">
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-            {/* 좌측: 견적 요청 폼 */}
-            <div className="w-full order-2 lg:order-1">
-              <QuoteRequestPanel />
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-12">
+            {/* 좌측: 견적 요청 폼 (8칸) */}
+            <div className="w-full order-2 lg:order-1 lg:col-span-8">
+              <QuoteRequestPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
             </div>
 
-            {/* 우측: 견적 요청 품목 요약 패널 */}
-            <div className="w-full order-1 lg:order-2">
-              <QuoteItemsSummaryPanel />
+            {/* 우측: 견적 요청 품목 요약 패널 (4칸) */}
+            <div className="w-full order-1 lg:order-2 lg:col-span-4">
+              <QuoteItemsSummaryPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
             </div>
           </div>
         </TabsContent>
