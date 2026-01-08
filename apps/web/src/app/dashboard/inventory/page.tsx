@@ -766,6 +766,7 @@ function InventoryCard({
   onRestockRequest,
   isRestockRequested = false,
   isRequestingRestock = false,
+  isRecommended = false,
 }: {
   inventory: ProductInventory;
   onEdit: () => void;
@@ -773,6 +774,7 @@ function InventoryCard({
   onRestockRequest?: () => void;
   isRestockRequested?: boolean;
   isRequestingRestock?: boolean;
+  isRecommended?: boolean;
 }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
   const [usageQuantity, setUsageQuantity] = useState("");
