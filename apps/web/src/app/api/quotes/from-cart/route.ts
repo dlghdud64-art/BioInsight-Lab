@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
 
     // 6. 총액 계산
     let totalAmount = 0;
-    const quoteItemsData = cart.items.map((item) => {
+    const quoteItemsData = cart.items.map((item: any) => {
       const unitPrice = item.product?.vendors[0]?.priceInKRW || item.unitPrice || 0;
       const lineTotal = unitPrice * item.quantity;
       totalAmount += lineTotal;
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 7. 트랜잭션으로 Quote + QuoteListItem 생성
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: any) => {
       // Quote 생성
       const quote = await tx.quote.create({
         data: {
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
 
       // QuoteListItem 생성
       await tx.quoteListItem.createMany({
-        data: quoteItemsData.map((item) => ({
+        data: quoteItemsData.map((item: any) => ({
           quoteId: quote.id,
           productId: item.productId,
           productName: item.productName,

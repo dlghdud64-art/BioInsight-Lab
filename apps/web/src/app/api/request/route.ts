@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
     }
 
     // MEMBER만 요청 가능 (OWNER/ADMIN은 직접 결제)
-    if (teamMember.role === TeamRole.OWNER || teamMember.role === TeamRole.ADMIN) {
+    if (teamMember.role === TeamRole.ADMIN) {
       return NextResponse.json(
-        { error: "OWNER and ADMIN cannot create purchase requests. Please checkout directly." },
+        { error: "ADMIN cannot create purchase requests. Please checkout directly." },
         { status: 400 }
       );
     }

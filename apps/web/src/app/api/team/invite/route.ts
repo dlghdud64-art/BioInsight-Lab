@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.OWNER && teamMember.role !== TeamRole.ADMIN)) {
+    if (!teamMember || (teamMember.role !== TeamRole.ADMIN || teamMember.role !== TeamRole.ADMIN)) {
       return NextResponse.json(
         { error: "Forbidden: Only OWNER or ADMIN can invite members" },
         { status: 403 }

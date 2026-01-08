@@ -1,7 +1,4 @@
 {
-  "git": {
-    "useWorktrees": false
-  },
   "permissions": {
     "allow": [
       "Bash(npx prisma migrate:*)",
@@ -28,7 +25,15 @@
       "Bash(git checkout:*)",
       "Bash(git reset:*)",
       "Bash(git pull:*)",
-      "Read(C:/Users/young/ai-biocompare/**)"
+      "Read(C:/Users/young/ai-biocompare/**)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 240 npm run build)",
+      "Bash(timeout 300 npm run build:*)",
+      "Bash(timeout 360 npm run build)",
+      "Bash(tee:*)"
     ]
+  },
+  "git": {
+    "useWorktrees": false
   }
 }

@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
       if (totalAmount <= 0) {
         throw new Error("INVALID_AMOUNT");
       }
+      if (!quote.userId) {
+        throw new Error("NO_USER_ID");
+      }
+
 
       // 2. 예산 체크 (견적 소유자의 예산)
       const budget = await tx.userBudget.findFirst({
@@ -101,6 +105,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: quote.userId, // 견적 소유자
           quoteId: quote.id,
+          orderNumber,
           totalAmount,
           status: OrderStatus.ORDERED,
           shippingAddress,
@@ -130,7 +135,7 @@ export async function POST(request: NextRequest) {
           remainingAmount: {
             decrement: totalAmount,
           },
-          spentAmount: {
+          usedAmount: {
             increment: totalAmount,
           },
         },
@@ -144,6 +149,8 @@ export async function POST(request: NextRequest) {
           amount: -totalAmount,
           type: "ORDER",
           description: `주문 생성: ${orderNumber}`,
+          balanceBefore: budget.remainingAmount,
+          balanceAfter: budget.remainingAmount - totalAmount,
         },
       });
 

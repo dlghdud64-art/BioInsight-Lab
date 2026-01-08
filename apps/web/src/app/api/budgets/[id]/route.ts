@@ -90,8 +90,9 @@ export async function PATCH(
         yearMonth,
         amount: amountInt,
         currency: currency || budget.currency,
-      description: combinedDescription,
-    });
+        description: combinedDescription,
+      });
+    }
 
     const updated = await db.budget.update({
       where: { id },

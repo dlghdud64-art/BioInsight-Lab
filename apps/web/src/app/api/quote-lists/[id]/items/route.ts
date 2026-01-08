@@ -64,7 +64,7 @@ export async function PUT(
     });
 
     const createdItems = await db.quoteListItem.createMany({
-      data: items.map((item) => ({
+      data: items.map((item: any) => ({
         quoteListId: id,
         productId: item.productId || null,
         name: item.name,

@@ -38,12 +38,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const teams = teamMembers.map((tm) => ({
+    const teams = teamMembers.map((tm: any) => ({
       id: tm.team.id,
       name: tm.team.name,
       description: tm.team.description,
       role: tm.role,
-      members: tm.team.members.map((m) => ({
+      members: tm.team.members.map((m: any) => ({
         id: m.user.id,
         name: m.user.name,
         email: m.user.email,
@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
         members: {
           create: {
             userId: session.user.id,
-            role: TeamRole.OWNER,
           },
         },
       },

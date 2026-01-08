@@ -73,9 +73,9 @@ export async function POST(
     }
 
     // MEMBER만 요청 가능
-    if (teamMember.role === TeamRole.OWNER || teamMember.role === TeamRole.ADMIN) {
+    if (teamMember.role === TeamRole.ADMIN) {
       return NextResponse.json(
-        { error: "OWNER and ADMIN cannot create purchase requests. Please checkout directly." },
+        { error: "ADMIN cannot create purchase requests. Please checkout directly." },
         { status: 400 }
       );
     }
@@ -94,7 +94,7 @@ export async function POST(
       },
     });
 
-    const existingRequest = pendingRequests.find((req) => {
+    const existingRequest = pendingRequests.find((req: any) => {
       const items = req.items as any;
       if (Array.isArray(items)) {
         return items.some((item: any) => item.inventoryId === inventoryId);
@@ -200,7 +200,7 @@ export async function GET(
       },
     });
 
-    const existingRequest = pendingRequests.find((req) => {
+    const existingRequest = pendingRequests.find((req: any) => {
       const items = req.items as any;
       if (Array.isArray(items)) {
         return items.some((item: any) => item.inventoryId === inventoryId);

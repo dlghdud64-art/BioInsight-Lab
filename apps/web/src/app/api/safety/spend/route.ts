@@ -139,18 +139,18 @@ export async function GET(request: NextRequest) {
         hazardous: data.hazardous,
         missingSds: data.missingSds,
       }))
-      .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+      .sort((a: any, b: any) => a.yearMonth.localeCompare(b.yearMonth));
 
     // 상위 위험 코드 (Top 10)
     const topHazardCodes = Array.from(hazardCodeMap.entries())
       .map(([code, amount]) => ({ code, amount }))
-      .sort((a, b) => b.amount - a.amount)
+      .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 10);
 
     // 상위 벤더 (Top 10)
     const topVendors = Array.from(vendorMap.entries())
       .map(([vendorName, amount]) => ({ vendorName, amount }))
-      .sort((a, b) => b.amount - a.amount)
+      .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 10);
 
     return NextResponse.json({

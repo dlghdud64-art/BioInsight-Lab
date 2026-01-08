@@ -105,19 +105,19 @@ export async function GET(request: NextRequest) {
     let sortedProducts = scored.map((s) => s.product);
 
     if (sortBy === "price_low") {
-      sortedProducts.sort((a, b) => {
+      sortedProducts.sort((a: any, b: any) => {
         const aPrice = (a.vendors?.[0] as any)?.priceInKRW || 0;
         const bPrice = (b.vendors?.[0] as any)?.priceInKRW || 0;
         return aPrice - bPrice;
       });
     } else if (sortBy === "price_high") {
-      sortedProducts.sort((a, b) => {
+      sortedProducts.sort((a: any, b: any) => {
         const aPrice = (a.vendors?.[0] as any)?.priceInKRW || 0;
         const bPrice = (b.vendors?.[0] as any)?.priceInKRW || 0;
         return bPrice - aPrice;
       });
     } else if (sortBy === "name") {
-      sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      sortedProducts.sort((a: any, b: any) => a.name.localeCompare(b.name));
     }
     // else: relevance (already sorted by score)
 
@@ -192,12 +192,12 @@ export async function GET(request: NextRequest) {
             vendorName: name,
             count,
           }))
-          .sort((a, b) => b.count - a.count)
+          .sort((a: any, b: any) => b.count - a.count)
           .slice(0, 20), // Top 20 vendors
 
         categoryCounts: Array.from(categoryCounts.entries())
           .map(([category, count]) => ({ category, count }))
-          .sort((a, b) => b.count - a.count),
+          .sort((a: any, b: any) => b.count - a.count),
       };
     }
 

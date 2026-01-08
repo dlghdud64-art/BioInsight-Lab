@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         title: title || null,
         message: message || null,
         items: {
-          create: items.map((item) => ({
+          create: items.map((item: any) => ({
             productId: item.productId || null,
             name: item.name,
             vendor: item.vendor || null,

@@ -25,6 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MainHeader } from "@/app/_components/main-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 
+import { useToast } from "@/hooks/use-toast";
 interface ProductInventory {
   id: string;
   productId: string;
@@ -49,8 +50,13 @@ export default function InventoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
+  const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -64,6 +70,18 @@ export default function InventoryPage() {
   });
 
   const selectedTeam = teamsData?.teams?.[0];
+  
+  // 팀 멤버 목록 조회
+  const { data: membersData } = useQuery({
+    queryKey: ["team-members", selectedTeam?.id],
+    queryFn: async () => {
+      if (!selectedTeam?.id) return { members: [] };
+      const response = await fetch(`/api/team/${selectedTeam.id}/members`);
+      if (!response.ok) throw new Error("Failed to fetch members");
+      return response.json();
+    },
+    enabled: status === "authenticated" && !!selectedTeam?.id,
+  });
 
   // 내 인벤토리 조회
   const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({

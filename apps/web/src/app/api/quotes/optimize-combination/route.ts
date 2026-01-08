@@ -304,7 +304,7 @@ export async function POST(request: NextRequest) {
 
     // 동일 벤더 제약조건 확인
     if (globalConstraints?.requireSameVendor) {
-      const vendorIds = new Set(optimizedItems.map((item) => item.selectedVendorId));
+      const vendorIds = new Set(optimizedItems.map((item: any) => item.selectedVendorId));
       if (vendorIds.size > 1) {
         constraintViolations.push("동일 벤더 제약조건 미충족");
       }
@@ -312,7 +312,7 @@ export async function POST(request: NextRequest) {
 
     // 평균 납기 계산
     const leadTimes = optimizedItems
-      .map((item) => item.leadTime)
+      .map((item: any) => item.leadTime)
       .filter((lt) => lt !== undefined) as number[];
     const averageLeadTime =
       leadTimes.length > 0

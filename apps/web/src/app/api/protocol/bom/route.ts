@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
 
     // 매칭된 제품들의 가격 정보 조회
     const matchedProductIds = bomItems
-      .filter((item) => item.productId)
-      .map((item) => item.productId!);
+      .filter((item: any) => item.productId)
+      .map((item: any) => item.productId!);
 
     const products = await db.product.findMany({
       where: { id: { in: matchedProductIds } },
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
         description: `프로토콜에서 자동 생성된 BOM (${reagents.length}개 항목, ${experimentRounds}회 실험 기준)`,
         items: {
           create: bomItems
-            .filter((item) => item.productId) // 제품이 매칭된 항목만 추가
-            .map((item, index) => {
+            .filter((item: any) => item.productId) // 제품이 매칭된 항목만 추가
+            .map((item: any, index: number) => {
               // 타입 에러 수정: productMap.get()의 반환 타입이 제대로 추론되지 않아 타입 캐스팅 추가
               const product = productMap.get(item.productId!) as any;
               const vendor = product?.vendors?.[0];
@@ -153,12 +153,12 @@ export async function POST(request: NextRequest) {
     });
 
     // 매칭되지 않은 항목들도 반환
-    const unmatchedItems = bomItems.filter((item) => !item.productId);
+    const unmatchedItems = bomItems.filter((item: any) => !item.productId);
 
     return NextResponse.json({
       quote,
       unmatchedItems,
-      message: `BOM이 생성되었습니다. ${bomItems.filter((i) => i.productId).length}개 항목이 자동 매칭되었고, ${unmatchedItems.length}개 항목은 수동으로 추가해주세요.`,
+      message: `BOM이 생성되었습니다. ${bomItems.filter((i: any) => i.productId).length}개 항목이 자동 매칭되었고, ${unmatchedItems.length}개 항목은 수동으로 추가해주세요.`,
     });
   } catch (error: any) {
     console.error("Error creating BOM:", error);

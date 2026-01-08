@@ -89,7 +89,7 @@ export async function PATCH(
     }
 
     // 트랜잭션으로 주문 상태 변경 및 인벤토리 등록
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: any) => {
       // 1. 주문 상태 업데이트
       const updateData: {
         status: typeof newStatus;
@@ -132,7 +132,7 @@ export async function PATCH(
 
       if (newStatus === "DELIVERED" && order.items.length > 0) {
         // 각 주문 품목을 인벤토리에 등록
-        const inventoryData = order.items.map((item) => ({
+        const inventoryData = order.items.map((item: any) => ({
           userId: order.userId,
           orderId: order.id,
           orderItemId: item.id,
@@ -175,7 +175,7 @@ export async function PATCH(
         orderNumber: order.orderNumber,
         deliveredDate: new Date().toLocaleDateString("ko-KR"),
         itemCount: order.items.length,
-        items: order.items.map((item) => ({
+        items: order.items.map((item: any) => ({
           name: item.name,
           quantity: item.quantity,
           brand: item.brand || undefined,
