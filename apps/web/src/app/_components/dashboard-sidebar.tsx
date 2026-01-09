@@ -23,6 +23,7 @@ import {
   X,
   Receipt,
   CreditCard,
+  Upload,
 } from "lucide-react";
 
 interface NavItem {
@@ -69,6 +70,11 @@ const navItems: NavItem[] = [
     icon: Package,
   },
   {
+    title: "대량 임포트",
+    href: "/dashboard/inventory/import",
+    icon: Upload,
+  },
+  {
     title: "공유 링크",
     href: "/dashboard/shared-links",
     icon: Link2,
@@ -101,6 +107,7 @@ const bottomNavItems: NavItem[] = [
     title: "청구 및 구독",
     href: "/billing",
     icon: CreditCard,
+  Upload,
   },
   {
     title: "설정",
