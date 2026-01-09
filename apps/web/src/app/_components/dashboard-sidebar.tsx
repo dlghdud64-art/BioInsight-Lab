@@ -107,7 +107,6 @@ const bottomNavItems: NavItem[] = [
     title: "청구 및 구독",
     href: "/billing",
     icon: CreditCard,
-  Upload,
   },
   {
     title: "설정",
