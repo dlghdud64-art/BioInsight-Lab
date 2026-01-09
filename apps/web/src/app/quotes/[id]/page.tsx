@@ -79,6 +79,7 @@ export default function QuoteDetailPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orderForm, setOrderForm] = useState({
+    grantId: "",
     expectedDelivery: "",
     paymentMethod: "",
     notes: "",

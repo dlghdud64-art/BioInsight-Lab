@@ -1243,6 +1243,7 @@ model Order {
   userId         String
   quoteId        String      @unique // 하나의 견적에 하나의 주문만 가능
   organizationId String?
+  grantId        String?     // 연구비 과제 ID (Grant)
   orderNumber    String      @unique // 주문번호 (ORD-YYYYMMDD-XXXX)
   totalAmount    Int         // 총 주문 금액 (KRW)
   status         OrderStatus @default(ORDERED)
@@ -1257,12 +1258,14 @@ model Order {
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   quote           Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   organization    Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  grant           Grant?              @relation(fields: [grantId], references: [id], onDelete: SetNull)
   purchaseRequest PurchaseRequest?    @relation("PurchaseRequestOrder") // 역방향 relation (PurchaseRequest.orderId -> Order.id)
   items           OrderItem[]
   budgetTransaction UserBudgetTransaction?
 
   @@index([userId])
   @@index([quoteId])
+  @@index([grantId])
   @@index([organizationId])
   @@index([status])
   @@index([createdAt])
@@ -1387,6 +1390,7 @@ model Team {
   // Relations
   members          TeamMember[]
   purchaseRequests PurchaseRequest[]
+  grants           Grant[]
 
   @@index([name])
 }
@@ -1489,4 +1493,31 @@ model CartItem {
   @@index([cartId])
   @@index([productId])
   @@index([catalogNumber])
+}
+
+// =====================================================
+// 연구비 과제 관리 (Grant Management)
+// =====================================================
+
+// 연구비 과제 (Grant)
+model Grant {
+  id              String    @id @default(cuid())
+  teamId          String?   // 어느 팀/랩의 과제인지
+  name            String    // 과제명 (예: "삼성전자 산학과제")
+  totalAmount     Int       // 총 예산 (KRW)
+  remainingAmount Int       // 잔액 (KRW)
+  startDate       DateTime? // 과제 시작일
+  endDate         DateTime? // 과제 종료일
+  description     String?   @db.Text // 과제 설명
+  isActive        Boolean   @default(true) // 활성 상태
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  orders Order[] // 이 과제로 구매한 주문들
+
+  @@index([teamId])
+  @@index([isActive])
+  @@index([remainingAmount])
 }

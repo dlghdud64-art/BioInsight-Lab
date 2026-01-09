@@ -13,19 +13,17 @@ function generateOrderNumber(): string {
 }
 
 /**
- * 주문 생성 API (Grant 지원 버전)
+ * 주문 생성 API
  * POST /api/orders
  *
- * Body: { quoteId, grantId?, shippingAddress?, notes?, expectedDelivery? }
+ * Body: { quoteId, shippingAddress?, notes? }
  *
  * 트랜잭션 흐름:
  * 1. 견적 검증 (본인 소유, COMPLETED 상태)
- * 2-A. grantId가 있으면 → Grant 잔액 확인 및 차감
- * 2-B. grantId가 없으면 → UserBudget 잔액 확인 및 차감 (기존 로직)
- * 3. 주문 생성 (grantId 연결)
- * 4. 견적 상태 변경 (PURCHASED)
- *
- * 💰 핵심: Grant 차감 시 마이너스 통장 방지 (Atomic Transaction)
+ * 2. 예산 체크 (잔액 >= 주문금액)
+ * 3. 주문 생성
+ * 4. 예산 차감
+ * 5. 견적 상태 변경 (PURCHASED)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { quoteId, grantId, shippingAddress, notes, expectedDelivery } = body;
+    const { quoteId, shippingAddress, notes, expectedDelivery } = body;
 
     if (!quoteId) {
       return NextResponse.json(
@@ -101,94 +99,21 @@ export async function POST(request: NextRequest) {
         throw new Error("INVALID_AMOUNT");
       }
 
-      // 2. 예산/Grant 차감 로직
-      let budgetInfo: any = null;
-      let grantInfo: any = null;
+      // 2. 예산 체크
+      const budget = await tx.userBudget.findFirst({
+        where: {
+          userId: session.user.id,
+          isActive: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
 
-      if (grantId) {
-        // 2-A. Grant를 사용한 결제
-        const grant = await tx.grant.findUnique({
-          where: { id: grantId },
-        });
+      if (!budget) {
+        throw new Error("NO_BUDGET");
+      }
 
-        if (!grant) {
-          throw new Error("GRANT_NOT_FOUND");
-        }
-
-        if (!grant.isActive) {
-          throw new Error("GRANT_NOT_ACTIVE");
-        }
-
-        // 💰 핵심: 잔액 확인 (마이너스 통장 방지)
-        if (grant.remainingAmount < totalAmount) {
-          throw new Error("INSUFFICIENT_GRANT_BUDGET");
-        }
-
-        // Grant 잔액 차감
-        const updatedGrant = await tx.grant.update({
-          where: { id: grantId },
-          data: {
-            remainingAmount: grant.remainingAmount - totalAmount,
-          },
-        });
-
-        grantInfo = {
-          id: updatedGrant.id,
-          name: updatedGrant.name,
-          totalAmount: updatedGrant.totalAmount,
-          remainingAmount: updatedGrant.remainingAmount,
-          deducted: totalAmount,
-        };
-      } else {
-        // 2-B. UserBudget을 사용한 결제 (기존 로직)
-        const budget = await tx.userBudget.findFirst({
-          where: {
-            userId: session.user.id,
-            isActive: true,
-          },
-          orderBy: { createdAt: "desc" },
-        });
-
-        if (!budget) {
-          throw new Error("NO_BUDGET");
-        }
-
-        if (budget.remainingAmount < totalAmount) {
-          throw new Error("INSUFFICIENT_BUDGET");
-        }
-
-        // Budget 잔액 차감
-        const balanceBefore = budget.remainingAmount;
-        const balanceAfter = balanceBefore - totalAmount;
-
-        await tx.userBudget.update({
-          where: { id: budget.id },
-          data: {
-            usedAmount: budget.usedAmount + totalAmount,
-            remainingAmount: balanceAfter,
-          },
-        });
-
-        // 예산 거래 내역 기록
-        await tx.userBudgetTransaction.create({
-          data: {
-            budgetId: budget.id,
-            orderId: null, // 주문 ID는 아래에서 생성 후 연결
-            type: "DEBIT",
-            amount: totalAmount,
-            description: `주문 예정 - ${quote.title}`,
-            balanceBefore,
-            balanceAfter,
-          },
-        });
-
-        budgetInfo = {
-          id: budget.id,
-          name: budget.name,
-          totalAmount: budget.totalAmount,
-          usedAmount: budget.usedAmount + totalAmount,
-          remainingAmount: balanceAfter,
-        };
+      if (budget.remainingAmount < totalAmount) {
+        throw new Error("INSUFFICIENT_BUDGET");
       }
 
       // 3. 주문 생성
@@ -198,7 +123,6 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           quoteId: quote.id,
           organizationId: quote.organizationId,
-          grantId: grantId || null, // 🔑 Grant 연결
           orderNumber,
           totalAmount,
           status: OrderStatus.ORDERED,
@@ -220,25 +144,35 @@ export async function POST(request: NextRequest) {
         },
         include: {
           items: true,
-          grant: true,
         },
       });
 
-      // UserBudget 사용 시 거래 내역에 orderId 업데이트
-      if (budgetInfo) {
-        await tx.userBudgetTransaction.updateMany({
-          where: {
-            budgetId: budgetInfo.id,
-            description: `주문 예정 - ${quote.title}`,
-          },
-          data: {
-            orderId: order.id,
-            description: `주문 ${orderNumber} - ${quote.title}`,
-          },
-        });
-      }
+      // 4. 예산 차감
+      const balanceBefore = budget.remainingAmount;
+      const balanceAfter = balanceBefore - totalAmount;
 
-      // 4. 견적 상태 변경
+      await tx.userBudget.update({
+        where: { id: budget.id },
+        data: {
+          usedAmount: budget.usedAmount + totalAmount,
+          remainingAmount: balanceAfter,
+        },
+      });
+
+      // 예산 거래 내역 기록
+      await tx.userBudgetTransaction.create({
+        data: {
+          budgetId: budget.id,
+          orderId: order.id,
+          type: "DEBIT",
+          amount: totalAmount,
+          description: `주문 ${orderNumber} - ${quote.title}`,
+          balanceBefore,
+          balanceAfter,
+        },
+      });
+
+      // 5. 견적 상태 변경
       await tx.quote.update({
         where: { id: quoteId },
         data: {
@@ -248,8 +182,13 @@ export async function POST(request: NextRequest) {
 
       return {
         order,
-        budget: budgetInfo,
-        grant: grantInfo,
+        budget: {
+          id: budget.id,
+          name: budget.name,
+          totalAmount: budget.totalAmount,
+          usedAmount: budget.usedAmount + totalAmount,
+          remainingAmount: balanceAfter,
+        },
       };
     });
 
@@ -271,10 +210,7 @@ export async function POST(request: NextRequest) {
         orderNumber: result.order.orderNumber,
         quoteId,
         totalAmount: result.order.totalAmount,
-        grantId: result.grant?.id,
-        grantName: result.grant?.name,
-        grantRemaining: result.grant?.remainingAmount,
-        budgetRemaining: result.budget?.remainingAmount,
+        budgetRemaining: result.budget.remainingAmount,
       },
       ipAddress,
       userAgent,
@@ -287,7 +223,6 @@ export async function POST(request: NextRequest) {
       message: "주문이 성공적으로 생성되었습니다.",
       order: result.order,
       budget: result.budget,
-      grant: result.grant,
     });
   } catch (error: any) {
     console.error("Error creating order:", error);
@@ -314,18 +249,6 @@ export async function POST(request: NextRequest) {
       },
       INSUFFICIENT_BUDGET: {
         message: "예산이 부족합니다. 잔액을 확인해주세요.",
-        status: 400,
-      },
-      GRANT_NOT_FOUND: {
-        message: "연구비 과제를 찾을 수 없습니다.",
-        status: 404,
-      },
-      GRANT_NOT_ACTIVE: {
-        message: "비활성화된 과제입니다.",
-        status: 400,
-      },
-      INSUFFICIENT_GRANT_BUDGET: {
-        message: "과제 예산이 부족합니다. 잔액을 확인해주세요.",
         status: 400,
       },
     };
@@ -379,13 +302,6 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               title: true,
-            },
-          },
-          grant: {
-            select: {
-              id: true,
-              name: true,
-              remainingAmount: true,
             },
           },
           items: true,

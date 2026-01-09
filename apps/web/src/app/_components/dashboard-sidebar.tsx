@@ -60,6 +60,11 @@ const navItems: NavItem[] = [
     icon: DollarSign,
   },
   {
+    title: "과제 관리",
+    href: "/dashboard/grants",
+    icon: DollarSign,
+  },
+  {
     title: "조직 관리",
     href: "/dashboard/organizations",
     icon: Building2,
