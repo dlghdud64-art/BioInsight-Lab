@@ -1345,21 +1345,22 @@ model UserBudgetTransaction {
 
 // 사용자 인벤토리 (배송 완료 시 자동 등록)
 model UserInventory {
-  id            String    @id @default(cuid())
-  userId        String
-  orderId       String?   // 연결된 주문 ID
-  orderItemId   String?   // 연결된 주문 품목 ID
-  productName   String    // 제품명
-  brand         String?   // 브랜드
-  catalogNumber String?   // 카탈로그 번호
-  quantity      Int       @default(1) // 현재 수량
-  unit          String?   @default("ea") // 단위
-  location      String    @default("미지정") // 보관 위치
-  status        String    @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
-  notes         String?   @db.Text
-  receivedAt    DateTime  @default(now()) // 입고일
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  orderId          String?   // 연결된 주문 ID
+  orderItemId      String?   // 연결된 주문 품목 ID
+  productName      String    // 제품명
+  brand            String?   // 브랜드
+  catalogNumber    String?   // 카탈로그 번호
+  quantity         Int       @default(1) // 현재 수량
+  unit             String?   @default("ea") // 단위
+  location         String    @default("미지정") // 보관 위치
+  status           String    @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
+  restockRequested Boolean   @default(false) // 재입고 알림 요청 플래그
+  notes            String?   @db.Text
+  receivedAt       DateTime  @default(now()) // 입고일
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1368,6 +1369,7 @@ model UserInventory {
   @@index([orderId])
   @@index([status])
   @@index([receivedAt])
+  @@index([restockRequested])
 }
 
 // =====================================================

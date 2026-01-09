@@ -26,6 +26,8 @@ import {
   Box,
   Calendar,
   Loader2,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
@@ -48,6 +50,7 @@ interface UserInventory {
   notes: string | null;
   receivedAt: string;
   orderId: string | null;
+  restockRequested?: boolean;
   userId?: string;
   user?: {
     id: string;
@@ -269,6 +272,41 @@ export default function InventoryPage() {
     reorderMutation.mutate(inventory);
   };
 
+  // 재입고 알림 토글 mutation (Simple Restock System)
+  const restockToggleMutation = useMutation({
+    mutationFn: async (inventoryId: string) => {
+      const response = await fetch(`/api/user-inventory/${inventoryId}/restock-toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to toggle restock notification");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["user-inventories"] });
+      toast({
+        title: data.message,
+        description: data.data.restockRequested
+          ? "재고가 들어오면 알려드리겠습니다."
+          : "재입고 알림이 해제되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "재입고 알림 설정 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRestockToggle = (inventoryId: string) => {
+    restockToggleMutation.mutate(inventoryId);
+  };
+
   if (status === "loading" || isLoadingAll) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -382,6 +420,7 @@ export default function InventoryPage() {
                               updateQuantityMutation.mutate({ id: inventory.id, quantity })
                             }
                             onReorder={handleReorder}
+                            onRestockToggle={handleRestockToggle}
                             isReordering={reorderingInventoryIds.has(inventory.id)}
                             isAddedToCart={addedToCartIds.has(inventory.id)}
                           />
@@ -439,6 +478,7 @@ export default function InventoryPage() {
                         updateQuantityMutation.mutate({ id: inventory.id, quantity })
                       }
                       onReorder={handleReorder}
+                      onRestockToggle={handleRestockToggle}
                       isReordering={reorderingInventoryIds.has(inventory.id)}
                       isAddedToCart={addedToCartIds.has(inventory.id)}
                     />
@@ -507,6 +547,7 @@ function InventoryCard({
   onLocationClick,
   onQuantityUpdate,
   onReorder,
+  onRestockToggle,
   isReordering = false,
   isAddedToCart = false,
 }: {
@@ -514,6 +555,7 @@ function InventoryCard({
   onLocationClick: (inventory: UserInventory) => void;
   onQuantityUpdate: (quantity: number) => void;
   onReorder: (inventory: UserInventory) => void;
+  onRestockToggle: (inventoryId: string) => void;
   isReordering?: boolean;
   isAddedToCart?: boolean;
 }) {
@@ -659,44 +701,70 @@ function InventoryCard({
               )}
             </Button>
           ) : (
-            <div className="flex gap-2">
-              <Button
-                variant={isLocationMissing ? "default" : "outline"}
-                onClick={() => onLocationClick(inventory)}
-                className={`flex-1 ${
-                  isLocationMissing
-                    ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : ""
-                }`}
-                size="sm"
-              >
-                <MapPin className="h-4 w-4 mr-1" />
-                {isLocationMissing ? "위치 설정" : "위치"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => onReorder(inventory)}
-                disabled={isReordering || isAddedToCart}
-                className="flex-1 disabled:opacity-75"
-                size="sm"
-              >
-                {isReordering ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    처리 중
-                  </>
-                ) : isAddedToCart ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                    담김
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    주문
-                  </>
-                )}
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  variant={isLocationMissing ? "default" : "outline"}
+                  onClick={() => onLocationClick(inventory)}
+                  className={`flex-1 ${
+                    isLocationMissing
+                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                      : ""
+                  }`}
+                  size="sm"
+                >
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {isLocationMissing ? "위치 설정" : "위치"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => onReorder(inventory)}
+                  disabled={isReordering || isAddedToCart}
+                  className="flex-1 disabled:opacity-75"
+                  size="sm"
+                >
+                  {isReordering ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      처리 중
+                    </>
+                  ) : isAddedToCart ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                      담김
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-4 w-4 mr-1" />
+                      주문
+                    </>
+                  )}
+                </Button>
+              </div>
+              {(isLowStock || isOutOfStock) && (
+                <Button
+                  variant={inventory.restockRequested ? "default" : "outline"}
+                  onClick={() => onRestockToggle(inventory.id)}
+                  className={`w-full ${
+                    inventory.restockRequested
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : ""
+                  }`}
+                  size="sm"
+                >
+                  {inventory.restockRequested ? (
+                    <>
+                      <Bell className="h-4 w-4 mr-1" />
+                      알림 받는 중
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="h-4 w-4 mr-1" />
+                      재입고 알림 받기
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </div>
