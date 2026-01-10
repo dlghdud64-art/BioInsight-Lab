@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const { title, description, items } = validation.data;
 
     // Calculate total amount
-    const totalAmount = items.reduce((sum, item) => sum + ((item.unitPrice || 0) * item.quantity), 0);
+    const totalAmount = items.reduce((sum: number, item) => sum + ((item.unitPrice || 0) * item.quantity), 0);
 
     // Create quote with items
     const quote = await db.quote.create({

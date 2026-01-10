@@ -80,7 +80,7 @@ export async function PUT(
     });
 
     // totalAmount 업데이트
-    const totalAmount = items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+    const totalAmount = items.reduce((sum: number, item) => sum + (item.lineTotal || 0), 0);
     await db.quoteList.update({
       where: { id },
       data: { totalAmount: totalAmount || null },

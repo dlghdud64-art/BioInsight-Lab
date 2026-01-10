@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 총 절감 금액 계산
-    const currentTotal = items.reduce((sum, item) => {
+    const currentTotal = items.reduce((sum: number, item) => {
       // 실제 가격은 API에서 다시 조회해야 하지만, 여기서는 간단히 처리
       return sum;
     }, 0);

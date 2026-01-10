@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
       .filter((lt) => lt !== undefined) as number[];
     const averageLeadTime =
       leadTimes.length > 0
-        ? leadTimes.reduce((sum, lt) => sum + lt, 0) / leadTimes.length
+        ? leadTimes.reduce((sum: number, lt) => sum + lt, 0) / leadTimes.length
         : undefined;
 
     const result: OptimizedCombination = {

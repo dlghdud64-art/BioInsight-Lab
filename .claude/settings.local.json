@@ -32,7 +32,8 @@
       "Bash(timeout 360 npm run build)",
       "Bash(tee:*)",
       "Bash(npm ls:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(grep:*)"
     ]
   },
   "git": {

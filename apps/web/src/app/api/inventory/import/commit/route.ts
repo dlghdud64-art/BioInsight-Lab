@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { fileCache } from "@/lib/cache/file-cache";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 🔥 Bulk Processing with Transaction
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
       for (const row of rows) {
         const rowNumber = row._rowNumber || 0;
 

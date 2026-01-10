@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
             snapshot: item.snapshot || null,
           })),
         },
-        totalAmount: items.reduce((sum, item) => sum + (item.lineTotal || 0), 0) || null,
+        totalAmount: items.reduce((sum: number, item) => sum + (item.lineTotal || 0), 0) || null,
       },
       include: {
         items: true,

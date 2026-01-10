@@ -125,7 +125,7 @@ export async function PATCH(
       });
 
       // Calculate new total
-      const totalAmount = items.reduce((sum, item) => sum + ((item.unitPrice || 0) * item.quantity), 0);
+      const totalAmount = items.reduce((sum: number, item) => sum + ((item.unitPrice || 0) * item.quantity), 0);
       updateData.totalAmount = totalAmount;
 
       // Create new items
