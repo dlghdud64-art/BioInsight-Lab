@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
@@ -81,9 +81,11 @@ export default function QuoteDetailPage() {
   const [orderForm, setOrderForm] = useState({
     expectedDelivery: "",
     paymentMethod: "",
+    budgetId: "",
     notes: "",
   });
 
+  // 견적서 조회
   const { data: quoteData, isLoading } = useQuery({
     queryKey: ["quote", quoteId],
     queryFn: async () => {
@@ -93,6 +95,24 @@ export default function QuoteDetailPage() {
     },
     enabled: !!quoteId && status === "authenticated",
   });
+
+  // 사용자 예산 목록 조회
+  const { data: budgetsData } = useQuery<{ budgets: any[] }>({
+    queryKey: ["user-budgets"],
+    queryFn: async () => {
+      const response = await fetch("/api/user-budgets");
+      if (!response.ok) throw new Error("Failed to fetch budgets");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  const budgets = budgetsData?.budgets || [];
+  const selectedBudget = budgets.find((b) => b.id === orderForm.budgetId);
+  const quoteTotal = quoteData?.quote?.totalAmount || 0;
+  const expectedRemaining = selectedBudget 
+    ? selectedBudget.remainingAmount - quoteTotal 
+    : null;
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -164,6 +184,7 @@ export default function QuoteDetailPage() {
     mutationFn: async (orderData: {
       expectedDelivery?: string;
       paymentMethod?: string;
+      budgetId?: string;
       notes?: string;
     }) => {
       const response = await fetch("/api/orders", {
@@ -172,6 +193,7 @@ export default function QuoteDetailPage() {
         body: JSON.stringify({
           quoteId,
           expectedDelivery: orderData.expectedDelivery || undefined,
+          budgetId: orderData.budgetId || undefined,
           notes: orderData.notes || (orderData.paymentMethod 
             ? `결제 방식: ${orderData.paymentMethod}${orderData.notes ? `\n\n전달 사항:\n${orderData.notes}` : ""}`
             : orderData.notes || undefined),
@@ -192,6 +214,7 @@ export default function QuoteDetailPage() {
       setOrderForm({
         expectedDelivery: "",
         paymentMethod: "",
+        budgetId: "",
         notes: "",
       });
       toast({
@@ -399,14 +422,6 @@ ${itemLines}
   const userTeamRole = userTeam?.role;
   const isMemberOnly = userTeamRole === "MEMBER";
   const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
-  const statusIconMap = {
-    PENDING: <Clock className="h-4 w-4 text-yellow-500" />,
-    SENT: <CheckCircle2 className="h-4 w-4 text-blue-500" />,
-    RESPONDED: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-    COMPLETED: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-    CANCELLED: <XCircle className="h-4 w-4 text-red-500" />,
-  };
-  const statusIcon = statusIconMap[quoteStatus];
 
   return (
     <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
@@ -432,7 +447,11 @@ ${itemLines}
                   }
                   className="flex items-center gap-1 text-xs md:text-sm"
                 >
-                  {statusIcon}
+                  {quoteStatus === "PENDING" && <Clock className="h-4 w-4 text-yellow-500" />}
+                  {quoteStatus === "SENT" && <CheckCircle2 className="h-4 w-4 text-blue-500" />}
+                  {quoteStatus === "RESPONDED" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                  {quoteStatus === "COMPLETED" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  {quoteStatus === "CANCELLED" && <XCircle className="h-4 w-4 text-red-500" />}
                   {QUOTE_STATUS[quoteStatus]}
                 </Badge>
                 <span className="text-xs md:text-sm text-muted-foreground">
@@ -881,6 +900,60 @@ ${itemLines}
                           />
                         </div>
                         <div className="space-y-2">
+                          <Label htmlFor="budgetId">
+                            결제할 과제를 선택하세요 <span className="text-red-500">*</span>
+                          </Label>
+                          <Select
+                            value={orderForm.budgetId}
+                            onValueChange={(value) =>
+                              setOrderForm({ ...orderForm, budgetId: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="과제를 선택하세요" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {budgets.map((budget) => (
+                                <SelectItem key={budget.id} value={budget.id}>
+                                  {budget.name} (잔액: ₩ {budget.remainingAmount.toLocaleString()})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {selectedBudget && (
+                            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">현재 잔액:</span>
+                                <span className="font-semibold">
+                                  ₩ {selectedBudget.remainingAmount.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm mt-1">
+                                <span className="text-muted-foreground">주문 금액:</span>
+                                <span className="font-semibold text-red-600">
+                                  - ₩ {quoteTotal.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                                <span className="font-medium">예상 잔액:</span>
+                                <span className={cn(
+                                  "font-bold text-lg",
+                                  expectedRemaining !== null && expectedRemaining < 0
+                                    ? "text-red-600"
+                                    : "text-green-600"
+                                )}>
+                                  ₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}
+                                </span>
+                              </div>
+                              {expectedRemaining !== null && expectedRemaining < 0 && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  ⚠️ 예산이 부족합니다
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-2">
                           <Label htmlFor="paymentMethod">
                             결제 방식 <span className="text-muted-foreground text-xs">(선택)</span>
                           </Label>
@@ -922,6 +995,7 @@ ${itemLines}
                               setOrderForm({
                                 expectedDelivery: "",
                                 paymentMethod: "",
+                                budgetId: "",
                                 notes: "",
                               });
                             }}
@@ -931,13 +1005,22 @@ ${itemLines}
                           </Button>
                           <Button
                             onClick={() => {
+                              if (!orderForm.budgetId) {
+                                toast({
+                                  title: "과제를 선택해주세요",
+                                  description: "결제할 과제를 선택해야 합니다",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
                               createOrderMutation.mutate({
                                 expectedDelivery: orderForm.expectedDelivery || undefined,
                                 paymentMethod: orderForm.paymentMethod || undefined,
+                                budgetId: orderForm.budgetId,
                                 notes: orderForm.notes || undefined,
                               });
                             }}
-                            disabled={createOrderMutation.isPending}
+                            disabled={createOrderMutation.isPending || !orderForm.budgetId}
                             className="flex-1 bg-blue-600 hover:bg-blue-700"
                           >
                             {createOrderMutation.isPending ? "처리 중..." : "주문 접수"}

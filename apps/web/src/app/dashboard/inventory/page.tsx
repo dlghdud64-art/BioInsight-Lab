@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,9 @@ import { ko } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MainHeader } from "@/app/_components/main-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { ImportWizard } from "@/components/inventory/import-wizard";
+import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductInventory {
   id: string;
@@ -49,8 +52,14 @@ export default function InventoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
+  const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
+  const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("");
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -132,6 +141,18 @@ export default function InventoryPage() {
   const recommendedInventoryIds = new Set(
     reorderRecommendationsData?.recommendations?.map((r) => r.inventoryId) || []
   );
+
+  // 팀 멤버 조회 (필터용)
+  const { data: membersData } = useQuery({
+    queryKey: ["team-members", selectedTeam?.id],
+    queryFn: async () => {
+      if (!selectedTeam?.id) return { members: [] };
+      const response = await fetch(`/api/team/${selectedTeam.id}/members`);
+      if (!response.ok) return { members: [] };
+      return response.json();
+    },
+    enabled: status === "authenticated" && !!selectedTeam?.id && inventoryView === "team",
+  });
 
   // 재입고 요청 mutation
   const restockRequestMutation = useMutation({
@@ -273,7 +294,7 @@ export default function InventoryPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+        <div className="flex-1 overflow-auto min-w-0 pt-20 md:pt-16">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4 md:mb-6">
@@ -283,37 +304,62 @@ export default function InventoryPage() {
               제품 재고를 관리하고 재주문 시점을 추적합니다.
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                재고 추가
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingInventory ? "재고 수정" : "재고 추가"}
-                </DialogTitle>
-                <DialogDescription>
-                  제품의 현재 재고량과 안전 재고를 설정합니다.
-                </DialogDescription>
-              </DialogHeader>
-              <InventoryForm
-                inventory={editingInventory}
-                onSubmit={(data) => {
-                  createOrUpdateMutation.mutate({
-                    ...data,
-                    id: editingInventory?.id,
-                  });
-                }}
-                onCancel={() => {
-                  setIsDialogOpen(false);
-                  setEditingInventory(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  재고 추가
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingInventory ? "재고 수정" : "재고 추가"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    제품의 현재 재고량과 안전 재고를 설정합니다.
+                  </DialogDescription>
+                </DialogHeader>
+                <InventoryForm
+                  inventory={editingInventory}
+                  onSubmit={(data) => {
+                    createOrUpdateMutation.mutate({
+                      ...data,
+                      id: editingInventory?.id,
+                    });
+                  }}
+                  onCancel={() => {
+                    setIsDialogOpen(false);
+                    setEditingInventory(null);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  일괄 등록
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>인벤토리 일괄 등록</DialogTitle>
+                  <DialogDescription>
+                    엑셀 파일을 업로드하여 여러 제품의 재고를 한 번에 등록합니다.
+                  </DialogDescription>
+                </DialogHeader>
+                <ImportWizard
+                  onSuccess={() => {
+                    setIsImportDialogOpen(false);
+                    queryClient.invalidateQueries({ queryKey: ["inventories"] });
+                    queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {lowStockItems.length > 0 && (
@@ -748,6 +794,7 @@ function InventoryCard({
   onRestockRequest,
   isRestockRequested = false,
   isRequestingRestock = false,
+  isRecommended = false,
 }: {
   inventory: ProductInventory;
   onEdit: () => void;
@@ -755,6 +802,7 @@ function InventoryCard({
   onRestockRequest?: () => void;
   isRestockRequested?: boolean;
   isRequestingRestock?: boolean;
+  isRecommended?: boolean;
 }) {
   const [showUsageDialog, setShowUsageDialog] = useState(false);
   const [usageQuantity, setUsageQuantity] = useState("");
@@ -853,22 +901,24 @@ function InventoryCard({
           </Button>
         )}
 
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <span className="text-muted-foreground">현재 재고:</span>
-            <div className="font-semibold text-lg">
-              {inventory.currentQuantity} {inventory.unit}
-            </div>
-          </div>
-          {inventory.safetyStock !== null && (
-            <div>
-              <span className="text-muted-foreground">안전 재고:</span>
-              <div className="font-medium">
-                {inventory.safetyStock} {inventory.unit}
-              </div>
-            </div>
-          )}
+        {/* 재고 수명 게이지 */}
+        <div className="space-y-2">
+          <div className="text-sm text-muted-foreground">재고 수명</div>
+          <StockLifespanGauge
+            inventoryId={inventory.id}
+            currentQuantity={inventory.currentQuantity}
+            safetyStock={inventory.safetyStock}
+            unit={inventory.unit}
+            onReorder={onRestockRequest}
+          />
         </div>
+
+        {/* 추가 정보 (안전 재고) */}
+        {inventory.safetyStock !== null && (
+          <div className="text-xs text-muted-foreground">
+            안전 재고: {inventory.safetyStock} {inventory.unit}
+          </div>
+        )}
 
         {inventory.location && (
           <div className="text-sm">

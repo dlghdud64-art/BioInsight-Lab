@@ -292,7 +292,7 @@ function SafetySpendPageContent() {
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+          <div className="flex-1 overflow-auto min-w-0 pt-20 md:pt-16">
             <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
               <Skeleton className="h-8 w-64 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -312,7 +312,7 @@ function SafetySpendPageContent() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
+        <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-16">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex items-center justify-between">

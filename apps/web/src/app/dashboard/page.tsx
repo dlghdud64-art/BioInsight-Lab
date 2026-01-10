@@ -28,6 +28,7 @@ import { WidgetGrid } from "@/components/dashboard/widget-grid";
 import { DraggableWidget } from "@/components/dashboard/draggable-widget";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import { ExecutiveDashboard } from "@/components/dashboard/executive-dashboard";
+import { GrantWalletWidget } from "@/components/dashboard/grant-wallet-widget";
 import { Settings, RotateCcw, Save } from "lucide-react";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -187,7 +188,7 @@ export default function DashboardPage() {
       />
       <div className="flex overflow-x-hidden w-full">
         <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-14">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-20 md:pt-16">
           <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-6xl mx-auto w-full">
             {/* 웰컴 섹션 */}
@@ -282,8 +283,14 @@ export default function DashboardPage() {
           <SmartPickWidget />
         </div>
 
-        {/* 구매 내역/예산 요약 카드 */}
+        {/* 구매 내역/예산 요약 카드 및 내 지갑 */}
         <WidgetGrid>
+          {/* 내 지갑 위젯 */}
+          <div className="col-span-1">
+            <GrantWalletWidget />
+          </div>
+          
+          {/* 구매 내역 요약 */}
           {widgets
             .filter((w) => w.id === "purchase-summary" && w.visible)
             .map((widget) => (

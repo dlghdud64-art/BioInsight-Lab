@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { quoteId, shippingAddress, notes, expectedDelivery } = body;
+    const { quoteId, shippingAddress, notes, expectedDelivery, budgetId } = body;
 
     if (!quoteId) {
       return NextResponse.json(
@@ -100,13 +100,17 @@ export async function POST(request: NextRequest) {
       }
 
       // 2. 예산 체크
-      const budget = await tx.userBudget.findFirst({
-        where: {
-          userId: session.user.id,
-          isActive: true,
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      const budget = budgetId
+        ? await tx.userBudget.findUnique({
+            where: { id: budgetId },
+          })
+        : await tx.userBudget.findFirst({
+            where: {
+              userId: session.user.id,
+              isActive: true,
+            },
+            orderBy: { createdAt: "desc" },
+          });
 
       if (!budget) {
         throw new Error("NO_BUDGET");
