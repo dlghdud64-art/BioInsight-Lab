@@ -3,10 +3,11 @@
  * In production, consider using Redis or session storage
  */
 
-interface CachedFile {
+export interface CachedFile {
   rows: any[];
   filename: string;
   timestamp: number;
+  userId?: string;
 }
 
 export const fileCache = new Map<string, CachedFile>();
