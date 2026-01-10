@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { batchEstimateInventoryStatus } from "@/lib/inventory/time-based-estimation";
 
 // =====================================================
 // 타입 정의 (Type Safety 보장)
@@ -148,7 +149,12 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // 5. 응답 데이터 구성
+    // 5. 시간 기반 재고 추정 (Time-Based Estimation)
+    const estimationMap = await db.$transaction(async (tx) => {
+      return await batchEstimateInventoryStatus(tx, userId, items);
+    });
+
+    // 6. 응답 데이터 구성
     const totalPages = Math.ceil(totalCount / limit);
 
     const statusCounts: Record<string, number> = {
@@ -181,10 +187,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        items: items.map((item) => ({
-          ...item,
-          isUnassigned: item.location === "미지정",
-        })),
+        items: items.map((item) => {
+          const estimation = estimationMap.get(item.id);
+          return {
+            ...item,
+            isUnassigned: item.location === "미지정",
+            // 시간 기반 추정 데이터 추가
+            estimation: estimation ? {
+              estimatedStatus: estimation.estimatedStatus,
+              estimatedPercentage: estimation.estimatedPercentage,
+              daysSinceLastPurchase: estimation.daysSinceLastPurchase,
+              averageCycleDays: estimation.averageCycleDays,
+              nextPurchaseDue: estimation.nextPurchaseDue,
+              confidence: estimation.confidence,
+              alertLevel: estimation.alertLevel,
+            } : null,
+          };
+        }),
         pagination: {
           currentPage: page,
           totalPages,
