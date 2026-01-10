@@ -4,6 +4,7 @@
  */
 
 interface CachedFile {
+  userId: string;
   rows: any[];
   filename: string;
   timestamp: number;
