@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { Plus, Wallet, TrendingDown, TrendingUp, Calendar } from "lucide-react";
 
 interface Grant {
@@ -36,6 +36,7 @@ interface GrantSummary {
 }
 
 export default function GrantsPage() {
+  const { toast } = useToast();
   const [grants, setGrants] = useState<Grant[]>([]);
   const [summary, setSummary] = useState<GrantSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,11 @@ export default function GrantsPage() {
       setSummary(data.summary);
     } catch (error) {
       console.error("Error fetching grants:", error);
-      toast.error("과제 목록을 불러오는데 실패했습니다.");
+      toast({
+        title: "오류",
+        description: "과제 목록을 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -74,7 +79,11 @@ export default function GrantsPage() {
     e.preventDefault();
 
     if (!formData.name || !formData.totalAmount) {
-      toast.error("과제명과 총 예산은 필수입니다.");
+      toast({
+        title: "입력 오류",
+        description: "과제명과 총 예산은 필수입니다.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -96,7 +105,10 @@ export default function GrantsPage() {
         throw new Error(error.error || "Failed to create grant");
       }
 
-      toast.success("과제가 성공적으로 등록되었습니다.");
+      toast({
+        title: "등록 완료",
+        description: "과제가 성공적으로 등록되었습니다.",
+      });
       setFormData({
         name: "",
         totalAmount: "",
@@ -108,7 +120,11 @@ export default function GrantsPage() {
       fetchGrants();
     } catch (error: any) {
       console.error("Error creating grant:", error);
-      toast.error(error.message || "과제 등록에 실패했습니다.");
+      toast({
+        title: "오류",
+        description: error.message || "과제 등록에 실패했습니다.",
+        variant: "destructive",
+      });
     }
   };
 
