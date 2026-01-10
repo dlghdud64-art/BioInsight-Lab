@@ -63,6 +63,24 @@ import {
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
+// Status icon helper function (moved outside component to avoid JSX compilation issues)
+function getStatusIcon(status: QuoteStatus) {
+  switch (status) {
+    case "PENDING":
+      return <Clock className="h-4 w-4 text-yellow-500" />;
+    case "SENT":
+      return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
+    case "RESPONDED":
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    case "COMPLETED":
+      return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+    case "CANCELLED":
+      return <XCircle className="h-4 w-4 text-red-500" />;
+    default:
+      return <Clock className="h-4 w-4 text-gray-500" />;
+  }
+}
+
 export default function QuoteDetailPage() {
   const { data: session, status } = useSession();
   const params = useParams();
@@ -399,22 +417,6 @@ ${itemLines}
   const userTeamRole = userTeam?.role;
   const isMemberOnly = userTeamRole === "MEMBER";
   const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "SENT":
-        return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
-      case "RESPONDED":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case "COMPLETED":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case "CANCELLED":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
   const statusIcon = getStatusIcon(quoteStatus);
 
   return (
