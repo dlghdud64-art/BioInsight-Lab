@@ -120,8 +120,8 @@ export async function GET(request: NextRequest) {
     });
 
     // 통계 계산
-    const totalBudget = grants.reduce((sum, g) => sum + g.totalAmount, 0);
-    const totalRemaining = grants.reduce((sum, g) => sum + g.remainingAmount, 0);
+    const totalBudget = grants.reduce((sum: number, g) => sum + g.totalAmount, 0);
+    const totalRemaining = grants.reduce((sum: number, g) => sum + g.remainingAmount, 0);
     const totalUsed = totalBudget - totalRemaining;
 
     logger.info(`Found ${grants.length} grants - Total: ${totalBudget}, Used: ${totalUsed}, Remaining: ${totalRemaining}`);
