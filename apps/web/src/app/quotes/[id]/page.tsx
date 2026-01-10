@@ -191,6 +191,7 @@ export default function QuoteDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       setShowOrderDialog(false);
       setOrderForm({
+        grantId: "",
         expectedDelivery: "",
         paymentMethod: "",
         notes: "",
@@ -930,6 +931,7 @@ ${itemLines}
                             onClick={() => {
                               setShowOrderDialog(false);
                               setOrderForm({
+                                grantId: "",
                                 expectedDelivery: "",
                                 paymentMethod: "",
                                 notes: "",

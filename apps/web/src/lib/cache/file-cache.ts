@@ -4,10 +4,11 @@
  */
 
 interface CachedFile {
-  userId: string;
+  userId?: string;
   rows: any[];
   filename: string;
   timestamp: number;
+  uploadedAt?: Date;
 }
 
 export const fileCache = new Map<string, CachedFile>();

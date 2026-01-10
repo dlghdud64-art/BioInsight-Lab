@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Store parsed data in cache
     fileCache.set(fileId, {
+      userId: session.user.id,
       rows,
       filename,
       timestamp: Date.now(),
