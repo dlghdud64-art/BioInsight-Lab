@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, GitCompare, FileText, Check, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 
 const steps = [
   {
@@ -35,7 +36,7 @@ const steps = [
   },
 ];
 
-export function StepNav() {
+function StepNavContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const fromInventory = searchParams?.get("from") === "inventory";
@@ -147,6 +148,32 @@ export function StepNav() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+export function StepNav() {
+  return (
+    <Suspense fallback={<StepNavFallback />}>
+      <StepNavContent />
+    </Suspense>
+  );
+}
+
+function StepNavFallback() {
+  return (
+    <nav className="w-full bg-white border-b border-gray-300 fixed top-14 left-0 right-0 z-[45] shadow-md" style={{ minHeight: '64px' }}>
+      <div className="container mx-auto px-3 md:px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center gap-2 py-4">
+            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-[2px] w-6 bg-gray-200" />
+            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-[2px] w-6 bg-gray-200" />
+            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
           </div>
         </div>
       </div>

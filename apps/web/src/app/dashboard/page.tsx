@@ -34,17 +34,19 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DASHBOARD_TABS = [
-  { id: "quotes", label: "견적" },
-  { id: "favorites", label: "즐겨찾기" },
-  { id: "recent", label: "최근" },
-  { id: "activity", label: "활동" },
-  { id: "inventory", label: "재고" },
+  { id: "workspace", label: "📋 내 업무", description: "할 일과 진행 현황" },
+  { id: "analytics", label: "📊 재무 현황", description: "예산과 지출 분석" },
 ];
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("quotes");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("dashboard-active-tab") || "workspace";
+    }
+    return "workspace";
+  });
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
   const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
   const [customStartDate, setCustomStartDate] = useState<string>("");
@@ -56,6 +58,13 @@ export default function DashboardPage() {
   useEffect(() => {
     loadLayout();
   }, [loadLayout]);
+
+  // 탭 상태 저장
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dashboard-active-tab", activeTab);
+    }
+  }, [activeTab]);
 
   // [저장] 버튼 클릭 핸들러
   const handleSaveLayout = () => {
@@ -83,7 +92,7 @@ export default function DashboardPage() {
     });
   };
 
-  // 견적 목록 조회
+  // 견적 목록 조회 (Workspace 탭에서만)
   const { data: quotesData, isLoading: quotesLoading } = useQuery({
     queryKey: ["quotes"],
     queryFn: async () => {
@@ -91,7 +100,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: status === "authenticated" && activeTab === "workspace",
   });
 
   // 즐겨찾기 조회
@@ -116,7 +125,7 @@ export default function DashboardPage() {
     enabled: status === "authenticated",
   });
 
-  // 구매 내역/예산 요약 조회
+  // 구매 내역/예산 요약 조회 (Analytics 탭에서만)
   const { data: purchaseSummary, isLoading: purchaseSummaryLoading, error: purchaseSummaryError } = useQuery({
     queryKey: ["purchase-summary", purchasePeriod, customStartDate, customEndDate],
     queryFn: async () => {
@@ -128,7 +137,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
       return response.json();
     },
-    enabled: status === "authenticated" && (purchasePeriod !== "custom" || (customStartDate !== "" && customEndDate !== "")),
+    enabled: status === "authenticated" && activeTab === "analytics" && (purchasePeriod !== "custom" || (customStartDate !== "" && customEndDate !== "")),
   });
 
   // 최근 활동 로그 조회

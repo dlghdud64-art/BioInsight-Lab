@@ -59,8 +59,6 @@ export function BioInsightSocialProofSection() {
           </div>
         </div>
       </div>
-      
     </section>
   );
 }
-
