@@ -943,6 +943,7 @@ export default function DashboardPage() {
               </DraggableWidget>
             ))}
         </WidgetGrid>
+        </div>
 
         {/* 탭 바 - 칩 스타일 (모바일) */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
