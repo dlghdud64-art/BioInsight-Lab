@@ -73,19 +73,31 @@ export function sanitizeDate(value: any): Date | null {
 /**
  * 행 데이터를 검증합니다
  */
-export function validateRow(row: any, rowIndex: number): { valid: boolean; errors: string[] } {
+export function validateRow(row: any, requiredFields?: string[]): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  // 제품명 필수
-  const productName = sanitizeText(row.productName || row["제품명"] || row["Product Name"]);
-  if (!productName) {
-    errors.push(`행 ${rowIndex + 1}: 제품명이 필요합니다`);
-  }
-  
-  // 수량 검증
-  const quantity = sanitizeQuantity(row.quantity || row["수량"] || row["Quantity"]);
-  if (quantity === null || quantity <= 0) {
-    errors.push(`행 ${rowIndex + 1}: 유효한 수량이 필요합니다`);
+  // requiredFields가 배열인 경우 (기존 호출 방식)
+  if (Array.isArray(requiredFields)) {
+    requiredFields.forEach((field) => {
+      if (!row[field]) {
+        errors.push(`${field}가 필요합니다`);
+      }
+    });
+  } else {
+    // rowIndex가 숫자인 경우 (새로운 호출 방식)
+    const rowIndex = typeof requiredFields === "number" ? requiredFields : 0;
+    
+    // 제품명 필수
+    const productName = sanitizeText(row.productName || row["제품명"] || row["Product Name"]);
+    if (!productName) {
+      errors.push(`행 ${rowIndex + 1}: 제품명이 필요합니다`);
+    }
+    
+    // 수량 검증
+    const quantity = sanitizeQuantity(row.quantity || row["수량"] || row["Quantity"]);
+    if (quantity === null || quantity <= 0) {
+      errors.push(`행 ${rowIndex + 1}: 유효한 수량이 필요합니다`);
+    }
   }
   
   return {
