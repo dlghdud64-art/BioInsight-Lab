@@ -105,7 +105,7 @@ export default function SafetyManagerPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-20 md:pt-16">
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             {/* 헤더 */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

@@ -1,9 +1,13 @@
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
 import Link from "next/link";
 import { Search, GitCompare, FileText, ArrowRight } from "lucide-react";
+import { useState } from "react";
 
-// FlowSection 컴포넌트 - 업무툴 스타일
+// FlowSection 컴포넌트 - Horizontal Steps (가로 한 줄)
 export function FlowSection() {
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+
   const steps = [
     {
       number: 1,
@@ -12,6 +16,7 @@ export function FlowSection() {
       href: "/test/search",
       icon: Search,
       color: "indigo",
+      image: "🔍", // 실제로는 이미지 URL로 교체 가능
     },
     {
       number: 2,
@@ -20,6 +25,7 @@ export function FlowSection() {
       href: "/test/compare",
       icon: GitCompare,
       color: "emerald",
+      image: "⚖️",
     },
     {
       number: 3,
@@ -28,59 +34,75 @@ export function FlowSection() {
       href: "/test/quote",
       icon: FileText,
       color: "blue",
+      image: "📄",
     },
   ];
 
+  const activeStep = steps[hoveredStep !== null ? hoveredStep - 1 : 0];
+
   return (
-    <section id="flow-section" className="py-6 md:py-12 lg:py-16 border-b border-slate-200 bg-white scroll-mt-14">
+    <section id="flow-section" className="py-6 md:py-10 border-b border-slate-200 bg-white scroll-mt-14">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="text-center mb-6 md:mb-12 lg:mb-16">
-          <h2 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 mb-2 md:mb-4">
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-2">
             간단한 3단계 프로세스
           </h2>
-          <p className="text-xs md:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xs md:text-sm text-slate-600 max-w-2xl mx-auto">
             검색부터 견적 요청까지, 모든 과정을 한 곳에서 처리하세요
           </p>
         </div>
-        <div className="grid gap-2 md:gap-6 lg:gap-8 grid-cols-3 md:grid-cols-3 w-full">
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
-            const colorClasses = {
-              indigo: "bg-indigo-500 border-indigo-500 text-indigo-600",
-              emerald: "bg-emerald-500 border-emerald-500 text-emerald-600",
-              blue: "bg-blue-500 border-blue-500 text-blue-600",
-            };
-            const hoverClasses = {
-              indigo: "hover:border-indigo-400 hover:bg-indigo-50/50",
-              emerald: "hover:border-emerald-400 hover:bg-emerald-50/50",
-              blue: "hover:border-blue-400 hover:bg-blue-50/50",
-            };
-            
-            return (
-              <Link key={step.href} href={step.href} className="relative z-10">
-                <Card className={`h-full border-2 border-slate-200 bg-white rounded-lg md:rounded-xl ${hoverClasses[step.color as keyof typeof hoverClasses]} transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 group`}>
-                  <CardContent className="flex flex-col items-center text-center p-2 md:p-6 lg:p-8 h-full">
-                    <div className={`relative mb-1.5 md:mb-4 w-8 h-8 md:w-16 md:h-16 rounded-xl md:rounded-2xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                      <Icon className="h-3.5 w-3.5 md:h-7 md:w-7 text-white" strokeWidth={2} />
-                      <div className={`absolute -top-1 -right-1 md:-top-2 md:-right-2 w-4 h-4 md:w-7 md:h-7 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-[10px] md:text-xs font-bold text-white`}>
+
+        {/* Horizontal Steps Bar */}
+        <div className="relative">
+          <div className="flex items-center justify-center gap-2 md:gap-4 lg:gap-6 mb-6 md:mb-8">
+            {steps.map((step, idx) => {
+              const Icon = step.icon;
+              const isLast = idx === steps.length - 1;
+              const colorClasses = {
+                indigo: "bg-indigo-500 text-indigo-600 border-indigo-500",
+                emerald: "bg-emerald-500 text-emerald-600 border-emerald-500",
+                blue: "bg-blue-500 text-blue-600 border-blue-500",
+              };
+              
+              return (
+                <div key={step.href} className="flex items-center">
+                  <Link
+                    href={step.href}
+                    onMouseEnter={() => setHoveredStep(step.number)}
+                    onMouseLeave={() => setHoveredStep(null)}
+                    className="group flex flex-col items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-all hover:bg-slate-50"
+                  >
+                    <div className={`relative w-10 h-10 md:w-12 md:h-12 rounded-lg ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                      <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" strokeWidth={2} />
+                      <div className={`absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-[10px] font-bold text-white`}>
                         {step.number}
                       </div>
                     </div>
-                    <div className="space-y-1 md:space-y-3 flex-1 w-full">
-                      <h3 className="text-[11px] md:text-xl font-bold text-slate-900 leading-tight">{step.title}</h3>
-                      <p className="hidden md:block text-base leading-relaxed text-slate-700">
+                    <div className="text-center">
+                      <h3 className="text-xs md:text-sm font-semibold text-slate-900">{step.title}</h3>
+                      <p className="hidden md:block text-[10px] text-slate-600 mt-0.5 max-w-[120px]">
                         {step.description}
                       </p>
                     </div>
-                    <div className="hidden md:flex mt-6 items-center gap-2 text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
-                      시작하기
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+                  </Link>
+                  {!isLast && (
+                    <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-slate-400 mx-1 md:mx-2 flex-shrink-0" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Interactive Image Display (hover 시 변경) */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-md h-48 md:h-64 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border-2 border-slate-200 flex items-center justify-center transition-all duration-300">
+              <div className="text-center p-6">
+                <div className="text-6xl md:text-8xl mb-4">{activeStep.image}</div>
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">{activeStep.title}</h3>
+                <p className="text-sm text-slate-600">{activeStep.description}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

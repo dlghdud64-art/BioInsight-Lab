@@ -223,11 +223,24 @@ export default function PurchasesPage() {
   };
 
   const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
-    const safeAmount = amount ?? 0;
-    if (currency === "KRW") {
-      return `₩${safeAmount.toLocaleString()}`;
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return "0원";
     }
-    return `${currency} ${safeAmount.toLocaleString()}`;
+    const safeAmount = Number(amount);
+    if (isNaN(safeAmount) || safeAmount < 0) {
+      return "0원";
+    }
+    if (currency === "KRW") {
+      return `₩${safeAmount.toLocaleString("ko-KR")}`;
+    }
+    try {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency: currency,
+      }).format(safeAmount);
+    } catch (error) {
+      return `${currency} ${safeAmount.toLocaleString("ko-KR")}`;
+    }
   };
 
   // 구매 내역 리스트 조회

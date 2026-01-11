@@ -66,9 +66,14 @@ const config: Config = {
           "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-4px)" },
           "20%, 40%, 60%, 80%": { transform: "translateX(4px)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         shake: "shake 0.5s ease-in-out infinite",
+        marquee: "marquee 60s linear infinite",
       },
     },
   },

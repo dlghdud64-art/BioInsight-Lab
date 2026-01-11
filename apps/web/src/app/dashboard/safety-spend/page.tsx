@@ -193,11 +193,25 @@ function SafetySpendPageContent() {
   };
   const unmappedRecords = unmappedData?.records || [];
 
-  const formatCurrency = (amount: number, currency: string = "KRW") => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+  const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return "0원";
+    }
+    const safeAmount = Number(amount);
+    if (isNaN(safeAmount) || safeAmount < 0) {
+      return "0원";
+    }
+    if (currency === "KRW") {
+      return `₩${safeAmount.toLocaleString("ko-KR")}`;
+    }
+    try {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency: currency,
+      }).format(safeAmount);
+    } catch (error) {
+      return `${currency} ${safeAmount.toLocaleString("ko-KR")}`;
+    }
   };
 
   const handleMatch = (recordId: string, productId: string) => {
@@ -292,7 +306,7 @@ function SafetySpendPageContent() {
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0 pt-20 md:pt-16">
+          <div className="flex-1 overflow-auto min-w-0">
             <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
               <Skeleton className="h-8 w-64 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -312,7 +326,7 @@ function SafetySpendPageContent() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-16">
+        <div className="flex-1 overflow-auto min-w-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex items-center justify-between">

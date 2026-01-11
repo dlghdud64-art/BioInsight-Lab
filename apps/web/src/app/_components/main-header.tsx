@@ -70,42 +70,47 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
     <header className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {/* 좌측: 메뉴 아이콘 (모바일) 또는 로고 */}
-        <div className="flex items-center gap-3 md:gap-6 min-w-0">
+        <div className="flex items-center gap-2 md:gap-6 min-w-0 flex-1 overflow-hidden">
           {showMenuIcon && onMenuClick ? (
             <button
               onClick={onMenuClick}
-              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors"
+              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-10"
               aria-label="메뉴 열기"
             >
               <Menu className="h-5 w-5" />
             </button>
           ) : null}
+          
+          {/* 로고 - 항상 표시, flex-shrink-0으로 크기 고정, 우측 마진으로 간격 확보 */}
+          <Link 
+            href="/" 
+            className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative"
+          >
+            <BioInsightLogo showText={false} />
+          </Link>
+          
+          {/* 페이지 타이틀 - 모바일에서만 표시, truncate로 말줄임표 처리, flex-1로 남은 공간 차지 */}
           {pageTitle ? (
-            <h1 className="text-base md:text-lg font-semibold text-gray-900 truncate md:hidden">
+            <h1 className="text-sm md:text-lg font-semibold text-gray-900 truncate md:hidden flex-1 min-w-0 relative z-10">
               {pageTitle}
             </h1>
-          ) : (
-            <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-              <BioInsightLogo />
-            </Link>
-          )}
-          {pageTitle && (
-            <Link href="/" className="hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-              <BioInsightLogo />
-            </Link>
-          )}
+          ) : null}
+          
+          {/* 데스크탑 로고 텍스트 */}
+          <div className="hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+            <BioInsightLogo showText={true} />
+          </div>
         </div>
 
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => scrollToId("pricing")}
+          <Link
+            href="/pricing"
             className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
-            aria-label="요금 및 도입 섹션으로 이동"
+            aria-label="요금 및 도입 페이지로 이동"
           >
             요금 & 도입
-          </button>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -119,9 +124,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {/* Group 1: 소싱 파이프라인 (Sourcing Pipeline) */}
-              <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
-                구매 검토
+              {/* Group 1: 구매 도구 */}
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground px-2 py-1.5">
+                구매 도구
               </DropdownMenuLabel>
               <DropdownMenuItem asChild>
                 <Link href="/test/search" className="flex items-center gap-2">
@@ -141,27 +146,21 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   <span>견적 요청</span>
                 </Link>
               </DropdownMenuItem>
-
+              
               <DropdownMenuSeparator />
-
-              {/* Group 2: 랩 운영 (Lab Operations) */}
-              <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
-                자산 관리
+              
+              {/* Group 2: 관리 도구 */}
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground px-2 py-1.5">
+                관리 도구
               </DropdownMenuLabel>
               <DropdownMenuItem asChild>
-                <Link href="/inventory" className="flex items-center gap-2">
+                <Link href="/dashboard/inventory" className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
                   <span>재고 관리</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/protocol/bom" className="flex items-center gap-2">
-                  <FlaskConical className="h-4 w-4" />
-                  <span>프로토콜 분석</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/search" className="flex items-center gap-2">
+                <Link href="/dashboard/safety" className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
                   <span>안전 관리</span>
                 </Link>
