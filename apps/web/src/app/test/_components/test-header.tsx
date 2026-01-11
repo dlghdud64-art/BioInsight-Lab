@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
@@ -24,10 +25,10 @@ export function TestHeader() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
-            <a href="/docs/PRD.md" target="_blank" rel="noopener noreferrer">
+            <Link href="/docs/PRD.md" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-4 w-4 mr-2" />
               문서 보기
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

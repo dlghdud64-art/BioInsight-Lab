@@ -98,14 +98,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => scrollToId("pricing")}
+          <Link
+            href="/pricing"
             className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
-            aria-label="요금 및 도입 섹션으로 이동"
+            aria-label="요금 및 도입 페이지로 이동"
           >
             요금 & 도입
-          </button>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
