@@ -232,7 +232,7 @@ export async function GET(
     }
 
     // 유사도 순으로 정렬하고 상위 N개만 반환
-    alternatives.sort((a, b) => b.similarity - a.similarity);
+    alternatives.sort((a: any, b: any) => b.similarity - a.similarity);
     const topAlternatives = alternatives.slice(0, limit);
 
     return NextResponse.json({

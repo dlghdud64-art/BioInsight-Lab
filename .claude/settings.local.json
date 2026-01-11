@@ -1,7 +1,4 @@
 {
-  "git": {
-    "useWorktrees": false
-  },
   "permissions": {
     "allow": [
       "Bash(npx prisma migrate:*)",
@@ -28,7 +25,22 @@
       "Bash(git checkout:*)",
       "Bash(git reset:*)",
       "Bash(git pull:*)",
-      "Read(C:/Users/young/ai-biocompare/**)"
+      "Read(C:/Users/young/ai-biocompare/**)",
+      "Bash(npx eslint:*)",
+      "Bash(awk:*)",
+      "Bash(npx:*)",
+      "Bash(node check-braces.js:*)",
+      "Bash(node find-issue.js:*)",
+      "Bash(node:*)",
+      "Bash(for file in admin/quotes/[id]/items/route.ts protocol/bom/route.ts quote-lists/route.ts quote-lists/[id]/items/route.ts quotes/from-cart/route.ts quotes/optimize-combination/route.ts user-inventory/route.ts vendor-requests/[token]/response/route.ts)",
+      "Bash(do sed -i 's/\\\\.map\\(\\(item\\) =>/\\\\.map\\(\\(item: any\\) =>/g' \"$file\")",
+      "Bash(done)",
+      "Bash(xargs:*)",
+      "Bash(timeout 180 npm run build)",
+      "Bash(tee:*)"
     ]
+  },
+  "git": {
+    "useWorktrees": false
   }
 }

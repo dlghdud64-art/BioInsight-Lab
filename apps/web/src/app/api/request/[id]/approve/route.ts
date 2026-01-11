@@ -53,7 +53,7 @@ export async function POST(
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.OWNER && teamMember.role !== TeamRole.ADMIN)) {
+    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.ADMIN)) {
       return NextResponse.json(
         { error: "Forbidden: Only OWNER or ADMIN can approve requests" },
         { status: 403 }
@@ -61,7 +61,7 @@ export async function POST(
     }
 
     // 트랜잭션으로 승인 및 Order 생성
-    const result = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx: any) => {
       // 1. 구매 요청 승인
       const approvedRequest = await tx.purchaseRequest.update({
         where: { id: requestId },

@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
       expired: 0,
     };
 
-    statusStats.forEach((stat) => {
+    statusStats.forEach((stat: any) => {
       stats[stat.status as keyof typeof stats] = stat._count.id;
       stats.total += stat._count.id;
     });
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        quotes: quotes.map((quote) => ({
+        quotes: quotes.map((quote: any) => ({
           id: quote.id,
           quoteNumber: quote.quoteNumber,
           title: quote.title,

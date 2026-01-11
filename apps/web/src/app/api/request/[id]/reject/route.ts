@@ -52,7 +52,7 @@ export async function POST(
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.OWNER && teamMember.role !== TeamRole.ADMIN)) {
+    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.ADMIN)) {
       return NextResponse.json(
         { error: "Forbidden: Only OWNER or ADMIN can reject requests" },
         { status: 403 }

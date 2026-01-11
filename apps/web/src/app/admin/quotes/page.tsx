@@ -378,7 +378,7 @@ export default function AdminQuotesPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {quoteDetailData.items.map((item) => (
+                          {quoteDetailData.items.map((item: any) => (
                             <TableRow key={item.id}>
                               <TableCell className="font-medium">
                                 {item.name || "품명 없음"}

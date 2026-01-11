@@ -58,7 +58,7 @@ export async function PATCH(
 
     // 트랜잭션으로 모든 품목 업데이트
     const updatedItems = await db.$transaction(
-      items.map((item) =>
+      items.map((item: any) =>
         db.quoteListItem.update({
           where: { id: item.id },
           data: {

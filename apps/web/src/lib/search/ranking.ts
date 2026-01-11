@@ -219,7 +219,7 @@ export function sortByRelevance<T extends ProductForScoring>(
   }));
 
   // Sort by score descending, then by name ascending
-  scored.sort((a, b) => {
+  scored.sort((a: any, b: any) => {
     if (b.score !== a.score) return b.score - a.score;
     return a.product.name.localeCompare(b.product.name);
   });

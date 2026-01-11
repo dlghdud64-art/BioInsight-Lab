@@ -40,7 +40,7 @@ export async function GET(
       select: { userId: true },
     });
 
-    const memberIds = teamMembers.map((m) => m.userId);
+    const memberIds = teamMembers.map((m: any) => m.userId);
 
     // 팀 멤버들의 인벤토리 조회
     const inventories = await db.userInventory.findMany({

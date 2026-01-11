@@ -142,10 +142,10 @@ export async function GET(request: NextRequest) {
       })),
       dailyStats: Object.entries(dailyGrouped)
         .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date)),
+        .sort((a: any, b: any) => a.date.localeCompare(b.date)),
       hourlyStats: Object.entries(hourlyGrouped)
         .map(([hour, count]) => ({ hour: parseInt(hour), count }))
-        .sort((a, b) => a.hour - b.hour),
+        .sort((a: any, b: any) => a.hour - b.hour),
     });
   } catch (error) {
     console.error("Error fetching activity log stats:", error);

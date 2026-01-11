@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     ];
 
     const filteredRequests = status && status !== "ALL"
-      ? mockRequests.filter((r) => r.status === status)
+      ? mockRequests.filter((r: any) => r.status === status)
       : mockRequests;
 
     return NextResponse.json({

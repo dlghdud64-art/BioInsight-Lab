@@ -158,30 +158,30 @@ export async function GET(req: NextRequest) {
       total: 0,
     };
 
-    stats.forEach((stat) => {
+    stats.forEach((stat: any) => {
       const count = stat._count.id;
       statusCounts[stat.status] = count;
       statusCounts.total += count;
     });
 
     const locations = locationGroups
-      .map((loc) => ({
+      .map((loc: any) => ({
         name: loc.location,
         count: loc._count.id,
         isUnassigned: loc.location === "미지정",
       }))
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         if (a.isUnassigned) return -1;
         if (b.isUnassigned) return 1;
         return a.name.localeCompare(b.name, "ko");
       });
 
-    const unassignedCount = locations.find((l) => l.isUnassigned)?.count || 0;
+    const unassignedCount = locations.find((l: any) => l.isUnassigned)?.count || 0;
 
     return NextResponse.json({
       success: true,
       data: {
-        items: items.map((item) => ({
+        items: items.map((item: any) => ({
           ...item,
           isUnassigned: item.location === "미지정",
         })),

@@ -92,7 +92,7 @@ export async function generateCollaborativeRecommendations(
     });
 
     // 유사도 순으로 정렬
-    similarities.sort((a, b) => b.similarity - a.similarity);
+    similarities.sort((a: any, b: any) => b.similarity - a.similarity);
 
     // 추천 제품 점수 계산
     const productScores = new Map<string, { score: number; purchaseCount: number }>();
@@ -202,7 +202,7 @@ export async function generateContextBasedRecommendations(
     } else if (categoryPreferences.size > 0) {
       // 가장 선호하는 카테고리 사용
       const topCategory = Array.from(categoryPreferences.entries())
-        .sort((a, b) => b[1] - a[1])[0][0];
+        .sort((a: any, b: any) => b[1] - a[1])[0][0];
       where.category = topCategory;
     }
 

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
 
         // Quote Items 생성 (QuoteListItem 사용)
         items: {
-          create: aiResult.items.map((item, index) => ({
+          create: aiResult.items.map((item: any, index: number) => ({
             name: item.name,
             catalogNumber: item.catalogNumber,
             unitPrice: item.price,

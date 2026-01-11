@@ -65,7 +65,7 @@ export const useDashboardWidgets = create<DashboardWidgetsState>()((set, get) =>
     set((state) => {
       const widgetMap = new Map(state.widgets.map((w) => [w.id, w]));
       const newWidgets = widgetIds
-        .map((id, index) => {
+        .map((id, index: number) => {
           const widget = widgetMap.get(id);
           return widget ? { ...widget, order: index } : null;
         })
@@ -78,7 +78,7 @@ export const useDashboardWidgets = create<DashboardWidgetsState>()((set, get) =>
 
       return {
         widgets: [...newWidgets, ...hiddenWidgets].sort(
-          (a, b) => a.order - b.order
+          (a, b: any) => a.order - b.order
         ),
       };
     });

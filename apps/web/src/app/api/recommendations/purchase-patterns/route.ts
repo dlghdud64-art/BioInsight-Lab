@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       // 제품 정보 포함
       const products = await db.product.findMany({
         where: {
-          id: { in: recommendations.map((r) => r.productId) },
+          id: { in: recommendations.map((r: any) => r.productId) },
         },
         include: {
           vendors: {
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         limit,
       });
       patterns = patterns.concat(
-        purchasePatterns.map((p) => ({ ...p, source: "purchase" }))
+        purchasePatterns.map((p: any) => ({ ...p, source: "purchase" }))
       );
     }
 
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         limit,
       });
       patterns = patterns.concat(
-        quotePatterns.map((p) => ({ ...p, source: "quote" }))
+        quotePatterns.map((p: any) => ({ ...p, source: "quote" }))
       );
     }
 

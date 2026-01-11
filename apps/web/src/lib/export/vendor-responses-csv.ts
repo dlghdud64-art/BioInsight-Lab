@@ -120,7 +120,7 @@ export function exportVendorResponsesToCSV(data: VendorResponsesExportData): str
   // Combine into CSV string
   const csvLines = [
     headers.map(escapeCsvValue).join(","),
-    ...rows.map((row) => row.join(",")),
+    ...rows.map((row: any) => row.join(",")),
   ];
 
   return csvLines.join("\n");

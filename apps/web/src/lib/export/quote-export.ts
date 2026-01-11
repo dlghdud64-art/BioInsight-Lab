@@ -48,7 +48,7 @@ export function exportQuoteAsTSV(data: QuoteExportData): void {
     "비고",
   ];
 
-  const rows = data.items.map((item, index) => {
+  const rows = data.items.map((item, index: number) => {
     const unitPrice = item.unitPrice || 0;
     const lineTotal = item.lineTotal || item.quantity * unitPrice;
 
@@ -66,7 +66,7 @@ export function exportQuoteAsTSV(data: QuoteExportData): void {
   });
 
   const tsvContent = UTF8_BOM + [headers, ...rows]
-    .map((row) => row.join("\t"))
+    .map((row: any) => row.join("\t"))
     .join("\n");
 
   // 다운로드 트리거
@@ -97,7 +97,7 @@ export function exportQuoteAsCSV(data: QuoteExportData): void {
     "비고",
   ];
 
-  const rows = data.items.map((item, index) => {
+  const rows = data.items.map((item, index: number) => {
     const unitPrice = item.unitPrice || 0;
     const lineTotal = item.lineTotal || item.quantity * unitPrice;
 
@@ -115,7 +115,7 @@ export function exportQuoteAsCSV(data: QuoteExportData): void {
   });
 
   const csvContent = UTF8_BOM + [headers, ...rows]
-    .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+    .map((row: any) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
     .join("\n");
 
   // 다운로드 트리거
@@ -186,7 +186,7 @@ export function buildItemsTSV(quoteList: QuoteListExportData): string {
     "비고",
   ];
 
-  const rows = quoteList.items.map((item, index) => {
+  const rows = quoteList.items.map((item, index: number) => {
     const unitPrice = item.selectedPrice || item.unitPrice || 0;
     const amount = item.quantity * unitPrice;
     const vendor = item.selectedVendor || item.vendor || "";
@@ -210,7 +210,7 @@ export function buildItemsTSV(quoteList: QuoteListExportData): string {
   });
 
   const tsvContent = [headers, ...rows]
-    .map((row) => row.join("\t"))
+    .map((row: any) => row.join("\t"))
     .join("\n");
 
   return UTF8_BOM + tsvContent;
@@ -244,7 +244,7 @@ export function buildResponsesCSV(
   });
 
   // 데이터 행 생성
-  const rows = quoteList.items.map((item, index) => {
+  const rows = quoteList.items.map((item, index: number) => {
     const row = [
       String(index + 1),
       item.productName,
@@ -269,7 +269,7 @@ export function buildResponsesCSV(
   });
 
   const csvContent = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${cell}"`).join(","))
+    .map((row: any) => row.map((cell) => `"${cell}"`).join(","))
     .join("\n");
 
   return UTF8_BOM + csvContent;

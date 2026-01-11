@@ -28,7 +28,7 @@ export async function generateCustomExcel(
     const worksheetData: any[][] = [];
 
     // Header row (ERP column names)
-    const headers = mappings.map((m) => m.erpColumnName);
+    const headers = mappings.map((m: any) => m.erpColumnName);
     worksheetData.push(headers);
 
     // Data rows

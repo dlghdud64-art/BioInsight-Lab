@@ -102,7 +102,7 @@ export function filterApplicableLinks(
   return templates
     .filter(template => template.enabled)
     .filter(template => evaluateRules(template.rules as ComplianceLinkRules, product))
-    .sort((a, b) => a.priority - b.priority); // priority 낮을수록 우선순위 높음
+    .sort((a: any, b: any) => a.priority - b.priority); // priority 낮을수록 우선순위 높음
 }
 
 /**
