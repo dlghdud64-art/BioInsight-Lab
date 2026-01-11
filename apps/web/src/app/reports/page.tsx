@@ -449,9 +449,6 @@ export default function ReportsPage() {
           </div>
         </DialogContent>
       </Dialog>
-        </div>
-          </div>
-        </div>
       </div>
     </div>
   );
