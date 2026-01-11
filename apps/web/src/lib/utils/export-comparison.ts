@@ -19,7 +19,7 @@ export function exportComparisonToCSV(products: any[], fields: string[]): string
   });
 
   // CSV 형식으로 변환
-  return rows.map((row: any) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
+  return rows.map((row: any) => row.map((cell: any) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
 }
 
 /**

@@ -115,7 +115,7 @@ export function exportQuoteAsCSV(data: QuoteExportData): void {
   });
 
   const csvContent = UTF8_BOM + [headers, ...rows]
-    .map((row: any) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+    .map((row: any) => row.map((cell: any) => `"${cell.replace(/"/g, '""')}"`).join(","))
     .join("\n");
 
   // 다운로드 트리거
@@ -269,7 +269,7 @@ export function buildResponsesCSV(
   });
 
   const csvContent = [headers, ...rows]
-    .map((row: any) => row.map((cell) => `"${cell}"`).join(","))
+    .map((row: any) => row.map((cell: any) => `"${cell}"`).join(","))
     .join("\n");
 
   return UTF8_BOM + csvContent;
