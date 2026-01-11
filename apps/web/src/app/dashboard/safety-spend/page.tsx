@@ -53,9 +53,7 @@ import {
   FileSpreadsheet,
   FileDown,
 } from "lucide-react";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -302,33 +300,20 @@ function SafetySpendPageContent() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <MainHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <Skeleton className="h-8 w-64 mb-4" />
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-32" />
-                ))}
-              </div>
-            </div>
-          </div>
+      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex items-center justify-between">
                 <PageHeader
                   title="위험물/규제 구매 예산"
@@ -660,9 +645,6 @@ function SafetySpendPageContent() {
                 </>
               )}
             </div>
-          </div>
-        </div>
-      </div>
 
       {/* Unmapped 매칭 다이얼로그 */}
       <Dialog open={isUnmappedDialogOpen} onOpenChange={setIsUnmappedDialogOpen}>

@@ -22,8 +22,6 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MainHeader } from "@/app/_components/main-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { ImportWizard } from "@/components/inventory/import-wizard";
 import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
 import { useToast } from "@/hooks/use-toast";
@@ -290,13 +288,8 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
+    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4 md:mb-6">
           <div>
             <h1 className="text-xl md:text-3xl font-bold">재고 관리</h1>
@@ -779,9 +772,6 @@ export default function InventoryPage() {
             </Card>
           </TabsContent>
         </Tabs>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
