@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -67,7 +67,7 @@ interface TestFlowContextType {
 
 const TestFlowContext = createContext<TestFlowContextType | undefined>(undefined);
 
-export function TestFlowProvider({ children }: { children: ReactNode }) {
+function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
@@ -488,6 +488,73 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
         removeQuoteItem,
         runProtocolAnalysis,
         generateShareLink,
+      }}
+    >
+      {children}
+    </TestFlowContext.Provider>
+  );
+}
+
+// Wrapper with Suspense boundary
+export function TestFlowProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<TestFlowProviderFallback>{children}</TestFlowProviderFallback>}>
+      <TestFlowProviderContent>{children}</TestFlowProviderContent>
+    </Suspense>
+  );
+}
+
+// Fallback component that provides empty context during loading
+function TestFlowProviderFallback({ children }: { children: ReactNode }) {
+  const { productIds, addProduct, removeProduct, clearProducts } = useCompareStore();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return (
+    <TestFlowContext.Provider
+      value={{
+        searchQuery: "",
+        setSearchQuery: () => {},
+        searchCategory: "",
+        setSearchCategory: () => {},
+        searchBrand: "",
+        setSearchBrand: () => {},
+        sortBy: "relevance",
+        setSortBy: () => {},
+        minPrice: undefined,
+        setMinPrice: () => {},
+        maxPrice: undefined,
+        setMaxPrice: () => {},
+        stockStatus: undefined,
+        setStockStatus: () => {},
+        leadTime: undefined,
+        setLeadTime: () => {},
+        grade: undefined,
+        setGrade: () => {},
+        products: [],
+        isSearchLoading: false,
+        queryAnalysis: null,
+        protocolText: "",
+        setProtocolText: () => {},
+        protocolAnalysis: null,
+        isExtracting: false,
+        compareIds: productIds,
+        quoteItems: [],
+        shareLink: null,
+        isGeneratingShareLink: false,
+        gptEnabled: false,
+        setGptEnabled: () => {},
+        hasSearched: false,
+        analysisLoading: false,
+        analysisError: null,
+        runSearch: () => {},
+        toggleCompare: () => {},
+        clearCompare: () => {},
+        addProductToQuote: () => {},
+        updateQuoteItem: () => {},
+        removeQuoteItem: () => {},
+        runProtocolAnalysis: () => {},
+        generateShareLink: async () => {},
       }}
     >
       {children}
