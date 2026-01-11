@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -67,6 +68,7 @@ interface TestFlowContextType {
 const TestFlowContext = createContext<TestFlowContextType | undefined>(undefined);
 
 export function TestFlowProvider({ children }: { children: ReactNode }) {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
   const [searchBrand, setSearchBrand] = useState<string>("");
@@ -82,10 +84,33 @@ export function TestFlowProvider({ children }: { children: ReactNode }) {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [gptEnabled, setGptEnabled] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  
+  const [queryParamInitialized, setQueryParamInitialized] = useState(false);
+
   const { productIds, addProduct, removeProduct, clearProducts } = useCompareStore();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // URL query parameter에서 검색어를 읽어서 자동으로 검색 시작 (재고에서 재구매 버튼으로 진입한 경우)
+  useEffect(() => {
+    if (queryParamInitialized) return;
+
+    const qParam = searchParams?.get("q");
+    const fromParam = searchParams?.get("from");
+
+    if (qParam && fromParam === "inventory") {
+      // 재고에서 왔고 검색어가 있으면 자동으로 검색 실행
+      setSearchQuery(qParam);
+      setQueryParamInitialized(true);
+
+      // 검색 트리거 (약간의 지연을 두어 state가 완전히 설정되도록 함)
+      setTimeout(() => {
+        setHasSearched(true);
+        setSearchTrigger(1);
+      }, 100);
+    } else {
+      setQueryParamInitialized(true);
+    }
+  }, [searchParams, queryParamInitialized]);
 
   // 검색 결과
   const { data: searchData, isLoading: isSearchLoading, error: searchError } = useQuery({

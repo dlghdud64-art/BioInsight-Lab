@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, GitCompare, FileText, Check } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Search, GitCompare, FileText, Check, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -37,6 +37,9 @@ const steps = [
 
 export function StepNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const fromInventory = searchParams?.get("from") === "inventory";
+
   // 현재 경로가 어떤 step에 해당하는지 확인 (하위 경로 포함)
   const getCurrentStep = () => {
     for (const step of steps) {
@@ -56,6 +59,13 @@ export function StepNav() {
     <nav className="w-full bg-white border-b border-gray-300 fixed top-14 left-0 right-0 z-[45] shadow-md" style={{ minHeight: '64px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
+          {/* 재고에서 온 경우 안내 메시지 */}
+          {fromInventory && currentStep === 1 && (
+            <div className="py-2 flex items-center justify-center gap-2 text-xs text-blue-700 bg-blue-50 border-b border-blue-100">
+              <Package className="h-3.5 w-3.5" />
+              <span className="font-medium">재고 관리에서 시작된 구매 프로세스입니다</span>
+            </div>
+          )}
           {/* 모바일: 숫자만 원형 배지 */}
           <div className="flex items-center justify-center gap-2 py-4 md:hidden">
             {steps.map((step, index) => {
