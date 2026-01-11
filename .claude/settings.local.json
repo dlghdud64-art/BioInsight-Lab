@@ -37,7 +37,9 @@
       "Bash(done)",
       "Bash(xargs:*)",
       "Bash(timeout 180 npm run build)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(git fetch:*)",
+      "Bash(grep:*)"
     ]
   },
   "git": {
