@@ -10,9 +10,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu, LayoutDashboard } from "lucide-react";
+import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu, LayoutDashboard, Package, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface MainHeaderProps {
@@ -117,6 +119,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
+              {/* Group 1: 소싱 파이프라인 (Sourcing Pipeline) */}
+              <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
+                구매 검토
+              </DropdownMenuLabel>
               <DropdownMenuItem asChild>
                 <Link href="/test/search" className="flex items-center gap-2">
                   <Search className="h-4 w-4" />
@@ -135,6 +141,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   <span>견적 요청</span>
                 </Link>
               </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {/* Group 2: 랩 운영 (Lab Operations) */}
+              <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
+                자산 관리
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href="/inventory" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>재고 관리</span>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/protocol/bom" className="flex items-center gap-2">
                   <FlaskConical className="h-4 w-4" />
@@ -143,8 +162,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/search" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span>일반 검색</span>
+                  <Shield className="h-4 w-4" />
+                  <span>안전 관리</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

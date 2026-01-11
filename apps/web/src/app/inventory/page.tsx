@@ -26,6 +26,7 @@ import {
   Box,
   Calendar,
   Loader2,
+  Search,
 } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
@@ -269,6 +270,12 @@ export default function InventoryPage() {
     reorderMutation.mutate(inventory);
   };
 
+  const handleSearchAlternative = (inventory: UserInventory) => {
+    // 제품명을 쿼리 파라미터로 전달하여 검색 페이지로 이동
+    const searchQuery = encodeURIComponent(inventory.productName);
+    router.push(`/test/search?q=${searchQuery}&from=inventory&inventoryId=${inventory.id}`);
+  };
+
   if (status === "loading" || isLoadingAll) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -382,6 +389,7 @@ export default function InventoryPage() {
                               updateQuantityMutation.mutate({ id: inventory.id, quantity })
                             }
                             onReorder={handleReorder}
+                            onSearchAlternative={handleSearchAlternative}
                             isReordering={reorderingInventoryIds.has(inventory.id)}
                             isAddedToCart={addedToCartIds.has(inventory.id)}
                           />
@@ -403,6 +411,7 @@ export default function InventoryPage() {
                               updateQuantityMutation.mutate({ id: inventory.id, quantity })
                             }
                             onReorder={handleReorder}
+                            onSearchAlternative={handleSearchAlternative}
                             isReordering={reorderingInventoryIds.has(inventory.id)}
                             isAddedToCart={addedToCartIds.has(inventory.id)}
                           />
@@ -439,6 +448,7 @@ export default function InventoryPage() {
                         updateQuantityMutation.mutate({ id: inventory.id, quantity })
                       }
                       onReorder={handleReorder}
+                      onSearchAlternative={handleSearchAlternative}
                       isReordering={reorderingInventoryIds.has(inventory.id)}
                       isAddedToCart={addedToCartIds.has(inventory.id)}
                     />
@@ -507,6 +517,7 @@ function InventoryCard({
   onLocationClick,
   onQuantityUpdate,
   onReorder,
+  onSearchAlternative,
   isReordering = false,
   isAddedToCart = false,
 }: {
@@ -514,6 +525,7 @@ function InventoryCard({
   onLocationClick: (inventory: UserInventory) => void;
   onQuantityUpdate: (quantity: number) => void;
   onReorder: (inventory: UserInventory) => void;
+  onSearchAlternative: (inventory: UserInventory) => void;
   isReordering?: boolean;
   isAddedToCart?: boolean;
 }) {
@@ -633,31 +645,42 @@ function InventoryCard({
         </div>
 
         {/* 액션 버튼 */}
-        <div className="pt-2 border-t border-gray-100">
+        <div className="pt-2 border-t border-gray-100 space-y-2">
           {isOutOfStock ? (
-            <Button
-              onClick={() => onReorder(inventory)}
-              disabled={isReordering || isAddedToCart}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
-              size="sm"
-            >
-              {isReordering ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  처리 중...
-                </>
-              ) : isAddedToCart ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  장바구니 담김
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  재주문하기
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                onClick={() => onReorder(inventory)}
+                disabled={isReordering || isAddedToCart}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
+                size="sm"
+              >
+                {isReordering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    처리 중...
+                  </>
+                ) : isAddedToCart ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    장바구니 담김
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    재주문하기
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => onSearchAlternative(inventory)}
+                variant="outline"
+                className="w-full"
+                size="sm"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                대체 제품 검색
+              </Button>
+            </>
           ) : (
             <div className="flex gap-2">
               <Button
@@ -711,6 +734,7 @@ function TeamInventoryCard({
   onLocationClick,
   onQuantityUpdate,
   onReorder,
+  onSearchAlternative,
   isReordering = false,
   isAddedToCart = false,
 }: {
@@ -718,6 +742,7 @@ function TeamInventoryCard({
   onLocationClick: (inventory: UserInventory) => void;
   onQuantityUpdate: (quantity: number) => void;
   onReorder: (inventory: UserInventory) => void;
+  onSearchAlternative: (inventory: UserInventory) => void;
   isReordering?: boolean;
   isAddedToCart?: boolean;
 }) {
@@ -852,31 +877,42 @@ function TeamInventoryCard({
         </div>
 
         {/* 액션 버튼 */}
-        <div className="pt-2 border-t border-gray-100">
+        <div className="pt-2 border-t border-gray-100 space-y-2">
           {isOutOfStock ? (
-            <Button
-              onClick={() => onReorder(inventory)}
-              disabled={isReordering || isAddedToCart}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
-              size="sm"
-            >
-              {isReordering ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  처리 중...
-                </>
-              ) : isAddedToCart ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  장바구니 담김
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  재주문하기
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                onClick={() => onReorder(inventory)}
+                disabled={isReordering || isAddedToCart}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
+                size="sm"
+              >
+                {isReordering ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    처리 중...
+                  </>
+                ) : isAddedToCart ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    장바구니 담김
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    재주문하기
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => onSearchAlternative(inventory)}
+                variant="outline"
+                className="w-full"
+                size="sm"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                대체 제품 검색
+              </Button>
+            </>
           ) : (
             <div className="flex gap-2">
               <Button
