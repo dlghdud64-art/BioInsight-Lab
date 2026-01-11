@@ -30,8 +30,13 @@ interface NavItem {
   badge?: string;
 }
 
+interface SidebarGroup {
+  label: string;
+  items: NavItem[];
+}
+
 // 메뉴 그룹 정의
-const sidebarGroups = [
+const sidebarGroups: SidebarGroup[] = [
   {
     label: "구매 및 예산 (PURCHASE)",
     items: [
