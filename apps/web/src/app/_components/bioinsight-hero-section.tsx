@@ -13,7 +13,7 @@ export function BioInsightHeroSection() {
   }, []);
 
   return (
-    <section className="relative border-b border-slate-200 bg-gradient-to-b from-white via-blue-50/30 to-white py-12 md:py-20 lg:py-28 overflow-hidden">
+    <section className="relative border-b border-slate-200 bg-gradient-to-b from-white via-blue-50/30 to-white py-8 md:py-12 lg:py-16 overflow-hidden">
       {/* 배경 장식 요소 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100/20 rounded-full blur-3xl"></div>
@@ -25,14 +25,14 @@ export function BioInsightHeroSection() {
           {/* 왼쪽: 텍스트 콘텐츠 */}
           <div className="space-y-6 md:space-y-8 text-center lg:text-left">
             <div className="space-y-4 md:space-y-6">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-slate-900">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-slate-900">
                 구매가 곧 관리가 됩니다.
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                   (Buying is Managing)
                 </span>
               </h1>
-              <p className="text-lg md:text-xl lg:text-2xl leading-relaxed text-slate-700 max-w-2xl mx-auto lg:mx-0">
+              <p className="text-base md:text-lg leading-relaxed text-slate-700 max-w-2xl mx-auto lg:mx-0">
                 주문 내역 기반 자동 인벤토리 등록부터, AI 재구매 예측까지.
                 <br />
                 <span className="font-semibold text-slate-900">연구에만 집중하세요.</span>
