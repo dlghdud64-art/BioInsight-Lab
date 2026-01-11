@@ -55,7 +55,7 @@ export async function GET(
     });
 
     return NextResponse.json({
-      members: members.map((m) => ({
+      members: members.map((m: any) => ({
         id: m.id,
         userId: m.user.id,
         name: m.user.name,
@@ -108,7 +108,7 @@ export async function PATCH(
       },
     });
 
-    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.OWNER)) {
+    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.ADMIN)) {
       return NextResponse.json(
         { error: "Forbidden: Only ADMIN or OWNER can change roles" },
         { status: 403 }
@@ -128,7 +128,7 @@ export async function PATCH(
     }
 
     // OWNER 역할은 변경 불가
-    if (targetMember.role === TeamRole.OWNER) {
+    if (targetMember.role === TeamRole.ADMIN) {
       return NextResponse.json(
         { error: "Cannot change OWNER role" },
         { status: 400 }
@@ -205,7 +205,7 @@ export async function DELETE(
       },
     });
 
-    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.OWNER)) {
+    if (!userMember || (userMember.role !== TeamRole.ADMIN && userMember.role !== TeamRole.ADMIN)) {
       return NextResponse.json(
         { error: "Forbidden: Only ADMIN or OWNER can remove members" },
         { status: 403 }
@@ -225,7 +225,7 @@ export async function DELETE(
     }
 
     // OWNER는 제거 불가
-    if (targetMember.role === TeamRole.OWNER) {
+    if (targetMember.role === TeamRole.ADMIN) {
       return NextResponse.json(
         { error: "Cannot remove OWNER" },
         { status: 400 }

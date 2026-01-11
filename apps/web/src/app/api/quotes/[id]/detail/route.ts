@@ -151,7 +151,7 @@ export async function GET(
         },
 
         // 품목 리스트
-        items: quote.items.map((item, index) => ({
+        items: quote.items.map((item: any, index: number) => ({
           seq: index + 1,
           id: item.id,
           productId: item.productId,

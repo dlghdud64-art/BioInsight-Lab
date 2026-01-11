@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // 유효기간 계산 (endDate가 있으면 D-day 계산)
     const now = new Date();
-    const budgetsWithDays = budgets.map((budget) => {
+    const budgetsWithDays = budgets.map((budget: any) => {
       let daysRemaining: number | null = null;
       if (budget.endDate) {
         const endDate = new Date(budget.endDate);

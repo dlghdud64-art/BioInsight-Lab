@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { QUOTE_STATUS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -1061,7 +1062,8 @@ ${itemLines}
             </>
           )}
           {quote.status === "COMPLETED" && !quote.order && !canCheckout && (
-                <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+            <>
+              <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
                   <DialogTrigger asChild>
                     <Button
                       variant="secondary"
@@ -1138,7 +1140,6 @@ ${itemLines}
                     </div>
                   </DialogContent>
                 </Dialog>
-              )}
             </>
           )}
           {quote.status === "COMPLETED" && quote.order && (

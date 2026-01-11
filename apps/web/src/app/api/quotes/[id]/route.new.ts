@@ -130,7 +130,7 @@ export async function PATCH(
 
       // Create new items
       updateData.items = {
-        create: items.map((item, index) => ({
+        create: items.map((item: any, index: number) => ({
           productId: item.productId || null,
           lineNumber: index + 1,
           name: item.name,

@@ -17,7 +17,7 @@ export function handleApiError(error: unknown, context: string): NextResponse<Ap
     return NextResponse.json(
       {
         error: "Validation failed",
-        details: error.errors.map((e) => ({
+        details: error.errors.map((e: any) => ({
           path: e.path.join("."),
           message: e.message,
         })),

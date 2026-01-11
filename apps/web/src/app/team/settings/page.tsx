@@ -49,7 +49,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const ROLE_LABELS: Record<TeamRole, string> = {
-  OWNER: "소유자",
   ADMIN: "관리자",
   MEMBER: "멤버",
   VIEWER: "조회자",
@@ -95,7 +94,7 @@ export default function TeamSettingsPage() {
 
   const members = membersData?.members || [];
   const currentUserMember = members.find((m: any) => m.userId === session?.user?.id);
-  const isAdmin = currentUserMember?.role === TeamRole.ADMIN || currentUserMember?.role === TeamRole.OWNER;
+  const isAdmin = currentUserMember?.role === TeamRole.ADMIN;
 
   // 초대 코드 생성 (간단한 토큰 기반)
   const inviteCode = currentTeam ? `TEAM-${currentTeam.id.slice(0, 8).toUpperCase()}` : null;
@@ -446,8 +445,8 @@ export default function TeamSettingsPage() {
                     <div className="space-y-3">
                       {members.map((member: any) => {
                         const isCurrentUser = member.userId === session?.user?.id;
-                        const canEdit = isAdmin && !isCurrentUser && member.role !== TeamRole.OWNER;
-                        const canRemove = isAdmin && !isCurrentUser && member.role !== TeamRole.OWNER;
+                        const canEdit = isAdmin && !isCurrentUser;
+                        const canRemove = isAdmin && !isCurrentUser;
 
                         return (
                           <div

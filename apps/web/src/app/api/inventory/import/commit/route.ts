@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
         const errors: string[] = [];
 
         if (error instanceof z.ZodError) {
-          errors.push(...error.errors.map((e) => `${e.path.join(".")}: ${e.message}`));
+          errors.push(...error.errors.map((e: any) => `${e.path.join(".")}: ${e.message}`));
         } else {
           errors.push(error.message || "Unknown error");
         }

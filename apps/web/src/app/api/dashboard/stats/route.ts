@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
         OR: [{ userId }, { organizationId: { in: [] } }],
       },
     });
-    const reorderNeededCount = allInventories.filter((inv) => {
+    const reorderNeededCount = allInventories.filter((inv: any) => {
       if (inv.safetyStock !== null) {
         return inv.currentQuantity <= inv.safetyStock;
       }

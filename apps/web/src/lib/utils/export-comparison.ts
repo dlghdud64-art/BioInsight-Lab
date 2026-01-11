@@ -2,7 +2,7 @@
  * 비교 결과를 CSV 형식으로 내보내기
  */
 export function exportComparisonToCSV(products: any[], fields: string[]): string {
-  const headers = ["항목", ...products.map((p) => p.name || p.id)];
+  const headers = ["항목", ...products.map((p: any) => p.name || p.id)];
   const rows: string[][] = [headers];
 
   // 각 필드에 대해 행 생성
@@ -10,7 +10,7 @@ export function exportComparisonToCSV(products: any[], fields: string[]): string
     const fieldLabel = getFieldLabel(fieldKey);
     const row = [fieldLabel];
 
-    products.forEach((product) => {
+    products.forEach((product: any) => {
       const value = getFieldValue(product, fieldKey);
       row.push(formatValue(value));
     });
@@ -19,14 +19,14 @@ export function exportComparisonToCSV(products: any[], fields: string[]): string
   });
 
   // CSV 형식으로 변환
-  return rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
+  return rows.map((row: any) => row.map((cell: any) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
 }
 
 /**
  * 비교 결과를 TSV 형식으로 내보내기
  */
 export function exportComparisonToTSV(products: any[], fields: string[]): string {
-  const headers = ["항목", ...products.map((p) => p.name || p.id)];
+  const headers = ["항목", ...products.map((p: any) => p.name || p.id)];
   const rows: string[][] = [headers];
 
   // 각 필드에 대해 행 생성
@@ -34,7 +34,7 @@ export function exportComparisonToTSV(products: any[], fields: string[]): string
     const fieldLabel = getFieldLabel(fieldKey);
     const row = [fieldLabel];
 
-    products.forEach((product) => {
+    products.forEach((product: any) => {
       const value = getFieldValue(product, fieldKey);
       row.push(formatValue(value));
     });
@@ -43,7 +43,7 @@ export function exportComparisonToTSV(products: any[], fields: string[]): string
   });
 
   // TSV 형식으로 변환
-  return rows.map((row) => row.join("\t")).join("\n");
+  return rows.map((row: any) => row.join("\t")).join("\n");
 }
 
 /**

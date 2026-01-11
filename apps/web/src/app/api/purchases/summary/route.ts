@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, { vendorName: string; amount: number }>)
     ) as { vendorName: string; amount: number }[])
-      .sort((a, b) => b.amount - a.amount)
+      .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 10);
 
     const topCategories = (Object.values(
@@ -69,14 +69,14 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, { category: string; amount: number }>)
     ) as { category: string; amount: number }[])
-      .sort((a, b) => b.amount - a.amount)
+      .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 10);
 
     logger.info(`Summary: total ${totalAmount}, ${purchases.length} purchases`);
 
     return NextResponse.json({
       totalAmount,
-      byMonth: (Object.values(byMonth) as { yearMonth: string; amount: number }[]).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth)),
+      byMonth: (Object.values(byMonth) as { yearMonth: string; amount: number }[]).sort((a: any, b: any) => a.yearMonth.localeCompare(b.yearMonth)),
       topVendors,
       topCategories,
     });

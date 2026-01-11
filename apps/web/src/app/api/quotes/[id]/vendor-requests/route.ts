@@ -172,8 +172,8 @@ export async function POST(
       emailResults,
       summary: {
         total: vendors.length,
-        emailsSent: emailResults.filter((r) => r.success).length,
-        emailsFailed: emailResults.filter((r) => !r.success).length,
+        emailsSent: emailResults.filter((r: any) => r.success).length,
+        emailsFailed: emailResults.filter((r: any) => !r.success).length,
       },
     }, { status: 201 });
   } catch (error) {

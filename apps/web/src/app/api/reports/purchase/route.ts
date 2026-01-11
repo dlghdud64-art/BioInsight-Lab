@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
     // 월별 데이터 정렬
     const monthlyData = Array.from(monthlyMap.entries())
       .map(([month, amount]) => ({ month, amount }))
-      .sort((a, b) => a.month.localeCompare(b.month));
+      .sort((a: any, b: any) => a.month.localeCompare(b.month));
 
     // 벤더별 데이터
     const vendorData = Array.from(vendorMap.entries())

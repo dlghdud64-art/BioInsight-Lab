@@ -187,8 +187,8 @@ export async function generateOptimizedRecommendations(params: {
 
     // 점수순 정렬 및 필터링 (점수가 0보다 큰 것만)
     return optimizedProducts
-      .filter((p) => p.score > 0)
-      .sort((a, b) => b.score - a.score)
+      .filter((p: any) => p.score > 0)
+      .sort((a: any, b: any) => b.score - a.score)
       .slice(0, limit);
   } catch (error) {
     console.error("Error generating optimized recommendations:", error);
@@ -228,7 +228,7 @@ export async function generateBudgetOptimizedCombination(params: {
 
     // 점수순 정렬
     const sortedProducts = [...optimizedProducts].sort(
-      (a, b) => b.score - a.score
+      (a, b: any) => b.score - a.score
     );
 
     for (const product of sortedProducts) {
@@ -240,7 +240,7 @@ export async function generateBudgetOptimizedCombination(params: {
 
     // 평균 납기일 계산
     const leadTimes = selectedProducts
-      .map((p) => p.minLeadTime)
+      .map((p: any) => p.minLeadTime)
       .filter((lt): lt is number => lt !== undefined);
     const averageLeadTime =
       leadTimes.length > 0

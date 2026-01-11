@@ -60,6 +60,11 @@ export async function POST(request: NextRequest) {
         throw new Error("QUOTE_NOT_FOUND");
       }
 
+      // userId 확인
+      if (!quote.userId) {
+        throw new Error("QUOTE_USER_MISSING");
+      }
+
       // 상태 확인 (COMPLETED 상태만 주문 가능)
       if (quote.status !== QuoteStatus.COMPLETED) {
         throw new Error("QUOTE_NOT_COMPLETED");
@@ -101,6 +106,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: quote.userId, // 견적 소유자
           quoteId: quote.id,
+          orderNumber,
           totalAmount,
           status: OrderStatus.ORDERED,
           shippingAddress,
@@ -130,9 +136,6 @@ export async function POST(request: NextRequest) {
           remainingAmount: {
             decrement: totalAmount,
           },
-          spentAmount: {
-            increment: totalAmount,
-          },
         },
       });
 
@@ -144,6 +147,8 @@ export async function POST(request: NextRequest) {
           amount: -totalAmount,
           type: "ORDER",
           description: `주문 생성: ${orderNumber}`,
+          balanceBefore: budget.remainingAmount,
+          balanceAfter: updatedBudget.remainingAmount,
         },
       });
 

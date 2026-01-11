@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
 
     // 더미 제품 처리
     if (dummyIds.length > 0) {
-      const dummyProductsList = dummyProducts.filter((p) => dummyIds.includes(p.id));
+      const dummyProductsList = dummyProducts.filter((p: any) => dummyIds.includes(p.id));
       products = products.concat(
-        dummyProductsList.map((p) => ({
+        dummyProductsList.map((p: any) => ({
           id: p.id,
           name: p.name,
           brand: p.vendor,

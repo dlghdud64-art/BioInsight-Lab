@@ -184,12 +184,12 @@ export default function MyOrdersPage() {
                             </TableCell>
                             <TableCell>
                               <Badge
-                                className={ORDER_STATUS_COLORS[order.status]}
+                                className={ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}
                                 variant="outline"
                               >
                                 <span className="flex items-center gap-1">
-                                  {ORDER_STATUS_ICONS[order.status]}
-                                  {ORDER_STATUS_LABELS[order.status]}
+                                  {ORDER_STATUS_ICONS[order.status as keyof typeof ORDER_STATUS_ICONS]}
+                                  {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
                                 </span>
                               </Badge>
                             </TableCell>

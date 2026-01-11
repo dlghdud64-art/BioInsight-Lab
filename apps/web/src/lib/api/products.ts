@@ -88,7 +88,7 @@ export async function searchProducts(params: SearchProductsParams) {
           embeddingArray
         )) as Array<{ id: string; similarity: number }>;
         
-        vectorSearchProductIds = vectorResults.map((r) => r.id);
+        vectorSearchProductIds = vectorResults.map((r: any) => r.id);
       }
     } catch (error) {
       // pgvector가 활성화되지 않았거나 에러가 발생한 경우 텍스트 검색만 사용
@@ -234,11 +234,11 @@ export async function searchProducts(params: SearchProductsParams) {
         
         if (exactCatalogMatch) {
           // 정확히 일치하는 제품을 맨 앞으로
-          products = products.filter((p) => p.id !== exactCatalogMatch.id);
+          products = products.filter((p: any) => p.id !== exactCatalogMatch.id);
           products.unshift(exactCatalogMatch);
           
           // 같은 Cat.No를 가진 다른 제품들도 함께 표시
-          const sameCatalogProducts = sampleProducts.filter((p) => 
+          const sameCatalogProducts = sampleProducts.filter((p: any) => 
             p.catalogNumber?.toLowerCase() === lowerQuery && p.id !== exactCatalogMatch.id
           );
           if (sameCatalogProducts.length > 0) {
@@ -246,10 +246,10 @@ export async function searchProducts(params: SearchProductsParams) {
           }
         } else {
           // 부분 일치하는 Cat.No 제품을 우선순위로
-          const catalogMatches = products.filter((p) => 
+          const catalogMatches = products.filter((p: any) => 
             p.catalogNumber?.toLowerCase().includes(lowerQuery)
           );
-          const otherMatches = products.filter((p) => 
+          const otherMatches = products.filter((p: any) => 
             !p.catalogNumber?.toLowerCase().includes(lowerQuery)
           );
           products = [...catalogMatches, ...otherMatches];
@@ -332,7 +332,7 @@ export async function searchProducts(params: SearchProductsParams) {
     
     if (exactCatalogMatch) {
       // 정확히 일치하는 제품을 맨 앞으로
-      products = products.filter((p) => p.id !== exactCatalogMatch.id);
+      products = products.filter((p: any) => p.id !== exactCatalogMatch.id);
       products.unshift(exactCatalogMatch);
       
       // 같은 Cat.No를 가진 다른 제품들도 함께 조회
@@ -362,10 +362,10 @@ export async function searchProducts(params: SearchProductsParams) {
       }
     } else {
       // 부분 일치하는 Cat.No 제품을 우선순위로
-      const catalogMatches = products.filter((p) => 
+      const catalogMatches = products.filter((p: any) => 
         p.catalogNumber?.toLowerCase().includes(lowerQuery)
       );
-      const otherMatches = products.filter((p) => 
+      const otherMatches = products.filter((p: any) => 
         !p.catalogNumber?.toLowerCase().includes(lowerQuery)
       );
       products = [...catalogMatches, ...otherMatches];
@@ -377,7 +377,7 @@ export async function searchProducts(params: SearchProductsParams) {
   const premiumProducts: typeof products = [];
   const regularProducts: typeof products = [];
 
-  products.forEach((product) => {
+  products.forEach((product: any) => {
     const hasPremiumVendor = product.vendors.some((pv: any) => {
       const vendor = pv.vendor;
       return (
@@ -412,14 +412,14 @@ export async function searchProducts(params: SearchProductsParams) {
   // 벡터 검색 결과가 있으면 유사도 순으로 재정렬
   let sortedProducts = [...premiumProducts, ...regularProducts];
   if (vectorSearchProductIds.length > 0 && query && sortBy === "relevance") {
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    const productMap = new Map(products.map((p: any) => [p.id, p]));
     const vectorProducts = vectorSearchProductIds
       .map((id) => productMap.get(id))
       .filter((p): p is typeof products[0] => !!p);
     
     // 프리미엄 제품을 최상단에 유지하면서 벡터 검색 결과 우선 정렬
-    const premiumVector = vectorProducts.filter((p) => premiumProducts.includes(p));
-    const regularVector = vectorProducts.filter((p) => !premiumProducts.includes(p));
+    const premiumVector = vectorProducts.filter((p: any) => premiumProducts.includes(p));
+    const regularVector = vectorProducts.filter((p: any) => !premiumProducts.includes(p));
     const remaining = products.filter(
       (p) => !vectorSearchProductIds.includes(p.id) && !premiumProducts.includes(p)
     );

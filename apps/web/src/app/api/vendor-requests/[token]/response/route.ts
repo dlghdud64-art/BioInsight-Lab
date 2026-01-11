@@ -115,7 +115,7 @@ export async function POST(
     const { items, vendorName } = validation.data;
 
     // Validate all quote item IDs against snapshot (not live quote)
-    const snapshotItemIds = snapshot.items.map((item) => item.quoteItemId);
+    const snapshotItemIds = snapshot.items.map((item: any) => item.quoteItemId);
     const invalidItems = items.filter((item) => !snapshotItemIds.includes(item.quoteItemId));
 
     if (invalidItems.length > 0) {

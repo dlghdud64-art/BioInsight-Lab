@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           `SELECT id FROM "Product" WHERE "hazardCodes"::jsonb @> $1::jsonb`,
           JSON.stringify([hazardCode])
         ) as Array<{ id: string }>;
-        hazardCodeProductIds = results.map((r) => r.id);
+        hazardCodeProductIds = results.map((r: any) => r.id);
       } catch (error) {
         console.error("Error querying hazard code products:", error);
       }
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
           `SELECT id FROM "Product" WHERE "pictograms"::jsonb @> $1::jsonb`,
           JSON.stringify([pictogram])
         ) as Array<{ id: string }>;
-        pictogramProductIds = results.map((r) => r.id);
+        pictogramProductIds = results.map((r: any) => r.id);
       } catch (error) {
         console.error("Error querying pictogram products:", error);
       }

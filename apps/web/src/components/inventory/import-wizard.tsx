@@ -519,14 +519,14 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                 <span className="font-bold text-green-600">{validRows}개</span>를 등록할 수
                 있습니다.
               </p>
-              {validationErrors.size > 0 && (
+              {Object.keys(validationErrors).length > 0 && (
                 <p className="text-sm text-destructive mt-1">
-                  {validationErrors.size}개 행에 오류가 있습니다.
+                  {Object.keys(validationErrors).length}개 행에 오류가 있습니다.
                 </p>
               )}
-              {excludedRows.size > 0 && (
+              {Object.keys(excludedRows).length > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {excludedRows.size}개 행이 제외되었습니다.
+                  {Object.keys(excludedRows).length}개 행이 제외되었습니다.
                 </p>
               )}
             </div>
@@ -587,7 +587,6 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                                     updateEditedCell(rowNumber, column, e.target.value)
                                   }
                                   className="h-8"
-                                  size="sm"
                                 />
                               ) : (
                                 <span className={hasError ? "text-destructive" : ""}>

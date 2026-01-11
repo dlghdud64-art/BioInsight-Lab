@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     let totalAmount = 0;
     let totalQuantity = 0;
 
-    const items = cart.items.map((item) => {
+    const items = cart.items.map((item: any) => {
       const currentPrice = item.product?.vendors[0]?.priceInKRW || item.unitPrice || 0;
       const lineTotal = currentPrice * item.quantity;
       totalAmount += lineTotal;

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
     const isMemberOnly = userTeams.every(
-      (tm) => tm.role === TeamRole.MEMBER
+      (tm: any) => tm.role === TeamRole.MEMBER
     ) && userTeams.length > 0;
 
     if (isMemberOnly) {

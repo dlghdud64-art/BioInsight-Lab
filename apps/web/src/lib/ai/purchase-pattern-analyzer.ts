@@ -103,7 +103,7 @@ export async function analyzePurchasePatterns(params: {
 
     // 신뢰도와 지지도 기반 정렬
     return patterns
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         // 신뢰도 * 지지도 * 빈도로 점수 계산
         const scoreA = a.confidence * a.support * a.frequency;
         const scoreB = b.confidence * b.support * b.frequency;
@@ -188,7 +188,7 @@ export async function analyzeQuotePatterns(params: {
     });
 
     return patterns
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const scoreA = a.confidence * a.support * a.frequency;
         const scoreB = b.confidence * b.support * b.frequency;
         return scoreB - scoreA;
@@ -259,7 +259,7 @@ export async function getFrequentlyBoughtTogether(
         frequency: data.frequency,
         reason: `${data.frequency}번 함께 구매/견적 요청되었습니다`,
       }))
-      .sort((a, b) => b.score - a.score)
+      .sort((a: any, b: any) => b.score - a.score)
       .slice(0, limit);
 
     return recommendations;

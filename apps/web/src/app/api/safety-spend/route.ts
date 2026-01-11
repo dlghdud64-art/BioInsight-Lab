@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       total: number;
       hazardous: number;
       missingSds: number;
-    }>).map((row) => ({
+    }>).map((row: any) => ({
       month: row.yearMonth,
       total: Number(row.total) || 0,
       hazardous: Number(row.hazardous) || 0,
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
     const topHazardCodes = (await db.$queryRawUnsafe(topHazardCodesQuery, ...params) as Array<{
       code: string;
       amount: number;
-    }>).map((row) => ({
+    }>).map((row: any) => ({
       code: row.code,
       amount: Number(row.amount) || 0,
     }));
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
     const topVendors = (await db.$queryRawUnsafe(topVendorsQuery, ...params) as Array<{
       vendorName: string;
       amount: number;
-    }>).map((row) => ({
+    }>).map((row: any) => ({
       name: row.vendorName,
       amount: Number(row.amount) || 0,
     }));

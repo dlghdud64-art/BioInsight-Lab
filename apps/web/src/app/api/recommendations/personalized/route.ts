@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
         // 제품 정보 포함
         if (purchasePatternRecs.length > 0) {
-          const patternProductIds = purchasePatternRecs.map((r) => r.productId);
+          const patternProductIds = purchasePatternRecs.map((r: any) => r.productId);
           const patternProducts = await db.product.findMany({
             where: {
               id: { in: patternProductIds },
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (collaborativeRecs.length > 0) {
-        const collaborativeProductIds = collaborativeRecs.map((r) => r.productId);
+        const collaborativeProductIds = collaborativeRecs.map((r: any) => r.productId);
         const collaborativeProducts = await db.product.findMany({
           where: {
             id: { in: collaborativeProductIds },
@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
         );
 
         if (contextRecs.length > 0) {
-          const contextProductIds = contextRecs.map((r) => r.productId);
+          const contextProductIds = contextRecs.map((r: any) => r.productId);
           const contextProducts = await db.product.findMany({
             where: {
               id: { in: contextProductIds },
