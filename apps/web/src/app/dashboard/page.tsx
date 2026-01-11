@@ -1038,21 +1038,21 @@ export default function DashboardPage() {
                     defaultSize={widget.size}
                   >
                     <section className="mt-6">
-                  {quotesLoading ? (
-                    <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
-                  ) : quotes.length === 0 ? (
-                    <>
-                      <div className="text-center text-sm text-slate-500">
-                        아직 보낸 견적 요청이 없습니다.
-                      </div>
-                      <div className="mt-4 flex justify-center">
-                        <Button size="sm" asChild>
-                          <Link href="/test/search">제품 검색하고 견적 받기</Link>
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                  <div className="space-y-3 md:space-y-4">
+                      {quotesLoading ? (
+                        <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
+                      ) : quotes.length === 0 ? (
+                        <>
+                          <div className="text-center text-sm text-slate-500">
+                            아직 보낸 견적 요청이 없습니다.
+                          </div>
+                          <div className="mt-4 flex justify-center">
+                            <Button size="sm" asChild>
+                              <Link href="/test/search">제품 검색하고 견적 받기</Link>
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-3 md:space-y-4">
                     {quotes.map((quote: any) => (
                       <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
                         <CardHeader className="px-0 pt-0 pb-3">
@@ -1137,9 +1137,9 @@ export default function DashboardPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                  )}
+                        ))}
+                        </div>
+                      )}
                     </section>
                   </DraggableWidget>
                 ))}
