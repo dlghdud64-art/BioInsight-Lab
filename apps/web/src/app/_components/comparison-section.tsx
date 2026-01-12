@@ -70,8 +70,40 @@ export function ComparisonSection() {
           </p>
         </div>
 
-        {/* Toggle Switch */}
-        <div className="flex items-center justify-center mb-6 md:mb-8">
+        {/* Toggle Switch - 모바일 전용 */}
+        <div className="flex items-center justify-center mb-6 md:mb-8 md:hidden">
+          <div className="flex items-center gap-2 bg-white border-2 border-slate-200 rounded-full p-1 shadow-lg w-full max-w-sm">
+            <button
+              onClick={() => setIsBioInsight(false)}
+              className={`flex-1 px-4 py-2.5 rounded-full font-semibold text-sm transition-all ${
+                !isBioInsight
+                  ? "bg-slate-100 text-slate-900 shadow-md"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="text-red-500">🔴</span>
+                <span>기존 방식</span>
+              </span>
+            </button>
+            <button
+              onClick={() => setIsBioInsight(true)}
+              className={`flex-1 px-4 py-2.5 rounded-full font-semibold text-sm transition-all ${
+                isBioInsight
+                  ? "bg-emerald-100 text-emerald-900 shadow-md"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="text-emerald-500">🟢</span>
+                <span>자동화</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* 데스크탑: 기존 토글 (md 이상) */}
+        <div className="hidden md:flex items-center justify-center mb-6 md:mb-8">
           <div className="flex items-center gap-3 bg-white border-2 border-slate-200 rounded-full p-1 shadow-lg">
             <button
               onClick={() => setIsBioInsight(false)}
@@ -104,7 +136,7 @@ export function ComparisonSection() {
 
         {/* 메인 비교 카드 (토글에 따라 내용 변경) */}
         <div className="mb-4 md:mb-6">
-          <div className="relative">
+          <div className="relative min-h-[400px] md:min-h-0">
             <div className={`border-2 ${borderColor} ${bgColor} rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 shadow-lg transition-all duration-300`}>
               <div className="space-y-2 md:space-y-4">
                 {currentItems.map((item, idx) => (

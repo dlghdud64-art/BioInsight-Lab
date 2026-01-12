@@ -47,7 +47,12 @@ const marqueeItems = [...universities, ...stats];
 
 export function BioInsightSocialProofSection() {
   return (
-    <section className="py-4 md:py-6 bg-slate-100/50 border-y border-slate-200 overflow-hidden">
+    <section className="py-4 md:py-6 bg-slate-100/50 border-y border-slate-200 overflow-hidden relative">
+      {/* 좌측 그라데이션 마스크 */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+      {/* 우측 그라데이션 마스크 */}
+      <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
+      
       <div className="relative h-[100px] md:h-[120px] flex items-center">
         {/* Infinite Marquee - 두 개의 동일한 세트를 나란히 배치 */}
         <div className="absolute inset-0 flex items-center">

@@ -72,7 +72,7 @@ export function FeaturesShowcaseSection() {
           </p>
         </div>
         
-        {/* Bento Grid Layout */}
+        {/* Bento Grid Layout - 모바일 2열 유지 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 auto-rows-fr">
           {features.map((feature, index) => {
             const Icon = feature.icon;
@@ -88,27 +88,27 @@ export function FeaturesShowcaseSection() {
               >
                 <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
                   {/* 아이콘 컨테이너 */}
-                  <div className={`mb-3 ${isLarge ? "md:mb-6" : ""}`}>
-                    <div className={`w-10 h-10 md:w-12 md:h-12 ${isLarge ? "lg:w-16 lg:h-16" : ""} ${feature.gradient} rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105`}>
-                      <Icon className={`h-5 w-5 md:h-6 md:w-6 ${isLarge ? "lg:h-8 lg:w-8" : ""} text-white`} strokeWidth={2.5} />
+                  <div className={`mb-2 md:mb-3 ${isLarge ? "md:mb-6" : ""}`}>
+                    <div className={`w-8 h-8 md:w-12 md:h-12 ${isLarge ? "lg:w-16 lg:h-16" : ""} ${feature.gradient} rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105`}>
+                      <Icon className={`h-4 w-4 md:h-6 md:w-6 ${isLarge ? "lg:h-8 lg:w-8" : ""} text-white`} strokeWidth={2.5} />
                     </div>
                   </div>
 
                   {/* 카드 본체 */}
                   <div className="flex-1 flex flex-col">
-                    <h3 className={`font-bold text-gray-900 mb-1.5 md:mb-2 group-hover:text-gray-800 transition-colors ${
-                      isLarge ? "text-base md:text-xl lg:text-2xl" : "text-sm md:text-base"
+                    <h3 className={`font-bold text-gray-900 mb-1 md:mb-1.5 md:mb-2 group-hover:text-gray-800 transition-colors ${
+                      isLarge ? "text-sm md:text-xl lg:text-2xl" : "text-xs md:text-base"
                     }`}>
                       {feature.title}
                     </h3>
-                    <p className={`text-gray-500 leading-relaxed mb-3 md:mb-4 flex-1 ${
+                    <p className={`text-gray-500 leading-relaxed mb-2 md:mb-3 md:mb-4 flex-1 hidden md:block ${
                       isLarge ? "text-xs md:text-sm lg:text-base" : "text-xs md:text-sm"
                     }`}>
                       {feature.description}
                     </p>
                     
-                    {/* 텍스트 링크 액션 */}
-                    <div className={`inline-flex items-center gap-1.5 ${feature.linkColor} font-medium ${
+                    {/* 텍스트 링크 액션 - 모바일 숨김 */}
+                    <div className={`inline-flex items-center gap-1.5 ${feature.linkColor} font-medium hidden md:flex ${
                       isLarge ? "text-sm md:text-base" : "text-xs md:text-sm"
                     } group-hover:gap-2 transition-all`}>
                       <span>Explore</span>
