@@ -12,9 +12,7 @@ import { Plus, Users, Mail, UserPlus, Trash2, FileText, Building2 } from "lucide
 import { useState } from "react";
 import { ORGANIZATION_ROLES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import {
   Select,
   SelectContent,
@@ -66,9 +64,11 @@ export default function OrganizationsPage() {
 
   if (status === "loading") {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
+      <div className="w-full px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -81,13 +81,8 @@ export default function OrganizationsPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
+    <div className="w-full px-4 md:px-6 py-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="조직 관리"
           description="조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다."
@@ -123,9 +118,6 @@ export default function OrganizationsPage() {
             ))}
           </div>
         )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
