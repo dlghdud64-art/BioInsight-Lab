@@ -67,15 +67,25 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
+    <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {/* 좌측: 메뉴 아이콘 (모바일) 또는 로고 */}
         <div className="flex items-center gap-2 md:gap-6 min-w-0 flex-1 overflow-hidden">
           {showMenuIcon && onMenuClick ? (
             <button
-              onClick={onMenuClick}
-              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-10"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMenuClick();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMenuClick();
+              }}
+              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-[70] relative touch-manipulation"
               aria-label="메뉴 열기"
+              type="button"
             >
               <Menu className="h-5 w-5" />
             </button>

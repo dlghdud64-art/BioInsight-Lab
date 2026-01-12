@@ -160,8 +160,18 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsMobileOpen(false)}
-            className="h-7 w-7"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsMobileOpen(false);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsMobileOpen(false);
+            }}
+            className="h-7 w-7 touch-manipulation"
+            type="button"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -181,9 +191,15 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMobileOpen(false);
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                  }}
                   className={cn(
-                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors touch-manipulation",
                     isActive
                       ? "bg-blue-50 text-blue-600"
                       : "text-slate-700 hover:bg-gray-100 hover:text-slate-900"
@@ -215,9 +231,15 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setIsMobileOpen(false)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMobileOpen(false);
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                      }}
                       className={cn(
-                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors touch-manipulation",
                         isActive
                           ? "bg-blue-50 text-blue-600"
                           : "text-slate-700 hover:bg-gray-100 hover:text-slate-900",
@@ -247,8 +269,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       {/* 모바일 오버레이 */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-[45] md:hidden"
           onClick={() => setIsMobileOpen(false)}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            setIsMobileOpen(false);
+          }}
         />
       )}
 
@@ -260,7 +286,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       {/* 모바일 사이드바 */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 md:hidden shrink-0",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-[50] mobile-sidebar transition-transform duration-300 md:hidden shrink-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
