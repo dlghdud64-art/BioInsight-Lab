@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MainHeader } from "@/app/_components/main-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import {
   Shield,
   AlertTriangle,
@@ -101,12 +99,8 @@ export default function SafetyManagerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+    <div className="w-full px-4 md:px-6 py-6 pt-24">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             {/* 헤더 */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
@@ -134,7 +128,7 @@ export default function SafetyManagerPage() {
                 <CardTitle className="text-sm md:text-base">필터</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
                     <label className="text-xs md:text-sm font-medium mb-2 block">필터 타입</label>
                     <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
@@ -304,8 +298,6 @@ export default function SafetyManagerPage() {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </main>
       </div>
     </div>
   );

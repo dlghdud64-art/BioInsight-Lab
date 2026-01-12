@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, Calendar, Filter, FileText, ChevronRight, Receipt } from "lucide-react";
+import { Upload, Download, Calendar, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
@@ -35,6 +35,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { ColumnDef } from "@tanstack/react-table";
 
 export default function PurchasesPage() {
   const { data: session } = useSession();
@@ -43,6 +53,10 @@ export default function PurchasesPage() {
   const [csvText, setCsvText] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState<string>("");
   const [dateRange, setDateRange] = useState<string>("month");
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState<string>("all");
+  const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null);
 
   const { data: organizations } = useQuery({
     queryKey: ["organizations"],
@@ -231,7 +245,7 @@ export default function PurchasesPage() {
       return "0원";
     }
     if (currency === "KRW") {
-      return `₩${safeAmount.toLocaleString("ko-KR")}`;
+      return new Intl.NumberFormat('ko-KR').format(safeAmount) + '원';
     }
     try {
       return new Intl.NumberFormat("ko-KR", {
@@ -245,11 +259,13 @@ export default function PurchasesPage() {
 
   // 구매 내역 리스트 조회
   const { data: purchasesData, isLoading: purchasesLoading } = useQuery({
-    queryKey: ["purchases-list", guestKey, dateRange],
+    queryKey: ["purchases-list", guestKey, dateRange, customDateRange],
     queryFn: async () => {
+      const dateFrom = customDateRange?.from || from.toISOString();
+      const dateTo = customDateRange?.to || to.toISOString();
       const params = new URLSearchParams({
-        from: from.toISOString(),
-        to: to.toISOString(),
+        from: dateFrom,
+        to: dateTo,
       });
       const response = await fetch(`/api/purchases?${params}`, {
         headers: {
@@ -261,6 +277,106 @@ export default function PurchasesPage() {
     },
     enabled: !!guestKey,
   });
+
+  // 필터링된 구매 내역
+  const filteredPurchases = useMemo(() => {
+    if (!purchasesData?.items) return [];
+    let filtered = purchasesData.items;
+
+    // 검색 필터 (품목명)
+    if (searchQuery) {
+      filtered = filtered.filter((purchase: any) =>
+        purchase.itemName?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // 공급사 필터
+    if (selectedVendor !== "all") {
+      filtered = filtered.filter((purchase: any) =>
+        purchase.vendorName === selectedVendor
+      );
+    }
+
+    return filtered;
+  }, [purchasesData?.items, searchQuery, selectedVendor]);
+
+  // 고유한 공급사 목록
+  const uniqueVendors = useMemo(() => {
+    if (!purchasesData?.items) return [];
+    const vendors = new Set(purchasesData.items.map((p: any) => p.vendorName).filter(Boolean));
+    return Array.from(vendors).sort();
+  }, [purchasesData?.items]);
+
+  // DataTable 컬럼 정의
+  const columns: ColumnDef<any>[] = useMemo(() => [
+    {
+      accessorKey: "purchasedAt",
+      header: "거래일자",
+      cell: ({ row }) => {
+        const date = row.original.purchasedAt;
+        return date ? format(new Date(date), "yyyy.MM.dd") : "-";
+      },
+    },
+    {
+      accessorKey: "itemName",
+      header: "품목명",
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{item.itemName || "-"}</span>
+            {item.catalogNumber && (
+              <span className="text-xs text-gray-400 font-mono">{item.catalogNumber}</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "vendorName",
+      header: "공급사",
+      cell: ({ row }) => row.original.vendorName || "-",
+    },
+    {
+      accessorKey: "qty",
+      header: "수량",
+      cell: ({ row }) => {
+        const item = row.original;
+        return `${item.qty || 0} ${item.unit || ""}`;
+      },
+    },
+    {
+      accessorKey: "unitPrice",
+      header: "단가",
+      cell: ({ row }) => {
+        const unitPrice = row.original.unitPrice;
+        return unitPrice ? formatCurrency(unitPrice, row.original.currency) : "-";
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "총액",
+      cell: ({ row }) => {
+        const amount = row.original.amount;
+        return <span className="font-bold">{formatCurrency(amount, row.original.currency)}</span>;
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "상태",
+      cell: ({ row }) => {
+        const statusBadge = getStatusBadge(row.original);
+        return (
+          <Badge
+            variant="outline"
+            className={`${statusBadge.className} border-0 rounded-full px-3 py-1 text-xs font-medium`}
+          >
+            {statusBadge.label}
+          </Badge>
+        );
+      },
+    },
+  ], []);
 
   // 상태에 따른 뱃지 스타일 (가상의 상태 - 실제 데이터에 따라 조정 필요)
   const getStatusBadge = (purchase: any) => {
@@ -333,21 +449,107 @@ export default function PurchasesPage() {
                       <p className="text-sm text-gray-600 mt-1">
                         {summary?.topVendors?.[0]
                           ? formatCurrency(summary.topVendors[0].totalAmount)
-                          : "데이터 없음"}
+                          : "-"}
                       </p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Purchase Import with Tabs */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>구매내역 추가</CardTitle>
-                    <CardDescription>
-                      간편 입력, TSV 붙여넣기, CSV 업로드 중 선택하세요
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                {/* Action Bar: [+ 내역 등록] 버튼 및 필터 */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  {/* 필터 바 */}
+                  <div className="flex flex-wrap items-center gap-3 flex-1">
+                    {/* 검색창 */}
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="품명 검색"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    {/* 기간 설정 */}
+                    <DateRangePicker
+                      startDate={customDateRange?.from}
+                      endDate={customDateRange?.to}
+                      onDateChange={(from, to) => setCustomDateRange({ from, to })}
+                    />
+                    {/* 공급사 필터 */}
+                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="공급사 필터" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체 공급사</SelectItem>
+                        {uniqueVendors.map((vendor) => (
+                          <SelectItem key={vendor} value={vendor}>
+                            {vendor}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* [+ 내역 등록] 버튼 */}
+                  <Button
+                    onClick={() => setIsImportDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    내역 등록
+                  </Button>
+                </div>
+
+                {/* Purchase History DataTable */}
+                {purchasesLoading ? (
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardContent className="flex items-center justify-center py-16">
+                      <p className="text-gray-500">로딩 중...</p>
+                    </CardContent>
+                  </Card>
+                ) : filteredPurchases.length > 0 ? (
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <CardHeader className="bg-gray-50/50 pb-3">
+                      <CardTitle className="text-lg font-semibold">구매 내역</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        총 {filteredPurchases.length}건의 구매 내역
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <DataTable
+                        columns={columns}
+                        data={filteredPurchases}
+                        searchKey="itemName"
+                        searchPlaceholder="품명 검색"
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <CardContent className="flex flex-col items-center justify-center py-16">
+                      <Package className="h-16 w-16 text-gray-300 mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">아직 구매 내역이 없습니다.</h3>
+                      <p className="text-sm text-gray-500 mb-6">첫 구매 내역을 등록해보세요.</p>
+                      <Button
+                        onClick={() => setIsImportDialogOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        내역 추가하기
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Import Dialog (모달) */}
+                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>구매 내역 등록</DialogTitle>
+                      <DialogDescription>
+                        간편 입력, TSV 붙여넣기, CSV 업로드 중 선택하세요
+                      </DialogDescription>
+                    </DialogHeader>
                     <Tabs defaultValue="csv-upload" className="w-full">
                       <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="simple-form">간편 입력</TabsTrigger>
@@ -435,135 +637,15 @@ export default function PurchasesPage() {
                         <CsvUploadTab
                           onSuccess={() => {
                             queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
+                            queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
+                            setIsImportDialogOpen(false);
                           }}
                         />
                       </TabsContent>
                     </Tabs>
-                  </CardContent>
-                </Card>
+                  </DialogContent>
+                </Dialog>
 
-                {/* Purchase History Table */}
-                {purchasesData?.items && purchasesData.items.length > 0 && (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <CardHeader className="bg-gray-50/50 pb-3">
-                      <CardTitle className="text-lg font-semibold">구매 내역</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        최근 구매 내역을 확인하세요
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                주문 번호
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                날짜
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                벤더
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                품목
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                수량
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                상태
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                금액
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 w-12">
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {purchasesData.items.map((purchase: any, idx: number) => {
-                              const statusBadge = getStatusBadge(purchase);
-                              const orderNumber = purchase.id.slice(-8).toUpperCase();
-                              return (
-                                <TableRow
-                                  key={purchase.id || `purchase-${idx}`}
-                                  className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors cursor-pointer"
-                                >
-                                  <TableCell className="py-4 px-6">
-                                    <span className="font-mono text-sm text-gray-600">
-                                      {orderNumber}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <span className="text-sm text-gray-500">
-                                      {format(new Date(purchase.purchasedAt), "yyyy.MM.dd")}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <span className="text-sm text-gray-900 font-medium">
-                                      {purchase.vendorName || "-"}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <div className="flex flex-col">
-                                      <span className="text-sm text-gray-900 font-medium">
-                                        {purchase.itemName || "-"}
-                                      </span>
-                                      {purchase.catalogNumber && (
-                                        <span className="text-xs text-gray-400 font-mono mt-0.5">
-                                          {purchase.catalogNumber}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6 text-right">
-                                    <span className="text-sm text-gray-600">
-                                      {purchase.qty} {purchase.unit || ""}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <Badge
-                                      variant="outline"
-                                      className={`${statusBadge.className} border-0 rounded-full px-3 py-1 text-xs font-medium`}
-                                    >
-                                      {statusBadge.label}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6 text-right">
-                                    <span className="font-bold text-gray-900">
-                                      {formatCurrency(purchase.amount, purchase.currency)}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="py-4 px-6">
-                                    <div className="flex items-center gap-2 justify-end">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                                        title="영수증 다운로드"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toast({
-                                            title: "준비 중",
-                                            description: "영수증 다운로드 기능은 곧 제공될 예정입니다.",
-                                          });
-                                        }}
-                                      >
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                      <ChevronRight className="h-4 w-4 text-gray-300" />
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Top Vendors */}
                 {summary?.topVendors && summary.topVendors.length > 0 && (
