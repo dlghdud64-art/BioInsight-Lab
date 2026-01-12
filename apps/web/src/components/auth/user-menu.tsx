@@ -11,12 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, UserCircle } from "lucide-react";
+import { User, LogOut, Settings, CreditCard, HelpCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { USER_ROLES } from "@/lib/constants";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
+  const router = useRouter();
 
   // 로딩 상태는 최대 2초까지만 표시
   const [showLoading, setShowLoading] = useState(true);
@@ -55,7 +57,10 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
+        <DropdownMenuLabel
+          className="cursor-pointer"
+          onClick={() => router.push("/dashboard/settings")}
+        >
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{session.user.name || "사용자"}</p>
             <p className="text-xs text-muted-foreground">{session.user.email}</p>
@@ -69,16 +74,22 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <Link href="/dashboard/settings">
           <DropdownMenuItem>
-            <UserCircle className="mr-2 h-4 w-4" />
-            내 정보 수정
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/dashboard/settings">
-          <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
             설정
           </DropdownMenuItem>
         </Link>
+        <Link href="/dashboard/settings?tab=billing">
+          <DropdownMenuItem>
+            <CreditCard className="mr-2 h-4 w-4" />
+            청구 및 구독
+          </DropdownMenuItem>
+        </Link>
+        <a href="mailto:support@bioinsight.com">
+          <DropdownMenuItem>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            고객센터
+          </DropdownMenuItem>
+        </a>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
           <LogOut className="mr-2 h-4 w-4" />

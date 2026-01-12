@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,8 @@ import {
   X,
   Upload,
   Settings,
+  CreditCard,
+  ArrowUp,
 } from "lucide-react";
 import { PageHeader } from "@/app/_components/page-header";
 import { useEffect } from "react";
@@ -55,7 +58,18 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("profile");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  // URL 파라미터에서 탭 값 가져오기 (기본값: "profile")
+  const tabFromUrl = searchParams.get("tab") || "profile";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  // URL 파라미터 변경 시 탭 업데이트
+  useEffect(() => {
+    const tab = searchParams.get("tab") || "profile";
+    setActiveTab(tab);
+  }, [searchParams]);
 
   // 프로필 상태
   const [profileName, setProfileName] = useState(session?.user?.name || "");
@@ -297,19 +311,34 @@ export default function SettingsPage() {
           icon={Settings}
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            setActiveTab(value);
+            router.push(`/dashboard/settings${value !== "profile" ? `?tab=${value}` : ""}`);
+          }} 
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              프로필
+              <span className="hidden sm:inline">내 프로필</span>
+              <span className="sm:hidden">프로필</span>
             </TabsTrigger>
             <TabsTrigger value="organization" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
-              조직 설정
+              <span className="hidden sm:inline">조직 관리</span>
+              <span className="sm:hidden">조직</span>
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">구독 결제</span>
+              <span className="sm:hidden">결제</span>
             </TabsTrigger>
             <TabsTrigger value="shipping" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              배송지 관리
+              <span className="hidden sm:inline">배송지 관리</span>
+              <span className="sm:hidden">배송지</span>
             </TabsTrigger>
           </TabsList>
 
@@ -489,7 +518,72 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab 3: 배송지 관리 */}
+          {/* Tab 3: 구독 결제 */}
+          <TabsContent value="billing" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>구독 및 결제</CardTitle>
+                <CardDescription>현재 플랜을 확인하고 업그레이드하세요</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* 현재 플랜 정보 */}
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">현재 플랜</h3>
+                        <p className="text-sm text-gray-600">Free 플랜 이용 중입니다</p>
+                      </div>
+                      <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                        Free
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>인벤토리 100개</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>엑셀 업로드</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span>기본 검색</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 업그레이드 버튼 */}
+                  <div className="text-center space-y-4">
+                    <p className="text-sm text-gray-600">
+                      더 많은 기능이 필요하신가요? 플랜을 업그레이드하세요.
+                    </p>
+                    <Button
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => router.push("/pricing")}
+                    >
+                      <ArrowUp className="h-4 w-4 mr-2" />
+                      플랜 업그레이드
+                    </Button>
+                  </div>
+
+                  {/* 플랜 비교 링크 */}
+                  <div className="pt-4 border-t">
+                    <Link
+                      href="/pricing"
+                      className="text-sm text-blue-600 hover:text-blue-700 underline"
+                    >
+                      모든 플랜 비교 보기 →
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab 4: 배송지 관리 */}
           <TabsContent value="shipping" className="space-y-6">
             <Card>
               <CardHeader>
