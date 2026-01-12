@@ -13,7 +13,7 @@ export function BioInsightHeroSection() {
   }, []);
 
   return (
-    <section className="relative border-b border-slate-200 bg-gradient-to-b from-white via-blue-50/30 to-white py-8 md:py-12 lg:py-16 overflow-hidden">
+    <section className="relative border-b border-slate-200 bg-gradient-to-b from-white via-blue-50/30 to-white pt-28 pb-8 md:pt-32 md:pb-12 lg:pt-36 lg:pb-16 overflow-hidden">
       {/* 배경 장식 요소 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100/20 rounded-full blur-3xl"></div>
