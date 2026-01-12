@@ -52,13 +52,13 @@ export function FeaturesShowcaseSection() {
     switch (tabId) {
       case "sourcing":
         return (
-          <div className="w-full h-full bg-white rounded-xl shadow-2xl p-6 space-y-4">
+          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-6 space-y-4">
             {/* 검색 바 */}
             <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
               <Search className="h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                value="Sigma-Aldrich Acetone"
+                value="Sigma-Aldrich Acetone 500ml"
                 className="flex-1 bg-transparent outline-none text-sm text-gray-900 font-medium"
                 readOnly
               />
@@ -67,204 +67,126 @@ export function FeaturesShowcaseSection() {
               </Button>
             </div>
             
-            {/* 검색 결과 카드들 */}
+            {/* 검색 결과 리스트 */}
             <div className="space-y-3">
-              {/* 결과 카드 1: 추천 */}
-              <div className="bg-white rounded-lg p-4 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-2">
+              {/* 리스트 아이템 1: 추천 */}
+              <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">추천</Badge>
                       <span className="text-sm font-semibold text-gray-900">Sigma-Aldrich</span>
                     </div>
-                    <p className="text-xs text-gray-600 mb-2">Acetone, ACS reagent, ≥99.5%</p>
-                    <div className="flex items-center gap-4">
+                    <p className="text-xs text-gray-500 mb-2">순도 99.9%</p>
+                    <div className="flex items-center gap-3 mb-2">
                       <span className="text-base font-bold text-gray-900">₩45,000</span>
-                      <span className="text-xs text-gray-500">재고 있음</span>
+                      <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5">🏷️ 최저가</Badge>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                      <span>🚀</span>
+                      <span>익일 도착 보장</span>
                     </div>
                   </div>
                   <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                 </div>
               </div>
 
-              {/* 결과 카드 2: 대체 */}
-              <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-2">
+              {/* 리스트 아이템 2: 대체 */}
+              <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+                <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge className="bg-blue-500 text-white text-xs px-2 py-0.5">대체</Badge>
                       <span className="text-sm font-semibold text-gray-900">TCI Chemicals</span>
                     </div>
-                    <p className="text-xs text-gray-600 mb-2">Acetone, 99.5+%, for analysis</p>
-                    <div className="flex items-center gap-4">
+                    <p className="text-xs text-gray-500 mb-2">순도 99.5%</p>
+                    <div className="flex items-center gap-3">
                       <span className="text-base font-bold text-gray-900">₩42,000</span>
-                      <span className="text-xs text-green-600 font-medium">₩3,000 절약</span>
+                      <span className="text-xs text-gray-500">해외 배송 2주</span>
                     </div>
                   </div>
                   <Package className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 </div>
               </div>
             </div>
-
-            {/* AI 분석 카드 */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-900">AI 추천 분석</span>
-              </div>
-              <p className="text-xs text-blue-700 leading-relaxed">
-                두 제품 모두 ACS 등급으로 동일한 품질입니다. TCI Chemicals가 6.7% 저렴하며 재고도 충분합니다.
-              </p>
-            </div>
           </div>
         );
 
       case "purchasing":
         return (
-          <div className="w-full h-full bg-white rounded-xl shadow-2xl p-6 space-y-4">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">견적 요청 리스트</h3>
-              <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white text-xs">
-                엑셀 내보내기
-              </Button>
-            </div>
-
-            {/* 견적 리스트 테이블 */}
+          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-6 space-y-4">
+            {/* 견적 비교 테이블 */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               {/* 테이블 헤더 */}
-              <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 bg-gray-50 px-4 py-3 border-b border-gray-200">
-                <div className="text-xs font-semibold text-gray-700">품명</div>
-                <div className="text-xs font-semibold text-gray-700">공급사</div>
-                <div className="text-xs font-semibold text-gray-700">단가</div>
-                <div className="text-xs font-semibold text-gray-700">상태</div>
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <div className="text-xs font-semibold text-gray-900">품목명</div>
+                <div className="text-xs font-semibold text-gray-900 text-center">벤더 A</div>
+                <div className="text-xs font-semibold text-gray-900 text-center">벤더 B</div>
+                <div className="text-xs font-semibold text-gray-900 text-center">선택</div>
               </div>
 
-              {/* 테이블 행들 */}
+              {/* 테이블 행 */}
               <div className="divide-y divide-gray-100">
-                <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">PBS 500ml</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Phosphate Buffered Saline</div>
+                    <div className="text-sm font-medium text-gray-900">FBS (500ml)</div>
                   </div>
-                  <div className="text-sm text-gray-700">Thermo</div>
-                  <div className="text-sm font-semibold text-gray-900">₩15,000</div>
-                  <div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-3">
-                      주문하기
-                    </Button>
+                  <div className="text-center">
+                    <div className="text-sm font-semibold text-gray-900">₩150,000</div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">DMEM Media</div>
-                    <div className="text-xs text-gray-500 mt-0.5">500ml</div>
+                  <div className="text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="text-sm font-semibold text-blue-600">₩135,000</div>
+                      <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0.5">Best</Badge>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-700">Gibco</div>
-                  <div className="text-sm font-semibold text-gray-900">₩28,000</div>
-                  <div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-3">
-                      주문하기
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Trypsin-EDTA</div>
-                    <div className="text-xs text-gray-500 mt-0.5">0.25%, 100ml</div>
-                  </div>
-                  <div className="text-sm text-gray-700">Sigma</div>
-                  <div className="text-sm font-semibold text-gray-900">₩12,500</div>
-                  <div>
-                    <Badge className="bg-yellow-100 text-yellow-700 text-xs">견적 대기</Badge>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <span className="text-xs text-green-600 ml-1">선택됨</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 하단 요약 */}
-            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                총 <span className="font-semibold text-gray-900">3</span>개 품목
-              </div>
-              <div className="text-sm font-semibold text-gray-900">
-                예상 총액: <span className="text-blue-600">₩55,500</span>
-              </div>
+            {/* 하단 액션 버튼 */}
+            <div className="pt-3 border-t border-gray-200">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2.5">
+                엑셀로 내려받기
+              </Button>
             </div>
           </div>
         );
 
       case "management":
         return (
-          <div className="w-full h-full bg-white rounded-xl shadow-2xl p-6 space-y-4">
-            {/* 재고 경고 알림 카드 */}
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-bold text-red-900">재고 경고</span>
-                    <Badge className="bg-red-500 text-white text-xs px-2 py-0.5">긴급</Badge>
-                  </div>
-                  <p className="text-sm text-gray-900 mb-3 leading-relaxed">
-                    에탄올 재고가 <span className="font-semibold text-red-600">2개</span> 남았습니다. 재주문하시겠습니까?
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs h-8">
-                      재주문하기
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs h-8 border-gray-300">
-                      나중에
-                    </Button>
-                  </div>
-                </div>
+          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-6 relative">
+            {/* 우측 상단: 실시간 예산 그래프 */}
+            <div className="absolute top-4 right-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="text-[10px] text-gray-500 mb-2 font-medium">예산 현황</div>
+              <div className="flex items-end gap-1 h-12">
+                {[60, 80, 45, 90, 70, 85].map((height, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"
+                    style={{ height: `${height}%` }}
+                  ></div>
+                ))}
               </div>
             </div>
 
-            {/* KPI 카드들 */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                <div className="text-xs text-gray-500 mb-1">이번 달 지출</div>
-                <div className="text-lg font-bold text-gray-900">₩3.2M</div>
-                <div className="text-xs text-green-600 mt-1">↓ 12%</div>
+            {/* 중앙: 재고 경고 알림 */}
+            <div className="flex flex-col items-center justify-center h-full min-h-[200px] space-y-4">
+              <div className="text-6xl">🚨</div>
+              <div className="text-center space-y-2">
+                <p className="text-base font-semibold text-gray-900">
+                  주의: 에탄올 재고가 <span className="text-red-600 font-bold">2병</span> 남았습니다.
+                </p>
               </div>
-              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                <div className="text-xs text-gray-500 mb-1">재고 품목</div>
-                <div className="text-lg font-bold text-gray-900">127</div>
-                <div className="text-xs text-blue-600 mt-1">정상</div>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-red-200 shadow-sm bg-red-50/30">
-                <div className="text-xs text-gray-500 mb-1">재고 경고</div>
-                <div className="text-lg font-bold text-red-600">3</div>
-                <div className="text-xs text-red-500 mt-1">긴급</div>
-              </div>
-            </div>
-
-            {/* 최근 도착 물품 */}
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-900 mb-2">최근 도착 물품</div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 bg-green-50 rounded-lg p-3 border border-green-200">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">DMEM Media (500ml)</div>
-                    <div className="text-xs text-gray-500">10분 전 도착</div>
-                  </div>
-                  <Badge className="bg-green-500 text-white text-xs">완료</Badge>
-                </div>
-                <div className="flex items-center gap-3 bg-blue-50 rounded-lg p-3 border border-blue-200">
-                  <Package className="h-5 w-5 text-blue-600 flex-shrink-0 animate-pulse" />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">Trypsin-EDTA</div>
-                    <div className="text-xs text-gray-500">배송 중</div>
-                  </div>
-                  <Badge className="bg-blue-500 text-white text-xs">배송중</Badge>
-                </div>
-              </div>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5">
+                원클릭 재주문
+              </Button>
             </div>
           </div>
         );
