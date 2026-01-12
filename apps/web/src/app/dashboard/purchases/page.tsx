@@ -304,7 +304,7 @@ export default function PurchasesPage() {
   const uniqueVendors = useMemo(() => {
     if (!purchasesData?.items) return [];
     const vendors = new Set(purchasesData.items.map((p: any) => p.vendorName).filter(Boolean));
-    return Array.from(vendors).sort();
+    return Array.from(vendors).sort() as string[];
   }, [purchasesData?.items]);
 
   // DataTable 컬럼 정의
