@@ -5,9 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Users, ShoppingCart, FileText, Share2, Target, Activity } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,12 +32,9 @@ export default function AnalyticsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <MainHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
-          </div>
+      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">로딩 중...</p>
         </div>
       </div>
     );
@@ -47,12 +42,9 @@ export default function AnalyticsPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <MainHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로그인이 필요합니다.</p>
-          </div>
+      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">로그인이 필요합니다.</p>
         </div>
       </div>
     );
@@ -96,10 +88,8 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <PageHeader
               title="KPI 대시보드"
@@ -278,7 +268,6 @@ export default function AnalyticsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );

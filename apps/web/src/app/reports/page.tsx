@@ -20,9 +20,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BarChart3 } from "lucide-react";
 
 export default function ReportsPage() {
@@ -95,7 +93,11 @@ export default function ReportsPage() {
 
   // 인증 확인
   if (status === "loading") {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+        <div className="flex items-center justify-center min-h-[400px]">Loading...</div>
+      </div>
+    );
   }
 
   // 개발 단계: 로그인 체크 제거
@@ -120,13 +122,8 @@ export default function ReportsPage() {
   const budgets = budgetsData || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
-          <div className="container mx-auto py-4 md:py-8 px-3 md:px-4">
-            <div className="max-w-7xl mx-auto">
+    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-7xl mx-auto">
         <PageHeader
           title="구매 리포트"
           description="기간/팀/벤더별 총 구매 금액과 예산 사용 상황을 확인합니다."
@@ -452,9 +449,6 @@ export default function ReportsPage() {
           </div>
         </DialogContent>
       </Dialog>
-        </div>
-          </div>
-        </div>
       </div>
     </div>
   );

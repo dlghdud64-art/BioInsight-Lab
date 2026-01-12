@@ -165,7 +165,7 @@ export default function SharedLinksPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-20 md:pt-16">
+        <div className="flex-1 overflow-auto min-w-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-7xl mx-auto">
         <div className="mb-4 md:mb-6">

@@ -1,196 +1,241 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
-import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Users, Building2, Crown } from "lucide-react";
+import { Check, Package, Users, Building2, Sparkles, Zap, Shield, CreditCard, FileText, BarChart3 } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
-import { SubscriptionPlan, PLAN_LIMITS } from "@/lib/plans";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function PricingPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  // 사용자의 조직 목록 조회
-  const { data: organizationsData } = useQuery({
-    queryKey: ["user-organizations"],
-    queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) return { organizations: [] };
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
-
-  const organizations = organizationsData?.organizations || [];
-
   const plans = [
     {
-      id: SubscriptionPlan.FREE,
-      name: "Free / Beta",
-      description: "기능 체험 및 파일럿 목적",
-      icon: Users,
-      price: 0,
-      features: PLAN_LIMITS[SubscriptionPlan.FREE],
-      badge: "현재",
+      id: "seed",
+      name: "씨앗 (Seed)",
+      price: "무료",
+      description: "개인 연구원 및 소규모 랩",
+      icon: Package,
+      badge: "현재 사용 중",
+      badgeVariant: "secondary" as const,
+      buttonText: "현재 사용 중",
+      buttonVariant: "outline" as const,
+      buttonDisabled: true,
+      features: [
+        "인벤토리 100개",
+        "엑셀 업로드",
+        "기본 검색",
+      ],
     },
     {
-      id: SubscriptionPlan.TEAM,
-      name: "Team",
-      description: "연구실/팀 단위 플랜",
+      id: "growth",
+      name: "성장 (Growth)",
+      price: "₩29,000",
+      pricePeriod: "/월",
+      description: "협업이 필요한 5~10인 팀",
       icon: Users,
-      price: 50000,
-      features: PLAN_LIMITS[SubscriptionPlan.TEAM],
+      badge: "⭐ 추천",
+      badgeVariant: "default" as const,
+      buttonText: "1개월 무료 체험",
+      buttonVariant: "default" as const,
+      buttonDisabled: false,
+      isRecommended: true,
+      features: [
+        "무제한 인벤토리",
+        "팀원 초대",
+        "재고 소진 알림 (배터리)",
+      ],
     },
     {
-      id: SubscriptionPlan.ORGANIZATION,
-      name: "Organization / Enterprise",
-      description: "회사/병원 단위 플랜",
+      id: "pro",
+      name: "프로 (Pro)",
+      price: "문의",
+      description: "체계적인 예산 관리가 필요한 기업/센터",
       icon: Building2,
-      price: 200000,
-      features: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION],
+      buttonText: "도입 문의하기",
+      buttonVariant: "outline" as const,
+      buttonDisabled: false,
+      features: [
+        "연구비 지갑 (Grant)",
+        "승인 결재 시스템",
+        "전담 매니저",
+      ],
     },
   ];
 
-  const handleUpgrade = (planId: SubscriptionPlan) => {
-    if (status === "authenticated" && organizations.length > 0) {
-      router.push(`/dashboard/settings/plans`);
-    } else {
-      router.push("/auth/signin?callbackUrl=/dashboard/organizations");
-    }
-  };
+  const comparisonFeatures = [
+    { feature: "인벤토리 관리", seed: true, growth: true, pro: true },
+    { feature: "엑셀 업로드", seed: true, growth: true, pro: true },
+    { feature: "기본 검색", seed: true, growth: true, pro: true },
+    { feature: "인벤토리 개수", seed: "100개", growth: "무제한", pro: "무제한" },
+    { feature: "팀원 초대", seed: false, growth: true, pro: true },
+    { feature: "재고 소진 알림", seed: false, growth: true, pro: true },
+    { feature: "연구비 지갑 (Grant)", seed: false, growth: false, pro: true },
+    { feature: "승인 결재 시스템", seed: false, growth: false, pro: true },
+    { feature: "전담 매니저", seed: false, growth: false, pro: true },
+  ];
 
   return (
     <MainLayout>
       <MainHeader />
-      <div className="container mx-auto px-4 py-8 md:py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              요금제
-            </h1>
-            <p className="text-lg text-slate-600">
-              팀에 맞는 플랜을 선택하세요
-            </p>
-          </div>
+      <div className="pt-20 min-h-screen bg-slate-50">
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <div className="max-w-7xl mx-auto">
+            {/* Headline */}
+            <div className="text-center mb-12 md:mb-16">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+                연구실 규모에 맞는 최적의 플랜을 선택하세요.
+              </h1>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {plans.map((plan) => {
-              const Icon = plan.icon;
-              return (
-                <Card
-                  key={plan.id}
-                  className={`relative ${
-                    plan.id === SubscriptionPlan.TEAM
-                      ? "border-blue-500 border-2 shadow-lg"
-                      : "border-slate-200"
-                  }`}
-                >
-                  {plan.id === SubscriptionPlan.TEAM && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-blue-600 text-white px-3 py-1">
-                        추천
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Icon className="h-6 w-6 text-slate-600" />
-                      <CardTitle className="text-xl font-bold">
+            {/* Pricing Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-16">
+              {plans.map((plan) => {
+                const Icon = plan.icon;
+                const isRecommended = plan.isRecommended;
+
+                return (
+                  <Card
+                    key={plan.id}
+                    className={cn(
+                      "relative flex flex-col",
+                      isRecommended && "border-2 border-blue-500 shadow-lg"
+                    )}
+                  >
+                    {isRecommended && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-blue-600 text-white px-3 py-1">
+                          Best Choice
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className="text-center pb-4">
+                      <div className="flex justify-center mb-4">
+                        <div className={cn(
+                          "p-3 rounded-full",
+                          isRecommended ? "bg-blue-100" : "bg-slate-100"
+                        )}>
+                          <Icon className={cn(
+                            "h-6 w-6",
+                            isRecommended ? "text-blue-600" : "text-slate-600"
+                          )} />
+                        </div>
+                      </div>
+                      <CardTitle className="text-xl md:text-2xl font-bold mb-2">
                         {plan.name}
                       </CardTitle>
-                    </div>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <div className="mt-4">
-                      <span className="text-3xl font-bold">
-                        {plan.price === 0
-                          ? "무료"
-                          : `₩${plan.price.toLocaleString()}`}
-                      </span>
-                      {plan.price > 0 && (
-                        <span className="text-sm text-muted-foreground ml-2">
-                          /월
+                      <div className="flex items-baseline justify-center gap-1 mb-2">
+                        <span className="text-3xl md:text-4xl font-bold text-slate-900">
+                          {plan.price}
                         </span>
+                        {plan.pricePeriod && (
+                          <span className="text-sm text-slate-600">
+                            {plan.pricePeriod}
+                          </span>
+                        )}
+                      </div>
+                      <CardDescription className="text-sm text-slate-600">
+                        {plan.description}
+                      </CardDescription>
+                      {plan.badge && (
+                        <div className="mt-3">
+                          <Badge variant={plan.badgeVariant} className="text-xs">
+                            {plan.badge}
+                          </Badge>
+                        </div>
                       )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span>
-                          최대 멤버:{" "}
-                          {plan.features.maxMembers === null
-                            ? "무제한"
-                            : `${plan.features.maxMembers}명`}
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span>
-                          월별 견적:{" "}
-                          {plan.features.maxQuotesPerMonth === null
-                            ? "무제한"
-                            : `${plan.features.maxQuotesPerMonth}개`}
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span>
-                          공유 링크:{" "}
-                          {plan.features.maxSharedLinks === null
-                            ? "무제한"
-                            : `${plan.features.maxSharedLinks}개`}
-                        </span>
-                      </li>
-                      {plan.features.features.advancedReports && (
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span>고급 리포트</span>
-                        </li>
-                      )}
-                      {plan.features.features.budgetManagement && (
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span>예산 관리</span>
-                        </li>
-                      )}
-                    </ul>
-                    <Button
-                      className="w-full"
-                      variant={
-                        plan.id === SubscriptionPlan.TEAM
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => handleUpgrade(plan.id)}
-                    >
-                      {plan.price === 0 ? "현재 플랜" : "시작하기"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col">
+                      <ul className="space-y-3 mb-6 flex-1">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-slate-700">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        variant={plan.buttonVariant}
+                        className={cn(
+                          "w-full",
+                          isRecommended && "bg-blue-600 hover:bg-blue-700 text-white",
+                          plan.buttonVariant === "outline" && !isRecommended && "border-slate-300 hover:bg-slate-50"
+                        )}
+                        disabled={plan.buttonDisabled}
+                      >
+                        {plan.buttonText}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-sm text-slate-600 mb-4">
-              현재는 <strong className="text-slate-900">Beta 무료</strong>로
-              모든 기능을 체험할 수 있습니다.
-            </p>
-            {status === "authenticated" && organizations.length > 0 && (
-              <Link href="/dashboard/settings/plans">
-                <Button variant="outline">구독 관리로 이동</Button>
-              </Link>
-            )}
+            {/* Comparison Table */}
+            <div className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-8">
+                기능 비교
+              </h2>
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="font-semibold">기능</TableHead>
+                          <TableHead className="text-center">씨앗 (Seed)</TableHead>
+                          <TableHead className="text-center">성장 (Growth)</TableHead>
+                          <TableHead className="text-center">프로 (Pro)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {comparisonFeatures.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{item.feature}</TableCell>
+                            <TableCell className="text-center">
+                              {typeof item.seed === "boolean" ? (
+                                item.seed ? (
+                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )
+                              ) : (
+                                <span className="text-sm text-slate-700">{item.seed}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {typeof item.growth === "boolean" ? (
+                                item.growth ? (
+                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )
+                              ) : (
+                                <span className="text-sm text-slate-700">{item.growth}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {typeof item.pro === "boolean" ? (
+                                item.pro ? (
+                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )
+                              ) : (
+                                <span className="text-sm text-slate-700">{item.pro}</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -198,8 +243,3 @@ export default function PricingPage() {
     </MainLayout>
   );
 }
-
-
-
-
-

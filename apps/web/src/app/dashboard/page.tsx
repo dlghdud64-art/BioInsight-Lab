@@ -10,13 +10,11 @@ import { ReorderRecommendations } from "@/components/inventory/reorder-recommend
 import { SmartPickWidget } from "@/components/dashboard/smart-pick-widget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity } from "lucide-react";
+import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity, FileText, ArrowRight, Wallet, Search } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS, PRODUCT_CATEGORIES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { LayoutDashboard } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,8 +34,8 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DASHBOARD_TABS = [
-  { id: "workspace", label: "📋 내 업무", description: "할 일과 진행 현황" },
-  { id: "analytics", label: "📊 재무 현황", description: "예산과 지출 분석" },
+  { id: "overview", label: "🧪 실험실 요약", description: "재고 알림과 주문 현황" },
+  { id: "analytics", label: "📊 재무 분석", description: "예산과 지출 분석" },
 ];
 
 export default function DashboardPage() {
@@ -45,9 +43,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("dashboard-active-tab") || "workspace";
+      return localStorage.getItem("dashboard-active-tab") || "overview";
     }
-    return "workspace";
+    return "overview";
   });
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
   const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
@@ -55,7 +53,6 @@ export default function DashboardPage() {
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const { isEditMode, setEditMode, widgets, resetLayout, loadLayout, saveLayout } = useDashboardWidgets();
   const { toast } = useToast();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // 레이아웃 로드 (페이지 마운트 시)
   useEffect(() => {
@@ -103,7 +100,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
     },
-    enabled: status === "authenticated" && activeTab === "workspace",
+    enabled: status === "authenticated" && activeTab === "overview",
   });
 
   // 즐겨찾기 조회
@@ -165,6 +162,50 @@ export default function DashboardPage() {
     enabled: status === "authenticated",
   });
 
+  // 대시보드 통계 조회 (재고 부족, 진행 중인 견적, 지출 등)
+  const { data: dashboardStats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/dashboard/stats");
+      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 배송 중인 주문 조회
+  const { data: shippingOrders } = useQuery({
+    queryKey: ["shipping-orders"],
+    queryFn: async () => {
+      const response = await fetch("/api/orders?status=SHIPPING");
+      if (!response.ok) throw new Error("Failed to fetch orders");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 모든 주문 조회 (타임라인용)
+  const { data: allOrdersData } = useQuery({
+    queryKey: ["all-orders"],
+    queryFn: async () => {
+      const response = await fetch("/api/orders?limit=10");
+      if (!response.ok) throw new Error("Failed to fetch orders");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
+  // 예산 목록 조회 (재무 분석 탭용)
+  const { data: budgetsData } = useQuery<{ budgets: any[] }>({
+    queryKey: ["user-budgets"],
+    queryFn: async () => {
+      const response = await fetch("/api/user-budgets");
+      if (!response.ok) throw new Error("Failed to fetch budgets");
+      return response.json();
+    },
+    enabled: status === "authenticated" && activeTab === "analytics",
+  });
+
   if (status === "loading") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -184,22 +225,14 @@ export default function DashboardPage() {
   const quotes = quotesData?.quotes || [];
   const favorites = favoritesData?.favorites || [];
   const recentProducts = recentData?.products || [];
+  const allOrders = allOrdersData?.orders || [];
 
   const userName = session?.user?.name || "연구자";
   const userDisplayName = userName.split(" ")[0] || userName;
 
   return (
-    <div className="min-h-screen bg-gray-50/50 overflow-x-hidden">
-      <MainHeader 
-        showMenuIcon={true}
-        pageTitle="대시보드"
-        onMenuClick={() => setIsMobileMenuOpen(true)}
-      />
-      <div className="flex overflow-x-hidden w-full">
-        <DashboardSidebar isMobileOpen={isMobileMenuOpen} onMobileOpenChange={setIsMobileMenuOpen} />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-20 md:pt-16">
-          <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto w-full">
+    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+      <div className="max-w-6xl mx-auto w-full">
             {/* 웰컴 섹션 */}
             <div className="mb-6 md:mb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -277,32 +310,432 @@ export default function DashboardPage() {
               </div>
             </div>
 
-        {/* Executive Dashboard */}
-        <div className="mb-6">
-          <ExecutiveDashboard />
-        </div>
+        {/* 새로운 Tab 구조: 실험실 요약 / 재무 분석 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <span>🧪 실험실 요약</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <span>📊 재무 분석</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Analytics Dashboard */}
-        <div className="mb-6">
-          <AnalyticsDashboard />
-        </div>
+          {/* Tab 1: 실험실 요약 */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* 상단: 재고 부족 알림 카드 강조 */}
+            <Card className="border-2 border-orange-300 bg-orange-50/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-semibold text-orange-900">재고 부족 알림</CardTitle>
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-900 mb-2">
+                  {dashboardStats?.reorderNeededCount || 0}개 품목
+                </div>
+                <p className="text-sm text-orange-700 mb-4">곧 동납니다. 재주문이 필요합니다.</p>
+                <Link href="/dashboard/inventory">
+                  <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                    재고 확인하기
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
 
-        {/* Smart Pick Widget - AI 추천 */}
-        <div className="mb-6">
-          <SmartPickWidget />
-        </div>
+            {/* 중단: 최근 주문 내역과 배송 상태 타임라인 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>최근 주문 내역 & 배송 상태</CardTitle>
+                <CardDescription>견적 요청 → 승인 대기 → 발주 완료 → 배송 중 → 배송 완료</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* 타임라인 형태로 표시 - 견적과 주문을 함께 */}
+                <div className="space-y-4">
+                  {(() => {
+                    // 견적과 주문을 합쳐서 날짜순으로 정렬
+                    const timelineItems = [
+                      ...quotes.slice(0, 10).map((q: any) => ({
+                        id: `quote-${q.id}`,
+                        type: "quote" as const,
+                        title: q.title,
+                        status: q.status,
+                        date: q.createdAt,
+                        amount: q.items?.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0) || 0,
+                      })),
+                      ...allOrders.slice(0, 10).map((o: any) => ({
+                        id: `order-${o.id}`,
+                        type: "order" as const,
+                        title: o.quote?.title || `주문 ${o.orderNumber}`,
+                        status: o.status,
+                        date: o.createdAt,
+                        amount: o.totalAmount,
+                      })),
+                    ]
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 8);
 
-        {/* 구매 내역/예산 요약 카드 및 내 지갑 */}
-        <WidgetGrid>
-          {/* 내 지갑 위젯 */}
-          <div className="col-span-1">
-            <GrantWalletWidget />
+                    return timelineItems.length > 0 ? (
+                      timelineItems.map((item) => (
+                        <div key={item.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-3 h-3 rounded-full ${
+                              item.type === "order" 
+                                ? item.status === "DELIVERED" ? "bg-green-500" :
+                                  item.status === "SHIPPING" ? "bg-blue-500" :
+                                  item.status === "CONFIRMED" ? "bg-purple-500" :
+                                  "bg-yellow-500"
+                                : item.status === "COMPLETED" ? "bg-green-500" :
+                                  item.status === "RESPONDED" ? "bg-blue-500" :
+                                  "bg-yellow-500"
+                            }`} />
+                            {item !== timelineItems[timelineItems.length - 1] && (
+                              <div className="w-px h-full bg-gray-200 mt-1 min-h-[40px]" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{item.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                    {item.type === "order" ? "주문" : "견적"}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.type === "order" 
+                                      ? item.status === "DELIVERED" ? "배송완료" :
+                                        item.status === "SHIPPING" ? "배송중" :
+                                        item.status === "CONFIRMED" ? "확인됨" :
+                                        "접수대기"
+                                      : QUOTE_STATUS[item.status as keyof typeof QUOTE_STATUS]}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(item.date).toLocaleDateString("ko-KR")}
+                                </p>
+                              </div>
+                              {item.amount > 0 && (
+                                <p className="text-xs font-medium text-slate-700 whitespace-nowrap">
+                                  ₩{item.amount.toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        견적 요청이나 주문이 없습니다
+                      </p>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 하단: 재주문 추천 리스트와 빠른 견적 요청 버튼 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left: 재주문 추천 리스트 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>재주문 추천</CardTitle>
+                  <CardDescription>재고가 부족한 품목을 확인하세요</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ReorderRecommendations
+                    onAddToQuoteList={(recommendations) => {
+                      router.push(`/search?bom=${encodeURIComponent(JSON.stringify(recommendations.map(r => ({
+                        name: r.product.name,
+                        quantity: r.recommendedQuantity,
+                        category: r.product.category,
+                      }))))}`);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Right: 빠른 견적 요청 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>빠른 견적 요청</CardTitle>
+                  <CardDescription>재주문 추천 품목을 바로 견적 요청하세요</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Link href="/test/quote" className="block">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
+                      <FileText className="h-4 w-4 mr-2" />
+                      견적 요청 리스트 만들기
+                    </Button>
+                  </Link>
+                  <Link href="/test/search" className="block">
+                    <Button variant="outline" className="w-full" size="lg">
+                      <Search className="h-4 w-4 mr-2" />
+                      제품 검색하기
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tab 2: 재무 분석 */}
+          <TabsContent value="analytics" className="space-y-6">
+            {/* KPI Cards: 이번 달 지출, 잔여 예산, 총 보유 자산 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* 이번 달 지출 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">이번 달 지출</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ₩{(dashboardStats?.thisMonthPurchaseAmount || 0).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">이번 달 구매 금액</p>
+                </CardContent>
+              </Card>
+
+              {/* 잔여 예산 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">잔여 예산</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ₩{(dashboardStats?.budget?.remainingAmount || 0).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">사용 가능한 예산</p>
+                </CardContent>
+              </Card>
+
+              {/* 총 보유 자산 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">총 보유 자산</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ₩{(dashboardStats?.totalAssetValue || 0).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">랩 냉장고 시약 총액</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts: 지출 추이, 예산 비중 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 지출 추이 (Line Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>지출 추이</CardTitle>
+                  <CardDescription>지난달보다 돈을 아꼈나요?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const monthlySpending = dashboardStats?.monthlySpending?.map((item: any) => ({
+                      month: item.month.slice(5), // "MM" 형식으로 변환
+                      amount: item.amount || 0,
+                    })) || [];
+                    return monthlySpending.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={monthlySpending}>
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(value) => `${value}월`}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(value) => `₩${(value / 1000000).toFixed(0)}M`}
+                          />
+                          <Tooltip
+                            formatter={(value: number) => [`₩${value.toLocaleString()}`, "지출"]}
+                            labelFormatter={(label) => `${label}월`}
+                          />
+                          <Legend />
+                          <Bar dataKey="amount" fill="#3b82f6" name="지출" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                        데이터가 없습니다
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* 예산 비중 (Donut Chart) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>예산 비중</CardTitle>
+                  <CardDescription>우리가 시약(Reagent)에 돈을 제일 많이 쓰는구나</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const categorySpending = dashboardStats?.categorySpending || [];
+                    const totalCategoryAmount = categorySpending.reduce(
+                      (sum: number, item: any) => sum + (item.amount || 0),
+                      0
+                    );
+                    const categoryData = categorySpending.map((item: any) => ({
+                      name: item.category || "기타",
+                      value: item.amount || 0,
+                      percentage: totalCategoryAmount > 0
+                        ? ((item.amount || 0) / totalCategoryAmount * 100).toFixed(1)
+                        : "0",
+                    }));
+                    const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1"];
+                    
+                    return categoryData.length > 0 ? (
+                      <div className="space-y-4">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={categoryData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={100}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {categoryData.map((entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: number, name: string, props: any) => [
+                                `₩${value.toLocaleString()} (${props.payload.percentage}%)`,
+                                name,
+                              ]}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="space-y-2">
+                          {categoryData.map((item: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between text-sm"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                />
+                                <span>{item.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  ₩{item.value.toLocaleString()}
+                                </span>
+                                <span className="text-muted-foreground text-xs">
+                                  ({item.percentage}%)
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                        데이터가 없습니다
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 하단: 등록된 예산(Grant) 목록 테이블 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>등록된 예산(Grant) 목록</CardTitle>
+                <CardDescription>연구비 지갑에 등록된 예산을 확인하세요</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const budgets = budgetsData?.budgets || [];
+
+                  return budgets.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2">예산명</th>
+                            <th className="text-right py-2">전체 금액</th>
+                            <th className="text-right py-2">사용 금액</th>
+                            <th className="text-right py-2">잔여 금액</th>
+                            <th className="text-center py-2">기간</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {budgets.map((budget: any) => (
+                            <tr key={budget.id} className="border-b hover:bg-slate-50">
+                              <td className="py-2 font-medium">{budget.name}</td>
+                              <td className="text-right py-2">₩{budget.totalAmount.toLocaleString()}</td>
+                              <td className="text-right py-2">₩{budget.usedAmount.toLocaleString()}</td>
+                              <td className="text-right py-2 font-semibold text-blue-600">
+                                ₩{budget.remainingAmount.toLocaleString()}
+                              </td>
+                              <td className="text-center py-2 text-xs text-muted-foreground">
+                                {budget.endDate && budget.daysRemaining !== null
+                                  ? `D-${budget.daysRemaining}`
+                                  : "무제한"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">등록된 예산이 없습니다</p>
+                      <Link href="/dashboard/budget" className="mt-4 inline-block">
+                        <Button variant="outline" size="sm">
+                          예산 등록하기
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* 기존 탭 구조는 유지하되 숨김 처리 */}
+        <div className="hidden">
+          {/* Executive Dashboard */}
+          <div className="mb-6">
+            <ExecutiveDashboard />
           </div>
-          
-          {/* 구매 내역 요약 */}
-          {widgets
-            .filter((w) => w.id === "purchase-summary" && w.visible)
-            .map((widget) => (
+
+          {/* Analytics Dashboard */}
+          <div className="mb-6">
+            <AnalyticsDashboard />
+          </div>
+
+          {/* Smart Pick Widget - AI 추천 */}
+          <div className="mb-6">
+            <SmartPickWidget />
+          </div>
+
+          {/* 구매 내역/예산 요약 카드 및 내 지갑 - 삭제됨 */}
+          <WidgetGrid>
+            {/* 내 지갑 위젯 */}
+            <div className="col-span-1">
+              <GrantWalletWidget />
+            </div>
+            
+            {/* 구매 내역 요약 - 삭제 */}
+            {widgets
+              .filter((w) => w.id === "purchase-summary" && w.visible)
+              .map((widget) => (
               <DraggableWidget
                 key={widget.id}
                 id={widget.id}
@@ -523,6 +956,7 @@ export default function DashboardPage() {
               </DraggableWidget>
             ))}
         </WidgetGrid>
+        </div>
 
         {/* 탭 바 - 칩 스타일 (모바일) */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
@@ -618,21 +1052,21 @@ export default function DashboardPage() {
                     defaultSize={widget.size}
                   >
                     <section className="mt-6">
-                  {quotesLoading ? (
-                    <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
-                  ) : quotes.length === 0 ? (
-                    <>
-                      <div className="text-center text-sm text-slate-500">
-                        아직 보낸 견적 요청이 없습니다.
-                      </div>
-                      <div className="mt-4 flex justify-center">
-                        <Button size="sm" asChild>
-                          <Link href="/test/search">제품 검색하고 견적 받기</Link>
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                  <div className="space-y-3 md:space-y-4">
+                      {quotesLoading ? (
+                        <p className="text-center text-muted-foreground py-8 text-sm">로딩 중...</p>
+                      ) : quotes.length === 0 ? (
+                        <>
+                          <div className="text-center text-sm text-slate-500">
+                            아직 보낸 견적 요청이 없습니다.
+                          </div>
+                          <div className="mt-4 flex justify-center">
+                            <Button size="sm" asChild>
+                              <Link href="/test/search">제품 검색하고 견적 받기</Link>
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-3 md:space-y-4">
                     {quotes.map((quote: any) => (
                       <Card key={quote.id} className="hover:shadow-md transition-shadow p-3 md:p-6">
                         <CardHeader className="px-0 pt-0 pb-3">
@@ -717,9 +1151,9 @@ export default function DashboardPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                  )}
+                        ))}
+                        </div>
+                      )}
                     </section>
                   </DraggableWidget>
                 ))}
@@ -1039,9 +1473,6 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
         </Tabs>
-        </div>
-          </div>
-        </div>
       </div>
     </div>
   );

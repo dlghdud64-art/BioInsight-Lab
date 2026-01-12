@@ -223,11 +223,24 @@ export default function PurchasesPage() {
   };
 
   const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
-    const safeAmount = amount ?? 0;
-    if (currency === "KRW") {
-      return `₩${safeAmount.toLocaleString()}`;
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return "0원";
     }
-    return `${currency} ${safeAmount.toLocaleString()}`;
+    const safeAmount = Number(amount);
+    if (isNaN(safeAmount) || safeAmount < 0) {
+      return "0원";
+    }
+    if (currency === "KRW") {
+      return `₩${safeAmount.toLocaleString("ko-KR")}`;
+    }
+    try {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency: currency,
+      }).format(safeAmount);
+    } catch (error) {
+      return `${currency} ${safeAmount.toLocaleString("ko-KR")}`;
+    }
   };
 
   // 구매 내역 리스트 조회
@@ -270,11 +283,11 @@ export default function PurchasesPage() {
         <DashboardSidebar />
         <div className="flex-1">
           <PageHeader
-            title="Purchase History"
-            description="Import and track your purchase records"
+            title="구매 내역"
+            description="구매 영수증과 내역을 이곳에서 관리하세요."
             icon={Download}
           />
-          <main className="container mx-auto p-6 space-y-6">
+          <main className="container mx-auto p-6 space-y-6 pt-24">
             {/* Purchase Summary - Always visible with guest-key */}
             {guestKey && (
               <>
@@ -315,7 +328,7 @@ export default function PurchasesPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-xl font-bold text-gray-900">
-                        {summaryLoading ? "..." : summary?.topVendors?.[0]?.vendorName || "N/A"}
+                        {summaryLoading ? "..." : summary?.topVendors?.[0]?.vendorName || "-"}
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
                         {summary?.topVendors?.[0]
@@ -489,13 +502,13 @@ export default function PurchasesPage() {
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
                                     <span className="text-sm text-gray-900 font-medium">
-                                      {purchase.vendorName || "Unknown"}
+                                      {purchase.vendorName || "-"}
                                     </span>
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
                                     <div className="flex flex-col">
                                       <span className="text-sm text-gray-900 font-medium">
-                                        {purchase.itemName || "Unknown Item"}
+                                        {purchase.itemName || "-"}
                                       </span>
                                       {purchase.catalogNumber && (
                                         <span className="text-xs text-gray-400 font-mono mt-0.5">
@@ -584,7 +597,7 @@ export default function PurchasesPage() {
                                 className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
                               >
                                 <TableCell className="py-4 px-6 font-medium text-gray-900">
-                                  {vendor?.vendorName || "Unknown"}
+                                  {vendor?.vendorName || "-"}
                                 </TableCell>
                                 <TableCell className="py-4 px-6 text-right text-gray-600">
                                   {vendor?.count ?? 0}
@@ -635,7 +648,7 @@ export default function PurchasesPage() {
                                 className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
                               >
                                 <TableCell className="py-4 px-6 font-medium text-gray-900">
-                                  {category?.category || "Unknown"}
+                                  {category?.category || "-"}
                                 </TableCell>
                                 <TableCell className="py-4 px-6 text-right text-gray-600">
                                   {category?.count ?? 0}

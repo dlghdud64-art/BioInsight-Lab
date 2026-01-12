@@ -9,8 +9,9 @@ export function PricingSection() {
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 mb-3">
           요금 & 도입
         </h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border-2 border-indigo-200 bg-indigo-50 rounded-lg">
+        {/* 모바일: 가로 스크롤, 데스크탑: 그리드 */}
+        <div className="md:grid md:grid-cols-3 md:gap-3 overflow-x-auto snap-x snap-mandatory scroll-pl-4 scroll-pr-4 flex md:block gap-3 pb-2 md:pb-0">
+          <Card className="border-2 border-indigo-200 bg-indigo-50 rounded-lg min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <CardTitle className="text-sm text-slate-900">Free / Beta</CardTitle>
@@ -30,7 +31,7 @@ export function PricingSection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200 bg-white rounded-lg hover:border-slate-300 hover:shadow-sm transition-all">
+          <Card className="border border-slate-200 bg-white rounded-lg hover:border-slate-300 hover:shadow-sm transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <CardTitle className="text-sm text-slate-900">Team 플랜</CardTitle>
               <CardDescription className="text-xs text-slate-500">
@@ -47,7 +48,7 @@ export function PricingSection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200 bg-white rounded-lg hover:border-slate-300 hover:shadow-sm transition-all">
+          <Card className="border border-slate-200 bg-white rounded-lg hover:border-slate-300 hover:shadow-sm transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <CardTitle className="text-sm text-slate-900">Organization / Enterprise</CardTitle>
               <CardDescription className="text-xs text-slate-500">

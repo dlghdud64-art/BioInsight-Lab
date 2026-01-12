@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download, CloudUpload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -55,6 +55,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
 
   // Step 1: Upload
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 
   // Step 2: Mapping
@@ -79,6 +80,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
+      setSelectedFile(files[0]);
       handleFileUpload(files[0]);
     }
   }, []);
@@ -86,6 +88,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
+      setSelectedFile(files[0]);
       handleFileUpload(files[0]);
     }
   }, []);
@@ -93,6 +96,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
   const handleFileUpload = async (file: File) => {
     try {
       setLoading(true);
+      setSelectedFile(file);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -231,9 +235,24 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
 
   const handleReset = () => {
     setStep("upload");
+    setSelectedFile(null);
     setPreviewData(null);
     setColumnMapping({});
     setImportResult(null);
+  };
+
+  const downloadSampleTemplate = () => {
+    const csvContent = `구매일,벤더,카테고리,품목명,카탈로그번호,단위,수량,단가,금액,통화
+2025-01-15,Sigma-Aldrich,REAGENT,Reagent A,CAT-001,ea,10,50000,500000,KRW
+2025-01-20,Thermo Fisher,EQUIPMENT,Centrifuge,CF-100,ea,1,2000000,2000000,KRW`;
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "구매내역_템플릿.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const downloadErrorCsv = () => {
@@ -273,17 +292,13 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => !loading && document.getElementById("file-upload")?.click()}
             className={`
-              border-2 border-dashed rounded-lg p-12 text-center transition-colors
-              ${isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
+              border-2 border-dashed rounded-lg bg-gray-50 h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
+              ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
               ${loading ? "opacity-50 pointer-events-none" : ""}
             `}
           >
-            <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">CSV 또는 Excel 파일 업로드</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              파일을 드래그하거나 클릭하여 선택하세요
-            </p>
             <input
               type="file"
               accept=".csv,.xlsx,.xls"
@@ -292,17 +307,41 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
               id="file-upload"
               disabled={loading}
             />
-            <label htmlFor="file-upload">
-              <Button asChild disabled={loading}>
-                <span>
-                  <Upload className="w-4 h-4 mr-2" />
-                  파일 선택
-                </span>
-              </Button>
-            </label>
-            <p className="text-xs text-muted-foreground mt-4">
-              지원 형식: CSV, XLSX (최대 10MB)
-            </p>
+            
+            {selectedFile ? (
+              <>
+                <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">
+                  {selectedFile.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  파일이 선택되었습니다. 처리 중...
+                </p>
+              </>
+            ) : (
+              <>
+                <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">
+                  여기를 클릭하거나 파일을 드래그하세요
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  CSV, Excel 파일 지원
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* 템플릿 다운로드 링크 */}
+          <div className="text-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadSampleTemplate();
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              양식이 필요하신가요? 샘플 파일 다운로드
+            </button>
           </div>
         </div>
       )}

@@ -112,21 +112,43 @@ export default function SharePage() {
   };
 
   const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
-    if (amount === null || amount === undefined) return "-";
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return "0원";
+    }
+    const safeAmount = Number(amount);
+    if (isNaN(safeAmount) || safeAmount < 0) {
+      return "0원";
+    }
+    if (currency === "KRW") {
+      return `₩${safeAmount.toLocaleString("ko-KR")}`;
+    }
+    try {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency: currency,
+      }).format(safeAmount);
+    } catch (error) {
+      return `${currency} ${safeAmount.toLocaleString("ko-KR")}`;
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-";
+    try {
+      const dateObj = new Date(dateString);
+      if (isNaN(dateObj.getTime())) {
+        return "-";
+      }
+      return dateObj.toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      return "-";
+    }
   };
 
   if (loading) {

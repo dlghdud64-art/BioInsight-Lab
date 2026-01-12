@@ -136,7 +136,7 @@ export default function EnterpriseSettingsPage() {
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0 pt-16 md:pt-16">
+          <div className="flex-1 overflow-auto min-w-0">
             <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
               <div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>
             </div>
@@ -151,7 +151,7 @@ export default function EnterpriseSettingsPage() {
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0 pt-20 md:pt-16">
+        <div className="flex-1 overflow-auto min-w-0">
           <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
             <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
               <PageHeader
