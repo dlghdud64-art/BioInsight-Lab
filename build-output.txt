@@ -16,35 +16,7 @@ npm warn Unknown project config "enable-pre-post-scripts". This will stop workin
    Linting and checking validity of types ...
    Collecting page data ...
 OPENAI_API_KEY가 설정되지 않았습니다.
-   Generating static pages (0/179) ...
-Error fetching products: n [Error]: Dynamic server usage: Route /api/admin/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\admin\products\route.js:1:940)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/admin/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error fetching activity log stats: n [Error]: Dynamic server usage: Route /api/activity-logs/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\activity-logs\stats\route.js:1:956)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/activity-logs/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
+   Generating static pages (0/181) ...
 Error fetching KPI data: n [Error]: Dynamic server usage: Route /api/analytics/kpi couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -58,19 +30,6 @@ Error fetching KPI data: n [Error]: Dynamic server usage: Route /api/analytics/k
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
   description: "Route /api/analytics/kpi couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
-}
-[2026-01-11T14:05:40.805Z] [ERROR] [API] Error in admin/inbound-emails: Dynamic server usage: Route /api/admin/inbound-emails couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
-  stack: "Error: Dynamic server usage: Route /api/admin/inbound-emails couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
-    '    at l (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\2808.js:1:37157)\n' +
-    '    at d (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:1:1603)\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:404:60433\n' +
-    '    at m (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\admin\\inbound-emails\\route.js:1:1093)\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:36963\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\server\\lib\\trace\\tracer.js:140:36\n' +
-    '    at NoopContextManager.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:7062)\n' +
-    '    at ContextAPI.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:518)\n' +
-    '    at NoopTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18093)\n' +
-    '    at ProxyTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18854)'
 }
 Error fetching admin quotes: n [Error]: Dynamic server usage: Route /api/admin/quotes couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
@@ -100,20 +59,6 @@ Error fetching audit logs: n [Error]: Dynamic server usage: Route /api/audit-log
   description: "Route /api/audit-logs couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error fetching users: n [Error]: Dynamic server usage: Route /api/admin/users couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\admin\users\route.js:1:940)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/admin/users couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
 [Invoices API] Error: n [Error]: Dynamic server usage: Route /api/billing/invoices couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -128,18 +73,45 @@ Error fetching users: n [Error]: Dynamic server usage: Route /api/admin/users co
   description: "Route /api/billing/invoices couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error fetching exchange rates: B [Error]: Dynamic server usage: Route /api/exchange-rates couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at V (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:21777)
-    at Object.get (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:28809)
-    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\exchange-rates\route.js:1:542)
+[2026-01-12T16:53:06.636Z] [ERROR] [API] Error in admin/inbound-emails: Dynamic server usage: Route /api/admin/inbound-emails couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
+  stack: "Error: Dynamic server usage: Route /api/admin/inbound-emails couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
+    '    at l (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\2808.js:1:37157)\n' +
+    '    at d (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:1:1603)\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:404:60433\n' +
+    '    at m (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\admin\\inbound-emails\\route.js:1:1093)\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:36963\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\server\\lib\\trace\\tracer.js:140:36\n' +
+    '    at NoopContextManager.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:7062)\n' +
+    '    at ContextAPI.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:518)\n' +
+    '    at NoopTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18093)\n' +
+    '    at ProxyTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18854)'
+}
+Error fetching products: n [Error]: Dynamic server usage: Route /api/admin/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\admin\products\route.js:1:940)
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
     at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
     at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:122:103 {
-  description: "Route /api/exchange-rates couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/admin/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching favorites: n [Error]: Dynamic server usage: Route /api/favorites couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\favorites\route.js:1:1123)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/favorites couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error fetching dashboard stats: n [Error]: Dynamic server usage: Route /api/dashboard/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -156,18 +128,46 @@ Error fetching dashboard stats: n [Error]: Dynamic server usage: Route /api/dash
   description: "Route /api/dashboard/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error fetching favorites: n [Error]: Dynamic server usage: Route /api/favorites couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+Error fetching exchange rates: B [Error]: Dynamic server usage: Route /api/exchange-rates couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:21777)
+    at Object.get (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:28809)
+    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\exchange-rates\route.js:1:542)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:122:103 {
+  description: "Route /api/exchange-rates couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching users: n [Error]: Dynamic server usage: Route /api/admin/users couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\favorites\route.js:1:1123)
+    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\admin\users\route.js:1:940)
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
     at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
     at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/favorites couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  description: "Route /api/admin/users couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching activity log stats: n [Error]: Dynamic server usage: Route /api/activity-logs/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\activity-logs\stats\route.js:1:956)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/activity-logs/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error fetching reorder recommendations: n [Error]: Dynamic server usage: Route /api/inventory/reorder-recommendations couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -198,7 +198,7 @@ Error fetching inventories: n [Error]: Dynamic server usage: Route /api/inventor
   description: "Route /api/inventory couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-   Generating static pages (44/179) 
+   Generating static pages (45/181) 
 Error fetching safety products: n [Error]: Dynamic server usage: Route /api/products/safety couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -213,7 +213,7 @@ Error fetching safety products: n [Error]: Dynamic server usage: Route /api/prod
   description: "Route /api/products/safety couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-[2026-01-11T14:05:42.244Z] [ERROR] [API] Error in products/search: Dynamic server usage: Route /api/products/search couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
+[2026-01-12T16:53:08.471Z] [ERROR] [API] Error in products/search: Dynamic server usage: Route /api/products/search couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
   stack: "Error: Dynamic server usage: Route /api/products/search couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
     '    at l (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\2808.js:1:37157)\n' +
     '    at d (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:1:1603)\n' +
@@ -263,20 +263,7 @@ Validation Error Count: 1
   clientVersion: '5.22.0',
   errorCode: undefined
 }
-[2026-01-11T14:05:42.645Z] [ERROR] [API] Error in purchases: Dynamic server usage: Route /api/purchases couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
-  stack: "Error: Dynamic server usage: Route /api/purchases couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
-    '    at l (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\2808.js:1:37157)\n' +
-    '    at d (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:1:1603)\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:404:60433\n' +
-    '    at o (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\purchases\\route.js:1:4472)\n' +
-    '    at g (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\purchases\\route.js:1:988)\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:36963\n' +
-    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\server\\lib\\trace\\tracer.js:140:36\n' +
-    '    at NoopContextManager.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:7062)\n' +
-    '    at ContextAPI.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:518)\n' +
-    '    at NoopTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18093)'
-}
-[2026-01-11T14:05:42.645Z] [ERROR] [API] Error in purchases/summary: Dynamic server usage: Route /api/purchases/summary couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
+[2026-01-12T16:53:08.742Z] [ERROR] [API] Error in purchases/summary: Dynamic server usage: Route /api/purchases/summary couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
   stack: "Error: Dynamic server usage: Route /api/purchases/summary couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
     '    at V (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:21777)\n' +
     '    at Object.get (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:29137)\n' +
@@ -289,21 +276,20 @@ Validation Error Count: 1
     '    at ProxyTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18854)\n' +
     '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\server\\lib\\trace\\tracer.js:122:103'
 }
-OPENAI_API_KEY가 설정되지 않았습니다.
-[Quotes/My] Error: n [Error]: Dynamic server usage: Route /api/quotes/my couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\quotes\my\route.js:1:1287)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/quotes/my couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
+[2026-01-12T16:53:08.745Z] [ERROR] [API] Error in purchases: Dynamic server usage: Route /api/purchases couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error {
+  stack: "Error: Dynamic server usage: Route /api/purchases couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
+    '    at l (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\2808.js:1:37157)\n' +
+    '    at d (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:1:1603)\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\chunks\\9864.js:404:60433\n' +
+    '    at o (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\purchases\\route.js:1:4472)\n' +
+    '    at g (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\apps\\web\\.next\\server\\app\\api\\purchases\\route.js:1:988)\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\next-server\\app-route.runtime.prod.js:6:36963\n' +
+    '    at C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\server\\lib\\trace\\tracer.js:140:36\n' +
+    '    at NoopContextManager.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:7062)\n' +
+    '    at ContextAPI.with (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:518)\n' +
+    '    at NoopTracer.startActiveSpan (C:\\Users\\young\\.claude-worktrees\\ai-biocompare\\vigilant-gauss\\node_modules\\next\\dist\\compiled\\@opentelemetry\\api\\index.js:1:18093)'
 }
+OPENAI_API_KEY가 설정되지 않았습니다.
 Error fetching recent products: n [Error]: Dynamic server usage: Route /api/recent-products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -318,20 +304,6 @@ Error fetching recent products: n [Error]: Dynamic server usage: Route /api/rece
   description: "Route /api/recent-products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error generating personalized recommendations: n [Error]: Dynamic server usage: Route /api/recommendations/personalized couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at m (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\recommendations\personalized\route.js:1:3886)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/recommendations/personalized couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
 Error generating organization recommendations: n [Error]: Dynamic server usage: Route /api/recommendations/organization couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -344,34 +316,6 @@ Error generating organization recommendations: n [Error]: Dynamic server usage: 
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
   description: "Route /api/recommendations/organization couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error fetching unmapped records: n [Error]: Dynamic server usage: Route /api/safety-spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety-spend\unmapped\route.js:1:950)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/safety-spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/safety-spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety-spend\route.js:1:956)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/safety-spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error analyzing purchase patterns: n [Error]: Dynamic server usage: Route /api/recommendations/purchase-patterns couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -402,6 +346,34 @@ Error fetching purchase reports: B [Error]: Dynamic server usage: Route /api/rep
   description: "Route /api/reports/purchase couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
+[Quotes/My] Error: n [Error]: Dynamic server usage: Route /api/quotes/my couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\quotes\my\route.js:1:1287)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/quotes/my couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating personalized recommendations: n [Error]: Dynamic server usage: Route /api/recommendations/personalized couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at m (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\recommendations\personalized\route.js:1:3886)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/recommendations/personalized couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
 Error fetching SDS documents: n [Error]: Dynamic server usage: Route /api/safety/sds couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -414,34 +386,6 @@ Error fetching SDS documents: n [Error]: Dynamic server usage: Route /api/safety
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
   description: "Route /api/safety/sds couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error fetching safety products: n [Error]: Dynamic server usage: Route /api/safety/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at c (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety\products\route.js:1:950)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/safety/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/safety/spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety\spend\route.js:1:937)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/safety/spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error exporting safety spend report: n [Error]: Dynamic server usage: Route /api/safety/spend/export couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -458,18 +402,18 @@ Error exporting safety spend report: n [Error]: Dynamic server usage: Route /api
   description: "Route /api/safety/spend/export couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error fetching shared links: n [Error]: Dynamic server usage: Route /api/shared-links couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+Error fetching unmapped records: n [Error]: Dynamic server usage: Route /api/safety-spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\shared-links\route.js:1:939)
+    at p (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety-spend\unmapped\route.js:1:950)
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
     at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
     at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
     at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/shared-links couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  description: "Route /api/safety-spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/safety/spend/summary couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -486,6 +430,34 @@ Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/sa
   description: "Route /api/safety/spend/summary couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
+Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/safety/spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety\spend\route.js:1:937)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/safety/spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching safety products: n [Error]: Dynamic server usage: Route /api/safety/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at c (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety\products\route.js:1:950)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/safety/products couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
 Error fetching unmapped records: n [Error]: Dynamic server usage: Route /api/safety/spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -500,7 +472,21 @@ Error fetching unmapped records: n [Error]: Dynamic server usage: Route /api/saf
   description: "Route /api/safety/spend/unmapped couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-   Generating static pages (89/179) 
+Error fetching safety spend data: n [Error]: Dynamic server usage: Route /api/safety-spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\safety-spend\route.js:1:956)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/safety-spend couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (90/181) 
 [UserBudget API] Error fetching budgets: n [Error]: Dynamic server usage: Route /api/user-budgets couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -529,6 +515,20 @@ Error fetching user team role: n [Error]: Dynamic server usage: Route /api/team/
   description: "Route /api/team/user-role couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
+Error fetching shared links: n [Error]: Dynamic server usage: Route /api/shared-links couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\shared-links\route.js:1:939)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/shared-links couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
 Error generating insights: n [Error]: Dynamic server usage: Route /api/vendor/insights couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -543,20 +543,6 @@ Error generating insights: n [Error]: Dynamic server usage: Route /api/vendor/in
   description: "Route /api/vendor/insights couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error fetching vendor quotes: n [Error]: Dynamic server usage: Route /api/vendor/quotes couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
-    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
-    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\vendor\quotes\route.js:1:939)
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
-    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
-    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
-    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
-    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
-    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
-  description: "Route /api/vendor/quotes couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
 Error fetching vendor info: n [Error]: Dynamic server usage: Route /api/vendor/info couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
     at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
@@ -569,6 +555,20 @@ Error fetching vendor info: n [Error]: Dynamic server usage: Route /api/vendor/i
     at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
     at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
   description: "Route /api/vendor/info couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching vendor quotes: n [Error]: Dynamic server usage: Route /api/vendor/quotes couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\2808.js:1:37157)
+    at d (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:1:1603)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9864.js:404:60433
+    at u (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\api\vendor\quotes\route.js:1:939)
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:36963
+    at C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/vendor/quotes couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error fetching vendors: n [Error]: Dynamic server usage: Route /api/vendors couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
@@ -596,273 +596,29 @@ Error fetching vendors: n [Error]: Dynamic server usage: Route /api/vendors coul
  ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
  ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
  ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
-   Generating static pages (134/179) 
- ✓ Generating static pages (179/179)
-   Finalizing page optimization ...
-   Collecting build traces ...
+   Generating static pages (135/181) 
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/dashboard/settings". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at i (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9928.js:1:13025)
+    at c (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\chunks\9928.js:1:24009)
+    at D (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web\.next\server\app\dashboard\settings\page.js:1:4213)
+    at nj (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46251)
+    at nM (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47571)
+    at nN (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64546)
+    at nI (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47010)
+    at nM (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47717)
+    at nM (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61546)
+    at nN (C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64546)
 
-Route (app)                                         Size     First Load JS
-┌ ○ /                                               9.3 kB          154 kB
-├ ○ /_not-found                                     153 B          87.5 kB
-├ ○ /about                                          2.82 kB         148 kB
-├ ○ /admin                                          6.76 kB         233 kB
-├ ○ /admin/quotes                                   28.5 kB         175 kB
-├ ƒ /admin/quotes/[id]                              11.4 kB         143 kB
-├ ○ /admin/requests                                 12 kB           176 kB
-├ ○ /admin/safety                                   5.43 kB         198 kB
-├ ƒ /api/activity-logs                              0 B                0 B
-├ ƒ /api/activity-logs/stats                        0 B                0 B
-├ ○ /api/admin/activity                             0 B                0 B
-├ ○ /api/admin/charts                               0 B                0 B
-├ ƒ /api/admin/inbound-emails                       0 B                0 B
-├ ƒ /api/admin/inbound-emails/[id]/attach-to-quote  0 B                0 B
-├ ƒ /api/admin/orders                               0 B                0 B
-├ ƒ /api/admin/orders/[id]/status                   0 B                0 B
-├ ƒ /api/admin/products                             0 B                0 B
-├ ƒ /api/admin/products/[id]                        0 B                0 B
-├ ƒ /api/admin/quotes                               0 B                0 B
-├ ƒ /api/admin/quotes/[id]                          0 B                0 B
-├ ƒ /api/admin/quotes/[id]/items                    0 B                0 B
-├ ƒ /api/admin/seed                                 0 B                0 B
-├ ○ /api/admin/stats                                0 B                0 B
-├ ƒ /api/admin/users                                0 B                0 B
-├ ƒ /api/analytics/kpi                              0 B                0 B
-├ ƒ /api/analytics/recommendation-metrics           0 B                0 B
-├ ƒ /api/analytics/search-history                   0 B                0 B
-├ ƒ /api/analytics/track                            0 B                0 B
-├ ƒ /api/analytics/user-behavior                    0 B                0 B
-├ ƒ /api/audit-logs                                 0 B                0 B
-├ ƒ /api/auth/[...nextauth]                         0 B                0 B
-├ ƒ /api/billing                                    0 B                0 B
-├ ƒ /api/billing/checkout                           0 B                0 B
-├ ƒ /api/billing/invoices                           0 B                0 B
-├ ƒ /api/billing/payment-methods                    0 B                0 B
-├ ƒ /api/billing/portal                             0 B                0 B
-├ ƒ /api/billing/webhook                            0 B                0 B
-├ ƒ /api/budgets                                    0 B                0 B
-├ ƒ /api/budgets/[id]                               0 B                0 B
-├ ƒ /api/cart                                       0 B                0 B
-├ ƒ /api/cart/from-inventory                        0 B                0 B
-├ ƒ /api/cart/items/[id]                            0 B                0 B
-├ ƒ /api/compliance-links                           0 B                0 B
-├ ƒ /api/compliance-links/[id]                      0 B                0 B
-├ ○ /api/config                                     0 B                0 B
-├ ƒ /api/dashboard/layout                           0 B                0 B
-├ ƒ /api/dashboard/stats                            0 B                0 B
-├ ƒ /api/datasheet/extract                          0 B                0 B
-├ ƒ /api/datasheet/extract-pdf                      0 B                0 B
-├ ƒ /api/datasheet/extract-url                      0 B                0 B
-├ ƒ /api/exchange-rates                             0 B                0 B
-├ ƒ /api/export/presets                             0 B                0 B
-├ ƒ /api/favorites                                  0 B                0 B
-├ ƒ /api/groupware/send                             0 B                0 B
-├ ƒ /api/inbound/sendgrid/[secret]                  0 B                0 B
-├ ƒ /api/inventory                                  0 B                0 B
-├ ƒ /api/inventory/[id]/restock-request             0 B                0 B
-├ ƒ /api/inventory/alerts/send                      0 B                0 B
-├ ƒ /api/inventory/auto-reorder                     0 B                0 B
-├ ƒ /api/inventory/import/commit                    0 B                0 B
-├ ƒ /api/inventory/import/preview                   0 B                0 B
-├ ƒ /api/inventory/reorder-recommendations          0 B                0 B
-├ ƒ /api/inventory/usage                            0 B                0 B
-├ ƒ /api/invites/accept                             0 B                0 B
-├ ƒ /api/orders                                     0 B                0 B
-├ ƒ /api/organizations                              0 B                0 B
-├ ƒ /api/organizations/[id]                         0 B                0 B
-├ ƒ /api/organizations/[id]/compliance-links        0 B                0 B
-├ ƒ /api/organizations/[id]/invites                 0 B                0 B
-├ ƒ /api/organizations/[id]/leave                   0 B                0 B
-├ ƒ /api/organizations/[id]/members                 0 B                0 B
-├ ƒ /api/organizations/[id]/security                0 B                0 B
-├ ƒ /api/organizations/[id]/sso                     0 B                0 B
-├ ƒ /api/organizations/[id]/sso/test                0 B                0 B
-├ ƒ /api/organizations/[id]/subscription            0 B                0 B
-├ ƒ /api/products/[id]                              0 B                0 B
-├ ƒ /api/products/[id]/alternatives                 0 B                0 B
-├ ƒ /api/products/[id]/embedding                    0 B                0 B
-├ ƒ /api/products/[id]/reviews                      0 B                0 B
-├ ƒ /api/products/[id]/safety                       0 B                0 B
-├ ƒ /api/products/[id]/safety-extract               0 B                0 B
-├ ƒ /api/products/[id]/sds                          0 B                0 B
-├ ƒ /api/products/[id]/sds/upload                   0 B                0 B
-├ ƒ /api/products/[id]/update                       0 B                0 B
-├ ƒ /api/products/[id]/usage                        0 B                0 B
-├ ƒ /api/products/[id]/view                         0 B                0 B
-├ ƒ /api/products/average-lead-time                 0 B                0 B
-├ ƒ /api/products/brands                            0 B                0 B
-├ ƒ /api/products/compare                           0 B                0 B
-├ ƒ /api/products/safety                            0 B                0 B
-├ ƒ /api/products/search                            0 B                0 B
-├ ƒ /api/protocol/bom                               0 B                0 B
-├ ƒ /api/protocol/extract                           0 B                0 B
-├ ƒ /api/protocol/extract-pdf                       0 B                0 B
-├ ƒ /api/protocol/extract-pdf-text                  0 B                0 B
-├ ƒ /api/protocol/extract-text                      0 B                0 B
-├ ƒ /api/purchases                                  0 B                0 B
-├ ƒ /api/purchases/[id]/match                       0 B                0 B
-├ ƒ /api/purchases/import                           0 B                0 B
-├ ƒ /api/purchases/import-file                      0 B                0 B
-├ ƒ /api/purchases/import/commit                    0 B                0 B
-├ ƒ /api/purchases/import/preview                   0 B                0 B
-├ ƒ /api/purchases/summary                          0 B                0 B
-├ ƒ /api/quote-items/[id]                           0 B                0 B
-├ ƒ /api/quote-items/[id]/mark-purchased            0 B                0 B
-├ ƒ /api/quote-lists                                0 B                0 B
-├ ƒ /api/quote-lists/[id]                           0 B                0 B
-├ ƒ /api/quote-lists/[id]/export                    0 B                0 B
-├ ƒ /api/quote-lists/[id]/items                     0 B                0 B
-├ ƒ /api/quotes                                     0 B                0 B
-├ ƒ /api/quotes/[id]                                0 B                0 B
-├ ƒ /api/quotes/[id]/detail                         0 B                0 B
-├ ƒ /api/quotes/[id]/responses                      0 B                0 B
-├ ƒ /api/quotes/[id]/responses/[responseId]         0 B                0 B
-├ ƒ /api/quotes/[id]/rfq-token                      0 B                0 B
-├ ƒ /api/quotes/[id]/share                          0 B                0 B
-├ ƒ /api/quotes/[id]/status                         0 B                0 B
-├ ƒ /api/quotes/[id]/vendor-requests                0 B                0 B
-├ ƒ /api/quotes/[id]/versions                       0 B                0 B
-├ ƒ /api/quotes/cost-optimization                   0 B                0 B
-├ ƒ /api/quotes/from-cart                           0 B                0 B
-├ ƒ /api/quotes/generate-english                    0 B                0 B
-├ ƒ /api/quotes/my                                  0 B                0 B
-├ ƒ /api/quotes/optimize-combination                0 B                0 B
-├ ƒ /api/quotes/parse-pdf                           0 B                0 B
-├ ƒ /api/recent-products                            0 B                0 B
-├ ƒ /api/recommendations/[id]/feedback              0 B                0 B
-├ ƒ /api/recommendations/feedback                   0 B                0 B
-├ ƒ /api/recommendations/optimized                  0 B                0 B
-├ ƒ /api/recommendations/organization               0 B                0 B
-├ ƒ /api/recommendations/personalized               0 B                0 B
-├ ƒ /api/recommendations/purchase-patterns          0 B                0 B
-├ ƒ /api/reports/purchase                           0 B                0 B
-├ ƒ /api/request                                    0 B                0 B
-├ ƒ /api/request/[id]/approve                       0 B                0 B
-├ ƒ /api/request/[id]/reject                        0 B                0 B
-├ ƒ /api/reviews/[id]                               0 B                0 B
-├ ƒ /api/safety-spend                               0 B                0 B
-├ ƒ /api/safety-spend/unmapped                      0 B                0 B
-├ ƒ /api/safety/products                            0 B                0 B
-├ ƒ /api/safety/sds                                 0 B                0 B
-├ ƒ /api/safety/spend                               0 B                0 B
-├ ƒ /api/safety/spend/export                        0 B                0 B
-├ ƒ /api/safety/spend/map                           0 B                0 B
-├ ƒ /api/safety/spend/summary                       0 B                0 B
-├ ƒ /api/safety/spend/unmapped                      0 B                0 B
-├ ƒ /api/sds/[id]/apply                             0 B                0 B
-├ ƒ /api/sds/[id]/extract                           0 B                0 B
-├ ƒ /api/sds/[id]/signed-url                        0 B                0 B
-├ ƒ /api/search                                     0 B                0 B
-├ ƒ /api/search/intent                              0 B                0 B
-├ ƒ /api/share/[token]                              0 B                0 B
-├ ƒ /api/shared-links                               0 B                0 B
-├ ƒ /api/shared-lists                               0 B                0 B
-├ ƒ /api/shared-lists/[publicId]                    0 B                0 B
-├ ƒ /api/shared-lists/bulk                          0 B                0 B
-├ ƒ /api/team                                       0 B                0 B
-├ ƒ /api/team/[id]/inventory                        0 B                0 B
-├ ƒ /api/team/[id]/members                          0 B                0 B
-├ ƒ /api/team/invite                                0 B                0 B
-├ ƒ /api/team/user-role                             0 B                0 B
-├ ƒ /api/templates                                  0 B                0 B
-├ ƒ /api/templates/[id]                             0 B                0 B
-├ ƒ /api/templates/[id]/export                      0 B                0 B
-├ ƒ /api/translate                                  0 B                0 B
-├ ƒ /api/user-budgets                               0 B                0 B
-├ ƒ /api/user-inventory                             0 B                0 B
-├ ƒ /api/user-inventory/[id]                        0 B                0 B
-├ ƒ /api/validate-link                              0 B                0 B
-├ ƒ /api/vendor-requests/[token]                    0 B                0 B
-├ ƒ /api/vendor-requests/[token]/response           0 B                0 B
-├ ƒ /api/vendor/auth/send-link                      0 B                0 B
-├ ƒ /api/vendor/billing                             0 B                0 B
-├ ƒ /api/vendor/info                                0 B                0 B
-├ ƒ /api/vendor/insights                            0 B                0 B
-├ ƒ /api/vendor/premium                             0 B                0 B
-├ ƒ /api/vendor/premium-featured                    0 B                0 B
-├ ƒ /api/vendor/products                            0 B                0 B
-├ ƒ /api/vendor/profile                             0 B                0 B
-├ ƒ /api/vendor/quotes                              0 B                0 B
-├ ƒ /api/vendor/quotes/[quoteId]/response           0 B                0 B
-├ ƒ /api/vendor/requests                            0 B                0 B
-├ ƒ /api/vendor/requests/[id]                       0 B                0 B
-├ ƒ /api/vendor/requests/[id]/attachments           0 B                0 B
-├ ƒ /api/vendor/requests/[id]/respond               0 B                0 B
-├ ○ /api/vendor/stats                               0 B                0 B
-├ ƒ /api/vendors                                    0 B                0 B
-├ ƒ /api/workspaces                                 0 B                0 B
-├ ƒ /api/workspaces/[id]                            0 B                0 B
-├ ƒ /api/workspaces/[id]/invites                    0 B                0 B
-├ ƒ /api/workspaces/[id]/members                    0 B                0 B
-├ ƒ /api/workspaces/[id]/members/[memberId]         0 B                0 B
-├ ○ /auth/error                                     3.08 kB         104 kB
-├ ○ /auth/signin                                    2.93 kB         109 kB
-├ ○ /billing                                        12.2 kB         169 kB
-├ ○ /billing/cancel                                 3.68 kB         149 kB
-├ ○ /billing/success                                5.07 kB         158 kB
-├ ○ /changelog                                      2.82 kB         148 kB
-├ ○ /compare                                        14.3 kB         273 kB
-├ ○ /compare/quote                                  7.06 kB         168 kB
-├ ○ /dashboard                                      37.1 kB         311 kB
-├ ○ /dashboard-guest                                2.15 kB         112 kB
-├ ○ /dashboard-guest/purchases                      7.65 kB         117 kB
-├ ○ /dashboard/activity-logs                        9.08 kB         177 kB
-├ ○ /dashboard/admin                                10.3 kB         147 kB
-├ ○ /dashboard/analytics                            4.65 kB         264 kB
-├ ○ /dashboard/budget                               26.5 kB         202 kB
-├ ○ /dashboard/grants                               4.97 kB         158 kB
-├ ○ /dashboard/inventory                            115 kB          294 kB
-├ ○ /dashboard/organizations                        12.3 kB         173 kB
-├ ○ /dashboard/purchases                            16.3 kB         184 kB
-├ ○ /dashboard/quotes                               4.85 kB         111 kB
-├ ○ /dashboard/safety                               8.72 kB         169 kB
-├ ○ /dashboard/safety-spend                         7.5 kB          204 kB
-├ ○ /dashboard/settings/enterprise                  16.8 kB         184 kB
-├ ○ /dashboard/settings/plans                       9.52 kB         146 kB
-├ ○ /dashboard/shared-links                         11 kB           164 kB
-├ ○ /dashboard/supplier                             10.4 kB         164 kB
-├ ○ /dashboard/vendor/billing                       4.22 kB         118 kB
-├ ○ /dashboard/vendor/premium                       6.32 kB         120 kB
-├ ○ /dashboard/vendor/quotes                        13.5 kB         131 kB
-├ ○ /extract                                        9.86 kB         112 kB
-├ ○ /help                                           2.82 kB         148 kB
-├ ○ /inventory                                      15.1 kB         179 kB
-├ ○ /my/orders                                      4.5 kB          158 kB
-├ ○ /pricing                                        5.22 kB         159 kB
-├ ○ /privacy                                        2.82 kB         148 kB
-├ ƒ /products/[id]                                  24.6 kB         157 kB
-├ ○ /protocol/bom                                   16.9 kB         178 kB
-├ ○ /quotes                                         7.15 kB         168 kB
-├ ƒ /quotes/[id]                                    19.7 kB         163 kB
-├ ○ /reports                                        10.7 kB         280 kB
-├ ○ /search                                         13.4 kB         166 kB
-├ ○ /settings/audit                                 6.48 kB         191 kB
-├ ○ /settings/billing                               5.2 kB          190 kB
-├ ○ /settings/compliance-links                      8.32 kB         201 kB
-├ ○ /settings/security                              6.25 kB         191 kB
-├ ○ /settings/workspace                             6.93 kB         200 kB
-├ ƒ /share/[token]                                  4.02 kB         143 kB
-├ ƒ /shared-list/[publicId]                         5.15 kB         115 kB
-├ ○ /team/settings                                  7.24 kB         196 kB
-├ ○ /templates                                      4.19 kB         149 kB
-├ ○ /terms                                          2.82 kB         148 kB
-├ ○ /test                                           153 B          87.5 kB
-├ ○ /test/analysis                                  6.26 kB         122 kB
-├ ○ /test/compare                                   19.4 kB         268 kB
-├ ○ /test/quote                                     4.1 kB          185 kB
-├ ○ /test/quote/request                             4.02 kB         185 kB
-├ ○ /test/search                                    10.4 kB         167 kB
-├ ○ /test/search/analysis                           5.17 kB         115 kB
-├ ○ /vendor                                         5.75 kB         122 kB
-├ ƒ /vendor/[token]                                 6.78 kB         101 kB
-├ ○ /vendor/dashboard                               4.1 kB          124 kB
-├ ○ /vendor/login                                   4.33 kB        98.9 kB
-└ ƒ /vendor/requests/[id]                           9.71 kB         130 kB
-+ First Load JS shared by all                       87.3 kB
-  ├ chunks/1528-3d357d6ce56694ee.js                 31.7 kB
-  ├ chunks/1dd3208c-01e8ffac18cba7d1.js             53.6 kB
-  └ other shared chunks (total)                     2.02 kB
+Error occurred prerendering page "/dashboard/settings". Read more: https://nextjs.org/docs/messages/prerender-error
 
+ ✓ Generating static pages (181/181)
 
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
+> Export encountered errors on following paths:
+	/dashboard/settings/page: /dashboard/settings
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web
+npm error workspace web@0.1.0
+npm error location C:\Users\young\.claude-worktrees\ai-biocompare\vigilant-gauss\apps\web
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c next build
