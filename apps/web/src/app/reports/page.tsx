@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Calendar, TrendingUp, Package, Building2, DollarSign, Upload, FileSpreadsheet } from "lucide-react";
+import { Calendar, TrendingUp, Package, Building2, DollarSign, Upload, FileSpreadsheet, Plus, CloudUpload, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -22,6 +22,8 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { PageHeader } from "@/app/_components/page-header";
 import { BarChart3 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { useCallback } from "react";
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -36,6 +38,11 @@ export default function ReportsPage() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [selectedBudget, setSelectedBudget] = useState<string>("all");
+
+  // CSV Import 모달 상태
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // 리포트 데이터 조회
   const { data: reportData, isLoading } = useQuery({
@@ -62,25 +69,31 @@ export default function ReportsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/purchases/import", {
+      const response = await fetch("/api/purchases/import-file", {
         method: "POST",
+        headers: {
+          "x-guest-key": session?.user?.id || "guest",
+        },
         body: formData,
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Import failed");
+        throw new Error(error.error || error.message || "Import failed");
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Import 성공",
-        description: "구매 내역이 성공적으로 import되었습니다.",
+        description: `${data.successRows || 0}개의 구매 내역이 성공적으로 import되었습니다.`,
       });
+      setIsImportDialogOpen(false);
+      setSelectedFile(null);
       // 리포트 데이터 새로고침
       queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
     },
     onError: (error: Error) => {
       toast({
@@ -90,6 +103,69 @@ export default function ReportsPage() {
       });
     },
   });
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.name.endsWith(".csv") || file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        setSelectedFile(file);
+      } else {
+        toast({
+          title: "파일 형식 오류",
+          description: "CSV 또는 Excel 파일만 업로드할 수 있습니다.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [toast]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  }, []);
+
+  const handleImport = () => {
+    if (!selectedFile) {
+      toast({
+        title: "파일 선택 필요",
+        description: "업로드할 파일을 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    importMutation.mutate(selectedFile);
+  };
+
+  const downloadSampleTemplate = () => {
+    const csvContent = `구매일,벤더,카테고리,품목명,카탈로그번호,단위,수량,단가,금액,통화
+2025-01-15,Sigma-Aldrich,REAGENT,Reagent A,CAT-001,ea,10,50000,500000,KRW
+2025-01-20,Thermo Fisher,EQUIPMENT,Centrifuge,CF-100,ea,1,2000000,2000000,KRW`;
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "구매내역_샘플.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   // 인증 확인
   if (status === "loading") {
@@ -129,6 +205,100 @@ export default function ReportsPage() {
           description="기간/팀/벤더별 총 구매 금액과 예산 사용 상황을 확인합니다."
           icon={BarChart3}
           iconColor="text-green-600"
+          actions={
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8 md:h-10">
+                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">데이터 가져오기</span>
+                  <span className="sm:hidden">가져오기</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>구매 내역 CSV Import</DialogTitle>
+                  <DialogDescription>
+                    CSV 또는 Excel 파일을 업로드하여 구매 내역을 import합니다.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {/* 드롭존 */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-lg p-12 text-center h-64 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                      isDragging
+                        ? "border-blue-500 bg-blue-50"
+                        : selectedFile
+                        ? "border-blue-300 bg-blue-50/50"
+                        : "border-gray-300 bg-gray-50 hover:border-gray-400"
+                    }`}
+                    onClick={() => document.getElementById("file-input")?.click()}
+                  >
+                    <input
+                      id="file-input"
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    {selectedFile ? (
+                      <>
+                        <FileText className="h-12 w-12 text-blue-600 mb-4" />
+                        <p className="text-lg font-semibold text-gray-900 mb-2">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          파일이 선택되었습니다. 아래 버튼을 클릭하여 업로드하세요.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <CloudUpload className="h-12 w-12 text-gray-400 mb-4" />
+                        <p className="text-lg font-semibold text-gray-900 mb-2">
+                          여기를 클릭하거나 파일을 드래그하세요
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          CSV, Excel 파일 지원
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 템플릿 다운로드 */}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={downloadSampleTemplate}
+                      className="text-sm text-blue-600 hover:text-blue-700 underline"
+                    >
+                      양식이 필요하신가요? 샘플 파일 다운로드
+                    </button>
+                  </div>
+
+                  {/* 업로드 버튼 */}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsImportDialogOpen(false);
+                        setSelectedFile(null);
+                      }}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      onClick={handleImport}
+                      disabled={!selectedFile || importMutation.isPending}
+                    >
+                      {importMutation.isPending ? "업로드 중..." : "업로드"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          }
         />
 
       {/* 필터 */}
@@ -227,7 +397,7 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent className="px-0 pb-0">
                 <div className="text-lg md:text-2xl font-bold break-words">
-                  ₩{reportData.totalAmount?.toLocaleString("ko-KR") || 0}
+                  {formatCurrency(reportData.totalAmount)}
                 </div>
               </CardContent>
             </Card>
@@ -247,7 +417,7 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent className="px-0 pb-0">
                 <div className="text-lg md:text-2xl font-bold break-words">
-                  ₩{reportData.averagePrice?.toLocaleString("ko-KR") || 0}
+                  {formatCurrency(reportData.averagePrice)}
                 </div>
               </CardContent>
             </Card>
@@ -280,8 +450,7 @@ export default function ReportsPage() {
                   <div className="flex justify-between text-sm">
                     <span>사용 금액</span>
                     <span>
-                      ₩{reportData.budgetUsage.used?.toLocaleString("ko-KR") || 0} / ₩
-                      {reportData.budgetUsage.total?.toLocaleString("ko-KR") || 0}
+                      {formatCurrency(reportData.budgetUsage.used)} / {formatCurrency(reportData.budgetUsage.total)}
                     </span>
                   </div>
                   <Progress
@@ -292,10 +461,9 @@ export default function ReportsPage() {
                     }
                   />
                   <div className="text-xs text-muted-foreground">
-                    남은 예산: ₩
-                    {(
+                    남은 예산: {formatCurrency(
                       (reportData.budgetUsage.total || 0) - (reportData.budgetUsage.used || 0)
-                    ).toLocaleString("ko-KR")}
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -394,18 +562,36 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.details.map((item: any, index: number) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          {new Date(item.purchaseDate).toLocaleDateString("ko-KR")}
+                    {reportData.details.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-3">
+                            <FileSpreadsheet className="h-12 w-12 text-gray-400" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 mb-1">
+                                데이터가 없습니다
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                CSV 파일을 업로드하여 리포트를 생성해보세요.
+                              </p>
+                            </div>
+                          </div>
                         </TableCell>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell>{item.vendorName}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>₩{item.unitPrice?.toLocaleString("ko-KR")}</TableCell>
-                        <TableCell>₩{item.totalAmount?.toLocaleString("ko-KR")}</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      reportData.details.map((item: any, index: number) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {formatDate(item.purchaseDate, { format: "date" })}
+                          </TableCell>
+                          <TableCell>{item.productName || "-"}</TableCell>
+                          <TableCell>{item.vendorName || "-"}</TableCell>
+                          <TableCell>{item.quantity || "-"}</TableCell>
+                          <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
+                          <TableCell>{formatCurrency(item.totalAmount)}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -414,41 +600,28 @@ export default function ReportsPage() {
         </>
       ) : (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            데이터가 없습니다. 필터를 조정하거나 구매 내역을 import해주세요.
+          <CardContent className="py-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <FileSpreadsheet className="h-16 w-16 text-gray-400" />
+              <div>
+                <p className="text-base font-medium text-gray-900 mb-2">
+                  데이터가 없습니다
+                </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  CSV 파일을 업로드하여 리포트를 생성해보세요.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsImportDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  데이터 가져오기
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
-
-      {/* CSV Import Dialog */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="fixed bottom-8 right-8" size="lg">
-            <Upload className="mr-2 h-4 w-4" />
-            CSV Import
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>구매 내역 CSV Import</DialogTitle>
-            <DialogDescription>
-              CSV 파일을 업로드하여 구매 내역을 import합니다.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  importMutation.mutate(file);
-                }
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
       </div>
     </div>
   );

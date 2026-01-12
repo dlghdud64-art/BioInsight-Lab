@@ -81,10 +81,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </button>
           ) : null}
           
-          {/* 로고 - 항상 표시, flex-shrink-0으로 크기 고정, 우측 마진으로 간격 확보 */}
+          {/* 로고 - 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
           <Link 
             href="/" 
-            className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative"
+            className="md:hidden flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative"
           >
             <BioInsightLogo showText={false} />
           </Link>
@@ -95,11 +95,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               {pageTitle}
             </h1>
           ) : null}
-          
-          {/* 데스크탑 로고 텍스트 */}
-          <div className="hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-            <BioInsightLogo showText={true} />
-          </div>
         </div>
 
         {/* 우측: CTA/유틸 */}

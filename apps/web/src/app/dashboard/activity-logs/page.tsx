@@ -5,9 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { Activity, Filter, Calendar, User, Building2, FileText, Share2, Eye, Trash2, Edit2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -83,16 +81,10 @@ export default function ActivityLogsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <MainHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 py-8">
-              <div className="max-w-7xl mx-auto">
-                <div className="text-center py-12">로딩 중...</div>
-              </div>
-            </div>
+      <div className="w-full px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
           </div>
         </div>
       </div>
@@ -100,19 +92,14 @@ export default function ActivityLogsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-              <PageHeader
-                title="활동 로그"
-                description="리스트 생성, 수정, 공유 등 모든 활동 내역을 확인할 수 있습니다."
-                icon={Activity}
-                iconColor="text-purple-600"
-              />
+    <div className="w-full px-4 md:px-6 py-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader
+          title="활동 로그"
+          description="리스트 생성, 수정, 공유 등 모든 활동 내역을 확인할 수 있습니다."
+          icon={Activity}
+          iconColor="text-purple-600"
+        />
 
               {/* 필터 */}
               <Card className="p-3 md:p-6">
@@ -245,9 +232,6 @@ export default function ActivityLogsPage() {
                   )}
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -70,10 +70,15 @@ const config: Config = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         shake: "shake 0.5s ease-in-out infinite",
         marquee: "marquee 60s linear infinite",
+        fadeIn: "fadeIn 0.5s ease-in-out forwards",
       },
     },
   },

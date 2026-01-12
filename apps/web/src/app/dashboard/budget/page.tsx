@@ -19,9 +19,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { trackEvent } from "@/lib/analytics";
 
 interface Budget {
@@ -134,9 +132,11 @@ export default function BudgetPage() {
 
   if (status === "loading") {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
+      <div className="w-full px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -151,13 +151,8 @@ export default function BudgetPage() {
   const budgets = data?.budgets || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
+    <div className="w-full px-4 md:px-6 py-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="예산 관리"
           description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
@@ -171,30 +166,30 @@ export default function BudgetPage() {
                   <span className="sm:hidden">추가</span>
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingBudget ? "예산 수정" : "예산 추가"}
-                </DialogTitle>
-                <DialogDescription>
-                  예산 정보를 입력하고 기간을 설정합니다.
-                </DialogDescription>
-              </DialogHeader>
-              <BudgetForm
-                budget={editingBudget}
-                onSubmit={(data) => {
-                  createOrUpdateMutation.mutate({
-                    ...data,
-                    id: editingBudget?.id,
-                  });
-                }}
-                onCancel={() => {
-                  setIsDialogOpen(false);
-                  setEditingBudget(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingBudget ? "예산 수정" : "예산 추가"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    예산 정보를 입력하고 기간을 설정합니다.
+                  </DialogDescription>
+                </DialogHeader>
+                <BudgetForm
+                  budget={editingBudget}
+                  onSubmit={(data) => {
+                    createOrUpdateMutation.mutate({
+                      ...data,
+                      id: editingBudget?.id,
+                    });
+                  }}
+                  onCancel={() => {
+                    setIsDialogOpen(false);
+                    setEditingBudget(null);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
           }
         />
 
@@ -234,9 +229,6 @@ export default function BudgetPage() {
             ))}
           </div>
         )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

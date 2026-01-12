@@ -69,49 +69,48 @@ export function BioInsightHeroSection() {
           {/* 노트북 프레임 */}
           <div className="relative z-10 w-full max-w-5xl">
             {/* 노트북 상단 바 */}
-            <div className="bg-slate-800 rounded-t-lg px-4 py-2 flex items-center gap-2">
+            <div className="bg-gray-200 rounded-t-lg px-4 py-2 flex items-center gap-2 border-b border-gray-300">
               <div className="flex gap-1.5 px-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <div className="flex-1 bg-slate-700 rounded px-3 py-1 text-xs text-slate-300 text-center">
+              <div className="flex-1 bg-white rounded px-3 py-1 text-xs text-gray-600 text-center border border-gray-300">
                 dashboard.bioinsight.com
               </div>
             </div>
 
             {/* 대시보드 이미지 영역 */}
-            <div className="relative bg-slate-900 rounded-b-lg overflow-hidden shadow-2xl transform perspective-1000" style={{ transform: 'perspective(1000px) rotateX(2deg)' }}>
-              {/* Placeholder 또는 실제 대시보드 이미지 */}
-              <div className="w-full h-[400px] md:h-[500px] lg:h-[600px] bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 flex items-center justify-center relative">
-                {/* 대시보드 목업 콘텐츠 */}
-                <div className="absolute inset-4 grid grid-cols-12 grid-rows-6 gap-3">
+            <div className="relative bg-white rounded-b-lg overflow-hidden shadow-2xl ring-1 ring-gray-900/10 transform perspective-1000" style={{ transform: 'perspective(1000px) rotateX(2deg)' }}>
+              {/* 실제 대시보드 목업 콘텐츠 */}
+              <div className="w-full h-[400px] md:h-[500px] lg:h-[600px] bg-gray-50 p-4 md:p-6">
+                <div className="h-full grid grid-cols-12 grid-rows-6 gap-3 md:gap-4">
                   {/* 상단 KPI 카드들 */}
-                  <div className="col-span-12 md:col-span-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-1">재고 부족 알림</div>
-                    <div className="text-2xl font-bold text-white">3개</div>
+                  <div className="col-span-12 md:col-span-3 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-1">재고 부족 알림</div>
+                    <div className="text-xl md:text-2xl font-bold text-gray-900">3개</div>
                   </div>
-                  <div className="col-span-12 md:col-span-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-1">진행 중인 견적</div>
-                    <div className="text-2xl font-bold text-white">5건</div>
+                  <div className="col-span-12 md:col-span-3 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-1">진행 중인 견적</div>
+                    <div className="text-xl md:text-2xl font-bold text-gray-900">5건</div>
                   </div>
-                  <div className="col-span-12 md:col-span-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-1">배송 중인 물품</div>
-                    <div className="text-2xl font-bold text-white">2개</div>
+                  <div className="col-span-12 md:col-span-3 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-1">배송 중인 물품</div>
+                    <div className="text-xl md:text-2xl font-bold text-gray-900">2개</div>
                   </div>
-                  <div className="col-span-12 md:col-span-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-1">이번 달 지출</div>
-                    <div className="text-2xl font-bold text-white">₩3.2M</div>
+                  <div className="col-span-12 md:col-span-3 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-1">이번 달 지출</div>
+                    <div className="text-xl md:text-2xl font-bold text-gray-900">₩3.2M</div>
                   </div>
                   
                   {/* 차트 영역 */}
-                  <div className="col-span-12 md:col-span-8 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-2">지출 추이</div>
-                    <div className="h-full flex items-end gap-2">
+                  <div className="col-span-12 md:col-span-8 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-2 font-medium">지출 추이</div>
+                    <div className="h-full flex items-end gap-1.5 md:gap-2">
                       {[60, 80, 45, 90, 70, 85].map((height, i) => (
                         <div
                           key={i}
-                          className="flex-1 bg-blue-500 rounded-t"
+                          className="flex-1 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t shadow-sm"
                           style={{ height: `${height}%` }}
                         ></div>
                       ))}
@@ -119,24 +118,48 @@ export function BioInsightHeroSection() {
                   </div>
                   
                   {/* 재구매 추천 리스트 */}
-                  <div className="col-span-12 md:col-span-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-4">
-                    <div className="text-xs text-slate-400 mb-2">재구매 추천</div>
-                    <div className="space-y-2">
+                  <div className="col-span-12 md:col-span-4 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-2 font-medium">재구매 추천</div>
+                    <div className="space-y-1.5 md:space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-white/5 rounded p-2">
-                          <div className="text-xs text-white">항체 A-{i}</div>
-                          <div className="text-[10px] text-slate-400">재고 부족</div>
+                        <div key={i} className="bg-gray-50 rounded p-2 border border-gray-100">
+                          <div className="text-xs text-gray-900 font-medium">항체 A-{i}</div>
+                          <div className="text-[10px] text-gray-500">재고 부족</div>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-                
-                {/* 중앙 텍스트 (이미지가 없을 때) */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <div className="text-white/20 text-sm font-semibold mb-2">Dashboard Screenshot Area</div>
-                    <div className="text-white/10 text-xs">대시보드 이미지가 여기에 표시됩니다</div>
+
+                  {/* 추가 카드: 예산 비중 차트 */}
+                  <div className="col-span-12 md:col-span-4 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-2 font-medium">예산 비중</div>
+                    <div className="flex items-center justify-center h-full">
+                      <div className="relative w-20 h-20 md:w-24 md:h-24">
+                        <div className="absolute inset-0 rounded-full border-8 border-blue-500 border-t-transparent" style={{ transform: 'rotate(45deg)' }}></div>
+                        <div className="absolute inset-0 rounded-full border-8 border-purple-500 border-r-transparent border-t-transparent" style={{ transform: 'rotate(135deg)' }}></div>
+                        <div className="absolute inset-0 rounded-full border-8 border-pink-500 border-b-transparent border-r-transparent border-t-transparent" style={{ transform: 'rotate(225deg)' }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 추가 카드: 최근 주문 내역 */}
+                  <div className="col-span-12 md:col-span-8 bg-white rounded-lg border border-gray-200 p-3 md:p-4 shadow-sm">
+                    <div className="text-xs text-gray-500 mb-2 font-medium">최근 주문 내역</div>
+                    <div className="space-y-1.5 md:space-y-2">
+                      {[
+                        { name: "Reagent A", status: "배송중", amount: "₩500K" },
+                        { name: "Antibody B", status: "완료", amount: "₩1.2M" },
+                        { name: "Buffer C", status: "대기", amount: "₩300K" },
+                      ].map((order, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100">
+                          <div className="flex-1">
+                            <div className="text-xs text-gray-900 font-medium">{order.name}</div>
+                            <div className="text-[10px] text-gray-500">{order.status}</div>
+                          </div>
+                          <div className="text-xs font-semibold text-gray-900">{order.amount}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

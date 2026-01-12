@@ -13,9 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Download, Calendar, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
@@ -393,17 +391,13 @@ export default function PurchasesPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <MainHeader />
-      <div className="flex flex-1">
-        <DashboardSidebar />
-        <div className="flex-1">
-          <PageHeader
-            title="구매 내역"
-            description="구매 영수증과 내역을 이곳에서 관리하세요."
-            icon={Download}
-          />
-          <main className="container mx-auto p-6 space-y-6 pt-24">
+    <div className="w-full px-4 md:px-6 py-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader
+          title="구매 내역"
+          description="구매 영수증과 내역을 이곳에서 관리하세요."
+          icon={Download}
+        />
             {/* Purchase Summary - Always visible with guest-key */}
             {guestKey && (
               <>
@@ -750,8 +744,6 @@ export default function PurchasesPage() {
                 )}
               </>
             )}
-          </main>
-        </div>
       </div>
     </div>
   );
