@@ -10,7 +10,7 @@ import { ReorderRecommendations } from "@/components/inventory/reorder-recommend
 import { SmartPickWidget } from "@/components/dashboard/smart-pick-widget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity, FileText, ArrowRight } from "lucide-react";
+import { ShoppingCart, Heart, History, ExternalLink, Calendar, MapPin, Package, DollarSign, TrendingUp, BarChart3, Activity, FileText, ArrowRight, Wallet, Search } from "lucide-react";
 import Link from "next/link";
 import { QUOTE_STATUS, PRODUCT_CATEGORIES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
@@ -34,8 +34,8 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DASHBOARD_TABS = [
-  { id: "workspace", label: "📋 내 업무", description: "할 일과 진행 현황" },
-  { id: "analytics", label: "📊 재무 현황", description: "예산과 지출 분석" },
+  { id: "overview", label: "🧪 실험실 요약", description: "재고 알림과 주문 현황" },
+  { id: "analytics", label: "📊 재무 분석", description: "예산과 지출 분석" },
 ];
 
 export default function DashboardPage() {
@@ -43,9 +43,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("dashboard-active-tab") || "workspace";
+      return localStorage.getItem("dashboard-active-tab") || "overview";
     }
-    return "workspace";
+    return "overview";
   });
   const [activityPeriod, setActivityPeriod] = useState<string>("month");
   const [purchasePeriod, setPurchasePeriod] = useState<string>("month");
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
     },
-    enabled: status === "authenticated" && activeTab === "workspace",
+    enabled: status === "authenticated" && activeTab === "overview",
   });
 
   // 즐겨찾기 조회
@@ -193,6 +193,17 @@ export default function DashboardPage() {
       return response.json();
     },
     enabled: status === "authenticated",
+  });
+
+  // 예산 목록 조회 (재무 분석 탭용)
+  const { data: budgetsData } = useQuery<{ budgets: any[] }>({
+    queryKey: ["user-budgets"],
+    queryFn: async () => {
+      const response = await fetch("/api/user-budgets");
+      if (!response.ok) throw new Error("Failed to fetch budgets");
+      return response.json();
+    },
+    enabled: status === "authenticated" && activeTab === "analytics",
   });
 
   if (status === "loading") {
@@ -299,78 +310,135 @@ export default function DashboardPage() {
               </div>
             </div>
 
-        {/* 새로운 Tab 구조: 내 업무 / 재무 현황 */}
-        <Tabs defaultValue="workspace" className="w-full">
+        {/* 새로운 Tab 구조: 실험실 요약 / 재무 분석 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="overview" className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="workspace" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              <span>내 업무</span>
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <span>🧪 실험실 요약</span>
             </TabsTrigger>
-            <TabsTrigger value="financials" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              <span>재무 현황</span>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <span>📊 재무 분석</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab 1: 내 업무 */}
-          <TabsContent value="workspace" className="space-y-6">
-            {/* KPI Cards: 재고 부족 알림, 진행 중인 견적, 배송 중인 물품 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* 재고 부족 알림 */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">재고 부족 알림</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {dashboardStats?.reorderNeededCount || 0}개 품목
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">곧 동납니다</p>
-                  <Link href="/dashboard/inventory" className="mt-2 inline-block">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">
-                      주문하기
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+          {/* Tab 1: 실험실 요약 */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* 상단: 재고 부족 알림 카드 강조 */}
+            <Card className="border-2 border-orange-300 bg-orange-50/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-semibold text-orange-900">재고 부족 알림</CardTitle>
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-900 mb-2">
+                  {dashboardStats?.reorderNeededCount || 0}개 품목
+                </div>
+                <p className="text-sm text-orange-700 mb-4">곧 동납니다. 재주문이 필요합니다.</p>
+                <Link href="/dashboard/inventory">
+                  <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                    재고 확인하기
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
 
-              {/* 진행 중인 견적 */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">진행 중인 견적</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ₩{(dashboardStats?.quoteStats?.pendingAmount || 0).toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">승인 대기 중인 예상 지출</p>
-                </CardContent>
-              </Card>
+            {/* 중단: 최근 주문 내역과 배송 상태 타임라인 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>최근 주문 내역 & 배송 상태</CardTitle>
+                <CardDescription>견적 요청 → 승인 대기 → 발주 완료 → 배송 중 → 배송 완료</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* 타임라인 형태로 표시 - 견적과 주문을 함께 */}
+                <div className="space-y-4">
+                  {(() => {
+                    // 견적과 주문을 합쳐서 날짜순으로 정렬
+                    const timelineItems = [
+                      ...quotes.slice(0, 10).map((q: any) => ({
+                        id: `quote-${q.id}`,
+                        type: "quote" as const,
+                        title: q.title,
+                        status: q.status,
+                        date: q.createdAt,
+                        amount: q.items?.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0) || 0,
+                      })),
+                      ...allOrders.slice(0, 10).map((o: any) => ({
+                        id: `order-${o.id}`,
+                        type: "order" as const,
+                        title: o.quote?.title || `주문 ${o.orderNumber}`,
+                        status: o.status,
+                        date: o.createdAt,
+                        amount: o.totalAmount,
+                      })),
+                    ]
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 8);
 
-              {/* 배송 중인 물품 */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">배송 중인 물품</CardTitle>
-                  <Package className="h-4 w-4 text-blue-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {shippingOrders?.total || 0}건
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">배송 진행 중</p>
-                </CardContent>
-              </Card>
-            </div>
+                    return timelineItems.length > 0 ? (
+                      timelineItems.map((item) => (
+                        <div key={item.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-3 h-3 rounded-full ${
+                              item.type === "order" 
+                                ? item.status === "DELIVERED" ? "bg-green-500" :
+                                  item.status === "SHIPPING" ? "bg-blue-500" :
+                                  item.status === "CONFIRMED" ? "bg-purple-500" :
+                                  "bg-yellow-500"
+                                : item.status === "COMPLETED" ? "bg-green-500" :
+                                  item.status === "RESPONDED" ? "bg-blue-500" :
+                                  "bg-yellow-500"
+                            }`} />
+                            {item !== timelineItems[timelineItems.length - 1] && (
+                              <div className="w-px h-full bg-gray-200 mt-1 min-h-[40px]" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{item.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                    {item.type === "order" ? "주문" : "견적"}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.type === "order" 
+                                      ? item.status === "DELIVERED" ? "배송완료" :
+                                        item.status === "SHIPPING" ? "배송중" :
+                                        item.status === "CONFIRMED" ? "확인됨" :
+                                        "접수대기"
+                                      : QUOTE_STATUS[item.status as keyof typeof QUOTE_STATUS]}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(item.date).toLocaleDateString("ko-KR")}
+                                </p>
+                              </div>
+                              {item.amount > 0 && (
+                                <p className="text-xs font-medium text-slate-700 whitespace-nowrap">
+                                  ₩{item.amount.toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        견적 요청이나 주문이 없습니다
+                      </p>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Main Content: Left (재구매 추천) / Right (견적/주문 현황) */}
+            {/* 하단: 재주문 추천 리스트와 빠른 견적 요청 버튼 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left: 재구매 추천 리스트 */}
+              {/* Left: 재주문 추천 리스트 */}
               <Card>
                 <CardHeader>
-                  <CardTitle>재구매 추천</CardTitle>
+                  <CardTitle>재주문 추천</CardTitle>
                   <CardDescription>재고가 부족한 품목을 확인하세요</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -386,100 +454,32 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Right: 내 견적/주문 현황 (타임라인) */}
+              {/* Right: 빠른 견적 요청 */}
               <Card>
                 <CardHeader>
-                  <CardTitle>내 견적/주문 현황</CardTitle>
-                  <CardDescription>견적 요청 → 승인 대기 → 발주 완료 흐름</CardDescription>
+                  <CardTitle>빠른 견적 요청</CardTitle>
+                  <CardDescription>재주문 추천 품목을 바로 견적 요청하세요</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {/* 타임라인 형태로 표시 - 견적과 주문을 함께 */}
-                  <div className="space-y-4">
-                    {(() => {
-                      // 견적과 주문을 합쳐서 날짜순으로 정렬
-                      const timelineItems = [
-                        ...quotes.slice(0, 10).map((q: any) => ({
-                          id: `quote-${q.id}`,
-                          type: "quote" as const,
-                          title: q.title,
-                          status: q.status,
-                          date: q.createdAt,
-                          amount: q.items?.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0) || 0,
-                        })),
-                        ...allOrders.slice(0, 10).map((o: any) => ({
-                          id: `order-${o.id}`,
-                          type: "order" as const,
-                          title: o.quote?.title || `주문 ${o.orderNumber}`,
-                          status: o.status,
-                          date: o.createdAt,
-                          amount: o.totalAmount,
-                        })),
-                      ]
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .slice(0, 8);
-
-                      return timelineItems.length > 0 ? (
-                        timelineItems.map((item) => (
-                          <div key={item.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
-                            <div className="flex flex-col items-center">
-                              <div className={`w-3 h-3 rounded-full ${
-                                item.type === "order" 
-                                  ? item.status === "DELIVERED" ? "bg-green-500" :
-                                    item.status === "SHIPPING" ? "bg-blue-500" :
-                                    item.status === "CONFIRMED" ? "bg-purple-500" :
-                                    "bg-yellow-500"
-                                  : item.status === "COMPLETED" ? "bg-green-500" :
-                                    item.status === "RESPONDED" ? "bg-blue-500" :
-                                    "bg-yellow-500"
-                              }`} />
-                              {item !== timelineItems[timelineItems.length - 1] && (
-                                <div className="w-px h-full bg-gray-200 mt-1 min-h-[40px]" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{item.title}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                                      {item.type === "order" ? "주문" : "견적"}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {item.type === "order" 
-                                        ? item.status === "DELIVERED" ? "배송완료" :
-                                          item.status === "SHIPPING" ? "배송중" :
-                                          item.status === "CONFIRMED" ? "확인됨" :
-                                          "접수대기"
-                                        : QUOTE_STATUS[item.status as keyof typeof QUOTE_STATUS]}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {new Date(item.date).toLocaleDateString("ko-KR")}
-                                  </p>
-                                </div>
-                                {item.amount > 0 && (
-                                  <p className="text-xs font-medium text-slate-700 whitespace-nowrap">
-                                    ₩{item.amount.toLocaleString()}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          견적 요청이나 주문이 없습니다
-                        </p>
-                      );
-                    })()}
-                  </div>
+                <CardContent className="space-y-4">
+                  <Link href="/test/quote" className="block">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
+                      <FileText className="h-4 w-4 mr-2" />
+                      견적 요청 리스트 만들기
+                    </Button>
+                  </Link>
+                  <Link href="/test/search" className="block">
+                    <Button variant="outline" className="w-full" size="lg">
+                      <Search className="h-4 w-4 mr-2" />
+                      제품 검색하기
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* Tab 2: 재무 현황 */}
-          <TabsContent value="financials" className="space-y-6">
+          {/* Tab 2: 재무 분석 */}
+          <TabsContent value="analytics" className="space-y-6">
             {/* KPI Cards: 이번 달 지출, 잔여 예산, 총 보유 자산 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* 이번 달 지출 */}
@@ -650,46 +650,59 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* 월별 지출 상세 테이블 */}
+            {/* 하단: 등록된 예산(Grant) 목록 테이블 */}
             <Card>
               <CardHeader>
-                <CardTitle>월별 지출 상세</CardTitle>
-                <CardDescription>월별 구매 내역을 확인하세요</CardDescription>
+                <CardTitle>등록된 예산(Grant) 목록</CardTitle>
+                <CardDescription>연구비 지갑에 등록된 예산을 확인하세요</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {(() => {
-                    const monthlySpending = dashboardStats?.monthlySpending?.map((item: any) => ({
-                      month: item.month, // "YYYY-MM" 형식
-                      displayMonth: item.month.slice(5), // "MM" 형식
-                      amount: item.amount || 0,
-                    })) || [];
-                    return monthlySpending.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left py-2">월</th>
-                              <th className="text-right py-2">지출 금액</th>
+                {(() => {
+                  const budgets = budgetsData?.budgets || [];
+
+                  return budgets.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2">예산명</th>
+                            <th className="text-right py-2">전체 금액</th>
+                            <th className="text-right py-2">사용 금액</th>
+                            <th className="text-right py-2">잔여 금액</th>
+                            <th className="text-center py-2">기간</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {budgets.map((budget: any) => (
+                            <tr key={budget.id} className="border-b hover:bg-slate-50">
+                              <td className="py-2 font-medium">{budget.name}</td>
+                              <td className="text-right py-2">₩{budget.totalAmount.toLocaleString()}</td>
+                              <td className="text-right py-2">₩{budget.usedAmount.toLocaleString()}</td>
+                              <td className="text-right py-2 font-semibold text-blue-600">
+                                ₩{budget.remainingAmount.toLocaleString()}
+                              </td>
+                              <td className="text-center py-2 text-xs text-muted-foreground">
+                                {budget.endDate && budget.daysRemaining !== null
+                                  ? `D-${budget.daysRemaining}`
+                                  : "무제한"}
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {monthlySpending.map((item: any) => (
-                              <tr key={item.month} className="border-b hover:bg-slate-50">
-                                <td className="py-2 font-medium">{item.displayMonth}월</td>
-                                <td className="text-right py-2">₩{item.amount.toLocaleString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        데이터가 없습니다
-                      </p>
-                    );
-                  })()}
-                </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">등록된 예산이 없습니다</p>
+                      <Link href="/dashboard/budget" className="mt-4 inline-block">
+                        <Button variant="outline" size="sm">
+                          예산 등록하기
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
