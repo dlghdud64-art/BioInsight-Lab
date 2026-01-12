@@ -26,14 +26,14 @@ export function BioInsightLogo({
       {showText && (
         <div className="leading-tight">
           <div className="flex items-baseline gap-1">
-            <span className="text-sm font-bold tracking-tight text-blue-900">
+            <span className="text-lg font-bold tracking-tight text-blue-900 md:text-xl">
               BioInsight
             </span>
-            <span className="text-sm font-bold tracking-tight text-teal-500">
+            <span className="text-lg font-bold tracking-tight text-teal-500 md:text-xl">
               Lab
             </span>
           </div>
-          <div className="text-[10px] font-normal text-gray-600 mt-0.5">
+          <div className="hidden md:block text-[10px] font-normal text-gray-600 mt-0.5">
             Procurement & Research
           </div>
         </div>

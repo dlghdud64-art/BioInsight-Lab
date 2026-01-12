@@ -86,7 +86,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             href="/" 
             className="md:hidden flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative"
           >
-            <BioInsightLogo showText={false} />
+            <BioInsightLogo showText={true} />
           </Link>
           
           {/* 페이지 타이틀 - 모바일에서만 표시, truncate로 말줄임표 처리, flex-1로 남은 공간 차지 */}
