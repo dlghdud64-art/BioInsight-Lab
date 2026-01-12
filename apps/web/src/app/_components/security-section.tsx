@@ -9,9 +9,9 @@ export function SecuritySection() {
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 mb-3">
           보안
         </h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border border-slate-200 bg-white rounded-lg hover:border-emerald-300 hover:shadow-sm transition-all">
-            <CardContent className="flex items-start gap-2.5 p-3">
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+            <CardContent className="flex items-start gap-2.5 p-6">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 flex-shrink-0">
                 <Shield className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.5} />
               </div>
@@ -24,8 +24,8 @@ export function SecuritySection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200 bg-white rounded-lg hover:border-slate-400 hover:shadow-sm transition-all">
-            <CardContent className="flex items-start gap-2.5 p-3">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+            <CardContent className="flex items-start gap-2.5 p-6">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 flex-shrink-0">
                 <Lock className="h-3.5 w-3.5 text-slate-700" strokeWidth={1.5} />
               </div>
@@ -38,8 +38,8 @@ export function SecuritySection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200 bg-white rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all">
-            <CardContent className="flex items-start gap-2.5 p-3">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+            <CardContent className="flex items-start gap-2.5 p-6">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 flex-shrink-0">
                 <Server className="h-3.5 w-3.5 text-indigo-600" strokeWidth={1.5} />
               </div>
