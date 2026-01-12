@@ -32,9 +32,11 @@ export default function AnalyticsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
+      <div className="w-full px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -42,9 +44,11 @@ export default function AnalyticsPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로그인이 필요합니다.</p>
+      <div className="w-full px-4 md:px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로그인이 필요합니다.</p>
+          </div>
         </div>
       </div>
     );
@@ -88,25 +92,25 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
+    <div className="w-full px-4 md:px-6 py-6">
       <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <PageHeader
-              title="KPI 대시보드"
-              description="서비스 사용 현황 및 핵심 지표를 확인하세요"
-              icon={Activity}
-            />
-            <Select value={period} onValueChange={(value: "7d" | "30d" | "90d") => setPeriod(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">최근 7일</SelectItem>
-                <SelectItem value="30d">최근 30일</SelectItem>
-                <SelectItem value="90d">최근 90일</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex items-center justify-between mb-6">
+          <PageHeader
+            title="KPI 대시보드"
+            description="서비스 사용 현황 및 핵심 지표를 확인하세요"
+            icon={Activity}
+          />
+          <Select value={period} onValueChange={(value: "7d" | "30d" | "90d") => setPeriod(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">최근 7일</SelectItem>
+              <SelectItem value="30d">최근 30일</SelectItem>
+              <SelectItem value="90d">최근 90일</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
           {/* P0 핵심 KPI */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
