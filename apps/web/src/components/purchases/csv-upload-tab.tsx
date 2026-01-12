@@ -80,6 +80,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
+      setSelectedFile(files[0]);
       handleFileUpload(files[0]);
     }
   }, []);
@@ -87,6 +88,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
+      setSelectedFile(files[0]);
       handleFileUpload(files[0]);
     }
   }, []);
