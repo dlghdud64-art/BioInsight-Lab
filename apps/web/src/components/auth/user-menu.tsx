@@ -50,7 +50,8 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2">
           <User className="h-4 w-4" />
-          {session.user.name || session.user.email}
+          {/* 사용자 이름 - 모바일에서 숨김 (Avatar만 표시) */}
+          <span className="hidden md:inline">{session.user.name || session.user.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

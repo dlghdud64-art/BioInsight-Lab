@@ -103,7 +103,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
         </div>
 
         {/* 우측: CTA/유틸 */}
-        <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
+        <div className="flex items-center gap-4 md:gap-3 flex-shrink-0">
           <Link
             href="/pricing"
             className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
@@ -111,11 +111,12 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
           >
             요금 & 도입
           </Link>
+          {/* 체험 버튼 - 로그인 상태일 때 모바일에서 숨김 */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                className="text-[10px] md:text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 md:px-3 h-8 md:h-9"
+                className={`${session?.user ? "hidden md:block" : ""} text-[10px] md:text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 md:px-3 h-8 md:h-9`}
                 aria-label="기능 체험 메뉴 열기"
                 aria-haspopup="true"
               >
