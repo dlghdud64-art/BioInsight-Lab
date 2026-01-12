@@ -502,13 +502,13 @@ export default function PurchasesPage() {
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
                                     <span className="text-sm text-gray-900 font-medium">
-                                      {purchase.vendorName || "Unknown"}
+                                      {purchase.vendorName || "-"}
                                     </span>
                                   </TableCell>
                                   <TableCell className="py-4 px-6">
                                     <div className="flex flex-col">
                                       <span className="text-sm text-gray-900 font-medium">
-                                        {purchase.itemName || "Unknown Item"}
+                                        {purchase.itemName || "-"}
                                       </span>
                                       {purchase.catalogNumber && (
                                         <span className="text-xs text-gray-400 font-mono mt-0.5">
