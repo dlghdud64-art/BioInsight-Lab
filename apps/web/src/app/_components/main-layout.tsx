@@ -1,3 +1,5 @@
+"use client";
+
 type MainLayoutProps = {
   children: React.ReactNode;
 };
