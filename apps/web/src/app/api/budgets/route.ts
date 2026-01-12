@@ -118,21 +118,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name,
-      amount,
+      amount: rawAmount,
       currency,
       periodStart,
       periodEnd,
       projectName,
       description,
       // Legacy fields (for backward compatibility)
-      organizationId,
+      organizationId: requestedOrgId,
       yearMonth,
     } = body;
 
-    // 필수 필드 검증 (신규 형식 우선, 레거시 형식도 지원)
-    if (!amount) {
+    // 1. 필수 필드 검증 (신규 형식 우선, 레거시 형식도 지원)
+    if (!rawAmount && rawAmount !== 0) {
       return NextResponse.json(
-        { error: "Missing required field: amount" },
+        { error: "필수 필드가 누락되었습니다: 금액" },
+        { status: 400 }
+      );
+    }
+
+    // 2. 숫자 포맷팅 처리 (쉼표 제거)
+    const cleanAmount = typeof rawAmount === 'string'
+      ? rawAmount.replace(/,/g, '')
+      : String(rawAmount);
+
+    const numericAmount = Number(cleanAmount);
+
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return NextResponse.json(
+        { error: "금액 형식이 잘못되었습니다. 양수 숫자를 입력해주세요." },
         { status: 400 }
       );
     }
@@ -161,43 +175,43 @@ export async function POST(request: NextRequest) {
     const yearMonthRegex = /^\d{4}-\d{2}$/;
     if (!yearMonthRegex.test(finalYearMonth)) {
       return NextResponse.json(
-        { error: "Invalid yearMonth format. Use YYYY-MM" },
+        { error: "연월 형식이 잘못되었습니다. YYYY-MM 형식을 사용해주세요." },
         { status: 400 }
       );
     }
 
-    // scopeKey 결정: organizationId가 있으면 사용, 없으면 사용자 ID 기반
-    let scopeKey = organizationId;
+    // 3. Team ID 세션에서 주입 (요청 바디를 믿지 않음)
+    // scopeKey 결정: 세션에서 사용자의 조직 ID를 가져와 강제 주입
+    let scopeKey: string;
 
-    if (!scopeKey) {
-      // 사용자의 조직이 있는지 확인
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
-      });
+    // 사용자의 조직이 있는지 확인
+    const userOrg = await db.organizationMember.findFirst({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
 
-      if (userOrg) {
-        scopeKey = userOrg.organizationId;
-      } else {
-        // 조직이 없으면 사용자 ID를 scopeKey로 사용
-        scopeKey = `user-${session.user.id}`;
-      }
+    if (userOrg) {
+      // 조직이 있으면 해당 조직 ID 사용 (요청의 organizationId는 무시)
+      scopeKey = userOrg.organizationId;
+    } else {
+      // 조직이 없으면 사용자 ID를 scopeKey로 사용
+      scopeKey = `user-${session.user.id}`;
     }
 
     // 금액을 정수로 변환 (Prisma 스키마에서 Int로 정의됨)
-    const amountInt = Math.round(Number(amount));
-    if (isNaN(amountInt) || amountInt <= 0) {
-      return NextResponse.json(
-        { error: "Invalid amount. Must be a positive number" },
-        { status: 400 }
-      );
-    }
+    const amountInt = Math.round(numericAmount);
+
+    // 4. 선택 필드(Optional) 처리
+    // description이나 projectName이 빈 문자열("")로 오면 null로 변환
+    const sanitizedProjectName = projectName && projectName.trim() !== '' ? projectName.trim() : null;
+    const sanitizedDescription = description && description.trim() !== '' ? description.trim() : null;
+    const sanitizedName = name && name.trim() !== '' ? name.trim() : null;
 
     // 설명 필드 구성 (name, projectName, description 통합)
     const descriptionParts: string[] = [];
-    if (name) descriptionParts.push(`[${name}]`);
-    if (projectName) descriptionParts.push(`프로젝트: ${projectName}`);
-    if (description) descriptionParts.push(description);
+    if (sanitizedName) descriptionParts.push(`[${sanitizedName}]`);
+    if (sanitizedProjectName) descriptionParts.push(`프로젝트: ${sanitizedProjectName}`);
+    if (sanitizedDescription) descriptionParts.push(sanitizedDescription);
     const finalDescription = descriptionParts.length > 0 ? descriptionParts.join(' | ') : null;
 
     if (process.env.NODE_ENV === "development") {
@@ -235,17 +249,45 @@ export async function POST(request: NextRequest) {
     const [year, month] = finalYearMonth.split("-").map(Number);
     const responseBudget = {
       ...budget,
-      name: name || `${finalYearMonth} Budget`,
+      name: sanitizedName || `${finalYearMonth} Budget`,
       periodStart: new Date(year, month - 1, 1).toISOString(),
       periodEnd: new Date(year, month, 0, 23, 59, 59).toISOString(),
-      projectName: projectName || null,
+      projectName: sanitizedProjectName,
     };
 
     return NextResponse.json({ budget: responseBudget });
   } catch (error) {
+    // 5. 상세 에러 메시지 반환
     console.error("[Budget API] Error creating budget:", error);
+
+    // Prisma 에러 처리
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; meta?: any };
+
+      if (prismaError.code === 'P2002') {
+        return NextResponse.json(
+          { error: "이미 해당 기간에 예산이 존재합니다. 기존 예산을 수정하거나 삭제 후 다시 시도해주세요." },
+          { status: 409 }
+        );
+      }
+
+      if (prismaError.code === 'P2003') {
+        return NextResponse.json(
+          { error: "연결된 데이터를 찾을 수 없습니다. 조직 또는 팀 정보를 확인해주세요." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 일반 에러 처리
+    const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+
     return NextResponse.json(
-      { error: "Failed to create budget", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "예산 저장에 실패했습니다.",
+        details: errorMessage,
+        hint: "입력한 데이터를 확인하고 다시 시도해주세요. 문제가 계속되면 관리자에게 문의하세요."
+      },
       { status: 500 }
     );
   }
