@@ -114,6 +114,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-4 md:gap-3 flex-shrink-0">
           <Link
+            href="/intro"
+            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+            aria-label="서비스 소개 페이지로 이동"
+          >
+            서비스 소개
+          </Link>
+          <Link
             href="/pricing"
             className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
             aria-label="요금 및 도입 페이지로 이동"
