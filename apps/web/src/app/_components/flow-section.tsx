@@ -44,8 +44,8 @@ export function FlowSection() {
           </p>
         </div>
 
-        {/* Horizontal Steps Bar */}
-        <div className="flex items-center justify-center gap-2 md:gap-4 lg:gap-6">
+        {/* Steps - 모바일: 세로 정렬, 데스크탑: 가로 정렬 */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-4 lg:gap-6">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isLast = idx === steps.length - 1;
@@ -56,10 +56,10 @@ export function FlowSection() {
             };
             
             return (
-              <div key={step.href} className="flex items-center">
+              <div key={step.href} className="flex flex-col md:flex-row items-center w-full md:w-auto">
                 <Link
                   href={step.href}
-                  className="group flex flex-col items-center gap-3 px-4 md:px-6 py-4 md:py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300"
+                  className="group flex flex-col items-center gap-3 px-4 md:px-6 py-4 md:py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-full md:w-auto"
                 >
                   <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
                     <Icon className="h-6 w-6 md:h-8 md:w-8 text-white" strokeWidth={2} />
@@ -69,13 +69,13 @@ export function FlowSection() {
                   </div>
                   <div className="text-center">
                     <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">{step.title}</h3>
-                    <p className="text-xs md:text-sm text-slate-600 max-w-[140px]">
+                    <p className="text-xs md:text-sm text-slate-600 max-w-[200px] md:max-w-[140px]">
                       {step.description}
                     </p>
                   </div>
                 </Link>
                 {!isLast && (
-                  <ArrowRight className="h-5 w-5 md:h-6 md:w-6 text-slate-400 mx-2 md:mx-4 flex-shrink-0" />
+                  <ArrowRight className="h-5 w-5 md:h-6 md:w-6 text-slate-400 my-2 md:my-0 md:mx-4 flex-shrink-0 rotate-90 md:rotate-0 transition-transform" />
                 )}
               </div>
             );
