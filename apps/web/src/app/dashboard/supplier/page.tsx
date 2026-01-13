@@ -15,9 +15,7 @@ import { QuoteExtractionResult } from "@/lib/ai/quote-extractor";
 import { QUOTE_STATUS, PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 
 export default function SupplierDashboardPage() {
   const { data: session, status } = useSession();
@@ -61,36 +59,30 @@ export default function SupplierDashboardPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <PageHeader
-                  title="공급사 대시보드"
-                  description="견적 요청을 확인하고 응답하세요."
-                  icon={Building2}
-                />
-                <div className="flex gap-2">
-                  <Link href="/dashboard/vendor/billing">
-                    <Button variant="outline" size="sm" className="gap-2 text-xs">
-                      <DollarSign className="h-3.5 w-3.5" />
-                      과금 관리
-                    </Button>
-                  </Link>
-                  {data?.vendor && (
-                    <Link href="/dashboard/vendor/premium">
-                      <Button variant={data.vendor.isPremium ? "default" : "outline"} size="sm" className="gap-2 text-xs">
-                        <Crown className="h-3.5 w-3.5" />
-                        {data.vendor.isPremium ? "프리미엄 관리" : "프리미엄 업그레이드"}
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
+    <div className="max-w-6xl mx-auto">
+      <PageHeader
+        title="공급사 대시보드"
+        description="견적 요청을 확인하고 응답하세요."
+        icon={Building2}
+        actions={
+          <div className="flex gap-2">
+            <Link href="/dashboard/vendor/billing">
+              <Button variant="outline" size="sm" className="gap-2 text-xs">
+                <DollarSign className="h-3.5 w-3.5" />
+                과금 관리
+              </Button>
+            </Link>
+            {data?.vendor && (
+              <Link href="/dashboard/vendor/premium">
+                <Button variant={data.vendor.isPremium ? "default" : "outline"} size="sm" className="gap-2 text-xs">
+                  <Crown className="h-3.5 w-3.5" />
+                  {data.vendor.isPremium ? "프리미엄 관리" : "프리미엄 업그레이드"}
+                </Button>
+              </Link>
+            )}
+          </div>
+        }
+      />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card>
@@ -153,10 +145,6 @@ export default function SupplierDashboardPage() {
             )}
           </CardContent>
         </Card>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
