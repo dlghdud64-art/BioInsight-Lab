@@ -13,7 +13,6 @@ const universities = [
 const stats = [
   { value: "100+", label: "연구실", color: "text-blue-600" },
   { value: "10,000+", label: "관리 품목", color: "text-indigo-600" },
-  { value: "99%", label: "시간 절약", color: "text-purple-600" },
 ];
 
 // Marquee 아이템 생성
