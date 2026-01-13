@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Users, Mail, UserPlus, Trash2, FileText, Building2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ORGANIZATION_ROLES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/app/_components/page-header";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,12 @@ export default function OrganizationsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // 로컬 상태로 조직 목록 관리
+  const [organizations, setOrganizations] = useState<any[]>([
+    { id: 1, name: "BioInsight Lab", description: "메인 연구소", members: [], _count: { members: 12, quotes: 5 } },
+  ]);
 
   // 조직 목록 조회
   const { data, isLoading } = useQuery({
@@ -44,6 +51,55 @@ export default function OrganizationsPage() {
     },
     enabled: status === "authenticated",
   });
+
+  // 서버 데이터가 로드되면 로컬 상태 업데이트
+  useEffect(() => {
+    if (data?.organizations) {
+      setOrganizations(data.organizations);
+    }
+  }, [data]);
+
+  // 조직 생성 핸들러
+  const handleCreateOrg = (data: { name: string; description?: string }) => {
+    // 새로운 조직 객체 생성
+    const newOrg = {
+      id: Date.now(), // 임시 ID
+      name: data.name,
+      description: data.description || "",
+      members: [],
+      _count: {
+        members: 1,
+        quotes: 0,
+      },
+    };
+
+    // 로컬 상태에 즉시 추가 (리스트 앞에)
+    setOrganizations((prev) => [newOrg, ...prev]);
+
+    // 서버에 저장 시도 (선택적)
+    createOrgMutation.mutate(data, {
+      onSuccess: (response) => {
+        // 서버 응답이 오면 ID 업데이트
+        setOrganizations((prev) =>
+          prev.map((org) => (org.id === newOrg.id ? response.organization : org))
+        );
+      },
+      onError: () => {
+        // 실패 시 롤백
+        setOrganizations((prev) => prev.filter((org) => org.id !== newOrg.id));
+        toast({
+          title: "생성 실패",
+          description: "조직 생성에 실패했습니다. 다시 시도해주세요.",
+          variant: "destructive",
+        });
+      },
+    });
+
+    toast({
+      title: "생성 완료",
+      description: "새로운 조직이 생성되었습니다.",
+    });
+  };
 
   const createOrgMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
@@ -59,8 +115,6 @@ export default function OrganizationsPage() {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
     },
   });
-
-  const organizations = data?.organizations || [];
 
   if (status === "loading") {
     return (
@@ -90,7 +144,7 @@ export default function OrganizationsPage() {
           iconColor="text-orange-600"
           actions={
             <CreateOrganizationDialog
-              onCreate={(data) => createOrgMutation.mutate(data)}
+              onCreate={handleCreateOrg}
               isCreating={createOrgMutation.isPending}
             />
           }
@@ -105,7 +159,7 @@ export default function OrganizationsPage() {
                 <Building2 className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
                 <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">소속된 조직이 없습니다</p>
                 <CreateOrganizationDialog
-                  onCreate={(data) => createOrgMutation.mutate(data)}
+                  onCreate={handleCreateOrg}
                   isCreating={createOrgMutation.isPending}
                 />
               </div>
@@ -136,7 +190,12 @@ function CreateOrganizationDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreate({ name, description });
+    if (!name.trim()) return;
+    
+    // 조직 생성
+    onCreate({ name: name.trim(), description: description.trim() });
+    
+    // 입력 필드 초기화 및 모달 닫기
     setName("");
     setDescription("");
     setOpen(false);
