@@ -2,7 +2,7 @@ import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlaskConical, ClipboardCheck, ShoppingCart, Zap, Brain, Package } from "lucide-react";
+import { FlaskConical, ClipboardCheck, ShoppingCart, Zap, Brain, Package, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load sections for better initial page load
