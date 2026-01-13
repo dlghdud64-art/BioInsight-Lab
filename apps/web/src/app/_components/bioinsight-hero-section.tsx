@@ -46,7 +46,7 @@ export function BioInsightHeroSection() {
           
           <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             더 이상 구글링하지 마세요. <br />
-            BioInsight AI가 스펙 비교부터 최적 견적까지 한 번에 찾아드립니다.
+            BioInsight Lab이 스펙 비교부터 최적 견적까지 한 번에 찾아드립니다.
           </p>
         </div>
 
