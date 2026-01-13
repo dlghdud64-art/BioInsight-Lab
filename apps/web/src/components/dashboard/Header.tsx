@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +15,16 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      e.preventDefault();
+      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   // 브레드크럼 생성
   const generateBreadcrumbs = () => {
@@ -96,6 +105,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Input
               type="search"
               placeholder="시약, 재고 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
               className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white"
             />
           </div>

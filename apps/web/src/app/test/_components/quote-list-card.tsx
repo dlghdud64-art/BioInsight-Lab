@@ -24,7 +24,7 @@ export function QuoteListCard({ productCount = 0 }: QuoteListCardProps) {
             size="sm"
             variant="outline"
             className="w-full"
-            onClick={() => router.push("/search")}
+            onClick={() => router.push("/test/search")}
           >
             견적 요청 리스트 만들기
             <ArrowRight className="h-4 w-4 ml-2" />

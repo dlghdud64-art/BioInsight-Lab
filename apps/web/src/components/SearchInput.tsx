@@ -29,7 +29,7 @@ export function SearchInput() {
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    router.push(`/search?q=${encodeURIComponent(query)}`);
+    router.push(`/test/search?q=${encodeURIComponent(query)}`);
   };
 
   return (

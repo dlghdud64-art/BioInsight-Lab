@@ -1,24 +1,24 @@
 ﻿"use client";
 
-import { Suspense, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import SearchResultList from "./SearchResultList";
-import { SearchInput } from "@/components/SearchInput";
-import { SearchFilters } from "@/components/search/search-filters";
-import { MainHeader } from "@/app/_components/main-header";
-import { PageHeader } from "@/app/_components/page-header";
-import { Search, Filter, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+
+// 기존 검색 페이지는 /test/search로 리다이렉트
+export default function SearchPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") || "";
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (q) {
+      params.set("q", q);
+    }
+    router.replace(`/test/search?${params.toString()}`);
+  }, [router, q]);
+
+  return null;
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();

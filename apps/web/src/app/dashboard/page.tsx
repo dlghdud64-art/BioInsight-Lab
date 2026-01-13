@@ -444,7 +444,7 @@ export default function DashboardPage() {
                 <CardContent>
                   <ReorderRecommendations
                     onAddToQuoteList={(recommendations) => {
-                      router.push(`/search?bom=${encodeURIComponent(JSON.stringify(recommendations.map(r => ({
+                      router.push(`/test/search?bom=${encodeURIComponent(JSON.stringify(recommendations.map(r => ({
                         name: r.product.name,
                         quantity: r.recommendedQuantity,
                         category: r.product.category,

@@ -14,7 +14,7 @@ export function BioInsightHeroSection() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -82,7 +82,7 @@ export function BioInsightHeroSection() {
                 className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-3 py-1.5 text-sm font-medium"
                 onClick={() => {
                   setSearchQuery(term);
-                  router.push(`/search?q=${encodeURIComponent(term)}`);
+                  router.push(`/test/search?q=${encodeURIComponent(term)}`);
                 }}
               >
                 #{term}
