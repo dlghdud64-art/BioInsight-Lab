@@ -946,7 +946,7 @@ export default function DashboardPage() {
             onAddToQuoteList={(recommendations) => {
               // 추천 목록을 품목 리스트에 추가
               const productIds = recommendations.map((r) => r.product.id);
-              router.push(`/search?bom=${encodeURIComponent(JSON.stringify(recommendations.map(r => ({
+              router.push(`/test/search?bom=${encodeURIComponent(JSON.stringify(recommendations.map(r => ({
                 name: r.product.name,
                 quantity: r.recommendedQuantity,
                 category: r.product.category,
@@ -1174,7 +1174,7 @@ export default function DashboardPage() {
                 ) : favorites.length === 0 ? (
                   <div className="text-center py-6 md:py-8">
                     <p className="text-muted-foreground mb-3 md:mb-4 text-xs md:text-sm">즐겨찾기한 제품이 없습니다</p>
-                    <Link href="/search">
+                    <Link href="/test/search">
                       <Button size="sm" className="text-xs md:text-sm h-8 md:h-10">제품 검색하기</Button>
                     </Link>
                   </div>
