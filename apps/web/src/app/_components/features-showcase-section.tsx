@@ -161,32 +161,105 @@ export function FeaturesShowcaseSection() {
 
       case "management":
         return (
-          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-6 relative">
-            {/* 우측 상단: 실시간 예산 그래프 */}
-            <div className="absolute top-4 right-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
-              <div className="text-[10px] text-gray-500 mb-2 font-medium">예산 현황</div>
-              <div className="flex items-end gap-1 h-12">
-                {[60, 80, 45, 90, 70, 85].map((height, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"
-                    style={{ height: `${height}%` }}
-                  ></div>
-                ))}
+          <div className="w-full h-full bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-lg border border-gray-200 p-6 relative overflow-hidden">
+            {/* 브라우저 창 헤더 (선택적) */}
+            <div className="absolute top-0 left-0 right-0 h-8 bg-gray-100 border-b border-gray-200 flex items-center gap-2 px-3">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+              </div>
+              <div className="flex-1 text-center">
+                <span className="text-[10px] text-gray-500 font-medium">BioInsight Lab - 대시보드</span>
               </div>
             </div>
 
-            {/* 중앙: 재고 경고 알림 */}
-            <div className="flex flex-col items-center justify-center h-full min-h-[200px] space-y-4">
-              <div className="text-6xl">🚨</div>
-              <div className="text-center space-y-2">
-                <p className="text-base font-semibold text-gray-900">
-                  주의: 에탄올 재고가 <span className="text-red-600 font-bold">2병</span> 남았습니다.
-                </p>
+            {/* 알림 센터 카드 */}
+            <div className="mt-8 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              {/* 알림 헤더 */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <h3 className="text-sm font-semibold text-gray-900">알림 센터</h3>
+                    <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5">3</Badge>
+                  </div>
+                  <span className="text-xs text-gray-500">모두 읽기</span>
+                </div>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5">
-                원클릭 재주문
-              </Button>
+
+              {/* 알림 리스트 */}
+              <div className="divide-y divide-gray-100">
+                {/* 알림 1: 긴급 재고 부족 */}
+                <div className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5">긴급</Badge>
+                        <span className="text-xs font-semibold text-gray-900">재고 부족 알림</span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed mb-1.5">
+                        FBS (Fetal Bovine Serum) 수량이 1개 남았습니다. 자동 주문을 진행할까요?
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] text-gray-500">10분 전</span>
+                        <Button size="sm" className="h-6 text-[10px] px-2 bg-blue-600 hover:bg-blue-700 text-white">
+                          주문하기
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 알림 2: 견적서 도착 */}
+                <div className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5">견적</Badge>
+                        <span className="text-xs font-semibold text-gray-900">요청하신 견적서 도착</span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed mb-1.5">
+                        Thermo Fisher 외 2개 벤더의 견적서가 도착했습니다. 최저가를 확인하세요.
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] text-gray-500">1시간 전</span>
+                        <Button size="sm" className="h-6 text-[10px] px-2 bg-blue-600 hover:bg-blue-700 text-white">
+                          확인하기
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 알림 3: 입고 완료 */}
+                <div className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5">입고</Badge>
+                        <span className="text-xs font-semibold text-gray-900">물품 수령 확인</span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed mb-1.5">
+                        50ml Conical Tube (500/case) 입고 처리가 완료되었습니다.
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] text-gray-500">어제</span>
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
