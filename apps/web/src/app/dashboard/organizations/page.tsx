@@ -59,6 +59,22 @@ export default function OrganizationsPage() {
     }
   }, [data]);
 
+  // 조직 생성 Mutation
+  const createOrgMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string }) => {
+      const response = await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create organization");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    },
+  });
+
   // 조직 생성 핸들러
   const handleCreateOrg = (data: { name: string; description?: string }) => {
     // 새로운 조직 객체 생성
@@ -75,6 +91,12 @@ export default function OrganizationsPage() {
 
     // 로컬 상태에 즉시 추가 (리스트 앞에)
     setOrganizations((prev) => [newOrg, ...prev]);
+
+    // Toast 메시지 표시
+    toast({
+      title: "생성 완료",
+      description: "새로운 조직이 생성되었습니다.",
+    });
 
     // 서버에 저장 시도 (선택적)
     createOrgMutation.mutate(data, {
@@ -94,27 +116,7 @@ export default function OrganizationsPage() {
         });
       },
     });
-
-    toast({
-      title: "생성 완료",
-      description: "새로운 조직이 생성되었습니다.",
-    });
   };
-
-  const createOrgMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
-      const response = await fetch("/api/organizations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create organization");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
-  });
 
   if (status === "loading") {
     return (
