@@ -2,7 +2,7 @@ import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlaskConical, Users, ShoppingCart, Zap, Brain, Package } from "lucide-react";
+import { FlaskConical, ClipboardCheck, ShoppingCart, Zap, Brain, Package } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load sections for better initial page load
@@ -53,7 +53,7 @@ export default function IntroPage() {
                 누가 쓰나요?
               </h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                연구실의 다양한 역할에 맞춘 솔루션
+                연구실부터 기업까지, 다양한 역할에 맞춘 솔루션
               </p>
             </div>
             
@@ -68,10 +68,13 @@ export default function IntroPage() {
                     R&D 연구자
                   </CardTitle>
                   <CardDescription className="text-base font-semibold text-slate-700">
-                    실험에만 집중하세요
+                    실험 설계에만 집중하세요
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                    시약 검색과 재고 파악은 AI가 1초 만에 끝냅니다.
+                  </p>
                   <ul className="space-y-2 text-sm text-slate-600">
                     <li className="flex items-start gap-2">
                       <span className="text-purple-600 mt-1">•</span>
@@ -89,32 +92,35 @@ export default function IntroPage() {
                 </CardContent>
               </Card>
 
-              {/* 랩 매니저 */}
+              {/* QC/QA 매니저 */}
               <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4">
+                    <ClipboardCheck className="h-6 w-6 text-emerald-600" />
                   </div>
                   <CardTitle className="text-xl font-bold text-slate-900 mb-2">
-                    랩 매니저
+                    QC/QA 매니저
                   </CardTitle>
                   <CardDescription className="text-base font-semibold text-slate-700">
-                    재고 현황을 한눈에
+                    바이오·의료기기 제조를 위한 엄격한 자재 관리
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                    Lot No. 추적부터 유효기간 관리까지, GMP/ISO 감사를 완벽하게 대비하세요.
+                  </p>
                   <ul className="space-y-2 text-sm text-slate-600">
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>전체 재고 통합 관리</span>
+                      <span className="text-emerald-600 mt-1">•</span>
+                      <span>Lot No. 및 배치 추적 관리</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>자동 재주문 추천</span>
+                      <span className="text-emerald-600 mt-1">•</span>
+                      <span>GMP/ISO 규격 준수 검증</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-1">•</span>
-                      <span>예산 사용률 추적</span>
+                      <span className="text-emerald-600 mt-1">•</span>
+                      <span>유효기간 자동 알림 및 관리</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -134,6 +140,9 @@ export default function IntroPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                    견적 요청부터 결제 품의까지, 복잡한 구매 프로세스를 원클릭으로 해결합니다.
+                  </p>
                   <ul className="space-y-2 text-sm text-slate-600">
                     <li className="flex items-start gap-2">
                       <span className="text-indigo-600 mt-1">•</span>
