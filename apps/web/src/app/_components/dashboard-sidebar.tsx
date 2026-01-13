@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -153,7 +154,14 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col justify-between">
-      <div className="p-3 md:p-4 pt-8 md:pt-8">
+      {/* 사이드바 헤더 (로고) */}
+      <div className="h-16 flex items-center px-6 border-b border-slate-200 flex-shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <BioInsightLogo showText={true} className="h-6" />
+        </Link>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-8 md:pt-8">
         {/* 모바일 헤더 */}
         <div className="flex items-center justify-between mb-6 md:hidden">
           <h2 className="text-xs font-semibold text-slate-900">메뉴</h2>

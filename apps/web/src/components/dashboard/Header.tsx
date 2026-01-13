@@ -7,6 +7,11 @@ import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Menu, Search, Bell, HelpCircle, ChevronRight } from "lucide-react";
 
 interface DashboardHeaderProps {
@@ -49,6 +54,31 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   const breadcrumbs = generateBreadcrumbs();
   const user = session?.user;
+
+  // 알림 데이터 (Dummy Data)
+  const notifications = [
+    {
+      id: 1,
+      type: "alert",
+      icon: "🔴",
+      title: "재고 부족: FBS (남은 수량 1개)",
+      time: "10분 전",
+    },
+    {
+      id: 2,
+      type: "quote",
+      icon: "🔵",
+      title: "견적 도착: Thermo Fisher 외 2건",
+      time: "1시간 전",
+    },
+    {
+      id: 3,
+      type: "delivery",
+      icon: "🟢",
+      title: "입고 완료: 50ml Conical Tube",
+      time: "어제",
+    },
+  ];
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200 bg-white">
@@ -122,16 +152,67 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Search className="h-5 w-5" />
           </Button>
 
-          {/* 알림 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 relative"
-            aria-label="알림"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
-          </Button>
+          {/* 알림 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 relative"
+                aria-label="알림"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-0">
+              <div className="p-4 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-900">알림</h3>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-sm text-slate-500">새로운 알림이 없습니다</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className="p-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-lg flex-shrink-0">{notification.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900">
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {notification.time}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <div className="p-3 border-t border-slate-200">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => {
+                      // TODO: 전체 알림 페이지로 이동
+                    }}
+                  >
+                    모든 알림 보기
+                  </Button>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* 도움말 */}
           <Button
