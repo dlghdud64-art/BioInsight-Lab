@@ -1,6 +1,6 @@
 "use client";
 
-import { MainHeader } from "@/app/_components/main-header";
+import { DashboardHeader } from "@/components/dashboard/Header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { useState } from "react";
 
@@ -12,18 +12,20 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader
-        onMenuClick={() => setIsMobileMenuOpen(true)}
-      />
-      <div className="flex overflow-x-hidden w-full">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex flex-1 overflow-x-hidden w-full">
         <DashboardSidebar 
           isMobileOpen={isMobileMenuOpen} 
           onMobileOpenChange={setIsMobileMenuOpen} 
         />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0 max-w-full pt-20">
-          {children}
-        </main>
+        <div className="flex flex-col flex-1 min-w-0">
+          <DashboardHeader
+            onMenuClick={() => setIsMobileMenuOpen(true)}
+          />
+          <main className="flex-1 overflow-y-auto p-6 md:p-8">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );
