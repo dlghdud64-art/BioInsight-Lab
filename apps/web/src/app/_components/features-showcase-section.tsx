@@ -161,21 +161,14 @@ export function FeaturesShowcaseSection() {
 
       case "management":
         return (
-          <div className="w-full h-full bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-lg border border-gray-200 p-6 relative overflow-hidden">
-            {/* 브라우저 창 헤더 (선택적) */}
-            <div className="absolute top-0 left-0 right-0 h-8 bg-gray-100 border-b border-gray-200 flex items-center gap-2 px-3">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              </div>
-              <div className="flex-1 text-center">
-                <span className="text-[10px] text-gray-500 font-medium">BioInsight Lab - 대시보드</span>
-              </div>
+          <div className="w-full h-full bg-white rounded-2xl shadow-2xl border border-slate-100 p-8">
+            {/* 알림 센터 제목 */}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-slate-400">🔔 실시간 알림 센터</h3>
             </div>
 
             {/* 알림 센터 카드 */}
-            <div className="mt-8 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl overflow-hidden">
               {/* 알림 헤더 */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
                 <div className="flex items-center justify-between">
