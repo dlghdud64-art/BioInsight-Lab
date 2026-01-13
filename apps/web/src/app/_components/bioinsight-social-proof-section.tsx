@@ -42,7 +42,12 @@ const createMarqueeItem = (item: typeof universities[0] | typeof stats[0], index
   }
 };
 
-const marqueeItems = [...universities, ...stats];
+// 레이아웃: [대학 로고 그룹] - [핵심 숫자 2개] - [대학 로고 그룹] 형태로 배치
+const marqueeItems = [
+  ...universities.slice(0, 3), // 첫 번째 대학 로고 그룹 (3개)
+  ...stats, // 핵심 숫자 2개
+  ...universities.slice(3), // 두 번째 대학 로고 그룹 (나머지 3개)
+];
 
 export function BioInsightSocialProofSection() {
   return (
