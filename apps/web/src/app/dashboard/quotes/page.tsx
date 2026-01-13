@@ -106,10 +106,10 @@ export default function QuotesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6 py-8">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">견적요청서</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">견적요청서</h1>
           <p className="text-sm text-slate-500 mt-1">
             총 {total}개의 견적요청서
           </p>
