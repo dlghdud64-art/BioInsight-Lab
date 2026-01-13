@@ -3,8 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MainHeader } from "@/app/_components/main-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { PageHeader } from "@/app/_components/page-header";
 import { Wallet, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,25 +22,18 @@ export default function GrantsPage() {
   const budgets = budgetsData?.budgets || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4 md:mb-6">
-                <div>
-                  <h1 className="text-xl md:text-3xl font-bold">연구비 관리</h1>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                    연구비 예산을 관리하고 사용 내역을 확인합니다.
-                  </p>
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  예산 추가
-                </Button>
-              </div>
+    <div className="max-w-6xl mx-auto">
+      <PageHeader
+        title="연구비 관리"
+        description="연구비 예산을 관리하고 사용 내역을 확인합니다."
+        icon={Wallet}
+        actions={
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            예산 추가
+          </Button>
+        }
+      />
 
               {isLoading ? (
                 <div className="text-center py-12">
@@ -96,10 +88,6 @@ export default function GrantsPage() {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

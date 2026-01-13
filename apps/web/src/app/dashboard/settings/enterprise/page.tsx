@@ -11,9 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { MainHeader } from "@/app/_components/main-header";
 import { PageHeader } from "@/app/_components/page-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download, Users, Mail } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState, useEffect } from "react";
@@ -132,34 +130,20 @@ export default function EnterpriseSettingsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <MainHeader />
-        <div className="flex">
-          <DashboardSidebar />
-          <div className="flex-1 overflow-auto min-w-0">
-            <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <div className="text-center py-8 md:py-12 text-xs md:text-sm">로딩 중...</div>
-            </div>
-          </div>
-        </div>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">로딩 중...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-              <PageHeader
-                title="Enterprise 설정"
-                description="SSO 연동, 감사 로그, 권한 관리 등 Enterprise 기능을 설정합니다."
-                icon={Shield}
-                iconColor="text-purple-600"
-              />
+    <div className="max-w-7xl mx-auto space-y-6">
+      <PageHeader
+        title="Enterprise 설정"
+        description="SSO 연동, 감사 로그, 권한 관리 등 Enterprise 기능을 설정합니다."
+        icon={Shield}
+        iconColor="text-purple-600"
+      />
 
               {/* 조직 선택 */}
               {organizations.length > 0 && (
@@ -517,17 +501,13 @@ export default function EnterpriseSettingsPage() {
                 </Tabs>
               )}
 
-              {!currentOrg && (
-                <Card>
-                  <CardContent className="py-12 text-center text-slate-500">
-                    조직이 없습니다. 먼저 조직을 생성해주세요.
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {!currentOrg && (
+        <Card>
+          <CardContent className="py-12 text-center text-slate-500">
+            조직이 없습니다. 먼저 조직을 생성해주세요.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

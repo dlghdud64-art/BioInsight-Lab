@@ -16,8 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MainHeader } from "@/app/_components/main-header";
-import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
+import { PageHeader } from "@/app/_components/page-header";
 
 export default function SharedLinksPage() {
   const { data: session, status } = useSession();
@@ -161,19 +160,12 @@ export default function SharedLinksPage() {
   const sharedLinks = data?.sharedLinks || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <MainHeader />
-      <div className="flex">
-        <DashboardSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-            <div className="max-w-7xl mx-auto">
-        <div className="mb-4 md:mb-6">
-          <h1 className="text-xl md:text-3xl font-bold">공유 링크 관리</h1>
-          <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            생성한 공유 링크를 관리하고 비활성화할 수 있습니다.
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto">
+      <PageHeader
+        title="공유 링크 관리"
+        description="생성한 공유 링크를 관리하고 비활성화할 수 있습니다."
+        icon={LinkIcon}
+      />
 
         {isLoading ? (
           <Card className="p-3 md:p-6">
@@ -359,10 +351,6 @@ export default function SharedLinksPage() {
             </CardContent>
           </Card>
         )}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
