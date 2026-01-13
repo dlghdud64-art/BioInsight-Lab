@@ -33,7 +33,7 @@ const guides = [
   {
     title: "구매 리포트",
     description: "구매 내역을 조회하고 분석하는 방법",
-    href: "/reports",
+    href: "/dashboard/reports",
   },
 ];
 

@@ -52,7 +52,7 @@ const sidebarGroups: SidebarGroup[] = [
       },
       {
         title: "구매 리포트",
-        href: "/reports",
+        href: "/dashboard/reports",
         icon: BarChart3,
       },
       {

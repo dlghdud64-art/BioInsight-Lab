@@ -1,16 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+export const dynamic = 'force-dynamic';
+
+import { useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { TrendingUp, Package, Building2, DollarSign, FileSpreadsheet, Download, CloudUpload, FileText } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
+import { PageHeader } from "@/app/_components/page-header";
+import { BarChart3 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 
 export default function ReportsPage() {
-  const router = useRouter();
-  
-  useEffect(() => {
-    router.replace("/dashboard/reports");
-  }, [router]);
-  
-  return null;
+  const { data: session, status } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,7 +87,6 @@ export default function ReportsPage() {
       });
       setIsImportDialogOpen(false);
       setSelectedFile(null);
-      // 리포트 데이터 새로고침
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
     },
@@ -150,21 +162,6 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // 인증 확인
-  if (status === "loading") {
-    return (
-      <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-        <div className="flex items-center justify-center min-h-[400px]">Loading...</div>
-      </div>
-    );
-  }
-
-  // 개발 단계: 로그인 체크 제거
-  // if (status === "unauthenticated") {
-  //   router.push("/auth/signin?callbackUrl=/reports");
-  //   return null;
-  // }
-
   // 예산 목록 조회
   const { data: budgetsData, isLoading: isLoadingBudgets } = useQuery({
     queryKey: ["budgets"],
@@ -172,29 +169,33 @@ export default function ReportsPage() {
       const response = await fetch("/api/budgets");
       if (!response.ok) throw new Error("Failed to fetch budgets");
       const data = await response.json();
-      // API 응답이 { budgets: [...] } 형태이므로 budgets 배열 추출
       return data?.budgets || [];
     },
   });
 
-  // budgets 배열 추출 (안전하게)
   const budgets = budgetsData || [];
 
+  // 리포트 데이터 구조 변환
+  const metrics = reportData?.metrics || {};
+  const monthlyData = reportData?.monthlyData || [];
+  const vendorData = reportData?.vendorData || [];
+  const categoryData = reportData?.categoryData || [];
+  const details = reportData?.details || [];
+
   return (
-    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-      <div className="max-w-7xl mx-auto">
-        <PageHeader
-          title="구매 리포트"
-          description="기간/팀/벤더별 총 구매 금액과 예산 사용 상황을 확인합니다."
-          icon={BarChart3}
-          iconColor="text-green-600"
-          actions={
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* 표준 페이지 헤더 */}
+      <PageHeader
+        title="구매 리포트"
+        description="월별 지출 현황과 예산 사용량을 분석합니다."
+        icon={BarChart3}
+        actions={
+          <div className="flex gap-2">
             <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8 md:h-10">
-                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">데이터 가져오기</span>
-                  <span className="sm:hidden">가져오기</span>
+                <Button variant="outline" size="sm">
+                  <CloudUpload className="h-4 w-4 mr-2" />
+                  데이터 가져오기
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -205,7 +206,6 @@ export default function ReportsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                  {/* 드롭존 */}
                   <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -248,8 +248,6 @@ export default function ReportsPage() {
                       </>
                     )}
                   </div>
-
-                  {/* 템플릿 다운로드 */}
                   <div className="text-center">
                     <button
                       type="button"
@@ -259,8 +257,6 @@ export default function ReportsPage() {
                       양식이 필요하신가요? 샘플 파일 다운로드
                     </button>
                   </div>
-
-                  {/* 업로드 버튼 */}
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -281,40 +277,45 @@ export default function ReportsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-          }
-        />
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              데이터 내보내기
+            </Button>
+          </div>
+        }
+      />
 
-      {/* 필터 */}
-      <Card className="mb-4 md:mb-6 p-3 md:p-6">
-        <CardHeader className="px-0 pt-0 pb-3">
-          <CardTitle className="text-sm md:text-lg">필터</CardTitle>
+      {/* 필터 섹션 - Card로 정리 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">필터</CardTitle>
         </CardHeader>
-        <CardContent className="px-0 pb-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="startDate" className="text-xs md:text-sm">시작일</Label>
+              <Label htmlFor="startDate" className="text-sm">시작일</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="text-xs md:text-sm h-8 md:h-10"
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="endDate" className="text-xs md:text-sm">종료일</Label>
+              <Label htmlFor="endDate" className="text-sm">종료일</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="text-xs md:text-sm h-8 md:h-10"
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="category" className="text-xs md:text-sm">카테고리</Label>
+              <Label htmlFor="category" className="text-sm">카테고리</Label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category" className="text-xs md:text-sm h-8 md:h-10">
+                <SelectTrigger id="category" className="mt-1">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -328,29 +329,29 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="team" className="text-xs md:text-sm">팀/조직</Label>
+              <Label htmlFor="team" className="text-sm">팀/조직</Label>
               <Input
                 id="team"
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
                 placeholder="전체"
-                className="text-xs md:text-sm h-8 md:h-10"
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="vendor" className="text-xs md:text-sm">벤더</Label>
+              <Label htmlFor="vendor" className="text-sm">벤더</Label>
               <Input
                 id="vendor"
                 value={selectedVendor}
                 onChange={(e) => setSelectedVendor(e.target.value)}
                 placeholder="전체"
-                className="text-xs md:text-sm h-8 md:h-10"
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="budget" className="text-xs md:text-sm">예산</Label>
+              <Label htmlFor="budget" className="text-sm">예산</Label>
               <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-                <SelectTrigger id="budget" className="text-xs md:text-sm h-8 md:h-10">
+                <SelectTrigger id="budget" className="mt-1">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -367,57 +368,59 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      {/* KPI 카드 */}
+      {/* KPI 카드 - 반응형 그리드 */}
       {isLoading ? (
-        <div className="text-center py-8">Loading...</div>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
       ) : reportData ? (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">총 구매 금액</CardTitle>
-                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">총 구매 금액</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="text-lg md:text-2xl font-bold break-words">
-                  {formatCurrency(reportData.totalAmount)}
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(metrics.totalAmount || 0)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">총 구매 건수</CardTitle>
-                <Package className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">총 구매 건수</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="text-lg md:text-2xl font-bold">{reportData.totalCount || 0}</div>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.itemCount || 0}</div>
               </CardContent>
             </Card>
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">평균 단가</CardTitle>
-                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">평균 단가</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="text-lg md:text-2xl font-bold break-words">
-                  {formatCurrency(reportData.averagePrice)}
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency((metrics.totalAmount || 0) / (metrics.itemCount || 1))}
                 </div>
               </CardContent>
             </Card>
-            <Card className="p-3 md:p-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-                <CardTitle className="text-xs md:text-sm font-medium">벤더 수</CardTitle>
-                <Building2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">벤더 수</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="text-lg md:text-2xl font-bold">{reportData.vendorCount || 0}</div>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.vendorCount || 0}</div>
               </CardContent>
             </Card>
           </div>
 
           {/* 예산 사용률 카드 */}
           {selectedBudget !== "all" && reportData.budgetUsage && (
-            <Card className="mb-6">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   예산 사용률
@@ -453,60 +456,59 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 예상 vs 실제 비교 */}
-          {reportData.budgetComparison && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>예상 vs 실제</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={reportData.budgetComparison}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="expected" fill="#8884d8" name="예상" />
-                    <Bar dataKey="actual" fill="#82ca9d" name="실제" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 그래프 */}
-          {reportData.chartData && reportData.chartData.length > 0 && (
-            <Card className="mb-6">
+          {/* 월별 구매 추이 차트 */}
+          {monthlyData && monthlyData.length > 0 && (
+            <Card>
               <CardHeader>
                 <CardTitle>기간별 구매 추이</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={reportData.chartData}>
+                  <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="amount" fill="#8884d8" name="구매 금액" />
+                    <Bar dataKey="amount" fill="#3b82f6" name="구매 금액" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
 
-          {/* 예산 사용률 */}
-          {reportData.budgetUsageChart && reportData.budgetUsageChart.length > 0 && (
-            <Card className="mb-6">
+          {/* 벤더별 구매 현황 */}
+          {vendorData && vendorData.length > 0 && (
+            <Card>
               <CardHeader>
-                <CardTitle>예산별 사용률</CardTitle>
+                <CardTitle>벤더별 구매 현황</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={vendorData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="vendor" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="amount" fill="#10b981" name="구매 금액" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 카테고리별 구매 현황 (파이 차트) */}
+          {categoryData && categoryData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>카테고리별 구매 현황</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={reportData.budgetUsageChart}
+                      data={categoryData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -515,7 +517,7 @@ export default function ReportsPage() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {reportData.budgetUsageChart.map((entry: any, index: number) => (
+                      {categoryData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={entry.color || "#8884d8"} />
                       ))}
                     </Pie>
@@ -527,7 +529,7 @@ export default function ReportsPage() {
           )}
 
           {/* 상세 테이블 */}
-          {reportData.details && reportData.details.length > 0 && (
+          {details && details.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>상세 내역</CardTitle>
@@ -545,36 +547,18 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.details.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12">
-                          <div className="flex flex-col items-center gap-3">
-                            <FileSpreadsheet className="h-12 w-12 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 mb-1">
-                                데이터가 없습니다
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                CSV 파일을 업로드하여 리포트를 생성해보세요.
-                              </p>
-                            </div>
-                          </div>
+                    {details.map((item: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {formatDate(item.date || item.purchaseDate, { format: "date" })}
                         </TableCell>
+                        <TableCell>{item.productName || item.product || "-"}</TableCell>
+                        <TableCell>{item.vendorName || item.vendor || "-"}</TableCell>
+                        <TableCell>{item.quantity || "-"}</TableCell>
+                        <TableCell>{formatCurrency(item.unitPrice || item.price || 0)}</TableCell>
+                        <TableCell>{formatCurrency(item.totalAmount || item.amount || 0)}</TableCell>
                       </TableRow>
-                    ) : (
-                      reportData.details.map((item: any, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            {formatDate(item.purchaseDate, { format: "date" })}
-                          </TableCell>
-                          <TableCell>{item.productName || "-"}</TableCell>
-                          <TableCell>{item.vendorName || "-"}</TableCell>
-                          <TableCell>{item.quantity || "-"}</TableCell>
-                          <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                          <TableCell>{formatCurrency(item.totalAmount)}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -597,7 +581,7 @@ export default function ReportsPage() {
                   variant="outline"
                   onClick={() => setIsImportDialogOpen(true)}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <CloudUpload className="h-4 w-4 mr-2" />
                   데이터 가져오기
                 </Button>
               </div>
@@ -605,7 +589,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       )}
-      </div>
     </div>
   );
 }
+
