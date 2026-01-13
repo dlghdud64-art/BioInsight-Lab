@@ -352,20 +352,22 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
             {/* 테이블 - 항상 헤더 표시 */}
             {quoteItems.length === 0 ? (
-              <div className="text-center py-16 md:py-20 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                  <ShoppingCart className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+              <div className="text-center py-16 md:py-20">
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-12 max-w-md mx-auto">
+                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                    <ShoppingCart className="w-16 h-16 text-slate-300" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">견적 바구니가 비어있습니다</h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+                    비교할 제품을 선택하고 견적 요청 목록에 추가해주세요.
+                  </p>
+                  <Link href="/test/search">
+                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <Search className="h-5 w-5 mr-2" />
+                      제품 검색하러 가기
+                    </Button>
+                  </Link>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">견적 바구니가 비어있습니다.</h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
-                  비교할 제품을 선택하고 견적 요청 목록에 추가해주세요.
-                </p>
-                <Link href="/test/search">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <Search className="h-5 w-5 mr-2" />
-                    제품 검색하러 가기
-                  </Button>
-                </Link>
               </div>
             ) : (
               <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">

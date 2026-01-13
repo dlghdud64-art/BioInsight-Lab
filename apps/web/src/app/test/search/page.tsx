@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft } from "lucide-react";
 import { AIInsightCard } from "@/components/ai-insight-card";
+import { useRouter } from "next/navigation";
 
 export default function SearchPage() {
   const {
@@ -64,13 +65,7 @@ export default function SearchPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="container mx-auto px-4 py-4 md:py-6">
-        <div className="mb-4">
-          <h1 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">Step 1: 검색</h1>
-          <p className="text-sm text-slate-600">제품명, 벤더, 카테고리로 후보 제품을 검색합니다.</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50/50 mt-8">
       
       {/* 2컬럼 레이아웃 */}
       <div className="container mx-auto px-4 pb-4 md:pb-6">
@@ -83,7 +78,7 @@ export default function SearchPage() {
         </aside>
 
         {/* 가운데: 검색 결과 */}
-        <section className="order-3 md:order-none space-y-4 max-w-4xl mx-auto w-full">
+        <section className="order-3 md:order-none space-y-4 max-w-4xl mx-auto w-full pt-16">
           {/* 상단 고정 검색창 */}
           <StickySearchBar />
           
@@ -205,12 +200,12 @@ export default function SearchPage() {
               <div className="flex h-full flex-col items-center justify-center py-16 md:py-20 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
                     <>
-                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                        <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-6 shadow-sm">
+                        <Search className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">AI 분석 준비 완료</h3>
-                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center">
-                        원하는 제품이나 키워드를 검색하면 후보 제품을 자동으로 분석하고 비교해 드립니다.
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3">찾으시는 시약/장비를 입력하면 AI가 비교 분석합니다.</h3>
+                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center max-w-md">
+                        검색창에 제품명, CAS Number, 제조사를 입력하시면 전 세계 500만 개 제품 중 최적의 후보를 찾아드립니다.
                       </p>
                     </>
                   ) : (
@@ -458,6 +453,7 @@ export default function SearchPage() {
 function StickySearchBar() {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
+  const router = useRouter();
 
   // 좌측 사이드바의 searchQuery와 동기화
   useEffect(() => {
@@ -479,36 +475,49 @@ function StickySearchBar() {
     setSearchQuery(value);
   };
 
+  const popularSearches = ["FBS", "Pipette", "Conical Tube", "Centrifuge", "DMEM", "Trypsin"];
+
   return (
     <div className="w-full p-6 border-b bg-white/95 backdrop-blur sticky top-0 z-10 shadow-sm">
-      <form onSubmit={handleSubmit} className="w-full">
-        <div className="relative flex items-center w-full">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 z-10" />
-          <input
+      <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
+        <div className="flex items-center gap-2 bg-white rounded-full border-2 border-slate-300 shadow-lg hover:shadow-xl transition-all focus-within:border-blue-500 focus-within:shadow-blue-500/20">
+          <Input
             type="text"
             value={localQuery}
             onChange={handleChange}
-            placeholder="제품명, 벤더, 키워드를 입력하여 AI 분석 시작"
-            className="w-full h-12 pl-12 pr-24 text-base bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요 (예: FBS, Anti-IL6)"
+            className="flex-1 h-14 px-6 text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
             type="submit"
-            className="absolute right-2 h-8 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-md shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+            size="lg"
+            className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold"
             disabled={!localQuery.trim()}
           >
-            <Search className="h-4 w-4 mr-1.5" />
+            <Search className="h-5 w-5 mr-2" />
             검색
           </Button>
         </div>
       </form>
-      
-      {/* Empty State 안내 문구 */}
+
+      {/* 추천 키워드 칩 */}
       {!hasSearched && (
-        <div className="mt-10 flex flex-col items-center justify-center text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">AI 분석 준비 완료</h3>
-          <p className="text-sm text-gray-600 leading-relaxed max-w-md">
-            원하는 제품이나 키워드를 검색하면 후보 제품을 자동으로 분석하고 비교해 드립니다.
-          </p>
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-6 max-w-3xl mx-auto">
+          <span className="text-sm text-slate-500 font-medium">🔥 추천:</span>
+          {popularSearches.map((term) => (
+            <Badge
+              key={term}
+              variant="secondary"
+              className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-3 py-1.5 text-sm font-medium"
+              onClick={() => {
+                setLocalQuery(term);
+                setSearchQuery(term);
+                runSearch();
+              }}
+            >
+              #{term}
+            </Badge>
+          ))}
         </div>
       )}
     </div>

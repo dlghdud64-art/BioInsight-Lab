@@ -310,22 +310,50 @@ export default function TestComparePage() {
 
   if (compareIds.length === 0) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>제품 비교</CardTitle>
-            <CardDescription>
-              비교할 제품이 없습니다. 검색 페이지에서 제품을 비교 목록에 추가해주세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-16 px-4 mt-8">
+        {/* 헤더 강화 */}
+        <div className="text-center mb-12">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Step 2. 제품 비교</h1>
+          <p className="text-sm text-slate-600">스펙·가격·납기를 한눈에 비교하세요</p>
+        </div>
+
+        {/* Empty State 디자인 */}
+        <div className="relative w-full max-w-2xl mx-auto">
+          {/* 배경: 비교 테이블 실루엣 */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="grid grid-cols-3 gap-4 h-full">
+              {[1, 2, 3].map((col) => (
+                <div key={col} className="border-2 border-slate-300 rounded-lg p-4 space-y-2">
+                  {[1, 2, 3, 4].map((row) => (
+                    <div key={row} className="h-4 bg-slate-200 rounded"></div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 저울 아이콘 */}
+          <div className="relative z-10 flex flex-col items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mb-6 shadow-lg">
+              <ArrowUpDown className="h-12 w-12 text-indigo-500" strokeWidth={1.5} />
+            </div>
+            
+            <h3 className="text-xl font-semibold text-slate-900 mb-3">비교할 제품이 없습니다</h3>
+            <p className="text-base text-slate-600 mb-2 max-w-md text-center leading-relaxed">
+              Step 1에서 제품을 선택하고 '비교함 담기'를 눌러주세요.
+            </p>
+            <p className="text-sm text-slate-500 mb-6 max-w-md text-center">
+              최대 5개까지 제품을 비교할 수 있습니다.
+            </p>
+            
             <Link href="/test/search">
-              <Button className="w-full">
-                검색 페이지로 이동
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                <Search className="h-4 w-4 mr-2" />
+                제품 검색하러 가기
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -405,7 +433,7 @@ export default function TestComparePage() {
       <div className="border-b border-slate-200 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">Step 2: 비교</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mb-1">Step 2. 제품 비교</h1>
             <p className="text-sm text-slate-600">
               스펙·가격·납기를 한눈에 비교하세요 ({products.length}개)
             </p>
