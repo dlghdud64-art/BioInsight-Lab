@@ -51,8 +51,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const user = session?.user;
 
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md">
-      <div className="flex h-full items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-50 h-16 border-b border-slate-200 bg-white">
+      <div className="flex h-full items-center justify-between px-8">
         {/* 좌측 영역: 브레드크럼 + 햄버거 메뉴 */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
           {/* 모바일 햄버거 메뉴 */}
