@@ -41,7 +41,8 @@
       "Bash(git fetch:*)",
       "Bash(grep:*)",
       "Bash(xxd:*)",
-      "Bash(timeout 60 npm run build:*)"
+      "Bash(timeout 60 npm run build:*)",
+      "Bash(jsx identifier\" error.\n\nReverted to the working version from d77346a that uses nested component\ndefinition with implicit return instead of the new HexagonIcon-based brand\nheader.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   },
   "git": {
