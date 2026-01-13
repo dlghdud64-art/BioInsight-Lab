@@ -4,7 +4,6 @@ import { MainFooter } from "./_components/main-footer";
 import { BioInsightHeroSection } from "./_components/bioinsight-hero-section";
 // import { BioInsightFeaturesSection } from "./_components/bioinsight-features-section"; // 삭제: 내용 중복
 import { BioInsightSocialProofSection } from "./_components/bioinsight-social-proof-section";
-import { Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load below-the-fold sections for better initial page load
