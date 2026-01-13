@@ -27,7 +27,7 @@ export default function DashboardLayout({
         />
         
         {/* 메인 콘텐츠 영역: 여기에만 페이지 내용이 들어감 */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto pt-16 pb-8 px-8">
           {children}
         </main>
       </div>
