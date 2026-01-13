@@ -65,11 +65,11 @@ export function PersonaSection() {
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 mb-3">
           누가 쓰나요?
         </h2>
-        <Accordion type="single" collapsible defaultValue="rnd" className="w-full space-y-2">
+        <Accordion type="single" collapsible defaultValue="rnd" className="w-full">
           {personas.map((persona) => {
             const Icon = persona.icon;
             return (
-              <AccordionItem key={persona.id} value={persona.id} className="border border-slate-200 rounded-lg bg-white px-4">
+              <AccordionItem key={persona.id} value={persona.id} className="mb-4 border border-slate-200 rounded-lg bg-white px-4 data-[state=open]:bg-blue-50 data-[state=open]:border-blue-200">
                 <AccordionTrigger className="hover:no-underline py-3">
                   <div className="flex items-center gap-2">
                     <div className={`flex h-6 w-6 items-center justify-center rounded-md ${persona.iconBg} flex-shrink-0`}>

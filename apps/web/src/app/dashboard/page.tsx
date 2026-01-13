@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, ArrowRight } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -69,7 +69,13 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+              <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                <TrendingUp className="h-3 w-3" />
+                <span>+12%</span>
+              </div>
+            </div>
             <p className="text-xs text-slate-500 mt-1">개 품목</p>
           </CardContent>
         </Card>
@@ -81,7 +87,13 @@ export default function DashboardPage() {
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+              <div className="flex items-center gap-1 text-xs font-medium text-red-600">
+                <TrendingDown className="h-3 w-3" />
+                <span>-3%</span>
+              </div>
+            </div>
             <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
           </CardContent>
         </Card>
@@ -93,8 +105,14 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
-              ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl md:text-4xl font-bold text-slate-900">
+                ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                <TrendingUp className="h-3 w-3" />
+                <span>+8%</span>
+              </div>
             </div>
             <p className="text-xs text-slate-500 mt-1">구매 금액</p>
           </CardContent>
@@ -107,7 +125,12 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+              <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                <span>→</span>
+              </div>
+            </div>
             <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
           </CardContent>
         </Card>
@@ -181,7 +204,7 @@ export default function DashboardPage() {
             {ordersLoading ? (
               <div className="p-8 text-center text-slate-500">로딩 중...</div>
             ) : orders.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
+              <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-lg">
                 <p className="mb-2">주문 내역이 없습니다</p>
                 <Link href="/test/search">
                   <Button variant="outline" size="sm" className="mt-2">

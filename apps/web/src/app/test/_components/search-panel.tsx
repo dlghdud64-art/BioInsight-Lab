@@ -40,11 +40,8 @@ export function SearchPanel() {
     <div className="space-y-3">
       <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700 bg-gradient-to-r from-blue-50 to-indigo-50">
-              Step 1
-            </span>
-            <span>검색·AI 분석</span>
+          <CardTitle className="text-sm font-semibold text-slate-900">
+            <span>통합 검색 & AI 분석</span>
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">
             제품을 검색하고 후보를 선택합니다.
