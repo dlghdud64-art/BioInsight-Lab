@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
@@ -26,7 +26,11 @@ interface MainHeaderProps {
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = useSession();
+  
+  // 대시보드 경로인지 확인 (대시보드에서는 사이드바에 로고가 있으므로 헤더 로고 숨김)
+  const isDashboard = pathname?.startsWith("/dashboard");
 
   const scrollToId = useCallback((id: string) => {
     if (typeof window === "undefined") return;
@@ -91,10 +95,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </button>
           ) : null}
           
-          {/* 로고 - 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
+          {/* 로고 - 랜딩 페이지에서는 항상 표시, 대시보드에서는 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
           <Link 
             href="/" 
-            className="md:hidden flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative"
+            className={`${isDashboard ? "md:hidden" : ""} flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative`}
           >
             <BioInsightLogo showText={true} />
           </Link>
