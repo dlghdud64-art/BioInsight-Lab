@@ -38,10 +38,26 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     const paths = pathname?.split("/").filter(Boolean) || [];
     const breadcrumbs = [{ label: "Home", href: "/" }];
 
+    // 경로별 라벨 매핑
+    const pathLabelMap: Record<string, string> = {
+      dashboard: "Dashboard",
+      analytics: "지출 분석",
+      inventory: "인벤토리",
+      purchases: "구매 내역",
+      quotes: "견적 관리",
+      organizations: "조직 관리",
+      safety: "안전 관리",
+      settings: "설정",
+      budget: "예산 관리",
+      reports: "구매 리포트",
+      notifications: "알림 센터",
+    };
+
     let currentPath = "";
     paths.forEach((path, index) => {
       currentPath += `/${path}`;
-      const label = path
+      // 매핑된 라벨이 있으면 사용, 없으면 기본 변환
+      const label = pathLabelMap[path] || path
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");

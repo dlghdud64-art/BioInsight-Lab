@@ -22,6 +22,8 @@ import {
   X,
   Receipt,
   CreditCard,
+  PieChart,
+  Home,
 } from "lucide-react";
 
 interface NavItem {
@@ -108,9 +110,9 @@ const dashboardLinks = [
     icon: LayoutDashboard,
   },
   {
-    title: "KPI 대시보드",
+    title: "지출 분석",
     href: "/dashboard/analytics",
-    icon: BarChart3,
+    icon: PieChart,
   },
 ];
 
@@ -153,7 +155,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   }, [isMobileOpen]);
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col justify-between">
+    <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) */}
       <div className="h-16 flex items-center px-6 border-b border-slate-200 flex-shrink-0">
         <Link 
@@ -164,6 +166,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         </Link>
       </div>
 
+      {/* 메뉴 영역 (스크롤 가능) */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-8 md:pt-8">
         {/* 모바일 헤더 */}
         <div className="flex items-center justify-between mb-6 md:hidden">
@@ -249,6 +252,18 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 하단 고정 영역 (서비스 홈으로) */}
+      <div className="px-3 md:px-4 py-3 md:py-4 border-t border-slate-200 flex-shrink-0 mt-auto">
+        <Link 
+          href="/" 
+          onClick={() => setIsMobileOpen(false)}
+          className="flex items-center gap-3 rounded-lg px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-slate-500 transition-all hover:text-blue-600 hover:bg-blue-50"
+        >
+          <Home className="h-4 w-4 flex-shrink-0" />
+          <span className="truncate whitespace-nowrap">서비스 홈으로</span>
+        </Link>
       </div>
     </div>
   );

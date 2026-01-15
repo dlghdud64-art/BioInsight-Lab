@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -16,10 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, FileText, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
+import { Plus, FileText, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Quote {
   id: string;
@@ -43,6 +43,7 @@ export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     loadQuotes();
@@ -89,16 +90,6 @@ export default function QuotesPage() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
   const filteredQuotes = quotes.filter((quote) => {
     if (statusFilter === "all") return true;
     if (statusFilter === "draft") return quote.status === "DRAFT";
@@ -107,8 +98,8 @@ export default function QuotesPage() {
   });
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      {/* 타이틀 섹션 */}
+    <div className="flex-1 space-y-4 pt-6">
+      {/* 타이틀 섹션 (표준 대시보드 레이아웃) */}
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">견적 요청 관리</h2>
         <div className="flex items-center space-x-2">
@@ -122,119 +113,124 @@ export default function QuotesPage() {
       </div>
       <Separator />
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <CardTitle>견적요청서 목록</CardTitle>
-              <CardDescription>
-                최근 작성한 견적요청서를 확인하고 관리하세요.
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={statusFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("all")}
-                className="text-xs whitespace-nowrap"
-              >
-                전체
-              </Button>
-              <Button
-                variant={statusFilter === "draft" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("draft")}
-                className="text-xs whitespace-nowrap"
-              >
-                작성중
-              </Button>
-              <Button
-                variant={statusFilter === "requested" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("requested")}
-                className="text-xs whitespace-nowrap"
-              >
-                요청완료
-              </Button>
-            </div>
+      {/* 3. 메인 컨텐츠 (테이블) */}
+      <div className="py-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
           </div>
-        </CardHeader>
-        <CardContent>
-          {filteredQuotes.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 mb-4">
-                {quotes.length === 0 
-                  ? "작성된 견적요청서가 없습니다."
-                  : "선택한 필터에 해당하는 견적요청서가 없습니다."}
-              </p>
-              {quotes.length === 0 && (
-                <Link href="/test/quote">
-                  <Button variant="outline" className="whitespace-nowrap">
-                    <Plus className="h-4 w-4 mr-2" />
-                    첫 견적 작성하기
+        ) : (
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>견적요청서 목록</CardTitle>
+                  <CardDescription>
+                    최근 작성한 견적요청서를 확인하고 관리하세요.
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={statusFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("all")}
+                    className="text-xs whitespace-nowrap"
+                  >
+                    전체
                   </Button>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">제목</TableHead>
-                    <TableHead className="whitespace-nowrap">상태</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">품목 수</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">총액</TableHead>
-                    <TableHead className="whitespace-nowrap">업데이트 날짜</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">작업</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredQuotes.map((quote) => (
-                    <TableRow
-                      key={quote.id}
-                      className="cursor-pointer hover:bg-slate-50"
-                      onClick={() => router.push(`/test/quote?quoteId=${quote.id}`)}
-                    >
-                      <TableCell className="font-medium">
-                        {quote.title}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(quote.status)}</TableCell>
-                      <TableCell className="text-right">
-                        {quote.itemCount}개
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₩{quote.totalAmount.toLocaleString("ko-KR")}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(quote.updatedAt).toLocaleDateString("ko-KR")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/test/quote?quoteId=${quote.id}`);
-                          }}
-                          className="whitespace-nowrap"
+                  <Button
+                    variant={statusFilter === "draft" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("draft")}
+                    className="text-xs whitespace-nowrap"
+                  >
+                    작성중
+                  </Button>
+                  <Button
+                    variant={statusFilter === "requested" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("requested")}
+                    className="text-xs whitespace-nowrap"
+                  >
+                    요청완료
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {filteredQuotes.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 mb-4">
+                    {quotes.length === 0 
+                      ? "작성된 견적요청서가 없습니다."
+                      : "선택한 필터에 해당하는 견적요청서가 없습니다."}
+                  </p>
+                  {quotes.length === 0 && (
+                    <Link href="/test/quote">
+                      <Button variant="outline" className="whitespace-nowrap">
+                        <Plus className="h-4 w-4 mr-2" />
+                        첫 견적 작성하기
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">제목</TableHead>
+                        <TableHead className="whitespace-nowrap">상태</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">품목 수</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">총액</TableHead>
+                        <TableHead className="whitespace-nowrap">업데이트 날짜</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">작업</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredQuotes.map((quote) => (
+                        <TableRow
+                          key={quote.id}
+                          className="cursor-pointer hover:bg-slate-50"
+                          onClick={() => router.push(`/test/quote?quoteId=${quote.id}`)}
                         >
-                          열기
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          <TableCell className="font-medium">
+                            {quote.title}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(quote.status)}</TableCell>
+                          <TableCell className="text-right">
+                            {quote.itemCount}개
+                          </TableCell>
+                          <TableCell className="text-right">
+                            ₩{quote.totalAmount.toLocaleString("ko-KR")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {new Date(quote.updatedAt).toLocaleDateString("ko-KR")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/test/quote?quoteId=${quote.id}`);
+                              }}
+                              className="whitespace-nowrap"
+                            >
+                              열기
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
-
-
-
-

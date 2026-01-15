@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,43 @@ interface Tab {
 
 export function FeaturesShowcaseSection() {
   const [activeTab, setActiveTab] = useState("sourcing");
+  
+  // --- Mobile Carousel Logic ---
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      // 약간의 오차 범위(5px)를 두어 끝 감지
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    // 리사이즈 이벤트 리스너 추가
+    const handleResize = () => {
+      setTimeout(checkScroll, 100);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = scrollRef.current.clientWidth * 0.8; // 화면 너비의 80%만큼 이동
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+      // 스크롤 완료 후 상태 업데이트
+      setTimeout(checkScroll, 300);
+    }
+  };
+  // ---------------------------
 
   const tabs: Tab[] = [
     {
@@ -345,15 +382,34 @@ export function FeaturesShowcaseSection() {
             })}
           </div>
 
-          {/* 모바일: 가로 스크롤 Carousel */}
-          <div className="md:hidden">
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 py-4 scrollbar-hide -mx-4">
+          {/* 모바일: 가로 스크롤 Carousel with Navigation */}
+          <div className="md:hidden relative group">
+            {/* Left Navigation Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white/90 ${
+                !canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              aria-label="이전 카드"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Scroll Container */}
+            <div
+              ref={scrollRef}
+              onScroll={checkScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 py-4 scrollbar-hide -mx-4"
+            >
               {tabs.map((tab) => {
                 const TabIcon = tab.icon;
                 return (
                   <div
                     key={tab.id}
-                    className="flex-shrink-0 min-w-[85vw] max-w-[320px] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    className="flex-shrink-0 min-w-[80vw] max-w-[300px] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
                   >
                     <div className="p-4 space-y-3">
                       {/* 헤더 영역 (아이콘 + 제목) */}
@@ -392,6 +448,20 @@ export function FeaturesShowcaseSection() {
                 );
               })}
             </div>
+
+            {/* Right Navigation Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white/90 ${
+                !canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              aria-label="다음 카드"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}

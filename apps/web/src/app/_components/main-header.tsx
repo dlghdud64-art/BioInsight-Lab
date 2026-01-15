@@ -148,7 +148,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-              <div className="flex flex-col h-full mt-6">
+              <div className="flex flex-col h-full pt-28">
                 {/* 1. 네비게이션 링크 그룹 */}
                 <div className="flex flex-col space-y-2">
                   <SheetClose asChild>
@@ -185,7 +185,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <div className="my-6 border-t border-slate-100" />
 
                 {/* 2. 하단 액션 그룹 */}
-                <div className="flex flex-col space-y-3">
+                <div className="flex flex-col space-y-3 mt-auto pb-10">
                   {!session?.user ? (
                     <>
                       <SheetClose asChild>

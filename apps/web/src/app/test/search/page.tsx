@@ -200,11 +200,11 @@ export default function SearchPage() {
               <div className="flex h-full flex-col items-center justify-center py-16 md:py-20 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
                     <>
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-6 shadow-sm">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-6 shadow-sm hidden md:flex">
                         <Search className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-3">찾으시는 시약/장비를 입력하면 AI가 비교 분석합니다.</h3>
-                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center max-w-md">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-3 hidden md:block">찾으시는 시약/장비를 입력하면 AI가 비교 분석합니다.</h3>
+                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center max-w-md hidden md:block">
                         검색창에 제품명, CAS Number, 제조사를 입력하시면 전 세계 500만 개 제품 중 최적의 후보를 찾아드립니다.
                       </p>
                     </>

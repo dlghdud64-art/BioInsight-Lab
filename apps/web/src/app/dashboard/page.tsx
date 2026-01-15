@@ -237,29 +237,29 @@ export default function DashboardPage() {
     return (
       <div
         key={orderData.orderId}
-        className="flex items-center justify-between p-4 rounded-lg border bg-white shadow-sm"
+        className="flex items-center justify-between p-4 rounded-lg border bg-white shadow-sm w-full min-w-0"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {/* 아이콘 박스 */}
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
             <Beaker className="h-5 w-5" />
           </div>
-          <div className="space-y-1 flex-1 min-w-0">
+          <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
             <p className="text-sm font-medium leading-none truncate">{orderData.productName}</p>
             <p className="text-xs text-muted-foreground truncate">{orderData.vendor} • {orderData.date}</p>
           </div>
         </div>
         <div className="text-right flex-shrink-0 ml-2">
-          <p className="text-sm font-bold mb-1">₩{orderData.amount.toLocaleString("ko-KR")}</p>
+          <p className="text-sm font-bold mb-1 whitespace-nowrap">₩{orderData.amount.toLocaleString("ko-KR")}</p>
           <Badge 
             variant="secondary" 
             className={cn(
-              "text-[10px] px-1.5 h-5 inline-flex items-center gap-1",
+              "text-[10px] px-1.5 h-5 inline-flex items-center gap-1 whitespace-nowrap",
               statusStyle.className
             )}
           >
-            <span className={cn("h-1 w-1 rounded-full", statusStyle.dotColor)} />
-            {orderData.status}
+            <span className={cn("h-1 w-1 rounded-full shrink-0", statusStyle.dotColor)} />
+            <span className="truncate">{orderData.status}</span>
           </Badge>
         </div>
       </div>
@@ -342,14 +342,279 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
+    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 overflow-x-hidden">
       <h2 className="text-2xl md:text-3xl font-bold tracking-tight">대시보드</h2>
 
-      <div className="flex flex-col space-y-6 md:grid md:grid-cols-7 md:space-y-0 md:gap-6">
+      {/* 모바일 전용 레이아웃 */}
+      <div className="md:hidden space-y-4">
+        {/* 1. 빠른 실행 (최상단, 컴팩트) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          <Link href="/test/search" className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+              <Search className="mr-1.5 h-3.5 w-3.5" />
+              통합 검색
+            </Button>
+          </Link>
+          <Link href="/dashboard/inventory" className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              재고 등록
+            </Button>
+          </Link>
+          <Link href="/test/quote" className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+              <FileText className="mr-1.5 h-3.5 w-3.5" />
+              견적 요청
+            </Button>
+          </Link>
+        </div>
+
+        {/* 2. KPI Cards (2x2 그리드) */}
+        <div className="grid grid-cols-2 gap-3">
+            {/* 총 재고 수 */}
+            <Link href="/dashboard/inventory">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">총 재고 수</CardTitle>
+                  <Package className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>+12%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">개 품목</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 부족 알림 */}
+            <Link href="/dashboard/inventory?filter=low">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">부족 알림</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-red-600">
+                      <TrendingDown className="h-3 w-3" />
+                      <span>-3%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 이번 달 지출 */}
+            <Link href="/dashboard/purchases">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">이번 달 지출</CardTitle>
+                  <DollarSign className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">
+                      ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>+8%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">구매 금액</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 진행 중인 견적 */}
+            <Link href="/dashboard/quotes">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">진행 중인 견적</CardTitle>
+                  <FileText className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                      <span>→</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
+        {/* 3. 주문 내역 & 알림 센터 탭 통합 */}
+        <Card>
+          <CardContent className="p-0">
+            {ordersLoading ? (
+              <div className="p-8 text-center text-slate-500">로딩 중...</div>
+            ) : (
+              <Tabs defaultValue="orders" className="w-full">
+                <div className="border-b border-slate-200 px-4 pt-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="orders" className="text-xs">
+                      최근 주문
+                    </TabsTrigger>
+                    <TabsTrigger value="notifications" className="text-xs">
+                      알림 센터
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {/* 주문 내역 탭 */}
+                <TabsContent value="orders" className="m-0">
+                  <Tabs defaultValue="all" className="w-full">
+                    <div className="border-b border-slate-200 px-4 pt-4">
+                      <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
+                        <TabsList className="inline-flex w-auto justify-start min-w-full">
+                          <TabsTrigger value="all" className="text-xs whitespace-nowrap">
+                            전체
+                          </TabsTrigger>
+                          <TabsTrigger value="shipping" className="text-xs whitespace-nowrap">
+                            배송 중
+                          </TabsTrigger>
+                          <TabsTrigger value="pending" className="text-xs whitespace-nowrap">
+                            승인 대기
+                          </TabsTrigger>
+                          <TabsTrigger value="completed" className="text-xs whitespace-nowrap">
+                            완료
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
+                    </div>
+
+                    {/* 전체 탭 */}
+                    <TabsContent value="all" className="m-0">
+                      <div className="grid gap-4 p-4 w-full min-w-0">
+                        {displayOrders.length === 0 ? (
+                          <div className="text-center py-8 text-slate-500 text-sm">
+                            주문 내역이 없습니다.
+                          </div>
+                        ) : (
+                          displayOrders.map((order: any, index: number) => {
+                            const orderData = processOrderData(order, index);
+                            return renderOrderCard(orderData);
+                          })
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    {/* 배송 중 탭 */}
+                    <TabsContent value="shipping" className="m-0">
+                      <div className="grid gap-4 p-4 w-full min-w-0">
+                        {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
+                          <div className="text-center py-8 text-slate-500 text-sm">
+                            배송 중인 주문 내역이 없습니다.
+                          </div>
+                        ) : (
+                          filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
+                            const orderData = processOrderData(order, index);
+                            return renderOrderCard(orderData);
+                          })
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    {/* 승인 대기 탭 */}
+                    <TabsContent value="pending" className="m-0">
+                      <div className="grid gap-4 p-4 w-full min-w-0">
+                        {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
+                          <div className="text-center py-8 text-slate-500 text-sm">
+                            승인 대기 중인 주문 내역이 없습니다.
+                          </div>
+                        ) : (
+                          filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
+                            const orderData = processOrderData(order, index);
+                            return renderOrderCard(orderData);
+                          })
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    {/* 완료 탭 */}
+                    <TabsContent value="completed" className="m-0">
+                      <div className="grid gap-4 p-4 w-full min-w-0">
+                        {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
+                          <div className="text-center py-8 text-slate-500 text-sm">
+                            완료된 주문 내역이 없습니다.
+                          </div>
+                        ) : (
+                          filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
+                            const orderData = processOrderData(order, index);
+                            return renderOrderCard(orderData);
+                          })
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+
+                {/* 알림 센터 탭 */}
+                <TabsContent value="notifications" className="m-0">
+                  <div className="p-4 space-y-3">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500 text-sm">
+                        알림이 없습니다.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-semibold text-slate-900">최근 알림</h3>
+                          <Link href="/dashboard/notifications">
+                            <Button variant="ghost" size="sm" className="text-xs h-7">
+                              모두 보기
+                            </Button>
+                          </Link>
+                        </div>
+                        {notifications.map((notification) => (
+                          <Link
+                            key={notification.id}
+                            href="/dashboard/notifications"
+                            className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                              notification.unread ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"
+                            }`}
+                          >
+                            {renderNotificationIcon(notification.type)}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-medium text-sm text-slate-900 truncate">{notification.title}</p>
+                                {notification.unread && (
+                                  <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600 flex-shrink-0">
+                                    새
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-600 mb-1 line-clamp-2">{notification.content}</p>
+                              <p className="text-xs text-slate-400">{notification.time}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 데스크탑 레이아웃 */}
+      <div className="hidden md:grid md:grid-cols-7 md:gap-6">
         {/* --- Left Main Content (Span 5) --- */}
         <div className="md:col-span-5 space-y-6">
           {/* 1. KPI Cards */}
-          <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {/* 총 재고 수 */}
             <Link href="/dashboard/inventory">
               <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
@@ -444,25 +709,61 @@ export default function DashboardPage() {
                 <Tabs defaultValue="all" className="w-full">
                   <div className="border-b border-slate-200 px-6 pt-4">
                     <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="all" className="text-xs md:text-sm">
+                      <TabsTrigger value="all" className="text-sm">
                         전체
                       </TabsTrigger>
-                      <TabsTrigger value="shipping" className="text-xs md:text-sm">
+                      <TabsTrigger value="shipping" className="text-sm">
                         배송 중
                       </TabsTrigger>
-                      <TabsTrigger value="pending" className="text-xs md:text-sm">
+                      <TabsTrigger value="pending" className="text-sm">
                         승인 대기
                       </TabsTrigger>
-                      <TabsTrigger value="completed" className="text-xs md:text-sm">
+                      <TabsTrigger value="completed" className="text-sm">
                         완료
                       </TabsTrigger>
                     </TabsList>
+                  </div>
+                  <div className="border-b border-slate-200 px-4 md:px-6 pt-4">
+                    {/* 모바일: 가로 스크롤 가능한 탭 */}
+                    <div className="w-full overflow-x-auto pb-2 scrollbar-hide md:hidden">
+                      <TabsList className="inline-flex w-auto justify-start min-w-full">
+                        <TabsTrigger value="all" className="text-xs whitespace-nowrap">
+                          전체
+                        </TabsTrigger>
+                        <TabsTrigger value="shipping" className="text-xs whitespace-nowrap">
+                          배송 중
+                        </TabsTrigger>
+                        <TabsTrigger value="pending" className="text-xs whitespace-nowrap">
+                          승인 대기
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="text-xs whitespace-nowrap">
+                          완료
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    {/* 데스크탑: 그리드 탭 */}
+                    <div className="hidden md:block">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="all" className="text-sm">
+                          전체
+                        </TabsTrigger>
+                        <TabsTrigger value="shipping" className="text-sm">
+                          배송 중
+                        </TabsTrigger>
+                        <TabsTrigger value="pending" className="text-sm">
+                          승인 대기
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="text-sm">
+                          완료
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
                   </div>
 
                   {/* 전체 탭 */}
                   <TabsContent value="all" className="m-0">
                     {/* 모바일: 카드 리스트 */}
-                    <div className="grid gap-4 p-4 md:hidden">
+                    <div className="grid gap-4 p-4 md:hidden w-full min-w-0">
                       {displayOrders.length === 0 ? (
                         <div className="text-center py-8 text-slate-500 text-sm">
                           주문 내역이 없습니다.
@@ -507,7 +808,7 @@ export default function DashboardPage() {
                   {/* 배송 중 탭 */}
                   <TabsContent value="shipping" className="m-0">
                     {/* 모바일: 카드 리스트 */}
-                    <div className="grid gap-4 p-4 md:hidden">
+                    <div className="grid gap-4 p-4 md:hidden w-full min-w-0">
                       {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
                         <div className="text-center py-8 text-slate-500 text-sm">
                           배송 중인 주문 내역이 없습니다.
@@ -552,7 +853,7 @@ export default function DashboardPage() {
                   {/* 승인 대기 탭 */}
                   <TabsContent value="pending" className="m-0">
                     {/* 모바일: 카드 리스트 */}
-                    <div className="grid gap-4 p-4 md:hidden">
+                    <div className="grid gap-4 p-4 md:hidden w-full min-w-0">
                       {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
                         <div className="text-center py-8 text-slate-500 text-sm">
                           승인 대기 중인 주문 내역이 없습니다.
@@ -597,7 +898,7 @@ export default function DashboardPage() {
                   {/* 완료 탭 */}
                   <TabsContent value="completed" className="m-0">
                     {/* 모바일: 카드 리스트 */}
-                    <div className="grid gap-4 p-4 md:hidden">
+                    <div className="grid gap-4 p-4 md:hidden w-full min-w-0">
                       {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
                         <div className="text-center py-8 text-slate-500 text-sm">
                           완료된 주문 내역이 없습니다.
@@ -638,14 +939,65 @@ export default function DashboardPage() {
                       </Table>
                     </div>
                   </TabsContent>
-                </Tabs>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  </Tabs>
+                </TabsContent>
 
-        {/* --- Right Side Panel (Span 2) --- */}
-        <div className="md:col-span-2 space-y-6">
+                {/* 알림 센터 탭 */}
+                <TabsContent value="notifications" className="m-0">
+                  <div className="p-4 space-y-3">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500 text-sm">
+                        알림이 없습니다.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-semibold text-slate-900">최근 알림</h3>
+                          <Link href="/dashboard/notifications">
+                            <Button variant="ghost" size="sm" className="text-xs h-7">
+                              모두 보기
+                            </Button>
+                          </Link>
+                        </div>
+                        {notifications.map((notification) => (
+                          <Link
+                            key={notification.id}
+                            href="/dashboard/notifications"
+                            className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                              notification.unread ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"
+                            }`}
+                          >
+                            {renderNotificationIcon(notification.type)}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-medium text-sm text-slate-900 truncate">{notification.title}</p>
+                                {notification.unread && (
+                                  <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600 flex-shrink-0">
+                                    새
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-600 mb-1 line-clamp-2">{notification.content}</p>
+                              <p className="text-xs text-slate-400">{notification.time}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 데스크탑 레이아웃 */}
+      <div className="hidden md:grid md:grid-cols-7 md:gap-6">
+        {/* --- Left Main Content (Span 5) --- */}
+        <div className="md:col-span-5 space-y-6">
+          {/* 1. KPI Cards */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* 3. Quick Actions (Compact) */}
           <Card>
             <CardHeader>
