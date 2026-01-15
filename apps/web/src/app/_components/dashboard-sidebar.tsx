@@ -159,7 +159,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       {/* 사이드바 헤더 (로고) */}
       <div className="h-16 flex items-center px-6 border-b border-slate-200 flex-shrink-0">
         <Link 
-          href="/dashboard" 
+          href="/" 
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
           <BioInsightLogo showText={true} className="h-6" />

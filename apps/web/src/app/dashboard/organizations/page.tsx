@@ -62,12 +62,36 @@ export default function OrganizationsPage() {
   // 조직 생성 Mutation
   const createOrgMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
+      // 디버깅용: 전송 데이터 로그
+      console.log("📤 조직 생성 전송 데이터:", data);
+
       const response = await fetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create organization");
+
+      if (!response.ok) {
+        // 서버 응답에서 에러 메시지 파싱
+        let errorMessage = "조직 생성에 실패했습니다.";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          console.error("❌ API 에러 응답:", errorData);
+        } catch (parseError) {
+          // JSON 파싱 실패 시 상태 코드 기반 메시지
+          console.error("❌ 응답 파싱 실패:", parseError);
+          if (response.status === 401) {
+            errorMessage = "로그인이 필요합니다.";
+          } else if (response.status === 400) {
+            errorMessage = "입력값을 확인해주세요.";
+          } else if (response.status === 500) {
+            errorMessage = "서버 오류가 발생했습니다.";
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
       return response.json();
     },
     onSuccess: () => {
@@ -106,12 +130,15 @@ export default function OrganizationsPage() {
           prev.map((org) => (org.id === newOrg.id ? response.organization : org))
         );
       },
-      onError: () => {
+      onError: (error: Error) => {
         // 실패 시 롤백
         setOrganizations((prev) => prev.filter((org) => org.id !== newOrg.id));
+        
+        // 구체적인 에러 메시지 표시
+        console.error("❌ 조직 생성 실패:", error);
         toast({
           title: "생성 실패",
-          description: "조직 생성에 실패했습니다. 다시 시도해주세요.",
+          description: error.message || "조직 생성에 실패했습니다. 다시 시도해주세요.",
           variant: "destructive",
         });
       },
@@ -194,8 +221,16 @@ function CreateOrganizationDialog({
     e.preventDefault();
     if (!name.trim()) return;
     
+    const formData = {
+      name: name.trim(),
+      description: description.trim(),
+    };
+    
+    // 디버깅용: 폼 제출 데이터 로그
+    console.log("📝 폼 제출 데이터:", formData);
+    
     // 조직 생성
-    onCreate({ name: name.trim(), description: description.trim() });
+    onCreate(formData);
     
     // 입력 필드 초기화 및 모달 닫기
     setName("");

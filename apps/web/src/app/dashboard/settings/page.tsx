@@ -5,10 +5,15 @@ export const dynamic = 'force-dynamic';
 import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -22,9 +27,13 @@ import {
   User,
   Upload,
   Lock,
+  Sun,
+  Moon,
+  Monitor,
+  Bell,
+  Mail,
+  Shield,
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-
 
 // Fallback component for Suspense
 function SettingsPageFallback() {
@@ -51,11 +60,21 @@ function SettingsPageContent() {
 
   // 프로필 상태
   const [profileName, setProfileName] = useState(session?.user?.name || "");
+  const [profileBio, setProfileBio] = useState("");
+  const [profileUrl, setProfileUrl] = useState("");
   const [profileEmail, setProfileEmail] = useState(session?.user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+
+  // 알림 설정 상태 (Mock)
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  const [securityAlerts, setSecurityAlerts] = useState(true);
+
+  // 테마 설정 상태 (Mock)
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   // 사용자 정보 조회
   const { data: userData } = useQuery({
@@ -122,86 +141,133 @@ function SettingsPageContent() {
     }
   };
 
+  // 아바타 초기값 생성
+  const getInitials = () => {
+    if (session?.user?.name) {
+      return session.user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return session?.user?.email?.[0].toUpperCase() || "U";
+  };
+
   return (
     <div className="w-full px-4 md:px-6 py-6 pt-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h3 className="text-lg font-medium text-slate-900">설정</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            내 계정 정보를 관리하세요.
-          </p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* 페이지 헤더 */}
+        <div className="space-y-0.5">
+          <h2 className="text-2xl font-bold tracking-tight">설정</h2>
+          <p className="text-muted-foreground">계정 및 환경설정을 관리합니다.</p>
         </div>
+        
+        <Separator className="my-6" />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>내 정보</CardTitle>
-            <CardDescription>프로필 사진과 이름을 수정할 수 있습니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Section A: 기본 정보 */}
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="avatar">프로필 이미지</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-full bg-slate-200 flex items-center justify-center">
-                    {session?.user?.image ? (
-                      <img
-                        src={session.user.image}
-                        alt="Profile"
-                        className="h-20 w-20 rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-10 w-10 text-slate-400" />
-                    )}
+        {/* Tabs 구조 */}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile">프로필</TabsTrigger>
+            <TabsTrigger value="account">계정</TabsTrigger>
+            <TabsTrigger value="notifications">알림</TabsTrigger>
+            <TabsTrigger value="display">디스플레이</TabsTrigger>
+          </TabsList>
+
+          {/* 1. 프로필 탭 */}
+          <TabsContent value="profile" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>내 정보</CardTitle>
+                <CardDescription>공개적으로 표시되는 프로필 정보입니다.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  {/* 아바타 영역 */}
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-semibold">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button type="button" variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      사진 변경
+                    </Button>
                   </div>
-                  <Button type="button" variant="outline" size="sm">
-                    <Upload className="h-4 w-4 mr-2" />
-                    이미지 업로드
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">이름</Label>
-                <Input
-                  id="name"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="이름을 입력하세요"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profileEmail}
-                  onChange={(e) => setProfileEmail(e.target.value)}
-                  placeholder="이메일을 입력하세요"
-                  disabled
-                  className="bg-slate-50"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={profileMutation.isPending}
-                className="w-full"
-              >
-                {profileMutation.isPending ? "저장 중..." : "저장"}
-              </Button>
-            </form>
 
-            <Separator className="my-6" />
+                  {/* 폼 영역 */}
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="name">이름</Label>
+                    <Input
+                      id="name"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      placeholder="이름을 입력하세요"
+                    />
+                  </div>
 
-            {/* Section B: 보안 (Security) */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-slate-900">로그인 및 보안</h4>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">비밀번호</p>
-                  <p className="text-sm text-muted-foreground">
-                    주기적으로 비밀번호를 변경하여 계정을 보호하세요.
-                  </p>
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="bio">소개</Label>
+                    <Textarea
+                      id="bio"
+                      value={profileBio}
+                      onChange={(e) => setProfileBio(e.target.value)}
+                      placeholder="자기소개를 입력하세요"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="url">URL</Label>
+                    <Input
+                      id="url"
+                      value={profileUrl}
+                      onChange={(e) => setProfileUrl(e.target.value)}
+                      placeholder="https://example.com"
+                      type="url"
+                    />
+                  </div>
+                </form>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleProfileSubmit} disabled={profileMutation.isPending}>
+                  {profileMutation.isPending ? "저장 중..." : "변경사항 저장"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          {/* 2. 계정 탭 */}
+          <TabsContent value="account" className="space-y-4">
+            {/* 이메일 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>이메일 주소</CardTitle>
+                <CardDescription>계정에 연결된 이메일 주소입니다.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2 max-w-md">
+                  <Label htmlFor="email">이메일</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profileEmail}
+                    disabled
+                    className="bg-slate-50"
+                  />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* 비밀번호 변경 카드 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>비밀번호</CardTitle>
+                <CardDescription>계정 보안을 위해 주기적으로 비밀번호를 변경하세요.</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
@@ -276,11 +342,155 @@ function SettingsPageContent() {
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
+            {/* Danger Zone */}
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader>
+                <CardTitle className="text-red-600">Danger Zone</CardTitle>
+                <CardDescription className="text-red-600/80">
+                  계정을 삭제하면 되돌릴 수 없습니다. 신중하게 결정하세요.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button variant="destructive">
+                  계정 삭제
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          {/* 3. 알림 탭 */}
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>알림 설정</CardTitle>
+                <CardDescription>이메일 알림 수신 설정을 관리하세요.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="email-notifications" className="text-base font-medium">
+                        이메일 알림
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      중요한 업데이트 및 활동 알림을 이메일로 받습니다.
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-notifications"
+                    checked={emailNotifications}
+                    onCheckedChange={setEmailNotifications}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="marketing-emails" className="text-base font-medium">
+                        마케팅 수신 동의
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      새로운 기능, 팁, 프로모션 정보를 받습니다.
+                    </p>
+                  </div>
+                  <Switch
+                    id="marketing-emails"
+                    checked={marketingEmails}
+                    onCheckedChange={setMarketingEmails}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="security-alerts" className="text-base font-medium">
+                        보안 알림
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      로그인 시도 및 보안 관련 중요한 알림을 받습니다.
+                    </p>
+                  </div>
+                  <Switch
+                    id="security-alerts"
+                    checked={securityAlerts}
+                    onCheckedChange={setSecurityAlerts}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 4. 디스플레이 탭 */}
+          <TabsContent value="display" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>테마 설정</CardTitle>
+                <CardDescription>앱의 색상 테마를 선택하세요.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                      theme === "light"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <Sun className={`h-6 w-6 ${theme === "light" ? "text-blue-600" : "text-slate-400"}`} />
+                    <span className={`text-sm font-medium ${theme === "light" ? "text-blue-600" : "text-slate-700"}`}>
+                      라이트
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                      theme === "dark"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <Moon className={`h-6 w-6 ${theme === "dark" ? "text-blue-600" : "text-slate-400"}`} />
+                    <span className={`text-sm font-medium ${theme === "dark" ? "text-blue-600" : "text-slate-700"}`}>
+                      다크
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTheme("system")}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                      theme === "system"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <Monitor className={`h-6 w-6 ${theme === "system" ? "text-blue-600" : "text-slate-400"}`} />
+                    <span className={`text-sm font-medium ${theme === "system" ? "text-blue-600" : "text-slate-700"}`}>
+                      시스템
+                    </span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -293,4 +503,3 @@ export default function SettingsPage() {
     </Suspense>
   );
 }
-
