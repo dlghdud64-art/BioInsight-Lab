@@ -347,22 +347,6 @@ export default function InventoryPage() {
     },
   });
 
-  if (status === "loading") {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 프로덕션 환경에서는 인증 체크 필수
-  if (process.env.NODE_ENV === "production" && status === "unauthenticated") {
-    router.push("/auth/signin?callbackUrl=/dashboard/inventory");
-    return null;
-  }
-
   // 삭제 mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -393,7 +377,7 @@ export default function InventoryPage() {
     // 검색 필터
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         inv.product?.name?.toLowerCase().includes(query) ||
         inv.product?.brand?.toLowerCase().includes(query) ||
         inv.product?.catalogNumber?.toLowerCase().includes(query);
@@ -421,6 +405,22 @@ export default function InventoryPage() {
   const uniqueLocations = Array.from(
     new Set(displayInventories.map((inv) => inv.location).filter(Boolean))
   ) as string[];
+
+  if (status === "loading") {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 프로덕션 환경에서는 인증 체크 필수
+  if (process.env.NODE_ENV === "production" && status === "unauthenticated") {
+    router.push("/auth/signin?callbackUrl=/dashboard/inventory");
+    return null;
+  }
 
   return (
     <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
@@ -966,6 +966,7 @@ export default function InventoryPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </div>
   );
