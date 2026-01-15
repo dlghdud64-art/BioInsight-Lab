@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { OrganizationRole } from "@/types";
+import type { Prisma } from "@prisma/client";
 
 // 사용자가 속한 조직 목록 조회
 export async function getOrganizationsByUser(userId: string) {
@@ -81,7 +82,7 @@ export async function createOrganization(
   }
 ) {
   // 트랜잭션으로 조직 생성과 멤버 등록을 원자적으로 처리
-  return await db.$transaction(async (tx) => {
+  return await db.$transaction(async (tx: Prisma.TransactionClient) => {
     // 1. 조직 생성
     const organization = await tx.organization.create({
       data: {

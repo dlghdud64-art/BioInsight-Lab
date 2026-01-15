@@ -768,7 +768,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">총 사용량</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats.totalUsage.toLocaleString()}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.totalUsage.toLocaleString()}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -776,7 +776,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">기록 수</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats.recordCount}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.recordCount}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -784,7 +784,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">제품 수</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats.uniqueProducts}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.uniqueProducts}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -792,10 +792,10 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">기간</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {usageStats.dateRange ? (
+                    {usageStats?.dateRange?.start && usageStats?.dateRange?.end ? (
                       <div className="text-xs md:text-sm">
-                        {format(new Date(usageStats.dateRange.start), "yyyy.MM.dd", { locale: ko })} ~{" "}
-                        {format(new Date(usageStats.dateRange.end), "yyyy.MM.dd", { locale: ko })}
+                        {format(new Date(usageStats?.dateRange?.start || ""), "yyyy.MM.dd", { locale: ko })} ~{" "}
+                        {format(new Date(usageStats?.dateRange?.end || ""), "yyyy.MM.dd", { locale: ko })}
                       </div>
                     ) : (
                       <div className="text-xs md:text-sm text-muted-foreground">데이터 없음</div>

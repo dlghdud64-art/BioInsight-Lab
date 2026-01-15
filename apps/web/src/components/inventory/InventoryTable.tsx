@@ -13,8 +13,12 @@ interface InventoryItem {
   currentQuantity: number;
   unit: string;
   safetyStock: number | null;
+  minOrderQty: number | null;
   location: string | null;
   expiryDate: string | null;
+  notes: string | null;
+  autoReorderEnabled?: boolean;
+  autoReorderThreshold?: number;
   product: {
     id: string;
     name: string;
