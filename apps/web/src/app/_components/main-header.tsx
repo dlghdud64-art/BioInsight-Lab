@@ -147,68 +147,75 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[80%] sm:w-[400px]">
-              <div className="flex flex-col gap-6 mt-8">
-                <SheetClose asChild>
-                  <Link
-                    href="/intro"
-                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
-                  >
-                    서비스 소개
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    href="/pricing"
-                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
-                  >
-                    요금 & 도입
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    href="/#features"
-                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      scrollToId("features");
-                    }}
-                  >
-                    기능 살펴보기
-                  </Link>
-                </SheetClose>
-                
-                <div className="border-t border-slate-200 my-2" />
-                
-                {!session?.user ? (
-                  <>
-                    <SheetClose asChild>
-                      <Link
-                        href="/login"
-                        className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
-                      >
-                        로그인
-                      </Link>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Button
-                        asChild
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                      >
-                        <Link href="/test/search">무료 체험</Link>
-                      </Button>
-                    </SheetClose>
-                  </>
-                ) : (
+            <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+              <div className="flex flex-col h-full mt-6">
+                {/* 1. 네비게이션 링크 그룹 */}
+                <div className="flex flex-col space-y-2">
                   <SheetClose asChild>
                     <Link
-                      href="/dashboard"
-                      className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                      href="/intro"
+                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
                     >
-                      대시보드
+                      서비스 소개
                     </Link>
                   </SheetClose>
-                )}
+                  <SheetClose asChild>
+                    <Link
+                      href="/pricing"
+                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
+                    >
+                      요금 & 도입
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href="/#features"
+                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        scrollToId("features");
+                      }}
+                    >
+                      기능 살펴보기
+                    </Link>
+                  </SheetClose>
+                </div>
+
+                {/* 구분선 */}
+                <div className="my-6 border-t border-slate-100" />
+
+                {/* 2. 하단 액션 그룹 */}
+                <div className="flex flex-col space-y-3">
+                  {!session?.user ? (
+                    <>
+                      <SheetClose asChild>
+                        <Link
+                          href="/login"
+                          className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors"
+                        >
+                          로그인
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button
+                          asChild
+                          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Link href="/test/search">무료 체험 시작하기</Link>
+                        </Button>
+                      </SheetClose>
+                    </>
+                  ) : (
+                    <SheetClose asChild>
+                      <Link
+                        href="/dashboard"
+                        className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
+                      >
+                        대시보드
+                      </Link>
+                    </SheetClose>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -117,6 +118,77 @@ export default function DashboardPage() {
       default:
         return "bg-slate-100 text-slate-700";
     }
+  };
+
+  // 주문 데이터 처리 함수
+  const processOrderData = (order: any, index: number) => {
+    const productName = order.product || order.items?.[0]?.productName || "제품명 없음";
+    const vendor = order.vendor || "공급사 정보 없음";
+    const amount = order.amount || order.totalAmount || 0;
+    let status = order.status;
+    if (!status) {
+      if (order.status === "SHIPPING") status = "배송 중";
+      else if (order.status === "DELIVERED") status = "배송 완료";
+      else status = "승인 대기";
+    }
+    let date = order.date;
+    if (!date && order.createdAt) {
+      const dateObj = new Date(order.createdAt);
+      date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
+    }
+    const orderId = order.id || `order-${index}`;
+
+    return {
+      orderId,
+      productName,
+      vendor,
+      amount,
+      status,
+      date,
+    };
+  };
+
+  // 주문 행 렌더링 함수
+  const renderOrderRow = (orderData: {
+    orderId: string;
+    productName: string;
+    vendor: string;
+    amount: number;
+    status: string;
+    date: string;
+  }) => {
+    return (
+      <TableRow key={orderData.orderId}>
+        <TableCell>
+          <div>
+            <div className="font-medium text-sm text-slate-900">{orderData.productName}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{orderData.vendor}</div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(orderData.status)}`}>
+            {orderData.status}
+          </span>
+        </TableCell>
+        <TableCell className="text-sm text-slate-600">{orderData.date}</TableCell>
+        <TableCell className="text-right font-medium text-sm text-slate-900">
+          ₩{orderData.amount.toLocaleString("ko-KR")}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  // 상태별 주문 필터링 함수
+  const filterOrdersByStatus = (orders: any[], status: string) => {
+    return orders.filter((order: any) => {
+      let orderStatus = order.status;
+      if (!orderStatus) {
+        if (order.status === "SHIPPING") orderStatus = "배송 중";
+        else if (order.status === "DELIVERED") orderStatus = "배송 완료";
+        else orderStatus = "승인 대기";
+      }
+      return orderStatus === status;
+    });
   };
 
   return (
@@ -267,62 +339,144 @@ export default function DashboardPage() {
 
       {/* 3. Recent Activity Table (Bottom Row) */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">최근 주문 내역</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">최근 주문 내역</h2>
+        </div>
         <Card>
           <CardContent className="p-0">
             {ordersLoading ? (
               <div className="p-8 text-center text-slate-500">로딩 중...</div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>주문 정보</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>날짜</TableHead>
-                    <TableHead className="text-right">금액</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayOrders.map((order: any, index: number) => {
-                    // 더미 데이터와 실제 API 데이터 구조 처리
-                    const productName = order.product || order.items?.[0]?.productName || "제품명 없음";
-                    const vendor = order.vendor || "공급사 정보 없음";
-                    const amount = order.amount || order.totalAmount || 0;
-                    let status = order.status;
-                    if (!status) {
-                      if (order.status === "SHIPPING") status = "배송 중";
-                      else if (order.status === "DELIVERED") status = "배송 완료";
-                      else status = "승인 대기";
-                    }
-                    let date = order.date;
-                    if (!date && order.createdAt) {
-                      const dateObj = new Date(order.createdAt);
-                      date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
-                    }
-                    const orderId = order.id || `order-${index}`;
+              <Tabs defaultValue="all" className="w-full">
+                <div className="border-b border-slate-200 px-6 pt-4">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="all" className="text-xs md:text-sm">
+                      전체
+                    </TabsTrigger>
+                    <TabsTrigger value="shipping" className="text-xs md:text-sm">
+                      배송 중
+                    </TabsTrigger>
+                    <TabsTrigger value="pending" className="text-xs md:text-sm">
+                      승인 대기
+                    </TabsTrigger>
+                    <TabsTrigger value="completed" className="text-xs md:text-sm">
+                      완료
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
-                    return (
-                      <TableRow key={orderId}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-sm text-slate-900">{productName}</div>
-                            <div className="text-xs text-slate-500 mt-0.5">{vendor}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(status)}`}>
-                            {status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600">{date}</TableCell>
-                        <TableCell className="text-right font-medium text-sm text-slate-900">
-                          ₩{amount.toLocaleString("ko-KR")}
-                        </TableCell>
+                {/* 전체 탭 */}
+                <TabsContent value="all" className="m-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>주문 정보</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>날짜</TableHead>
+                        <TableHead className="text-right">금액</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {displayOrders.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                            주문 내역이 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        displayOrders.map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderRow(orderData);
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* 배송 중 탭 */}
+                <TabsContent value="shipping" className="m-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>주문 정보</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>날짜</TableHead>
+                        <TableHead className="text-right">금액</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                            배송 중인 주문 내역이 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderRow(orderData);
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* 승인 대기 탭 */}
+                <TabsContent value="pending" className="m-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>주문 정보</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>날짜</TableHead>
+                        <TableHead className="text-right">금액</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                            승인 대기 중인 주문 내역이 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderRow(orderData);
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* 완료 탭 */}
+                <TabsContent value="completed" className="m-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>주문 정보</TableHead>
+                        <TableHead>상태</TableHead>
+                        <TableHead>날짜</TableHead>
+                        <TableHead className="text-right">금액</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                            완료된 주문 내역이 없습니다.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderRow(orderData);
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              </Tabs>
             )}
           </CardContent>
         </Card>

@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, Calendar, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package } from "lucide-react";
+import { Upload, Download, Calendar as CalendarIcon, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
@@ -40,6 +40,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ColumnDef } from "@tanstack/react-table";
@@ -55,6 +62,16 @@ export default function PurchasesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null);
+  const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined);
+  
+  // 구매 내역 등록 폼 상태
+  const [vendorName, setVendorName] = useState("");
+  const [category, setCategory] = useState("");
+  const [itemName, setItemName] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("KRW");
 
   const { data: organizations } = useQuery({
     queryKey: ["organizations"],
@@ -174,6 +191,101 @@ export default function PurchasesPage() {
     }
 
     return rows;
+  };
+
+  // 구매 내역 등록 Mutation
+  const createPurchaseMutation = useMutation({
+    mutationFn: async (data: {
+      purchase_date: string;
+      vendor_name: string;
+      product_name: string;
+      category?: string;
+      quantity: number;
+      unit_price: number;
+      currency: string;
+      total_amount: number;
+    }) => {
+      const response = await fetch("/api/purchases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create purchase");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
+      toast({
+        title: "구매 내역이 등록되었습니다.",
+        description: "구매 내역이 성공적으로 저장되었습니다.",
+      });
+      // 폼 초기화
+      setPurchaseDate(undefined);
+      setVendorName("");
+      setCategory("");
+      setItemName("");
+      setQuantity("");
+      setUnitPrice("");
+      setAmount("");
+      setCurrency("KRW");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "저장 실패",
+        description: error.message || "다시 시도해주세요.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // 구매 내역 등록 핸들러
+  const handlePurchaseSubmit = async () => {
+    // 유효성 검사
+    if (!purchaseDate || !vendorName || !itemName) {
+      toast({
+        title: "필수 정보를 입력해주세요.",
+        description: "구매일, 벤더명, 품목명은 필수입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 숫자 변환 (콤마 제거)
+    const cleanQuantity = quantity ? Number(String(quantity).replace(/,/g, "")) : 0;
+    const cleanUnitPrice = unitPrice ? Number(String(unitPrice).replace(/,/g, "")) : 0;
+    const cleanAmount = amount ? Number(String(amount).replace(/,/g, "")) : 0;
+
+    // 총액 계산 (금액이 없으면 수량 * 단가로 계산)
+    const calculatedTotal = cleanQuantity * cleanUnitPrice;
+    const finalTotal = cleanAmount || calculatedTotal;
+
+    if (finalTotal <= 0) {
+      toast({
+        title: "금액 오류",
+        description: "금액 또는 수량과 단가를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload = {
+      purchase_date: format(purchaseDate, "yyyy-MM-dd"),
+      vendor_name: vendorName,
+      product_name: itemName,
+      category: category || undefined,
+      quantity: cleanQuantity,
+      unit_price: cleanUnitPrice,
+      currency: currency,
+      total_amount: finalTotal,
+    };
+
+    createPurchaseMutation.mutate(payload);
   };
 
   const importMutation = useMutation({
@@ -406,7 +518,7 @@ export default function PurchasesPage() {
                   <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                       <CardTitle className="text-sm font-medium text-gray-500">이번 달 총 지출</CardTitle>
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-extrabold text-gray-900">
@@ -420,7 +532,7 @@ export default function PurchasesPage() {
                   <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                       <CardTitle className="text-sm font-medium text-gray-500">연간 누적</CardTitle>
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-extrabold text-gray-900">
@@ -556,19 +668,50 @@ export default function PurchasesPage() {
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
                             <Label htmlFor="purchasedAt">구매일 *</Label>
-                            <Input type="date" id="purchasedAt" />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !purchaseDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {purchaseDate ? (
+                                    format(purchaseDate, "yyyy-MM-dd")
+                                  ) : (
+                                    <span>날짜를 선택하세요</span>
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={purchaseDate}
+                                  onSelect={setPurchaseDate}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="vendorName">벤더 *</Label>
-                            <Input id="vendorName" placeholder="Sigma-Aldrich" />
+                            <Input 
+                              id="vendorName" 
+                              placeholder="Sigma-Aldrich" 
+                              value={vendorName}
+                              onChange={(e) => setVendorName(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="category">카테고리</Label>
-                            <Select>
+                            <Select value={category} onValueChange={setCategory}>
                               <SelectTrigger id="category">
                                 <SelectValue placeholder="선택..." />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="">선택 안함</SelectItem>
                                 <SelectItem value="REAGENT">REAGENT</SelectItem>
                                 <SelectItem value="EQUIPMENT">EQUIPMENT</SelectItem>
                                 <SelectItem value="TOOL">TOOL</SelectItem>
@@ -578,44 +721,116 @@ export default function PurchasesPage() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="itemName">품목명 *</Label>
-                            <Input id="itemName" placeholder="Reagent A" />
+                            <Input 
+                              id="itemName" 
+                              placeholder="Reagent A" 
+                              value={itemName}
+                              onChange={(e) => setItemName(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="qty">수량 *</Label>
-                            <Input type="number" id="qty" placeholder="10" />
+                            <Input 
+                              type="number" 
+                              id="qty" 
+                              placeholder="10" 
+                              value={quantity}
+                              onChange={(e) => setQuantity(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="unitPrice">단가</Label>
-                            <Input type="number" id="unitPrice" placeholder="50000" />
+                            <Input 
+                              type="number" 
+                              id="unitPrice" 
+                              placeholder="50000" 
+                              value={unitPrice}
+                              onChange={(e) => setUnitPrice(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="amount">금액 *</Label>
-                            <Input type="number" id="amount" placeholder="500000" />
+                            <Input 
+                              type="number" 
+                              id="amount" 
+                              placeholder="500000" 
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="currency">통화</Label>
-                            <Input id="currency" defaultValue="KRW" />
+                            <Input 
+                              id="currency" 
+                              value={currency}
+                              onChange={(e) => setCurrency(e.target.value)}
+                            />
                           </div>
                         </div>
-                        <Button className="w-full">
+                        <Button 
+                          className="w-full"
+                          onClick={handlePurchaseSubmit}
+                          disabled={createPurchaseMutation.isPending}
+                        >
                           <Upload className="mr-2 h-4 w-4" />
-                          추가
+                          {createPurchaseMutation.isPending ? "저장 중..." : "추가"}
                         </Button>
                       </TabsContent>
 
                       {/* Tab 2: TSV Paste */}
                       <TabsContent value="tsv-paste" className="space-y-4">
-                        <Textarea
-                          placeholder="TSV 데이터를 붙여넣으세요...
-예시:
-구매일	벤더	카테고리	품목명	수량	단가	금액
-2025-01-15	Sigma-Aldrich	REAGENT	Reagent A	10	50000	500000
-2025-01-20	Thermo Fisher	EQUIPMENT	Centrifuge	1	2000000	2000000"
-                          value={csvText}
-                          onChange={(e) => setCsvText(e.target.value)}
-                          rows={8}
-                          className="font-mono text-sm"
-                        />
+                        <div className="space-y-2">
+                          <div className="text-sm text-muted-foreground">
+                            아래 순서대로 엑셀 데이터를 복사해서 붙여넣어 주세요.
+                          </div>
+                          
+                          {/* Column Guide Bar */}
+                          <div className="flex items-center gap-2 bg-slate-100 p-3 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3" />
+                              구매일
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <Package className="h-3 w-3" />
+                              벤더
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              카테고리
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <Package className="h-3 w-3" />
+                              품목명
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-base">🔢</span>
+                              수량
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-base">💰</span>
+                              단가
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-base">💱</span>
+                              통화
+                            </span>
+                          </div>
+
+                          <Textarea
+                            placeholder="2026-01-15	Sigma-Aldrich	REAGENT	Acetone	2	15000	KRW
+2026-01-20	Thermo Fisher	EQUIPMENT	Centrifuge	1	2000000	KRW"
+                            value={csvText}
+                            onChange={(e) => setCsvText(e.target.value)}
+                            rows={8}
+                            className="font-mono text-sm whitespace-pre min-h-[200px]"
+                          />
+                        </div>
                         <Button
                           onClick={handleImport}
                           disabled={!csvText.trim() || importMutation.isPending}

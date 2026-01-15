@@ -19,6 +19,7 @@ import {
 import { Loader2, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 interface Quote {
   id: string;
@@ -106,21 +107,20 @@ export default function QuotesPage() {
   });
 
   return (
-    <div className="space-y-6 pt-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">견적요청서</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            총 {total}개의 견적요청서
-          </p>
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      {/* 타이틀 섹션 */}
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">견적 요청 관리</h2>
+        <div className="flex items-center space-x-2">
+          <Link href="/test/quote">
+            <Button className="whitespace-nowrap">
+              <Plus className="h-4 w-4 mr-2" />
+              새 견적 요청
+            </Button>
+          </Link>
         </div>
-        <Link href="/test/quote">
-          <Button className="w-full sm:w-auto whitespace-nowrap">
-            <Plus className="h-4 w-4 mr-2" />
-            새 견적 작성
-          </Button>
-        </Link>
       </div>
+      <Separator />
 
       <Card>
         <CardHeader>

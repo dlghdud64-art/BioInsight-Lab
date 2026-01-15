@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Bell, HelpCircle, ChevronRight } from "lucide-react";
+import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck } from "lucide-react";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -57,26 +57,49 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
   const user = session?.user;
 
+  // 알림 아이콘 렌더링 함수
+  const renderNotificationIcon = (type: string) => {
+    switch (type) {
+      case "alert":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-red-100 p-2">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          </div>
+        );
+      case "quote":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-blue-100 p-2">
+            <FileText className="h-4 w-4 text-blue-600" />
+          </div>
+        );
+      case "delivery":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-green-100 p-2">
+            <Truck className="h-4 w-4 text-green-600" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   // 알림 데이터 (Dummy Data)
   const notifications = [
     {
       id: 1,
       type: "alert",
-      icon: "🔴",
       title: "재고 부족: FBS (남은 수량 1개)",
       time: "10분 전",
     },
     {
       id: 2,
       type: "quote",
-      icon: "🔵",
       title: "견적 도착: Thermo Fisher 외 2건",
       time: "1시간 전",
     },
     {
       id: 3,
       type: "delivery",
-      icon: "🟢",
       title: "입고 완료: 50ml Conical Tube",
       time: "어제",
     },
@@ -183,8 +206,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                         key={notification.id}
                         className="p-3 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        <div className="flex items-start gap-2">
-                          <span className="text-base flex-shrink-0">{notification.icon}</span>
+                        <div className="flex items-start gap-4">
+                          {renderNotificationIcon(notification.type)}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-900">
                               {notification.title}

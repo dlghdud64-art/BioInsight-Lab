@@ -2,288 +2,270 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/app/_components/page-header";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, ShoppingCart, FileText, Share2, Target, Activity } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /**
- * KPI 대시보드 페이지
- * PRD 14.2, 14.3 기반
+ * 지출 분석 페이지 (사용자용)
+ * 연구비 소진 현황을 확인하는 리포트
  */
 export default function AnalyticsPage() {
-  const { data: session, status } = useSession();
-  const [period, setPeriod] = useState<"7d" | "30d" | "90d">("30d");
-
-  // KPI 데이터 조회
-  const { data: kpiData, isLoading } = useQuery({
-    queryKey: ["analytics-kpi", period],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics/kpi?period=${period}`);
-      if (!response.ok) throw new Error("Failed to fetch KPI data");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
-
-  if (status === "loading" || isLoading) {
-    return (
-      <div className="w-full px-4 md:px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "unauthenticated") {
-    return (
-      <div className="w-full px-4 md:px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로그인이 필요합니다.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const kpi = kpiData || {
-    activation: {
-      searchRunRate: 0,
-      addToCompareRate: 0,
-      exportRate: 0,
-    },
-    value: {
-      listCreationRate: 0,
-      avgItemCount: 0,
-    },
-    retention: {
-      returnRate: 0,
-      avgSessionsPerUser: 0,
-    },
-    revenue: {
-      shareLinkRate: 0,
-      rfqCreationRate: 0,
-      budgetUsageRate: 0,
-    },
-    quality: {
-      protocolAcceptRate: 0,
-      aiConfidenceRate: 0,
-    },
+  // Mock Data: 예산 요약
+  const budgetSummary = {
+    total: 50000000,      // 총 예산: ₩ 50,000,000
+    used: 12500000,       // 현재 사용액: ₩ 12,500,000
+    remaining: 37500000,  // 잔액: ₩ 37,500,000
+    usageRate: 25,        // 사용률: 25%
   };
 
-  // 차트 데이터 준비
-  const activationData = [
-    { name: "검색 실행", value: kpi.activation.searchRunRate, target: 60 },
-    { name: "비교 추가", value: kpi.activation.addToCompareRate, target: 30 },
-    { name: "내보내기", value: kpi.activation.exportRate, target: 15 },
+  // Mock Data: 월별 지출 추이 (최근 6개월)
+  const monthlySpending = [
+    { month: "7월", amount: 1800000 },
+    { month: "8월", amount: 2100000 },
+    { month: "9월", amount: 1950000 },
+    { month: "10월", amount: 2400000 },
+    { month: "11월", amount: 2200000 },
+    { month: "12월", amount: 2050000 },
   ];
 
-  const valueData = [
-    { name: "리스트 생성", value: kpi.value.listCreationRate, target: 10 },
-    { name: "평균 품목 수", value: kpi.value.avgItemCount, target: 3 },
+  // Mock Data: 카테고리별 비중
+  const categorySpending = [
+    { name: "시약", value: 45, amount: 5625000, color: "#3b82f6" },
+    { name: "장비", value: 30, amount: 3750000, color: "#10b981" },
+    { name: "소모품", value: 15, amount: 1875000, color: "#f59e0b" },
+    { name: "기타", value: 10, amount: 1250000, color: "#8b5cf6" },
   ];
+
+  // Mock Data: 최근 큰 지출 Top 5
+  const topSpending = [
+    { id: 1, item: "Gibco FBS (500ml × 10)", vendor: "Thermo Fisher", category: "시약", amount: 2500000, date: "2024-12-15" },
+    { id: 2, item: "Centrifuge (고속 원심분리기)", vendor: "Eppendorf", category: "장비", amount: 1800000, date: "2024-11-20" },
+    { id: 3, item: "Pipette Tips (10μL × 1000)", vendor: "Corning", category: "소모품", amount: 850000, date: "2024-12-10" },
+    { id: 4, item: "DMEM Medium (500ml × 20)", vendor: "Sigma-Aldrich", category: "시약", amount: 720000, date: "2024-11-28" },
+    { id: 5, item: "Cell Culture Plate (96-well × 50)", vendor: "Falcon", category: "소모품", amount: 450000, date: "2024-12-05" },
+  ];
+
+  const COLORS = categorySpending.map(cat => cat.color);
 
   return (
-    <div className="w-full px-4 md:px-6 py-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <PageHeader
-            title="KPI 대시보드"
-            description="서비스 사용 현황 및 핵심 지표를 확인하세요"
-            icon={Activity}
-          />
-          <Select value={period} onValueChange={(value: "7d" | "30d" | "90d") => setPeriod(value)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">최근 7일</SelectItem>
-              <SelectItem value="30d">최근 30일</SelectItem>
-              <SelectItem value="90d">최근 90일</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      {/* 헤더 섹션 */}
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">지출 분석</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            연구비 소진 현황을 확인하세요
+          </p>
         </div>
-
-          {/* P0 핵심 KPI */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  검색 실행률
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.activation.searchRunRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 60%+</div>
-                <div className="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-600 transition-all"
-                    style={{ width: `${Math.min((kpi.activation.searchRunRate / 60) * 100, 100)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4 text-green-600" />
-                  비교 추가율
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.activation.addToCompareRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 30%+</div>
-                <div className="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-600 transition-all"
-                    style={{ width: `${Math.min((kpi.activation.addToCompareRate / 30) * 100, 100)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-purple-600" />
-                  내보내기율
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.activation.exportRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 15%+</div>
-                <div className="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-purple-600 transition-all"
-                    style={{ width: `${Math.min((kpi.activation.exportRate / 15) * 100, 100)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Value 지표 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">산출물 생성률</CardTitle>
-                <CardDescription>구매요청 리스트 생성 비율</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold mb-2">{kpi.value.listCreationRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground">목표: 10%+</div>
-                <div className="mt-4">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={valueData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#8884d8" />
-                      <Bar dataKey="target" fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">재방문율</CardTitle>
-                <CardDescription>7일 내 재방문 비율</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold mb-2">{kpi.retention.returnRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground">목표: 15%+</div>
-                <div className="mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    평균 세션 수: {kpi.retention.avgSessionsPerUser.toFixed(1)}회
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Revenue Proxy 지표 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Share2 className="h-4 w-4 text-orange-600" />
-                  공유 링크 생성률
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.revenue.shareLinkRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 10%+</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Target className="h-4 w-4 text-red-600" />
-                  견적 요청 생성률
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.revenue.rfqCreationRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 5%+</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-indigo-600" />
-                  예산 기능 사용률
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{kpi.revenue.budgetUsageRate.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground mt-1">목표: 10%+</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quality 지표 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">AI 신뢰도</CardTitle>
-              <CardDescription>프로토콜 추출 수정 없이 확정 비율</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-2">{kpi.quality.protocolAcceptRate.toFixed(1)}%</div>
-              <div className="text-xs text-muted-foreground">목표: 40%+</div>
-              <div className="mt-4">
-                <div className="text-sm text-muted-foreground">
-                  AI 확신도: {kpi.quality.aiConfidenceRate.toFixed(1)}%
-                </div>
-              </div>
-            </CardContent>
-          </Card>
       </div>
+      <Separator />
+
+      {/* 요약 카드 (Stats) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">총 예산</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₩ {budgetSummary.total.toLocaleString("ko-KR")}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              연간 연구비
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">현재 사용액</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₩ {budgetSummary.used.toLocaleString("ko-KR")}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              사용률: {budgetSummary.usageRate}%
+            </p>
+            <div className="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-600 transition-all"
+                style={{ width: `${budgetSummary.usageRate}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">잔액</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₩ {budgetSummary.remaining.toLocaleString("ko-KR")}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              남은 예산
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 메인 차트 (Charts) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 월별 지출 추이 (Bar Chart) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>월별 지출 추이</CardTitle>
+            <CardDescription>최근 6개월간 지출액 변화</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlySpending}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  stroke="#cbd5e1"
+                />
+                <YAxis 
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  stroke="#cbd5e1"
+                  tickFormatter={(value) => `₩${(value / 1000000).toFixed(1)}M`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{ 
+                    borderRadius: '8px', 
+                    border: 'none', 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    backgroundColor: 'white'
+                  }}
+                  formatter={(value: number) => [`₩ ${value.toLocaleString("ko-KR")}`, "지출액"]}
+                />
+                <Bar 
+                  dataKey="amount" 
+                  fill="#3b82f6" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* 카테고리별 비중 (Pie Chart) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>카테고리별 비중</CardTitle>
+            <CardDescription>시약, 장비, 소모품 비율</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={categorySpending}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {categorySpending.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '8px', 
+                    border: 'none', 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    backgroundColor: 'white'
+                  }}
+                  formatter={(value: number, name: string, props: any) => [
+                    `₩ ${props.payload.amount.toLocaleString("ko-KR")}`,
+                    `${name} (${value}%)`
+                  ]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {categorySpending.map((category) => (
+                <div key={category.name} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="text-slate-600">{category.name}</span>
+                  </div>
+                  <span className="font-medium">₩ {category.amount.toLocaleString("ko-KR")}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 최근 큰 지출 (Top Spending) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>최근 큰 지출</CardTitle>
+          <CardDescription>가격이 높은 순서대로 구매 내역 Top 5</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">순위</TableHead>
+                  <TableHead>품목명</TableHead>
+                  <TableHead>벤더</TableHead>
+                  <TableHead>카테고리</TableHead>
+                  <TableHead className="text-right">금액</TableHead>
+                  <TableHead>구매일</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {topSpending.map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-semibold">
+                        {index + 1}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{item.item}</TableCell>
+                    <TableCell>{item.vendor}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {item.category === "시약" && <FlaskConical className="h-4 w-4 text-blue-600" />}
+                        {item.category === "장비" && <Package className="h-4 w-4 text-green-600" />}
+                        {item.category === "소모품" && <ShoppingCart className="h-4 w-4 text-orange-600" />}
+                        <span>{item.category}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      ₩ {item.amount.toLocaleString("ko-KR")}
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {new Date(item.date).toLocaleDateString("ko-KR")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

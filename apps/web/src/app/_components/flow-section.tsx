@@ -44,38 +44,71 @@ export function FlowSection() {
           </p>
         </div>
 
-        {/* Steps - 모바일: 세로 정렬, 데스크탑: 가로 정렬 */}
-        <div className="flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:gap-4 lg:gap-6">
+        {/* Steps - 모바일: 슬림 리스트, 데스크탑: 가로 정렬 */}
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:gap-4 lg:gap-6">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isLast = idx === steps.length - 1;
             const colorClasses = {
-              indigo: "bg-indigo-500 text-indigo-600 border-indigo-500",
-              emerald: "bg-emerald-500 text-emerald-600 border-emerald-500",
-              blue: "bg-blue-500 text-blue-600 border-blue-500",
+              indigo: "bg-indigo-50 text-indigo-600",
+              emerald: "bg-emerald-50 text-emerald-600",
+              blue: "bg-blue-50 text-blue-600",
             };
             
             return (
               <div key={step.href} className="flex flex-col md:flex-row items-center w-full md:w-auto">
+                {/* 모바일: 슬림 리스트 형태 */}
                 <Link
                   href={step.href}
-                  className="group flex flex-col items-center gap-3 px-4 md:px-6 py-4 md:py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-full md:w-auto max-w-full"
+                  className="group md:hidden flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 w-full"
                 >
-                  <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
-                    <Icon className="h-6 w-6 md:h-8 md:w-8 text-white" strokeWidth={2} />
-                    <div className={`absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-xs font-bold text-white`}>
-                      {step.number}
-                    </div>
+                  {/* 좌측: 아이콘 (작게) */}
+                  <div className={`flex-shrink-0 p-3 ${colorClasses[step.color as keyof typeof colorClasses]} rounded-lg`}>
+                    <Icon className="h-6 w-6" strokeWidth={2} />
                   </div>
-                  <div className="text-center break-keep w-full">
-                    <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1 whitespace-nowrap">{step.title}</h3>
-                    <p className="text-xs md:text-sm text-slate-600 max-w-full md:max-w-[140px] mx-auto">
+                  {/* 우측: 텍스트 */}
+                  <div className="text-left flex-1 min-w-0">
+                    <h3 className="font-bold text-lg mb-1 text-slate-900">{step.number}. {step.title}</h3>
+                    <p className="text-sm text-slate-600 leading-snug break-keep">
                       {step.description}
                     </p>
                   </div>
                 </Link>
+
+                {/* 데스크탑: 기존 카드 형태 */}
+                <Link
+                  href={step.href}
+                  className="hidden md:flex group flex-col items-center gap-3 px-6 py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-auto"
+                >
+                  <div className={`relative w-16 h-16 rounded-xl ${
+                    step.color === 'indigo' ? 'bg-indigo-500' :
+                    step.color === 'emerald' ? 'bg-emerald-500' :
+                    'bg-blue-500'
+                  } flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                    <Icon className="h-8 w-8 text-white" strokeWidth={2} />
+                    <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full ${
+                      step.color === 'indigo' ? 'bg-indigo-500' :
+                      step.color === 'emerald' ? 'bg-emerald-500' :
+                      'bg-blue-500'
+                    } border-2 border-white flex items-center justify-center text-xs font-bold text-white`}>
+                      {step.number}
+                    </div>
+                  </div>
+                  <div className="text-center break-keep">
+                    <h3 className="text-base font-semibold text-slate-900 mb-1 whitespace-nowrap">{step.title}</h3>
+                    <p className="text-sm text-slate-600 max-w-[140px] mx-auto">
+                      {step.description}
+                    </p>
+                  </div>
+                </Link>
+
                 {!isLast && (
-                  <ArrowRight className="h-5 w-5 md:h-6 md:w-6 text-slate-400 my-2 md:my-0 md:mx-4 flex-shrink-0 rotate-90 md:rotate-0 transition-transform" />
+                  <>
+                    {/* 모바일: 아래쪽 화살표 */}
+                    <ArrowRight className="md:hidden h-5 w-5 text-slate-400 my-2 flex-shrink-0 rotate-90" />
+                    {/* 데스크탑: 오른쪽 화살표 */}
+                    <ArrowRight className="hidden md:block h-6 w-6 text-slate-400 mx-4 flex-shrink-0" />
+                  </>
                 )}
               </div>
             );

@@ -345,41 +345,46 @@ export function FeaturesShowcaseSection() {
             })}
           </div>
 
-          {/* 모바일: 기능 카드 세로 나열 */}
-          <div className="md:hidden space-y-6">
-            {tabs.map((tab) => {
-              const TabIcon = tab.icon;
-              return (
-                <div key={tab.id} className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${tab.gradient}`}>
-                        <TabIcon className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">{tab.title}</h3>
-                        <p className="text-sm text-gray-600 mb-3">{tab.description}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {tab.features.map((feature) => (
-                            <span
-                              key={feature}
-                              className="text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 text-blue-700"
-                            >
-                              {feature}
-                            </span>
-                          ))}
+          {/* 모바일: 가로 스크롤 Carousel */}
+          <div className="md:hidden">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 pb-4 scrollbar-hide -mx-4">
+              {tabs.map((tab) => {
+                const TabIcon = tab.icon;
+                return (
+                  <div
+                    key={tab.id}
+                    className="flex-shrink-0 min-w-[85vw] snap-center bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden"
+                  >
+                    <div className="p-4 md:p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${tab.gradient}`}>
+                          <TabIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 text-left">{tab.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3 text-left">{tab.description}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {tab.features.map((feature) => (
+                              <span
+                                key={feature}
+                                className="text-xs px-2.5 py-1 rounded-full font-medium bg-blue-100 text-blue-700"
+                              >
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="relative w-full aspect-[4/3] bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
-                    <div className="w-full h-full p-2 md:p-4 overflow-auto">
-                      {renderMockup(tab.id)}
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
+                      <div className="w-full h-full p-2 md:p-4 overflow-auto">
+                        {renderMockup(tab.id)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}

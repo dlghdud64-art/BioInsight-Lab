@@ -140,3 +140,13 @@ div.quote-table td.no-column-cell {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
