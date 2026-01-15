@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar as CalendarIcon, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +27,8 @@ import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge"
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface ProductInventory {
   id: string;
@@ -306,7 +308,7 @@ export default function InventoryPage() {
       productId: string;
       currentQuantity: number;
       unit: string;
-      safetyStock?: number;
+      date?: string;
       minOrderQty?: number;
       location?: string;
       expiryDate?: string;
@@ -1197,9 +1199,7 @@ function InventoryForm({
     inventory?.currentQuantity.toString() || "0"
   );
   const [unit, setUnit] = useState(inventory?.unit || "개");
-  const [safetyStock, setSafetyStock] = useState(
-    inventory?.safetyStock?.toString() || ""
-  );
+  const [recordDate, setRecordDate] = useState<Date | undefined>(undefined);
   const [minOrderQty, setMinOrderQty] = useState(
     inventory?.minOrderQty?.toString() || ""
   );
@@ -1211,7 +1211,7 @@ function InventoryForm({
     inventory?.autoReorderEnabled || false
   );
   const [autoReorderThreshold, setAutoReorderThreshold] = useState(
-    inventory?.autoReorderThreshold?.toString() || inventory?.safetyStock?.toString() || ""
+    inventory?.autoReorderThreshold?.toString() || ""
   );
   const [notes, setNotes] = useState(inventory?.notes || "");
 
@@ -1234,7 +1234,7 @@ function InventoryForm({
       productId: inventory?.productId || productId,
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
-      safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,
+      date: recordDate ? format(recordDate, "yyyy-MM-dd") : undefined,
       minOrderQty: minOrderQty ? parseFloat(minOrderQty) : undefined,
       location: location || undefined,
       expiryDate: expiryDate || undefined,
@@ -1298,15 +1298,27 @@ function InventoryForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="safetyStock">안전 재고 (선택)</Label>
-          <Input
-            id="safetyStock"
-            type="number"
-            min="0"
-            value={safetyStock}
-            onChange={(e) => setSafetyStock(e.target.value)}
-            placeholder="이 수량 이하로 떨어지면 재주문 추천"
-          />
+          <Label htmlFor="recordDate">입고일 (선택)</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="recordDate"
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {recordDate ? format(recordDate, "yyyy-MM-dd", { locale: ko }) : "날짜 선택"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={recordDate}
+                onSelect={setRecordDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
           <Label htmlFor="minOrderQty">최소 주문 수량 (선택)</Label>
@@ -1366,10 +1378,10 @@ function InventoryForm({
               min="0"
               value={autoReorderThreshold}
               onChange={(e) => setAutoReorderThreshold(e.target.value)}
-              placeholder={safetyStock || "안전 재고와 동일"}
+              placeholder="자동 재주문 임계값"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              이 수량 이하로 떨어지면 자동 재주문이 실행됩니다. 비워두면 안전 재고를 사용합니다.
+              이 수량 이하로 떨어지면 자동 재주문이 실행됩니다.
             </p>
           </div>
         )}
@@ -1390,7 +1402,7 @@ function InventoryForm({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           취소
         </Button>
-        <Button type="submit" className="flex-1">
+        <Button type="submit" onClick={handleSubmit} className="flex-1">
           저장
         </Button>
       </div>
