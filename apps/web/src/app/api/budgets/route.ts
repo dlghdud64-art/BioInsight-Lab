@@ -116,6 +116,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // 1. Request Body 로깅 (디버깅용)
+    console.log("[Budget API] POST Request Body:", JSON.stringify(body, null, 2));
+    console.log("[Budget API] Session User ID:", session.user.id);
+
     const {
       name,
       amount: rawAmount,
@@ -137,7 +142,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. 숫자 포맷팅 처리 (쉼표 제거)
+    // 2. 숫자 포맷팅 처리 (쉼표 제거 및 안전한 변환)
+    console.log("[Budget API] Raw Amount Type:", typeof rawAmount, "Value:", rawAmount);
+
     let numericAmount: number;
     if (typeof rawAmount === 'number') {
       numericAmount = rawAmount;
@@ -148,9 +155,15 @@ export async function POST(request: NextRequest) {
       numericAmount = Number(String(rawAmount).replace(/,/g, ''));
     }
 
+    // 한 번 더 Number()로 감싸서 안전하게 처리
+    numericAmount = Number(numericAmount);
+
+    console.log("[Budget API] Parsed Amount:", numericAmount);
+
     if (isNaN(numericAmount) || numericAmount <= 0) {
+      console.error("[Budget API] Invalid amount:", { rawAmount, numericAmount });
       return NextResponse.json(
-        { error: "금액 형식이 잘못되었습니다. 양수 숫자를 입력해주세요." },
+        { error: "금액 형식이 잘못되었습니다. 양수 숫자를 입력해주세요.", receivedAmount: rawAmount },
         { status: 400 }
       );
     }
@@ -188,18 +201,32 @@ export async function POST(request: NextRequest) {
     // scopeKey 결정: 세션에서 사용자의 조직 ID를 가져와 강제 주입
     let scopeKey: string;
 
+    console.log("[Budget API] Fetching user organization...");
+
     // 사용자의 조직이 있는지 확인
     const userOrg = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
 
+    console.log("[Budget API] User Organization:", userOrg);
+
     if (userOrg) {
       // 조직이 있으면 해당 조직 ID 사용 (요청의 organizationId는 무시)
       scopeKey = userOrg.organizationId;
+      console.log("[Budget API] Using organization scopeKey:", scopeKey);
     } else {
       // 조직이 없으면 사용자 ID를 scopeKey로 사용
       scopeKey = `user-${session.user.id}`;
+      console.log("[Budget API] Using user scopeKey:", scopeKey);
+    }
+
+    if (!scopeKey) {
+      console.error("[Budget API] scopeKey is missing!");
+      return NextResponse.json(
+        { error: "조직 정보를 찾을 수 없습니다. 조직에 가입하거나 관리자에게 문의하세요." },
+        { status: 400 }
+      );
     }
 
     // 금액을 정수로 변환 (Prisma 스키마에서 Int로 정의됨)
@@ -218,15 +245,15 @@ export async function POST(request: NextRequest) {
     if (sanitizedDescription) descriptionParts.push(sanitizedDescription);
     const finalDescription = descriptionParts.length > 0 ? descriptionParts.join(' | ') : null;
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Budget API] Creating budget:", {
-        scopeKey,
-        yearMonth: finalYearMonth,
-        amount: amountInt,
-        currency: currency || "KRW",
-        description: finalDescription,
-      });
-    }
+    console.log("[Budget API] Creating budget with data:", {
+      scopeKey,
+      yearMonth: finalYearMonth,
+      amount: amountInt,
+      currency: currency || "KRW",
+      description: finalDescription,
+      name: sanitizedName,
+      projectName: sanitizedProjectName,
+    });
 
     const budget = await db.budget.upsert({
       where: {
@@ -262,34 +289,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ budget: responseBudget });
   } catch (error) {
     // 5. 상세 에러 메시지 반환
-    console.error("[Budget API] Error creating budget:", error);
+    console.error("[Budget API] ========== ERROR START ==========");
+    console.error("[Budget API] Error Type:", typeof error);
+    console.error("[Budget API] Error Object:", error);
+    if (error instanceof Error) {
+      console.error("[Budget API] Error Message:", error.message);
+      console.error("[Budget API] Error Stack:", error.stack);
+    }
+    console.error("[Budget API] ========== ERROR END ==========");
 
     // Prisma 에러 처리
     if (error && typeof error === 'object' && 'code' in error) {
       const prismaError = error as { code: string; meta?: any };
 
+      console.error("[Budget API] Prisma Error Code:", prismaError.code);
+      console.error("[Budget API] Prisma Error Meta:", prismaError.meta);
+
       if (prismaError.code === 'P2002') {
         return NextResponse.json(
-          { error: "이미 해당 기간에 예산이 존재합니다. 기존 예산을 수정하거나 삭제 후 다시 시도해주세요." },
+          {
+            error: "이미 해당 기간에 예산이 존재합니다. 기존 예산을 수정하거나 삭제 후 다시 시도해주세요.",
+            code: prismaError.code
+          },
           { status: 409 }
         );
       }
 
       if (prismaError.code === 'P2003') {
         return NextResponse.json(
-          { error: "연결된 데이터를 찾을 수 없습니다. 조직 또는 팀 정보를 확인해주세요." },
+          {
+            error: "연결된 데이터를 찾을 수 없습니다. 조직 또는 팀 정보를 확인해주세요.",
+            code: prismaError.code,
+            meta: prismaError.meta
+          },
           { status: 400 }
         );
       }
+
+      // 기타 Prisma 에러
+      return NextResponse.json(
+        {
+          error: "데이터베이스 작업 중 오류가 발생했습니다.",
+          details: prismaError.code,
+          meta: prismaError.meta
+        },
+        { status: 500 }
+      );
     }
 
     // 일반 에러 처리
     const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
     return NextResponse.json(
       {
         error: "예산 저장에 실패했습니다.",
         details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
         hint: "입력한 데이터를 확인하고 다시 시도해주세요. 문제가 계속되면 관리자에게 문의하세요."
       },
       { status: 500 }
