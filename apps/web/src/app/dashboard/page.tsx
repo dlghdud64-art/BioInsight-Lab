@@ -5,9 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -36,7 +38,7 @@ export default function DashboardPage() {
 
   if (status === "loading" || statsLoading) {
     return (
-      <div className="space-y-8">
+      <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
@@ -106,19 +108,6 @@ export default function DashboardPage() {
   // 주문 데이터가 없으면 더미 데이터 사용
   const displayOrders = orders.length > 0 ? orders : mockOrders;
 
-  // 상태 뱃지 스타일 함수
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "배송 중":
-        return "bg-blue-100 text-blue-700";
-      case "승인 대기":
-        return "bg-yellow-100 text-yellow-700";
-      case "배송 완료":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  };
 
   // 주문 데이터 처리 함수
   const processOrderData = (order: any, index: number) => {
@@ -148,7 +137,33 @@ export default function DashboardPage() {
     };
   };
 
-  // 주문 행 렌더링 함수
+  // 상태 뱃지 스타일 및 점 색상 함수
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case "배송 중":
+        return {
+          className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+          dotColor: "bg-blue-500",
+        };
+      case "승인 대기":
+        return {
+          className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100",
+          dotColor: "bg-yellow-500",
+        };
+      case "배송 완료":
+        return {
+          className: "bg-green-100 text-green-700 hover:bg-green-100",
+          dotColor: "bg-green-500",
+        };
+      default:
+        return {
+          className: "bg-slate-100 text-slate-700 hover:bg-slate-100",
+          dotColor: "bg-slate-500",
+        };
+    }
+  };
+
+  // 주문 행 렌더링 함수 (데스크탑 테이블용)
   const renderOrderRow = (orderData: {
     orderId: string;
     productName: string;
@@ -157,24 +172,97 @@ export default function DashboardPage() {
     status: string;
     date: string;
   }) => {
+    const statusStyle = getStatusBadgeStyle(orderData.status);
     return (
-      <TableRow key={orderData.orderId}>
-        <TableCell>
-          <div>
-            <div className="font-medium text-sm text-slate-900">{orderData.productName}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{orderData.vendor}</div>
+      <TableRow 
+        key={orderData.orderId} 
+        className="group cursor-pointer hover:bg-muted/50 transition-colors"
+      >
+        <TableCell className="py-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
+              <Beaker className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-sm text-slate-900 truncate">{orderData.productName}</span>
+              <span className="text-xs text-muted-foreground mt-0.5">{orderData.vendor}</span>
+            </div>
           </div>
         </TableCell>
-        <TableCell>
-          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(orderData.status)}`}>
+        <TableCell className="py-4">
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "rounded-full px-3 py-1 font-medium shadow-none inline-flex items-center gap-2",
+              statusStyle.className
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", statusStyle.dotColor)} />
             {orderData.status}
-          </span>
+          </Badge>
         </TableCell>
-        <TableCell className="text-sm text-slate-600">{orderData.date}</TableCell>
-        <TableCell className="text-right font-medium text-sm text-slate-900">
+        <TableCell className="py-4 text-sm text-slate-500">
+          {orderData.date}
+        </TableCell>
+        <TableCell className="py-4 text-right font-bold text-slate-900">
           ₩{orderData.amount.toLocaleString("ko-KR")}
         </TableCell>
+        <TableCell className="py-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-slate-400 group-hover:text-blue-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              // 상세보기 로직 추가 가능
+            }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </TableCell>
       </TableRow>
+    );
+  };
+
+  // 주문 카드 렌더링 함수 (모바일용)
+  const renderOrderCard = (orderData: {
+    orderId: string;
+    productName: string;
+    vendor: string;
+    amount: number;
+    status: string;
+    date: string;
+  }) => {
+    const statusStyle = getStatusBadgeStyle(orderData.status);
+    return (
+      <div
+        key={orderData.orderId}
+        className="flex items-center justify-between p-4 rounded-lg border bg-white shadow-sm"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* 아이콘 박스 */}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <Beaker className="h-5 w-5" />
+          </div>
+          <div className="space-y-1 flex-1 min-w-0">
+            <p className="text-sm font-medium leading-none truncate">{orderData.productName}</p>
+            <p className="text-xs text-muted-foreground truncate">{orderData.vendor} • {orderData.date}</p>
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0 ml-2">
+          <p className="text-sm font-bold mb-1">₩{orderData.amount.toLocaleString("ko-KR")}</p>
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "text-[10px] px-1.5 h-5 inline-flex items-center gap-1",
+              statusStyle.className
+            )}
+          >
+            <span className={cn("h-1 w-1 rounded-full", statusStyle.dotColor)} />
+            {orderData.status}
+          </Badge>
+        </div>
+      </div>
     );
   };
 
@@ -191,295 +279,463 @@ export default function DashboardPage() {
     });
   };
 
+  // 알림 데이터 (Mock Data)
+  const notifications = [
+    {
+      id: 1,
+      type: "alert",
+      title: "재고 부족: FBS (남은 수량 1개)",
+      content: "FBS (Fetal Bovine Serum) 수량이 1개 남았습니다.",
+      time: "10분 전",
+      unread: true,
+    },
+    {
+      id: 2,
+      type: "quote",
+      title: "견적 도착: Thermo Fisher 외 2건",
+      content: "요청하신 견적서가 도착했습니다.",
+      time: "1시간 전",
+      unread: true,
+    },
+    {
+      id: 3,
+      type: "delivery",
+      title: "입고 완료: 50ml Conical Tube",
+      content: "50ml Conical Tube (500/case) 입고 처리가 완료되었습니다.",
+      time: "어제",
+      unread: false,
+    },
+    {
+      id: 4,
+      type: "alert",
+      title: "재고 부족: Trypsin-EDTA",
+      content: "Trypsin-EDTA Solution 수량이 부족합니다.",
+      time: "2일 전",
+      unread: false,
+    },
+  ];
+
+  // 알림 아이콘 렌더링 함수
+  const renderNotificationIcon = (type: string) => {
+    switch (type) {
+      case "alert":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-red-100 p-2">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          </div>
+        );
+      case "quote":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-blue-100 p-2">
+            <FileText className="h-4 w-4 text-blue-600" />
+          </div>
+        );
+      case "delivery":
+        return (
+          <div className="flex-shrink-0 rounded-md bg-green-100 p-2">
+            <Truck className="h-4 w-4 text-green-600" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="space-y-8 pt-8">
-      {/* 1. KPI Cards (Top Row) */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* 총 재고 수 */}
-        <Link href="/dashboard/inventory">
-          <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">총 재고 수</CardTitle>
-              <Package className="h-4 w-4 text-slate-400" />
+    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
+      <h2 className="text-2xl md:text-3xl font-bold tracking-tight">대시보드</h2>
+
+      <div className="flex flex-col space-y-6 md:grid md:grid-cols-7 md:space-y-0 md:gap-6">
+        {/* --- Left Main Content (Span 5) --- */}
+        <div className="md:col-span-5 space-y-6">
+          {/* 1. KPI Cards */}
+          <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* 총 재고 수 */}
+            <Link href="/dashboard/inventory">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">총 재고 수</CardTitle>
+                  <Package className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>+12%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">개 품목</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 부족 알림 */}
+            <Link href="/dashboard/inventory?filter=low">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">부족 알림</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-red-600">
+                      <TrendingDown className="h-3 w-3" />
+                      <span>-3%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 이번 달 지출 */}
+            <Link href="/dashboard/purchases">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">이번 달 지출</CardTitle>
+                  <DollarSign className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">
+                      ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>+8%</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">구매 금액</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* 진행 중인 견적 */}
+            <Link href="/dashboard/quotes">
+              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">진행 중인 견적</CardTitle>
+                  <FileText className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                      <span>→</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
+          {/* 2. Recent Orders Table */}
+          <Card className="min-h-[400px]">
+            <CardHeader>
+              <CardTitle>최근 주문 내역</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
-                <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>+12%</span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">개 품목</p>
-            </CardContent>
-          </Card>
-        </Link>
+            <CardContent className="p-0">
+              {ordersLoading ? (
+                <div className="p-8 text-center text-slate-500">로딩 중...</div>
+              ) : (
+                <Tabs defaultValue="all" className="w-full">
+                  <div className="border-b border-slate-200 px-6 pt-4">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="all" className="text-xs md:text-sm">
+                        전체
+                      </TabsTrigger>
+                      <TabsTrigger value="shipping" className="text-xs md:text-sm">
+                        배송 중
+                      </TabsTrigger>
+                      <TabsTrigger value="pending" className="text-xs md:text-sm">
+                        승인 대기
+                      </TabsTrigger>
+                      <TabsTrigger value="completed" className="text-xs md:text-sm">
+                        완료
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
 
-        {/* 부족 알림 */}
-        <Link href="/dashboard/inventory?filter=low">
-          <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">부족 알림</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
-                <div className="flex items-center gap-1 text-xs font-medium text-red-600">
-                  <TrendingDown className="h-3 w-3" />
-                  <span>-3%</span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* 이번 달 지출 */}
-        <Link href="/dashboard/purchases">
-          <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">이번 달 지출</CardTitle>
-              <DollarSign className="h-4 w-4 text-slate-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-3xl md:text-4xl font-bold text-slate-900">
-                  ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
-                </div>
-                <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>+8%</span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">구매 금액</p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* 진행 중인 견적 */}
-        <Link href="/dashboard/quotes">
-          <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">진행 중인 견적</CardTitle>
-              <FileText className="h-4 w-4 text-slate-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
-                <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-                  <span>→</span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-
-      {/* 2. Quick Actions (Middle Row) */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">빠른 실행</h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* 물품 검색/구매 */}
-          <Link href="/test/search" className="group">
-            <div className="relative overflow-hidden rounded-xl border-2 border-blue-200 bg-blue-50 p-6 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer h-full">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center group-hover:bg-blue-700 transition-colors">
-                  <Search className="h-6 w-6 text-white" />
-                </div>
-                <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="font-bold text-lg text-blue-900 mb-2">🔍 물품 검색 및 구매</h3>
-              <p className="text-sm text-blue-700 leading-relaxed">
-                500만 개 시약 최저가 검색
-                <br />
-                필요한 시약과 장비를 최저가로 찾아보세요.
-              </p>
-            </div>
-          </Link>
-
-          {/* 재고 등록 */}
-          <Link href="/dashboard/inventory" className="group">
-            <div className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-white p-6 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer h-full">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-slate-600 flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <Plus className="h-6 w-6 text-white" />
-                </div>
-                <ArrowRight className="h-5 w-5 text-slate-600 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">📦 재고 등록</h3>
-              <p className="text-sm text-slate-700 leading-relaxed">
-                실험실 자재 등록하기
-                <br />
-                새로 입고된 시약과 장비를 인벤토리에 추가하세요.
-              </p>
-            </div>
-          </Link>
-
-          {/* 견적 요청 */}
-          <Link href="/dashboard/quotes" className="group">
-            <div className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-white p-6 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer h-full">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-slate-600 flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <ShoppingCart className="h-6 w-6 text-white" />
-                </div>
-                <ArrowRight className="h-5 w-5 text-slate-600 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">📋 견적 요청</h3>
-              <p className="text-sm text-slate-700 leading-relaxed">
-                장바구니 확인
-                <br />
-                진행 중인 견적 요청을 확인하고 관리하세요.
-              </p>
-            </div>
-          </Link>
-        </div>
-      </div>
-
-      {/* 3. Recent Activity Table (Bottom Row) */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">최근 주문 내역</h2>
-        </div>
-        <Card>
-          <CardContent className="p-0">
-            {ordersLoading ? (
-              <div className="p-8 text-center text-slate-500">로딩 중...</div>
-            ) : (
-              <Tabs defaultValue="all" className="w-full">
-                <div className="border-b border-slate-200 px-6 pt-4">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="all" className="text-xs md:text-sm">
-                      전체
-                    </TabsTrigger>
-                    <TabsTrigger value="shipping" className="text-xs md:text-sm">
-                      배송 중
-                    </TabsTrigger>
-                    <TabsTrigger value="pending" className="text-xs md:text-sm">
-                      승인 대기
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="text-xs md:text-sm">
-                      완료
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-
-                {/* 전체 탭 */}
-                <TabsContent value="all" className="m-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>주문 정보</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>날짜</TableHead>
-                        <TableHead className="text-right">금액</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  {/* 전체 탭 */}
+                  <TabsContent value="all" className="m-0">
+                    {/* 모바일: 카드 리스트 */}
+                    <div className="grid gap-4 p-4 md:hidden">
                       {displayOrders.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                            주문 내역이 없습니다.
-                          </TableCell>
-                        </TableRow>
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          주문 내역이 없습니다.
+                        </div>
                       ) : (
                         displayOrders.map((order: any, index: number) => {
                           const orderData = processOrderData(order, index);
-                          return renderOrderRow(orderData);
+                          return renderOrderCard(orderData);
                         })
                       )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                    </div>
+                    {/* 데스크탑: 테이블 */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>주문 정보</TableHead>
+                            <TableHead>상태</TableHead>
+                            <TableHead>날짜</TableHead>
+                            <TableHead className="text-right">금액</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {displayOrders.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                주문 내역이 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            displayOrders.map((order: any, index: number) => {
+                              const orderData = processOrderData(order, index);
+                              return renderOrderRow(orderData);
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
 
-                {/* 배송 중 탭 */}
-                <TabsContent value="shipping" className="m-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>주문 정보</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>날짜</TableHead>
-                        <TableHead className="text-right">금액</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  {/* 배송 중 탭 */}
+                  <TabsContent value="shipping" className="m-0">
+                    {/* 모바일: 카드 리스트 */}
+                    <div className="grid gap-4 p-4 md:hidden">
                       {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                            배송 중인 주문 내역이 없습니다.
-                          </TableCell>
-                        </TableRow>
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          배송 중인 주문 내역이 없습니다.
+                        </div>
                       ) : (
                         filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
                           const orderData = processOrderData(order, index);
-                          return renderOrderRow(orderData);
+                          return renderOrderCard(orderData);
                         })
                       )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                    </div>
+                    {/* 데스크탑: 테이블 */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>주문 정보</TableHead>
+                            <TableHead>상태</TableHead>
+                            <TableHead>날짜</TableHead>
+                            <TableHead className="text-right">금액</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                배송 중인 주문 내역이 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
+                              const orderData = processOrderData(order, index);
+                              return renderOrderRow(orderData);
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
 
-                {/* 승인 대기 탭 */}
-                <TabsContent value="pending" className="m-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>주문 정보</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>날짜</TableHead>
-                        <TableHead className="text-right">금액</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  {/* 승인 대기 탭 */}
+                  <TabsContent value="pending" className="m-0">
+                    {/* 모바일: 카드 리스트 */}
+                    <div className="grid gap-4 p-4 md:hidden">
                       {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                            승인 대기 중인 주문 내역이 없습니다.
-                          </TableCell>
-                        </TableRow>
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          승인 대기 중인 주문 내역이 없습니다.
+                        </div>
                       ) : (
                         filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
                           const orderData = processOrderData(order, index);
-                          return renderOrderRow(orderData);
+                          return renderOrderCard(orderData);
                         })
                       )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                    </div>
+                    {/* 데스크탑: 테이블 */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>주문 정보</TableHead>
+                            <TableHead>상태</TableHead>
+                            <TableHead>날짜</TableHead>
+                            <TableHead className="text-right">금액</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                승인 대기 중인 주문 내역이 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
+                              const orderData = processOrderData(order, index);
+                              return renderOrderRow(orderData);
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
 
-                {/* 완료 탭 */}
-                <TabsContent value="completed" className="m-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>주문 정보</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>날짜</TableHead>
-                        <TableHead className="text-right">금액</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  {/* 완료 탭 */}
+                  <TabsContent value="completed" className="m-0">
+                    {/* 모바일: 카드 리스트 */}
+                    <div className="grid gap-4 p-4 md:hidden">
                       {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                            완료된 주문 내역이 없습니다.
-                          </TableCell>
-                        </TableRow>
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          완료된 주문 내역이 없습니다.
+                        </div>
                       ) : (
                         filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
                           const orderData = processOrderData(order, index);
-                          return renderOrderRow(orderData);
+                          return renderOrderCard(orderData);
                         })
                       )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-              </Tabs>
-            )}
-          </CardContent>
-        </Card>
+                    </div>
+                    {/* 데스크탑: 테이블 */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>주문 정보</TableHead>
+                            <TableHead>상태</TableHead>
+                            <TableHead>날짜</TableHead>
+                            <TableHead className="text-right">금액</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                완료된 주문 내역이 없습니다.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
+                              const orderData = processOrderData(order, index);
+                              return renderOrderRow(orderData);
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* --- Right Side Panel (Span 2) --- */}
+        <div className="md:col-span-2 space-y-6">
+          {/* 3. Quick Actions (Compact) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base md:text-lg">빠른 실행</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* 모바일: 2열 그리드 */}
+              <div className="grid grid-cols-2 gap-2 md:hidden">
+                <Link href="/test/search">
+                  <Button variant="outline" className="justify-start h-10 w-full text-xs">
+                    <Search className="mr-1.5 h-3.5 w-3.5" />
+                    통합 검색
+                  </Button>
+                </Link>
+                <Link href="/dashboard/inventory">
+                  <Button variant="outline" className="justify-start h-10 w-full text-xs">
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    재고 등록
+                  </Button>
+                </Link>
+                <Link href="/test/quote" className="col-span-2">
+                  <Button variant="outline" className="justify-start h-10 w-full text-xs">
+                    <FileText className="mr-1.5 h-3.5 w-3.5" />
+                    견적 요청하기
+                  </Button>
+                </Link>
+              </div>
+              {/* 데스크탑: 세로 리스트 */}
+              <div className="hidden md:grid md:gap-2">
+                <Link href="/test/search">
+                  <Button variant="outline" className="justify-start h-12 w-full">
+                    <Search className="mr-2 h-4 w-4" />
+                    통합 검색
+                  </Button>
+                </Link>
+                <Link href="/dashboard/inventory">
+                  <Button variant="outline" className="justify-start h-12 w-full">
+                    <Plus className="mr-2 h-4 w-4" />
+                    새 재고 등록
+                  </Button>
+                </Link>
+                <Link href="/test/quote">
+                  <Button variant="outline" className="justify-start h-12 w-full">
+                    <FileText className="mr-2 h-4 w-4" />
+                    견적 요청하기
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4. Recent Notifications (Fixed) */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">최근 알림</CardTitle>
+                <Link href="/dashboard/notifications">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    모두 보기
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {notifications.map((notification) => (
+                <Link
+                  key={notification.id}
+                  href="/dashboard/notifications"
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                    notification.unread ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"
+                  }`}
+                >
+                  {renderNotificationIcon(notification.type)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm text-slate-900">{notification.title}</p>
+                      {notification.unread && (
+                        <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600">
+                          새
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-600 mb-1">{notification.content}</p>
+                    <p className="text-xs text-slate-400">{notification.time}</p>
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
