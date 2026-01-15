@@ -14,47 +14,18 @@ function scrollToId(id: string) {
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 const footerColumns = [
   {
-    title: "제품",
+    title: "서비스",
     links: [
-      { label: "개요", href: "/", onClick: null },
-      { label: "기능 소개", href: "#features", onClick: () => scrollToId("features") },
-      { label: "사용 흐름", href: "#flow", onClick: () => scrollToId("flow") },
-      { label: "누가 쓰나요?", href: "#personas", onClick: () => scrollToId("personas") },
-      { label: "요금 & 도입", href: "#pricing", onClick: () => scrollToId("pricing") },
+      { label: "홈", href: "/", onClick: null },
+      { label: "서비스 소개", href: "/intro", onClick: null },
+      { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
     ],
   },
   {
-    title: "기능",
+    title: "바로가기",
     links: [
-      { label: "검색 · AI 분석", href: "/test/search", onClick: null },
-      { label: "비교 · 견적 요청", href: "/test/quote", onClick: null },
-      { label: "견적 요청", href: "/test/quote/request", onClick: null },
-      { label: "예산 · 구매 리포트", href: "/dashboard/reports", onClick: null },
-    ],
-  },
-  {
-    title: "활용 사례",
-    links: [
-      { label: "R&D 연구자", href: "#personas", onClick: () => scrollToId("personas") },
-      { label: "QC/QA 실무자", href: "#personas", onClick: () => scrollToId("personas") },
-      { label: "생산 엔지니어", href: "#personas", onClick: () => scrollToId("personas") },
-      { label: "구매 담당자", href: "#personas", onClick: () => scrollToId("personas") },
-    ],
-  },
-  {
-    title: "회사",
-    links: [
-      { label: "서비스 소개", href: "/about", onClick: null },
-      { label: "피드백 · 문의", href: "mailto:contact@bioinsight.lab", onClick: null },
-      { label: "변경 로그", href: "/changelog", onClick: null },
-    ],
-  },
-  {
-    title: "리소스",
-    links: [
-      { label: "도움말 · 가이드", href: "/help", onClick: null },
-      { label: "이용 약관", href: "/terms", onClick: null },
-      { label: "개인정보 처리방침", href: "/privacy", onClick: null },
+      { label: "대시보드", href: "/dashboard", onClick: null },
+      { label: "로그인", href: "/login", onClick: null },
     ],
   },
 ];
@@ -111,7 +82,7 @@ export function MainFooter() {
           </div>
 
           {/* 오른쪽: 링크 컬럼 그리드 */}
-          <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 text-xs">
+          <div className="grid gap-8 sm:grid-cols-2 text-xs">
             {footerColumns.map((col) => (
               <div key={col.title} className="space-y-2">
                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -153,21 +124,8 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-4 text-[11px] text-slate-500 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <span>한국어</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span>© {year} BioInsight Lab. All rights reserved.</span>
-            <span className="hidden h-3 w-px bg-slate-300 md:inline" />
-            <Link href="/terms" className="hover:text-slate-900 transition-colors">
-              이용 약관
-            </Link>
-            <span className="h-3 w-px bg-slate-300" />
-            <Link href="/privacy" className="hover:text-slate-900 transition-colors">
-              개인정보 처리방침
-            </Link>
-          </div>
+        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-4 text-center text-[11px] text-slate-500">
+          <span>© {year} BioInsight Lab. All rights reserved.</span>
         </div>
       </div>
     </footer>

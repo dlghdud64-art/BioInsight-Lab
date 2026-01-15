@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +25,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ImportWizard } from "@/components/inventory/import-wizard";
 import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
 import { useToast } from "@/hooks/use-toast";
+import { InventoryTable } from "@/components/inventory/InventoryTable";
+import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 
 interface ProductInventory {
   id: string;
@@ -58,6 +60,9 @@ export default function InventoryPage() {
   const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -101,6 +106,77 @@ export default function InventoryPage() {
   const lowStockItems = inventories.filter(
     (inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock
   );
+
+  // Mock 데이터 (데이터가 없을 때 사용)
+  const mockInventories: ProductInventory[] = [
+    {
+      id: "mock-1",
+      productId: "mock-product-1",
+      currentQuantity: 5,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉장고 1칸",
+      expiryDate: null,
+      notes: null,
+      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
+    },
+    {
+      id: "mock-2",
+      productId: "mock-product-2",
+      currentQuantity: 15,
+      unit: "개",
+      safetyStock: 20,
+      minOrderQty: 50,
+      location: "선반 3층",
+      expiryDate: null,
+      notes: null,
+      product: { id: "mock-product-2", name: "Falcon 50ml Conical Tube", brand: "Corning", catalogNumber: "352070" },
+    },
+    {
+      id: "mock-3",
+      productId: "mock-product-3",
+      currentQuantity: 2,
+      unit: "box",
+      safetyStock: 5,
+      minOrderQty: 10,
+      location: "냉장고 2칸",
+      expiryDate: null,
+      notes: null,
+      product: { id: "mock-product-3", name: "Pipette Tips (1000μL)", brand: "Eppendorf", catalogNumber: "0030078447" },
+    },
+    {
+      id: "mock-4",
+      productId: "mock-product-4",
+      currentQuantity: 0,
+      unit: "개",
+      safetyStock: 3,
+      minOrderQty: 5,
+      location: "선반 1층",
+      expiryDate: null,
+      notes: null,
+      product: { id: "mock-product-4", name: "DMEM Medium (500ml)", brand: "Sigma-Aldrich", catalogNumber: "D5671" },
+    },
+    {
+      id: "mock-5",
+      productId: "mock-product-5",
+      currentQuantity: 25,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉장고 3칸",
+      expiryDate: null,
+      notes: null,
+      product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
+    },
+  ];
+
+  // 데이터가 없으면 Mock 데이터 사용
+  const displayInventories = inventories.length > 0 ? inventories : mockInventories;
+  const incomingItems = displayInventories.filter((inv) => {
+    // 입고 예정 로직 (간단한 예시)
+    return inv.currentQuantity <= (inv.safetyStock || 0) * 0.5;
+  });
 
   // 재입고 요청 상태 조회 (각 인벤토리별)
   const { data: restockStatusData } = useQuery({
@@ -287,53 +363,97 @@ export default function InventoryPage() {
     return null;
   }
 
+  // 삭제 mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/inventory/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete inventory");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      toast({
+        title: "삭제 완료",
+        description: "재고가 삭제되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "삭제 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // 필터링된 인벤토리
+  const filteredInventories = displayInventories.filter((inv) => {
+    // 검색 필터
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        inv.product?.name?.toLowerCase().includes(query) ||
+        inv.product?.brand?.toLowerCase().includes(query) ||
+        inv.product?.catalogNumber?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // 위치 필터
+    if (locationFilter !== "all") {
+      if (locationFilter === "none" && inv.location) return false;
+      if (locationFilter !== "none" && inv.location !== locationFilter) return false;
+    }
+
+    // 상태 필터
+    if (statusFilter !== "all") {
+      const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
+      const isOut = inv.currentQuantity === 0;
+      if (statusFilter === "low" && !isLow && !isOut) return false;
+      if (statusFilter === "normal" && (isLow || isOut)) return false;
+    }
+
+    return true;
+  });
+
+  // 고유 위치 목록 추출
+  const uniqueLocations = Array.from(
+    new Set(displayInventories.map((inv) => inv.location).filter(Boolean))
+  ) as string[];
+
   return (
-    <div className="w-full max-w-full px-3 md:px-4 py-4 md:py-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4 md:mb-6">
+    <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 상단 컨트롤 바 */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-3xl font-bold">재고 관리</h1>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">
-              제품 재고를 관리하고 재주문 시점을 추적합니다.
-            </p>
+            <h1 className="text-2xl md:text-3xl font-bold">재고 관리</h1>
           </div>
           <div className="flex gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  재고 추가
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingInventory ? "재고 수정" : "재고 추가"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    제품의 현재 재고량과 안전 재고를 설정합니다.
-                  </DialogDescription>
-                </DialogHeader>
-                <InventoryForm
-                  inventory={editingInventory}
-                  onSubmit={(data) => {
-                    createOrUpdateMutation.mutate({
-                      ...data,
-                      id: editingInventory?.id,
-                    });
-                  }}
-                  onCancel={() => {
-                    setIsDialogOpen(false);
-                    setEditingInventory(null);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+            <AddInventoryModal
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) setEditingInventory(null);
+              }}
+              onSubmit={(data) => {
+                createOrUpdateMutation.mutate({
+                  ...data,
+                  id: editingInventory?.id,
+                });
+              }}
+              inventory={editingInventory}
+            />
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              재고 등록
+            </Button>
             <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <Upload className="h-4 w-4 mr-2" />
-                  일괄 등록
+                  엑셀 업로드
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -352,27 +472,98 @@ export default function InventoryPage() {
                 />
               </DialogContent>
             </Dialog>
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              내보내기
+            </Button>
           </div>
         </div>
 
-        {lowStockItems.length > 0 && (
-          <Alert variant="destructive" className="mb-4 md:mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="text-xs md:text-sm">재고 부족 알림</AlertTitle>
-            <AlertDescription className="text-xs md:text-sm">
-              안전 재고 이하인 제품이 {lowStockItems.length}개 있습니다.{" "}
-              <Button
-                variant="link"
-                className="p-0 h-auto font-semibold text-xs md:text-sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                재주문 추천 보기
-              </Button>
-            </AlertDescription>
-          </Alert>
+        {/* 필터 영역 */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Input
+              placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="위치별" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 위치</SelectItem>
+              <SelectItem value="none">위치 미지정</SelectItem>
+              {uniqueLocations.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="상태별" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 상태</SelectItem>
+              <SelectItem value="low">부족</SelectItem>
+              <SelectItem value="normal">정상</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="카테고리별" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 카테고리</SelectItem>
+              <SelectItem value="reagent">시약</SelectItem>
+              <SelectItem value="equipment">장비</SelectItem>
+              <SelectItem value="consumable">소모품</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* 메인 테이블 */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <InventoryTable
+                inventories={filteredInventories}
+                onEdit={(inventory) => {
+                  setEditingInventory(inventory);
+                  setIsDialogOpen(true);
+                }}
+                onDelete={(inventory) => {
+                  if (confirm(`정말 ${inventory.product.name} 재고를 삭제하시겠습니까?`)) {
+                    deleteMutation.mutate(inventory.id);
+                  }
+                }}
+                onReorder={(inventory) => {
+                  toast({
+                    title: "주문하기",
+                    description: `${inventory.product.name} 주문 기능은 곧 제공될 예정입니다.`,
+                  });
+                }}
+                emptyMessage="아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
+                emptyAction={() => setIsDialogOpen(true)}
+              />
+            </CardContent>
+          </Card>
         )}
 
-        <Tabs defaultValue="inventory" className="w-full">
+        {/* 기존 탭 구조는 숨김 처리 (필요시 나중에 복원 가능) */}
+        {false && (
+          <Tabs defaultValue="inventory" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6">
             <TabsTrigger value="inventory" className="text-xs md:text-sm">
               <Package className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
@@ -404,12 +595,15 @@ export default function InventoryPage() {
               
               {/* 검색 및 필터 */}
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                <Input
-                  placeholder="김 연구원이 가지고 있던 그 항체..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <Input
+                    placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
                 {inventoryView === "team" && (
                   <Select value={ownerFilter} onValueChange={setOwnerFilter}>
                     <SelectTrigger className="w-full sm:w-48">

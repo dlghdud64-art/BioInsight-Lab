@@ -71,12 +71,29 @@ export default function BudgetPage() {
     }) => {
       const url = data.id ? `/api/budgets/${data.id}` : "/api/budgets";
       const method = data.id ? "PATCH" : "POST";
+      
+      // 콤마 제거 및 숫자 변환 (이중 체크)
+      const cleanAmount = typeof data.amount === 'string' 
+        ? Number(String(data.amount).replace(/,/g, ''))
+        : Number(data.amount);
+      
+      const payload = {
+        ...data,
+        amount: cleanAmount, // 순수 숫자로 변환
+      };
+      
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error("Failed to save budget");
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.details || "Failed to save budget";
+        throw new Error(errorMessage);
+      }
+      
       return response.json();
     },
     onSuccess: (data) => {
@@ -461,9 +478,21 @@ function BudgetForm({
       return;
     }
 
+    // 콤마 제거 및 숫자 변환
+    const cleanAmount = Number(String(amount).replace(/,/g, ""));
+    
+    if (isNaN(cleanAmount) || cleanAmount <= 0) {
+      toast({
+        title: "입력 오류",
+        description: "올바른 예산 금액을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     onSubmit({
       name: name.trim(),
-      amount: parseFloat(amount.replace(/,/g, "")) || 0,
+      amount: cleanAmount, // 순수 숫자로 변환
       currency,
       periodStart: periodStart ? periodStart.toISOString().split("T")[0] : "",
       periodEnd: periodEnd ? periodEnd.toISOString().split("T")[0] : "",

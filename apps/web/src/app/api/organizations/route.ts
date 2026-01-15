@@ -39,9 +39,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 새 조직 생성
+// 새 조직 생성 (RLS 권한 문제 해결)
 export async function POST(request: NextRequest) {
   try {
+    // 1. 사용자 확인
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description } = body;
 
+    // 입력 검증
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json(
         { error: "Organization name is required" },
@@ -57,16 +59,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 2. 조직 생성 및 멤버 등록 (트랜잭션으로 처리)
     const organization = await createOrganization(session.user.id, {
       name: name.trim(),
       description: description?.trim(),
     });
 
+    // 3. 성공 응답 반환
     return NextResponse.json({ organization }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating organization:", error);
+    console.error("[Organization API] Error creating organization:", error);
+    
+    // Prisma 에러 처리
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "이미 존재하는 조직 이름입니다." },
+        { status: 409 }
+      );
+    }
+
+    // 일반 에러 처리
     return NextResponse.json(
-      { error: error.message || "Failed to create organization" },
+      { 
+        error: error.message || "Failed to create organization",
+        details: process.env.NODE_ENV === "development" ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

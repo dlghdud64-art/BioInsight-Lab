@@ -14,6 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu, LayoutDashboard, Package, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -113,20 +119,99 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-4 md:gap-3 flex-shrink-0">
+          {/* 데스크탑 메뉴 */}
           <Link
             href="/intro"
-            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+            className="hidden md:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
             aria-label="서비스 소개 페이지로 이동"
           >
             서비스 소개
           </Link>
           <Link
             href="/pricing"
-            className="hidden sm:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+            className="hidden md:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
             aria-label="요금 및 도입 페이지로 이동"
           >
             요금 & 도입
           </Link>
+
+          {/* 모바일 햄버거 메뉴 */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-9 w-9"
+                aria-label="메뉴 열기"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[80%] sm:w-[400px]">
+              <div className="flex flex-col gap-6 mt-8">
+                <SheetClose asChild>
+                  <Link
+                    href="/intro"
+                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                  >
+                    서비스 소개
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    href="/pricing"
+                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                  >
+                    요금 & 도입
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    href="/#features"
+                    className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToId("features");
+                    }}
+                  >
+                    기능 살펴보기
+                  </Link>
+                </SheetClose>
+                
+                <div className="border-t border-slate-200 my-2" />
+                
+                {!session?.user ? (
+                  <>
+                    <SheetClose asChild>
+                      <Link
+                        href="/login"
+                        className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                      >
+                        로그인
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button
+                        asChild
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        <Link href="/test/search">무료 체험</Link>
+                      </Button>
+                    </SheetClose>
+                  </>
+                ) : (
+                  <SheetClose asChild>
+                    <Link
+                      href="/dashboard"
+                      className="text-lg font-medium text-slate-900 hover:text-indigo-600 transition-colors"
+                    >
+                      대시보드
+                    </Link>
+                  </SheetClose>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
           {/* 체험 버튼 - 로그인 상태일 때 모바일에서 숨김 */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

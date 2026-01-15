@@ -72,7 +72,7 @@ export async function leaveOrganization(organizationId: string, userId: string) 
   });
 }
 
-// 조직 생성
+// 조직 생성 (RLS 권한 문제 해결을 위해 트랜잭션 사용)
 export async function createOrganization(
   userId: string,
   data: {
@@ -80,32 +80,44 @@ export async function createOrganization(
     description?: string;
   }
 ) {
-  return await db.organization.create({
-    data: {
-      name: data.name,
-      description: data.description,
-      plan: "FREE",
-      members: {
-        create: {
-          userId,
-          role: "ADMIN",
-        },
+  // 트랜잭션으로 조직 생성과 멤버 등록을 원자적으로 처리
+  return await db.$transaction(async (tx) => {
+    // 1. 조직 생성
+    const organization = await tx.organization.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        plan: "FREE",
       },
-    },
-    include: {
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              name: true,
+    });
+
+    // 2. 생성자를 멤버로 즉시 등록 (RLS 권한 문제 해결)
+    await tx.organizationMember.create({
+      data: {
+        organizationId: organization.id,
+        userId: userId,
+        role: "ADMIN",
+      },
+    });
+
+    // 3. 생성된 조직을 멤버 정보와 함께 반환
+    return await tx.organization.findUnique({
+      where: { id: organization.id },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+              },
             },
           },
         },
+        subscription: true,
       },
-      subscription: true,
-    },
+    });
   });
 }
 

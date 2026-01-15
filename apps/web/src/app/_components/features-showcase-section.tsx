@@ -52,17 +52,19 @@ export function FeaturesShowcaseSection() {
     switch (tabId) {
       case "sourcing":
         return (
-          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-6 space-y-4">
+          <div className="w-full h-full bg-white rounded-xl shadow-md border border-gray-100 p-4 md:p-6 space-y-4 max-w-full overflow-hidden">
             {/* 검색 바 */}
-            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <Search className="h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value="Sigma-Aldrich Acetone 500ml"
-                className="flex-1 bg-transparent outline-none text-sm text-gray-900 font-medium"
-                readOnly
-              />
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  value="Sigma-Aldrich Acetone 500ml"
+                  className="flex-1 bg-transparent outline-none text-xs sm:text-sm text-gray-900 font-medium truncate min-w-0"
+                  readOnly
+                />
+              </div>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium flex-shrink-0 w-full sm:w-auto">
                 검색
               </Button>
             </div>
@@ -370,8 +372,10 @@ export function FeaturesShowcaseSection() {
                       </div>
                     </div>
                   </div>
-                  <div className="relative w-full aspect-[4/3] bg-gray-100 border-t border-gray-200">
-                    {renderMockup(tab.id)}
+                  <div className="relative w-full aspect-[4/3] bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
+                    <div className="w-full h-full p-2 md:p-4 overflow-auto">
+                      {renderMockup(tab.id)}
+                    </div>
                   </div>
                 </div>
               );
@@ -380,11 +384,11 @@ export function FeaturesShowcaseSection() {
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}
           <div className="hidden md:block lg:sticky lg:top-24">
-            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-2xl">
+            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-2xl max-w-full">
               {/* Fade-in 애니메이션을 위한 컨테이너 */}
               <div
                 key={activeTab}
-                className="absolute inset-0 animate-fadeIn"
+                className="absolute inset-0 animate-fadeIn max-w-full overflow-hidden"
               >
                 {renderMockup(activeTab)}
               </div>

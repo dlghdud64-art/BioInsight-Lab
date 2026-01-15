@@ -41,6 +41,7 @@ import {
   Settings,
   CreditCard,
   ArrowUp,
+  Lock,
 } from "lucide-react";
 import { PageHeader } from "@/app/_components/page-header";
 import { useEffect } from "react";
@@ -321,8 +322,24 @@ function SettingsPageContent() {
     }
   };
 
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword && newPassword === confirmPassword && currentPassword) {
+      profileMutation.mutate({
+        password: newPassword,
+        currentPassword: currentPassword,
+      });
+      setIsPasswordDialogOpen(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  };
+
   return (
-    <div className="w-full px-4 md:px-6 py-6 pt-24">
+    <div className="w-full px-4 md:px-6 py-6 pt-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="설정"
@@ -426,48 +443,14 @@ function SettingsPageContent() {
                 <CardDescription>보안을 위해 정기적으로 비밀번호를 변경하세요</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">현재 비밀번호</Label>
-                    <Input
-                      id="currentPassword"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="현재 비밀번호를 입력하세요"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">새 비밀번호</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="새 비밀번호를 입력하세요"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">비밀번호 확인</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="새 비밀번호를 다시 입력하세요"
-                    />
-                  </div>
-                  {newPassword && newPassword !== confirmPassword && (
-                    <p className="text-sm text-red-500">비밀번호가 일치하지 않습니다.</p>
-                  )}
-                  <Button
-                    type="submit"
-                    disabled={profileMutation.isPending || !newPassword || newPassword !== confirmPassword}
-                    className="w-full"
-                  >
-                    {profileMutation.isPending ? "변경 중..." : "비밀번호 변경"}
-                  </Button>
-                </form>
+                <Button
+                  onClick={() => setIsPasswordDialogOpen(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  비밀번호 변경
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -675,6 +658,76 @@ function SettingsPageContent() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 비밀번호 변경 다이얼로그 */}
+        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>비밀번호 변경</DialogTitle>
+              <DialogDescription>
+                보안을 위해 주기적으로 비밀번호를 변경해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="dialogCurrentPassword">현재 비밀번호</Label>
+                <Input
+                  id="dialogCurrentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="현재 비밀번호를 입력하세요"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dialogNewPassword">새 비밀번호</Label>
+                <Input
+                  id="dialogNewPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="새 비밀번호를 입력하세요"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dialogConfirmPassword">비밀번호 확인</Label>
+                <Input
+                  id="dialogConfirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="새 비밀번호를 다시 입력하세요"
+                  required
+                />
+              </div>
+              {newPassword && newPassword !== confirmPassword && (
+                <p className="text-sm text-red-500">비밀번호가 일치하지 않습니다.</p>
+              )}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsPasswordDialogOpen(false);
+                    setCurrentPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
+                >
+                  취소
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={profileMutation.isPending || !newPassword || newPassword !== confirmPassword || !currentPassword}
+                >
+                  {profileMutation.isPending ? "변경 중..." : "변경하기"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* 배송지 추가/수정 다이얼로그 */}
         <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>

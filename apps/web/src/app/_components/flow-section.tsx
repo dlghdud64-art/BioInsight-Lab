@@ -45,7 +45,7 @@ export function FlowSection() {
         </div>
 
         {/* Steps - 모바일: 세로 정렬, 데스크탑: 가로 정렬 */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-4 lg:gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-8 md:space-y-0 md:gap-4 lg:gap-6">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isLast = idx === steps.length - 1;
@@ -59,17 +59,17 @@ export function FlowSection() {
               <div key={step.href} className="flex flex-col md:flex-row items-center w-full md:w-auto">
                 <Link
                   href={step.href}
-                  className="group flex flex-col items-center gap-3 px-4 md:px-6 py-4 md:py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-full md:w-auto"
+                  className="group flex flex-col items-center gap-3 px-4 md:px-6 py-4 md:py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-full md:w-auto max-w-full"
                 >
-                  <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                  <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
                     <Icon className="h-6 w-6 md:h-8 md:w-8 text-white" strokeWidth={2} />
                     <div className={`absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 rounded-full ${colorClasses[step.color as keyof typeof colorClasses].split(' ')[0]} border-2 border-white flex items-center justify-center text-xs font-bold text-white`}>
                       {step.number}
                     </div>
                   </div>
-                  <div className="text-center">
-                    <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1">{step.title}</h3>
-                    <p className="text-xs md:text-sm text-slate-600 max-w-[200px] md:max-w-[140px]">
+                  <div className="text-center break-keep w-full">
+                    <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-1 whitespace-nowrap">{step.title}</h3>
+                    <p className="text-xs md:text-sm text-slate-600 max-w-full md:max-w-[140px] mx-auto">
                       {step.description}
                     </p>
                   </div>

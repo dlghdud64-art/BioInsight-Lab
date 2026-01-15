@@ -16,9 +16,10 @@ export function BioInsightFeaturesSection() {
     },
     {
       icon: Users,
-      title: "팀워크",
-      description: "동료의 시약을 빌려 쓰고 공유하는 팀 기능.",
-      details: "랩 전체의 재고를 한눈에 보고, 동료와 자산을 공유할 수 있습니다.",
+      title: "중복 구매 방지",
+      titleSub: "Inventory Sharing",
+      description: "옆 실험대에 있는데 또 주문하셨나요?",
+      details: "연구실 전체 재고를 통합 검색하세요. 불필요한 지출을 막고, 급할 땐 동료의 시약을 바로 찾을 수 있습니다.",
       color: "from-indigo-500 to-indigo-600",
       bgColor: "bg-indigo-50",
       iconColor: "text-indigo-600",
@@ -58,8 +59,13 @@ export function BioInsightFeaturesSection() {
                   <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
                     <Icon className="h-7 w-7 text-white" />
                   </div>
-                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-2">
+                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
                     {feature.title}
+                    {feature.titleSub && (
+                      <span className="text-xs md:text-sm font-normal text-slate-500 ml-2">
+                        ({feature.titleSub})
+                      </span>
+                    )}
                   </CardTitle>
                   <CardDescription className="text-base md:text-lg font-semibold text-slate-700">
                     {feature.description}

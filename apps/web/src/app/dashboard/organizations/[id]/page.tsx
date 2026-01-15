@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowLeft, UserPlus, Mail, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, UserPlus, Mail, Trash2, Loader2, Search, Users, Shield, MailQuestion } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -77,6 +77,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // 조직 정보 조회 (조직 목록에서 필터링)
   const { data: orgsData, isLoading: orgLoading } = useQuery({
@@ -146,6 +149,64 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   const currentUserMember = members.find((m) => m.user?.id === session?.user?.id);
   const isAdmin = currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER";
+
+  // 통계 계산
+  const totalMembers = members.length;
+  const adminCount = members.filter((m) => m.role === "ADMIN" || m.role === "OWNER").length;
+  const pendingCount = members.filter((m) => m.status === "Pending").length;
+
+  // 필터링된 멤버
+  const filteredMembers = members.filter((member) => {
+    // 검색 필터
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        member.user?.name?.toLowerCase().includes(query) ||
+        member.user?.email?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // 권한 필터
+    if (roleFilter !== "all") {
+      if (roleFilter === "admin" && member.role !== "ADMIN" && member.role !== "OWNER") return false;
+      if (roleFilter === "member" && (member.role === "ADMIN" || member.role === "OWNER")) return false;
+      if (roleFilter !== "admin" && roleFilter !== "member" && member.role !== roleFilter) return false;
+    }
+
+    // 상태 필터
+    if (statusFilter !== "all") {
+      if (member.status !== statusFilter) return false;
+    }
+
+    return true;
+  });
+
+  // 초대 재발송 Mutation
+  const resendInviteMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const response = await fetch(`/api/organizations/${params.id}/members/resend-invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      if (!response.ok) throw new Error("Failed to resend invite");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      toast({
+        title: "초대 재발송 완료",
+        description: "초대 이메일이 재발송되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "재발송 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // 멤버 초대 Mutation
   const inviteMemberMutation = useMutation({
@@ -334,6 +395,48 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         )}
       </div>
 
+      {/* 요약 카드 섹션 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">총 멤버</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalMembers}</div>
+            <p className="text-xs text-muted-foreground mt-1">명</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">관리자</CardTitle>
+            <Shield className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{adminCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">명</p>
+          </CardContent>
+        </Card>
+        <Card 
+          className={pendingCount > 0 ? "cursor-pointer hover:bg-slate-50 transition-colors" : ""}
+          onClick={pendingCount > 0 ? () => {
+            toast({
+              title: "초대 대기 멤버",
+              description: `${pendingCount}명의 멤버가 초대 대기 중입니다.`,
+            });
+          } : undefined}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">초대 대기</CardTitle>
+            <MailQuestion className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">명</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* 멤버 리스트 섹션 */}
       <Card>
         <CardHeader>
@@ -343,11 +446,53 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {members.length === 0 ? (
+          {/* 컨트롤 바 (Toolbar) */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+            <div className="relative flex-1 w-full sm:w-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Input
+                placeholder="이름, 이메일 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-full sm:w-80"
+              />
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="모든 권한" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 권한</SelectItem>
+                  <SelectItem value="admin">관리자</SelectItem>
+                  <SelectItem value="member">연구원</SelectItem>
+                  <SelectItem value="VIEWER">조회자</SelectItem>
+                  <SelectItem value="REQUESTER">요청자</SelectItem>
+                  <SelectItem value="APPROVER">승인자</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="모든 상태" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 상태</SelectItem>
+                  <SelectItem value="Active">활성</SelectItem>
+                  <SelectItem value="Pending">대기중</SelectItem>
+                  <SelectItem value="Inactive">비활성</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {filteredMembers.length === 0 ? (
             <div className="text-center py-12">
               <Mail className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 mb-4">멤버가 없습니다.</p>
-              {isAdmin && (
+              <p className="text-slate-500 mb-4">
+                {members.length === 0 
+                  ? "멤버가 없습니다." 
+                  : "검색 조건에 맞는 멤버가 없습니다."}
+              </p>
+              {isAdmin && members.length === 0 && (
                 <Button
                   onClick={() => setIsInviteDialogOpen(true)}
                   className="bg-blue-600 hover:bg-blue-700"
@@ -371,7 +516,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member) => {
+                  {filteredMembers.map((member) => {
                     const statusConfig = STATUS_LABELS[member.status || "Active"] || STATUS_LABELS.Active;
                     const isCurrentUser = member.user?.id === session?.user?.id;
                     const canEdit = isAdmin && !isCurrentUser;
@@ -412,6 +557,19 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             <div className="flex items-center justify-end gap-2">
                               {canEdit && (
                                 <>
+                                  {member.status === "Pending" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 text-xs"
+                                      onClick={() => resendInviteMutation.mutate(member.id)}
+                                      disabled={resendInviteMutation.isPending}
+                                      title="초대 재발송"
+                                    >
+                                      <Mail className="h-3 w-3 mr-1" />
+                                      재발송
+                                    </Button>
+                                  )}
                                   <Select
                                     value={member.role}
                                     onValueChange={(role) =>

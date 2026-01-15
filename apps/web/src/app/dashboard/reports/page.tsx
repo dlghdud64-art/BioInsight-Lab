@@ -183,7 +183,7 @@ export default function ReportsPage() {
   const details = reportData?.details || [];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-8 pt-8">
       {/* 표준 페이지 헤더 */}
       <PageHeader
         title="구매 리포트"
@@ -286,11 +286,11 @@ export default function ReportsPage() {
       />
 
       {/* 필터 섹션 - Card로 정리 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">필터</CardTitle>
+      <Card className="bg-white border border-slate-100 shadow-sm rounded-xl">
+        <CardHeader className="p-6 pb-4">
+          <CardTitle className="text-sm font-semibold text-slate-700">리포트 필터 설정</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="startDate" className="text-sm">시작일</Label>
@@ -465,12 +465,25 @@ export default function ReportsPage() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      cursor={{ fill: "transparent" }}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
+                    />
                     <Legend />
-                    <Bar dataKey="amount" fill="#3b82f6" name="구매 금액" />
+                    <Bar
+                      dataKey="amount"
+                      fill="#3b82f6"
+                      name="구매 금액"
+                      barSize={40}
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -486,12 +499,25 @@ export default function ReportsPage() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={vendorData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="vendor" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      cursor={{ fill: "transparent" }}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
+                    />
                     <Legend />
-                    <Bar dataKey="amount" fill="#10b981" name="구매 금액" />
+                    <Bar
+                      dataKey="amount"
+                      fill="#10b981"
+                      name="구매 금액"
+                      barSize={40}
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -521,7 +547,13 @@ export default function ReportsPage() {
                         <Cell key={`cell-${index}`} fill={entry.color || "#8884d8"} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "none",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>

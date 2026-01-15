@@ -39,19 +39,19 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-5xl xl:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight py-2">
+          <h1 className="text-3xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight py-2">
             전 세계 500만 개 시약/장비, <br className="hidden sm:block" />
             <span className="text-blue-600">최저가 검색부터 견적까지</span>
           </h1>
           
-          <p className="text-base md:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-2">
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed px-2">
             더 이상 구글링하지 마세요. <br />
             BioInsight Lab이 스펙 비교부터 최적 견적까지 한 번에 찾아드립니다.
           </p>
         </div>
 
         {/* 2. 중앙 대형 검색창 (구글 스타일) */}
-        <div className="max-w-3xl mx-auto px-2">
+        <div className="max-w-3xl mx-auto px-4">
           <form onSubmit={handleSearch} className="relative w-full">
             <div className="flex items-center gap-2 bg-white rounded-full border-2 border-slate-300 shadow-lg hover:shadow-xl transition-all focus-within:border-blue-500 focus-within:shadow-blue-500/20 w-full max-w-full">
               <Input

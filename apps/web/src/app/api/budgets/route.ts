@@ -138,11 +138,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. 숫자 포맷팅 처리 (쉼표 제거)
-    const cleanAmount = typeof rawAmount === 'string'
-      ? rawAmount.replace(/,/g, '')
-      : String(rawAmount);
-
-    const numericAmount = Number(cleanAmount);
+    let numericAmount: number;
+    if (typeof rawAmount === 'number') {
+      numericAmount = rawAmount;
+    } else if (typeof rawAmount === 'string') {
+      const cleanAmount = rawAmount.replace(/,/g, '');
+      numericAmount = Number(cleanAmount);
+    } else {
+      numericAmount = Number(String(rawAmount).replace(/,/g, ''));
+    }
 
     if (isNaN(numericAmount) || numericAmount <= 0) {
       return NextResponse.json(
