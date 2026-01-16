@@ -154,7 +154,7 @@ function SettingsPageContent() {
 
   // 프로필 업데이트
   const profileMutation = useMutation({
-    mutationFn: async (data: { name?: string; email?: string; password?: string }) => {
+    mutationFn: async (data: { name?: string; email?: string; password?: string; currentPassword?: string }) => {
       const response = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
