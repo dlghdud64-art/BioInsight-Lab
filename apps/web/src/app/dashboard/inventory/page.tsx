@@ -794,8 +794,8 @@ export default function InventoryPage() {
                   <CardContent>
                     {usageStats?.dateRange ? (
                       <div className="text-xs md:text-sm">
-                        {format(new Date(usageStats.dateRange.start), "yyyy.MM.dd", { locale: ko })} ~{" "}
-                        {format(new Date(usageStats.dateRange.end), "yyyy.MM.dd", { locale: ko })}
+                        {format(new Date(usageStats?.dateRange?.start || new Date()), "yyyy.MM.dd", { locale: ko })} ~{" "}
+                        {format(new Date(usageStats?.dateRange?.end || new Date()), "yyyy.MM.dd", { locale: ko })}
                       </div>
                     ) : (
                       <div className="text-xs md:text-sm text-muted-foreground">데이터 없음</div>
