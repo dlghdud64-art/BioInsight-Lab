@@ -37,9 +37,8 @@ export default function OrganizationsPage() {
   const { toast } = useToast();
 
   // 로컬 상태로 조직 목록 관리
-  const [organizations, setOrganizations] = useState<any[]>([
-    { id: 1, name: "BioInsight Lab", description: "메인 연구소", members: [], _count: { members: 12, quotes: 5 } },
-  ]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 조직 목록 조회
   const { data, isLoading } = useQuery({
@@ -52,13 +51,13 @@ export default function OrganizationsPage() {
     enabled: status === "authenticated",
   });
 
-  // 서버 데이터가 처음 로드될 때만 로컬 상태 업데이트 (생성 후에는 업데이트 안 함)
+  // 서버 데이터가 처음 로드될 때만 로컬 상태 업데이트
   useEffect(() => {
-    if (data?.organizations && organizations.length === 1 && organizations[0].id === 1) {
-      // 초기 더미 데이터만 있을 때만 서버 데이터로 대체
+    if (data?.organizations && !isInitialized) {
       setOrganizations(data.organizations);
+      setIsInitialized(true);
     }
-  }, [data]);
+  }, [data, isInitialized]);
 
   // 조직 생성 Mutation
   const createOrgMutation = useMutation({
