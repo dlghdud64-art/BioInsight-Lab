@@ -52,9 +52,10 @@ export default function OrganizationsPage() {
     enabled: status === "authenticated",
   });
 
-  // 서버 데이터가 로드되면 로컬 상태 업데이트
+  // 서버 데이터가 처음 로드될 때만 로컬 상태 업데이트 (생성 후에는 업데이트 안 함)
   useEffect(() => {
-    if (data?.organizations) {
+    if (data?.organizations && organizations.length === 1 && organizations[0].id === 1) {
+      // 초기 더미 데이터만 있을 때만 서버 데이터로 대체
       setOrganizations(data.organizations);
     }
   }, [data]);
@@ -67,12 +68,13 @@ export default function OrganizationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create organization");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create organization");
+      }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
+    // onSuccess에서 invalidateQueries 제거 - 로컬 상태만 업데이트
   });
 
   // 조직 생성 핸들러
