@@ -51,23 +51,33 @@ export function BioInsightHeroSection() {
         </div>
 
         {/* 2. 중앙 대형 검색창 (구글 스타일) */}
-        <div className="w-full max-w-md mx-auto px-4">
+        <div className="mt-8 md:mt-12 w-full max-w-[90%] md:!max-w-[800px] lg:!max-w-[1000px] mx-auto px-4 relative z-10">
           <form onSubmit={handleSearch} className="relative w-full">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white rounded-full sm:rounded-full border-2 border-slate-300 shadow-lg hover:shadow-xl transition-all focus-within:border-blue-500 focus-within:shadow-blue-500/20 w-full">
-              <Input
+            <div className="flex items-center w-full h-14 md:h-20 bg-white rounded-full border border-slate-200 md:border-2 shadow-lg md:shadow-2xl px-2 md:px-4 focus-within:ring-4 focus-within:ring-blue-100 transition-all">
+              {/* 돋보기 아이콘 */}
+              <Search className="ml-2 md:ml-4 h-5 w-5 md:h-8 md:w-8 text-slate-400 shrink-0" />
+              
+              {/* 입력창 */}
+              <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요 (예: FBS, Anti-IL6)"
-                className="flex-1 h-12 sm:h-14 md:h-16 px-4 md:px-6 text-sm md:text-base lg:text-lg border-0 rounded-full sm:rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요"
+                className="flex-1 bg-transparent px-3 md:px-6 text-base md:text-2xl text-slate-900 placeholder:text-slate-400 outline-none min-w-0 font-medium h-full border-0"
               />
+              
+              {/* 검색 버튼 */}
               <Button
                 type="submit"
-                size="lg"
-                className="h-12 sm:h-14 md:h-16 px-4 md:px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full sm:rounded-full sm:mr-1 sm:my-1 font-semibold text-sm md:text-base flex-shrink-0 w-full sm:w-auto"
+                className="h-10 w-10 md:h-16 md:w-auto rounded-full shrink-0 md:px-10 bg-blue-600 hover:bg-blue-700 text-white transition-all"
               >
-                <Search className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">검색</span>
+                <span className="md:hidden">
+                  <Search className="h-5 w-5" />
+                </span>
+                <span className="hidden md:flex items-center gap-2 text-xl font-bold">
+                  <Search className="h-5 w-5" />
+                  검색
+                </span>
               </Button>
             </div>
           </form>
