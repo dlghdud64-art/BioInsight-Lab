@@ -81,20 +81,27 @@ export default function BudgetPage() {
         ...data,
         amount: cleanAmount, // 순수 숫자로 변환
       };
-      
+
+      console.log("[Budget Page] Sending request:", { url, method, payload });
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      
+
+      console.log("[Budget Page] Response status:", response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("[Budget Page] Error response:", errorData);
         const errorMessage = errorData.error || errorData.details || "Failed to save budget";
         throw new Error(errorMessage);
       }
-      
-      return response.json();
+
+      const result = await response.json();
+      console.log("[Budget Page] Success response:", result);
+      return result;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
@@ -115,9 +122,10 @@ export default function BudgetPage() {
       });
     },
     onError: (error: Error) => {
+      console.error("[Budget Page] Save error:", error);
       toast({
         title: "예산 저장 실패",
-        description: error.message,
+        description: error.message || "예산 저장에 실패했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
     },
