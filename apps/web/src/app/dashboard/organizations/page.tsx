@@ -37,9 +37,8 @@ export default function OrganizationsPage() {
   const { toast } = useToast();
 
   // 로컬 상태로 조직 목록 관리
-  const [organizations, setOrganizations] = useState<any[]>([
-    { id: 1, name: "BioInsight Lab", description: "메인 연구소", members: [], _count: { members: 12, quotes: 5 } },
-  ]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 조직 목록 조회
   const { data, isLoading } = useQuery({
@@ -52,51 +51,29 @@ export default function OrganizationsPage() {
     enabled: status === "authenticated",
   });
 
-  // 서버 데이터가 로드되면 로컬 상태 업데이트
+  // 서버 데이터가 처음 로드될 때만 로컬 상태 업데이트
   useEffect(() => {
-    if (data?.organizations) {
+    if (data?.organizations && !isInitialized) {
       setOrganizations(data.organizations);
+      setIsInitialized(true);
     }
-  }, [data]);
+  }, [data, isInitialized]);
 
   // 조직 생성 Mutation
   const createOrgMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
-      // 디버깅용: 전송 데이터 로그
-      console.log("📤 조직 생성 전송 데이터:", data);
-
       const response = await fetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       if (!response.ok) {
-        // 서버 응답에서 에러 메시지 파싱
-        let errorMessage = "조직 생성에 실패했습니다.";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-          console.error("❌ API 에러 응답:", errorData);
-        } catch (parseError) {
-          // JSON 파싱 실패 시 상태 코드 기반 메시지
-          console.error("❌ 응답 파싱 실패:", parseError);
-          if (response.status === 401) {
-            errorMessage = "로그인이 필요합니다.";
-          } else if (response.status === 400) {
-            errorMessage = "입력값을 확인해주세요.";
-          } else if (response.status === 500) {
-            errorMessage = "서버 오류가 발생했습니다.";
-          }
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create organization");
       }
-
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
+    // onSuccess에서 invalidateQueries 제거 - 로컬 상태만 업데이트
   });
 
   // 조직 생성 핸들러
@@ -130,15 +107,12 @@ export default function OrganizationsPage() {
           prev.map((org) => (org.id === newOrg.id ? response.organization : org))
         );
       },
-      onError: (error: Error) => {
+      onError: () => {
         // 실패 시 롤백
         setOrganizations((prev) => prev.filter((org) => org.id !== newOrg.id));
-        
-        // 구체적인 에러 메시지 표시
-        console.error("❌ 조직 생성 실패:", error);
         toast({
           title: "생성 실패",
-          description: error.message || "조직 생성에 실패했습니다. 다시 시도해주세요.",
+          description: "조직 생성에 실패했습니다. 다시 시도해주세요.",
           variant: "destructive",
         });
       },
@@ -221,16 +195,8 @@ function CreateOrganizationDialog({
     e.preventDefault();
     if (!name.trim()) return;
     
-    const formData = {
-      name: name.trim(),
-      description: description.trim(),
-    };
-    
-    // 디버깅용: 폼 제출 데이터 로그
-    console.log("📝 폼 제출 데이터:", formData);
-    
     // 조직 생성
-    onCreate(formData);
+    onCreate({ name: name.trim(), description: description.trim() });
     
     // 입력 필드 초기화 및 모달 닫기
     setName("");

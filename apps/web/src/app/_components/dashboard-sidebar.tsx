@@ -45,7 +45,7 @@ const sidebarGroups: SidebarGroup[] = [
     items: [
       {
         title: "견적 관리",
-        href: "/quotes",
+        href: "/dashboard/quotes",
         icon: FileText,
       },
       {

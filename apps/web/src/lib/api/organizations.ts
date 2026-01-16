@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { OrganizationRole } from "@/types";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // 사용자가 속한 조직 목록 조회
 export async function getOrganizationsByUser(userId: string) {

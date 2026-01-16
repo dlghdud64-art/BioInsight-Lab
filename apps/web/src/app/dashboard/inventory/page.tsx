@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar as CalendarIcon, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,8 +28,6 @@ import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge"
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 
 interface ProductInventory {
   id: string;
@@ -40,7 +39,6 @@ interface ProductInventory {
   location: string | null;
   expiryDate: string | null;
   notes: string | null;
-  notificationDate?: string | null; // 재주문 알림 날짜
   autoReorderEnabled?: boolean; // 타입 에러 수정: 누락된 속성 추가
   autoReorderThreshold?: number; // 타입 에러 수정: 누락된 속성 추가
   product: {
@@ -309,11 +307,10 @@ export default function InventoryPage() {
       productId: string;
       currentQuantity: number;
       unit: string;
-      date?: string;
+      safetyStock?: number;
       minOrderQty?: number;
       location?: string;
       expiryDate?: string;
-      notificationDate?: string;
       autoReorderEnabled?: boolean;
       autoReorderThreshold?: number;
       notes?: string;
@@ -772,7 +769,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">총 사용량</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats?.totalUsage.toLocaleString()}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.totalUsage?.toLocaleString() || 0}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -780,7 +777,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">기록 수</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats?.recordCount}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.recordCount || 0}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -788,7 +785,7 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">제품 수</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-lg md:text-2xl font-bold">{usageStats?.uniqueProducts}</div>
+                    <div className="text-lg md:text-2xl font-bold">{usageStats?.uniqueProducts || 0}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -796,10 +793,10 @@ export default function InventoryPage() {
                     <CardTitle className="text-xs md:text-sm font-medium">기간</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {usageStats?.dateRange?.start && usageStats?.dateRange?.end ? (
+                    {usageStats?.dateRange ? (
                       <div className="text-xs md:text-sm">
-                        {format(new Date(usageStats?.dateRange?.start || ""), "yyyy.MM.dd", { locale: ko })} ~{" "}
-                        {format(new Date(usageStats?.dateRange?.end || ""), "yyyy.MM.dd", { locale: ko })}
+                        {format(new Date(usageStats?.dateRange?.start || new Date()), "yyyy.MM.dd", { locale: ko })} ~{" "}
+                        {format(new Date(usageStats?.dateRange?.end || new Date()), "yyyy.MM.dd", { locale: ko })}
                       </div>
                     ) : (
                       <div className="text-xs md:text-sm text-muted-foreground">데이터 없음</div>
@@ -1201,6 +1198,9 @@ function InventoryForm({
     inventory?.currentQuantity.toString() || "0"
   );
   const [unit, setUnit] = useState(inventory?.unit || "개");
+  const [safetyStock, setSafetyStock] = useState(
+    inventory?.safetyStock?.toString() || ""
+  );
   const [minOrderQty, setMinOrderQty] = useState(
     inventory?.minOrderQty?.toString() || ""
   );
@@ -1208,19 +1208,13 @@ function InventoryForm({
   const [expiryDate, setExpiryDate] = useState(
     inventory?.expiryDate ? new Date(inventory.expiryDate).toISOString().split("T")[0] : ""
   );
-  const [alarmEnabled, setAlarmEnabled] = useState(
-    inventory?.notificationDate ? true : false
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(
+    inventory?.autoReorderEnabled || false
   );
-  const [reorderDate, setReorderDate] = useState<Date | undefined>(
-    inventory?.notificationDate ? new Date(inventory.notificationDate) : undefined
+  const [autoReorderThreshold, setAutoReorderThreshold] = useState(
+    inventory?.autoReorderThreshold?.toString() || inventory?.safetyStock?.toString() || ""
   );
   const [notes, setNotes] = useState(inventory?.notes || "");
-
-  // 평균 주문 주기 계산 (Mock 데이터 - 실제로는 API에서 가져와야 함)
-  const averageOrderCycle = 45; // 일 단위
-  const estimatedNextOrderDate = reorderDate 
-    ? new Date(reorderDate.getTime() + averageOrderCycle * 24 * 60 * 60 * 1000)
-    : null;
 
   // 제품 검색 (간단한 구현, 실제로는 제품 검색 API 필요)
   const { data: productsData } = useQuery({
@@ -1241,10 +1235,12 @@ function InventoryForm({
       productId: inventory?.productId || productId,
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
+      safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,
       minOrderQty: minOrderQty ? parseFloat(minOrderQty) : undefined,
       location: location || undefined,
       expiryDate: expiryDate || undefined,
-      notificationDate: alarmEnabled && reorderDate ? reorderDate.toISOString() : undefined,
+      autoReorderEnabled,
+      autoReorderThreshold: autoReorderThreshold ? parseFloat(autoReorderThreshold) : undefined,
       notes: notes || undefined,
     });
   };
@@ -1301,16 +1297,29 @@ function InventoryForm({
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="minOrderQty">최소 주문 수량 (선택)</Label>
-        <Input
-          id="minOrderQty"
-          type="number"
-          min="0"
-          value={minOrderQty}
-          onChange={(e) => setMinOrderQty(e.target.value)}
-          placeholder="최소 주문 수량"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="safetyStock">안전 재고 (선택)</Label>
+          <Input
+            id="safetyStock"
+            type="number"
+            min="0"
+            value={safetyStock}
+            onChange={(e) => setSafetyStock(e.target.value)}
+            placeholder="이 수량 이하로 떨어지면 재주문 추천"
+          />
+        </div>
+        <div>
+          <Label htmlFor="minOrderQty">최소 주문 수량 (선택)</Label>
+          <Input
+            id="minOrderQty"
+            type="number"
+            min="0"
+            value={minOrderQty}
+            onChange={(e) => setMinOrderQty(e.target.value)}
+            placeholder="최소 주문 수량"
+          />
+        </div>
       </div>
 
       <div>
@@ -1333,70 +1342,36 @@ function InventoryForm({
         />
       </div>
 
-      {/* 재주문 알림 설정 섹션 */}
-      <div className="space-y-3 p-4 border rounded-lg bg-white shadow-sm">
+      <div className="space-y-3 p-4 border rounded-lg bg-slate-50">
         <div className="flex items-center justify-between">
-          <Label className="text-base font-semibold flex items-center gap-2">
-            📅 재주문 알림 설정
-          </Label>
-          <Switch 
-            checked={alarmEnabled} 
-            onCheckedChange={setAlarmEnabled}
+          <div>
+            <Label htmlFor="autoReorderEnabled">자동 재주문</Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              재고가 임계값 이하로 떨어지면 자동으로 재주문 리스트를 생성합니다.
+            </p>
+          </div>
+          <input
+            id="autoReorderEnabled"
+            type="checkbox"
+            checked={autoReorderEnabled}
+            onChange={(e) => setAutoReorderEnabled(e.target.checked)}
+            className="h-4 w-4"
           />
         </div>
-
-        {alarmEnabled && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-            {/* 날짜 선택기 */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !reorderDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {reorderDate ? (
-                    format(reorderDate, "yyyy년 MM월 dd일", { locale: ko })
-                  ) : (
-                    "알림 받을 날짜 선택"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={reorderDate}
-                  onSelect={setReorderDate}
-                  locale={ko}
-                />
-              </PopoverContent>
-            </Popover>
-
-            {/* 스마트 주기 힌트 */}
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
-              <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-semibold">
-                  평균 주문 주기: 약 {averageOrderCycle}일
-                </p>
-                {estimatedNextOrderDate ? (
-                  <p className="text-blue-600/80">
-                    이전 기록을 분석해보니, 보통{" "}
-                    <span className="underline decoration-wavy">
-                      {format(estimatedNextOrderDate, "yyyy년 M월 d일", { locale: ko })}
-                    </span>
-                    쯤 재주문하셨어요.
-                  </p>
-                ) : (
-                  <p className="text-blue-600/80">
-                    이전 주문 기록이 쌓이면 평균 주기를 알려드립니다.
-                  </p>
-                )}
-              </div>
-            </div>
+        {autoReorderEnabled && (
+          <div>
+            <Label htmlFor="autoReorderThreshold">자동 재주문 임계값 (선택)</Label>
+            <Input
+              id="autoReorderThreshold"
+              type="number"
+              min="0"
+              value={autoReorderThreshold}
+              onChange={(e) => setAutoReorderThreshold(e.target.value)}
+              placeholder={safetyStock || "안전 재고와 동일"}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              이 수량 이하로 떨어지면 자동 재주문이 실행됩니다. 비워두면 안전 재고를 사용합니다.
+            </p>
           </div>
         )}
       </div>
