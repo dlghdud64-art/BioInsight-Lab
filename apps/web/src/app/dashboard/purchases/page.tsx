@@ -693,6 +693,9 @@ export default function PurchasesPage() {
                                   onSelect={setPurchaseDate}
                                   initialFocus
                                   locale={ko}
+                                  captionLayout="dropdown-buttons"
+                                  fromYear={2015}
+                                  toYear={2030}
                                 />
                               </PopoverContent>
                             </Popover>
