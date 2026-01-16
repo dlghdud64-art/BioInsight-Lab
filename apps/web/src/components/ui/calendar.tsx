@@ -13,28 +13,17 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  captionLayout = "dropdown",
-  fromYear = 2020,
-  toYear = 2030,
   ...props
 }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      captionLayout={captionLayout}
-      fromYear={fromYear}
-      toYear={toYear}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        month_caption: "flex justify-center pt-1 relative items-center gap-2",
-        caption_label: "text-sm font-medium hover:bg-gray-100 rounded px-2 py-1 transition-colors cursor-pointer",
-        caption_dropdowns: "flex items-center gap-2",
-        dropdown: "bg-white border border-gray-200 rounded-md shadow-lg p-2 max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100",
-        dropdown_month: "bg-white border border-gray-200 rounded-md shadow-lg p-2 max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100",
-        dropdown_year: "bg-white border border-gray-200 rounded-md shadow-lg p-2 max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100",
-        dropdown_icon: "text-gray-500",
+        caption: "flex justify-center pt-1 relative items-center",
+        caption_label: "text-sm font-medium",
         nav: "space-x-1 flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),

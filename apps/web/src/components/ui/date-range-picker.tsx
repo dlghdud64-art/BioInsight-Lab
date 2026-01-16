@@ -161,6 +161,7 @@ export function DateRangePicker({
               selected={date}
               onSelect={handleDateSelect}
               numberOfMonths={2}
+              locale={ko}
               className="rounded-md border-0"
             />
           </div>

@@ -21,6 +21,7 @@ import Link from "next/link";
 import { PageHeader } from "@/app/_components/page-header";
 import { BarChart3 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -293,22 +294,14 @@ export default function ReportsPage() {
         <CardContent className="p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="startDate" className="text-sm">시작일</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="endDate" className="text-sm">종료일</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+              <Label className="text-sm">기간 선택</Label>
+              <DateRangePicker
+                startDate={startDate}
+                endDate={endDate}
+                onDateChange={(start, end) => {
+                  setStartDate(start);
+                  setEndDate(end);
+                }}
                 className="mt-1"
               />
             </div>

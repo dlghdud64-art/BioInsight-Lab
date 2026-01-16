@@ -17,6 +17,7 @@ import { PageHeader } from "@/app/_components/page-header";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { ko } from "date-fns/locale";
 import { getGuestKey } from "@/lib/guest-key";
 import {
   Table,
@@ -679,7 +680,7 @@ export default function PurchasesPage() {
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
                                   {purchaseDate ? (
-                                    format(purchaseDate, "yyyy-MM-dd")
+                                    format(purchaseDate, "yyyy년 M월 d일", { locale: ko })
                                   ) : (
                                     <span>날짜를 선택하세요</span>
                                   )}
@@ -691,6 +692,7 @@ export default function PurchasesPage() {
                                   selected={purchaseDate}
                                   onSelect={setPurchaseDate}
                                   initialFocus
+                                  locale={ko}
                                 />
                               </PopoverContent>
                             </Popover>
