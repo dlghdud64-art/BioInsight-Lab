@@ -40,6 +40,7 @@ interface ProductInventory {
   location: string | null;
   expiryDate: string | null;
   notes: string | null;
+  notificationDate?: string | null; // 재주문 알림 날짜
   autoReorderEnabled?: boolean; // 타입 에러 수정: 누락된 속성 추가
   autoReorderThreshold?: number; // 타입 에러 수정: 누락된 속성 추가
   product: {
@@ -312,6 +313,7 @@ export default function InventoryPage() {
       minOrderQty?: number;
       location?: string;
       expiryDate?: string;
+      notificationDate?: string;
       autoReorderEnabled?: boolean;
       autoReorderThreshold?: number;
       notes?: string;
@@ -1199,7 +1201,6 @@ function InventoryForm({
     inventory?.currentQuantity.toString() || "0"
   );
   const [unit, setUnit] = useState(inventory?.unit || "개");
-  const [recordDate, setRecordDate] = useState<Date | undefined>(undefined);
   const [minOrderQty, setMinOrderQty] = useState(
     inventory?.minOrderQty?.toString() || ""
   );
@@ -1207,13 +1208,19 @@ function InventoryForm({
   const [expiryDate, setExpiryDate] = useState(
     inventory?.expiryDate ? new Date(inventory.expiryDate).toISOString().split("T")[0] : ""
   );
-  const [autoReorderEnabled, setAutoReorderEnabled] = useState(
-    inventory?.autoReorderEnabled || false
+  const [alarmEnabled, setAlarmEnabled] = useState(
+    inventory?.notificationDate ? true : false
   );
-  const [autoReorderThreshold, setAutoReorderThreshold] = useState(
-    inventory?.autoReorderThreshold?.toString() || ""
+  const [reorderDate, setReorderDate] = useState<Date | undefined>(
+    inventory?.notificationDate ? new Date(inventory.notificationDate) : undefined
   );
   const [notes, setNotes] = useState(inventory?.notes || "");
+
+  // 평균 주문 주기 계산 (Mock 데이터 - 실제로는 API에서 가져와야 함)
+  const averageOrderCycle = 45; // 일 단위
+  const estimatedNextOrderDate = reorderDate 
+    ? new Date(reorderDate.getTime() + averageOrderCycle * 24 * 60 * 60 * 1000)
+    : null;
 
   // 제품 검색 (간단한 구현, 실제로는 제품 검색 API 필요)
   const { data: productsData } = useQuery({
@@ -1234,12 +1241,10 @@ function InventoryForm({
       productId: inventory?.productId || productId,
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
-      date: recordDate ? format(recordDate, "yyyy-MM-dd") : undefined,
       minOrderQty: minOrderQty ? parseFloat(minOrderQty) : undefined,
       location: location || undefined,
       expiryDate: expiryDate || undefined,
-      autoReorderEnabled,
-      autoReorderThreshold: autoReorderThreshold ? parseFloat(autoReorderThreshold) : undefined,
+      notificationDate: alarmEnabled && reorderDate ? reorderDate.toISOString() : undefined,
       notes: notes || undefined,
     });
   };
@@ -1296,41 +1301,16 @@ function InventoryForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="recordDate">입고일 (선택)</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="recordDate"
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {recordDate ? format(recordDate, "yyyy-MM-dd", { locale: ko }) : "날짜 선택"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={recordDate}
-                onSelect={setRecordDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div>
-          <Label htmlFor="minOrderQty">최소 주문 수량 (선택)</Label>
-          <Input
-            id="minOrderQty"
-            type="number"
-            min="0"
-            value={minOrderQty}
-            onChange={(e) => setMinOrderQty(e.target.value)}
-            placeholder="최소 주문 수량"
-          />
-        </div>
+      <div>
+        <Label htmlFor="minOrderQty">최소 주문 수량 (선택)</Label>
+        <Input
+          id="minOrderQty"
+          type="number"
+          min="0"
+          value={minOrderQty}
+          onChange={(e) => setMinOrderQty(e.target.value)}
+          placeholder="최소 주문 수량"
+        />
       </div>
 
       <div>
@@ -1353,36 +1333,70 @@ function InventoryForm({
         />
       </div>
 
-      <div className="space-y-3 p-4 border rounded-lg bg-slate-50">
+      {/* 재주문 알림 설정 섹션 */}
+      <div className="space-y-3 p-4 border rounded-lg bg-white shadow-sm">
         <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="autoReorderEnabled">자동 재주문</Label>
-            <p className="text-xs text-muted-foreground mt-1">
-              재고가 임계값 이하로 떨어지면 자동으로 재주문 리스트를 생성합니다.
-            </p>
-          </div>
-          <input
-            id="autoReorderEnabled"
-            type="checkbox"
-            checked={autoReorderEnabled}
-            onChange={(e) => setAutoReorderEnabled(e.target.checked)}
-            className="h-4 w-4"
+          <Label className="text-base font-semibold flex items-center gap-2">
+            📅 재주문 알림 설정
+          </Label>
+          <Switch 
+            checked={alarmEnabled} 
+            onCheckedChange={setAlarmEnabled}
           />
         </div>
-        {autoReorderEnabled && (
-          <div>
-            <Label htmlFor="autoReorderThreshold">자동 재주문 임계값 (선택)</Label>
-            <Input
-              id="autoReorderThreshold"
-              type="number"
-              min="0"
-              value={autoReorderThreshold}
-              onChange={(e) => setAutoReorderThreshold(e.target.value)}
-              placeholder="자동 재주문 임계값"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              이 수량 이하로 떨어지면 자동 재주문이 실행됩니다.
-            </p>
+
+        {alarmEnabled && (
+          <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+            {/* 날짜 선택기 */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !reorderDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {reorderDate ? (
+                    format(reorderDate, "yyyy년 MM월 dd일", { locale: ko })
+                  ) : (
+                    "알림 받을 날짜 선택"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={reorderDate}
+                  onSelect={setReorderDate}
+                  locale={ko}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* 스마트 주기 힌트 */}
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 text-blue-700 text-xs">
+              <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">
+                  평균 주문 주기: 약 {averageOrderCycle}일
+                </p>
+                {estimatedNextOrderDate ? (
+                  <p className="text-blue-600/80">
+                    이전 기록을 분석해보니, 보통{" "}
+                    <span className="underline decoration-wavy">
+                      {format(estimatedNextOrderDate, "yyyy년 M월 d일", { locale: ko })}
+                    </span>
+                    쯤 재주문하셨어요.
+                  </p>
+                ) : (
+                  <p className="text-blue-600/80">
+                    이전 주문 기록이 쌓이면 평균 주기를 알려드립니다.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1402,7 +1416,7 @@ function InventoryForm({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           취소
         </Button>
-        <Button type="submit" onClick={handleSubmit} className="flex-1">
+        <Button type="submit" className="flex-1">
           저장
         </Button>
       </div>
