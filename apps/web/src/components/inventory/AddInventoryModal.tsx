@@ -9,7 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search } from "lucide-react";
+import { Search, Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -45,8 +50,8 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
   const [safetyStock, setSafetyStock] = useState(inventory?.safetyStock?.toString() || "");
   const [minOrderQty, setMinOrderQty] = useState(inventory?.minOrderQty?.toString() || "");
   const [location, setLocation] = useState(inventory?.location || "");
-  const [expiryDate, setExpiryDate] = useState(
-    inventory?.expiryDate ? new Date(inventory.expiryDate).toISOString().split("T")[0] : ""
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>(
+    inventory?.expiryDate ? new Date(inventory.expiryDate) : undefined
   );
   const [notes, setNotes] = useState(inventory?.notes || "");
 
@@ -90,7 +95,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
       safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,
       minOrderQty: minOrderQty ? parseFloat(minOrderQty) : undefined,
       location: location || undefined,
-      expiryDate: expiryDate || undefined,
+      expiryDate: expiryDate ? expiryDate.toISOString().split("T")[0] : undefined,
       notes: notes || undefined,
     });
   };
@@ -291,12 +296,37 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
 
             <div>
               <Label htmlFor="expiryDate">유통기한 (선택)</Label>
-              <Input
-                id="expiryDate"
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="expiryDate"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !expiryDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {expiryDate ? (
+                      format(expiryDate, "yyyy년 M월 d일", { locale: ko })
+                    ) : (
+                      <span>날짜를 선택하세요</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={expiryDate}
+                    onSelect={setExpiryDate}
+                    initialFocus
+                    locale={ko}
+                    captionLayout="dropdown"
+                    fromYear={2015}
+                    toYear={2030}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>

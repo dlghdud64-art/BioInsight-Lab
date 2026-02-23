@@ -162,7 +162,7 @@ export function DateRangePicker({
               onSelect={handleDateSelect}
               numberOfMonths={2}
               locale={ko}
-              captionLayout="dropdown-buttons"
+              captionLayout="dropdown"
               fromYear={2015}
               toYear={2030}
               className="rounded-md border-0"

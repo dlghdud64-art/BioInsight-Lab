@@ -227,6 +227,28 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    // DB 연결/테넌트 등 민감한 에러는 서버에서만 로깅하고, 클라이언트에는 안전한 메시지 반환
+    const isDbConnectionError =
+      error instanceof Error &&
+      (error.message.includes("FATAL") ||
+        error.message.includes("Tenant or user not found") ||
+        error.message.includes("Can't reach database") ||
+        error.message.includes("Connection") ||
+        error.message.includes("ECONNREFUSED") ||
+        (error as any).code === "P1001" ||
+        (error as any).code === "P1017");
+
+    if (isDbConnectionError) {
+      console.error("[products/search] Database error:", error);
+      return NextResponse.json(
+        {
+          error:
+            "데이터베이스 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        },
+        { status: 500 }
+      );
+    }
+
     return handleApiError(error, "products/search");
   }
 }

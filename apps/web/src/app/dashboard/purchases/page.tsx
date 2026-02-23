@@ -693,7 +693,7 @@ export default function PurchasesPage() {
                                   onSelect={setPurchaseDate}
                                   initialFocus
                                   locale={ko}
-                                  captionLayout="dropdown-buttons"
+                                  captionLayout="dropdown"
                                   fromYear={2015}
                                   toYear={2030}
                                 />
