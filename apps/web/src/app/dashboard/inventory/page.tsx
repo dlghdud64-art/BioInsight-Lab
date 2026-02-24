@@ -315,19 +315,47 @@ export default function InventoryPage() {
       autoReorderThreshold?: number;
       notes?: string;
     }) => {
-      const response = await fetch("/api/inventory", {
-        method: "POST",
+      const isEdit = Boolean(data.id);
+      const url = isEdit ? `/api/inventory/${data.id}` : "/api/inventory";
+      const body = isEdit
+        ? {
+            quantity: data.currentQuantity,
+            location: data.location ?? undefined,
+            notes: data.notes ?? undefined,
+            expiryDate: data.expiryDate ?? undefined,
+            minOrderQty: data.minOrderQty ?? undefined,
+          }
+        : data;
+
+      const response = await fetch(url, {
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error("Failed to save inventory");
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error || "저장에 실패했습니다.");
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const isEdit = Boolean(variables.id);
       queryClient.invalidateQueries({ queryKey: ["inventories"] });
       queryClient.invalidateQueries({ queryKey: ["reorder-recommendations"] });
       setIsDialogOpen(false);
       setEditingInventory(null);
+      router.refresh();
+      toast({
+        title: isEdit ? "재고가 수정되었습니다." : "재고가 등록되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "저장 실패",
+        description: error.message || "알 수 없는 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -445,6 +473,7 @@ export default function InventoryPage() {
                 });
               }}
               inventory={editingInventory}
+              isLoading={createOrUpdateMutation.isPending}
             />
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Calendar as CalendarIcon } from "lucide-react";
+import { Search, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -37,9 +37,11 @@ interface AddInventoryModalProps {
     notes?: string;
   }) => void;
   inventory?: any;
+  /** 저장 중일 때 true. 버튼 비활성화 및 스피너 표시용 */
+  isLoading?: boolean;
 }
 
-export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: AddInventoryModalProps) {
+export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isLoading = false }: AddInventoryModalProps) {
   const [step, setStep] = useState<"search" | "details">(inventory ? "details" : "search");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(
     inventory ? { id: inventory.productId, name: inventory.product.name, brand: inventory.product.brand, catalogNumber: inventory.product.catalogNumber } : null
@@ -88,7 +90,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
     e.preventDefault();
     if (!selectedProduct) return;
 
-    onSubmit({
+    const data = {
       productId: selectedProduct.id,
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
@@ -97,7 +99,9 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
       location: location || undefined,
       expiryDate: expiryDate ? expiryDate.toISOString().split("T")[0] : undefined,
       notes: notes || undefined,
-    });
+    };
+    console.log("저장 시도:", data);
+    onSubmit(data);
   };
 
   const handleClose = () => {
@@ -341,11 +345,18 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory }: A
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1" disabled={isLoading}>
                 취소
               </Button>
-              <Button type="submit" className="flex-1">
-                저장
+              <Button type="submit" className="flex-1" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  "저장"
+                )}
               </Button>
             </div>
           </form>

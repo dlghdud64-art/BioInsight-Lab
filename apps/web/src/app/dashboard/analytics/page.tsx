@@ -2,8 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart } from "lucide-react";
 import {
@@ -20,6 +22,8 @@ import {
  * 연구비 소진 현황을 확인하는 리포트
  */
 export default function AnalyticsPage() {
+  const [period, setPeriod] = useState<"3m" | "6m" | "1y" | "all">("6m");
+
   // Mock Data: 예산 요약
   const budgetSummary = {
     total: 50000000,      // 총 예산: ₩ 50,000,000
@@ -59,14 +63,22 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
-      {/* 헤더 섹션 */}
-      <div className="flex items-center justify-between space-y-2">
+      {/* 헤더: 제목 + 기간 선택 탭 */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">지출 분석</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            연구비 소진 현황을 확인하세요
+          <p className="text-muted-foreground mt-1">
+            연구비 소진 현황을 확인하세요.
           </p>
         </div>
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as "3m" | "6m" | "1y" | "all")} className="w-full md:w-auto">
+          <TabsList className="grid w-full grid-cols-4 md:w-[400px]">
+            <TabsTrigger value="3m">최근 3개월</TabsTrigger>
+            <TabsTrigger value="6m">최근 6개월</TabsTrigger>
+            <TabsTrigger value="1y">올해</TabsTrigger>
+            <TabsTrigger value="all">전체</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       <Separator />
 
@@ -124,7 +136,13 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>월별 지출 추이</CardTitle>
-            <CardDescription>최근 6개월간 지출액 변화</CardDescription>
+            <CardDescription>
+              {period === "3m" && "최근 3개월"}
+              {period === "6m" && "최근 6개월"}
+              {period === "1y" && "올해"}
+              {period === "all" && "전체 기간"}
+              지출액 변화
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

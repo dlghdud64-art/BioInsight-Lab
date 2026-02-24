@@ -15,7 +15,7 @@ import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -267,14 +267,12 @@ export default function SearchPage() {
                 side={sheetSide}
                 className={`w-full ${sheetSide === "right" ? "sm:max-w-lg lg:max-w-xl" : ""} flex flex-col p-0 ${sheetSide === "bottom" ? "h-[90vh]" : ""}`}
               >
-                {/* 헤더 */}
-                <div className="px-6 py-4 border-b">
-                  <SheetHeader>
-                    <SheetTitle className="text-lg font-bold">견적 요청 리스트</SheetTitle>
-                    <SheetDescription className="text-sm text-slate-600">
-                      선택한 품목을 확인하고 수량을 조절할 수 있습니다.
-                    </SheetDescription>
-                  </SheetHeader>
+                {/* 헤더: 타이틀 + 품목 개수 뱃지 */}
+                <div className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 px-6 pt-4">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900">선택된 품목</h2>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 rounded-full px-2.5">
+                    {quoteItems.length}건
+                  </Badge>
                 </div>
 
                 {/* 스크롤 가능한 아이템 리스트 */}

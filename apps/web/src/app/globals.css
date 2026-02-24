@@ -72,16 +72,25 @@ div.quote-table td.no-column-cell {
   direction: ltr !important;
 }
 
+/* ============================================
+   BioInsight Lab Design System (B2B SaaS)
+   - Radius: 0.5rem (모던, 과하지 않은 둥글기)
+   - Primary: Deep Blue (신뢰감)
+   - Surface: 흰색 유지, body만 옅은 회색으로 카드 대비
+   - Card: border + shadow-sm / Badge: 파스텔+도트 / Button: primary·outline
+   ============================================ */
 @layer base {
   :root {
+    /* Surface: 카드·팝오버는 흰색 유지 (body는 아래에서 slate-50) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: 딥 블루 (221.2 83.2% 53.3%) */
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -89,18 +98,18 @@ div.quote-table td.no-column-cell {
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 221.2 83.2% 53.3%;
+    /* Radius: 통일된 둥글기 (0.5rem = 8px) */
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
+    --chart-1: 221.2 83.2% 53.3%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
-
 }
 
 @layer base {
@@ -116,7 +125,7 @@ div.quote-table td.no-column-cell {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
-    @apply bg-background text-foreground;
+    @apply bg-slate-50 text-foreground;
   }
   * {
     font-family: inherit;
