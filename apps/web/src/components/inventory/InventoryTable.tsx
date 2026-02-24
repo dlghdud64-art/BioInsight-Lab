@@ -46,15 +46,65 @@ export function InventoryTable({
 }: InventoryTableProps) {
   const getStockStatus = (inventory: InventoryItem) => {
     if (inventory.currentQuantity === 0) {
-      return { label: "부족", variant: "destructive" as const, emoji: "🔴" };
+      return { label: "부족" as const };
     }
     if (inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock) {
-      return { label: "부족", variant: "destructive" as const, emoji: "🔴" };
+      return { label: "부족" as const };
     }
     if (inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock * 1.5) {
-      return { label: "주의", variant: "outline" as const, emoji: "🟡" };
+      return { label: "주의" as const };
     }
-    return { label: "정상", variant: "default" as const, emoji: "🟢" };
+    return { label: "정상" as const };
+  };
+
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "부족":
+      case "out_of_stock":
+      case "low":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-50 text-red-700 border-red-200 gap-1.5 px-2.5 py-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+            부족
+          </Badge>
+        );
+      case "주의":
+      case "warning":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-amber-50 text-amber-700 border-amber-200 gap-1.5 px-2.5 py-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
+            주의
+          </Badge>
+        );
+      case "정상":
+      case "in_stock":
+      case "normal":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5 px-2.5 py-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+            정상
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            variant="outline"
+            className="bg-slate-50 text-slate-700 border-slate-200 gap-1.5 px-2.5 py-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+            알 수 없음
+          </Badge>
+        );
+    }
   };
 
   const isExpiringSoon = (expiryDate: string | null) => {
@@ -109,9 +159,9 @@ export function InventoryTable({
               return (
                 <TableRow key={inventory.id} className="hover:bg-slate-50">
                   <TableCell>
-                    <Badge variant={status.variant} className="text-xs whitespace-nowrap">
-                      {status.emoji} {status.label}
-                    </Badge>
+                    <span className="text-xs whitespace-nowrap">
+                      {renderStatusBadge(status.label)}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">

@@ -343,26 +343,32 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 overflow-x-hidden">
-      <h2 className="text-2xl md:text-3xl font-bold tracking-tight">대시보드</h2>
+      {/* 페이지 헤더 영역 */}
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">대시보드</h2>
+        <p className="text-muted-foreground">
+          안녕하세요! 오늘도 효율적인 연구와 업무를 지원합니다. 🚀
+        </p>
+      </div>
 
       {/* 모바일 전용 레이아웃 */}
       <div className="md:hidden space-y-4">
-        {/* 1. 빠른 실행 (최상단, 컴팩트) */}
+        {/* 1. 빠른 실행 (최상단, 컴팩트) - 계층별 스타일 */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <Link href="/test/search" className="flex-shrink-0">
-            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+            <Button variant="outline" size="sm" className="h-10 px-3 text-xs bg-slate-50 text-slate-500 hover:bg-slate-100 border-dashed">
               <Search className="mr-1.5 h-3.5 w-3.5" />
               통합 검색
             </Button>
           </Link>
           <Link href="/dashboard/inventory" className="flex-shrink-0">
-            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+            <Button variant="outline" size="sm" className="h-10 px-3 text-xs border-blue-200 text-blue-700 hover:bg-blue-50">
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               재고 등록
             </Button>
           </Link>
           <Link href="/test/quote" className="flex-shrink-0">
-            <Button variant="outline" size="sm" className="h-10 px-3 text-xs">
+            <Button size="sm" className="h-10 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
               <FileText className="mr-1.5 h-3.5 w-3.5" />
               견적 요청
             </Button>
@@ -847,32 +853,30 @@ export default function DashboardPage() {
 
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
-          {/* 3. Quick Actions (Compact) */}
+          {/* 3. Quick Actions - 계층별 시인성 강화 */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base md:text-lg">빠른 실행</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold">빠른 실행</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-2">
-                <Link href="/test/search">
-                  <Button variant="outline" className="justify-start h-12 w-full">
-                    <Search className="mr-2 h-4 w-4" />
-                    통합 검색
-                  </Button>
-                </Link>
-                <Link href="/dashboard/inventory">
-                  <Button variant="outline" className="justify-start h-12 w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    새 재고 등록
-                  </Button>
-                </Link>
-                <Link href="/test/quote">
-                  <Button variant="outline" className="justify-start h-12 w-full">
-                    <FileText className="mr-2 h-4 w-4" />
-                    견적 요청하기
-                  </Button>
-                </Link>
-              </div>
+            <CardContent className="space-y-3">
+              <Link href="/test/search">
+                <Button variant="outline" className="w-full justify-start h-12 bg-slate-50 text-slate-500 hover:bg-slate-100 border-dashed">
+                  <Search className="mr-2 h-4 w-4" />
+                  통합 검색
+                </Button>
+              </Link>
+              <Link href="/dashboard/inventory">
+                <Button variant="outline" className="w-full justify-start h-12 border-blue-200 text-blue-700 hover:bg-blue-50">
+                  <Plus className="mr-2 h-4 w-4" />
+                  새 재고 등록
+                </Button>
+              </Link>
+              <Link href="/test/quote">
+                <Button className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
+                  <FileText className="mr-2 h-4 w-4" />
+                  견적 요청하기
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
