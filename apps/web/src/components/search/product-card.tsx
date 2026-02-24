@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy, Check, Package, ShoppingCart, Heart, Plus, Thermometer, Box, Calendar } from "lucide-react";
+import { Package, ShoppingCart, Heart, Thermometer, Box, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ interface ProductCardProps {
     casNumber?: string;
     specification?: string;
     storageCondition?: string;
+    imageUrl?: string;
   };
   isInCompare?: boolean;
   onToggleCompare?: () => void;
@@ -35,6 +36,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const { toast } = useToast();
   const [casCopied, setCasCopied] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
+  const showFallback = imgError;
 
   const handleCopyCAS = () => {
     if (!product.casNumber) return;
@@ -72,15 +76,28 @@ export function ProductCard({
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
-        {/* 제품명 */}
-        <Link href={`/products/${product.id}`} className="block">
-          <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 hover:text-blue-600 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-
-        {/* 브랜드/캣넘버 */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        {/* 썸네일 + 제품명 */}
+        <div className="flex items-start gap-3">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-white overflow-hidden flex items-center justify-center">
+            {!showFallback ? (
+              <img
+                src={imageSrc}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <FlaskConical className="h-8 w-8 text-slate-300" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <Link href={`/products/${product.id}`} className="block">
+              <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 hover:text-blue-600 transition-colors">
+                {product.name}
+              </h3>
+            </Link>
+            {/* 브랜드/캣넘버 */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
           {product.vendor && (
             <>
               <span>{product.vendor}</span>
@@ -90,6 +107,8 @@ export function ProductCard({
           {product.catalogNumber && (
             <span className="font-mono">Cat. {product.catalogNumber}</span>
           )}
+            </div>
+          </div>
         </div>
 
         {/* 스펙 배지 */}
@@ -136,13 +155,12 @@ export function ProductCard({
             )}
           </div>
 
-          {/* 버튼 그룹 */}
+          {/* 버튼 그룹: 견적 담기(Primary) / 비교함(보조) */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* 비교함 담기 */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 w-9 p-0"
+              className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded h-9 w-9 p-0"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -154,12 +172,10 @@ export function ProductCard({
             >
               <Heart className="h-4 w-4" />
             </Button>
-
-            {/* 견적 요청 */}
             <Link href={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm font-medium"
               >
                 <ShoppingCart className="h-4 w-4 mr-1.5" />
                 견적 담기

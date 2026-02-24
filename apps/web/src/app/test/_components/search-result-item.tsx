@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { ShoppingCart, GitCompare, Thermometer, AlertTriangle, Shield, Package, Box, Heart, Calendar, Clock } from "lucide-react";
+import { ShoppingCart, GitCompare, Thermometer, Package, Box, Calendar, FlaskConical } from "lucide-react";
 
 interface SearchResultItemProps {
   product: any;
@@ -50,10 +51,12 @@ export function SearchResultItem({
   onAddToQuote,
   onClick,
 }: SearchResultItemProps) {
+  const [imgError, setImgError] = useState(false);
   const vendor = product.vendors?.[0];
-  // 가격이 null이거나 0이면 표시하지 않음
   const unitPrice = vendor?.priceInKRW && vendor.priceInKRW > 0 ? vendor.priceInKRW : null;
   const keySpecs = getKeySpecs(product);
+  const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
+  const showFallback = imgError;
 
   return (
     <div
@@ -62,13 +65,26 @@ export function SearchResultItem({
     >
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
-        {/* 제품명 */}
-        <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
-          {product.name}
-        </h3>
-
-        {/* 브랜드/캣넘버 */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        {/* 썸네일 + 제품명 행 */}
+        <div className="flex items-start gap-3">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-white overflow-hidden flex items-center justify-center">
+            {!showFallback ? (
+              <img
+                src={imageSrc}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <FlaskConical className="h-8 w-8 text-slate-300" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+              {product.name}
+            </h3>
+            {/* 브랜드/캣넘버 */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
           {product.vendors?.[0]?.vendor?.name && (
             <>
               <span>{product.vendors[0].vendor.name}</span>
@@ -78,6 +94,8 @@ export function SearchResultItem({
           {product.catalogNumber && (
             <span className="font-mono">Cat. {product.catalogNumber}</span>
           )}
+            </div>
+          </div>
         </div>
 
         {/* 스펙 배지 */}
@@ -116,24 +134,21 @@ export function SearchResultItem({
             )}
           </div>
 
-          {/* 버튼 그룹 - 모바일: 세로, 데스크톱: 가로 */}
+          {/* 버튼 그룹: 견적 담기(Primary) / 비교함 담기(보조) */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
-            {/* 비교함 담기 - 모바일: 작게, 데스크톱: 일반 */}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className={`bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 border-blue-200 text-blue-600" : ""}`}
+              className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto text-slate-600 hover:text-slate-800 hover:bg-slate-100 ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100" : ""}`}
               onClick={onToggleCompare}
             >
               <GitCompare className="h-4 w-4 md:mr-1.5" />
               <span className="hidden md:inline">비교함 담기</span>
               <span className="md:hidden">비교</span>
             </Button>
-
-            {/* 견적 요청 - 모바일: 전체 너비, 데스크톱: 자동 */}
             <Button
               size="sm"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all rounded h-9 py-2 px-4 text-sm w-full md:w-auto"
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm w-full md:w-auto font-medium"
               onClick={onAddToQuote}
             >
               <ShoppingCart className="h-4 w-4 mr-1.5" />

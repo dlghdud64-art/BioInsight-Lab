@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -1970,7 +1970,7 @@ export function QuoteRequestPanel({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 상단 헤더 */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
@@ -2010,10 +2010,10 @@ export function QuoteRequestPanel({
         </div>
       </div>
 
-      <form id="quote-request-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="quote-request-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Section 1: 기본 정보 */}
-        <Card className="bg-white p-6 rounded-xl border shadow-sm">
-          <CardHeader className="px-0 pt-0 pb-4">
+        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">기본 정보</CardTitle>
           </CardHeader>
           <CardContent className="px-0 space-y-4">
@@ -2053,15 +2053,16 @@ export function QuoteRequestPanel({
           </CardContent>
         </Card>
 
-        {/* Section 2: 배송 정보 */}
-        <Card className="bg-white p-6 rounded-xl border shadow-sm">
-          <CardHeader className="px-0 pt-0 pb-4">
-            <CardTitle className="text-base font-semibold">배송 정보</CardTitle>
+        {/* Section 2: 배송 및 일정 (Grid로 압축) */}
+        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-3">
+            <CardTitle className="text-base font-semibold">배송 및 일정</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="delivery-date" className="text-sm font-medium">
+                <Label htmlFor="delivery-date" className="text-sm font-medium flex items-center gap-1">
+                  <Calendar className="w-4 h-4 text-slate-500" />
                   납기 희망일
                 </Label>
                 <Select
@@ -2089,7 +2090,8 @@ export function QuoteRequestPanel({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="delivery-location" className="text-sm font-medium">
+                <Label htmlFor="delivery-location" className="text-sm font-medium flex items-center gap-1">
+                  <MapPin className="w-4 h-4 text-slate-500" />
                   납품 장소
                 </Label>
                 <Select
@@ -2144,9 +2146,44 @@ export function QuoteRequestPanel({
           </CardContent>
         </Card>
 
+        {/* Section: 파일 첨부 */}
+        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-3">
+            <CardTitle className="text-base font-semibold flex items-center justify-between">
+              첨부 파일
+              <span className="text-xs text-muted-foreground font-normal">선택사항</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => document.getElementById("quote-file-upload")?.click()}
+              onKeyDown={(e) => e.key === "Enter" && document.getElementById("quote-file-upload")?.click()}
+              className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 p-8 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <input
+                id="quote-file-upload"
+                type="file"
+                multiple
+                accept=".pdf,.xlsx,.xls,.doc,.docx"
+                className="sr-only"
+                aria-label="파일 첨부"
+              />
+              <UploadCloud className="h-8 w-8 text-slate-400 mb-3" />
+              <p className="text-sm font-medium text-slate-700">
+                클릭하거나 파일을 이곳으로 드래그하세요
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                PDF, Excel, Word 지원 (최대 10MB)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Section 3: 추가 요청 */}
-        <Card className="bg-white p-6 rounded-xl border shadow-sm">
-          <CardHeader className="px-0 pt-0 pb-4">
+        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+          <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">추가 요청</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
@@ -2370,7 +2407,7 @@ export function QuoteItemsSummaryPanel({
 
   return (
     <div className="sticky top-24 h-fit">
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-lg">
+      <Card className="rounded-lg border-2 border-blue-100 bg-white shadow-md shadow-[0_4px_14px_0_rgba(147,197,253,0.2)]">
         <CardHeader className="border-b border-slate-200 bg-slate-50/50">
           <CardTitle className="text-base font-semibold text-slate-900">견적 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">

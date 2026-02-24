@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, FileSpreadsheet, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Search, FileSpreadsheet, ArrowRight, UploadCloud } from "lucide-react";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
@@ -101,23 +107,54 @@ export function BioInsightHeroSection() {
             ))}
           </div>
 
-          {/* 빠른 견적 요청 CTA */}
+          {/* 빠른 견적 요청 CTA: 클릭 시 팝업(Dialog) */}
           <div className="mt-10 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
             <p className="text-sm text-slate-500 mb-3">
               찾으시는 제품이 없거나 엑셀 구매 리스트가 있으신가요?
             </p>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-8 h-12"
-              asChild
-            >
-              <Link href="/dashboard/quotes">
-                <FileSpreadsheet className="mr-2 h-5 w-5" />
-                엑셀/파일로 한 번에 견적 받기
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-8 h-12"
+                >
+                  <FileSpreadsheet className="mr-2 h-5 w-5" />
+                  엑셀/파일로 한 번에 견적 받기
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>파일로 견적 요청</DialogTitle>
+                  <DialogDescription>
+                    엑셀 또는 CSV 파일을 업로드하면 품목을 자동으로 읽어 견적 요청을 만들어 드립니다.
+                  </DialogDescription>
+                </DialogHeader>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => document.getElementById("hero-quote-file")?.click()}
+                  onKeyDown={(e) => e.key === "Enter" && document.getElementById("hero-quote-file")?.click()}
+                  className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 p-8 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <input
+                    id="hero-quote-file"
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.pdf"
+                    className="sr-only"
+                    aria-label="견적용 파일 선택"
+                  />
+                  <UploadCloud className="h-10 w-10 text-slate-400 mb-3" />
+                  <p className="text-sm font-medium text-slate-700">
+                    클릭하거나 파일을 이곳으로 드래그하세요
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    PDF, Excel, CSV 지원 (최대 10MB)
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
