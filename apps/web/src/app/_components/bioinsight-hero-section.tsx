@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, FileSpreadsheet, ArrowRight } from "lucide-react";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export function BioInsightHeroSection() {
           </form>
 
           {/* 인기 검색어 칩 */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-6 md:gap-3">
             <span className="text-sm text-slate-500 font-medium">🔥 인기:</span>
             {popularSearches.map((term) => (
               <Badge
@@ -98,6 +99,25 @@ export function BioInsightHeroSection() {
                 #{term}
               </Badge>
             ))}
+          </div>
+
+          {/* 빠른 견적 요청 CTA */}
+          <div className="mt-10 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+            <p className="text-sm text-slate-500 mb-3">
+              찾으시는 제품이 없거나 엑셀 구매 리스트가 있으신가요?
+            </p>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-8 h-12"
+              asChild
+            >
+              <Link href="/dashboard/quotes">
+                <FileSpreadsheet className="mr-2 h-5 w-5" />
+                엑셀/파일로 한 번에 견적 받기
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
