@@ -47,6 +47,10 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
     inventory ? { id: inventory.productId, name: inventory.product.name, brand: inventory.product.brand, catalogNumber: inventory.product.catalogNumber } : null
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [isManualEntry, setIsManualEntry] = useState(false);
+  const [manualProductName, setManualProductName] = useState("");
+  const [manualBrand, setManualBrand] = useState("");
+  const [manualCatalogNumber, setManualCatalogNumber] = useState("");
   const [currentQuantity, setCurrentQuantity] = useState(inventory?.currentQuantity?.toString() || "0");
   const [unit, setUnit] = useState(inventory?.unit || "개");
   const [safetyStock, setSafetyStock] = useState(inventory?.safetyStock?.toString() || "");
@@ -107,7 +111,23 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const handleClose = () => {
     setStep(inventory ? "details" : "search");
     setSelectedProduct(inventory ? selectedProduct : null);
+    setIsManualEntry(false);
+    setManualProductName("");
+    setManualBrand("");
+    setManualCatalogNumber("");
     onOpenChange(false);
+  };
+
+  const handleManualEntryNext = () => {
+    const name = manualProductName.trim();
+    if (!name) return;
+    setSelectedProduct({
+      id: `manual-${Date.now()}`,
+      name,
+      brand: manualBrand.trim() || null,
+      catalogNumber: manualCatalogNumber.trim() || null,
+    });
+    setStep("details");
   };
 
   return (
@@ -123,6 +143,64 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
         </DialogHeader>
 
         {step === "search" ? (
+          isManualEntry ? (
+            <div className="space-y-4 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsManualEntry(false)}
+                className="-ml-2 text-slate-500 hover:text-slate-700"
+              >
+                ← 다시 검색하기
+              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="manual-name" className="text-sm font-medium">
+                  제품명 <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="manual-name"
+                  placeholder="예: Fetal Bovine Serum"
+                  value={manualProductName}
+                  onChange={(e) => setManualProductName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manual-brand" className="text-sm font-medium">
+                  제조사
+                </Label>
+                <Input
+                  id="manual-brand"
+                  placeholder="예: Gibco"
+                  value={manualBrand}
+                  onChange={(e) => setManualBrand(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manual-catalog" className="text-sm font-medium">
+                  카탈로그 번호
+                </Label>
+                <Input
+                  id="manual-catalog"
+                  placeholder="예: 16000-044"
+                  value={manualCatalogNumber}
+                  onChange={(e) => setManualCatalogNumber(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" onClick={handleClose} className="flex-1">
+                  취소
+                </Button>
+                <Button
+                  onClick={handleManualEntryNext}
+                  disabled={!manualProductName.trim()}
+                  className="flex-1"
+                >
+                  다음
+                </Button>
+              </div>
+            </div>
+          ) : (
           <div className="space-y-4">
             <div>
               <Label className="text-base font-semibold mb-2 block">상품명 또는 카탈로그 번호 검색</Label>
@@ -141,8 +219,23 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               {isLoadingProducts ? (
                 <div className="p-8 text-center text-muted-foreground">검색 중...</div>
               ) : filteredProducts.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  {searchQuery ? "제품을 찾을 수 없습니다." : "검색어를 입력하세요."}
+                <div className="p-8 text-center">
+                  {searchQuery ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <p className="text-sm text-slate-500">검색된 제품이 없습니다.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsManualEntry(true)}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        + 직접 제품 정보 입력하기
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">검색어를 입력하세요.</p>
+                  )}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -191,6 +284,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               </Button>
             </div>
           </div>
+          )
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 선택된 제품 정보 */}
@@ -221,6 +315,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                       size="sm"
                       onClick={() => {
                         setSelectedProduct(null);
+                        setIsManualEntry(false);
                         setStep("search");
                       }}
                     >

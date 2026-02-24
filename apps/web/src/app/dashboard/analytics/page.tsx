@@ -2,12 +2,12 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,8 +22,6 @@ import {
  * 연구비 소진 현황을 확인하는 리포트
  */
 export default function AnalyticsPage() {
-  const [period, setPeriod] = useState<"3m" | "6m" | "1y" | "all">("6m");
-
   // Mock Data: 예산 요약
   const budgetSummary = {
     total: 50000000,      // 총 예산: ₩ 50,000,000
@@ -63,22 +61,12 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
-      {/* 헤더: 제목 + 기간 선택 탭 */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">지출 분석</h2>
-          <p className="text-muted-foreground mt-1">
-            연구비 소진 현황을 확인하세요.
-          </p>
-        </div>
-        <Tabs value={period} onValueChange={(v) => setPeriod(v as "3m" | "6m" | "1y" | "all")} className="w-full md:w-auto">
-          <TabsList className="grid w-full grid-cols-4 md:w-[400px]">
-            <TabsTrigger value="3m">최근 3개월</TabsTrigger>
-            <TabsTrigger value="6m">최근 6개월</TabsTrigger>
-            <TabsTrigger value="1y">올해</TabsTrigger>
-            <TabsTrigger value="all">전체</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* 헤더 */}
+      <div className="flex flex-col space-y-2 mb-8">
+        <h2 className="text-3xl font-bold tracking-tight">지출 분석</h2>
+        <p className="text-muted-foreground">
+          연구비 소진 현황을 확인하세요.
+        </p>
       </div>
       <Separator />
 
@@ -134,15 +122,16 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 월별 지출 추이 (Bar Chart) */}
         <Card>
-          <CardHeader>
-            <CardTitle>월별 지출 추이</CardTitle>
-            <CardDescription>
-              {period === "3m" && "최근 3개월"}
-              {period === "6m" && "최근 6개월"}
-              {period === "1y" && "올해"}
-              {period === "all" && "전체 기간"}
-              지출액 변화
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="space-y-1">
+              <CardTitle>월별 지출 추이</CardTitle>
+              <CardDescription>최근 6개월간 지출액 변화</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600 text-sm shrink-0" asChild>
+              <Link href="/dashboard/analytics/monthly">
+                상세보기 <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -181,9 +170,16 @@ export default function AnalyticsPage() {
 
         {/* 카테고리별 비중 (Pie Chart) */}
         <Card>
-          <CardHeader>
-            <CardTitle>카테고리별 비중</CardTitle>
-            <CardDescription>시약, 장비, 소모품 비율</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="space-y-1">
+              <CardTitle>카테고리별 비중</CardTitle>
+              <CardDescription>시약, 장비, 소모품 비율</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600 text-sm shrink-0" asChild>
+              <Link href="/dashboard/analytics/category">
+                상세보기 <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

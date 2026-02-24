@@ -29,6 +29,7 @@ import {
   Info,
   Calendar,
   Clock,
+  Home,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -306,15 +307,26 @@ export default function ProductDetailPage() {
       <div className="container mx-auto px-4 md:px-4 lg:px-8 pt-14 md:py-8 relative z-0">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex items-center text-sm text-gray-500 overflow-x-auto whitespace-nowrap">
-              <Link href="/" className="hover:text-blue-600 transition-colors">Home</Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-300" />
-              <Link href="/search" className="hover:text-blue-600 transition-colors">검색 결과</Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-300" />
-              <span className="font-semibold text-gray-800 truncate">{product.name}</span>
-            </div>
-          </div>
+          <nav className="flex items-center space-x-1 md:space-x-2 text-sm text-slate-500 mb-6 md:mb-8 px-1 overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
+            <Link
+              href="/"
+              className="flex items-center gap-1 hover:text-blue-600 transition-colors font-medium text-slate-600"
+            >
+              <Home className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">홈</span>
+            </Link>
+            <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0" />
+            <Link
+              href="/search"
+              className="hover:text-blue-600 transition-colors font-medium text-slate-600 whitespace-nowrap"
+            >
+              검색 결과
+            </Link>
+            <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0" />
+            <span className="text-slate-900 font-semibold truncate max-w-[200px] md:max-w-[400px]">
+              {product.name || "제품"}
+            </span>
+          </nav>
 
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 lg:gap-10">
             {/* 제품 정보 (8칸) */}

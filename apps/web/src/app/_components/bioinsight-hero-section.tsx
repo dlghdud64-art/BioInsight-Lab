@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,11 +12,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, FileSpreadsheet, ArrowRight, UploadCloud } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { Search, FileSpreadsheet, ArrowRight, UploadCloud, Loader2 } from "lucide-react";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +33,32 @@ export function BioInsightHeroSection() {
   };
 
   const popularSearches = ["FBS", "Pipette", "Conical Tube", "Centrifuge", "DMEM", "Trypsin"];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "파일을 선택해주세요",
+        description: "업로드할 파일을 먼저 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsUploading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    toast({
+      title: "견적 요청이 접수되었습니다",
+      description: "대시보드에서 확인해주세요.",
+    });
+    setIsUploading(false);
+    setFile(null);
+    setIsOpen(false);
+  };
 
   return (
     <section className="relative w-full pt-32 md:pt-40 pb-20 overflow-hidden bg-white border-b border-slate-200 min-h-[60vh]">
@@ -112,7 +145,13 @@ export function BioInsightHeroSection() {
             <p className="text-sm text-slate-500 mb-3">
               찾으시는 제품이 없거나 엑셀 구매 리스트가 있으신가요?
             </p>
-            <Dialog>
+            <Dialog
+              open={isOpen}
+              onOpenChange={(open) => {
+                setIsOpen(open);
+                if (!open) setFile(null);
+              }}
+            >
               <DialogTrigger asChild>
                 <Button
                   size="lg"
@@ -131,27 +170,59 @@ export function BioInsightHeroSection() {
                     엑셀 또는 CSV 파일을 업로드하면 품목을 자동으로 읽어 견적 요청을 만들어 드립니다.
                   </DialogDescription>
                 </DialogHeader>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  aria-label="견적용 파일 선택"
+                />
+
                 <div
                   role="button"
                   tabIndex={0}
-                  onClick={() => document.getElementById("hero-quote-file")?.click()}
-                  onKeyDown={(e) => e.key === "Enter" && document.getElementById("hero-quote-file")?.click()}
-                  className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 p-8 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                  className={cn(
+                    "mt-4 border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer",
+                    file ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                  )}
                 >
-                  <input
-                    id="hero-quote-file"
-                    type="file"
-                    accept=".xlsx,.xls,.csv,.pdf"
-                    className="sr-only"
-                    aria-label="견적용 파일 선택"
-                  />
-                  <UploadCloud className="h-10 w-10 text-slate-400 mb-3" />
-                  <p className="text-sm font-medium text-slate-700">
-                    클릭하거나 파일을 이곳으로 드래그하세요
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    PDF, Excel, CSV 지원 (최대 10MB)
-                  </p>
+                  <UploadCloud className={cn("h-10 w-10 mb-3", file ? "text-blue-600" : "text-slate-400")} />
+                  {file ? (
+                    <p className="text-sm font-semibold text-blue-700">선택된 파일: {file.name}</p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-slate-700">
+                        클릭하거나 파일을 이곳으로 드래그하세요
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        PDF, Excel, CSV 지원 (최대 10MB)
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isUploading}>
+                    취소
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        접수 중...
+                      </>
+                    ) : (
+                      "견적 요청하기"
+                    )}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

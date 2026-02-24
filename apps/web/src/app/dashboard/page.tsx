@@ -375,18 +375,19 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* 2. KPI Cards (2x2 그리드) */}
+        {/* 2. KPI Cards (2x2 그리드) - 모던화 */}
         <div className="grid grid-cols-2 gap-3">
-            {/* 총 재고 수 */}
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">총 재고 수</CardTitle>
-                  <Package className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">총 재고 수</CardTitle>
+                  <div className="rounded-full p-2 bg-blue-50">
+                    <Package className="h-4 w-4 text-blue-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.totalInventory || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-green-600">
                       <TrendingUp className="h-3 w-3" />
                       <span>+12%</span>
@@ -396,17 +397,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 부족 알림 */}
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">부족 알림</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-50">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-red-600">
                       <TrendingDown className="h-3 w-3" />
                       <span>-3%</span>
@@ -416,17 +417,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 이번 달 지출 */}
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">이번 달 지출</CardTitle>
-                  <DollarSign className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">이번 달 지출</CardTitle>
+                  <div className="rounded-full p-2 bg-emerald-50">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">
                       ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
                     </div>
                     <div className="flex items-center gap-1 text-xs font-medium text-green-600">
@@ -438,17 +439,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 진행 중인 견적 */}
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">진행 중인 견적</CardTitle>
-                  <FileText className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">진행 중인 견적</CardTitle>
+                  <div className="rounded-full p-2 bg-violet-50">
+                    <FileText className="h-4 w-4 text-violet-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.activeQuotes || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
                       <span>→</span>
                     </div>
@@ -619,18 +620,19 @@ export default function DashboardPage() {
       <div className="hidden md:grid md:grid-cols-7 md:gap-6">
         {/* --- Left Main Content (Span 5) --- */}
         <div className="md:col-span-5 space-y-6">
-          {/* 1. KPI Cards */}
+          {/* 1. KPI Cards - 모던화 */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {/* 총 재고 수 */}
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">총 재고 수</CardTitle>
-                  <Package className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">총 재고 수</CardTitle>
+                  <div className="rounded-full p-2 bg-blue-50">
+                    <Package className="h-4 w-4 text-blue-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.totalInventory || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.totalInventory || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-green-600">
                       <TrendingUp className="h-3 w-3" />
                       <span>+12%</span>
@@ -640,17 +642,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 부족 알림 */}
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">부족 알림</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-50">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-red-600">{stats.lowStockAlerts || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-red-600">
                       <TrendingDown className="h-3 w-3" />
                       <span>-3%</span>
@@ -660,17 +662,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 이번 달 지출 */}
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">이번 달 지출</CardTitle>
-                  <DollarSign className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">이번 달 지출</CardTitle>
+                  <div className="rounded-full p-2 bg-emerald-50">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">
                       ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
                     </div>
                     <div className="flex items-center gap-1 text-xs font-medium text-green-600">
@@ -682,17 +684,17 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-
-            {/* 진행 중인 견적 */}
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all hover:shadow-md hover:border-blue-400">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">진행 중인 견적</CardTitle>
-                  <FileText className="h-4 w-4 text-slate-400" />
+                  <CardTitle className="text-sm font-semibold text-slate-600">진행 중인 견적</CardTitle>
+                  <div className="rounded-full p-2 bg-violet-50">
+                    <FileText className="h-4 w-4 text-violet-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl md:text-4xl font-bold text-slate-900">{stats.activeQuotes || 0}</div>
+                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.activeQuotes || 0}</div>
                     <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
                       <span>→</span>
                     </div>
@@ -853,28 +855,37 @@ export default function DashboardPage() {
 
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
-          {/* 3. Quick Actions - 계층별 시인성 강화 */}
-          <Card>
-            <CardHeader className="pb-3">
+          {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg font-bold">빠른 실행</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Link href="/test/search">
-                <Button variant="outline" className="w-full justify-start h-12 bg-slate-50 text-slate-500 hover:bg-slate-100 border-dashed">
-                  <Search className="mr-2 h-4 w-4" />
-                  통합 검색
+                <Button variant="outline" className="w-full h-12 justify-between rounded-lg bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <Search className="mr-3 h-4 w-4 text-slate-500" />
+                    통합 검색
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400" />
                 </Button>
               </Link>
               <Link href="/dashboard/inventory">
-                <Button variant="outline" className="w-full justify-start h-12 border-blue-200 text-blue-700 hover:bg-blue-50">
-                  <Plus className="mr-2 h-4 w-4" />
-                  새 재고 등록
+                <Button variant="outline" className="w-full h-12 justify-between rounded-lg border-blue-200 text-blue-700 bg-blue-50/30 hover:bg-blue-50 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <Plus className="mr-3 h-4 w-4" />
+                    새 재고 등록
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-blue-300" />
                 </Button>
               </Link>
               <Link href="/test/quote">
-                <Button className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
-                  <FileText className="mr-2 h-4 w-4" />
-                  견적 요청하기
+                <Button className="w-full h-12 justify-between rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <FileText className="mr-3 h-4 w-4" />
+                    견적 요청하기
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-blue-300" />
                 </Button>
               </Link>
             </CardContent>
