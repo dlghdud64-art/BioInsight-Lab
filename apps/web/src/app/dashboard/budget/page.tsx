@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,7 @@ interface Budget {
   periodStart: string;
   periodEnd: string;
   organizationId?: string | null;
+  targetDepartment?: string | null;
   projectName?: string | null;
   description?: string | null;
   usage?: {
@@ -39,6 +40,14 @@ interface Budget {
   };
 }
 
+const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "부서를 선택해주세요" },
+  { value: "공정개발팀", label: "공정개발팀" },
+  { value: "기초연구팀", label: "기초연구팀" },
+  { value: "품질관리(QC)팀", label: "품질관리(QC)팀" },
+  { value: "전체(공용 예산)", label: "전체(공용 예산)" },
+];
+
 export default function BudgetPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -46,6 +55,8 @@ export default function BudgetPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data, isLoading } = useQuery<{ budgets: Budget[] }>({
     queryKey: ["budgets"],
@@ -57,6 +68,55 @@ export default function BudgetPage() {
     enabled: status === "authenticated",
   });
 
+  // API 데이터를 로컬 budgets에 동기화 (최초/갱신 시)
+  useEffect(() => {
+    if (data?.budgets && Array.isArray(data.budgets)) {
+      setBudgets(data.budgets);
+    }
+  }, [data?.budgets]);
+
+  /** 데모용: 가상 저장 (API 호출 없이 로컬 상태만 갱신) */
+  const handleMockSubmit = async (formData: {
+    name: string;
+    amount: number;
+    currency: string;
+    periodStart: string;
+    periodEnd: string;
+    targetDepartment?: string | null;
+    projectName?: string | null;
+    description?: string | null;
+  }) => {
+    setIsSubmitting(true);
+    // 1초 가상 로딩
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const newBudget: Budget = {
+      id: String(Date.now()),
+      name: formData.name || "신규 예산",
+      amount: formData.amount ?? 0,
+      currency: formData.currency || "KRW",
+      periodStart: formData.periodStart,
+      periodEnd: formData.periodEnd,
+      targetDepartment: formData.targetDepartment ?? null,
+      projectName: formData.projectName ?? null,
+      description: formData.description ?? null,
+      usage: {
+        totalSpent: 0,
+        usageRate: 0,
+        remaining: formData.amount ?? 0,
+      },
+    };
+
+    setBudgets((prev) => [newBudget, ...prev]);
+    toast({
+      title: "예산이 성공적으로 등록되었습니다.",
+      description: "데모 모드로 저장되었습니다.",
+    });
+    setIsDialogOpen(false);
+    setEditingBudget(null);
+    setIsSubmitting(false);
+  };
+
   const createOrUpdateMutation = useMutation({
     mutationFn: async (data: {
       id?: string;
@@ -66,6 +126,7 @@ export default function BudgetPage() {
       periodStart: string;
       periodEnd: string;
       organizationId?: string | null;
+      targetDepartment?: string | null;
       projectName?: string | null;
       description?: string | null;
     }) => {
@@ -173,8 +234,6 @@ export default function BudgetPage() {
   //   return null;
   // }
 
-  const budgets = data?.budgets || [];
-
   return (
     <div className="w-full px-4 md:px-6 py-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -202,11 +261,11 @@ export default function BudgetPage() {
                 </DialogHeader>
                 <BudgetForm
                   budget={editingBudget}
+                  isSubmitting={isSubmitting}
                   onSubmit={(data) => {
-                    createOrUpdateMutation.mutate({
-                      ...data,
-                      id: editingBudget?.id,
-                    });
+                    // 데모용: 가상 저장 (실제 API 호출 주석 처리)
+                    // createOrUpdateMutation.mutate({ ...data, id: editingBudget?.id });
+                    handleMockSubmit(data);
                   }}
                   onCancel={() => {
                     setIsDialogOpen(false);
@@ -224,7 +283,7 @@ export default function BudgetPage() {
               <p className="text-muted-foreground">예산 목록을 불러오는 중...</p>
             </CardContent>
           </Card>
-        ) : budgets.length === 0 ? (
+        ) : (budgets.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -236,24 +295,81 @@ export default function BudgetPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {Array.isArray(budgets) && budgets.map((budget) => (
-              <BudgetCard
-                key={budget.id}
-                budget={budget}
-                onEdit={() => {
-                  setEditingBudget(budget);
-                  setIsDialogOpen(true);
-                }}
-                onDelete={() => {
-                  if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
-                    deleteMutation.mutate(budget.id);
-                  }
-                }}
-              />
-            ))}
+          <div className="grid gap-6 md:grid-cols-2 mt-6">
+            {Array.isArray(budgets) &&
+              budgets.map((budget) => {
+                const used = budget.usage?.totalSpent ?? 0;
+                const total = budget.amount;
+                const rate = total > 0 ? Math.round((used / total) * 100) : 0;
+                const startStr =
+                  budget.periodStart &&
+                  new Date(budget.periodStart).toLocaleDateString("ko-KR");
+                const endStr =
+                  budget.periodEnd &&
+                  new Date(budget.periodEnd).toLocaleDateString("ko-KR");
+                return (
+                  <Card
+                    key={budget.id}
+                    className="shadow-sm border-slate-200"
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex justify-between items-center">
+                        {budget.name}
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                        >
+                          운영 중
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        {startStr} ~ {endStr}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-slate-500">
+                            사용 금액 ({rate}%)
+                          </span>
+                          <span className="font-bold">
+                            ₩{used.toLocaleString("ko-KR")} / ₩
+                            {total.toLocaleString("ko-KR")}
+                          </span>
+                        </div>
+                        <Progress value={rate} className="h-2" />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingBudget(budget);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          상세 보기
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
+                              setBudgets((prev) =>
+                                prev.filter((b) => b.id !== budget.id)
+                              );
+                            }
+                          }}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
@@ -367,10 +483,12 @@ function BudgetCard({
 
 function BudgetForm({
   budget,
+  isSubmitting = false,
   onSubmit,
   onCancel,
 }: {
   budget?: Budget | null;
+  isSubmitting?: boolean;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
@@ -397,6 +515,7 @@ function BudgetForm({
   const [currency, setCurrency] = useState(budget?.currency || "KRW");
   const [periodStart, setPeriodStart] = useState<Date | null>(getDefaultStartDate());
   const [periodEnd, setPeriodEnd] = useState<Date | null>(getDefaultEndDate());
+  const [targetDepartment, setTargetDepartment] = useState(budget?.targetDepartment || "");
   const [projectName, setProjectName] = useState(budget?.projectName || "");
   const [description, setDescription] = useState(budget?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -470,6 +589,10 @@ function BudgetForm({
       newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
     }
 
+    if (!targetDepartment.trim()) {
+      newErrors.targetDepartment = "대상 부서/팀을 선택해주세요.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -500,10 +623,11 @@ function BudgetForm({
 
     onSubmit({
       name: name.trim(),
-      amount: cleanAmount, // 순수 숫자로 변환
+      amount: cleanAmount,
       currency,
       periodStart: periodStart ? periodStart.toISOString().split("T")[0] : "",
       periodEnd: periodEnd ? periodEnd.toISOString().split("T")[0] : "",
+      targetDepartment: targetDepartment.trim() || undefined,
       projectName: projectName.trim() || undefined,
       description: description.trim() || undefined,
     });
@@ -606,6 +730,33 @@ function BudgetForm({
         </div>
       )}
 
+      <div className="space-y-2">
+        <Label htmlFor="targetDepartment">
+          대상 부서/팀 <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={targetDepartment}
+          onValueChange={(v) => {
+            setTargetDepartment(v);
+            if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" }));
+          }}
+        >
+          <SelectTrigger id="targetDepartment" className={errors.targetDepartment ? "border-red-500" : ""}>
+            <SelectValue placeholder="부서를 선택해주세요" />
+          </SelectTrigger>
+          <SelectContent>
+            {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value || "empty"} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.targetDepartment && (
+          <p className="text-xs text-red-500 mt-1">{errors.targetDepartment}</p>
+        )}
+      </div>
+
       <div>
         <Label htmlFor="projectName">프로젝트/과제명 (선택)</Label>
         <Input
@@ -632,8 +783,8 @@ function BudgetForm({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           취소
         </Button>
-        <Button type="submit" className="flex-1">
-          {budget ? "수정" : "저장"}
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? (budget ? "수정 중..." : "저장 중...") : budget ? "수정" : "저장"}
         </Button>
       </div>
     </form>

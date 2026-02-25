@@ -14,13 +14,15 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Search, FileSpreadsheet, ArrowRight, UploadCloud, Loader2 } from "lucide-react";
+import { Search, MessageSquareText, UploadCloud, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [inquiryText, setInquiryText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,11 +42,11 @@ export function BioInsightHeroSection() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) {
+  const handleSubmitInquiry = async () => {
+    if (!inquiryText.trim()) {
       toast({
-        title: "파일을 선택해주세요",
-        description: "업로드할 파일을 먼저 선택해주세요.",
+        title: "문의 내용을 입력해주세요",
+        description: "문의 내용은 필수입니다.",
         variant: "destructive",
       });
       return;
@@ -52,10 +54,11 @@ export function BioInsightHeroSection() {
     setIsUploading(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
     toast({
-      title: "견적 요청이 접수되었습니다",
-      description: "대시보드에서 확인해주세요.",
+      title: "문의가 접수되었습니다",
+      description: "담당자가 빠르게 답변해 드리겠습니다.",
     });
     setIsUploading(false);
+    setInquiryText("");
     setFile(null);
     setIsOpen(false);
   };
@@ -140,16 +143,19 @@ export function BioInsightHeroSection() {
             ))}
           </div>
 
-          {/* 빠른 견적 요청 CTA: 클릭 시 팝업(Dialog) */}
+          {/* 맞춤 소싱 및 도입 문의 CTA */}
           <div className="mt-10 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
             <p className="text-sm text-slate-500 mb-3">
-              찾으시는 제품이 없거나 엑셀 구매 리스트가 있으신가요?
+              원하는 제품이 없거나, 연구실 맞춤 도입 상담이 필요하신가요?
             </p>
             <Dialog
               open={isOpen}
               onOpenChange={(open) => {
                 setIsOpen(open);
-                if (!open) setFile(null);
+                if (!open) {
+                  setInquiryText("");
+                  setFile(null);
+                }
               }}
             >
               <DialogTrigger asChild>
@@ -158,51 +164,63 @@ export function BioInsightHeroSection() {
                   variant="outline"
                   className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-8 h-12"
                 >
-                  <FileSpreadsheet className="mr-2 h-5 w-5" />
-                  엑셀/파일로 한 번에 견적 받기
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <MessageSquareText className="mr-2 h-5 w-5" />
+                  전문가에게 맞춤 소싱 및 도입 문의하기
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>
-                  <DialogTitle>파일로 견적 요청</DialogTitle>
+                  <DialogTitle className="text-xl">맞춤 소싱 및 도입 문의</DialogTitle>
                   <DialogDescription>
-                    엑셀 또는 CSV 파일을 업로드하면 품목을 자동으로 읽어 견적 요청을 만들어 드립니다.
+                    궁금하신 점이나 찾으시는 품목을 남겨주시면, 담당자가 빠르게 답변해 드립니다.
                   </DialogDescription>
                 </DialogHeader>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  aria-label="견적용 파일 선택"
-                />
+                <div className="space-y-4 mt-2">
+                  {/* [필수] 문의 내용 */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      문의 내용 <span className="text-red-500">*</span>
+                    </label>
+                    <Textarea
+                      placeholder="어떤 시약/장비가 필요하신가요? 또는 궁금한 점을 자유롭게 남겨주세요."
+                      className="min-h-[120px] resize-none"
+                      value={inquiryText}
+                      onChange={(e) => setInquiryText(e.target.value)}
+                    />
+                  </div>
 
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => fileInputRef.current?.click()}
-                  onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-                  className={cn(
-                    "mt-4 border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer",
-                    file ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
-                  )}
-                >
-                  <UploadCloud className={cn("h-10 w-10 mb-3", file ? "text-blue-600" : "text-slate-400")} />
-                  {file ? (
-                    <p className="text-sm font-semibold text-blue-700">선택된 파일: {file.name}</p>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium text-slate-700">
-                        클릭하거나 파일을 이곳으로 드래그하세요
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        PDF, Excel, CSV 지원 (최대 10MB)
-                      </p>
-                    </>
-                  )}
+                  {/* [선택] 참고용 파일 첨부 */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">
+                      참고용 파일 첨부 <span className="text-slate-400 font-normal">(선택사항)</span>
+                    </label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv,.pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      aria-label="참고용 파일 선택"
+                    />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                      className={cn(
+                        "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors cursor-pointer hover:bg-slate-50",
+                        file ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-slate-50"
+                      )}
+                    >
+                      <UploadCloud className={cn("h-6 w-6 mb-2", file ? "text-blue-600" : "text-slate-400")} />
+                      {file ? (
+                        <p className="text-sm font-semibold text-blue-700">{file.name}</p>
+                      ) : (
+                        <p className="text-sm text-slate-500">클릭하여 파일 업로드 (엑셀, PDF 등)</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
@@ -211,8 +229,8 @@ export function BioInsightHeroSection() {
                   </Button>
                   <Button
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={handleUpload}
-                    disabled={isUploading}
+                    onClick={handleSubmitInquiry}
+                    disabled={isUploading || !inquiryText.trim()}
                   >
                     {isUploading ? (
                       <>
@@ -220,7 +238,7 @@ export function BioInsightHeroSection() {
                         접수 중...
                       </>
                     ) : (
-                      "견적 요청하기"
+                      "문의 접수하기"
                     )}
                   </Button>
                 </div>

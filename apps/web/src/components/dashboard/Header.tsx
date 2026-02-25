@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck } from "lucide-react";
+import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones } from "lucide-react";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -33,16 +33,17 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     }
   };
 
-  // 브레드크럼 생성
-  const generateBreadcrumbs = () => {
-    const paths = pathname?.split("/").filter(Boolean) || [];
-    const breadcrumbs = [{ label: "Home", href: "/" }];
-
-    // 경로별 라벨 매핑
+  // 경로 세그먼트를 한글로 표시용 라벨로 변환 (Raw ID·UUID 숨김, 영문→한글 매핑)
+  const formatPathName = (path: string, isLastSegment: boolean): string => {
+    if (!path) return "";
+    // 10자리 이상 숫자 ID 또는 UUID 패턴 → "상세 관리" / "상세 정보"
+    if (/^\d{10,}$/.test(path) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(path)) {
+      return isLastSegment ? "상세 정보" : "상세 관리";
+    }
     const pathLabelMap: Record<string, string> = {
-      dashboard: "Dashboard",
+      dashboard: "대시보드",
       analytics: "지출 분석",
-      inventory: "인벤토리",
+      inventory: "재고 관리",
       purchases: "구매 내역",
       quotes: "견적 관리",
       organizations: "조직 관리",
@@ -51,18 +52,48 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       budget: "예산 관리",
       reports: "구매 리포트",
       notifications: "알림 센터",
+      guide: "이용 가이드",
+      faq: "자주 묻는 질문",
+      support: "1:1 문의",
+      orders: "견적 및 구매 내역",
+      admin: "관리자",
+      my: "내 정보",
+      test: "테스트",
     };
+    const mapped = pathLabelMap[path];
+    if (mapped) return mapped;
+    return path
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // 브레드크럼 생성
+  const generateBreadcrumbs = () => {
+    const paths = pathname?.split("/").filter(Boolean) || [];
+    const breadcrumbs = [{ label: "Home", href: "/" }];
 
     let currentPath = "";
     paths.forEach((path, index) => {
       currentPath += `/${path}`;
-      // 매핑된 라벨이 있으면 사용, 없으면 기본 변환
-      const label = pathLabelMap[path] || path
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
+      const isLast = index === paths.length - 1;
+      const prevSegment = index > 0 ? paths[index - 1] : null;
+
+      let label: string;
+      if (index === 0) {
+        // 첫 번째 세그먼트는 보통 "dashboard" → "대시보드"
+        label = formatPathName(path, isLast);
+      } else if (
+        prevSegment === "organizations" &&
+        ( /^\d{10,}$/.test(path) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(path) )
+      ) {
+        // 조직 상세 페이지의 Raw ID는 "조직 상세"로 치환
+        label = "조직 상세";
+      } else {
+        label = formatPathName(path, isLast);
+      }
       breadcrumbs.push({
-        label: index === 0 ? "Dashboard" : label,
+        label,
         href: currentPath,
       });
     });
@@ -268,30 +299,21 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem asChild>
-                <Link
-                  href="/help/guide"
-                  className="flex items-center gap-2 w-full cursor-pointer"
-                >
-                  <span>📖</span>
-                  <span>이용 가이드</span>
+                <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  이용 가이드
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link
-                  href="/help/faq"
-                  className="flex items-center gap-2 w-full cursor-pointer"
-                >
-                  <span>❓</span>
-                  <span>자주 묻는 질문</span>
+                <Link href="/dashboard/faq" className="cursor-pointer w-full flex items-center">
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  자주 묻는 질문
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link
-                  href="/help/support"
-                  className="flex items-center gap-2 w-full cursor-pointer"
-                >
-                  <span>🎧</span>
-                  <span>1:1 문의하기</span>
+                <Link href="/dashboard/support" className="cursor-pointer w-full flex items-center">
+                  <Headphones className="mr-2 h-4 w-4" />
+                  1:1 문의하기
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

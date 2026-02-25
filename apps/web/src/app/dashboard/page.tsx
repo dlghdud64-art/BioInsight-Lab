@@ -137,28 +137,32 @@ export default function DashboardPage() {
     };
   };
 
-  // 상태 뱃지 스타일 및 점 색상 함수
+  // 상태 뱃지 스타일 (Status Dot + Pill)
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "배송 중":
         return {
-          className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
-          dotColor: "bg-blue-500",
+          className: "bg-blue-50 text-blue-700 border-blue-200",
+          dot: "blue" as const,
+          dotPulse: false,
         };
       case "승인 대기":
         return {
-          className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100",
-          dotColor: "bg-yellow-500",
+          className: "bg-amber-50 text-amber-700 border-amber-200",
+          dot: "amber" as const,
+          dotPulse: true,
         };
       case "배송 완료":
         return {
-          className: "bg-green-100 text-green-700 hover:bg-green-100",
-          dotColor: "bg-green-500",
+          className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          dot: "emerald" as const,
+          dotPulse: false,
         };
       default:
         return {
-          className: "bg-slate-100 text-slate-700 hover:bg-slate-100",
-          dotColor: "bg-slate-500",
+          className: "bg-slate-100 text-slate-600 border-slate-200",
+          dot: "slate" as const,
+          dotPulse: false,
         };
     }
   };
@@ -190,14 +194,12 @@ export default function DashboardPage() {
           </div>
         </TableCell>
         <TableCell className="py-4">
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "rounded-full px-3 py-1 font-medium shadow-none inline-flex items-center gap-2",
-              statusStyle.className
-            )}
+          <Badge
+            variant="outline"
+            dot={statusStyle.dot}
+            dotPulse={statusStyle.dotPulse}
+            className={statusStyle.className}
           >
-            <span className={cn("h-1.5 w-1.5 rounded-full", statusStyle.dotColor)} />
             {orderData.status}
           </Badge>
         </TableCell>
@@ -251,14 +253,12 @@ export default function DashboardPage() {
         </div>
         <div className="text-right flex-shrink-0 ml-2">
           <p className="text-sm font-bold mb-1 whitespace-nowrap">₩{orderData.amount.toLocaleString("ko-KR")}</p>
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "text-[10px] px-1.5 h-5 inline-flex items-center gap-1 whitespace-nowrap",
-              statusStyle.className
-            )}
+          <Badge
+            variant="outline"
+            dot={statusStyle.dot}
+            dotPulse={statusStyle.dotPulse}
+            className={cn("whitespace-nowrap", statusStyle.className)}
           >
-            <span className={cn("h-1 w-1 rounded-full shrink-0", statusStyle.dotColor)} />
             <span className="truncate">{orderData.status}</span>
           </Badge>
         </div>
@@ -856,12 +856,12 @@ export default function DashboardPage() {
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
           {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
-          <Card className="shadow-sm">
+          <Card className="shadow-sm border-slate-200">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-bold">빠른 실행</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href="/test/search">
+            <CardContent className="flex flex-col gap-3">
+              <Link href="/test/search" className="block">
                 <Button variant="outline" className="w-full h-12 justify-between rounded-lg bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:-translate-y-0.5 transition-all">
                   <div className="flex items-center">
                     <Search className="mr-3 h-4 w-4 text-slate-500" />
@@ -870,7 +870,7 @@ export default function DashboardPage() {
                   <ChevronRight className="h-4 w-4 text-slate-400" />
                 </Button>
               </Link>
-              <Link href="/dashboard/inventory">
+              <Link href="/dashboard/inventory" className="block">
                 <Button variant="outline" className="w-full h-12 justify-between rounded-lg border-blue-200 text-blue-700 bg-blue-50/30 hover:bg-blue-50 hover:-translate-y-0.5 transition-all">
                   <div className="flex items-center">
                     <Plus className="mr-3 h-4 w-4" />
@@ -879,7 +879,7 @@ export default function DashboardPage() {
                   <ChevronRight className="h-4 w-4 text-blue-300" />
                 </Button>
               </Link>
-              <Link href="/test/quote">
+              <Link href="/test/quote" className="block">
                 <Button className="w-full h-12 justify-between rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:-translate-y-0.5 transition-all">
                   <div className="flex items-center">
                     <FileText className="mr-3 h-4 w-4" />

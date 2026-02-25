@@ -69,7 +69,7 @@ const sidebarGroups: SidebarGroup[] = [
     label: "랩 운영 (LAB MANAGEMENT)",
     items: [
       {
-        title: "인벤토리",
+        title: "재고 관리",
         href: "/dashboard/inventory",
         icon: Package,
       },

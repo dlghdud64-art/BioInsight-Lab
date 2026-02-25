@@ -435,6 +435,24 @@ export default function InventoryPage() {
     new Set(displayInventories.map((inv) => inv.location).filter(Boolean))
   ) as string[];
 
+  // 상단 KPI 카드용 요약 지표
+  const totalInventoryCount = displayInventories.length;
+  const lowOrOutOfStockCount = displayInventories.filter((inv) => {
+    const isOut = inv.currentQuantity === 0;
+    const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
+    return isOut || isLow;
+  }).length;
+  const now = new Date();
+  const expiringSoonCount = displayInventories.filter((inv) => {
+    if (!inv.expiryDate) return false;
+    const expiry = new Date(inv.expiryDate);
+    if (isNaN(expiry.getTime())) return false;
+    const daysUntilExpiry = Math.ceil(
+      (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
+  }).length;
+
   if (status === "loading") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -507,6 +525,54 @@ export default function InventoryPage() {
               내보내기
             </Button>
           </div>
+        </div>
+
+        {/* 상단 KPI 요약 카드 */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-slate-600">전체 재고</CardTitle>
+              <div className="bg-blue-50 p-2 rounded-full">
+                <Package className="h-4 w-4 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tight text-slate-900">
+                {totalInventoryCount}
+                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-slate-600">부족/품절</CardTitle>
+              <div className="bg-red-50 p-2 rounded-full">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tight text-slate-900">
+                {lowOrOutOfStockCount}
+                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-slate-600">폐기 임박</CardTitle>
+              <div className="bg-orange-50 p-2 rounded-full">
+                <Calendar className="h-4 w-4 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold tracking-tight text-slate-900">
+                {expiringSoonCount}
+                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* 필터 영역 */}
@@ -947,7 +1013,7 @@ export default function InventoryPage() {
                               )}
                             </div>
                             {isLowStock && (
-                              <Badge variant="destructive" className="mt-1 text-[9px] md:text-xs">
+                              <Badge variant="outline" dot="amber" className="mt-1 bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
                                 재고 부족
                               </Badge>
                             )}
@@ -960,8 +1026,10 @@ export default function InventoryPage() {
                             )}
                             {hasSafetyStock && (
                               <Badge
-                                variant={isLowStock ? "destructive" : "secondary"}
-                                className="text-[9px] md:text-xs"
+                                variant="outline"
+                                dot={isLowStock ? "red" : "emerald"}
+                                dotPulse={isLowStock}
+                                className={isLowStock ? "bg-red-50 text-red-700 border-red-200 text-[11px]" : "bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px]"}
                               >
                                 {isLowStock ? "알림 활성" : "정상"}
                               </Badge>
@@ -1056,7 +1124,7 @@ function InventoryCard({
             <div className="flex items-center gap-2 mb-1">
               <CardTitle className="text-lg">{inventory.product.name}</CardTitle>
               {isRecommended && (
-                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+                <Badge variant="outline" dot="blue" className="bg-blue-50 text-blue-700 border-blue-200 text-[11px]">
                   재구매 추천
                 </Badge>
               )}
@@ -1067,16 +1135,18 @@ function InventoryCard({
           </div>
           <div className="flex flex-col items-end gap-1">
             {hasRestockRequest && (
-              <Badge variant="destructive" className="text-xs">
+              <Badge variant="outline" dot="red" dotPulse className="bg-red-50 text-red-700 border-red-200 text-[11px]">
                 <Check className="h-3 w-3 mr-1" />
                 요청됨
               </Badge>
             )}
             {isOutOfStock && !hasRestockRequest && (
-              <Badge variant="destructive">품절</Badge>
+              <Badge variant="outline" dot="red" dotPulse className="bg-red-50 text-red-700 border-red-200">
+                품절
+              </Badge>
             )}
             {isLowStock && !isOutOfStock && !hasRestockRequest && (
-              <Badge variant="outline" className="bg-orange-100 text-orange-800">
+              <Badge variant="outline" dot="amber" className="bg-amber-50 text-amber-700 border-amber-200">
                 재고 부족
               </Badge>
             )}
@@ -1500,12 +1570,12 @@ function TeamInventoryCard({
             )}
           </div>
           {isOutOfStock && (
-            <Badge variant="destructive" className="flex-shrink-0">
+            <Badge variant="outline" dot="red" dotPulse className="flex-shrink-0 bg-red-50 text-red-700 border-red-200">
               품절
             </Badge>
           )}
           {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" className="flex-shrink-0 bg-orange-100 text-orange-800 border-orange-300">
+            <Badge variant="outline" dot="amber" className="flex-shrink-0 bg-amber-50 text-amber-700 border-amber-200">
               부족
             </Badge>
           )}
@@ -1550,7 +1620,7 @@ function TeamInventoryCard({
             {inventory.location || "미지정"}
           </span>
           {isLocationMissing && (
-            <Badge variant="outline" className="bg-amber-200 border-amber-400 text-amber-900 text-xs">
+            <Badge variant="outline" dot="amber" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
               설정 필요
             </Badge>
           )}

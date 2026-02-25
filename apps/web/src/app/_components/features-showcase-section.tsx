@@ -75,7 +75,7 @@ export function FeaturesShowcaseSection() {
       id: "management",
       title: "자동화된 연구실 관리",
       description: "물건이 도착하면 자동으로 인벤토리에 등록됩니다. 예산 현황도 실시간으로 확인하세요.",
-      features: ["대시보드", "인벤토리"],
+      features: ["대시보드", "재고 관리"],
       icon: BarChart3,
       gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
     },

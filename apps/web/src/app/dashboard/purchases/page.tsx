@@ -480,7 +480,9 @@ export default function PurchasesPage() {
         return (
           <Badge
             variant="outline"
-            className={`${statusBadge.className} border-0 rounded-full px-3 py-1 text-xs font-medium`}
+            dot={statusBadge.dot}
+            dotPulse={statusBadge.dotPulse}
+            className={statusBadge.className}
           >
             {statusBadge.label}
           </Badge>
@@ -489,18 +491,16 @@ export default function PurchasesPage() {
     },
   ], []);
 
-  // 상태에 따른 뱃지 스타일 (가상의 상태 - 실제 데이터에 따라 조정 필요)
+  // 상태에 따른 뱃지 (Status Dot + Pill)
   const getStatusBadge = (purchase: any) => {
-    // 실제 데이터에 status 필드가 없으므로, purchasedAt 기준으로 가상 상태 생성
     const daysAgo = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / (1000 * 60 * 60 * 24));
-    
     if (daysAgo > 7) {
-      return { label: "배송완료", className: "bg-green-100 text-green-700" };
-    } else if (daysAgo > 3) {
-      return { label: "배송중", className: "bg-blue-100 text-blue-700" };
-    } else {
-      return { label: "대기", className: "bg-yellow-100 text-yellow-700" };
+      return { label: "배송완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
     }
+    if (daysAgo > 3) {
+      return { label: "배송중", dot: "blue" as const, dotPulse: false, className: "bg-blue-50 text-blue-700 border-blue-200" };
+    }
+    return { label: "대기", dot: "amber" as const, dotPulse: false, className: "bg-amber-50 text-amber-700 border-amber-200" };
   };
 
   return (

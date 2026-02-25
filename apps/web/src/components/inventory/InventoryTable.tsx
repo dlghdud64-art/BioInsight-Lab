@@ -65,9 +65,10 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="bg-red-50 text-red-700 border-red-200 gap-1.5 px-2.5 py-0.5"
+            dot="red"
+            dotPulse
+            className="bg-red-50 text-red-700 border-red-200"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
             부족
           </Badge>
         );
@@ -76,9 +77,9 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="bg-amber-50 text-amber-700 border-amber-200 gap-1.5 px-2.5 py-0.5"
+            dot="amber"
+            className="bg-amber-50 text-amber-700 border-amber-200"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
             주의
           </Badge>
         );
@@ -88,9 +89,9 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5 px-2.5 py-0.5"
+            dot="emerald"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
             정상
           </Badge>
         );
@@ -98,9 +99,9 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="bg-slate-50 text-slate-700 border-slate-200 gap-1.5 px-2.5 py-0.5"
+            dot="slate"
+            className="bg-slate-100 text-slate-600 border-slate-200"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
             알 수 없음
           </Badge>
         );
