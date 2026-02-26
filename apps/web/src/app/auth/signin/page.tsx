@@ -1,13 +1,17 @@
 "use client";
 
+import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 
-export default function SignInPage() {
+function SignInContent() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) */}
@@ -21,12 +25,12 @@ export default function SignInPage() {
             backgroundSize: "48px 48px",
           }}
         />
-        {/* 좌측 브랜드 마크 - 최상단 고정 */}
-        <div className="relative z-10 flex items-center gap-3 font-bold text-2xl text-white mb-12">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
+        {/* 브랜드 로고 마크 - 좌측 상단 고정 (레이아웃 우선순위 최상) */}
+        <div className="absolute top-12 left-12 flex items-center gap-3 font-bold text-2xl tracking-tight z-20">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg">
             B
           </div>
-          <span className="tracking-tighter">BioInsight Lab</span>
+          <span className="text-white">BioInsight Lab</span>
         </div>
         {/* 중앙 슬로건 섹션 */}
         <div className="relative z-10 space-y-6 pt-8 lg:pt-12">
@@ -50,6 +54,13 @@ export default function SignInPage() {
 
       {/* 우측 로그인 영역 */}
       <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-white dark:bg-slate-950">
+        {/* 모바일: 좌측 상단 B BioInsight Lab 브랜드 마크 (좌측 패널 숨김 시 표시) */}
+        <div className="lg:hidden flex items-center gap-3 font-bold text-xl text-slate-900 dark:text-white p-6 pb-0">
+          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white text-lg shrink-0">
+            B
+          </div>
+          <span className="tracking-tighter">BioInsight Lab</span>
+        </div>
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center lg:text-left">
@@ -83,7 +94,7 @@ export default function SignInPage() {
               <Button
                 variant="outline"
                 className="w-full h-12 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-600 font-medium"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
+                onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -157,5 +168,17 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }

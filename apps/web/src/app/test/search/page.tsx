@@ -16,6 +16,8 @@ import { PageHeader } from "@/app/_components/page-header";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +30,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft } from "lucide-react";
 import { AIInsightCard } from "@/components/ai-insight-card";
-import { useRouter } from "next/navigation";
 
 export default function SearchPage() {
   const {
@@ -46,11 +47,29 @@ export default function SearchPage() {
     gptEnabled,
     searchQuery,
   } = useTestFlow();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isQuoteSheetOpen, setIsQuoteSheetOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [sheetSide, setSheetSide] = useState<"bottom" | "right">("bottom");
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+
+  const callbackUrl = searchQuery ? `/test/search?q=${encodeURIComponent(searchQuery)}` : "/test/search";
+
+  const handleProtectedAction = (action: () => void) => {
+    if (!session?.user) {
+      setIsLoginPromptOpen(true);
+      return;
+    }
+    action();
+  };
+
+  const handleLoginRedirect = () => {
+    setIsLoginPromptOpen(false);
+    router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  };
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
@@ -187,11 +206,11 @@ export default function SearchPage() {
                         product={product}
                         isInCompare={isInCompare}
                         onToggleCompare={() => toggleCompare(product.id)}
-                        onAddToQuote={() => addProductToQuote(product)}
-                        onClick={() => {
+                        onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
+                        onClick={() => handleProtectedAction(() => {
                           setSelectedProduct(product);
                           setIsDetailOpen(true);
-                        }}
+                        })}
                       />
                     );
                   })}
@@ -435,6 +454,33 @@ export default function SearchPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 로그인 유도 모달 */}
+      <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>로그인이 필요합니다</DialogTitle>
+            <DialogDescription>
+              상세보기와 견적 담기 기능을 이용하려면 로그인해 주세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={handleLoginRedirect}
+            >
+              로그인하기
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setIsLoginPromptOpen(false)}
+            >
+              취소
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 하단 설명 */}
       <div className="container mx-auto px-4 py-4 md:py-6">

@@ -192,7 +192,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                       </SheetClose>
                       <SheetClose asChild>
                         <Link
-                          href="/test/search"
+                          href="/auth/signin?callbackUrl=/test/search"
                           className="inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 transition-all shadow-md"
                         >
                           Get Started
@@ -224,7 +224,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   로그인
                 </Button>
               </Link>
-              <Link href="/test/search">
+              <Link href="/auth/signin?callbackUrl=/test/search">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 h-8 md:h-9 rounded-lg transition-all shadow-md whitespace-nowrap">
                   Get Started
                 </Button>
