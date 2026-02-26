@@ -54,14 +54,20 @@ function SignInContent() {
 
       {/* 우측 로그인 영역 */}
       <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-white dark:bg-slate-950">
-        {/* 모바일: B BioInsight Lab 브랜드 마크 - 상단 중앙 정렬, 선명하게 */}
+        {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
-          <div className="flex items-center gap-3 font-bold text-xl sm:text-2xl text-slate-900 dark:text-white">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg">
-              B
+          <Link href="/" className="group flex items-center gap-3 cursor-pointer">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
+              <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={40} height={40} className="w-full h-full object-cover" />
             </div>
-            <span className="tracking-tighter">BioInsight Lab</span>
-          </div>
+            <div className="leading-tight">
+              <div className="flex items-center gap-1">
+                <span className="text-lg font-bold tracking-tighter text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">BioInsight</span>
+                <span className="text-lg font-bold tracking-tighter text-teal-500 dark:text-teal-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Lab</span>
+              </div>
+              <div className="text-[10px] text-gray-500 dark:text-slate-400 tracking-tight">Procurement & Research</div>
+            </div>
+          </Link>
         </div>
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="max-w-md w-full space-y-8">
