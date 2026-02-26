@@ -105,17 +105,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Link>
             )}
           </div>
-          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시, 로그인 왼쪽 / Get Started 우측 끝 */}
+          {/* Get Started - 비로그인 시 데스크톱에 표시, 로그인/통합 인증 페이지로 연결 */}
           {!session?.user && (
-            <div className="hidden md:flex items-center gap-4 ml-auto">
-              <Link href="/auth/signin">
-                <Button
-                  variant="ghost"
-                  className="text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium px-4 h-8 md:h-9 rounded-lg transition-all"
-                >
-                  로그인
-                </Button>
-              </Link>
+            <div className="hidden md:flex items-center ml-auto">
               <Link href="/auth/signin?callbackUrl=/test/search">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 h-8 md:h-9 rounded-lg transition-all shadow-md whitespace-nowrap">
                   Get Started
