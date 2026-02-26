@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Shield,
+  ShieldAlert,
+  Biohazard,
   AlertTriangle,
   Download,
   FileWarning,
@@ -22,21 +23,30 @@ import {
   Hand,
   ShieldCheck,
   Calendar,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-// GHS 픽토그램 렌더링
+// GHS 픽토그램 렌더링 (다크모드 대응)
 function GHSPictogram({ type }: { type: string }) {
   const base = "w-6 h-6 p-1 rounded flex-shrink-0";
   if (type === "corrosive")
-    return <Droplets className={`${base} text-red-600 bg-red-50`} aria-label="부식성" />;
+    return <Droplets className={`${base} text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50`} aria-label="부식성" />;
   if (type === "toxic")
-    return <Skull className={`${base} text-red-600 bg-red-50`} aria-label="독성" />;
+    return <Skull className={`${base} text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50`} aria-label="독성" />;
   if (type === "flammable")
-    return <Flame className={`${base} text-orange-500 bg-orange-50`} aria-label="인화성" />;
+    return <Flame className={`${base} text-orange-500 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50`} aria-label="인화성" />;
   if (type === "oxidizer")
-    return <Flame className={`${base} text-yellow-600 bg-yellow-50`} aria-label="산화성" />;
-  return <AlertTriangle className={`${base} text-amber-500 bg-amber-50`} aria-label="경고" />;
+    return <Flame className={`${base} text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-950/50`} aria-label="산화성" />;
+  return <AlertTriangle className={`${base} text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50`} aria-label="경고" />;
 }
 
 // PPE 아이콘 렌더링 (필수: 브랜드 컬러, 선택: 회색)
@@ -48,7 +58,7 @@ function PPEIcon({
   required?: boolean;
 }) {
   const base = "w-5 h-5 p-1 rounded flex-shrink-0";
-  const active = required ? "text-blue-600 bg-blue-50" : "text-slate-300 bg-slate-50";
+  const active = required ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50" : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
   const label =
     type === "gloves"
       ? "보호장갑"
@@ -138,13 +148,26 @@ const safetyItems = [
   },
 ];
 
+const LOCATIONS = ["시약장 A (산성)", "시약장 B (염기성)", "방폭 캐비닛 1", "일반 캐비닛"];
+
 export default function SafetyManagerPage() {
   const { toast } = useToast();
-  const [filter, setFilter] = useState<"high_risk" | "no_msds" | "all">("high_risk");
+  const [riskFilter, setRiskFilter] = useState<string>("all");
+  const [msdsFilter, setMsdsFilter] = useState<string>("all");
+  const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredItems = (safetyItems || []).filter((item) => {
-    if (filter === "high_risk") return item.isHighRisk;
-    if (filter === "no_msds") return !item.hasMsds;
+    if (riskFilter === "high" && item.level !== "HIGH") return false;
+    if (riskFilter === "medium" && item.level !== "MEDIUM") return false;
+    if (riskFilter === "low" && item.level !== "LOW") return false;
+    if (msdsFilter === "registered" && !item.hasMsds) return false;
+    if (msdsFilter === "missing" && item.hasMsds) return false;
+    if (locationFilter !== "all" && item.loc !== locationFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      if (!item.name.toLowerCase().includes(q) && !item.cas.includes(q)) return false;
+    }
     return true;
   });
 
@@ -153,9 +176,9 @@ export default function SafetyManagerPage() {
   const msdsMissingCount = safetyItems.filter((i) => !i.hasMsds).length;
 
   const getBorderColor = (level: string) => {
-    if (level === "HIGH") return "border-l-red-500";
-    if (level === "MEDIUM") return "border-l-orange-500";
-    return "border-l-slate-300";
+    if (level === "HIGH") return "!border-l-red-500 dark:!border-l-red-400";
+    if (level === "MEDIUM") return "!border-l-orange-500 dark:!border-l-orange-400";
+    return "!border-l-yellow-500 dark:!border-l-yellow-500";
   };
 
   const handleExport = () => {
@@ -204,16 +227,16 @@ export default function SafetyManagerPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Shield className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
+                <Shield className="h-5 w-5 md:h-6 md:w-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <h1 className="text-xl md:text-3xl font-bold text-slate-900">안전 관리</h1>
+              <h1 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white">안전 관리</h1>
             </div>
-            <p className="text-xs md:text-sm text-slate-600">
+            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
               GMP/KOSHA 규격 대응. 고위험 물질, MSDS, 필수 보호구를 한눈에 관리합니다.
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs md:text-sm shrink-0">
+          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs md:text-sm shrink-0 border-slate-200 dark:border-slate-700">
             <Download className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
             CSV 내보내기
           </Button>
@@ -221,149 +244,163 @@ export default function SafetyManagerPage() {
 
         {/* 1. 상단 안전 요약 KPI */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
             <CardContent className="pt-6 flex justify-between items-center">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-600">전체 관리 물질</p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {totalCount} <span className="text-sm font-normal text-slate-500">종</span>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">전체 관리 물질</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                  {totalCount} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">종</span>
                 </p>
               </div>
-              <Shield className="text-slate-300 w-10 h-10 flex-shrink-0" />
+              <ShieldAlert className="text-slate-400 dark:text-slate-500 w-10 h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-red-100 bg-red-50/20 shadow-sm">
+          <Card className="border-red-100 dark:border-red-900/50 bg-red-50/20 dark:bg-red-950/30 shadow-sm">
             <CardContent className="pt-6 flex justify-between items-center">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-red-600">고위험 물질</p>
-                <p className="text-3xl font-bold text-red-700">
-                  {highRiskCount} <span className="text-sm font-normal text-red-500">종</span>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">고위험 물질</p>
+                <p className="text-3xl font-bold text-red-700 dark:text-red-300">
+                  {highRiskCount} <span className="text-sm font-normal text-red-500 dark:text-red-400">종</span>
                 </p>
               </div>
-              <AlertOctagon className="text-red-300 w-10 h-10 flex-shrink-0" />
+              <Biohazard className="text-red-400 dark:text-red-500 w-10 h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-amber-100 bg-amber-50/20 shadow-sm">
+          <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/30 shadow-sm">
             <CardContent className="pt-6 flex justify-between items-center">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-amber-600">MSDS 누락 항목</p>
-                <p className="text-3xl font-bold text-amber-700">
-                  {msdsMissingCount} <span className="text-sm font-normal text-amber-500">종</span>
+                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">MSDS 누락 항목</p>
+                <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
+                  {msdsMissingCount} <span className="text-sm font-normal text-amber-500 dark:text-amber-400">종</span>
                 </p>
               </div>
-              <FileWarning className="text-amber-300 w-10 h-10 flex-shrink-0" />
+              <FileWarning className="text-amber-400 dark:text-amber-500 w-10 h-10 flex-shrink-0" />
             </CardContent>
           </Card>
         </div>
 
-        {/* 필터 탭 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm md:text-base">필터</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Tabs
-              value={filter}
-              onValueChange={(v) => setFilter(v as "high_risk" | "no_msds" | "all")}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-                <TabsTrigger
-                  value="high_risk"
-                  className="flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:shadow-sm"
-                >
-                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
-                  <span className="truncate">고위험군</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="no_msds"
-                  className="flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:shadow-sm"
-                >
-                  <FileWarning className="h-4 w-4 text-amber-600 shrink-0" />
-                  <span className="truncate">MSDS 누락</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="all"
-                  className="flex items-center justify-center gap-2 py-2.5 text-xs md:text-sm data-[state=active]:bg-slate-100 data-[state=active]:text-slate-800 data-[state=active]:shadow-sm"
-                >
-                  <Shield className="h-4 w-4 text-slate-600 shrink-0" />
-                  <span className="truncate">전체</span>
-                </TabsTrigger>
-              </TabsList>
-              <p className="text-xs md:text-sm text-slate-600">
-                총 {filteredItems.length}개 제품이 검색되었습니다.
-              </p>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* 슬림 필터 바 */}
+        <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-4 border rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={riskFilter} onValueChange={setRiskFilter}>
+              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+                <SelectValue placeholder="위험 등급" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">위험 등급 전체</SelectItem>
+                <SelectItem value="high">고위험</SelectItem>
+                <SelectItem value="medium">중위험</SelectItem>
+                <SelectItem value="low">일반</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={msdsFilter} onValueChange={setMsdsFilter}>
+              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+                <SelectValue placeholder="MSDS 상태" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">MSDS 상태 전체</SelectItem>
+                <SelectItem value="registered">등록됨</SelectItem>
+                <SelectItem value="missing">누락</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+                <SelectValue placeholder="보관 장소" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">보관 장소 전체</SelectItem>
+                {LOCATIONS.map((loc) => (
+                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              className="pl-9 h-9 text-xs border-slate-200 dark:border-slate-700"
+              placeholder="물질명 또는 CAS 번호 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+          총 {filteredItems.length}개 제품이 검색되었습니다.
+        </p>
 
         {/* 2. 고도화된 제품 리스트 */}
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <CardHeader>
-            <CardTitle className="text-lg">관리 대상 물질 리스트</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg dark:text-white">관리 대상 물질 리스트</CardTitle>
+            <CardDescription className="dark:text-slate-400">
               위험 등급별 컬러 바, GHS 픽토그램, 필수 보호구(PPE)를 확인하세요.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {filteredItems.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-sm">
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {filteredItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors border-l-4 ${getBorderColor(item.level)}`}
+                    className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800 ${getBorderColor(item.level)}`}
                   >
-                    {/* 좌측: GHS 픽토그램 + 제품 정보 */}
-                    <div className="flex items-center gap-4 min-w-0">
+                    {/* 좌측: 위험 아이콘 + GHS 픽토그램 + 제품 정보 */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0">
+                        {item.level === "HIGH" ? (
+                          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" aria-label="고위험" />
+                        ) : item.level === "MEDIUM" ? (
+                          <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400" aria-label="중위험" />
+                        ) : (
+                          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" aria-label="일반" />
+                        )}
+                      </div>
                       <div className="flex gap-1 flex-shrink-0">
                         {item.icons.map((icon) => (
                           <GHSPictogram key={icon} type={icon} />
                         ))}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-slate-900 truncate">{item.name}</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <h4 className="font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           CAS: {item.cas} | {item.loc}
                         </p>
                       </div>
                     </div>
 
-                    {/* 우측: PPE 가이드 + MSDS */}
-                    <div className="flex flex-wrap items-center gap-4 md:gap-6">
-                      {/* PPE 아이콘 */}
-                      <div className="flex gap-2">
+                    {/* 우측: PPE 가이드 + MSDS 아이콘 버튼 */}
+                    <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                      <div className="flex gap-1.5">
                         {item.ppe.map((p) => (
-                          <PPEIcon
-                            key={p.type}
-                            type={p.type}
-                            required={p.required}
-                          />
+                          <PPEIcon key={p.type} type={p.type} required={p.required} />
                         ))}
                       </div>
-
-                      {/* MSDS 관리: 최종 업데이트 일자 */}
                       <div className="flex items-center gap-2">
                         {item.hasMsds && item.msdsUpdatedAt ? (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <FileSearch className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            <span>최종 업데이트: {item.msdsUpdatedAt}</span>
-                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {item.msdsUpdatedAt}
+                          </span>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="text-[10px] border-amber-200 bg-amber-50 text-amber-700"
+                            className="text-[10px] border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
                           >
                             MSDS 미등록
                           </Badge>
                         )}
-                        <Button size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50 shrink-0">
-                          <FileSearch className="w-4 h-4 mr-1.5" />
-                          MSDS 보기
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 shrink-0 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                          title="MSDS 보기"
+                        >
+                          <FileSearch className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>

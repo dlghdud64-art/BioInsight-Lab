@@ -213,23 +213,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </div>
             </SheetContent>
           </Sheet>
-          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시 */}
+          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시, 로그인 왼쪽 / Get Started 우측 끝 */}
           {!session?.user && (
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-4 ml-auto">
               <Link href="/auth/signin">
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium h-8 md:h-9 whitespace-nowrap px-3"
+                  className="text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium px-4 h-8 md:h-9 rounded-lg transition-all"
                 >
                   로그인
                 </Button>
               </Link>
               <Link href="/test/search">
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 h-8 md:h-9 rounded-lg transition-all shadow-md whitespace-nowrap"
-                >
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 h-8 md:h-9 rounded-lg transition-all shadow-md whitespace-nowrap">
                   Get Started
                 </Button>
               </Link>
@@ -239,11 +235,12 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
           {session?.user && (
             <Link href="/dashboard">
               <Button
+                variant="outline"
                 size="sm"
-                className="text-[10px] md:text-xs bg-gray-100 text-gray-900 hover:bg-gray-200 px-2 md:px-3 h-8 md:h-9"
+                className="flex items-center gap-1.5 border-slate-200 dark:border-slate-800 rounded-full px-4 h-8 md:h-9 text-[10px] md:text-xs font-bold text-slate-900 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                 aria-label="대시보드로 이동"
               >
-                <LayoutDashboard className="h-5 w-5 mr-1 md:mr-1.5" />
+                <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
                 <span className="hidden sm:inline">대시보드</span>
                 <span className="sm:hidden">대시</span>
               </Button>

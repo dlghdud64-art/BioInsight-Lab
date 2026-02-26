@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { Search, MessageSquareText, UploadCloud, Loader2, Flame, ArrowRight } from "lucide-react";
+import { Search, MessageSquareText, UploadCloud, Loader2, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
@@ -126,21 +125,8 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
-          {/* 메인 CTA: Get Started 단일 버튼 */}
-          <div className="flex justify-center mt-10 md:mt-12">
-            <Link href="/test/search">
-              <Button
-                size="lg"
-                className="h-14 px-12 text-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 whitespace-nowrap"
-              >
-                Get Started
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* 인기 검색어 칩 */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6 md:gap-3">
+          {/* 인기 검색어 칩 - 검색창과의 간격 조정 */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-6 md:mt-8 md:gap-3">
             <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
               <Flame className="h-4 w-4 text-slate-500" />
               인기:

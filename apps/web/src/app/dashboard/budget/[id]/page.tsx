@@ -1,8 +1,47 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import Link from "next/link";
-import { Wallet, Calendar, ArrowLeft } from "lucide-react";
+import {
+  Wallet,
+  Calendar,
+  ArrowLeft,
+  FileSpreadsheet,
+  FileText,
+  ChevronRight,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 type Budget = {
   id: string;
@@ -21,7 +60,16 @@ type Budget = {
   };
 };
 
-// TODO: 실제 API 연동 시 이 부분을 서버 요청으로 대체하세요.
+// 다크모드 친화적 차트 컬러 (네온/소프트)
+const CHART_COLORS = [
+  "#3b82f6", // blue-500
+  "#10b981", // emerald-500
+  "#06b6d4", // cyan-500
+  "#8b5cf6", // violet-500
+  "#f59e0b", // amber-500
+  "#ec4899", // pink-500
+];
+
 const MOCK_BUDGETS: Budget[] = [
   {
     id: "1",
@@ -41,8 +89,76 @@ const MOCK_BUDGETS: Budget[] = [
   },
 ];
 
+// 월별 집행 추이 (Mock)
+const MOCK_SPENDING_TREND = [
+  { month: "1월", amount: 0 },
+  { month: "2월", amount: 2800000 },
+  { month: "3월", amount: 4200000 },
+  { month: "4월", amount: 5500000 },
+];
+
+// 항목별 지출 비중 (Mock)
+const MOCK_CATEGORY_DATA = [
+  { name: "시약", value: 5200000, color: CHART_COLORS[0] },
+  { name: "소모품", value: 3800000, color: CHART_COLORS[1] },
+  { name: "장비", value: 2500000, color: CHART_COLORS[2] },
+  { name: "기타", value: 1000000, color: CHART_COLORS[3] },
+];
+
+// 최근 집행 내역 (Mock)
+const MOCK_RECENT_SPENDING = [
+  {
+    id: "1",
+    date: "2026-04-15",
+    item: "Gibco FBS (500ml)",
+    vendor: "Thermo Fisher",
+    amount: 1850000,
+    category: "시약",
+    reportUrl: null as string | null,
+  },
+  {
+    id: "2",
+    date: "2026-04-10",
+    item: "Pipette Tips (1000μL)",
+    vendor: "Eppendorf",
+    amount: 420000,
+    category: "소모품",
+    reportUrl: null as string | null,
+  },
+  {
+    id: "3",
+    date: "2026-04-05",
+    item: "DMEM Medium (500ml)",
+    vendor: "Sigma-Aldrich",
+    amount: 890000,
+    category: "시약",
+    reportUrl: null as string | null,
+  },
+  {
+    id: "4",
+    date: "2026-03-28",
+    item: "Centrifuge Tube (50ml)",
+    vendor: "Corning",
+    amount: 320000,
+    category: "소모품",
+    reportUrl: null as string | null,
+  },
+  {
+    id: "5",
+    date: "2026-03-20",
+    item: "Microplate Reader",
+    vendor: "BioTek",
+    amount: 2500000,
+    category: "장비",
+    reportUrl: null as string | null,
+  },
+];
+
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   const id = params?.id;
+  const { toast } = useToast();
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedSpending, setSelectedSpending] = useState<typeof MOCK_RECENT_SPENDING[0] | null>(null);
 
   if (!id) {
     return (
@@ -76,10 +192,27 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const startStr = new Date(budget.periodStart).toLocaleDateString("ko-KR");
   const endStr = new Date(budget.periodEnd).toLocaleDateString("ko-KR");
 
+  const handleRowClick = (item: typeof MOCK_RECENT_SPENDING[0]) => {
+    setSelectedSpending(item);
+    setReportDialogOpen(true);
+  };
+
+  const handleExcelDownload = () => {
+    toast({ title: "엑셀 다운로드", description: "집행 내역이 다운로드됩니다. (준비 중)" });
+  };
+
+  const handleReportGenerate = () => {
+    toast({ title: "리포트 생성", description: "예산 보고서가 생성됩니다. (준비 중)" });
+  };
+
+  const formatAmount = (n: number) => `₩ ${n.toLocaleString("ko-KR")}`;
+  const formatDate = (d: string) => new Date(d).toLocaleDateString("ko-KR");
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] py-8 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-3">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* 헤더 + 액션 버튼 */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white">
               <Wallet className="h-5 w-5" />
@@ -88,91 +221,254 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
                 예산 상세: {budget.name}
               </h1>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                조직/팀별 예산 현황과 사용률을 한눈에 확인합니다.
-              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400">{startStr} ~ {endStr}</span>
+                {budget.targetDepartment && (
+                  <Badge variant="outline" className="text-xs bg-slate-50 dark:bg-slate-800/60">
+                    {budget.targetDepartment}
+                  </Badge>
+                )}
+                {budget.projectName && (
+                  <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/40">
+                    {budget.projectName}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-          <Link
-            href="/dashboard/budget"
-            className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            목록으로
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-slate-200 dark:border-slate-700"
+              onClick={handleExcelDownload}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+              엑셀 다운로드
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-slate-200 dark:border-slate-700"
+              onClick={handleReportGenerate}
+            >
+              <FileText className="w-4 h-4 mr-1.5" />
+              리포트 생성
+            </Button>
+            <Link
+              href="/dashboard/budget"
+              className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              목록
+            </Link>
+          </div>
         </div>
 
-        <Card className="shadow-sm border-slate-200 bg-white/90 dark:bg-slate-900/60">
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <CardTitle className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white break-keep">
-                {budget.name}
-              </CardTitle>
-              <CardDescription className="mt-1 text-xs md:text-sm flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-slate-500 dark:text-slate-400">
-                  {startStr} ~ {endStr}
-                </span>
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {budget.targetDepartment && (
-                <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800/60 text-xs">
-                  {budget.targetDepartment}
-                </Badge>
-              )}
-              {budget.projectName && (
-                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/40 text-xs">
-                  {budget.projectName}
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">예산 금액</p>
-                <p className="text-2xl xl:text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
-                  ₩ {budget.amount.toLocaleString("ko-KR")}
+        {/* Top: 3단 수치 요약 (콤팩트) */}
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+          <CardContent className="p-4 md:p-6">
+            <div className="grid grid-cols-3 gap-4 md:gap-6">
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400">예산 금액</p>
+                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
+                  {formatAmount(budget.amount)}
                 </p>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">사용 금액</p>
-                <p className="text-2xl xl:text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
-                  ₩ {(usage?.totalSpent ?? 0).toLocaleString("ko-KR")}
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400">사용 금액</p>
+                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
+                  {formatAmount(usage?.totalSpent ?? 0)}
                 </p>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">잔여 금액</p>
-                <p className="text-2xl xl:text-3xl font-extrabold tracking-tighter break-keep text-emerald-600 dark:text-emerald-400">
-                  ₩ {(usage?.remaining ?? budget.amount).toLocaleString("ko-KR")}
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400">잔여 금액</p>
+                <p className="text-xl md:text-2xl font-extrabold tracking-tighter break-keep text-emerald-600 dark:text-emerald-400">
+                  {formatAmount(usage?.remaining ?? budget.amount)}
                 </p>
               </div>
             </div>
-
             {usage && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs md:text-sm">
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 dark:text-slate-400">예산 사용률</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">
-                    {usageRate.toFixed(1)}%
-                  </span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{usageRate.toFixed(1)}%</span>
                 </div>
                 <Progress value={Math.min(usageRate, 100)} className="h-2" />
               </div>
             )}
+          </CardContent>
+        </Card>
 
-            {budget.description && (
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-                <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 break-keep">
-                  {budget.description}
-                </p>
-              </div>
-            )}
+        {/* Middle: 차트 2열 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-2 shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">월별 집행 추이</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={MOCK_SPENDING_TREND} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.6} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.3} />
+                  <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--card-foreground))",
+                    }}
+                    formatter={(value: number) => [formatAmount(value), "집행액"]}
+                    labelFormatter={(label) => label}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorAmount)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">항목별 지출 비중</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={MOCK_CATEGORY_DATA}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                    style={{ fontSize: 12 }}
+                  >
+                    {MOCK_CATEGORY_DATA.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#475569" strokeWidth={1} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--card-foreground))",
+                    }}
+                    formatter={(value: number) => [formatAmount(value), "금액"]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom: 최근 집행 내역 테이블 */}
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+          <CardHeader>
+            <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">최근 집행 내역</CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400">
+              항목 클릭 시 관련 구매 보고서를 확인할 수 있습니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-200 dark:border-slate-800">
+                    <TableHead className="text-slate-600 dark:text-slate-400">날짜</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400">항목</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400">벤더</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400">카테고리</TableHead>
+                    <TableHead className="text-right text-slate-600 dark:text-slate-400">금액</TableHead>
+                    <TableHead className="w-[50px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {MOCK_RECENT_SPENDING.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-slate-100 dark:border-slate-800"
+                      onClick={() => handleRowClick(item)}
+                    >
+                      <TableCell className="text-slate-700 dark:text-slate-300">{formatDate(item.date)}</TableCell>
+                      <TableCell className="font-medium text-slate-900 dark:text-white">{item.item}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">{item.vendor}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {item.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
+                        {formatAmount(item.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* 구매 보고서 팝업 */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-white">구매 보고서</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
+              {selectedSpending?.item} - 관련 구매 증빙 자료
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSpending && (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">항목</span>
+                  <p className="font-medium text-slate-900 dark:text-white">{selectedSpending.item}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">벤더</span>
+                  <p className="font-medium text-slate-900 dark:text-white">{selectedSpending.vendor}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">금액</span>
+                  <p className="font-medium text-slate-900 dark:text-white">{formatAmount(selectedSpending.amount)}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">날짜</span>
+                  <p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedSpending.date)}</p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="w-12 h-12 text-slate-400 mb-2" />
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  PDF/이미지 보고서는 구매 데이터 연동 후 제공됩니다.
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
