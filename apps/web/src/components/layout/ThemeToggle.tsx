@@ -15,12 +15,15 @@ export function FloatingThemeToggle() {
   }, []);
 
   // next-themes: 첫 방문 시 localStorage에 theme이 없으면 명시적 설정 (setTheme 첫 호출 이슈 회피)
+  // 모바일(768px 미만 또는 모바일 UA)에서는 시스템 설정과 관계없이 라이트 모드 기본 적용
   React.useEffect(() => {
     if (!mounted || !setTheme) return;
     const stored = typeof window !== "undefined" && localStorage.getItem("bioinsight-theme");
     if (!stored) {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
+      const isMobile =
+        typeof window !== "undefined" &&
+        (window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent));
+      setTheme(isMobile ? "light" : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
     }
   }, [mounted, setTheme]);
 
