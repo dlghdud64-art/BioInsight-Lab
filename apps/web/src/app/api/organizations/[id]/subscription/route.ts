@@ -63,14 +63,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let id: string | undefined;
+  let body: any;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
-    const body = await request.json();
+    ({ id } = await params);
+    body = await request.json();
     const { plan, periodMonths = 1 } = body;
 
     if (!plan || !Object.values(SubscriptionPlan).includes(plan)) {
