@@ -37,8 +37,8 @@ interface Budget {
   };
 }
 
+// Radix UI SelectItem은 value=""를 허용하지 않음 - placeholder는 SelectValue에서 처리
 const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "부서를 선택해주세요" },
   { value: "공정개발팀", label: "공정개발팀" },
   { value: "기초연구팀", label: "기초연구팀" },
   { value: "품질관리(QC)팀", label: "품질관리(QC)팀" },

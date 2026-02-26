@@ -19,15 +19,17 @@ export async function GET(request: NextRequest) {
       include: {
         organization: {
           include: {
-            subscription: true,
-            members: true,
+            members: { select: { id: true, userId: true, role: true } },
           },
         },
       },
     });
 
-    // 타입 에러 수정: m 파라미터에 타입 명시
-    const organizations = memberships.map((m: any) => m.organization);
+    // role은 membership에 있으므로 organization에 병합
+    const organizations = memberships.map((m: any) => ({
+      ...m.organization,
+      role: m.role ?? '멤버',
+    }));
 
     return NextResponse.json({ organizations });
   } catch (error: any) {
