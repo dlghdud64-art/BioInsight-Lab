@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
+import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
 
 export const metadata: Metadata = {
   title: {
@@ -85,6 +86,7 @@ export default function RootLayout({
               <QueryProvider>
                 {children}
                 <Toaster />
+                <FloatingThemeToggle />
                 <Analytics />
               </QueryProvider>
             </AuthSessionProvider>

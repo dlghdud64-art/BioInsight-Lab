@@ -7,7 +7,18 @@ export function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="bioinsight-theme"
+      {...props}
+    >
+      {children}
+    </NextThemesProvider>
+  );
 }
 
 

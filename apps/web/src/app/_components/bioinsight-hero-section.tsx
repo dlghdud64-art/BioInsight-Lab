@@ -127,7 +127,7 @@ export function BioInsightHeroSection() {
           </form>
 
           {/* 메인 CTA: Get Started 단일 버튼 */}
-          <div className="flex justify-center mt-8 md:mt-10">
+          <div className="flex justify-center mt-10 md:mt-12">
             <Link href="/test/search">
               <Button
                 size="lg"

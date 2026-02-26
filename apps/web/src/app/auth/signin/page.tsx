@@ -11,7 +11,7 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 p-12 flex-col justify-between text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 p-12 lg:p-16 flex-col justify-between text-white relative overflow-hidden">
         {/* 격자 패턴 배경 */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -21,27 +21,30 @@ export default function SignInPage() {
             backgroundSize: "48px 48px",
           }}
         />
-        <div className="relative z-10 flex items-center gap-2 font-bold text-xl">
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-extrabold text-sm">
+        {/* 브랜드 상단 로고 마크 */}
+        <div className="relative z-10 flex items-center gap-3 font-bold text-2xl tracking-tight">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
             B
           </div>
-          <span>BioInsight Lab</span>
+          <span className="break-keep">BioInsight Lab</span>
         </div>
-        <div className="relative z-10">
-          <h1 className="text-3xl xl:text-4xl font-bold leading-tight mb-4">
+        {/* 중앙 슬로건 및 설명 */}
+        <div className="relative z-10 space-y-6">
+          <h1 className="text-4xl font-extrabold leading-tight tracking-tight break-keep">
             연구에만 집중하세요.
             <br />
-            시약 관리는 저희가 합니다.
+            <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>
-          <p className="text-slate-400 text-base xl:text-lg max-w-md">
+          <p className="text-slate-400 text-lg leading-relaxed max-w-md break-keep">
             수천 개의 시약과 예산을 데이터로 증명하세요.
             <br />
             실사(Audit) 준비가 더 이상 두렵지 않습니다.
           </p>
         </div>
-        <div className="relative z-10 text-sm text-slate-500 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-slate-400" />
-          256-bit 데이터 암호화 적용 중
+        {/* 하단 보안 인증 배지 */}
+        <div className="relative z-10 flex items-center gap-2 text-slate-500 text-sm font-medium">
+          <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0" />
+          <span>256-bit 엔터프라이즈급 데이터 암호화 적용 중</span>
         </div>
       </div>
 

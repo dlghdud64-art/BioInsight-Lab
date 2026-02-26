@@ -12,8 +12,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { Menu, LayoutDashboard, ArrowRight } from "lucide-react";
-import { HeaderThemeToggle } from "@/components/layout/ThemeToggle";
+import { Menu, LayoutDashboard } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface MainHeaderProps {
@@ -179,30 +178,17 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 {/* 구분선 */}
                 <div className="my-6 border-t border-slate-100" />
 
-                {/* 2. 하단 액션 그룹 - 로그인 1개 + Get Started 1개 */}
+                {/* 2. 하단 액션 그룹 - 로그인 또는 대시보드 */}
                 <div className="flex flex-col space-y-3 mt-auto pb-10">
                   {!session?.user ? (
-                    <>
-                      <SheetClose asChild>
-                        <Link
-                          href="/auth/signin"
-                          className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors whitespace-nowrap"
-                        >
-                          로그인
-                        </Link>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Button
-                          asChild
-                          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold whitespace-nowrap"
-                        >
-                          <Link href="/test/search" className="flex items-center justify-center gap-2">
-                            Get Started
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </SheetClose>
-                    </>
+                    <SheetClose asChild>
+                      <Link
+                        href="/auth/signin"
+                        className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors whitespace-nowrap"
+                      >
+                        로그인
+                      </Link>
+                    </SheetClose>
                   ) : (
                     <SheetClose asChild>
                       <Link
@@ -217,7 +203,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </div>
             </SheetContent>
           </Sheet>
-          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시 (각 1개씩) */}
+          {/* 로그인(ghost) - 비로그인 시 데스크톱에 표시 */}
           {!session?.user && (
             <div className="hidden md:flex items-center gap-2">
               <Link href="/auth/signin">
@@ -227,15 +213,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium h-8 md:h-9 whitespace-nowrap px-3"
                 >
                   로그인
-                </Button>
-              </Link>
-              <Link href="/test/search">
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 h-8 md:h-9 whitespace-nowrap"
-                >
-                  Get Started
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -254,7 +231,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Button>
             </Link>
           )}
-          <HeaderThemeToggle />
           <UserMenu />
         </div>
       </div>
