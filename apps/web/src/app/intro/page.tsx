@@ -63,14 +63,14 @@ export default function IntroPage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
               {/* R&D 연구자 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
-                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-amber-600" />
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
+                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50 text-amber-500">
+                  <Zap size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
+                <CardHeader className="pb-2 pt-12">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     R&D 연구자
                   </CardTitle>
                 </CardHeader>
@@ -87,12 +87,12 @@ export default function IntroPage() {
               </Card>
 
               {/* QC/QA 매니저 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
-                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
+                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-500">
+                  <ShieldCheck size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
+                <CardHeader className="pb-2 pt-12">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     QC/QA 매니저
                   </CardTitle>
                 </CardHeader>
@@ -109,12 +109,12 @@ export default function IntroPage() {
               </Card>
 
               {/* 구매 담당자 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
-                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <Layers className="h-5 w-5 text-indigo-600" />
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
+                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-500">
+                  <Layers size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
+                <CardHeader className="pb-2 pt-12">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     구매 담당자
                   </CardTitle>
                 </CardHeader>
