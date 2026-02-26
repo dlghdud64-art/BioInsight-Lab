@@ -34,11 +34,23 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     }
   };
 
-  // 경로 세그먼트를 한글로 표시용 라벨로 변환 (Raw ID·UUID 숨김, 영문→한글 매핑)
+  // ID 패턴 감지 (숫자 ID, UUID, CUID 등)
+  const isIdSegment = (path: string): boolean => {
+    if (!path) return false;
+    // 10자리 이상 숫자 ID
+    if (/^\d{10,}$/.test(path)) return true;
+    // UUID 패턴 (8-4-4-4-12)
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(path)) return true;
+    // Prisma CUID 패턴 (20자 이상 소문자 + 숫자 조합, 숫자 포함 필수)
+    if (path.length >= 20 && /^[a-z][a-z0-9]+$/.test(path) && /\d/.test(path)) return true;
+    return false;
+  };
+
+  // 경로 세그먼트를 한글로 표시용 라벨로 변환 (Raw ID·UUID·CUID 숨김, 영문→한글 매핑)
   const formatPathName = (path: string, isLastSegment: boolean): string => {
     if (!path) return "";
-    // 10자리 이상 숫자 ID 또는 UUID 패턴 → "상세 관리" / "상세 정보"
-    if (/^\d{10,}$/.test(path) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(path)) {
+    // 숫자 ID / UUID / CUID 패턴 → "상세 관리" / "상세 정보"
+    if (isIdSegment(path)) {
       return isLastSegment ? "상세 정보" : "상세 관리";
     }
     const pathLabelMap: Record<string, string> = {
@@ -84,11 +96,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       if (index === 0) {
         // 첫 번째 세그먼트는 보통 "dashboard" → "대시보드"
         label = formatPathName(path, isLast);
-      } else if (
-        prevSegment === "organizations" &&
-        ( /^\d{10,}$/.test(path) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(path) )
-      ) {
-        // 조직 상세 페이지의 Raw ID는 "조직 상세"로 치환
+      } else if (prevSegment === "organizations" && isIdSegment(path)) {
+        // 조직 상세 페이지의 Raw ID(숫자/UUID/CUID 모두)는 "조직 상세"로 치환
         label = "조직 상세";
       } else {
         label = formatPathName(path, isLast);
