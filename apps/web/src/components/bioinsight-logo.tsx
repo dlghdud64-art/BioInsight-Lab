@@ -5,12 +5,15 @@ import { cn } from "@/lib/utils";
 type BioInsightLogoProps = {
   className?: string;
   showText?: boolean; // 아이콘만 쓰고 싶으면 false로
+  variant?: "light" | "dark"; // dark: 어두운 배경용 (텍스트 흰색 계열)
 };
 
 export function BioInsightLogo({
   className,
   showText = true,
+  variant = "light",
 }: BioInsightLogoProps) {
+  const isDark = variant === "dark";
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {/* 아이콘: 이미지 파일 사용 */}
@@ -26,14 +29,23 @@ export function BioInsightLogo({
       {showText && (
         <div className="leading-tight">
           <div className="flex items-baseline gap-1">
-            <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight text-blue-900">
+            <span className={cn(
+              "text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight",
+              isDark ? "text-white" : "text-blue-900"
+            )}>
               BioInsight
             </span>
-            <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight text-teal-500">
+            <span className={cn(
+              "text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight",
+              isDark ? "text-teal-300" : "text-teal-500"
+            )}>
               Lab
             </span>
           </div>
-          <div className="hidden md:block text-[10px] font-normal text-gray-600 mt-0.5">
+          <div className={cn(
+            "hidden md:block text-[10px] font-normal mt-0.5",
+            isDark ? "text-slate-400" : "text-gray-600"
+          )}>
             Procurement & Research
           </div>
         </div>
