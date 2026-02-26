@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 import {
   User,
   Upload,
@@ -73,8 +74,8 @@ function SettingsPageContent() {
   const [marketingEmails, setMarketingEmails] = useState(false);
   const [securityAlerts, setSecurityAlerts] = useState(true);
 
-  // 테마 설정 상태 (Mock)
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  // 테마 설정 (next-themes)
+  const { theme, setTheme } = useTheme();
 
   // 사용자 정보 조회
   const { data: userData } = useQuery({
@@ -447,12 +448,12 @@ function SettingsPageContent() {
                     onClick={() => setTheme("light")}
                     className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                       theme === "light"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 hover:border-slate-300"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-950/30"
+                        : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
                     }`}
                   >
                     <Sun className={`h-6 w-6 ${theme === "light" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className={`text-sm font-medium ${theme === "light" ? "text-blue-600" : "text-slate-700"}`}>
+                    <span className={`text-sm font-medium ${theme === "light" ? "text-blue-600" : "text-slate-700 dark:text-slate-300"}`}>
                       라이트
                     </span>
                   </button>
@@ -462,12 +463,12 @@ function SettingsPageContent() {
                     onClick={() => setTheme("dark")}
                     className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                       theme === "dark"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 hover:border-slate-300"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-950/30"
+                        : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
                     }`}
                   >
                     <Moon className={`h-6 w-6 ${theme === "dark" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className={`text-sm font-medium ${theme === "dark" ? "text-blue-600" : "text-slate-700"}`}>
+                    <span className={`text-sm font-medium ${theme === "dark" ? "text-blue-600" : "text-slate-700 dark:text-slate-300"}`}>
                       다크
                     </span>
                   </button>
@@ -477,12 +478,12 @@ function SettingsPageContent() {
                     onClick={() => setTheme("system")}
                     className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                       theme === "system"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 hover:border-slate-300"
+                        ? "border-blue-600 bg-blue-50 dark:bg-blue-950/30"
+                        : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
                     }`}
                   >
                     <Monitor className={`h-6 w-6 ${theme === "system" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className={`text-sm font-medium ${theme === "system" ? "text-blue-600" : "text-slate-700"}`}>
+                    <span className={`text-sm font-medium ${theme === "system" ? "text-blue-600" : "text-slate-700 dark:text-slate-300"}`}>
                       시스템
                     </span>
                   </button>

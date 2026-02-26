@@ -28,6 +28,8 @@ import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge"
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Info, FileText } from "lucide-react";
 
 interface ProductInventory {
   id: string;
@@ -39,8 +41,16 @@ interface ProductInventory {
   location: string | null;
   expiryDate: string | null;
   notes: string | null;
-  autoReorderEnabled?: boolean; // 타입 에러 수정: 누락된 속성 추가
-  autoReorderThreshold?: number; // 타입 에러 수정: 누락된 속성 추가
+  lotNumber?: string | null;
+  storageCondition?: string | null;
+  hazard?: boolean;
+  testPurpose?: string | null;
+  vendor?: string | null;
+  deliveryPeriod?: string | null;
+  inUseOrUnopened?: string | null;
+  averageExpiry?: string | null;
+  autoReorderEnabled?: boolean;
+  autoReorderThreshold?: number;
   product: {
     id: string;
     name: string;
@@ -64,6 +74,8 @@ export default function InventoryPage() {
   const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -108,18 +120,46 @@ export default function InventoryPage() {
     (inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock
   );
 
-  // Mock 데이터 (데이터가 없을 때 사용)
+  // Mock 데이터 (데이터가 없을 때 사용) — 동일 제품 Lot별 분리, 실무 엑셀 필드 반영
   const mockInventories: ProductInventory[] = [
     {
-      id: "mock-1",
+      id: "mock-1a",
       productId: "mock-product-1",
-      currentQuantity: 5,
+      currentQuantity: 3,
       unit: "개",
       safetyStock: 10,
       minOrderQty: 20,
-      location: "냉장고 1칸",
-      expiryDate: null,
+      location: "냉동고 1칸",
+      expiryDate: "2026-12-31",
       notes: null,
+      lotNumber: "24A01-X",
+      storageCondition: "냉동",
+      hazard: false,
+      testPurpose: "세포 배양",
+      vendor: "Thermo Fisher 공급",
+      deliveryPeriod: "2~3주",
+      inUseOrUnopened: "미개봉",
+      averageExpiry: "2026-12-31",
+      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
+    },
+    {
+      id: "mock-1b",
+      productId: "mock-product-1",
+      currentQuantity: 2,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉동고 1칸",
+      expiryDate: "2026-03-15",
+      notes: "개봉된 vial인데 시약관리대장 상에서 수량 차감 안 되어서 8/12 개봉 기록 후 vial 전량 사용 예정",
+      lotNumber: "23K15-Y",
+      storageCondition: "냉동",
+      hazard: false,
+      testPurpose: "세포 배양",
+      vendor: "Thermo Fisher 공급",
+      deliveryPeriod: "2~3주",
+      inUseOrUnopened: "사용 중",
+      averageExpiry: "2026-03-15",
       product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
     },
     {
@@ -132,6 +172,11 @@ export default function InventoryPage() {
       location: "선반 3층",
       expiryDate: null,
       notes: null,
+      storageCondition: "상온",
+      hazard: false,
+      testPurpose: "일반 실험",
+      vendor: "Corning 직납",
+      deliveryPeriod: "1주",
       product: { id: "mock-product-2", name: "Falcon 50ml Conical Tube", brand: "Corning", catalogNumber: "352070" },
     },
     {
@@ -143,7 +188,12 @@ export default function InventoryPage() {
       minOrderQty: 10,
       location: "냉장고 2칸",
       expiryDate: null,
-      notes: null,
+      notes: "분기 별 1회 이상 사용",
+      storageCondition: "상온",
+      hazard: false,
+      testPurpose: "MTT assay",
+      vendor: "Eppendorf",
+      deliveryPeriod: "1~2주",
       product: { id: "mock-product-3", name: "Pipette Tips (1000μL)", brand: "Eppendorf", catalogNumber: "0030078447" },
     },
     {
@@ -156,6 +206,11 @@ export default function InventoryPage() {
       location: "선반 1층",
       expiryDate: null,
       notes: null,
+      storageCondition: "냉장",
+      hazard: false,
+      testPurpose: "MTT assay, 외래성 바이러스 시험",
+      vendor: "Sigma-Aldrich",
+      deliveryPeriod: "3~4주",
       product: { id: "mock-product-4", name: "DMEM Medium (500ml)", brand: "Sigma-Aldrich", catalogNumber: "D5671" },
     },
     {
@@ -168,6 +223,11 @@ export default function InventoryPage() {
       location: "냉장고 3칸",
       expiryDate: null,
       notes: null,
+      storageCondition: "냉장",
+      hazard: true,
+      testPurpose: "세포 배양",
+      vendor: "Gibco",
+      deliveryPeriod: "2주",
       product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
     },
   ];
@@ -650,12 +710,149 @@ export default function InventoryPage() {
                     description: `${inventory.product.name} 주문 기능은 곧 제공될 예정입니다.`,
                   });
                 }}
+                onDetailClick={(inventory) => {
+                  setSelectedItem(inventory);
+                  setIsSheetOpen(true);
+                }}
                 emptyMessage="아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
                 emptyAction={() => setIsDialogOpen(true)}
               />
             </CardContent>
           </Card>
         )}
+
+        {/* 우측 상세 Sheet (Drawer) */}
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent className="w-[90vw] overflow-y-auto sm:max-w-[500px]">
+            {selectedItem && (
+              <>
+                <SheetHeader className="mb-6 mt-4 border-b border-slate-100 pb-6 dark:border-slate-800">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge className="border-none bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300">
+                      시약 상세 정보
+                    </Badge>
+                    {selectedItem.hazard && (
+                      <Badge className="border-none bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400">
+                        <AlertTriangle className="mr-1 h-3 w-3" />
+                        유해 물질
+                      </Badge>
+                    )}
+                  </div>
+                  <SheetTitle className="text-2xl font-bold">
+                    {selectedItem.product.name}
+                  </SheetTitle>
+                  <SheetDescription className="flex items-center gap-2 text-base text-slate-600 dark:text-slate-400">
+                    <span>{selectedItem.product.brand ?? "-"}</span>
+                    <span className="text-slate-300 dark:text-slate-600">|</span>
+                    <span className="font-mono text-sm">
+                      {selectedItem.product.catalogNumber ?? "-"}
+                    </span>
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900/50">
+                      <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">Lot Number</p>
+                      <p className="font-mono font-bold">
+                        {selectedItem.lotNumber ?? "-"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900/50">
+                      <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">유효 기한</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-100">
+                        {selectedItem.expiryDate
+                          ? format(new Date(selectedItem.expiryDate), "yyyy.MM.dd", { locale: ko })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
+                      <Info className="mr-2 h-4 w-4 text-slate-400" />
+                      기본 정보
+                    </h4>
+                    <div className="grid grid-cols-2 gap-y-4 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
+                      <div className="text-slate-500 dark:text-slate-400">제조사</div>
+                      <div className="font-medium">
+                        {selectedItem.product.brand ?? "-"}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400">Cat.No.</div>
+                      <div className="font-mono font-medium">
+                        {selectedItem.product.catalogNumber ?? "-"}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400">구매처</div>
+                      <div className="font-medium">{selectedItem.vendor ?? "-"}</div>
+                      <div className="text-slate-500 dark:text-slate-400">배송기간</div>
+                      <div className="font-medium">{selectedItem.deliveryPeriod ?? "-"}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
+                      <Info className="mr-2 h-4 w-4 text-slate-400" />
+                      관리 정보
+                    </h4>
+                    <div className="grid grid-cols-2 gap-y-4 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
+                      <div className="text-slate-500 dark:text-slate-400">사용 중/미개봉</div>
+                      <div className="font-medium">
+                        {selectedItem.inUseOrUnopened ?? "-"}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400">평균 유효기한</div>
+                      <div className="font-medium">
+                        {selectedItem.averageExpiry ?? "-"}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400">시험항목</div>
+                      <div className="font-medium">
+                        {selectedItem.testPurpose ?? "-"}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400">보관조건</div>
+                      <div className="font-medium">
+                        {selectedItem.storageCondition ?? "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
+                      <FileText className="mr-2 h-4 w-4 text-slate-400" />
+                      특이사항
+                    </h4>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm leading-relaxed text-slate-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-slate-300">
+                      {selectedItem.notes || "등록된 특이사항이 없습니다."}
+                    </div>
+                  </div>
+
+                  <div className="flex w-full gap-2 pt-6">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsSheetOpen(false);
+                        setEditingInventory(selectedItem);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      수정하기
+                    </Button>
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        toast({
+                          title: "재발주 (견적 요청)",
+                          description: `${selectedItem.product.name} 견적 요청 기능은 곧 제공될 예정입니다.`,
+                        });
+                      }}
+                    >
+                      재발주 (견적 요청)
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
 
         {/* 기존 탭 구조는 숨김 처리 (필요시 나중에 복원 가능) */}
         {false && (

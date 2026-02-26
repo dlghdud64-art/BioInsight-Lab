@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, ShoppingCart, Trash2 } from "lucide-react";
+import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer } from "lucide-react";
 import { format } from "date-fns";
 
 interface InventoryItem {
@@ -19,6 +19,14 @@ interface InventoryItem {
   notes: string | null;
   autoReorderEnabled?: boolean;
   autoReorderThreshold?: number;
+  lotNumber?: string | null;
+  storageCondition?: string | null;
+  hazard?: boolean;
+  testPurpose?: string | null;
+  vendor?: string | null;
+  deliveryPeriod?: string | null;
+  inUseOrUnopened?: string | null;
+  averageExpiry?: string | null;
   product: {
     id: string;
     name: string;
@@ -32,6 +40,7 @@ interface InventoryTableProps {
   onEdit: (inventory: InventoryItem) => void;
   onDelete?: (inventory: InventoryItem) => void;
   onReorder: (inventory: InventoryItem) => void;
+  onDetailClick?: (inventory: InventoryItem) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
 }
@@ -41,6 +50,7 @@ export function InventoryTable({
   onEdit, 
   onDelete,
   onReorder,
+  onDetailClick,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction
 }: InventoryTableProps) {
@@ -89,10 +99,21 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            dot="emerald"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200"
+            className="h-6 w-fit shrink-0 rounded-full border-emerald-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 text-[11px] tracking-wide dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
           >
+            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
             정상
+          </Badge>
+        );
+      case "임박":
+      case "expiring_soon":
+        return (
+          <Badge
+            variant="outline"
+            className="h-6 w-fit shrink-0 rounded-full border-amber-200 bg-amber-50 px-2.5 font-semibold text-amber-700 text-[11px] tracking-wide dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+          >
+            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+            임박
           </Badge>
         );
       default:
@@ -123,17 +144,19 @@ export function InventoryTable({
     return expiry.getTime() < today.getTime();
   };
 
+  const minQty = (inv: InventoryItem) => inv.safetyStock ?? inv.minOrderQty ?? 0;
+
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-950 shadow-sm">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[80px]">상태</TableHead>
-            <TableHead className="min-w-[250px]">품목명</TableHead>
-            <TableHead className="w-[180px]">위치</TableHead>
-            <TableHead className="w-[120px]">재고량</TableHead>
-            <TableHead className="w-[120px]">유통기한</TableHead>
-            <TableHead className="w-[180px] text-right">관리</TableHead>
+        <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">상태</TableHead>
+            <TableHead className="min-w-[200px] text-xs font-semibold text-slate-500 dark:text-slate-400">품목 정보</TableHead>
+            <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400">Lot 및 유효기한</TableHead>
+            <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400">보관조건</TableHead>
+            <TableHead className="w-[120px] text-right text-xs font-semibold text-slate-500 dark:text-slate-400">재고 현황</TableHead>
+            <TableHead className="w-[100px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400">관리</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -151,86 +174,115 @@ export function InventoryTable({
               </TableCell>
             </TableRow>
           ) : (
-            inventories.map((inventory) => {
+            inventories.map((inventory, index) => {
               const status = getStockStatus(inventory);
-              const isLowQuantity = inventory.currentQuantity <= (inventory.safetyStock || 0);
+              const isLowQuantity = inventory.currentQuantity <= minQty(inventory);
               const expirySoon = isExpiringSoon(inventory.expiryDate);
               const expired = isExpired(inventory.expiryDate);
+              const isSameProductAsPrevious =
+                index > 0 && inventories[index - 1].productId === inventory.productId;
+              const isSameProductAsNext =
+                index < inventories.length - 1 && inventories[index + 1].productId === inventory.productId;
+              const statusLabel =
+                expirySoon && !expired ? "임박" : status.label;
+              const rowIsExpirySoon = expirySoon && !expired;
+              const handleRowClick = () => onDetailClick?.(inventory);
 
               return (
-                <TableRow key={inventory.id} className="hover:bg-slate-50">
+                <TableRow
+                  key={inventory.id}
+                  className={`transition-colors ${
+                    isSameProductAsNext ? "border-b-0" : "border-b"
+                  } ${isSameProductAsPrevious ? "bg-slate-50/50 dark:bg-slate-900/30" : ""} hover:bg-slate-50 dark:hover:bg-slate-900/50 ${
+                    onDetailClick ? "cursor-pointer" : ""
+                  }`}
+                  onClick={onDetailClick ? handleRowClick : undefined}
+                >
                   <TableCell>
                     <span className="text-xs whitespace-nowrap">
-                      {renderStatusBadge(status.label)}
+                      {renderStatusBadge(statusLabel)}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 rounded-lg border flex-shrink-0">
-                        <AvatarImage src={`/api/products/${inventory.productId}/image`} alt={inventory.product.name} />
-                        <AvatarFallback className="bg-slate-100 text-slate-600 text-xs">
-                          {inventory.product.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{inventory.product.name}</div>
-                        {inventory.product.brand && (
-                          <div className="text-xs text-muted-foreground">{inventory.product.brand}</div>
-                        )}
+                    {isSameProductAsPrevious ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 shrink-0 rounded-bl-md border-b-2 border-l-2 border-slate-300 dark:border-slate-600" />
+                        <div>
+                          <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                            동일 품목 (이전 배치)
+                          </div>
+                          {inventory.product.brand && (
+                            <div className="text-xs text-slate-400 dark:text-slate-500">
+                              {inventory.product.brand}
+                              {inventory.product.catalogNumber && ` • Cat: ${inventory.product.catalogNumber}`}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {inventory.location || "미지정"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`text-sm font-medium ${isLowQuantity ? "text-red-600" : ""}`}>
-                      {inventory.currentQuantity} {inventory.unit}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {inventory.expiryDate ? (
-                      <span className={`text-sm ${expired ? "text-red-600" : expirySoon ? "text-orange-600" : "text-muted-foreground"}`}>
-                        {format(new Date(inventory.expiryDate), "yyyy.MM.dd")}
-                      </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">-</span>
+                      <div>
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                          {inventory.product.name}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {inventory.product.brand ?? "-"}
+                          {inventory.product.catalogNumber && ` • Cat: ${inventory.product.catalogNumber}`}
+                        </div>
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onEdit(inventory)}
-                        className="h-8 w-8 p-0"
-                        title="수정"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {onDelete && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onDelete(inventory)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          title="삭제"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onReorder(inventory)}
-                        className="h-8 w-8 p-0"
-                        title="주문하기"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                      </Button>
+                    <div className="font-mono text-sm text-slate-700 dark:text-slate-300">
+                      {inventory.lotNumber ?? "-"}
                     </div>
+                    <div
+                      className={`text-xs mt-0.5 font-medium ${
+                        rowIsExpirySoon || expired ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
+                      } ${expired ? "text-red-600 dark:text-red-400" : ""}`}
+                    >
+                      {inventory.expiryDate
+                        ? format(new Date(inventory.expiryDate), "yyyy.MM.dd")
+                        : "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {inventory.storageCondition ? (
+                      <Badge
+                        variant="secondary"
+                        className="h-6 rounded-full border-0 bg-slate-100 text-slate-600 font-normal hover:bg-slate-200 text-xs dark:bg-slate-800 dark:text-slate-400"
+                      >
+                        <Thermometer className="w-3 h-3 mr-1 shrink-0" />
+                        {inventory.storageCondition}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                      {inventory.currentQuantity}
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                      {inventory.unit}
+                    </span>
+                    {minQty(inventory) > 0 && (
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                        최소 {minQty(inventory)} 필요
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-600 dark:text-blue-400 font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDetailClick?.(inventory);
+                      }}
+                    >
+                      상세 보기
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
