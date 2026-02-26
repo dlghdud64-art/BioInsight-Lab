@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Building2, Zap, ArrowRight } from "lucide-react";
+import { Check, Package, Building2, Zap, Layers, ArrowRight } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
@@ -33,9 +33,30 @@ export default function PricingPage() {
       ],
     },
     {
+      id: "basic",
+      name: "Basic",
+      price: "₩29,000",
+      pricePeriod: "/월",
+      description: "소규모 랩실용. 재고 500개, 재고 예측 알림, 팀원 3명까지.",
+      icon: Layers,
+      badge: null as string | null,
+      badgeVariant: "secondary" as const,
+      buttonText: "Get Started",
+      buttonVariant: "outline" as const,
+      buttonDisabled: false,
+      buttonHref: "/auth/signin",
+      features: [
+        "재고 최대 500개",
+        "재고 예측 알림",
+        "팀원 3명",
+        "엑셀 업로드",
+        "기본 검색",
+      ],
+    },
+    {
       id: "pro",
       name: "Pro",
-      price: "₩99,000",
+      price: "₩69,000",
       pricePeriod: "/월",
       description: "대학/벤처용. 재고 무제한, Lot 관리, 예산 분석, 감사 증적(Audit Trail) 포함.",
       icon: Zap,
@@ -47,7 +68,7 @@ export default function PricingPage() {
       buttonHref: "/auth/signin",
       isRecommended: true,
       features: [
-        "재고 무제한 (무제한)",
+        "재고 무제한",
         "Lot 관리",
         "예산 분석",
         "감사 증적 (Audit Trail)",
@@ -78,17 +99,18 @@ export default function PricingPage() {
   ];
 
   const comparisonFeatures = [
-    { feature: "인벤토리 관리", starter: true, pro: true, enterprise: true },
-    { feature: "엑셀 업로드", starter: true, pro: true, enterprise: true },
-    { feature: "기본 검색", starter: true, pro: true, enterprise: true },
-    { feature: "재고 개수", starter: "100개", pro: "무제한", enterprise: "무제한" },
-    { feature: "팀원 수", starter: "1명", pro: "무제한", enterprise: "무제한" },
-    { feature: "Lot 관리", starter: false, pro: true, enterprise: true },
-    { feature: "예산 분석", starter: false, pro: true, enterprise: true },
-    { feature: "감사 증적 (Audit Trail)", starter: false, pro: true, enterprise: true },
-    { feature: "단일 세금계산서 (통합 정산)", starter: false, pro: false, enterprise: true },
-    { feature: "ERP 연동", starter: false, pro: false, enterprise: true },
-    { feature: "전담 매니저", starter: false, pro: false, enterprise: true },
+    { feature: "인벤토리 관리", starter: true, basic: true, pro: true, enterprise: true },
+    { feature: "엑셀 업로드", starter: true, basic: true, pro: true, enterprise: true },
+    { feature: "기본 검색", starter: true, basic: true, pro: true, enterprise: true },
+    { feature: "재고 개수", starter: "100개", basic: "500개", pro: "무제한", enterprise: "무제한" },
+    { feature: "팀원 수", starter: "1명", basic: "3명", pro: "무제한", enterprise: "무제한" },
+    { feature: "재고 예측 알림", starter: false, basic: true, pro: true, enterprise: true },
+    { feature: "Lot 관리", starter: false, basic: false, pro: true, enterprise: true },
+    { feature: "예산 분석", starter: false, basic: false, pro: true, enterprise: true },
+    { feature: "감사 증적 (Audit Trail)", starter: false, basic: false, pro: true, enterprise: true },
+    { feature: "단일 세금계산서 (통합 정산)", starter: false, basic: false, pro: false, enterprise: true },
+    { feature: "ERP 연동", starter: false, basic: false, pro: false, enterprise: true },
+    { feature: "전담 매니저", starter: false, basic: false, pro: false, enterprise: true },
   ];
 
   return (
@@ -106,7 +128,7 @@ export default function PricingPage() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 items-stretch">
               {plans.map((plan) => {
                 const Icon = plan.icon;
                 const isRecommended = plan.isRecommended;
@@ -115,13 +137,13 @@ export default function PricingPage() {
                   <Card
                     key={plan.id}
                     className={cn(
-                      "relative flex flex-col",
-                      isRecommended && "border-2 border-blue-500 shadow-lg"
+                      "relative flex flex-col h-full",
+                      isRecommended && "border-2 border-blue-500 shadow-xl ring-2 ring-blue-500/20"
                     )}
                   >
                     {plan.badge && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Badge className="bg-blue-600 text-white px-3 py-1">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                        <Badge className="bg-blue-600 text-white px-4 py-1.5 text-sm font-bold shadow-lg">
                           {plan.badge}
                         </Badge>
                       </div>
@@ -154,13 +176,6 @@ export default function PricingPage() {
                       <CardDescription className="text-sm text-slate-600">
                         {plan.description}
                       </CardDescription>
-                      {plan.badge && (
-                        <div className="mt-3">
-                          <Badge variant={plan.badgeVariant} className="text-xs">
-                            {plan.badge}
-                          </Badge>
-                        </div>
-                      )}
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col">
                       <ul className="space-y-3 mb-6 flex-1">
@@ -207,49 +222,33 @@ export default function PricingPage() {
                         <TableRow>
                           <TableHead className="font-semibold">기능</TableHead>
                           <TableHead className="text-center">Starter</TableHead>
+                          <TableHead className="text-center">Basic</TableHead>
                           <TableHead className="text-center">Pro</TableHead>
                           <TableHead className="text-center">Enterprise</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {comparisonFeatures.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{item.feature}</TableCell>
-                            <TableCell className="text-center">
-                              {typeof item.starter === "boolean" ? (
-                                item.starter ? (
-                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
-                                ) : (
-                                  <span className="text-slate-400">-</span>
-                                )
+                        {comparisonFeatures.map((item, index) => {
+                          const renderCell = (value: boolean | string) =>
+                            typeof value === "boolean" ? (
+                              value ? (
+                                <Check className="h-5 w-5 text-green-600 mx-auto" />
                               ) : (
-                                <span className="text-sm text-slate-700">{item.starter}</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {typeof item.pro === "boolean" ? (
-                                item.pro ? (
-                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
-                                ) : (
-                                  <span className="text-slate-400">-</span>
-                                )
-                              ) : (
-                                <span className="text-sm text-slate-700">{item.pro}</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {typeof item.enterprise === "boolean" ? (
-                                item.enterprise ? (
-                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
-                                ) : (
-                                  <span className="text-slate-400">-</span>
-                                )
-                              ) : (
-                                <span className="text-sm text-slate-700">{item.enterprise}</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                                <span className="text-slate-400">-</span>
+                              )
+                            ) : (
+                              <span className="text-sm text-slate-700">{value}</span>
+                            );
+                          return (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{item.feature}</TableCell>
+                              <TableCell className="text-center">{renderCell(item.starter)}</TableCell>
+                              <TableCell className="text-center">{renderCell(item.basic)}</TableCell>
+                              <TableCell className="text-center">{renderCell(item.pro)}</TableCell>
+                              <TableCell className="text-center">{renderCell(item.enterprise)}</TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
