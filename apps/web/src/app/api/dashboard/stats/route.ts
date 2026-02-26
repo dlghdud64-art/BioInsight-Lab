@@ -194,13 +194,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 8. 재주문 필요 품목 수
+    // 8. 재주문 필요 품목 수 (안전재고 + 리드타임 기반)
     const allInventories = await db.productInventory.findMany({
       where: {
         OR: [{ userId }, { organizationId: { in: [] } }],
       },
     });
     const reorderNeededCount = allInventories.filter((inv: any) => {
+      const dailyUsage = inv.averageDailyUsage ?? 0;
+      const leadTime = inv.leadTimeDays ?? 0;
+      if (dailyUsage > 0 && leadTime > 0) {
+        if (inv.currentQuantity <= dailyUsage * leadTime) return true;
+      }
       if (inv.safetyStock !== null) {
         return inv.currentQuantity <= inv.safetyStock;
       }
@@ -239,6 +244,10 @@ export async function GET(request: NextRequest) {
 
       // 재주문 필요 품목 수
       reorderNeededCount,
+
+      // 대시보드 KPI 카드용 (lowStockAlerts = 재주문 필요 건수)
+      lowStockAlerts: reorderNeededCount,
+      totalInventory: allInventories.length,
 
       // 카테고리별 지출 비중
       categorySpending: categorySpendingArray,

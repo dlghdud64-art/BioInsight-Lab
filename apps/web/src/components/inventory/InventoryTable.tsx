@@ -5,8 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface InventoryItem {
   id: string;
@@ -28,6 +34,8 @@ interface InventoryItem {
   deliveryPeriod?: string | null;
   inUseOrUnopened?: string | null;
   averageExpiry?: string | null;
+  averageDailyUsage?: number;
+  leadTimeDays?: number;
   product: {
     id: string;
     name: string;
@@ -58,19 +66,75 @@ export function InventoryTable({
   emptyActionLabel = "첫 재고 등록하기"
 }: InventoryTableProps) {
   const getStockStatus = (inventory: InventoryItem) => {
-    if (inventory.currentQuantity === 0) {
+    const dailyUsage = inventory.averageDailyUsage ?? 0;
+    const leadTime = inventory.leadTimeDays ?? 0;
+    const currentStock = inventory.currentQuantity;
+
+    // 리드 타임 기반 재주문 필요 판단: current_stock <= average_daily_usage * lead_time_days
+    if (dailyUsage > 0 && leadTime > 0) {
+      const reorderPoint = dailyUsage * leadTime;
+      if (currentStock <= reorderPoint) {
+        const daysUntilExhaustion = Math.floor(currentStock / dailyUsage);
+        const exhaustionDate = addDays(new Date(), daysUntilExhaustion);
+        const exhaustionDateStr = format(exhaustionDate, "yyyy-MM-dd");
+        const label =
+          daysUntilExhaustion <= 7
+            ? `소진 임박 (D-${daysUntilExhaustion})`
+            : "재주문 권장";
+        return {
+          label,
+          exhaustionDate: exhaustionDateStr,
+          daysUntilExhaustion,
+          isReorderNeeded: true,
+        };
+      }
+    }
+
+    if (currentStock === 0) {
       return { label: "부족" as const };
     }
-    if (inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock) {
+    if (inventory.safetyStock !== null && currentStock <= inventory.safetyStock) {
       return { label: "부족" as const };
     }
-    if (inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock * 1.5) {
+    if (inventory.safetyStock !== null && currentStock <= inventory.safetyStock * 1.5) {
       return { label: "주의" as const };
     }
     return { label: "정상" as const };
   };
 
-  const renderStatusBadge = (status: string) => {
+  const renderStatusBadge = (status: string, tooltipText?: string) => {
+    const badgeClass = "antialiased";
+    const wrapWithTooltip = (content: React.ReactNode) =>
+      tooltipText ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-block cursor-help">{content}</span>
+            </TooltipTrigger>
+            <TooltipContent className="antialiased">
+              {tooltipText}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        content
+      );
+
+    // 소진 임박 (D-N) 또는 재주문 권장 (동적 라벨)
+    if (status.startsWith("소진 임박") || status === "재주문 권장") {
+      const badge = (
+        <Badge
+          variant="outline"
+          dot="red"
+          dotPulse={status.startsWith("소진 임박")}
+          className={`${badgeClass} bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800`}
+        >
+          {status}
+        </Badge>
+      );
+      return wrapWithTooltip(badge);
+    }
+
     switch (status) {
       case "부족":
       case "out_of_stock":
@@ -80,7 +144,7 @@ export function InventoryTable({
             variant="outline"
             dot="red"
             dotPulse
-            className="bg-red-50 text-red-700 border-red-200"
+            className={`${badgeClass} bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800`}
           >
             부족
           </Badge>
@@ -91,7 +155,7 @@ export function InventoryTable({
           <Badge
             variant="outline"
             dot="amber"
-            className="bg-amber-50 text-amber-700 border-amber-200"
+            className={`${badgeClass} bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800`}
           >
             주의
           </Badge>
@@ -102,7 +166,7 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="h-6 w-fit shrink-0 rounded-full border-emerald-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 text-[11px] tracking-wide dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+            className={`${badgeClass} h-6 w-fit shrink-0 rounded-full border-emerald-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 text-[11px] tracking-wide dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400`}
           >
             <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
             정상
@@ -113,7 +177,7 @@ export function InventoryTable({
         return (
           <Badge
             variant="outline"
-            className="h-6 w-fit shrink-0 rounded-full border-amber-200 bg-amber-50 px-2.5 font-semibold text-amber-700 text-[11px] tracking-wide dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+            className={`${badgeClass} h-6 w-fit shrink-0 rounded-full border-amber-200 bg-amber-50 px-2.5 font-semibold text-amber-700 text-[11px] tracking-wide dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400`}
           >
             <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
             임박
@@ -124,7 +188,7 @@ export function InventoryTable({
           <Badge
             variant="outline"
             dot="slate"
-            className="bg-slate-100 text-slate-600 border-slate-200"
+            className={`${badgeClass} bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400`}
           >
             알 수 없음
           </Badge>
@@ -189,6 +253,10 @@ export function InventoryTable({
                 index < inventories.length - 1 && inventories[index + 1].productId === inventory.productId;
               const statusLabel =
                 expirySoon && !expired ? "임박" : status.label;
+              const tooltipText =
+                "exhaustionDate" in status && status.exhaustionDate
+                  ? `현재 사용량 기준 ${status.exhaustionDate} 소진 예상`
+                  : undefined;
               const rowIsExpirySoon = expirySoon && !expired;
               const handleRowClick = () => onDetailClick?.(inventory);
 
@@ -203,8 +271,8 @@ export function InventoryTable({
                   onClick={onDetailClick ? handleRowClick : undefined}
                 >
                   <TableCell>
-                    <span className="text-xs whitespace-nowrap">
-                      {renderStatusBadge(statusLabel)}
+                    <span className="text-xs whitespace-nowrap antialiased">
+                      {renderStatusBadge(statusLabel, tooltipText)}
                     </span>
                   </TableCell>
                   <TableCell className="max-w-[200px] min-w-0">

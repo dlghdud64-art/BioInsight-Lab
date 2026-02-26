@@ -52,6 +52,8 @@ interface ProductInventory {
   averageExpiry?: string | null;
   autoReorderEnabled?: boolean;
   autoReorderThreshold?: number;
+  averageDailyUsage?: number;
+  leadTimeDays?: number;
   product: {
     id: string;
     name: string;
@@ -119,9 +121,21 @@ export default function InventoryPage() {
   const myInventories = data?.inventories || [];
   const teamInventories = teamInventoryData?.inventories || [];
   const inventories = inventoryView === "my" ? myInventories : teamInventories;
-  const lowStockItems = inventories.filter(
-    (inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock
-  );
+
+  // 리드 타임 기반 재주문 필요: current_stock <= average_daily_usage * lead_time_days
+  const isReorderNeededByLeadTime = (inv: ProductInventory) => {
+    const dailyUsage = inv.averageDailyUsage ?? 0;
+    const leadTime = inv.leadTimeDays ?? 0;
+    if (dailyUsage > 0 && leadTime > 0) {
+      return inv.currentQuantity <= dailyUsage * leadTime;
+    }
+    return false;
+  };
+  const lowStockItems = inventories.filter((inv) => {
+    const bySafetyStock = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
+    const byLeadTime = isReorderNeededByLeadTime(inv);
+    return bySafetyStock || byLeadTime || inv.currentQuantity === 0;
+  });
 
   // Mock 데이터 (데이터가 없을 때 사용) — 동일 제품 Lot별 분리, 실무 엑셀 필드 반영
   const [mockInventories, setMockInventories] = useState<ProductInventory[]>([
@@ -143,6 +157,8 @@ export default function InventoryPage() {
       deliveryPeriod: "2~3주",
       inUseOrUnopened: "미개봉",
       averageExpiry: "2026-12-31",
+      averageDailyUsage: 0.5,
+      leadTimeDays: 21,
       product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
     },
     {
@@ -163,6 +179,8 @@ export default function InventoryPage() {
       deliveryPeriod: "2~3주",
       inUseOrUnopened: "사용 중",
       averageExpiry: "2026-03-15",
+      averageDailyUsage: 0.5,
+      leadTimeDays: 21,
       product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
     },
     {
@@ -180,6 +198,8 @@ export default function InventoryPage() {
       testPurpose: "일반 실험",
       vendor: "Corning 직납",
       deliveryPeriod: "1주",
+      averageDailyUsage: 1,
+      leadTimeDays: 7,
       product: { id: "mock-product-2", name: "Falcon 50ml Conical Tube", brand: "Corning", catalogNumber: "352070" },
     },
     {
@@ -197,6 +217,8 @@ export default function InventoryPage() {
       testPurpose: "MTT assay",
       vendor: "Eppendorf",
       deliveryPeriod: "1~2주",
+      averageDailyUsage: 0.2,
+      leadTimeDays: 14,
       product: { id: "mock-product-3", name: "Pipette Tips (1000μL)", brand: "Eppendorf", catalogNumber: "0030078447" },
     },
     {
@@ -214,6 +236,8 @@ export default function InventoryPage() {
       testPurpose: "MTT assay, 외래성 바이러스 시험",
       vendor: "Sigma-Aldrich",
       deliveryPeriod: "3~4주",
+      averageDailyUsage: 0.3,
+      leadTimeDays: 28,
       product: { id: "mock-product-4", name: "DMEM Medium (500ml)", brand: "Sigma-Aldrich", catalogNumber: "D5671" },
     },
     {
@@ -231,6 +255,8 @@ export default function InventoryPage() {
       testPurpose: "세포 배양",
       vendor: "Gibco",
       deliveryPeriod: "2주",
+      averageDailyUsage: 1,
+      leadTimeDays: 14,
       product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
     },
   ]);
@@ -523,12 +549,14 @@ export default function InventoryPage() {
       if (locationFilter !== "none" && inv.location !== locationFilter) return false;
     }
 
-    // 상태 필터
+    // 상태 필터 (리드 타임 기반 재주문 필요 포함)
     if (statusFilter !== "all") {
       const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
       const isOut = inv.currentQuantity === 0;
-      if (statusFilter === "low" && !isLow && !isOut) return false;
-      if (statusFilter === "normal" && (isLow || isOut)) return false;
+      const byLeadTime = isReorderNeededByLeadTime(inv);
+      const needsAttention = isLow || isOut || byLeadTime;
+      if (statusFilter === "low" && !needsAttention) return false;
+      if (statusFilter === "normal" && needsAttention) return false;
     }
 
     return true;
@@ -539,12 +567,13 @@ export default function InventoryPage() {
     new Set(displayInventories.map((inv) => inv.location).filter(Boolean))
   ) as string[];
 
-  // 상단 KPI 카드용 요약 지표
+  // 상단 KPI 카드용 요약 지표 (리드 타임 기반 재주문 포함)
   const totalInventoryCount = displayInventories.length;
   const lowOrOutOfStockCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
     const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
-    return isOut || isLow;
+    const byLeadTime = isReorderNeededByLeadTime(inv);
+    return isOut || isLow || byLeadTime;
   }).length;
   const now = new Date();
   const expiringSoonCount = displayInventories.filter((inv) => {
@@ -836,6 +865,7 @@ export default function InventoryPage() {
                       const isOut = inv.currentQuantity === 0;
                       const isLow =
                         inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
+                      const byLeadTime = isReorderNeededByLeadTime(inv);
                       const isExpiring =
                         inv.expiryDate &&
                         (() => {
@@ -843,7 +873,7 @@ export default function InventoryPage() {
                           const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                           return days > 0 && days <= 30;
                         })();
-                      return isOut || isLow || isExpiring;
+                      return isOut || isLow || byLeadTime || isExpiring;
                     })
                     .slice(0, 8);
                   if (urgent.length === 0) {
@@ -858,6 +888,7 @@ export default function InventoryPage() {
                     if (inv.currentQuantity === 0) reasons.push("품절");
                     else if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock)
                       reasons.push("재고 부족");
+                    else if (isReorderNeededByLeadTime(inv)) reasons.push("재주문 권장");
                     if (
                       inv.expiryDate &&
                       (() => {

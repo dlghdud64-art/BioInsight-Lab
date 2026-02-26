@@ -624,6 +624,8 @@ model ProductInventory {
   expiryDate           DateTime? // ?통기한
   autoReorderEnabled   Boolean   @default(false) // ?동 ?주??성????
   autoReorderThreshold Float? // ?동 ?주??계?(기본? safetyStock)
+  averageDailyUsage    Float? // 일일 사용량 (리드타임 기반 재주문 예측용)
+  leadTimeDays        Int? // 배송 소요 기간 (일)
   notes                String?   @db.Text
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt

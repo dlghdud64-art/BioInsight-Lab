@@ -397,14 +397,14 @@ export default function DashboardPage() {
             <Link href="/dashboard/inventory?filter=low">
               <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0 antialiased">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0 antialiased">
                     <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
-                  <div className="text-auto-scale text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
-                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                  <div className="text-auto-scale text-red-600 dark:text-red-400 antialiased">{stats.lowStockAlerts}</div>
+                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1 antialiased">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
@@ -629,8 +629,8 @@ export default function DashboardPage() {
             <Link href="/dashboard/inventory?filter=low">
               <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0 antialiased">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0 antialiased">
                     <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
