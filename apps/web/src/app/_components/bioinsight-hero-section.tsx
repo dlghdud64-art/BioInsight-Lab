@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Search, MessageSquareText, UploadCloud, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Search, MessageSquareText, UploadCloud, Loader2, Flame, ArrowRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
@@ -125,9 +126,34 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
+          {/* 메인 CTA: Get Started + 요금제 보기 */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 md:mt-10">
+            <Link href="/test/search">
+              <Button
+                size="lg"
+                className="h-14 px-8 text-lg bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-14 px-8 text-lg border-slate-200 dark:border-slate-800"
+              >
+                요금제 보기
+              </Button>
+            </Link>
+          </div>
+
           {/* 인기 검색어 칩 */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-6 md:gap-3">
-            <span className="text-sm text-slate-500 font-medium">🔥 인기:</span>
+            <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
+              <Flame className="h-4 w-4 text-slate-500" />
+              인기:
+            </span>
             {popularSearches.map((term) => (
               <Badge
                 key={term}

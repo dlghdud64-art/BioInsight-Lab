@@ -7,20 +7,12 @@ import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { Search, GitCompare, FileText, FlaskConical, ShoppingCart, Menu, LayoutDashboard, Package, Shield } from "lucide-react";
+import { Menu, LayoutDashboard, ArrowRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface MainHeaderProps {
@@ -190,7 +182,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     <>
                       <SheetClose asChild>
                         <Link
-                          href="/login"
+                          href="/auth/signin"
                           className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors"
                         >
                           로그인
@@ -201,7 +193,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                           asChild
                           className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white"
                         >
-                          <Link href="/test/search">무료 체험 시작하기</Link>
+                          <Link href="/test/search" className="flex items-center justify-center gap-2">
+                            Get Started
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
                         </Button>
                       </SheetClose>
                     </>
@@ -219,63 +214,29 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </div>
             </SheetContent>
           </Sheet>
-          {/* 체험 버튼 - 로그인 상태일 때 모바일에서 숨김 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                className={`${session?.user ? "hidden md:block" : ""} text-[10px] md:text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 md:px-3 h-8 md:h-9`}
-                aria-label="기능 체험 메뉴 열기"
-                aria-haspopup="true"
-              >
-                <span className="hidden sm:inline">기능 체험</span>
-                <span className="sm:hidden">체험</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {/* Group 1: 구매 도구 */}
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground px-2 py-1.5">
-                구매 도구
-              </DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href="/test/search" className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
-                  <span>검색/AI 분석</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/compare" className="flex items-center gap-2">
-                  <GitCompare className="h-4 w-4" />
-                  <span>제품 비교</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/test/quote" className="flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  <span>견적 요청</span>
-                </Link>
-              </DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              
-              {/* Group 2: 관리 도구 */}
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground px-2 py-1.5">
-                관리 도구
-              </DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/inventory" className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  <span>재고 관리</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/safety" className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  <span>안전 관리</span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* 로그인 버튼 - 비로그인 시 데스크톱에 표시 */}
+          {!session?.user && (
+            <>
+              <Link href="/auth/signin" className="hidden md:inline-block">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs h-8 md:h-9"
+                >
+                  로그인
+                </Button>
+              </Link>
+              <Link href="/test/search" className="hidden md:inline-block">
+                <Button
+                  size="sm"
+                  className="text-[10px] md:text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-4 h-8 md:h-9"
+                >
+                  Get Started
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
+                </Button>
+              </Link>
+            </>
+          )}
           {/* 대시보드 버튼 - 로그인한 사용자에게만 표시 */}
           {session?.user && (
             <Link href="/dashboard">
