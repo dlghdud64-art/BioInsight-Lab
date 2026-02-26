@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -497,15 +497,22 @@ export default function InventoryPage() {
     },
   });
 
-  // 필터링된 인벤토리
+  // 필터링된 인벤토리 (검색어 + 기타 필터)
   const filteredInventories = displayInventories.filter((inv) => {
-    // 검색 필터
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // 검색 필터: 품목명, 제조사, 카탈로그 번호, Lot, 공급사
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const name = (inv.product?.name ?? "").toLowerCase();
+      const brand = (inv.product?.brand ?? "").toLowerCase();
+      const catNo = (inv.product?.catalogNumber ?? "").toLowerCase();
+      const lot = (inv.lotNumber ?? "").toLowerCase();
+      const vendor = (inv.vendor ?? "").toLowerCase();
       const matchesSearch =
-        inv.product?.name?.toLowerCase().includes(query) ||
-        inv.product?.brand?.toLowerCase().includes(query) ||
-        inv.product?.catalogNumber?.toLowerCase().includes(query);
+        name.includes(query) ||
+        brand.includes(query) ||
+        catNo.includes(query) ||
+        lot.includes(query) ||
+        vendor.includes(query);
       if (!matchesSearch) return false;
     }
 
@@ -648,14 +655,24 @@ export default function InventoryPage() {
           {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
           <TabsContent value="manage" className="m-0 space-y-4">
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950">
-              <div className="relative w-80">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <div className="relative flex-1 min-w-0 w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none flex-shrink-0" />
                 <Input
                   placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full"
+                  className="pl-10 pr-10 min-w-0 w-full"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+                    aria-label="검색어 지우기"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-[140px]">
@@ -727,8 +744,13 @@ export default function InventoryPage() {
                       );
                       setIsSheetOpen(true);
                     }}
-                    emptyMessage="아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
-                    emptyAction={() => setIsDialogOpen(true)}
+                    emptyMessage={
+                      searchQuery.trim()
+                        ? "검색 결과가 없습니다. 품목명이나 카탈로그 번호를 다시 확인해 주세요."
+                        : "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
+                    }
+                    emptyAction={searchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
+                    emptyActionLabel={searchQuery.trim() ? "검색 초기화" : "첫 재고 등록하기"}
                   />
                 </CardContent>
               </Card>

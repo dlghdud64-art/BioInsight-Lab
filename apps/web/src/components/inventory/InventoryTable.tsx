@@ -44,6 +44,7 @@ interface InventoryTableProps {
   onDetailClick?: (inventory: InventoryItem) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
+  emptyActionLabel?: string;
 }
 
 export function InventoryTable({ 
@@ -53,7 +54,8 @@ export function InventoryTable({
   onReorder,
   onDetailClick,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
-  emptyAction
+  emptyAction,
+  emptyActionLabel = "첫 재고 등록하기"
 }: InventoryTableProps) {
   const getStockStatus = (inventory: InventoryItem) => {
     if (inventory.currentQuantity === 0) {
@@ -169,7 +171,7 @@ export function InventoryTable({
                   <p className="text-muted-foreground mb-4">{emptyMessage}</p>
                   {emptyAction && (
                     <Button onClick={emptyAction} size="sm">
-                      첫 재고 등록하기
+                      {emptyActionLabel}
                     </Button>
                   )}
                 </div>
