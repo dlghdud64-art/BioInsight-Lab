@@ -21,12 +21,12 @@ export default function SignInPage() {
             backgroundSize: "48px 48px",
           }}
         />
-        {/* 상단 브랜드 마크 */}
-        <div className="relative z-10 flex items-center gap-3 font-bold text-2xl tracking-tight animate-in fade-in duration-500">
+        {/* 좌측 브랜드 마크 - 최상단 고정 */}
+        <div className="relative z-10 flex items-center gap-3 font-bold text-2xl text-white mb-12">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
             B
           </div>
-          <span>BioInsight Lab</span>
+          <span className="tracking-tighter">BioInsight Lab</span>
         </div>
         {/* 중앙 슬로건 섹션 */}
         <div className="relative z-10 space-y-6 pt-8 lg:pt-12">
