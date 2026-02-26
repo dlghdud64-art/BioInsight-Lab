@@ -18,18 +18,18 @@ function SignInContent() {
       {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
       <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
         {/* 1. 브랜드 로고 */}
-        <div className="absolute top-12 left-12 z-10 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-lg">
+        <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
             <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={48} height={48} className="w-full h-full object-cover" />
           </div>
-          <div className="leading-tight">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold tracking-tight text-white">BioInsight</span>
-              <span className="text-xl font-bold tracking-tight text-teal-300">Lab</span>
+          <div className="flex flex-col justify-center leading-tight">
+            <div className="flex items-center gap-1">
+              <span className="text-xl font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+              <span className="text-xl font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
             </div>
-            <div className="text-[11px] text-slate-400">Procurement & Research</div>
+            <div className="text-[11px] text-slate-400 tracking-tight">Procurement & Research</div>
           </div>
-        </div>
+        </Link>
 
         {/* 2. 슬로건: 수직 중앙 배치 */}
         <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-8">
