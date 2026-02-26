@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
+
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -78,13 +78,6 @@ function SignInContent() {
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 홈으로 돌아가기
-              </Link>
-            </div>
-
-            {/* 로고 상단 중앙 */}
-            <div className="flex justify-center">
-              <Link href="/" className="inline-block">
-                <BioInsightLogo showText={true} />
               </Link>
             </div>
 
