@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +56,27 @@ export default function BudgetPage() {
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(true);
+
+  /** 예산 목록 서버에서 불러오기 */
+  const fetchBudgets = useCallback(async () => {
+    try {
+      setIsFetching(true);
+      const res = await fetch("/api/budgets");
+      if (!res.ok) return;
+      const json = await res.json();
+      const list = Array.isArray(json.budgets) ? json.budgets : [];
+      setBudgets(list);
+    } catch (e) {
+      console.error("[BudgetPage] Failed to fetch budgets:", e);
+    } finally {
+      setIsFetching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
   const handleAddBudget = async (formData: {
@@ -139,7 +160,8 @@ export default function BudgetPage() {
       setIsDialogOpen(false);
       setEditingBudget(null);
 
-      router.push("/dashboard/analytics/category");
+      await fetchBudgets();
+      router.refresh();
     } catch (error) {
       console.error("[BudgetPage] Unexpected error while saving budget:", error);
       setSubmitError(
@@ -224,7 +246,25 @@ export default function BudgetPage() {
           }
         />
 
-        {budgets.length === 0 ? (
+        {isFetching ? (
+          <div className="grid gap-6 md:grid-cols-2 mt-6">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <Card key={idx} className="shadow-sm border-slate-200 animate-pulse">
+                <CardHeader className="pb-2">
+                  <div className="h-5 w-36 rounded bg-slate-200 dark:bg-slate-700 mb-2" />
+                  <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="h-3 rounded bg-slate-100 dark:bg-slate-800" />
+                  <div className="flex justify-end gap-2">
+                    <div className="h-8 w-20 rounded bg-slate-100 dark:bg-slate-800" />
+                    <div className="h-8 w-14 rounded bg-slate-100 dark:bg-slate-800" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : budgets.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -547,8 +587,8 @@ function BudgetForm({
       return;
     }
 
-    // 콤마 제거 및 숫자 변환
-    const cleanAmount = Number(String(amount).replace(/,/g, ""));
+    // 숫자 외 모든 기호 제거 후 변환 (400 Bad Request 방지)
+    const cleanAmount = Number(String(amount).replace(/[^0-9]/g, ""));
     
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
       toast({

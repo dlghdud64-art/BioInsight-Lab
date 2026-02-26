@@ -72,13 +72,40 @@ export async function POST(request: NextRequest) {
     const trimmedName = name.trim();
     const trimmedDescription = description?.trim();
 
+    // 2. 요금제별 조직 생성 한도 체크 (Basic: 3개, Pro 이상: 무제한)
+    const existingMemberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      include: {
+        organization: {
+          include: { subscription: true },
+        },
+      },
+    });
+
+    const currentOrgCount = existingMemberships.length;
+    const hasPremiumPlan = existingMemberships.some((m: any) => {
+      const plan: string | undefined = m.organization?.subscription?.plan;
+      return plan && plan !== "FREE" && plan !== "BASIC";
+    });
+
+    if (!hasPremiumPlan && currentOrgCount >= 3) {
+      console.warn("[Organizations API] Plan limit exceeded:", { currentOrgCount, hasPremiumPlan });
+      return NextResponse.json(
+        {
+          error: "Basic 요금제에서는 최대 3개의 조직만 생성할 수 있습니다. Pro 요금제로 업그레이드하면 무제한으로 생성할 수 있습니다.",
+          code: "PLAN_LIMIT_EXCEEDED",
+        },
+        { status: 403 }
+      );
+    }
+
     console.log("[Organizations API] Creating organization with data:", {
       userId: session.user.id,
       name: trimmedName,
       description: trimmedDescription,
     });
 
-    // 2. 조직 생성 및 멤버 등록 (트랜잭션으로 처리)
+    // 3. 조직 생성 및 멤버 등록 (트랜잭션으로 처리)
     const organization = await createOrganization(session.user.id, {
       name: trimmedName,
       description: trimmedDescription,
