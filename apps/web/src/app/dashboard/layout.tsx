@@ -26,8 +26,8 @@ export default function DashboardLayout({
           onMenuClick={() => setIsMobileMenuOpen(true)}
         />
         
-        {/* 메인 콘텐츠 영역: 여기에만 페이지 내용이 들어감 */}
-        <main className="flex-1 overflow-y-auto pb-8 px-8">
+        {/* 메인 콘텐츠 영역: 모바일 p-4, 데스크톱 p-8 */}
+        <main className="flex-1 overflow-y-auto pb-8 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

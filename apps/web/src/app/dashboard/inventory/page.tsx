@@ -30,6 +30,7 @@ import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Info, FileText, BellRing, Save } from "lucide-react";
+import { getStorageConditionLabel } from "@/lib/constants";
 
 interface ProductInventory {
   id: string;
@@ -122,7 +123,7 @@ export default function InventoryPage() {
   );
 
   // Mock 데이터 (데이터가 없을 때 사용) — 동일 제품 Lot별 분리, 실무 엑셀 필드 반영
-  const mockInventories: ProductInventory[] = [
+  const [mockInventories, setMockInventories] = useState<ProductInventory[]>([
     {
       id: "mock-1a",
       productId: "mock-product-1",
@@ -134,7 +135,7 @@ export default function InventoryPage() {
       expiryDate: "2026-12-31",
       notes: null,
       lotNumber: "24A01-X",
-      storageCondition: "냉동",
+      storageCondition: "freezer_20",
       hazard: false,
       testPurpose: "세포 배양",
       vendor: "Thermo Fisher 공급",
@@ -154,7 +155,7 @@ export default function InventoryPage() {
       expiryDate: "2026-03-15",
       notes: "개봉된 vial인데 시약관리대장 상에서 수량 차감 안 되어서 8/12 개봉 기록 후 vial 전량 사용 예정",
       lotNumber: "23K15-Y",
-      storageCondition: "냉동",
+      storageCondition: "freezer_20",
       hazard: false,
       testPurpose: "세포 배양",
       vendor: "Thermo Fisher 공급",
@@ -173,7 +174,7 @@ export default function InventoryPage() {
       location: "선반 3층",
       expiryDate: null,
       notes: null,
-      storageCondition: "상온",
+      storageCondition: "room_temp_std",
       hazard: false,
       testPurpose: "일반 실험",
       vendor: "Corning 직납",
@@ -190,7 +191,7 @@ export default function InventoryPage() {
       location: "냉장고 2칸",
       expiryDate: null,
       notes: "분기 별 1회 이상 사용",
-      storageCondition: "상온",
+      storageCondition: "room_temp_std",
       hazard: false,
       testPurpose: "MTT assay",
       vendor: "Eppendorf",
@@ -207,7 +208,7 @@ export default function InventoryPage() {
       location: "선반 1층",
       expiryDate: null,
       notes: null,
-      storageCondition: "냉장",
+      storageCondition: "fridge",
       hazard: false,
       testPurpose: "MTT assay, 외래성 바이러스 시험",
       vendor: "Sigma-Aldrich",
@@ -224,14 +225,14 @@ export default function InventoryPage() {
       location: "냉장고 3칸",
       expiryDate: null,
       notes: null,
-      storageCondition: "냉장",
+      storageCondition: "fridge",
       hazard: true,
       testPurpose: "세포 배양",
       vendor: "Gibco",
       deliveryPeriod: "2주",
       product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
     },
-  ];
+  ]);
 
   // 데이터가 없으면 Mock 데이터 사용
   const displayInventories = inventories.length > 0 ? inventories : mockInventories;
@@ -377,8 +378,36 @@ export default function InventoryPage() {
       notes?: string;
       lotNumber?: string;
       storageCondition?: string;
+      testPurpose?: string;
     }) => {
       const isEdit = Boolean(data.id);
+      const isMockItem = isEdit && data.id?.startsWith("mock-");
+
+      // Mock 데이터 수정: API 대신 로컬 상태 업데이트 (1초 딜레이 시뮬레이션)
+      if (isMockItem && data.id) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setMockInventories((prev) =>
+          prev.map((item) =>
+            item.id === data.id
+              ? {
+                  ...item,
+                  currentQuantity: data.currentQuantity,
+                  unit: data.unit,
+                  safetyStock: data.safetyStock ?? item.safetyStock,
+                  minOrderQty: data.minOrderQty ?? item.minOrderQty,
+                  location: data.location ?? item.location,
+                  expiryDate: data.expiryDate ?? item.expiryDate,
+                  notes: data.notes ?? item.notes,
+                  lotNumber: data.lotNumber ?? item.lotNumber,
+                  storageCondition: data.storageCondition ?? item.storageCondition,
+                  testPurpose: data.testPurpose ?? item.testPurpose,
+                }
+              : item
+          )
+        );
+        return { success: true };
+      }
+
       const url = isEdit ? `/api/inventory/${data.id}` : "/api/inventory";
       const body = isEdit
         ? {
@@ -390,6 +419,7 @@ export default function InventoryPage() {
             safetyStock: data.safetyStock ?? undefined,
             lotNumber: data.lotNumber ?? undefined,
             storageCondition: data.storageCondition ?? undefined,
+            testPurpose: data.testPurpose ?? undefined,
           }
         : data;
 
@@ -541,7 +571,7 @@ export default function InventoryPage() {
         {/* 상단 타이틀 및 액션 버튼 */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">재고 관리 📦</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
             <p className="text-muted-foreground">
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
@@ -601,17 +631,17 @@ export default function InventoryPage() {
           <TabsList className="bg-slate-100/50 p-1 dark:bg-slate-900/50">
             <TabsTrigger
               value="manage"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+              className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
             >
-              <List className="mr-2 h-4 w-4" />
-              시약 관리하기 📝
+              <List className="mr-2 h-4 w-4 text-slate-500" />
+              시약 관리하기
             </TabsTrigger>
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+              className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
             >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              한눈에 보기 📊
+              <LayoutDashboard className="mr-2 h-4 w-4 text-slate-500" />
+              한눈에 보기
             </TabsTrigger>
           </TabsList>
 
@@ -916,7 +946,7 @@ export default function InventoryPage() {
                       </div>
                       <div className="text-slate-500 dark:text-slate-400">보관조건</div>
                       <div className="font-medium">
-                        {selectedItem.storageCondition ?? "-"}
+                        {getStorageConditionLabel(selectedItem.storageCondition)}
                       </div>
                     </div>
                   </div>
@@ -997,7 +1027,7 @@ export default function InventoryPage() {
                       </Button>
                     </div>
                     <p className="mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                      설정된 수량 이하로 재고가 떨어지면 대시보드와 앱 내 알림(🔔)으로 즉시 경고가 발생하며,
+                      설정된 수량 이하로 재고가 떨어지면 대시보드와 앱 내 알림으로 즉시 경고가 발생하며,
                       원클릭 재발주가 활성화됩니다.
                     </p>
                   </div>

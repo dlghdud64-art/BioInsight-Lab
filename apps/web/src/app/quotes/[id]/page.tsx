@@ -34,6 +34,7 @@ import {
   X,
   Send,
   CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Dialog,
@@ -358,12 +359,12 @@ export default function QuoteDetailPage() {
     const shareUrl = `${window.location.origin}/quotes/${quote.id}`;
 
     // 최종 텍스트 조합
-    const shareText = `🧪 [BioInsight] ${quote.title || `${monthName} ${weekNum}주차 시약 구매 요청`}
+    const shareText = `[BioInsight] ${quote.title || `${monthName} ${weekNum}주차 시약 구매 요청`}
 
 ${itemLines}
 
-💰 총 예상 금액: ${totalAmount > 0 ? `${totalAmount.toLocaleString()}원` : "미정"}
-🔗 리스트 보러가기: ${shareUrl}`;
+총 예상 금액: ${totalAmount > 0 ? `${totalAmount.toLocaleString()}원` : "미정"}
+리스트 보러가기: ${shareUrl}`;
 
     try {
       await navigator.clipboard.writeText(shareText);
@@ -947,8 +948,9 @@ ${itemLines}
                                 </span>
                               </div>
                               {expectedRemaining !== null && expectedRemaining < 0 && (
-                                <p className="text-xs text-red-600 mt-1">
-                                  ⚠️ 예산이 부족합니다
+                                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  예산이 부족합니다
                                 </p>
                               )}
                             </div>

@@ -416,7 +416,7 @@ function BudgetCard({
         </div>
       </CardHeader>
       <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div>
             <div className="text-xs md:text-sm text-muted-foreground">예산 금액</div>
             <div className="text-base md:text-lg font-semibold break-words">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer } from "lucide-react";
 import { format } from "date-fns";
+import { getStorageConditionLabel } from "@/lib/constants";
 
 interface InventoryItem {
   id: string;
@@ -148,7 +149,8 @@ export function InventoryTable({
 
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-950 shadow-sm">
-      <Table>
+      <div className="overflow-x-auto">
+      <Table className="min-w-[700px]">
         <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">상태</TableHead>
@@ -252,7 +254,7 @@ export function InventoryTable({
                         className="h-6 rounded-full border-0 bg-slate-100 text-slate-600 font-normal hover:bg-slate-200 text-xs dark:bg-slate-800 dark:text-slate-400"
                       >
                         <Thermometer className="w-3 h-3 mr-1 shrink-0" />
-                        {inventory.storageCondition}
+                        {getStorageConditionLabel(inventory.storageCondition)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
@@ -286,10 +288,11 @@ export function InventoryTable({
                   </TableCell>
                 </TableRow>
               );
-            })
-          )}
-        </TableBody>
+            }          )
+        )}
+      </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

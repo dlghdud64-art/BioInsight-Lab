@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin, Package } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -2039,8 +2039,9 @@ export function QuoteRequestPanel({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quote-message" className="text-sm font-medium">
-                📦 배송 및 공통 요청사항 (모든 벤더에게 전송됨)
+              <Label htmlFor="quote-message" className="text-sm font-medium flex items-center gap-2">
+                <Package className="h-4 w-4 text-slate-500" />
+                배송 및 공통 요청사항 (모든 벤더에게 전송됨)
               </Label>
               <Textarea
                 id="quote-message"

@@ -119,7 +119,7 @@ export function SearchAnalysisCard() {
                 </div>
                 <div className="pt-2 border-t border-blue-200">
                   <p className="text-[10px] text-blue-700 leading-relaxed">
-                    💡 검색어에 <strong>제품명</strong>, <strong>타깃</strong>, <strong>실험 유형</strong>을 함께 입력하면 GPT가 자동으로 분석합니다.
+                    검색어에 <strong>제품명</strong>, <strong>타깃</strong>, <strong>실험 유형</strong>을 함께 입력하면 GPT가 자동으로 분석합니다.
                   </p>
                 </div>
               </div>

@@ -370,8 +370,8 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* 2. KPI Cards (2x2 그리드) - Mock 데이터 + 추이 강화 */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* 2. KPI Cards - 모바일 1열, sm 이상 2열 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link href="/dashboard/inventory">
               <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -599,7 +599,7 @@ export default function DashboardPage() {
         {/* --- Left Main Content (Span 5) --- */}
         <div className="md:col-span-5 space-y-6">
           {/* 1. KPI Cards - Mock 데이터 + 추이 강화 */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Link href="/dashboard/inventory">
               <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -695,7 +695,8 @@ export default function DashboardPage() {
 
                   {/* 전체 탭 */}
                   <TabsContent value="all" className="m-0">
-                    <Table>
+                    <div className="overflow-x-auto">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>주문 정보</TableHead>
@@ -720,11 +721,13 @@ export default function DashboardPage() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </TabsContent>
 
                   {/* 배송 중 탭 */}
                   <TabsContent value="shipping" className="m-0">
-                    <Table>
+                    <div className="overflow-x-auto">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>주문 정보</TableHead>
@@ -749,11 +752,13 @@ export default function DashboardPage() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </TabsContent>
 
                   {/* 승인 대기 탭 */}
                   <TabsContent value="pending" className="m-0">
-                    <Table>
+                    <div className="overflow-x-auto">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>주문 정보</TableHead>
@@ -778,11 +783,13 @@ export default function DashboardPage() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </TabsContent>
 
                   {/* 완료 탭 */}
                   <TabsContent value="completed" className="m-0">
-                    <Table>
+                    <div className="overflow-x-auto">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
                           <TableHead>주문 정보</TableHead>
@@ -807,6 +814,7 @@ export default function DashboardPage() {
                         )}
                       </TableBody>
                     </Table>
+                    </div>
                   </TabsContent>
                 </Tabs>
               )}

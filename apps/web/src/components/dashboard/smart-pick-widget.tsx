@@ -133,7 +133,7 @@ export function SmartPickWidget() {
                   <p className="text-xs text-gray-500 mb-2">{rec.product.brand}</p>
                 )}
                 <p className="text-xs text-blue-700 font-medium mb-2">
-                  💡 보통 이맘때 재구매하셨어요
+                  보통 이맘때 재구매하셨어요
                 </p>
                 <div className="flex items-center gap-3 text-xs text-gray-600">
                   <span>

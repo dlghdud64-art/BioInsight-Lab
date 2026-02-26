@@ -19,7 +19,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.mfds.go.kr",
     description: "식품, 의약품, 화장품 등 안전 규제 정보",
     tags: ["규제", "식약처", "의약품"],
-    icon: "🏛️"
+    icon: "Building2"
   },
   {
     id: "ncis",
@@ -27,7 +27,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://icis.me.go.kr",
     description: "화학물질 정보, 제한금지 물질 조회",
     tags: ["화학물질", "규제", "환경부"],
-    icon: "🧪"
+    icon: "FlaskConical"
   },
   {
     id: "msds-nier",
@@ -35,7 +35,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://msds.kosha.or.kr",
     description: "물질안전보건자료(MSDS) 통합 검색 시스템",
     tags: ["MSDS", "SDS", "안전"],
-    icon: "📋"
+    icon: "ClipboardList"
   },
   {
     id: "kosha",
@@ -43,7 +43,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.kosha.or.kr",
     description: "산업안전보건법, 작업환경 측정, PPE 정보",
     tags: ["산안법", "안전", "PPE"],
-    icon: "🦺"
+    icon: "Shield"
   },
   {
     id: "kosha-msds",
@@ -51,7 +51,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://msds.kosha.or.kr/MSDSInfo/kcic/msdsSearch.do",
     description: "한국산업안전보건공단 MSDS 검색",
     tags: ["MSDS", "SDS", "검색"],
-    icon: "🔍"
+    icon: "Search"
   },
   {
     id: "chemical-info",
@@ -59,7 +59,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://ncis.nier.go.kr",
     description: "국내 화학물질 유통량, 유해성 정보 조회",
     tags: ["화학물질", "유해성", "정보"],
-    icon: "📊"
+    icon: "BarChart3"
   },
   {
     id: "reach",
@@ -67,7 +67,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://echa.europa.eu/regulations/reach",
     description: "유럽 화학물질 등록·평가·허가·제한 규제",
     tags: ["REACH", "EU", "수출"],
-    icon: "🇪🇺"
+    icon: "Globe"
   },
   {
     id: "nfpa",
@@ -75,7 +75,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.nfpa.org/codes-and-standards/all-codes-and-standards/list-of-codes-and-standards/detail?code=704",
     description: "NFPA 704 표준 - 위험물 표시",
     tags: ["NFPA", "위험", "표시"],
-    icon: "💎"
+    icon: "Diamond"
   },
   {
     id: "ghs",
@@ -83,7 +83,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.unece.org/trans/danger/publi/ghs/ghs_welcome_e.html",
     description: "화학물질 분류 및 표지 국제조화시스템",
     tags: ["GHS", "분류", "국제"],
-    icon: "🌐"
+    icon: "Globe"
   },
   {
     id: "waste-disposal",
@@ -91,7 +91,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://me.go.kr",
     description: "화학물질 폐기 절차 및 규정",
     tags: ["폐기", "환경", "규제"],
-    icon: "♻️"
+    icon: "Recycle"
   },
   {
     id: "lab-safety-guide",
@@ -99,7 +99,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.law.go.kr",
     description: "연구실 안전관리 법률 및 지침",
     tags: ["실험실", "안전", "법률"],
-    icon: "🔬"
+    icon: "Microscope"
   },
   {
     id: "ppe-guide",
@@ -107,7 +107,7 @@ export const DEFAULT_COMPLIANCE_LINKS: DefaultComplianceLink[] = [
     url: "https://www.kosha.or.kr/kosha/data/guideline.do",
     description: "화학물질별 개인보호장비 선택 가이드",
     tags: ["PPE", "보호구", "안전"],
-    icon: "🥽"
+    icon: "Glasses"
   }
 ];
 

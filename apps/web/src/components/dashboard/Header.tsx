@@ -154,15 +154,15 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200 bg-white">
-      <div className="flex h-full items-center justify-between px-8">
+      <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 브레드크럼 + 햄버거 메뉴 */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
-          {/* 모바일 햄버거 메뉴 */}
+          {/* 모바일/태블릿 햄버거 메뉴 (lg 미만에서 사이드바 대신 표시) */}
           {onMenuClick && (
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-9 w-9 flex-shrink-0"
+              className="lg:hidden h-9 w-9 flex-shrink-0"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
@@ -200,29 +200,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
 
         {/* 중앙/우측 영역: 검색창 + 유틸리티 + 프로필 */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* 전역 검색창 */}
-          <div className="hidden lg:flex items-center relative w-64 xl:w-96">
-            <Search className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none" />
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:justify-end">
+          {/* 전역 검색창: 모바일 100%, 데스크톱 고정 너비 */}
+          <div className="flex items-center relative flex-1 sm:flex-initial w-full min-w-0 sm:w-48 md:w-56 lg:w-64 xl:w-96">
+            <Search className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none flex-shrink-0" />
             <Input
               type="search"
               placeholder="시약, 재고 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white"
+              className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white w-full min-w-0"
             />
           </div>
-
-          {/* 모바일 검색 아이콘 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-9 w-9"
-            aria-label="검색"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
 
           {/* 알림 드롭다운 */}
           <DropdownMenu>
@@ -230,7 +220,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 relative"
+                className="h-9 w-9 relative flex-shrink-0"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
@@ -285,13 +275,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 도움말 드롭다운 */}
+          {/* 도움말 드롭다운 (sm 미만에서 공간 부족 시 숨김) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 cursor-pointer hover:text-blue-600 transition-colors"
+                className="h-9 w-9 flex-shrink-0 cursor-pointer hover:text-blue-600 transition-colors hidden sm:flex"
                 aria-label="도움말"
               >
                 <HelpCircle className="h-5 w-5 text-slate-500" />
@@ -320,7 +310,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </DropdownMenu>
 
           {/* 사용자 프로필 */}
-          <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+          <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 flex-shrink-0">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
               <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-semibold">

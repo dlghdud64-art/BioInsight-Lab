@@ -18,7 +18,7 @@ export function PricingSection() {
                 <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-xs border-indigo-200">현재</Badge>
               </div>
               <CardDescription className="text-xs text-slate-600">
-                기능 체험 및 파일럿 목적
+                초기 랩실용. Get Started로 바로 시작
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 pt-0">

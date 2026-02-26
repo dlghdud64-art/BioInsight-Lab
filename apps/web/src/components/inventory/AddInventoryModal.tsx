@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ interface AddInventoryModalProps {
     notes?: string;
     lotNumber?: string;
     storageCondition?: string;
+    testPurpose?: string;
   }) => void;
   inventory?: any;
   /** 저장 중일 때 true. 버튼 비활성화 및 스피너 표시용 */
@@ -64,6 +65,14 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const [notes, setNotes] = useState(inventory?.notes || "");
   const [lotNumber, setLotNumber] = useState(inventory?.lotNumber ?? "");
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
+  const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
+
+  // 수정 모드: inventory 변경 시 폼 값 동기화
+  useEffect(() => {
+    if (inventory) {
+      setTestPurpose(inventory.testPurpose ?? "");
+    }
+  }, [inventory]);
 
   // 제품 검색
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
@@ -114,6 +123,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
       notes: notes || undefined,
       lotNumber: lotNumber.trim() || undefined,
       storageCondition: storageCondition || undefined,
+      testPurpose: testPurpose.trim() || undefined,
     };
     console.log("저장 시도:", data);
     onSubmit(data);
@@ -361,9 +371,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                       <SelectValue placeholder="조건 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="room">상온 보관</SelectItem>
+                      <SelectItem value="room_temp_broad">실온 (1~30°C)</SelectItem>
+                      <SelectItem value="room_temp_std">상온 (15~25°C)</SelectItem>
                       <SelectItem value="fridge">냉장 (2~8°C)</SelectItem>
-                      <SelectItem value="freezer">냉동 (-20°C 이하)</SelectItem>
+                      <SelectItem value="freezer_20">냉동 (-20°C)</SelectItem>
+                      <SelectItem value="deep_freezer_80">초저온 냉동 (-80°C)</SelectItem>
+                      <SelectItem value="ln2">액체질소 (-196°C)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -497,6 +510,18 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     placeholder="최소 주문 수량"
                   />
                 </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="testPurpose" className="font-semibold text-slate-700 dark:text-slate-300">
+                  시험항목 (용도)
+                </Label>
+                <Input
+                  id="testPurpose"
+                  value={testPurpose}
+                  onChange={(e) => setTestPurpose(e.target.value)}
+                  placeholder="예: MTT assay, 외래성 바이러스 시험 등"
+                />
               </div>
 
               <div className="grid gap-2">

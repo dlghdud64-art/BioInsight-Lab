@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronRight } from "lucide-react";
+import { FileText, ChevronRight, Bell } from "lucide-react";
 
 type OrderStatus = "pending" | "quoted" | "ordered" | "shipping" | "delivered";
 
@@ -186,9 +186,10 @@ export default function OrderHistoryPage() {
           <TabsTrigger value="pending">견적 대기</TabsTrigger>
           <TabsTrigger
             value="quoted"
-            className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50"
+            className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-600 dark:text-slate-300"
           >
-            견적 도착 🔔
+            <Bell className="mr-2 h-4 w-4 text-slate-500" />
+            견적 도착
           </TabsTrigger>
           <TabsTrigger value="ordered">발주 완료</TabsTrigger>
           <TabsTrigger value="shipping">배송 중</TabsTrigger>

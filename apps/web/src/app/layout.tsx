@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthSessionProvider } from "@/providers/session-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
@@ -72,16 +73,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body>
-        <LocaleProvider>
-          <AuthSessionProvider>
-            <QueryProvider>
-              {children}
-              <Toaster />
-              <Analytics />
-            </QueryProvider>
-          </AuthSessionProvider>
-        </LocaleProvider>
+      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-50">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LocaleProvider>
+            <AuthSessionProvider>
+              <QueryProvider>
+                {children}
+                <Toaster />
+                <Analytics />
+              </QueryProvider>
+            </AuthSessionProvider>
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

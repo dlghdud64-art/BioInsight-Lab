@@ -24,6 +24,7 @@ import {
   CreditCard,
   PieChart,
   Home,
+  Lock,
 } from "lucide-react";
 
 interface NavItem {
@@ -92,6 +93,11 @@ const sidebarGroups: SidebarGroup[] = [
         title: "활동 로그",
         href: "/dashboard/activity-logs",
         icon: Activity,
+      },
+      {
+        title: "감사 증적",
+        href: "/dashboard/audit",
+        icon: Lock,
       },
       {
         title: "설정",
@@ -168,8 +174,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
       {/* 메뉴 영역 (스크롤 가능) */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-8 md:pt-8">
-        {/* 모바일 헤더 */}
-        <div className="flex items-center justify-between mb-6 md:hidden">
+        {/* 모바일/태블릿 헤더 */}
+        <div className="flex items-center justify-between mb-6 lg:hidden">
           <h2 className="text-xs font-semibold text-slate-900">메뉴</h2>
           <Button
             variant="ghost"
@@ -182,7 +188,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         </div>
         
         {/* 데스크톱 헤더 */}
-        <h2 className="hidden md:block text-xs md:text-sm font-semibold text-slate-900 mb-6">메뉴</h2>
+        <h2 className="hidden lg:block text-xs lg:text-sm font-semibold text-slate-900 mb-6">메뉴</h2>
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
@@ -270,23 +276,23 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   return (
     <>
-      {/* 모바일 오버레이 */}
+      {/* 모바일/태블릿 오버레이 */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* 데스크톱 사이드바 */}
-      <aside className="hidden md:block w-64 min-w-[16rem] min-h-screen bg-white border-r border-slate-200 shrink-0 z-30">
+      {/* 데스크톱 사이드바 (lg 이상에서만 표시) */}
+      <aside className="hidden lg:block w-64 min-w-[16rem] min-h-screen bg-white border-r border-slate-200 shrink-0 z-30">
         <SidebarContent />
       </aside>
 
-      {/* 모바일 사이드바 */}
+      {/* 모바일/태블릿 사이드바 (Sheet 형태) */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 md:hidden shrink-0",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 lg:hidden shrink-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

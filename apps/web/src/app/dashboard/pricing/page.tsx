@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus, Building2, Users, User } from "lucide-react";
+import { Check, Minus, Building2, Users, User, Package, CreditCard, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -178,7 +178,10 @@ export default function PricingPage() {
               {/* 카테고리 1: 재고 관리 */}
               <TableRow className="bg-slate-50/50 dark:bg-slate-900/30">
                 <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
-                  📦 재고 관리
+                  <span className="flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5 text-slate-500" />
+                    재고 관리
+                  </span>
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -225,7 +228,10 @@ export default function PricingPage() {
               {/* 카테고리 2: 구매 및 정산 */}
               <TableRow className="bg-slate-50/50 dark:bg-slate-900/30">
                 <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
-                  💳 구매 및 정산
+                  <span className="flex items-center gap-2">
+                    <CreditCard className="h-3.5 w-3.5 text-slate-500" />
+                    구매 및 정산
+                  </span>
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -268,7 +274,10 @@ export default function PricingPage() {
               {/* 카테고리 3: 분석 및 권한 */}
               <TableRow className="bg-slate-50/50 dark:bg-slate-900/30">
                 <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
-                  📊 분석 및 권한
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="h-3.5 w-3.5 text-slate-500" />
+                    분석 및 권한
+                  </span>
                 </TableCell>
               </TableRow>
               <TableRow>

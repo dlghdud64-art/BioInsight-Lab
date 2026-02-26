@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, Flame } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
@@ -501,7 +501,10 @@ function StickySearchBar() {
       {/* 추천 키워드 칩 */}
       {!hasSearched && (
         <div className="flex flex-wrap items-center justify-center gap-2 mt-6 max-w-3xl mx-auto">
-          <span className="text-sm text-slate-500 font-medium">🔥 추천:</span>
+          <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
+            <Flame className="h-4 w-4 text-slate-500" />
+            추천:
+          </span>
           {popularSearches.map((term) => (
             <Badge
               key={term}

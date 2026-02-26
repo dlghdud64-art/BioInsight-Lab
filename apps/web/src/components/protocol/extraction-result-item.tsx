@@ -88,7 +88,7 @@ export function ExtractionResultItem({ item }: ExtractionResultItemProps) {
                     "{item.evidence}"
                   </div>
                   <div className="text-xs text-slate-500 pt-2 border-t border-slate-200">
-                    💡 원문에서 이 부분을 참고하여 추출했습니다.
+                    원문에서 이 부분을 참고하여 추출했습니다.
                   </div>
                 </div>
               </HoverCardContent>

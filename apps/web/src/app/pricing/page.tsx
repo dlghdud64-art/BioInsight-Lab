@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Users, Building2, Sparkles, Zap, Shield, CreditCard, FileText, BarChart3 } from "lucide-react";
+import { Check, Package, Building2, Zap, ArrowRight } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
@@ -14,68 +14,81 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function PricingPage() {
   const plans = [
     {
-      id: "seed",
-      name: "씨앗 (Seed)",
+      id: "starter",
+      name: "Starter",
       price: "무료",
-      description: "개인 연구원 및 소규모 랩",
+      description: "초기 랩실용. 팀원 최대 3명, 재고 500개.",
       icon: Package,
-      badge: "현재 사용 중",
+      badge: null as string | null,
       badgeVariant: "secondary" as const,
-      buttonText: "현재 사용 중",
+      buttonText: "Get Started",
       buttonVariant: "outline" as const,
-      buttonDisabled: true,
+      buttonDisabled: false,
+      buttonHref: "/test/search",
       features: [
-        "인벤토리 100개",
+        "팀원 최대 3명",
+        "재고 500개",
         "엑셀 업로드",
         "기본 검색",
       ],
     },
     {
-      id: "growth",
-      name: "성장 (Growth)",
-      price: "₩29,000",
+      id: "pro",
+      name: "Pro",
+      price: "₩99,000",
       pricePeriod: "/월",
-      description: "협업이 필요한 5~10인 팀",
-      icon: Users,
-      badge: "⭐ 추천",
+      description: "대학/벤처용. 재고 무제한, Lot 관리, 예산 분석, 감사 증적(Audit Trail) 포함.",
+      icon: Zap,
+      badge: "Best Choice",
       badgeVariant: "default" as const,
       buttonText: "1개월 무료 체험",
       buttonVariant: "default" as const,
       buttonDisabled: false,
+      buttonHref: "/auth/signin",
       isRecommended: true,
       features: [
-        "무제한 인벤토리",
+        "재고 무제한",
+        "Lot 관리",
+        "예산 분석",
+        "감사 증적 (Audit Trail)",
         "팀원 초대",
-        "재고 소진 알림 (배터리)",
+        "재고 소진 알림",
       ],
     },
     {
-      id: "pro",
-      name: "프로 (Pro)",
-      price: "문의",
-      description: "체계적인 예산 관리가 필요한 기업/센터",
+      id: "enterprise",
+      name: "Enterprise",
+      price: "도입 문의",
+      description: "대기업/산학협력단용. Pro 기능 + 단일 세금계산서(통합 정산), ERP 연동 포함.",
       icon: Building2,
+      badge: null as string | null,
+      badgeVariant: "secondary" as const,
       buttonText: "도입 문의하기",
       buttonVariant: "outline" as const,
       buttonDisabled: false,
+      buttonHref: "/intro",
       features: [
-        "연구비 지갑 (Grant)",
-        "승인 결재 시스템",
+        "Pro 전체 기능",
+        "단일 세금계산서 (통합 정산)",
+        "ERP 연동",
         "전담 매니저",
+        "SSO/권한 관리",
       ],
     },
   ];
 
   const comparisonFeatures = [
-    { feature: "인벤토리 관리", seed: true, growth: true, pro: true },
-    { feature: "엑셀 업로드", seed: true, growth: true, pro: true },
-    { feature: "기본 검색", seed: true, growth: true, pro: true },
-    { feature: "인벤토리 개수", seed: "100개", growth: "무제한", pro: "무제한" },
-    { feature: "팀원 초대", seed: false, growth: true, pro: true },
-    { feature: "재고 소진 알림", seed: false, growth: true, pro: true },
-    { feature: "연구비 지갑 (Grant)", seed: false, growth: false, pro: true },
-    { feature: "승인 결재 시스템", seed: false, growth: false, pro: true },
-    { feature: "전담 매니저", seed: false, growth: false, pro: true },
+    { feature: "인벤토리 관리", starter: true, pro: true, enterprise: true },
+    { feature: "엑셀 업로드", starter: true, pro: true, enterprise: true },
+    { feature: "기본 검색", starter: true, pro: true, enterprise: true },
+    { feature: "재고 개수", starter: "500개", pro: "무제한", enterprise: "무제한" },
+    { feature: "팀원 수", starter: "최대 3명", pro: "무제한", enterprise: "무제한" },
+    { feature: "Lot 관리", starter: false, pro: true, enterprise: true },
+    { feature: "예산 분석", starter: false, pro: true, enterprise: true },
+    { feature: "감사 증적 (Audit Trail)", starter: false, pro: true, enterprise: true },
+    { feature: "단일 세금계산서 (통합 정산)", starter: false, pro: false, enterprise: true },
+    { feature: "ERP 연동", starter: false, pro: false, enterprise: true },
+    { feature: "전담 매니저", starter: false, pro: false, enterprise: true },
   ];
 
   return (
@@ -106,10 +119,10 @@ export default function PricingPage() {
                       isRecommended && "border-2 border-blue-500 shadow-lg"
                     )}
                   >
-                    {isRecommended && (
+                    {plan.badge && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                         <Badge className="bg-blue-600 text-white px-3 py-1">
-                          Best Choice
+                          {plan.badge}
                         </Badge>
                       </div>
                     )}
@@ -166,8 +179,14 @@ export default function PricingPage() {
                           plan.buttonVariant === "outline" && !isRecommended && "border-slate-300 hover:bg-slate-50"
                         )}
                         disabled={plan.buttonDisabled}
+                        asChild
                       >
-                        {plan.buttonText}
+                        <Link href={plan.buttonHref} className="flex items-center justify-center gap-2">
+                          {plan.buttonText}
+                          {(plan.buttonText === "Get Started" || plan.buttonVariant === "default") && (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                        </Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -187,9 +206,9 @@ export default function PricingPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="font-semibold">기능</TableHead>
-                          <TableHead className="text-center">씨앗 (Seed)</TableHead>
-                          <TableHead className="text-center">성장 (Growth)</TableHead>
-                          <TableHead className="text-center">프로 (Pro)</TableHead>
+                          <TableHead className="text-center">Starter</TableHead>
+                          <TableHead className="text-center">Pro</TableHead>
+                          <TableHead className="text-center">Enterprise</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -197,25 +216,14 @@ export default function PricingPage() {
                           <TableRow key={index}>
                             <TableCell className="font-medium">{item.feature}</TableCell>
                             <TableCell className="text-center">
-                              {typeof item.seed === "boolean" ? (
-                                item.seed ? (
+                              {typeof item.starter === "boolean" ? (
+                                item.starter ? (
                                   <Check className="h-5 w-5 text-green-600 mx-auto" />
                                 ) : (
                                   <span className="text-slate-400">-</span>
                                 )
                               ) : (
-                                <span className="text-sm text-slate-700">{item.seed}</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {typeof item.growth === "boolean" ? (
-                                item.growth ? (
-                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
-                                ) : (
-                                  <span className="text-slate-400">-</span>
-                                )
-                              ) : (
-                                <span className="text-sm text-slate-700">{item.growth}</span>
+                                <span className="text-sm text-slate-700">{item.starter}</span>
                               )}
                             </TableCell>
                             <TableCell className="text-center">
@@ -227,6 +235,17 @@ export default function PricingPage() {
                                 )
                               ) : (
                                 <span className="text-sm text-slate-700">{item.pro}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {typeof item.enterprise === "boolean" ? (
+                                item.enterprise ? (
+                                  <Check className="h-5 w-5 text-green-600 mx-auto" />
+                                ) : (
+                                  <span className="text-slate-400">-</span>
+                                )
+                              ) : (
+                                <span className="text-sm text-slate-700">{item.enterprise}</span>
                               )}
                             </TableCell>
                           </TableRow>

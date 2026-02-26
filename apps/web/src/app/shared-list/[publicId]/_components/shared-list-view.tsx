@@ -134,7 +134,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
                     <div className="text-xs text-blue-800">
-                      💡 이 리스트에는 대체 후보 제품 및 다른 벤더 가격 정보가 포함되어 있습니다. 아래 "대체 후보 및 비교 정보" 섹션에서 확인하세요.
+                      이 리스트에는 대체 후보 제품 및 다른 벤더 가격 정보가 포함되어 있습니다. 아래 "대체 후보 및 비교 정보" 섹션에서 확인하세요.
                     </div>
                   </div>
                 </div>

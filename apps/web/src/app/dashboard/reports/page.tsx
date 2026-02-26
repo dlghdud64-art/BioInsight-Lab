@@ -8,18 +8,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Package, Building2, DollarSign, FileSpreadsheet, Download, CloudUpload, FileText } from "lucide-react";
+import { TrendingUp, Package, Building2, DollarSign, FileSpreadsheet, Download, CloudUpload, FileText, RefreshCcw, FileDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { PageHeader } from "@/app/_components/page-header";
-import { BarChart3 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 
@@ -183,22 +179,28 @@ export default function ReportsPage() {
   const categoryData = reportData?.categoryData || [];
   const details = reportData?.details || [];
 
+  const totalAmount = metrics.totalAmount || 0;
+  const itemCount = metrics.itemCount || 0;
+  const avgPrice = itemCount > 0 ? totalAmount / itemCount : 0;
+  const vendorCount = metrics.vendorCount || 0;
+  const hasData = reportData != null;
+
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pt-8">
-      {/* 표준 페이지 헤더 */}
-      <PageHeader
-        title="구매 리포트"
-        description="월별 지출 현황과 예산 사용량을 분석합니다."
-        icon={BarChart3}
-        actions={
-          <div className="flex gap-2">
-            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <CloudUpload className="h-4 w-4 mr-2" />
-                  데이터 가져오기
-                </Button>
-              </DialogTrigger>
+    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full">
+      {/* 1. 헤더 영역 */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">구매 리포트</h2>
+          <p className="text-muted-foreground mt-1 text-sm">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">
+                <CloudUpload className="h-4 w-4 mr-2" />
+                데이터 가져오기
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>구매 내역 CSV Import</DialogTitle>
@@ -278,23 +280,83 @@ export default function ReportsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              데이터 내보내기
-            </Button>
-          </div>
-        }
-      />
+          <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50" onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}>
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            데이터 갱신
+          </Button>
+          <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+            <FileDown className="h-4 w-4 mr-2" />
+            리포트 내보내기
+          </Button>
+        </div>
+      </div>
 
-      {/* 필터 섹션 - Card로 정리 */}
-      <Card className="bg-white border border-slate-100 shadow-sm rounded-xl">
-        <CardHeader className="p-6 pb-4">
-          <CardTitle className="text-sm font-semibold text-slate-700">리포트 필터 설정</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm">기간 선택</Label>
+      {/* 2. 상단 KPI 통계 (전진 배치) */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-16 bg-slate-200 rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-blue-100 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">총 구매 금액</CardTitle>
+              <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {formatCurrency(totalAmount)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">총 구매 건수</CardTitle>
+              <Package className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {itemCount}건
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-emerald-100 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">평균 단가</CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {formatCurrency(avgPrice)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-violet-100 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">벤더 수</CardTitle>
+              <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {vendorCount}개
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 3. 압축된 한 줄 필터 바 */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">기간 선택</label>
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
@@ -302,13 +364,12 @@ export default function ReportsPage() {
                   setStartDate(start);
                   setEndDate(end);
                 }}
-                className="mt-1"
               />
             </div>
-            <div>
-              <Label htmlFor="category" className="text-sm">카테고리</Label>
+            <div className="space-y-1.5">
+              <label htmlFor="category" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">카테고리</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category" className="mt-1">
+                <SelectTrigger id="category">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -321,30 +382,37 @@ export default function ReportsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="team" className="text-sm">팀/조직</Label>
-              <Input
-                id="team"
-                value={selectedTeam}
-                onChange={(e) => setSelectedTeam(e.target.value)}
-                placeholder="전체"
-                className="mt-1"
-              />
+            <div className="space-y-1.5">
+              <label htmlFor="team" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">팀 / 조직</label>
+              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                <SelectTrigger id="team">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="team1">1팀</SelectItem>
+                  <SelectItem value="team2">2팀</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label htmlFor="vendor" className="text-sm">벤더</Label>
-              <Input
-                id="vendor"
-                value={selectedVendor}
-                onChange={(e) => setSelectedVendor(e.target.value)}
-                placeholder="전체"
-                className="mt-1"
-              />
+            <div className="space-y-1.5">
+              <label htmlFor="vendor" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">벤더</label>
+              <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                <SelectTrigger id="vendor">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="sigma">Sigma-Aldrich</SelectItem>
+                  <SelectItem value="thermo">Thermo Fisher</SelectItem>
+                  <SelectItem value="eppendorf">Eppendorf</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label htmlFor="budget" className="text-sm">예산</Label>
+            <div className="space-y-1.5">
+              <label htmlFor="budget" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">예산</label>
               <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-                <SelectTrigger id="budget" className="mt-1">
+                <SelectTrigger id="budget">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,58 +429,35 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      {/* KPI 카드 - 반응형 그리드 */}
-      {isLoading ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      ) : reportData ? (
+      {/* 4. 메인 분석 영역 */}
+      {!hasData && !isLoading ? (
+        <Card className="min-h-[400px] border-dashed border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
+          <CardContent className="py-16 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <FileSpreadsheet className="h-16 w-16 text-slate-400 dark:text-slate-500" />
+              <div>
+                <p className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  데이터가 없습니다
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                  필터를 설정하여 상세 구매 분석 데이터를 조회하거나, CSV 파일을 업로드하여 리포트를 생성해보세요.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsImportDialogOpen(true)}
+                  className="border-slate-200 hover:bg-slate-50"
+                >
+                  <CloudUpload className="h-4 w-4 mr-2" />
+                  데이터 가져오기
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : hasData ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 구매 금액</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(metrics.totalAmount || 0)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 구매 건수</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metrics.itemCount || 0}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">평균 단가</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency((metrics.totalAmount || 0) / (metrics.itemCount || 1))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">벤더 수</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metrics.vendorCount || 0}</div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* 예산 사용률 카드 */}
-          {selectedBudget !== "all" && reportData.budgetUsage && (
+          {selectedBudget !== "all" && reportData?.budgetUsage && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -560,7 +605,8 @@ export default function ReportsPage() {
                 <CardTitle>상세 내역</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>날짜</TableHead>
@@ -586,34 +632,23 @@ export default function ReportsPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 데이터 없음 시 안내 (hasData이지만 차트/테이블 데이터 없음) */}
+          {hasData && !monthlyData?.length && !vendorData?.length && !categoryData?.length && !details?.length && (
+            <Card className="min-h-[300px] border-dashed border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
+              <CardContent className="py-12 text-center">
+                <p className="text-slate-500 dark:text-slate-400 font-medium">
+                  필터를 설정하여 상세 구매 분석 데이터를 조회하세요.
+                </p>
               </CardContent>
             </Card>
           )}
         </>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <FileSpreadsheet className="h-16 w-16 text-gray-400" />
-              <div>
-                <p className="text-base font-medium text-gray-900 mb-2">
-                  데이터가 없습니다
-                </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  CSV 파일을 업로드하여 리포트를 생성해보세요.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsImportDialogOpen(true)}
-                >
-                  <CloudUpload className="h-4 w-4 mr-2" />
-                  데이터 가져오기
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -47,6 +47,20 @@ export const TEMPLATE_TYPES = {
 
 export type TemplateType = typeof TEMPLATE_TYPES[keyof typeof TEMPLATE_TYPES] | string;
 
+// 보관 조건 (바이오 랩실 실무 규격)
+export const STORAGE_CONDITION_LABELS: Record<string, string> = {
+  room_temp_broad: "실온 (1~30°C)",
+  room_temp_std: "상온 (15~25°C)",
+  fridge: "냉장 (2~8°C)",
+  freezer_20: "냉동 (-20°C)",
+  deep_freezer_80: "초저온 냉동 (-80°C)",
+  ln2: "액체질소 (-196°C)",
+};
+
+export function getStorageConditionLabel(value: string | null | undefined): string {
+  return (value && STORAGE_CONDITION_LABELS[value]) || value || "-";
+}
+
 // 기본 템플릿 컬럼
 export const DEFAULT_TEMPLATE_COLUMNS = [
   "productName",

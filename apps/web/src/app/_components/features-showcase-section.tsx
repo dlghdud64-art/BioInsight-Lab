@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight, ChevronLeft, ChevronRight, Tag, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -119,10 +119,13 @@ export function FeaturesShowcaseSection() {
                     <p className="text-xs text-gray-500 mb-2">순도 99.9%</p>
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-base font-bold text-gray-900">₩45,000</span>
-                      <Badge className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5">🏷️ 최저가</Badge>
+                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
+                      <Tag className="h-2.5 w-2.5" />
+                      최저가
+                    </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
-                      <span>🚀</span>
+                      <Zap className="h-3 w-3" />
                       <span>익일 도착 보장</span>
                     </div>
                   </div>
@@ -203,7 +206,10 @@ export function FeaturesShowcaseSection() {
           <div className="w-full h-full bg-white rounded-2xl shadow-2xl border border-slate-100 p-8">
             {/* 알림 센터 제목 */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-slate-400">🔔 실시간 알림 센터</h3>
+              <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
+              <Bell className="h-4 w-4 text-slate-500" />
+              실시간 알림 센터
+            </h3>
             </div>
 
             {/* 알림 센터 카드 */}

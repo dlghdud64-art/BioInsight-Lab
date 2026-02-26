@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, Calendar as CalendarIcon, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package } from "lucide-react";
+import { Upload, Download, Calendar as CalendarIcon, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package, Hash, DollarSign, CircleDollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
@@ -812,17 +812,17 @@ export default function PurchasesPage() {
                             </span>
                             <span className="text-slate-400">|</span>
                             <span className="flex items-center gap-1">
-                              <span className="text-base">🔢</span>
+                              <Hash className="h-3 w-3 text-slate-500" />
                               수량
                             </span>
                             <span className="text-slate-400">|</span>
                             <span className="flex items-center gap-1">
-                              <span className="text-base">💰</span>
+                              <DollarSign className="h-3 w-3 text-slate-500" />
                               단가
                             </span>
                             <span className="text-slate-400">|</span>
                             <span className="flex items-center gap-1">
-                              <span className="text-base">💱</span>
+                              <CircleDollarSign className="h-3 w-3 text-slate-500" />
                               통화
                             </span>
                           </div>

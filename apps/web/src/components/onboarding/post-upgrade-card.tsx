@@ -36,7 +36,7 @@ export function PostUpgradeCard({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg font-bold text-blue-900 mb-1">
-              🎉 TEAM 플랜으로 업그레이드 완료!
+              TEAM 플랜으로 업그레이드 완료!
             </CardTitle>
             <CardDescription className="text-sm text-blue-700">
               {organizationName && (

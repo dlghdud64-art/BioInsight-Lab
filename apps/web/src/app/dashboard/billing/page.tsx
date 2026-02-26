@@ -21,14 +21,14 @@ export default function BillingPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 페이지 헤더 */}
         <div className="flex flex-col space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">정산 및 세금계산서 💳</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">정산 및 세금계산서</h2>
           <p className="text-muted-foreground">
             여러 벤더의 구매 내역을 BioInsight 단일 세금계산서로 한 번에 처리하세요.
           </p>
         </div>
 
         {/* KPI 카드 - 이번 달 정산 요약 */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-semibold text-muted-foreground">
@@ -113,7 +113,8 @@ export default function BillingPage() {
               <h4 className="mb-3 text-sm font-semibold text-muted-foreground">
                 포함된 상세 주문 내역
               </h4>
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[500px]">
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead>주문 일자</TableHead>
@@ -155,6 +156,7 @@ export default function BillingPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -128,7 +128,7 @@ export default function AdminRequestsPage() {
       // });
 
       toast({
-        title: "승인 완료! 🎉",
+        title: "승인 완료",
         description: "구매 요청이 승인되어 주문이 생성되었습니다.",
       });
     },

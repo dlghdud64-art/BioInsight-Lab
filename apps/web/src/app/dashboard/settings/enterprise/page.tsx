@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/app/_components/page-header";
-import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download, Users, Mail } from "lucide-react";
+import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download, Users, Mail, Lightbulb } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -656,7 +656,10 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
         </Table>
       </div>
       <div className="text-xs md:text-sm text-slate-600 p-3 bg-slate-50 rounded-lg">
-        <p className="font-medium mb-1">💡 참고</p>
+        <p className="font-medium mb-1 flex items-center gap-2">
+          <Lightbulb className="h-4 w-4 text-slate-500" />
+          참고
+        </p>
         <ul className="list-disc list-inside space-y-1 text-[10px] md:text-xs">
           <li>관리자만 멤버의 역할을 변경할 수 있습니다.</li>
           <li>본인의 역할은 변경할 수 없습니다.</li>
