@@ -16,10 +16,10 @@ function SignInContent() {
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
       <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
-        {/* 1. 브랜드 로고: fixed로 뷰포트에 고정, flex/padding 영향 없음 */}
-        <div className="fixed top-16 left-16 flex items-center gap-3 z-[999]">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl font-bold">B</div>
-          <span className="text-white text-2xl font-bold tracking-tighter antialiased">BioInsight Lab</span>
+        {/* 1. 브랜드 로고: absolute로 좌측 패널 내 고정 */}
+        <div className="absolute top-12 left-12 flex items-center gap-3 z-10">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 text-xl font-bold shadow-md">B</div>
+          <span className="text-white text-2xl font-bold tracking-tighter drop-shadow-md">BioInsight Lab</span>
         </div>
 
         {/* 2. 중앙 슬로건: pt-[40vh]로 화면 수직 중앙 강제 배치 */}
