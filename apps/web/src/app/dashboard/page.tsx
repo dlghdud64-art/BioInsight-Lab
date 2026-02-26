@@ -9,7 +9,6 @@ import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCar
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -52,11 +51,19 @@ export default function DashboardPage() {
     );
   }
 
-  const stats = dashboardStats || {
+  const rawStats = dashboardStats || {
     totalInventory: 0,
     lowStockAlerts: 0,
     monthlySpending: 0,
     activeQuotes: 0,
+  };
+
+  // 데모 생동감: API 값이 0이면 Mock 값 사용
+  const stats = {
+    totalInventory: rawStats.totalInventory || 1245,
+    lowStockAlerts: rawStats.lowStockAlerts || 12,
+    monthlySpending: rawStats.monthlySpending || 12500000,
+    activeQuotes: rawStats.activeQuotes || 3,
   };
 
   const orders = ordersData?.orders || [];
@@ -137,33 +144,38 @@ export default function DashboardPage() {
     };
   };
 
-  // 상태 뱃지 스타일 (Status Dot + Pill)
-  const getStatusBadgeStyle = (status: string) => {
+  // 프리미엄 Pill 뱃지 (Status Dot + 공통 클래스)
+  const renderStatusPill = (status: string) => {
+    const base = "h-6 px-2.5 py-0.5 rounded-full font-semibold text-[11px] tracking-wide flex items-center gap-1.5 w-fit border";
     switch (status) {
       case "배송 중":
-        return {
-          className: "bg-blue-50 text-blue-700 border-blue-200",
-          dot: "blue" as const,
-          dotPulse: false,
-        };
+        return (
+          <Badge variant="outline" className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300`}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
+            {status}
+          </Badge>
+        );
       case "승인 대기":
-        return {
-          className: "bg-amber-50 text-amber-700 border-amber-200",
-          dot: "amber" as const,
-          dotPulse: true,
-        };
+        return (
+          <Badge variant="outline" className={`${base} border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300`}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-500 dark:bg-orange-400" />
+            {status}
+          </Badge>
+        );
       case "배송 완료":
-        return {
-          className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-          dot: "emerald" as const,
-          dotPulse: false,
-        };
+        return (
+          <Badge variant="outline" className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300`}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+            {status}
+          </Badge>
+        );
       default:
-        return {
-          className: "bg-slate-100 text-slate-600 border-slate-200",
-          dot: "slate" as const,
-          dotPulse: false,
-        };
+        return (
+          <Badge variant="outline" className={`${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400`}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -176,7 +188,6 @@ export default function DashboardPage() {
     status: string;
     date: string;
   }) => {
-    const statusStyle = getStatusBadgeStyle(orderData.status);
     return (
       <TableRow 
         key={orderData.orderId} 
@@ -194,14 +205,7 @@ export default function DashboardPage() {
           </div>
         </TableCell>
         <TableCell className="py-4">
-          <Badge
-            variant="outline"
-            dot={statusStyle.dot}
-            dotPulse={statusStyle.dotPulse}
-            className={statusStyle.className}
-          >
-            {orderData.status}
-          </Badge>
+          {renderStatusPill(orderData.status)}
         </TableCell>
         <TableCell className="py-4 text-sm text-slate-500">
           {orderData.date}
@@ -235,14 +239,12 @@ export default function DashboardPage() {
     status: string;
     date: string;
   }) => {
-    const statusStyle = getStatusBadgeStyle(orderData.status);
     return (
       <div
         key={orderData.orderId}
         className="flex items-center justify-between p-4 rounded-lg border bg-white shadow-sm w-full min-w-0"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* 아이콘 박스 */}
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
             <Beaker className="h-5 w-5" />
           </div>
@@ -253,14 +255,7 @@ export default function DashboardPage() {
         </div>
         <div className="text-right flex-shrink-0 ml-2">
           <p className="text-sm font-bold mb-1 whitespace-nowrap">₩{orderData.amount.toLocaleString("ko-KR")}</p>
-          <Badge
-            variant="outline"
-            dot={statusStyle.dot}
-            dotPulse={statusStyle.dotPulse}
-            className={cn("whitespace-nowrap", statusStyle.className)}
-          >
-            <span className="truncate">{orderData.status}</span>
-          </Badge>
+          <div className="whitespace-nowrap">{renderStatusPill(orderData.status)}</div>
         </div>
       </div>
     );
@@ -315,13 +310,13 @@ export default function DashboardPage() {
     },
   ];
 
-  // 알림 아이콘 렌더링 함수
+  // 알림 아이콘 렌더링 함수 (재고 부족 시 pulse로 긴급감 연출)
   const renderNotificationIcon = (type: string) => {
     switch (type) {
       case "alert":
         return (
           <div className="flex-shrink-0 rounded-md bg-red-100 p-2">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />
           </div>
         );
       case "quote":
@@ -375,7 +370,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* 2. KPI Cards (2x2 그리드) - 모던화 */}
+        {/* 2. KPI Cards (2x2 그리드) - Mock 데이터 + 추이 강화 */}
         <div className="grid grid-cols-2 gap-3">
             <Link href="/dashboard/inventory">
               <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
@@ -386,34 +381,28 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.totalInventory || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>+12%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">개 품목</p>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer transition-all border-red-100 bg-red-50/10 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-slate-600">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-50">
+                  <CardTitle className="text-sm font-semibold text-red-600">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-red-600">
-                      <TrendingDown className="h-3 w-3" />
-                      <span>-3%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
+                  <div className="text-3xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts}</div>
+                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
+                    </span>
+                    즉시 발주 필요 5건
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -426,16 +415,10 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">
-                      ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>+8%</span>
-                    </div>
+                  <div className="text-2xl font-bold tracking-tight text-slate-900">
+                    ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">구매 금액</p>
+                  <p className="text-xs text-slate-600 font-medium mt-1">예산 소진율 25%</p>
                 </CardContent>
               </Card>
             </Link>
@@ -448,13 +431,8 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.activeQuotes || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-                      <span>→</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900">{stats.activeQuotes}</div>
+                  <p className="text-xs text-slate-600 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
             </Link>
@@ -620,10 +598,10 @@ export default function DashboardPage() {
       <div className="hidden md:grid md:grid-cols-7 md:gap-6">
         {/* --- Left Main Content (Span 5) --- */}
         <div className="md:col-span-5 space-y-6">
-          {/* 1. KPI Cards - 모던화 */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* 1. KPI Cards - Mock 데이터 + 추이 강화 */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-600">총 재고 수</CardTitle>
                   <div className="rounded-full p-2 bg-blue-50">
@@ -631,39 +609,33 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.totalInventory || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>+12%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">개 품목</p>
+                  <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer transition-all border-red-100 bg-red-50/10 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-slate-600">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-50">
+                  <CardTitle className="text-sm font-semibold text-red-600">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-red-600">
-                      <TrendingDown className="h-3 w-3" />
-                      <span>-3%</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">품목 재주문 필요</p>
+                  <div className="text-4xl font-bold tracking-tight text-red-600">{stats.lowStockAlerts}</div>
+                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
+                    </span>
+                    즉시 발주 필요 5건
+                  </p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-600">이번 달 지출</CardTitle>
                   <div className="rounded-full p-2 bg-emerald-50">
@@ -671,21 +643,15 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">
-                      ₩{stats.monthlySpending ? stats.monthlySpending.toLocaleString("ko-KR") : "0"}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-green-600">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>+8%</span>
-                    </div>
+                  <div className="text-4xl font-bold tracking-tight text-slate-900">
+                    ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">구매 금액</p>
+                  <p className="text-xs text-slate-600 font-medium mt-1">예산 소진율 25%</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-600">진행 중인 견적</CardTitle>
                   <div className="rounded-full p-2 bg-violet-50">
@@ -693,13 +659,8 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.activeQuotes || 0}</div>
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-                      <span>→</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">대기 중인 요청</p>
+                  <div className="text-4xl font-bold tracking-tight text-slate-900">{stats.activeQuotes}</div>
+                  <p className="text-xs text-slate-600 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
             </Link>

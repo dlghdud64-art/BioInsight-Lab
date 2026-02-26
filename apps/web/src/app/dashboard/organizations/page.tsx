@@ -1,468 +1,216 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { useSession } from "next-auth/react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Building2, Plus, Users, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Users, Mail, UserPlus, Trash2, FileText, Building2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { ORGANIZATION_ROLES } from "@/lib/constants";
-import { useRouter } from "next/navigation";
-import { PageHeader } from "@/app/_components/page-header";
-import { useToast } from "@/hooks/use-toast";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrganizationsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  // 로컬 상태로 조직 목록 관리
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [organizations, setOrganizations] = useState<any[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [formData, setFormData] = useState({ name: "", description: "" });
 
-  // 조직 목록 조회
-  const { data, isLoading } = useQuery({
-    queryKey: ["organizations"],
-    queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) throw new Error("Failed to fetch organizations");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
-
-  // 서버 데이터가 처음 로드될 때만 로컬 상태 업데이트
-  useEffect(() => {
-    if (data?.organizations && !isInitialized) {
-      setOrganizations(data.organizations);
-      setIsInitialized(true);
-    }
-  }, [data, isInitialized]);
-
-  // 조직 생성 Mutation
-  const createOrgMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
-      const response = await fetch("/api/organizations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+  // 가상 저장 로직 (1초 딜레이 후 성공 처리)
+  const handleCreateOrg = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "입력 필요",
+        description: "조직 이름을 입력해주세요.",
+        variant: "destructive",
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create organization");
-      }
-      return response.json();
-    },
-    // onSuccess에서 invalidateQueries 제거 - 로컬 상태만 업데이트
-  });
+      return;
+    }
 
-  // 조직 생성 핸들러
-  const handleCreateOrg = (data: { name: string; description?: string }) => {
-    // 새로운 조직 객체 생성
+    setIsLoading(true);
+
+    // API 통신을 흉내 내는 1초 딜레이
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const newOrg = {
-      id: Date.now(), // 임시 ID
-      name: data.name,
-      description: data.description || "",
-      members: [],
-      _count: {
-        members: 1,
-        quotes: 0,
-      },
+      id: Date.now(),
+      name: formData.name.trim(),
+      description: formData.description.trim() || "새로 생성된 연구 조직입니다.",
+      memberCount: 1,
+      role: "최고 관리자",
+      createdAt: new Date().toLocaleDateString("ko-KR"),
     };
 
-    // 로컬 상태에 즉시 추가 (리스트 앞에)
-    setOrganizations((prev) => [newOrg, ...prev]);
-
-    // Toast 메시지 표시
+    setOrganizations([newOrg, ...organizations]);
     toast({
-      title: "생성 완료",
-      description: "새로운 조직이 생성되었습니다.",
+      title: "조직 생성 완료",
+      description: "새로운 조직이 성공적으로 생성되었습니다.",
     });
 
-    // 서버에 저장 시도 (선택적)
-    createOrgMutation.mutate(data, {
-      onSuccess: (response) => {
-        // 서버 응답이 오면 ID 업데이트
-        setOrganizations((prev) =>
-          prev.map((org) => (org.id === newOrg.id ? response.organization : org))
-        );
-      },
-      onError: () => {
-        // 실패 시 롤백
-        setOrganizations((prev) => prev.filter((org) => org.id !== newOrg.id));
-        toast({
-          title: "생성 실패",
-          description: "조직 생성에 실패했습니다. 다시 시도해주세요.",
-          variant: "destructive",
-        });
-      },
-    });
+    setIsOpen(false);
+    setIsLoading(false);
+    setFormData({ name: "", description: "" });
   };
 
-  if (status === "loading") {
-    return (
-      <div className="w-full px-4 md:px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 개발 단계: 로그인 체크 제거
-  // if (status === "unauthenticated") {
-  //   router.push("/auth/signin?callbackUrl=/dashboard/organizations");
-  //   return null;
-  // }
-
   return (
-    <div className="w-full px-4 md:px-6 py-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <PageHeader
-          title="조직 관리"
-          description="조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다."
-          icon={Building2}
-          iconColor="text-orange-600"
-          actions={
-            <CreateOrganizationDialog
-              onCreate={handleCreateOrg}
-              isCreating={createOrgMutation.isPending}
-            />
-          }
-        />
-
-        {isLoading ? (
-          <p className="text-center text-muted-foreground py-6 md:py-8 text-xs md:text-sm">로딩 중...</p>
-        ) : organizations.length === 0 ? (
-          <Card className="p-3 md:p-6">
-            <CardContent className="px-0 pt-0 pb-0">
-              <div className="text-center py-6 md:py-8">
-                <Building2 className="h-8 w-8 md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">소속된 조직이 없습니다</p>
-                <CreateOrganizationDialog
-                  onCreate={handleCreateOrg}
-                  isCreating={createOrgMutation.isPending}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {organizations.map((org: any) => (
-              <OrganizationCard key={org.id} organization={org} />
-            ))}
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-6xl mx-auto w-full">
+      {/* 상단 헤더 */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center gap-2 text-blue-600 mb-1">
+            <Building2 className="h-5 w-5" />
+            <span className="font-semibold tracking-tight">조직 관리</span>
           </div>
+          <h2 className="text-3xl font-bold tracking-tight">조직 관리</h2>
+          <p className="text-muted-foreground">
+            조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다.
+          </p>
+        </div>
+
+        {organizations.length > 0 && (
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 shrink-0"
+          >
+            <Plus className="mr-2 h-4 w-4" /> 새 조직 만들기
+          </Button>
         )}
       </div>
-    </div>
-  );
-}
 
-function CreateOrganizationDialog({
-  onCreate,
-  isCreating,
-}: {
-  onCreate: (data: { name: string; description?: string }) => void;
-  isCreating: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    
-    // 조직 생성
-    onCreate({ name: name.trim(), description: description.trim() });
-    
-    // 입력 필드 초기화 및 모달 닫기
-    setName("");
-    setDescription("");
-    setOpen(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          새 조직 만들기
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>새 조직 만들기</DialogTitle>
-          <DialogDescription>
-            조직을 생성하여 팀원들과 함께 견적을 관리하세요
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">조직명</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="예: 서울대학교 생명과학부"
-              required
-            />
+      {/* 조직 생성 모달 */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>새 조직 만들기</DialogTitle>
+            <DialogDescription>
+              연구실이나 팀의 이름을 입력하여 새로운 워크스페이스를 만듭니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="org-name">
+                조직 이름 <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="org-name"
+                placeholder="예: 생명공학연구소 1팀"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-desc">간단한 설명 (선택)</Label>
+              <Input
+                id="org-desc"
+                placeholder="예: 단백질 구조 분석 프로젝트 팀"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">설명 (선택사항)</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="조직에 대한 설명을 입력하세요"
-              rows={3}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
+          <div className="mt-6 flex justify-end gap-2">
             <Button
-              type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => setIsOpen(false)}
+              disabled={isLoading}
             >
               취소
             </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? "생성 중..." : "생성"}
+            <Button
+              onClick={handleCreateOrg}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 생성 중...
+                </>
+              ) : (
+                "조직 생성"
+              )}
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+        </DialogContent>
+      </Dialog>
 
-function OrganizationCard({ organization }: { organization: any }) {
-  const { data: session } = useSession();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [memberEmail, setMemberEmail] = useState("");
-  const [memberRole, setMemberRole] = useState("VIEWER");
-
-  const addMemberMutation = useMutation({
-    mutationFn: async (data: { userEmail: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${organization.id}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add member");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      setMemberEmail("");
-      setMemberRole("VIEWER");
-      setShowAddMember(false);
-    },
-  });
-
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${organization.id}/members`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, role }),
-      });
-      if (!response.ok) throw new Error("Failed to update role");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
-  });
-
-  const removeMemberMutation = useMutation({
-    mutationFn: async (memberId: string) => {
-      const response = await fetch(
-        `/api/organizations/${organization.id}/members?memberId=${memberId}`,
-        { method: "DELETE" }
-      );
-      if (!response.ok) throw new Error("Failed to remove member");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-    },
-  });
-
-  const currentUserMember = organization.members?.find(
-    (m: any) => m.user?.id === session?.user?.id
-  );
-  const isAdmin = currentUserMember?.role === "ADMIN";
-  const canManageMembers = isAdmin || currentUserMember?.role === "APPROVER";
-
-  return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-xl">{organization.name}</CardTitle>
-            {organization.description && (
-              <CardDescription className="mt-1">{organization.description}</CardDescription>
-            )}
+      {/* 메인 화면 (Empty State vs Card Grid) */}
+      {organizations.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center py-24 shadow-sm border-slate-200 dark:border-slate-800">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800">
+            <Building2 className="h-8 w-8 text-slate-400" />
           </div>
-          {isAdmin && (
-            <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium">
-              관리자
-            </span>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>멤버 {organization._count?.members || organization.members?.length || 0}명</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            <span>견적 {organization._count?.quotes || 0}개</span>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium">멤버</p>
-            {canManageMembers && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowAddMember(!showAddMember)}
-              >
-                <UserPlus className="h-3 w-3 mr-1" />
-                초대
-              </Button>
-            )}
-          </div>
-
-          {showAddMember && canManageMembers && (
-            <div className="p-3 bg-muted rounded-lg mb-3 space-y-2">
-              <Input
-                placeholder="이메일 주소"
-                value={memberEmail}
-                onChange={(e) => setMemberEmail(e.target.value)}
-                type="email"
-              />
-              <Select value={memberRole} onValueChange={setMemberRole}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ORGANIZATION_ROLES).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    addMemberMutation.mutate({ userEmail: memberEmail, role: memberRole });
-                  }}
-                  disabled={addMemberMutation.isPending || !memberEmail}
-                >
-                  {addMemberMutation.isPending ? "초대 중..." : "초대하기"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddMember(false);
-                    setMemberEmail("");
-                  }}
-                >
-                  취소
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {organization.members?.map((member: any) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-2 bg-muted rounded text-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{member.user?.name || member.user?.email}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({ORGANIZATION_ROLES[member.role as keyof typeof ORGANIZATION_ROLES]})
-                  </span>
-                </div>
-                {isAdmin && (
-                  <div className="flex gap-2">
-                    <Select
-                      value={member.role}
-                      onValueChange={(role) =>
-                        updateRoleMutation.mutate({ memberId: member.id, role })
-                      }
-                    >
-                      <SelectTrigger className="w-24 h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(ORGANIZATION_ROLES).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeMemberMutation.mutate(member.id)}
-                      disabled={removeMemberMutation.isPending}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+          <h3 className="mb-4 text-lg font-medium text-slate-600 dark:text-slate-400">
+            소속된 조직이 없습니다
+          </h3>
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="mr-2 h-4 w-4" /> 새 조직 만들기
+          </Button>
+        </Card>
+      ) : (
+        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {organizations.map((org) => (
+            <Card
+              key={org.id}
+              className="cursor-pointer border-slate-200 shadow-sm transition-shadow hover:border-blue-200 hover:shadow-md dark:border-slate-800 dark:hover:border-blue-800"
+            >
+              <CardHeader className="pb-3">
+                <div className="mb-2 flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                    {org.name.substring(0, 1)}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  <Badge
+                    variant="outline"
+                    className="border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                  >
+                    {org.role}
+                  </Badge>
+                </div>
+                <CardTitle className="text-xl">{org.name}</CardTitle>
+                <CardDescription className="line-clamp-1">
+                  {org.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center rounded-md bg-slate-50 p-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <Users className="mr-2 h-4 w-4 text-slate-400" />
+                  팀원 {org.memberCount}명
+                </div>
+              </CardContent>
+              <CardFooter className="mt-4 border-t border-slate-100 pt-0 dark:border-slate-800">
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                >
+                  관리 페이지로 이동 <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => router.push(`/dashboard/organizations/${organization.id}`)}
-        >
-          상세 보기
-        </Button>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

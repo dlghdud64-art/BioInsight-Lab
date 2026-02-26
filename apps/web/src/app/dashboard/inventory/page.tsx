@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Info, FileText } from "lucide-react";
+import { Info, FileText, BellRing, Save } from "lucide-react";
 
 interface ProductInventory {
   id: string;
@@ -76,6 +76,7 @@ export default function InventoryPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
+  const [sheetSafetyStock, setSheetSafetyStock] = useState("");
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -374,6 +375,8 @@ export default function InventoryPage() {
       autoReorderEnabled?: boolean;
       autoReorderThreshold?: number;
       notes?: string;
+      lotNumber?: string;
+      storageCondition?: string;
     }) => {
       const isEdit = Boolean(data.id);
       const url = isEdit ? `/api/inventory/${data.id}` : "/api/inventory";
@@ -384,6 +387,9 @@ export default function InventoryPage() {
             notes: data.notes ?? undefined,
             expiryDate: data.expiryDate ?? undefined,
             minOrderQty: data.minOrderQty ?? undefined,
+            safetyStock: data.safetyStock ?? undefined,
+            lotNumber: data.lotNumber ?? undefined,
+            storageCondition: data.storageCondition ?? undefined,
           }
         : data;
 
@@ -532,10 +538,13 @@ export default function InventoryPage() {
   return (
     <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* 상단 컨트롤 바 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">재고 관리</h1>
+        {/* 상단 타이틀 및 액션 버튼 */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">재고 관리 📦</h1>
+            <p className="text-muted-foreground">
+              연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
+            </p>
           </div>
           <div className="flex gap-2">
             <AddInventoryModal
@@ -587,139 +596,237 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* 상단 KPI 요약 카드 */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-600">전체 재고</CardTitle>
-              <div className="bg-blue-50 p-2 rounded-full">
-                <Package className="h-4 w-4 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold tracking-tight text-slate-900">
-                {totalInventoryCount}
-                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* 뷰 분리 탭 */}
+        <Tabs defaultValue="manage" className="w-full space-y-6">
+          <TabsList className="bg-slate-100/50 p-1 dark:bg-slate-900/50">
+            <TabsTrigger
+              value="manage"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+            >
+              <List className="mr-2 h-4 w-4" />
+              시약 관리하기 📝
+            </TabsTrigger>
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              한눈에 보기 📊
+            </TabsTrigger>
+          </TabsList>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-600">부족/품절</CardTitle>
-              <div className="bg-red-50 p-2 rounded-full">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+          {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
+          <TabsContent value="manage" className="m-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950">
+              <div className="relative w-80">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input
+                  placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full"
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold tracking-tight text-slate-900">
-                {lowOrOutOfStockCount}
-                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
-              </div>
-            </CardContent>
-          </Card>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="위치별" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 위치</SelectItem>
+                  <SelectItem value="none">위치 미지정</SelectItem>
+                  {uniqueLocations.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="상태별" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 상태</SelectItem>
+                  <SelectItem value="low">부족</SelectItem>
+                  <SelectItem value="normal">정상</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="카테고리별" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 카테고리</SelectItem>
+                  <SelectItem value="reagent">시약</SelectItem>
+                  <SelectItem value="equipment">장비</SelectItem>
+                  <SelectItem value="consumable">소모품</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-slate-600">폐기 임박</CardTitle>
-              <div className="bg-orange-50 p-2 rounded-full">
-                <Calendar className="h-4 w-4 text-orange-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold tracking-tight text-slate-900">
-                {expiringSoonCount}
-                <span className="text-lg font-normal text-slate-500 ml-1">개</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <InventoryTable
+                    inventories={filteredInventories}
+                    onEdit={(inventory) => {
+                      setEditingInventory(inventory);
+                      setIsDialogOpen(true);
+                    }}
+                    onDelete={(inventory) => {
+                      if (confirm(`정말 ${inventory.product.name} 재고를 삭제하시겠습니까?`)) {
+                        deleteMutation.mutate(inventory.id);
+                      }
+                    }}
+                    onReorder={(inventory) => {
+                      toast({
+                        title: "주문하기",
+                        description: `${inventory.product.name} 주문 기능은 곧 제공될 예정입니다.`,
+                      });
+                    }}
+                    onDetailClick={(inventory) => {
+                      setSelectedItem(inventory);
+                      setSheetSafetyStock(
+                        String(inventory.safetyStock ?? inventory.minOrderQty ?? 1)
+                      );
+                      setIsSheetOpen(true);
+                    }}
+                    emptyMessage="아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
+                    emptyAction={() => setIsDialogOpen(true)}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        {/* 필터 영역 */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-            <Input
-              placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
-          <Select value={locationFilter} onValueChange={setLocationFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="위치별" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 위치</SelectItem>
-              <SelectItem value="none">위치 미지정</SelectItem>
-              {uniqueLocations.map((loc) => (
-                <SelectItem key={loc} value={loc}>
-                  {loc}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="상태별" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 상태</SelectItem>
-              <SelectItem value="low">부족</SelectItem>
-              <SelectItem value="normal">정상</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="카테고리별" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 카테고리</SelectItem>
-              <SelectItem value="reagent">시약</SelectItem>
-              <SelectItem value="equipment">장비</SelectItem>
-              <SelectItem value="consumable">소모품</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          {/* 2. 한눈에 보기 (대시보드 전용 뷰) */}
+          <TabsContent value="overview" className="m-0 space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                    전체 재고
+                  </CardTitle>
+                  <div className="rounded-full bg-blue-50 p-2 dark:bg-blue-900/40">
+                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {totalInventoryCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* 메인 테이블 */}
-        {isLoading ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <InventoryTable
-                inventories={filteredInventories}
-                onEdit={(inventory) => {
-                  setEditingInventory(inventory);
-                  setIsDialogOpen(true);
-                }}
-                onDelete={(inventory) => {
-                  if (confirm(`정말 ${inventory.product.name} 재고를 삭제하시겠습니까?`)) {
-                    deleteMutation.mutate(inventory.id);
+              <Card className="border-red-100 bg-red-50/10 shadow-sm dark:border-red-900/50 dark:bg-red-950/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
+                    부족/품절
+                  </CardTitle>
+                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
+                    {lowOrOutOfStockCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-orange-100 bg-orange-50/10 shadow-sm dark:border-orange-900/50 dark:bg-orange-950/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                    폐기 임박
+                  </CardTitle>
+                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/40">
+                    <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {expiringSoonCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  긴급 발주/폐기 필요 품목
+                </CardTitle>
+                <CardDescription>
+                  재고 부족 또는 유통기한 임박 항목입니다. 클릭하면 상세 보기에서 조치할 수 있습니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const urgent = displayInventories
+                    .filter((inv) => {
+                      const isOut = inv.currentQuantity === 0;
+                      const isLow =
+                        inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
+                      const isExpiring =
+                        inv.expiryDate &&
+                        (() => {
+                          const d = new Date(inv.expiryDate);
+                          const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          return days > 0 && days <= 30;
+                        })();
+                      return isOut || isLow || isExpiring;
+                    })
+                    .slice(0, 8);
+                  if (urgent.length === 0) {
+                    return (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        긴급 조치가 필요한 품목이 없습니다.
+                      </p>
+                    );
                   }
-                }}
-                onReorder={(inventory) => {
-                  toast({
-                    title: "주문하기",
-                    description: `${inventory.product.name} 주문 기능은 곧 제공될 예정입니다.`,
-                  });
-                }}
-                onDetailClick={(inventory) => {
-                  setSelectedItem(inventory);
-                  setIsSheetOpen(true);
-                }}
-                emptyMessage="아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
-                emptyAction={() => setIsDialogOpen(true)}
-              />
-            </CardContent>
-          </Card>
-        )}
+                  return (
+                    <ul className="space-y-2">
+                      {urgent.map((inv) => (
+                        <li key={inv.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedItem(inv);
+                              setSheetSafetyStock(
+                                String(inv.safetyStock ?? inv.minOrderQty ?? 1)
+                              );
+                              setIsSheetOpen(true);
+                            }}
+                            className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50"
+                          >
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {inv.product.name}
+                            </span>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                              {inv.currentQuantity} {inv.unit}
+                              {inv.safetyStock != null && ` / 최소 ${inv.safetyStock}`}
+                              {inv.expiryDate && ` · ${format(new Date(inv.expiryDate), "yyyy.MM.dd")}`}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* 우측 상세 Sheet (Drawer) */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -822,6 +929,77 @@ export default function InventoryPage() {
                     <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm leading-relaxed text-slate-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-slate-300">
                       {selectedItem.notes || "등록된 특이사항이 없습니다."}
                     </div>
+                  </div>
+
+                  {/* 재고 부족 알림 기준 설정 */}
+                  <div className="mt-6 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
+                      <BellRing className="mr-2 h-4 w-4 text-blue-500" />
+                      재고 부족 알림 기준 설정
+                    </h4>
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1 space-y-1">
+                        <Label
+                          htmlFor="sheet-minQty"
+                          className="text-xs text-slate-500 dark:text-slate-400"
+                        >
+                          최소 유지 수량 (안전 재고)
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="sheet-minQty"
+                            type="number"
+                            min={0}
+                            value={sheetSafetyStock}
+                            onChange={(e) => setSheetSafetyStock(e.target.value)}
+                            className="w-24 bg-white dark:bg-slate-950"
+                          />
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            {selectedItem.unit || "개"}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 border-blue-200 bg-white text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:bg-slate-950 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                        disabled={createOrUpdateMutation.isPending}
+                        onClick={() => {
+                          const value = parseInt(sheetSafetyStock, 10);
+                          if (isNaN(value) || value < 0) return;
+                          const payload = {
+                            id: selectedItem.id,
+                            productId: selectedItem.productId,
+                            currentQuantity: selectedItem.currentQuantity,
+                            unit: selectedItem.unit,
+                            safetyStock: value,
+                            minOrderQty: selectedItem.minOrderQty ?? undefined,
+                            location: selectedItem.location ?? undefined,
+                            notes: selectedItem.notes ?? undefined,
+                            expiryDate: selectedItem.expiryDate ?? undefined,
+                          };
+                          createOrUpdateMutation.mutate(payload, {
+                            onSuccess: () => {
+                              setSelectedItem((prev) =>
+                                prev ? { ...prev, safetyStock: value } : null
+                              );
+                              toast({
+                                title: "알림 기준 저장됨",
+                                description: `최소 유지 수량이 ${value} ${selectedItem.unit || "개"}(으)로 설정되었습니다.`,
+                              });
+                            },
+                          });
+                        }}
+                      >
+                        <Save className="mr-1 h-3 w-3" />
+                        변경 저장
+                      </Button>
+                    </div>
+                    <p className="mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      설정된 수량 이하로 재고가 떨어지면 대시보드와 앱 내 알림(🔔)으로 즉시 경고가 발생하며,
+                      원클릭 재발주가 활성화됩니다.
+                    </p>
                   </div>
 
                   <div className="flex w-full gap-2 pt-6">

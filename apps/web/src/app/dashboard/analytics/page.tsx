@@ -1,11 +1,14 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart, ChevronRight } from "lucide-react";
 import {
@@ -21,7 +24,25 @@ import {
  * 지출 분석 페이지 (사용자용)
  * 연구비 소진 현황을 확인하는 리포트
  */
+const FILTER_OPTIONS = [
+  { value: "all", label: "전체 팀원" },
+  { value: "team1", label: "1팀 (세포배양)" },
+  { value: "team2", label: "2팀 (분자생물)" },
+  { value: "lee", label: "이호영 (관리자)" },
+];
+
+// Mock: 팀원별 지출 랭킹 (이번 달 누적 기준)
+const teamSpendingRanking = [
+  { rank: 1, name: "박연구", amount: 4500000, percent: 36 },
+  { rank: 2, name: "김석사", amount: 3200000, percent: 25 },
+  { rank: 3, name: "최학부", amount: 1500000, percent: 12 },
+  { rank: 4, name: "정인턴", amount: 1200000, percent: 10 },
+  { rank: 5, name: "한연구", amount: 1100000, percent: 9 },
+];
+
 export default function AnalyticsPage() {
+  const [filterValue, setFilterValue] = useState("all");
+
   // Mock Data: 예산 요약
   const budgetSummary = {
     total: 50000000,      // 총 예산: ₩ 50,000,000
@@ -60,13 +81,27 @@ export default function AnalyticsPage() {
   const COLORS = categorySpending.map(cat => cat.color);
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      {/* 헤더 */}
-      <div className="flex flex-col space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">지출 분석</h2>
-        <p className="text-muted-foreground">
-          연구비 소진 현황을 확인하세요.
-        </p>
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full">
+      {/* 1. 상단 타이틀 및 글로벌 필터 */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
+        <div className="flex flex-col space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">지출 분석 📊</h2>
+          <p className="text-muted-foreground">연구비 소진 현황을 확인하세요.</p>
+        </div>
+        <div className="w-full sm:w-48">
+          <Select value={filterValue} onValueChange={setFilterValue}>
+            <SelectTrigger className="bg-white dark:bg-slate-950">
+              <SelectValue placeholder="조직 단위 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <Separator />
 
@@ -230,56 +265,99 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* 최근 큰 지출 (Top Spending) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>최근 큰 지출</CardTitle>
-          <CardDescription>가격이 높은 순서대로 구매 내역 Top 5</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">순위</TableHead>
-                  <TableHead>품목명</TableHead>
-                  <TableHead>벤더</TableHead>
-                  <TableHead>카테고리</TableHead>
-                  <TableHead className="text-right">금액</TableHead>
-                  <TableHead>구매일</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topSpending.map((item, index) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-semibold">
-                        {index + 1}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{item.item}</TableCell>
-                    <TableCell>{item.vendor}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {item.category === "시약" && <FlaskConical className="h-4 w-4 text-blue-600" />}
-                        {item.category === "장비" && <Package className="h-4 w-4 text-green-600" />}
-                        {item.category === "소모품" && <ShoppingCart className="h-4 w-4 text-orange-600" />}
-                        <span>{item.category}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₩ {item.amount.toLocaleString("ko-KR")}
-                    </TableCell>
-                    <TableCell className="text-slate-600">
-                      {new Date(item.date).toLocaleDateString("ko-KR")}
-                    </TableCell>
+      {/* 2. 하단 레이아웃 분할 (7-Grid): 최근 큰 지출 + 팀원별 지출 랭킹 */}
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 mt-4">
+        {/* 좌측: 최근 큰 지출 (col-span-4) */}
+        <Card className="lg:col-span-4 shadow-sm">
+          <CardHeader>
+            <CardTitle>최근 큰 지출</CardTitle>
+            <CardDescription>가격이 높은 순서대로 구매 내역 Top 5</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]">순위</TableHead>
+                    <TableHead>품목명</TableHead>
+                    <TableHead>벤더</TableHead>
+                    <TableHead>카테고리</TableHead>
+                    <TableHead className="text-right">금액</TableHead>
+                    <TableHead>구매일</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {topSpending.map((item, index) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-semibold dark:bg-slate-800 dark:text-slate-300">
+                          {index + 1}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{item.item}</TableCell>
+                      <TableCell>{item.vendor}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {item.category === "시약" && <FlaskConical className="h-4 w-4 text-blue-600" />}
+                          {item.category === "장비" && <Package className="h-4 w-4 text-green-600" />}
+                          {item.category === "소모품" && <ShoppingCart className="h-4 w-4 text-orange-600" />}
+                          <span>{item.category}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ₩ {item.amount.toLocaleString("ko-KR")}
+                      </TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">
+                        {new Date(item.date).toLocaleDateString("ko-KR")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 우측: 팀원별 지출 랭킹 (col-span-3) */}
+        <Card className="lg:col-span-3 shadow-sm border-slate-200 dark:border-slate-800">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">팀원별 지출 랭킹 🏆</CardTitle>
+            <CardDescription>이번 달 누적 지출액 기준</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-4">
+            {teamSpendingRanking.map((row) => (
+              <div key={row.rank}>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        row.rank === 1
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}
+                    >
+                      {row.rank}
+                    </span>
+                    {row.name}
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    ₩ {row.amount.toLocaleString("ko-KR")}
+                    <span className="text-slate-400 dark:text-slate-500 font-normal text-xs ml-1">
+                      ({row.percent}%)
+                    </span>
+                  </span>
+                </div>
+                <Progress
+                  value={row.percent}
+                  className={`h-2 bg-slate-100 dark:bg-slate-800 ${
+                    row.rank === 1 ? "[&>div]:bg-blue-600" : "[&>div]:bg-slate-500"
+                  }`}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
