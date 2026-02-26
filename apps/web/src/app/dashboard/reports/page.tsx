@@ -304,46 +304,46 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-blue-100 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-950/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">총 구매 금액</CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <Card className="border-blue-100 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-950/20 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 금액</CardTitle>
+              <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="p-4 pt-0">
+              <div className={`text-2xl md:text-3xl font-bold break-words ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {formatCurrency(totalAmount)}
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">총 구매 건수</CardTitle>
-              <Package className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          <Card className="border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/30 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 건수</CardTitle>
+              <Package className="h-4 w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="p-4 pt-0">
+              <div className={`text-2xl md:text-3xl font-bold break-words ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {itemCount}건
               </div>
             </CardContent>
           </Card>
-          <Card className="border-emerald-100 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">평균 단가</CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <Card className="border-emerald-100 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/20 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">평균 단가</CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="p-4 pt-0">
+              <div className={`text-2xl md:text-3xl font-bold break-words ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {formatCurrency(avgPrice)}
               </div>
             </CardContent>
           </Card>
-          <Card className="border-violet-100 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">벤더 수</CardTitle>
-              <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <Card className="border-violet-100 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/20 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">벤더 수</CardTitle>
+              <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="p-4 pt-0">
+              <div className={`text-2xl md:text-3xl font-bold break-words ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {vendorCount}개
               </div>
             </CardContent>

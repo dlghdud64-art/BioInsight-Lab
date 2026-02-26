@@ -49,11 +49,11 @@ export default function PricingPage() {
             <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                팀원 최대 3명
+                개인 전용 (팀원 초대 불가)
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                재고 관리 (최대 500개)
+                재고 관리 (최대 100개)
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -186,7 +186,7 @@ export default function PricingPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium text-slate-700 dark:text-slate-300">팀원 수</TableCell>
-                <TableCell className="text-center text-slate-500 dark:text-slate-400">최대 3명</TableCell>
+                <TableCell className="text-center text-slate-500 dark:text-slate-400">1명</TableCell>
                 <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
                   무제한
                 </TableCell>
@@ -194,7 +194,7 @@ export default function PricingPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium text-slate-700 dark:text-slate-300">재고 등록 한도</TableCell>
-                <TableCell className="text-center text-slate-500 dark:text-slate-400">최대 500개</TableCell>
+                <TableCell className="text-center text-slate-500 dark:text-slate-400">최대 100개</TableCell>
                 <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
                   무제한
                 </TableCell>

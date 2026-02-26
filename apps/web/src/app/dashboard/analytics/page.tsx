@@ -178,26 +178,26 @@ export default function AnalyticsPage() {
 
       {/* 요약 카드 (Stats) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">총 예산</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium truncate min-w-0">총 예산</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₩ {budgetSummary.total.toLocaleString("ko-KR")}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl md:text-3xl font-bold break-words">₩ {budgetSummary.total.toLocaleString("ko-KR")}</div>
             <p className="text-xs text-muted-foreground mt-1">
               연간 연구비
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">현재 사용액</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium truncate min-w-0">현재 사용액</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₩ {budgetSummary.used.toLocaleString("ko-KR")}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl md:text-3xl font-bold break-words">₩ {budgetSummary.used.toLocaleString("ko-KR")}</div>
             <p className="text-xs text-muted-foreground mt-1">
               사용률: {budgetSummary.usageRate}%
             </p>
@@ -210,13 +210,13 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">잔액</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium truncate min-w-0">잔액</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₩ {budgetSummary.remaining.toLocaleString("ko-KR")}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl md:text-3xl font-bold break-words">₩ {budgetSummary.remaining.toLocaleString("ko-KR")}</div>
             <p className="text-xs text-muted-foreground mt-1">
               남은 예산
             </p>
@@ -365,7 +365,9 @@ export default function AnalyticsPage() {
                           {index + 1}
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{item.item}</TableCell>
+                      <TableCell className="font-medium max-w-[180px] min-w-0">
+                        <span className="truncate block">{item.item}</span>
+                      </TableCell>
                       <TableCell>{item.vendor}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

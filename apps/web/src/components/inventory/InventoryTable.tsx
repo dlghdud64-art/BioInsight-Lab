@@ -205,7 +205,7 @@ export function InventoryTable({
                       {renderStatusBadge(statusLabel)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[200px] min-w-0">
                     {isSameProductAsPrevious ? (
                       <div className="flex items-center gap-2">
                         <div className="h-4 w-4 shrink-0 rounded-bl-md border-b-2 border-l-2 border-slate-300 dark:border-slate-600" />
@@ -222,11 +222,11 @@ export function InventoryTable({
                         </div>
                       </div>
                     ) : (
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                      <div className="min-w-0 overflow-hidden">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
                           {inventory.product.name}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                           {inventory.product.brand ?? "-"}
                           {inventory.product.catalogNumber && ` • Cat: ${inventory.product.catalogNumber}`}
                         </div>
