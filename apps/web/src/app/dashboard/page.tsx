@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -198,9 +198,9 @@ export default function DashboardPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
               <Beaker className="h-5 w-5" />
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 overflow-hidden">
               <span className="font-medium text-sm text-slate-900 truncate">{orderData.productName}</span>
-              <span className="text-xs text-muted-foreground mt-0.5">{orderData.vendor}</span>
+              <span className="text-xs text-muted-foreground mt-0.5 truncate">{orderData.vendor}</span>
             </div>
           </div>
         </TableCell>
@@ -339,8 +339,11 @@ export default function DashboardPage() {
   return (
     <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 overflow-x-hidden">
       {/* 페이지 헤더 영역 */}
-      <div className="flex flex-col space-y-2">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">대시보드</h2>
+      <div className="flex flex-col space-y-2 min-w-0">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 truncate min-w-0">
+          <LayoutDashboard className="h-5 w-5 text-blue-600 flex-shrink-0" />
+          <span className="truncate">대시보드</span>
+        </h2>
         <p className="text-muted-foreground">
           안녕하세요! 오늘도 효율적인 연구와 업무를 지원합니다. 🚀
         </p>
@@ -826,8 +829,8 @@ export default function DashboardPage() {
         <div className="md:col-span-2 space-y-6">
           {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
           <Card className="shadow-sm border-slate-200">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold">빠른 실행</CardTitle>
+            <CardHeader className="pb-4 min-w-0">
+              <CardTitle className="text-lg font-bold truncate min-w-0">빠른 실행</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <Link href="/test/search" className="block">
@@ -862,9 +865,9 @@ export default function DashboardPage() {
 
           {/* 4. Recent Notifications (Fixed) */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">최근 알림</CardTitle>
+            <CardHeader className="min-w-0">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <CardTitle className="text-lg truncate min-w-0">최근 알림</CardTitle>
                 <Link href="/dashboard/notifications">
                   <Button variant="ghost" size="sm" className="text-xs">
                     모두 보기
@@ -882,9 +885,9 @@ export default function DashboardPage() {
                   }`}
                 >
                   {renderNotificationIcon(notification.type)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm text-slate-900">{notification.title}</p>
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-1 min-w-0">
+                      <p className="font-medium text-sm text-slate-900 truncate">{notification.title}</p>
                       {notification.unread && (
                         <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600">
                           새

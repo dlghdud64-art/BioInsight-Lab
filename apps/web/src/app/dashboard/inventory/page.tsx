@@ -647,7 +647,7 @@ export default function InventoryPage() {
               value="overview"
               className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
             >
-              <LayoutDashboard className="mr-2 h-4 w-4 text-slate-500" />
+              <LayoutDashboard className="mr-2 h-5 w-5 text-slate-500" />
               한눈에 보기
             </TabsTrigger>
           </TabsList>

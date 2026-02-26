@@ -75,7 +75,7 @@ export function AdminSidebar() {
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-white" : "")} />
               {item.title}
             </Link>
           );

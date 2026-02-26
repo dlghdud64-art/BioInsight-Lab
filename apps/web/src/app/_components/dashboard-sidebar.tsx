@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
@@ -23,8 +24,8 @@ import {
   Receipt,
   CreditCard,
   PieChart,
-  Home,
   Lock,
+  House,
 } from "lucide-react";
 
 interface NavItem {
@@ -129,7 +130,27 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileOpenChange }: DashboardSidebarProps = {}) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [internalIsMobileOpen, setInternalIsMobileOpen] = useState(false);
+
+  const userRole = session?.user?.role as string | undefined;
+  const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
+
+  const filteredSidebarGroups = useMemo(
+    () =>
+      sidebarGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => {
+            if (item.href === "/dashboard/audit") {
+              return canAccessAudit;
+            }
+            return true;
+          }),
+        }))
+        .filter((group) => group.items.length > 0),
+    [canAccessAudit]
+  );
   
   // 외부에서 제어하는 경우와 내부에서 제어하는 경우를 모두 지원
   const isMobileOpen = externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen;
@@ -209,7 +230,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       : "text-slate-700 hover:bg-gray-100 hover:text-slate-900"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
+                  <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-500")} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -219,7 +240,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 메뉴 그룹 */}
         <div className="space-y-6">
-          {sidebarGroups.map((group, groupIndex) => (
+          {filteredSidebarGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
                 {group.label}
@@ -244,7 +265,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                         isInventory && !isActive && "font-semibold"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-600" : isInventory ? "text-blue-500" : "text-slate-500")} />
+                      <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : isInventory ? "text-blue-500" : "text-slate-500")} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
@@ -267,7 +288,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           onClick={() => setIsMobileOpen(false)}
           className="flex items-center gap-3 rounded-lg px-2 md:px-3 py-2 text-xs md:text-sm font-medium text-slate-500 transition-all hover:text-blue-600 hover:bg-blue-50"
         >
-          <Home className="h-4 w-4 flex-shrink-0" />
+          <House className="h-5 w-5 flex-shrink-0" />
           <span className="truncate whitespace-nowrap">서비스 홈으로</span>
         </Link>
       </div>

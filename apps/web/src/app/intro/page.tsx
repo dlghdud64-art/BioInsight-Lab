@@ -2,7 +2,7 @@ import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlaskConical, ClipboardCheck, ShoppingCart, Zap, Brain, Package, Users } from "lucide-react";
+import { Zap, ShieldCheck, Layers, Brain, Users } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load sections for better initial page load
@@ -22,19 +22,25 @@ export default function IntroPage() {
       <MainHeader />
       {/* 전체 레이아웃 컨테이너 */}
       <div className="w-full">
-        {/* 1. Hero Section - Clean & Professional */}
-        <section className="relative py-24 md:py-32 bg-gradient-to-b from-blue-50 to-white overflow-hidden">
-          {/* 격자 무늬 배경 */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.02) 1px, transparent 1px),
-                                linear-gradient(to bottom, rgba(0,0,0,0.02) 1px, transparent 1px)`,
-              backgroundSize: '40px 40px'
+        {/* 1. Hero Section - Premium & Professional */}
+        <section className="relative py-24 md:py-32 bg-gradient-to-b from-blue-50/80 via-white to-white overflow-hidden">
+          {/* 실험실 대시보드 패턴 배경 */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 opacity-[0.03]" style={{
+              backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+                                linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px)`,
+              backgroundSize: '32px 32px'
+            }}></div>
+            {/* 대시보드 실루엣 - 차트/그리드 느낌 */}
+            <div className="absolute bottom-0 left-0 right-0 h-1/3 opacity-[0.02]" style={{
+              backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(59,130,246,0.3) 60px, rgba(59,130,246,0.3) 62px),
+                                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(59,130,246,0.2) 40px, rgba(59,130,246,0.2) 42px)`,
+              backgroundSize: '120px 80px'
             }}></div>
           </div>
           
           <div className="relative mx-auto max-w-4xl px-4 md:px-6 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
               연구실 관리의 새로운 표준
             </h1>
             <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
@@ -45,7 +51,7 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* 2. User Persona - 3열 카드 그리드 */}
+        {/* 2. 핵심 기능 시각화 - 직군별 페인포인트 & 해결책 1:1 매칭 */}
         <section className="py-16 md:py-24 bg-white">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="text-center mb-12">
@@ -53,110 +59,74 @@ export default function IntroPage() {
                 누가 쓰나요?
               </h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                연구실부터 기업까지, 다양한 역할에 맞춘 솔루션
+                연구실부터 기업까지, 직군별 페인포인트를 해결합니다
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {/* R&D 연구자 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
-                    <FlaskConical className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-slate-900 mb-2">
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
+                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-amber-600" />
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
                     R&D 연구자
                   </CardTitle>
-                  <CardDescription className="text-base font-semibold text-slate-700">
-                    실험 설계에만 집중하세요
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                    시약 검색과 재고 파악은 AI가 1초 만에 끝냅니다.
-                  </p>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 mt-1">•</span>
-                      <span>프로토콜에서 시약 자동 추출</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 mt-1">•</span>
-                      <span>스펙 중심 제품 비교</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 mt-1">•</span>
-                      <span>영문 데이터시트 한글 번역</span>
-                    </li>
-                  </ul>
+                <CardContent className="space-y-4">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                    <p className="text-sm text-slate-700">시약 검색·스펙 비교에 매번 20분 이상 소요</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">해결책</p>
+                    <p className="text-sm font-medium text-blue-900">AI 통합 검색으로 1초 만에 500만 개 제품 비교</p>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* QC/QA 매니저 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4">
-                    <ClipboardCheck className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-slate-900 mb-2">
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
+                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
                     QC/QA 매니저
                   </CardTitle>
-                  <CardDescription className="text-base font-semibold text-slate-700">
-                    바이오·의료기기 제조를 위한 엄격한 자재 관리
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                    Lot No. 추적부터 유효기간 관리까지, GMP/ISO 감사를 완벽하게 대비하세요.
-                  </p>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 mt-1">•</span>
-                      <span>Lot No. 및 배치 추적 관리</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 mt-1">•</span>
-                      <span>GMP/ISO 규격 준수 검증</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 mt-1">•</span>
-                      <span>유효기간 자동 알림 및 관리</span>
-                    </li>
-                  </ul>
+                <CardContent className="space-y-4">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                    <p className="text-sm text-slate-700">Lot No.·유효기간 수기 관리, GMP 감사 대비 부담</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                    <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">해결책</p>
+                    <p className="text-sm font-medium text-emerald-900">배치 추적·유효기간 자동 알림, CFR 21 Part 11 준수</p>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* 구매 담당자 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center mb-4">
-                    <ShoppingCart className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-slate-900 mb-2">
+              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden">
+                <div className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <Layers className="h-5 w-5 text-indigo-600" />
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-bold text-slate-900 pr-12">
                     구매 담당자
                   </CardTitle>
-                  <CardDescription className="text-base font-semibold text-slate-700">
-                    투명한 예산 집행
-                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                    견적 요청부터 결제 품의까지, 복잡한 구매 프로세스를 원클릭으로 해결합니다.
-                  </p>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600 mt-1">•</span>
-                      <span>견적 요청 리스트 통합</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600 mt-1">•</span>
-                      <span>벤더별 가격·납기 비교</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-indigo-600 mt-1">•</span>
-                      <span>구매 리포트 자동 생성</span>
-                    </li>
-                  </ul>
+                <CardContent className="space-y-4">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                    <p className="text-sm text-slate-700">벤더별 견적 수집·정리·비교에 45분 이상 소요</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100">
+                    <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">해결책</p>
+                    <p className="text-sm font-medium text-indigo-900">통합 견적 요청·가격 비교표 자동 생성, ~5분 완료</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>

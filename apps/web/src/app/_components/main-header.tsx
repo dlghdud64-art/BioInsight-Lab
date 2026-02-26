@@ -13,6 +13,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Menu, LayoutDashboard, ArrowRight } from "lucide-react";
+import { HeaderThemeToggle } from "@/components/layout/ThemeToggle";
 import { useSession } from "next-auth/react";
 
 interface MainHeaderProps {
@@ -110,22 +111,24 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
         </div>
 
         {/* 우측: CTA/유틸 */}
-        <div className="flex items-center gap-4 md:gap-3 flex-shrink-0">
-          {/* 데스크탑 메뉴 */}
-          <Link
-            href="/intro"
-            className="hidden md:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
-            aria-label="서비스 소개 페이지로 이동"
-          >
-            서비스 소개
-          </Link>
-          <Link
-            href="/pricing"
-            className="hidden md:inline-block text-[10px] md:text-xs text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
-            aria-label="요금 및 도입 페이지로 이동"
-          >
-            요금 & 도입
-          </Link>
+        <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
+          {/* 데스크탑 내비게이션 메뉴 */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              href="/intro"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+              aria-label="서비스 소개 페이지로 이동"
+            >
+              서비스 소개
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded px-2 py-1"
+              aria-label="요금 및 도입 페이지로 이동"
+            >
+              요금 & 도입
+            </Link>
+          </nav>
 
           {/* 모바일 햄버거 메뉴 */}
           <Sheet>
@@ -176,14 +179,14 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 {/* 구분선 */}
                 <div className="my-6 border-t border-slate-100" />
 
-                {/* 2. 하단 액션 그룹 */}
+                {/* 2. 하단 액션 그룹 - 로그인 1개 + Get Started 1개 */}
                 <div className="flex flex-col space-y-3 mt-auto pb-10">
                   {!session?.user ? (
                     <>
                       <SheetClose asChild>
                         <Link
                           href="/auth/signin"
-                          className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors"
+                          className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors whitespace-nowrap"
                         >
                           로그인
                         </Link>
@@ -191,7 +194,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                       <SheetClose asChild>
                         <Button
                           asChild
-                          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white"
+                          className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold whitespace-nowrap"
                         >
                           <Link href="/test/search" className="flex items-center justify-center gap-2">
                             Get Started
@@ -214,28 +217,28 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </div>
             </SheetContent>
           </Sheet>
-          {/* 로그인 버튼 - 비로그인 시 데스크톱에 표시 */}
+          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시 (각 1개씩) */}
           {!session?.user && (
-            <>
-              <Link href="/auth/signin" className="hidden md:inline-block">
+            <div className="hidden md:flex items-center gap-2">
+              <Link href="/auth/signin">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs h-8 md:h-9"
+                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium h-8 md:h-9 whitespace-nowrap px-3"
                 >
                   로그인
                 </Button>
               </Link>
-              <Link href="/test/search" className="hidden md:inline-block">
+              <Link href="/test/search">
                 <Button
                   size="sm"
-                  className="text-[10px] md:text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-4 h-8 md:h-9"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 h-8 md:h-9 whitespace-nowrap"
                 >
                   Get Started
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:h-4 md:w-4" />
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </Link>
-            </>
+            </div>
           )}
           {/* 대시보드 버튼 - 로그인한 사용자에게만 표시 */}
           {session?.user && (
@@ -245,12 +248,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 className="text-[10px] md:text-xs bg-gray-100 text-gray-900 hover:bg-gray-200 px-2 md:px-3 h-8 md:h-9"
                 aria-label="대시보드로 이동"
               >
-                <LayoutDashboard className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-1.5" />
+                <LayoutDashboard className="h-5 w-5 mr-1 md:mr-1.5" />
                 <span className="hidden sm:inline">대시보드</span>
                 <span className="sm:hidden">대시</span>
               </Button>
             </Link>
           )}
+          <HeaderThemeToggle />
           <UserMenu />
         </div>
       </div>

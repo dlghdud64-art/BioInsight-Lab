@@ -1,9 +1,8 @@
 "use client";
 
-import { Clock, X, CheckCircle2, Zap, TrendingDown, XCircle } from "lucide-react";
+import { X, CheckCircle2, TrendingDown } from "lucide-react";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 export function ComparisonSection() {
   const [isBioInsight, setIsBioInsight] = useState(false);
@@ -19,7 +18,7 @@ export function ComparisonSection() {
       icon: X
     },
     { 
-      title: "메일 첨부 문서 작성", 
+      title: "견적 요청 문서 작성", 
       detail: "~10분 · 형식 맞추기",
       icon: X
     },
@@ -104,62 +103,45 @@ export function ComparisonSection() {
           </div>
         </div>
 
-        {/* 데스크탑: 비교 테이블 (md 이상) */}
+        {/* 데스크탑: 인터랙티브 비교 테이블 (md 이상) */}
         <div className="hidden md:block mb-6 md:mb-8">
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xl max-w-4xl mx-auto bg-white">
             <Table>
               <TableHeader>
-                <TableRow className="bg-white hover:bg-white">
-                  <TableHead className="font-semibold text-gray-900 w-[200px]">기능</TableHead>
-                  <TableHead className="text-center font-semibold text-gray-400">전통적 방식</TableHead>
-                  <TableHead className="text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-blue-700">BioInsight</span>
-                        <Badge className="bg-blue-600 text-white text-[10px] px-2 py-0.5">AI Solution</Badge>
-                      </div>
-                    </div>
-                  </TableHead>
+                <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                  <TableHead className="p-6 text-sm font-semibold text-slate-500 uppercase tracking-wider">기능</TableHead>
+                  <TableHead className="p-6 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center">전통적 방식</TableHead>
+                  <TableHead className="p-6 text-sm font-semibold text-blue-600 uppercase tracking-wider text-center">BioInsight 솔루션</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {beforeItems.map((beforeItem, idx) => {
-                  const afterItem = afterItems[idx];
-                  return (
-                    <TableRow key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                      <TableCell className="font-medium text-gray-900 bg-white">
-                        <div className="text-sm">{beforeItem.title}</div>
-                      </TableCell>
-                      <TableCell className="text-center bg-white">
-                        <div className="flex items-center justify-center gap-2 text-gray-400">
-                          <XCircle className="h-4 w-4 text-gray-300" />
-                          <span className="text-sm">{beforeItem.detail}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center bg-blue-50/60 border-2 border-blue-100 rounded-2xl shadow-lg shadow-blue-500/10 p-4">
-                        <div className="flex items-center justify-center gap-2 text-blue-900 font-medium">
-                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm">{afterItem.detail}</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {/* 총 소요시간 행 */}
-                <TableRow className="border-t-2 border-gray-200">
-                  <TableCell className="font-semibold text-gray-900 bg-white">
-                    <div className="text-sm uppercase tracking-wide">총 소요시간</div>
+              <TableBody className="divide-y divide-slate-100">
+                <TableRow className="hover:bg-blue-50/30 transition-colors">
+                  <TableCell className="p-6 font-medium text-slate-900">벤더 사이트 개별 검색</TableCell>
+                  <TableCell className="p-6 text-center text-slate-400 font-mono text-sm">~20분 (10+개 사이트)</TableCell>
+                  <TableCell className="p-6 text-center text-blue-600 font-bold text-lg">~2분 (자동 크롤링)</TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-blue-50/30 transition-colors">
+                  <TableCell className="p-6 font-medium text-slate-900">엑셀/노션에 수동 정리</TableCell>
+                  <TableCell className="p-6 text-center text-slate-400 font-mono text-sm">~15분 (복붙 반복)</TableCell>
+                  <TableCell className="p-6 text-center text-blue-600 font-bold text-lg">즉시 (AI 분석)</TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-blue-50/30 transition-colors">
+                  <TableCell className="p-6 font-medium text-slate-900">견적 요청 문서 작성</TableCell>
+                  <TableCell className="p-6 text-center text-slate-400 font-mono text-sm">~10분 (형식 맞추기)</TableCell>
+                  <TableCell className="p-6 text-center text-blue-600 font-bold text-lg">1분 (클릭 한 번)</TableCell>
+                </TableRow>
+                <TableRow className="border-t-2 border-slate-200 hover:bg-blue-50/30">
+                  <TableCell className="p-6 font-semibold text-slate-900 uppercase tracking-wide">총 소요시간</TableCell>
+                  <TableCell className="p-6 text-center">
+                    <span className="text-slate-400 font-mono text-lg line-through">~45분</span>
                   </TableCell>
-                  <TableCell className="text-center bg-white">
-                    <div className="text-lg font-bold text-gray-400">~45분</div>
-                  </TableCell>
-                  <TableCell className="text-center bg-blue-50/60 border-2 border-blue-100 rounded-2xl shadow-lg shadow-blue-500/10 py-8">
+                  <TableCell className="p-6 text-center bg-blue-50/50">
                     <div className="flex flex-col items-center gap-1">
-                      <div className="text-lg font-bold text-blue-700">~5분</div>
-                      <div className="flex items-center gap-1 text-xs text-blue-600">
-                        <TrendingDown className="h-3 w-3 text-blue-600" />
-                        <span>90% 시간 절약</span>
-                      </div>
+                      <span className="text-blue-600 font-bold text-2xl">~5분</span>
+                      <span className="text-blue-600 font-bold text-sm flex items-center gap-1">
+                        <TrendingDown className="h-4 w-4" />
+                        90% 시간 절약
+                      </span>
                     </div>
                   </TableCell>
                 </TableRow>

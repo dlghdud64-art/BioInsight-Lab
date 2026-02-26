@@ -126,24 +126,15 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
-          {/* 메인 CTA: Get Started + 요금제 보기 */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 md:mt-10">
+          {/* 메인 CTA: Get Started 단일 버튼 */}
+          <div className="flex justify-center mt-8 md:mt-10">
             <Link href="/test/search">
               <Button
                 size="lg"
-                className="h-14 px-8 text-lg bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-14 px-12 text-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/20 whitespace-nowrap"
               >
                 Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-14 px-8 text-lg border-slate-200 dark:border-slate-800"
-              >
-                요금제 보기
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
           </div>

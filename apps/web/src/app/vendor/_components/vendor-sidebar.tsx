@@ -60,7 +60,7 @@ export function VendorSidebar() {
                   : "text-slate-700 hover:bg-slate-100"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : "")} />
               {item.title}
             </Link>
           );
