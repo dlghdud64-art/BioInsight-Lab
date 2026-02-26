@@ -178,17 +178,27 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 {/* 구분선 */}
                 <div className="my-6 border-t border-slate-100" />
 
-                {/* 2. 하단 액션 그룹 - 로그인 또는 대시보드 */}
+                {/* 2. 하단 액션 그룹 - 로그인/Get Started 또는 대시보드 */}
                 <div className="flex flex-col space-y-3 mt-auto pb-10">
                   {!session?.user ? (
-                    <SheetClose asChild>
-                      <Link
-                        href="/auth/signin"
-                        className="text-sm font-medium text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors whitespace-nowrap"
-                      >
-                        로그인
-                      </Link>
-                    </SheetClose>
+                    <>
+                      <SheetClose asChild>
+                        <Link
+                          href="/auth/signin"
+                          className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white px-4 py-2 transition-colors whitespace-nowrap"
+                        >
+                          로그인
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link
+                          href="/test/search"
+                          className="inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 transition-all shadow-md"
+                        >
+                          Get Started
+                        </Link>
+                      </SheetClose>
+                    </>
                   ) : (
                     <SheetClose asChild>
                       <Link
@@ -203,16 +213,24 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </div>
             </SheetContent>
           </Sheet>
-          {/* 로그인(ghost) - 비로그인 시 데스크톱에 표시 */}
+          {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시 */}
           {!session?.user && (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-3">
               <Link href="/auth/signin">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium h-8 md:h-9 whitespace-nowrap px-3"
+                  className="text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-medium h-8 md:h-9 whitespace-nowrap px-3"
                 >
                   로그인
+                </Button>
+              </Link>
+              <Link href="/test/search">
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 h-8 md:h-9 rounded-lg transition-all shadow-md whitespace-nowrap"
+                >
+                  Get Started
                 </Button>
               </Link>
             </div>

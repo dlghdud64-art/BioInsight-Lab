@@ -255,15 +255,8 @@ export default function BudgetPage() {
                         <Progress value={rate} className="h-2" />
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingBudget(budget);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          상세 보기
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/dashboard/budget/${budget.id}`}>상세 보기</a>
                         </Button>
                         <Button
                           variant="outline"

@@ -232,16 +232,16 @@ function SettingsPageContent() {
     }
   };
 
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
-  const handleSettingsSave = async () => {
-    setIsSavingSettings(true);
+  const handleNotificationSave = async () => {
+    setIsSavingNotifications(true);
     await new Promise((r) => setTimeout(r, 1000));
     toast({
       title: "설정 저장 완료",
       description: "알림 설정이 반영되었습니다.",
     });
-    setIsSavingSettings(false);
+    setIsSavingNotifications(false);
   };
 
   const getInitials = () => {
@@ -265,6 +265,63 @@ function SettingsPageContent() {
     { id: "team", label: "팀 관리", icon: Users },
     { id: "notifications", label: "알림 설정", icon: Bell },
   ];
+
+  type TeamRoleValue = "admin" | "researcher" | "guest";
+
+  const mapBackendRoleToDisplay = (role: string): TeamRoleValue => {
+    if (role === "ADMIN" || role === "OWNER") return "admin";
+    if (role === "RESEARCHER" || role === "USER") return "researcher";
+    return "guest";
+  };
+
+  const mapDisplayToBackendRole = (value: TeamRoleValue): string => {
+    if (value === "admin") return "ADMIN";
+    if (value === "researcher") return "RESEARCHER";
+    return "VIEWER";
+  };
+
+  const [teamRoles, setTeamRoles] = useState<Record<string, TeamRoleValue>>({});
+  const [isTeamDirty, setIsTeamDirty] = useState(false);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
+
+  useEffect(() => {
+    if (members?.length) {
+      const initial: Record<string, TeamRoleValue> = {};
+      members.forEach((member: { id: string; role: string }) => {
+        initial[member.id] = mapBackendRoleToDisplay(member.role);
+      });
+      setTeamRoles(initial);
+      setIsTeamDirty(false);
+    }
+  }, [members]);
+
+  const handleTeamSave = async () => {
+    if (!members?.length) return;
+
+    const changes = members.filter((member: { id: string; role: string }) => {
+      const currentDisplay = mapBackendRoleToDisplay(member.role);
+      const selected = teamRoles[member.id] ?? currentDisplay;
+      return selected !== currentDisplay;
+    });
+
+    if (changes.length === 0) {
+      setIsTeamDirty(false);
+      return;
+    }
+
+    setIsSavingTeam(true);
+    try {
+      for (const member of changes) {
+        const displayRole = teamRoles[member.id] ?? mapBackendRoleToDisplay(member.role);
+        const backendRole = mapDisplayToBackendRole(displayRole);
+        // @ts-ignore mutateAsync는 런타임에서 지원됩니다.
+        await roleUpdateMutation.mutateAsync({ memberId: member.id, role: backendRole });
+      }
+      setIsTeamDirty(false);
+    } finally {
+      setIsSavingTeam(false);
+    }
+  };
 
   return (
     <div className="w-full px-4 md:px-6 py-6 pt-6">
@@ -544,63 +601,78 @@ function SettingsPageContent() {
                       팀 권한 관리
                     </CardTitle>
                     <CardDescription className="text-muted-foreground dark:text-slate-400">
-                      {currentOrgName} 멤버들의 권한을 직접 수정합니다.
+                      {currentOrgName} 멤버들의 시스템 접근 권한을 이 자리에서 바로 조정합니다.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {members.length === 0 ? (
-                      <p className="text-sm text-muted-foreground dark:text-slate-400 py-4">
-                        등록된 팀원이 없습니다.
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                        팀원 목록
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        팀원별로 역할을 선택하면 하단의 변경사항 저장 버튼이 활성화됩니다.
                       </p>
-                    ) : (
-                      members.map((member: { id: string; user: { id: string; name: string | null; email: string } | null; role: string }) => {
-                        const name = member.user?.name || member.user?.email || "알 수 없음";
-                        const email = member.user?.email || "";
-                        const initial = name?.charAt(0)?.toUpperCase() || "?";
-                        const isAdminRole = member.role === "ADMIN" || member.role === "OWNER";
-                        const displayRole = isAdminRole ? "admin" : "user";
-                        return (
-                          <div
-                            key={member.id}
-                            className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-medium dark:bg-slate-700 dark:text-slate-200">
-                                  {initial}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <span className="text-sm font-medium text-slate-900 dark:text-white block truncate">
-                                  {name}
-                                </span>
-                                {email && (
-                                  <span className="text-xs text-muted-foreground dark:text-slate-400 block truncate">
-                                    {email}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <Select
-                              value={displayRole}
-                              onValueChange={(v) => {
-                                const newRole = v === "admin" ? "ADMIN" : "VIEWER";
-                                roleUpdateMutation.mutate({ memberId: member.id, role: newRole });
-                              }}
-                              disabled={roleUpdateMutation.isPending}
+                    </div>
+                    <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
+                      {members.length === 0 ? (
+                        <div className="p-6 text-sm text-slate-500 dark:text-slate-400 text-center">
+                          아직 초대된 팀원이 없습니다.
+                        </div>
+                      ) : (
+                        members.map((member: { id: string; user: { id: string; name: string | null; email: string } | null; role: string }) => {
+                          const name = member.user?.name || member.user?.email || "알 수 없음";
+                          const email = member.user?.email || "";
+                          const initial = name?.charAt(0)?.toUpperCase() || "?";
+                          const currentDisplayRole = mapBackendRoleToDisplay(member.role);
+                          const selectedRole = teamRoles[member.id] ?? currentDisplayRole;
+
+                          return (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between p-4 border-b last:border-0 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                             >
-                              <SelectTrigger className="w-[110px] h-8 text-xs flex-shrink-0">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin">관리자</SelectItem>
-                                <SelectItem value="user">연구원</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        );
-                      })
-                    )}
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar className="h-9 w-9 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold dark:bg-slate-700 dark:text-slate-200">
+                                    {initial}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">
+                                    {name}
+                                  </span>
+                                  {email && (
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
+                                      {email}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <Select
+                                value={selectedRole}
+                                onValueChange={(v: TeamRoleValue) => {
+                                  setTeamRoles((prev) => ({
+                                    ...prev,
+                                    [member.id]: v,
+                                  }));
+                                  setIsTeamDirty(true);
+                                }}
+                                disabled={roleUpdateMutation.isPending || isSavingTeam}
+                              >
+                                <SelectTrigger className="w-[130px] h-9 text-xs font-medium flex-shrink-0">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">관리자</SelectItem>
+                                  <SelectItem value="researcher">연구원</SelectItem>
+                                  <SelectItem value="guest">게스트</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -788,10 +860,23 @@ function SettingsPageContent() {
                   variant="default"
                   size="lg"
                   className="w-full md:w-auto px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                  onClick={() => (activeSection === "profile" ? handleProfileSubmit() : handleSettingsSave())}
-                  disabled={profileMutation.isPending || isSavingSettings}
+                  onClick={() => {
+                    if (activeSection === "profile") {
+                      handleProfileSubmit();
+                    } else if (activeSection === "team") {
+                      handleTeamSave();
+                    } else {
+                      handleNotificationSave();
+                    }
+                  }}
+                  disabled={
+                    profileMutation.isPending ||
+                    isSavingNotifications ||
+                    isSavingTeam ||
+                    (activeSection === "team" && !isTeamDirty)
+                  }
                 >
-                  {(profileMutation.isPending || isSavingSettings) ? (
+                  {(profileMutation.isPending || isSavingNotifications || isSavingTeam) ? (
                     "저장 중..."
                   ) : (
                     "변경사항 저장"

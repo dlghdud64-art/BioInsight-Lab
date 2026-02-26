@@ -11,7 +11,7 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 p-12 lg:p-16 flex-col justify-between text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0b1120] p-12 lg:p-16 flex-col justify-between text-white relative overflow-hidden">
         {/* 격자 패턴 배경 */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -21,27 +21,27 @@ export default function SignInPage() {
             backgroundSize: "48px 48px",
           }}
         />
-        {/* 브랜드 상단 로고 마크 */}
+        {/* 상단 브랜드 로고 마크 */}
         <div className="relative z-10 flex items-center gap-3 font-bold text-2xl tracking-tight">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
             B
           </div>
-          <span className="break-keep">BioInsight Lab</span>
+          <span>BioInsight Lab</span>
         </div>
-        {/* 중앙 슬로건 및 설명 */}
+        {/* 중앙 메인 슬로건 */}
         <div className="relative z-10 space-y-6">
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight break-keep">
+          <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tighter">
             연구에만 집중하세요.
             <br />
             <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>
-          <p className="text-slate-400 text-lg leading-relaxed max-w-md break-keep">
+          <p className="text-slate-400 text-xl leading-relaxed max-w-lg">
             수천 개의 시약과 예산을 데이터로 증명하세요.
             <br />
             실사(Audit) 준비가 더 이상 두렵지 않습니다.
           </p>
         </div>
-        {/* 하단 보안 인증 배지 */}
+        {/* 하단 보안 지표 */}
         <div className="relative z-10 flex items-center gap-2 text-slate-500 text-sm font-medium">
           <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0" />
           <span>256-bit 엔터프라이즈급 데이터 암호화 적용 중</span>
