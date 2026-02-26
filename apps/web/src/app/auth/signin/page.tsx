@@ -16,13 +16,24 @@ function SignInContent() {
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
       <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
-        {/* 1. 브랜드 로고: absolute로 좌측 패널 내 고정 */}
-        <div className="absolute top-12 left-12 z-10">
-          <BioInsightLogo variant="dark" />
+        {/* 1. 브랜드 로고: PNG 흰배경 없이 CSS 그라데이션 아이콘 + 텍스트 */}
+        <div className="absolute top-12 left-12 z-10 flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-400 via-blue-500 to-purple-500 flex items-center justify-center shadow-lg shrink-0">
+            <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" aria-hidden="true">
+              <path d="M4 5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zm8 8a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-6zM4 14a1 1 0 0 1 1-1h3v-3a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3H5a1 1 0 0 1-1-1z"/>
+            </svg>
+          </div>
+          <div className="leading-tight">
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold tracking-tight text-white">BioInsight</span>
+              <span className="text-xl font-bold tracking-tight text-teal-300">Lab</span>
+            </div>
+            <div className="text-[11px] text-slate-400">Procurement & Research</div>
+          </div>
         </div>
 
-        {/* 2. 중앙 슬로건: pt-[40vh]로 화면 수직 중앙 강제 배치 */}
-        <div className="flex-1 flex flex-col justify-center pt-[40vh] pl-16 pr-16 space-y-8">
+        {/* 2. 슬로건: 수직 중앙 배치 */}
+        <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-8">
           <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tighter antialiased">
             연구에만 집중하세요.
             <br />
