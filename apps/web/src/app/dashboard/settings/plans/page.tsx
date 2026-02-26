@@ -44,11 +44,18 @@ export default function PlansPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, periodMonths: 1 }),
       });
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upgrade plan");
+        const message = (data as { error?: string })?.error ?? "요금제 변경에 실패했습니다.";
+        console.error("[Plans] Upgrade API error:", {
+          status: response.status,
+          error: data,
+          organizationId,
+          plan,
+        });
+        throw new Error(message);
       }
-      return response.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-organizations"] });
@@ -58,8 +65,9 @@ export default function PlansPage() {
       });
     },
     onError: (error: Error) => {
+      console.error("[Plans] Upgrade mutation error:", error.message, error);
       toast({
-        title: "업그레이드 실패",
+        title: "요금제 변경 실패",
         description: error.message,
         variant: "destructive",
       });
@@ -96,7 +104,7 @@ export default function PlansPage() {
   const plans = [
     {
       id: SubscriptionPlan.FREE,
-      name: "Free / Beta",
+      name: "Starter",
       description: "기능 체험 및 파일럿용 무료 플랜",
       icon: Users,
       price: 0,
@@ -105,20 +113,20 @@ export default function PlansPage() {
     },
     {
       id: SubscriptionPlan.TEAM,
-      name: "Team",
-      description: "연구실/팀 단위 플랜",
+      name: "Basic",
+      description: "소규모 랩실용. 재고 500개, 재고 예측 알림, 팀원 3명까지.",
       icon: Users,
-      price: 50000, // 월 5만원
-      annualPrice: 480000, // 연간 48만원 (20% 할인)
+      price: 29000, // 월 ₩29,000
+      annualPrice: 278400, // 연간 20% 할인
       features: PLAN_LIMITS[SubscriptionPlan.TEAM],
     },
     {
       id: SubscriptionPlan.ORGANIZATION,
-      name: "Organization / Enterprise",
-      description: "회사/병원 단위 플랜",
+      name: "Pro",
+      description: "대학/벤처용. 재고 무제한, Lot 관리, 예산 분석, 감사 증적 포함.",
       icon: Building2,
-      price: 200000, // 월 20만원
-      annualPrice: 1920000, // 연간 192만원 (20% 할인)
+      price: 69000, // 월 ₩69,000
+      annualPrice: 662400, // 연간 20% 할인
       features: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION],
     },
   ];

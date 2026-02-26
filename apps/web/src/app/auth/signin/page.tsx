@@ -14,28 +14,30 @@ function SignInContent() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
   return (
     <div className="flex min-h-screen">
-      {/* 좌측 비주얼 영역 (데스크톱 전용) - 절대 좌표로 로고/텍스트 물리적 고정 */}
-      <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col">
-        {/* 1. 브랜드 마크: 절대 좌표로 강제 노출 */}
-        <div className="absolute top-16 left-16 flex items-center gap-3 z-[999]">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-xl">B</div>
-          <span className="text-white text-2xl font-bold tracking-tighter">BioInsight Lab</span>
+      {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
+      <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
+        {/* 1. 브랜드 로고: fixed로 뷰포트에 고정, flex/padding 영향 없음 */}
+        <div className="fixed top-16 left-16 flex items-center gap-3 z-[999]">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl font-bold">B</div>
+          <span className="text-white text-2xl font-bold tracking-tighter antialiased">BioInsight Lab</span>
         </div>
 
-        {/* 2. 중앙 슬로건: 상단 여백을 강제로 주어 위치 고정 */}
-        <div className="flex-1 flex flex-col pt-[35vh] px-16 space-y-8">
-          <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tighter">
+        {/* 2. 중앙 슬로건: pt-[40vh]로 화면 수직 중앙 강제 배치 */}
+        <div className="flex-1 flex flex-col justify-center pt-[40vh] pl-16 pr-16 space-y-8">
+          <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tighter antialiased">
             연구에만 집중하세요.
             <br />
             <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>
-          <p className="text-slate-400 text-xl leading-relaxed max-w-lg">
+          <p className="text-slate-400 text-xl max-w-lg leading-relaxed antialiased">
             수천 개의 시약과 예산을 데이터로 증명하세요.
+            <br />
+            실사(Audit) 준비가 더 이상 두렵지 않습니다.
           </p>
         </div>
 
         {/* 3. 하단 보안 지표 */}
-        <div className="absolute bottom-12 left-16 flex items-center gap-2 text-slate-500 text-sm">
+        <div className="absolute bottom-12 left-16 flex items-center gap-2 text-slate-500 text-sm antialiased">
           <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
           256-bit 엔터프라이즈급 데이터 암호화 적용 중
         </div>

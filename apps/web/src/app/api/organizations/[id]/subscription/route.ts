@@ -157,9 +157,42 @@ export async function POST(
       subscription,
     });
   } catch (error: any) {
-    console.error("Error updating subscription:", error);
+    const errMsg = error?.message ?? "Unknown error";
+    const errCode = error?.code;
+    const errStack = error?.stack;
+
+    console.error("[Subscription API] POST Error:", {
+      message: errMsg,
+      code: errCode,
+      stack: errStack,
+      organizationId: id,
+      requestedPlan: body?.plan,
+    });
+
+    if (errCode === "P2002") {
+      return NextResponse.json(
+        { error: "구독 정보가 이미 존재합니다. 페이지를 새로고침 후 다시 시도해주세요." },
+        { status: 409 }
+      );
+    }
+    if (errCode === "P2003") {
+      return NextResponse.json(
+        { error: "조직 정보를 찾을 수 없습니다. 조직 선택을 확인해주세요." },
+        { status: 400 }
+      );
+    }
+    if (errCode === "P2025") {
+      return NextResponse.json(
+        { error: "구독 레코드를 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요." },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to update subscription" },
+      {
+        error: "요금제 변경 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        details: process.env.NODE_ENV === "development" ? errMsg : undefined,
+      },
       { status: 500 }
     );
   }
