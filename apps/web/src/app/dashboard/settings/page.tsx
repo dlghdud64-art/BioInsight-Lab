@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, Suspense, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,6 +96,7 @@ function SettingsPageFallback() {
 
 function SettingsPageContent() {
   const { data: session } = useSession();
+  const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -623,7 +624,7 @@ function SettingsPageContent() {
             {/* 2. 팀 관리 탭 */}
             {activeSection === "team" && (
               <div className="animate-in fade-in-50 duration-300">
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700">
+                <Card className="overflow-hidden shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                       <Users className="h-5 w-5" />
@@ -639,12 +640,12 @@ function SettingsPageContent() {
                         팀원 목록
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        팀원별로 역할을 선택하면 하단의 변경사항 저장 버튼이 활성화됩니다.
+                        팀원별로 역할을 선택한 뒤 하단의 변경사항 저장 버튼을 눌러 반영합니다.
                       </p>
                     </div>
-                    <div className="border border-slate-100 dark:border-slate-800/50 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
+                    <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
                       {members.length === 0 ? (
-                        <div className="p-6 text-sm text-slate-500 dark:text-slate-400 text-center">
+                        <div className="p-6 text-sm text-slate-500 dark:text-slate-400 text-center w-full">
                           아직 초대된 팀원이 없습니다.
                         </div>
                       ) : (
@@ -703,6 +704,23 @@ function SettingsPageContent() {
                       )}
                     </div>
                   </CardContent>
+                  {/* 카드 내부 통합 저장 버튼: 팀원이 있을 때만 노출 */}
+                  <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-t dark:border-slate-800 flex justify-end">
+                    {members.length > 0 && (
+                      <Button
+                        size="lg"
+                        className="antialiased bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
+                        onClick={handleTeamSave}
+                        disabled={!isTeamDirty || roleUpdateMutation.isPending || isSavingTeam}
+                      >
+                        {roleUpdateMutation.isPending || isSavingTeam ? (
+                          "저장 중..."
+                        ) : (
+                          "변경사항 저장"
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </Card>
               </div>
             )}
@@ -825,111 +843,158 @@ function SettingsPageContent() {
               <div className="animate-in fade-in-50 duration-300 space-y-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200">구독 현황</h3>
-                  <Link href="/dashboard/settings/plans">
-                    <Button variant="outline" size="sm" className="border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400">
-                      플랜 변경
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 antialiased"
+                    onClick={() => router.push("/dashboard/settings/plans")}
+                  >
+                    플랜 변경
+                  </Button>
                 </div>
 
                 {billingLoading ? (
                   <div className="space-y-4">
-                    <Skeleton className="h-32 w-full rounded-xl dark:bg-slate-800" />
-                    <Skeleton className="h-64 w-full rounded-xl dark:bg-slate-800" />
-                  </div>
-                ) : (
-                  <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800/50 border-blue-500/30 dark:border-blue-500/30">
+                      <Card className="overflow-hidden border-slate-200 dark:border-slate-800 dark:bg-slate-900">
                         <CardHeader className="pb-2">
-                          <CardDescription className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
-                            현재 플랜
-                          </CardDescription>
-                          <CardTitle className="text-2xl text-slate-900 dark:text-slate-200">
-                            {(billingData?.planInfo as Record<string, { nameKo: string }>)?.[billingData?.subscription?.plan || "FREE"]?.nameKo || "무료"}
-                          </CardTitle>
+                          <Skeleton className="h-4 w-24 rounded dark:bg-slate-800" />
+                          <Skeleton className="h-8 w-32 mt-2 rounded dark:bg-slate-800" />
                         </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline" className="border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
-                              Active
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            다음 결제일: {billingData?.subscription?.currentPeriodEnd
-                              ? new Date(billingData.subscription.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
-                              : "-"}
-                            {(billingData?.planInfo as Record<string, { priceDisplay: string }>)?.[billingData?.subscription?.plan || "FREE"]?.priceDisplay
-                              ? ` (${(billingData?.planInfo as Record<string, { priceDisplay: string }>)?.[billingData?.subscription?.plan || "FREE"]?.priceDisplay})`
-                              : ""}
-                          </p>
+                        <CardContent className="space-y-2">
+                          <Skeleton className="h-5 w-16 rounded dark:bg-slate-800" />
+                          <Skeleton className="h-4 w-full rounded dark:bg-slate-800" />
+                        </CardContent>
+                      </Card>
+                      <Card className="overflow-hidden border-slate-200 dark:border-slate-800 dark:bg-slate-900">
+                        <CardHeader className="pb-2">
+                          <Skeleton className="h-4 w-24 rounded dark:bg-slate-800" />
+                          <Skeleton className="h-8 w-28 mt-2 rounded dark:bg-slate-800" />
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <Skeleton className="h-5 w-20 rounded dark:bg-slate-800" />
+                          <Skeleton className="h-4 w-3/4 rounded dark:bg-slate-800" />
                         </CardContent>
                       </Card>
                     </div>
+                    <Card className="overflow-hidden border-slate-200 dark:border-slate-800 dark:bg-slate-900">
+                      <CardHeader>
+                        <Skeleton className="h-6 w-24 rounded dark:bg-slate-800" />
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <Skeleton key={i} className="h-12 w-full rounded dark:bg-slate-800" />
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <>
+                    {(() => {
+                      const subscription = billingData?.subscription || {
+                        plan: "FREE",
+                        status: "active",
+                        currentPeriodEnd: null as string | null,
+                      };
+                      const planInfo = (billingData?.planInfo as Record<string, { nameKo: string; priceDisplay?: string }>) || {};
+                      const planKey = (subscription?.plan && ["FREE", "TEAM", "ORGANIZATION"].includes(subscription.plan) ? subscription.plan : "FREE") as string;
+                      const displayName = planInfo[planKey]?.nameKo ?? "무료";
+                      const priceDisplay = planInfo[planKey]?.priceDisplay ?? "";
+                      const invoices = billingData?.invoices ?? [];
+                      return (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800 border-blue-500/30 dark:border-blue-500/30">
+                              <CardHeader className="pb-2">
+                                <CardDescription className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
+                                  현재 플랜
+                                </CardDescription>
+                                <CardTitle className="text-2xl text-slate-900 dark:text-slate-200 antialiased">
+                                  {displayName}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant="outline" className="border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                                    Active
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 antialiased">
+                                  다음 결제일: {subscription?.currentPeriodEnd
+                                    ? new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+                                    : "-"}
+                                  {priceDisplay ? ` (${priceDisplay})` : ""}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          </div>
 
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200">결제 이력</h3>
-                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800/50 overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <Table className="dark:bg-slate-900 min-w-[500px]">
-                            <TableHeader>
-                              <TableRow className="dark:border-slate-800/50 dark:hover:bg-slate-900">
-                                <TableHead className="text-slate-900 dark:text-slate-200">날짜</TableHead>
-                                <TableHead className="text-slate-900 dark:text-slate-200">항목</TableHead>
-                                <TableHead className="text-slate-900 dark:text-slate-200">금액</TableHead>
-                                <TableHead className="text-right text-slate-900 dark:text-slate-200">영수증</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {(billingData?.invoices || []).length === 0 ? (
-                                <TableRow className="dark:border-slate-800/50">
-                                  <TableCell colSpan={4} className="text-center py-12 text-slate-500 dark:text-slate-400">
-                                    결제 내역이 없습니다.
-                                  </TableCell>
-                                </TableRow>
-                              ) : (
-                                (billingData?.invoices || []).map((invoice: { id: string; paidAt?: string; periodStart?: string; description?: string; amountDue?: number; amountPaid?: number; invoicePdfUrl?: string }) => (
-                                  <TableRow key={invoice.id} className="dark:border-slate-800/50 dark:hover:bg-slate-800/50">
-                                    <TableCell className="text-slate-900 dark:text-slate-200">
-                                      {invoice.paidAt
-                                        ? new Date(invoice.paidAt).toLocaleDateString("ko-KR")
-                                        : invoice.periodStart
-                                          ? new Date(invoice.periodStart).toLocaleDateString("ko-KR")
-                                          : "-"}
-                                    </TableCell>
-                                    <TableCell className="text-slate-900 dark:text-slate-200">{invoice.description || "구독 결제"}</TableCell>
-                                    <TableCell className="text-slate-900 dark:text-slate-200">
-                                      {(invoice.amountPaid ?? invoice.amountDue ?? 0).toLocaleString("ko-KR")}원
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-slate-600 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
-                                        disabled={!invoice.invoicePdfUrl}
-                                        onClick={() => {
-                                          if (invoice.invoicePdfUrl) {
-                                            window.open(invoice.invoicePdfUrl, "_blank");
-                                          } else {
-                                            toast({
-                                              title: "영수증",
-                                              description: "PDF 영수증은 결제 시스템 연동 후 이용 가능합니다.",
-                                            });
-                                          }
-                                        }}
-                                      >
-                                        <Receipt className="h-4 w-4 mr-1" />
-                                        다운로드
-                                      </Button>
-                                    </TableCell>
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200">결제 이력</h3>
+                            <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800 overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table className="dark:bg-slate-900 min-w-[500px]">
+                                  <TableHeader>
+                                    <TableRow className="dark:border-slate-800/50 dark:hover:bg-slate-900">
+                                    <TableHead className="text-slate-900 dark:text-slate-200">날짜</TableHead>
+                                    <TableHead className="text-slate-900 dark:text-slate-200">항목</TableHead>
+                                    <TableHead className="text-slate-900 dark:text-slate-200">금액</TableHead>
+                                    <TableHead className="text-right text-slate-900 dark:text-slate-200">영수증</TableHead>
                                   </TableRow>
-                                ))
-                              )}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </Card>
-                    </div>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {invoices.length === 0 ? (
+                                      <TableRow className="dark:border-slate-800/50">
+                                        <TableCell colSpan={4} className="text-center py-12 text-slate-500 dark:text-slate-400">
+                                          결제 내역이 없습니다.
+                                        </TableCell>
+                                      </TableRow>
+                                    ) : (
+                                      invoices.map((invoice: { id: string; paidAt?: string; periodStart?: string; description?: string; amountDue?: number; amountPaid?: number; invoicePdfUrl?: string }) => (
+                                        <TableRow key={invoice.id} className="dark:border-slate-800/50 dark:hover:bg-slate-800/50">
+                                          <TableCell className="text-slate-900 dark:text-slate-200">
+                                            {invoice.paidAt
+                                              ? new Date(invoice.paidAt).toLocaleDateString("ko-KR")
+                                              : invoice.periodStart
+                                                ? new Date(invoice.periodStart).toLocaleDateString("ko-KR")
+                                                : "-"}
+                                          </TableCell>
+                                          <TableCell className="text-slate-900 dark:text-slate-200">{invoice.description || "구독 결제"}</TableCell>
+                                          <TableCell className="text-slate-900 dark:text-slate-200">
+                                            {(invoice.amountPaid ?? invoice.amountDue ?? 0).toLocaleString("ko-KR")}원
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-slate-600 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
+                                              disabled={!invoice.invoicePdfUrl}
+                                              onClick={() => {
+                                                if (invoice.invoicePdfUrl) {
+                                                  window.open(invoice.invoicePdfUrl, "_blank");
+                                                } else {
+                                                  toast({
+                                                    title: "영수증",
+                                                    description: "PDF 영수증은 결제 시스템 연동 후 이용 가능합니다.",
+                                                  });
+                                                }
+                                              }}
+                                            >
+                                              <Receipt className="h-4 w-4 mr-1" />
+                                              다운로드
+                                            </Button>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </Card>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>
@@ -997,31 +1062,27 @@ function SettingsPageContent() {
               </Card>
             )}
 
-            {/* 하단 고정 저장 버튼 (청구 및 구독 탭에서는 미표시) */}
-            {activeSection !== "billing" && (
+            {/* 하단 고정 저장 버튼 (청구·구독 탭 미표시, 팀 탭은 카드 내부 버튼 사용) */}
+            {activeSection !== "billing" && activeSection !== "team" && (
               <div className="sticky bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
                 <div className="flex justify-end">
                   <Button
                     variant="default"
                     size="lg"
-                    className="w-full md:w-auto px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                    className="w-full md:w-auto px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold antialiased"
                     onClick={() => {
                       if (activeSection === "profile") {
                         handleProfileSubmit();
-                      } else if (activeSection === "team") {
-                        handleTeamSave();
                       } else {
                         handleNotificationSave();
                       }
                     }}
                     disabled={
                       profileMutation.isPending ||
-                      isSavingNotifications ||
-                      isSavingTeam ||
-                      (activeSection === "team" && !isTeamDirty)
+                      isSavingNotifications
                     }
                   >
-                    {(profileMutation.isPending || isSavingNotifications || isSavingTeam) ? (
+                    {(profileMutation.isPending || isSavingNotifications) ? (
                       "저장 중..."
                     ) : (
                       "변경사항 저장"

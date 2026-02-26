@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,34 +45,19 @@ const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
   { value: "전체(공용 예산)", label: "전체(공용 예산)" },
 ];
 
-const INITIAL_BUDGETS: Budget[] = [
-  {
-    id: "1",
-    name: "2026 상반기 시약비",
-    amount: 50000000,
-    currency: "KRW",
-    periodStart: "2026-01-01",
-    periodEnd: "2026-06-30",
-    targetDepartment: "기초연구팀",
-    projectName: "R&D 프로젝트",
-    description: "상반기 시약 및 소모품 구매 예산",
-    usage: {
-      totalSpent: 12500000,
-      usageRate: 25,
-      remaining: 37500000,
-    },
-  },
-];
+const INITIAL_BUDGETS: Budget[] = [];
 
 export default function BudgetPage() {
   const { status } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  /** 가상 저장: API 호출 없이 로컬 상태만 갱신 (1초 로딩 후 반영) */
+  /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
   const handleAddBudget = async (formData: {
     name: string;
     amount: number;
@@ -83,52 +69,91 @@ export default function BudgetPage() {
     description?: string | null;
   }) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setSubmitError(null);
 
-    if (editingBudget) {
-      const updated: Budget = {
-        ...editingBudget,
-        name: formData.name || editingBudget.name,
-        amount: formData.amount ?? editingBudget.amount,
-        currency: formData.currency || editingBudget.currency,
-        periodStart: formData.periodStart,
-        periodEnd: formData.periodEnd,
-        targetDepartment: formData.targetDepartment ?? null,
-        projectName: formData.projectName ?? null,
-        description: formData.description ?? null,
-        usage: editingBudget.usage ?? {
-          totalSpent: 0,
-          usageRate: 0,
-          remaining: formData.amount ?? 0,
+    try {
+      const res = await fetch("/api/budgets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-      setBudgets((prev) =>
-        prev.map((b) => (b.id === editingBudget.id ? updated : b))
-      );
-      toast({ title: "예산이 수정되었습니다." });
-    } else {
-      const newBudget: Budget = {
-        id: String(Date.now()),
-        name: formData.name || "신규 예산",
-        amount: formData.amount ?? 0,
-        currency: formData.currency || "KRW",
-        periodStart: formData.periodStart,
-        periodEnd: formData.periodEnd,
+        body: JSON.stringify({
+          name: formData.name,
+          amount: formData.amount,
+          currency: formData.currency,
+          periodStart: formData.periodStart,
+          periodEnd: formData.periodEnd,
+          projectName: formData.projectName,
+          description: formData.description,
+        }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const message =
+          (json as any)?.error ||
+          (json as any)?.details ||
+          "예산 반영 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+
+        console.error("[BudgetPage] Failed to save budget:", json);
+        setSubmitError(message);
+        toast({
+          title: "예산 저장 실패",
+          description:
+            "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const apiBudget = (json as any).budget;
+
+      const mappedBudget: Budget = {
+        id: apiBudget?.id ?? String(Date.now()),
+        name: apiBudget?.name ?? formData.name ?? "신규 예산",
+        amount: apiBudget?.amount ?? formData.amount ?? 0,
+        currency: apiBudget?.currency ?? formData.currency ?? "KRW",
+        periodStart: apiBudget?.periodStart ?? formData.periodStart,
+        periodEnd: apiBudget?.periodEnd ?? formData.periodEnd,
         targetDepartment: formData.targetDepartment ?? null,
-        projectName: formData.projectName ?? null,
-        description: formData.description ?? null,
+        projectName: apiBudget?.projectName ?? formData.projectName ?? null,
+        description: apiBudget?.description ?? formData.description ?? null,
         usage: {
           totalSpent: 0,
           usageRate: 0,
-          remaining: formData.amount ?? 0,
+          remaining: apiBudget?.amount ?? formData.amount ?? 0,
         },
       };
-      setBudgets((prev) => [newBudget, ...prev]);
-      toast({ title: "새 예산이 성공적으로 등록되었습니다." });
+
+      if (editingBudget) {
+        setBudgets((prev) =>
+          prev.map((b) => (b.id === editingBudget.id ? mappedBudget : b))
+        );
+        toast({ title: "예산이 수정되었습니다." });
+      } else {
+        setBudgets((prev) => [mappedBudget, ...prev]);
+        toast({ title: "새 예산이 성공적으로 등록되었습니다." });
+      }
+
+      setIsDialogOpen(false);
+      setEditingBudget(null);
+
+      router.push("/dashboard/analytics/category");
+    } catch (error) {
+      console.error("[BudgetPage] Unexpected error while saving budget:", error);
+      setSubmitError(
+        "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다. 잠시 후 다시 시도해주세요."
+      );
+      toast({
+        title: "예산 저장 실패",
+        description:
+          "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDialogOpen(false);
-    setEditingBudget(null);
-    setIsSubmitting(false);
   };
 
   const handleDeleteBudget = (id: string) => {
@@ -184,6 +209,8 @@ export default function BudgetPage() {
                 <BudgetForm
                   budget={editingBudget}
                   isSubmitting={isSubmitting}
+                  submitError={submitError}
+                  onClearSubmitError={() => setSubmitError(null)}
                   onSubmit={(data) => {
                     handleAddBudget(data);
                   }}
@@ -390,11 +417,15 @@ function BudgetCard({
 function BudgetForm({
   budget,
   isSubmitting = false,
+  submitError,
+  onClearSubmitError,
   onSubmit,
   onCancel,
 }: {
   budget?: Budget | null;
   isSubmitting?: boolean;
+  submitError?: string | null;
+  onClearSubmitError?: () => void;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
@@ -505,6 +536,7 @@ function BudgetForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    onClearSubmitError?.();
     
     if (!validate()) {
       toast({
@@ -696,10 +728,17 @@ function BudgetForm({
               {budget ? "수정 중..." : "저장 중..."}
             </>
           ) : (
-            budget ? "수정" : "저장"
+            submitError ? "다시 시도" : budget ? "수정" : "저장"
           )}
         </Button>
       </div>
+      {submitError && (
+        <div className="mt-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-slate-900 px-3 py-2">
+          <p className="text-xs text-red-600 dark:text-red-400">
+            {submitError}
+          </p>
+        </div>
+      )}
     </form>
   );
 }

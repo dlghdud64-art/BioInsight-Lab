@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Plus, Users, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,17 +30,84 @@ export default function OrganizationsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [navigatingToOrgId, setNavigatingToOrgId] = useState<number | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [navigatingToOrgId, setNavigatingToOrgId] = useState<string | number | null>(null);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [formData, setFormData] = useState({ name: "", description: "" });
 
-  const handleGoToOrgDashboard = (orgId: number) => {
+  // 조직 목록 불러오기
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchOrganizations = async () => {
+      try {
+        setIsFetching(true);
+        const res = await fetch("/api/organizations");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch organizations: ${res.status}`);
+        }
+        const json = await res.json();
+        if (!cancelled) {
+          const raw = Array.isArray(json.organizations) ? json.organizations : [];
+          const mapped = raw.map((org: any) => ({
+            id: org.id,
+            name: org.name ?? "",
+            description: org.description ?? "",
+            memberCount: Array.isArray(org.members) ? org.members.length : 0,
+            role: org.role ?? "멤버",
+          }));
+          setOrganizations(mapped);
+        }
+      } catch (error) {
+        console.error("[OrganizationsPage] Error fetching organizations:", error);
+        if (!cancelled) {
+          setOrganizations([]);
+          toast({
+            title: "조직 목록을 불러오지 못했습니다.",
+            description: "잠시 후 다시 시도해주세요.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    fetchOrganizations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
+
+  const refetchOrganizations = async () => {
+    try {
+      const res = await fetch("/api/organizations");
+      if (!res.ok) return;
+      const json = await res.json();
+      const raw = Array.isArray(json.organizations) ? json.organizations : [];
+      const mapped = raw.map((org: any) => ({
+        id: org.id,
+        name: org.name ?? "",
+        description: org.description ?? "",
+        memberCount: Array.isArray(org.members) ? org.members.length : 0,
+        role: org.role ?? "멤버",
+      }));
+      setOrganizations(mapped);
+    } catch (e) {
+      console.error("[OrganizationsPage] Refetch error:", e);
+    }
+  };
+
+  const handleGoToOrgDashboard = (orgId: string | number) => {
     setNavigatingToOrgId(orgId);
     router.push(`/dashboard/organizations/${orgId}`);
   };
 
-  // 가상 저장 로직 (1초 딜레이 후 성공 처리)
+  // 조직 생성
   const handleCreateOrg = async () => {
     if (!formData.name.trim()) {
       toast({
@@ -51,29 +118,71 @@ export default function OrganizationsPage() {
       return;
     }
 
-    setIsLoading(true);
+    try {
+      setIsCreating(true);
 
-    // API 통신을 흉내 내는 1초 딜레이
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch("/api/organizations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+        }),
+      });
 
-    const newOrg = {
-      id: Date.now(),
-      name: formData.name.trim(),
-      description: formData.description.trim() || "새로 생성된 연구 조직입니다.",
-      memberCount: 1,
-      role: "최고 관리자",
-      createdAt: new Date().toLocaleDateString("ko-KR"),
-    };
+      const json = await res.json().catch(() => ({}));
 
-    setOrganizations([newOrg, ...organizations]);
-    toast({
-      title: "조직 생성 완료",
-      description: "새로운 조직이 성공적으로 생성되었습니다.",
-    });
+      if (!res.ok) {
+        const message =
+          (json as any)?.error ||
+          (json as any)?.details ||
+          "조직 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
 
-    setIsOpen(false);
-    setIsLoading(false);
-    setFormData({ name: "", description: "" });
+        console.error("[OrganizationsPage] Failed to create organization:", json);
+        toast({
+          title: "조직 생성 실패",
+          description: message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const createdOrg = (json as any).organization;
+
+      // 로컬 목록 즉시 반영 (API 응답을 카드 형식에 맞게 매핑)
+      if (createdOrg) {
+        const mapped = {
+          id: createdOrg.id,
+          name: createdOrg.name ?? formData.name.trim(),
+          description: createdOrg.description ?? formData.description.trim() ?? "",
+          memberCount: Array.isArray(createdOrg.members) ? createdOrg.members.length : 1,
+          role: createdOrg.role ?? "최고 관리자",
+        };
+        setOrganizations((prev) => [mapped, ...prev]);
+      }
+
+      toast({
+        title: "조직 생성 완료",
+        description: "새로운 조직이 성공적으로 생성되었습니다.",
+      });
+
+      setIsOpen(false);
+      setFormData({ name: "", description: "" });
+
+      await refetchOrganizations();
+      router.refresh();
+    } catch (error) {
+      console.error("[OrganizationsPage] Unexpected error creating organization:", error);
+      toast({
+        title: "조직 생성 실패",
+        description: "통신이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -140,16 +249,16 @@ export default function OrganizationsPage() {
             <Button
               variant="outline"
               onClick={() => setIsOpen(false)}
-              disabled={isLoading}
+              disabled={isCreating}
             >
               취소
             </Button>
             <Button
               onClick={handleCreateOrg}
-              disabled={isLoading}
+              disabled={isCreating}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isLoading ? (
+              {isCreating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 생성 중...
                 </>
@@ -161,15 +270,42 @@ export default function OrganizationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 메인 화면 (Empty State vs Card Grid) */}
-      {organizations.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-24 shadow-sm border-slate-200 dark:border-slate-800">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800">
+      {/* 메인 화면 (로딩 / Empty State / Card Grid) */}
+      {isFetching ? (
+        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <Card
+              key={idx}
+              className="shadow-sm border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 animate-pulse"
+            >
+              <CardHeader className="pb-3">
+                <div className="mb-2 flex items-start justify-between">
+                  <div className="h-10 w-10 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+                </div>
+                <div className="h-5 w-32 rounded bg-slate-200 dark:bg-slate-800 mb-2" />
+                <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-800" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 rounded-md bg-slate-100 dark:bg-slate-800" />
+              </CardContent>
+              <CardFooter className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+                <div className="h-8 w-full rounded-md bg-slate-100 dark:bg-slate-800" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : organizations.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center py-24 shadow-sm border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
             <Building2 className="h-8 w-8 text-slate-400" />
           </div>
-          <h3 className="mb-4 text-lg font-medium text-slate-600 dark:text-slate-400">
+          <h3 className="mb-2 text-lg font-medium text-slate-700 dark:text-slate-300">
             소속된 조직이 없습니다
           </h3>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            첫 조직을 생성하고 팀원들과 함께 워크스페이스를 시작해 보세요.
+          </p>
           <Button
             onClick={() => setIsOpen(true)}
             className="bg-blue-600 hover:bg-blue-700"

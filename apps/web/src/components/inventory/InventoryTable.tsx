@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer } from "lucide-react";
+import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer, Snowflake } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
 import {
@@ -221,8 +221,8 @@ export function InventoryTable({
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">상태</TableHead>
             <TableHead className="min-w-[200px] text-xs font-semibold text-slate-500 dark:text-slate-400">품목 정보</TableHead>
-            <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400">Lot 및 유효기한</TableHead>
-            <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400">보관조건</TableHead>
+            <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">Lot 및 유효기한</TableHead>
+            <TableHead className="min-w-[145px] w-[145px] text-xs font-semibold text-slate-500 dark:text-slate-400">보존조건</TableHead>
             <TableHead className="w-[120px] text-right text-xs font-semibold text-slate-500 dark:text-slate-400">재고 현황</TableHead>
             <TableHead className="w-[100px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400">관리</TableHead>
           </TableRow>
@@ -317,15 +317,29 @@ export function InventoryTable({
                         : "-"}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap px-4 py-3">
                     {inventory.storageCondition ? (
-                      <Badge
-                        variant="secondary"
-                        className="h-6 rounded-full border-0 bg-slate-100 text-slate-600 font-normal hover:bg-slate-200 text-xs dark:bg-slate-800 dark:text-slate-400"
-                      >
-                        <Thermometer className="w-3 h-3 mr-1 shrink-0" />
-                        {getStorageConditionLabel(inventory.storageCondition)}
-                      </Badge>
+                      (() => {
+                        const cond = inventory.storageCondition;
+                        const label = getStorageConditionLabel(cond);
+                        const isFreezer = /freezer_20|deep_freezer_80|ln2/i.test(cond);
+                        const isFridge = /fridge/i.test(cond);
+                        const isRoom = /room_temp|room_temp_std/i.test(cond);
+                        const Icon = isFreezer ? Snowflake : Thermometer;
+                        const badgeClass = isFreezer
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                          : isFridge
+                            ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400";
+                        return (
+                          <div
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap w-fit ${badgeClass}`}
+                          >
+                            <Icon className="w-3 h-3 shrink-0" />
+                            <span>{label}</span>
+                          </div>
+                        );
+                      })()
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}

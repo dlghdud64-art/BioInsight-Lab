@@ -102,14 +102,20 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   });
 
   const products = productsData?.products || [];
-  
+
   const filteredProducts = products.filter((product: Product) => {
+    // 1글자부터 부분 일치 검색 (대소문자 무시)
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
+
+    const name = product.name?.toLowerCase() ?? "";
+    const brand = product.brand?.toLowerCase() ?? "";
+    const catalog = product.catalogNumber?.toLowerCase() ?? "";
+
     return (
-      product.name.toLowerCase().includes(query) ||
-      product.brand?.toLowerCase().includes(query) ||
-      product.catalogNumber?.toLowerCase().includes(query)
+      name.includes(query) ||
+      brand.includes(query) ||
+      catalog.includes(query)
     );
   });
 
@@ -504,7 +510,10 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
             </div>
             <div className="border rounded-lg max-h-[400px] overflow-y-auto">
               {isLoadingProducts ? (
-                <div className="p-8 text-center text-muted-foreground">검색 중...</div>
+                <div className="p-8 flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">검색 중...</span>
+                </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="p-8 text-center">
                   {searchQuery ? (

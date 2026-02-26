@@ -9,10 +9,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-// 플랜 정보 (가격, 기능)
-const PLAN_INFO = {
+// 플랜 정보 (가격, 기능) - Starter / Basic ₩29,000 / Pro ₩69,000 정책 반영
+const PLAN_INFO: Record<string, { name: string; nameKo: string; price: number | null; priceDisplay: string; maxSeats: number | null; maxQuotesPerMonth: number | null; features: string[] }> = {
   FREE: {
-    name: "Free",
+    name: "Starter",
     nameKo: "무료",
     price: 0,
     priceDisplay: "무료",
@@ -25,34 +25,34 @@ const PLAN_INFO = {
     ],
   },
   TEAM: {
-    name: "Team",
-    nameKo: "팀",
-    price: 49000,
-    priceDisplay: "₩49,000/월",
-    maxSeats: 10,
+    name: "Basic",
+    nameKo: "Basic",
+    price: 29000,
+    priceDisplay: "₩29,000/월",
+    maxSeats: 3,
     maxQuotesPerMonth: 100,
     features: [
-      "무제한 검색",
-      "월 100개 견적 리스트",
-      "고급 비교 & 분석",
-      "팀 협업 기능",
-      "우선 고객 지원",
+      "재고 최대 500개",
+      "재고 예측 알림",
+      "팀원 3명",
+      "엑셀 업로드",
+      "기본 검색",
     ],
   },
   ORGANIZATION: {
-    name: "Enterprise",
-    nameKo: "엔터프라이즈",
-    price: null, // 협의 가격
-    priceDisplay: "문의",
+    name: "Pro",
+    nameKo: "Pro",
+    price: 69000,
+    priceDisplay: "₩69,000/월",
     maxSeats: null, // 무제한
     maxQuotesPerMonth: null, // 무제한
     features: [
-      "모든 Team 기능 포함",
-      "무제한 시트",
-      "SSO/SAML 인증",
-      "전용 계정 관리자",
-      "SLA 보장",
-      "맞춤 통합 지원",
+      "재고 무제한",
+      "Lot 관리",
+      "예산 분석",
+      "감사 증적 (Audit Trail)",
+      "팀원 초대",
+      "재고 소진 알림",
     ],
   },
 };
