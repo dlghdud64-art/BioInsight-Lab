@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 function SignInContent() {
@@ -14,41 +14,29 @@ function SignInContent() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
   return (
     <div className="flex min-h-screen">
-      {/* 좌측 비주얼 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0b1120] p-16 flex-col text-white relative overflow-hidden h-full min-h-screen">
-        {/* 격자 패턴 배경 */}
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)`,
-            backgroundSize: "48px 48px",
-          }}
-        />
-        {/* 최상단 로고 - 절대 누락 금지 */}
-        <div className="flex items-center gap-3 font-bold text-2xl z-20 shrink-0">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
-            B
-          </div>
-          <span className="text-white">BioInsight Lab</span>
+      {/* 좌측 비주얼 영역 (데스크톱 전용) - 브랜드 마크 절대 고정, 레이아웃 강제 */}
+      <div className="hidden lg:flex w-1/2 bg-[#0b1120] p-16 relative flex flex-col justify-between text-white min-h-screen">
+        {/* 1. 브랜드 마크 - absolute로 강제 배치, z-50으로 가림 방지 */}
+        <div className="absolute top-16 left-16 flex items-center gap-3 font-bold text-2xl z-[9999]">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shrink-0">B</div>
+          <span className="text-white tracking-tight">BioInsight Lab</span>
         </div>
-        {/* 중앙 슬로건 - 수직 중앙 배치 */}
-        <div className="flex-1 flex flex-col justify-center space-y-6 pt-20 relative z-10">
-          <h1 className="text-5xl font-extrabold leading-tight text-white">
+
+        {/* 2. 중앙 슬로건 (pt-48로 로고와 분리) */}
+        <div className="flex-1 flex flex-col justify-center space-y-6 pt-48">
+          <h1 className="text-5xl font-extrabold leading-tight">
             연구에만 집중하세요.
             <br />
             <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>
-          <p className="text-white text-xl leading-relaxed max-w-lg opacity-90">
+          <p className="text-slate-400 text-xl max-w-lg">
             수천 개의 시약과 예산을 데이터로 증명하세요.
-            <br />
-            실사(Audit) 준비가 더 이상 두렵지 않습니다.
           </p>
         </div>
-        {/* 3. 하단 보안 지표 */}
-        <div className="flex items-center gap-2 text-white text-sm font-medium relative z-10">
-          <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0" />
-          <span>256-bit 엔터프라이즈급 데이터 암호화 적용 중</span>
+
+        {/* 3. 하단 보안 문구 */}
+        <div className="text-slate-500 text-sm shrink-0 pb-16 pl-16">
+          256-bit 엔터프라이즈급 데이터 암호화 적용 중
         </div>
       </div>
 

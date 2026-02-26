@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -634,28 +634,33 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* 뷰 분리 탭 */}
-        <Tabs defaultValue="manage" className="w-full space-y-6">
-          <TabsList className="bg-slate-100/50 p-1 dark:bg-slate-900/50">
-            <TabsTrigger
-              value="manage"
-              className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
-            >
-              <FlaskConical className="mr-2 h-4 w-4 text-slate-500" />
-              시약 관리하기
-            </TabsTrigger>
-            <TabsTrigger
-              value="overview"
-              className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
-            >
-              <LayoutGrid className="mr-2 h-5 w-5 text-slate-500" />
-              한눈에 보기
-            </TabsTrigger>
-          </TabsList>
+        {/* 통합 카드: 탭 + 검색/필터/리스트 */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <Tabs defaultValue="manage" className="w-full">
+            {/* 상단 통합 헤더 */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+              <TabsList className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                <TabsTrigger
+                  value="manage"
+                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <ListFilter className="w-4 h-4" />
+                  시약 관리하기
+                </TabsTrigger>
+                <TabsTrigger
+                  value="overview"
+                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  한눈에 보기
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
-          <TabsContent value="manage" className="m-0 space-y-4">
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950">
+            {/* 하단 통합 콘텐츠 */}
+            {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
+            <TabsContent value="manage" className="m-0 p-6 space-y-4">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
               <div className="relative flex-1 min-w-0 w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none flex-shrink-0" />
                 <Input
@@ -758,8 +763,8 @@ export default function InventoryPage() {
             )}
           </TabsContent>
 
-          {/* 2. 한눈에 보기 (대시보드 전용 뷰) */}
-          <TabsContent value="overview" className="m-0 space-y-6">
+            {/* 2. 한눈에 보기 (대시보드 전용 뷰) */}
+            <TabsContent value="overview" className="m-0 p-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
               <Card className="shadow-sm border-slate-200 dark:border-slate-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -936,8 +941,9 @@ export default function InventoryPage() {
                 })()}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        </div>
 
         {/* 우측 상세 Sheet (Drawer) */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

@@ -516,13 +516,13 @@ export default function PurchasesPage() {
               <>
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-500">이번 달 총 지출</CardTitle>
-                      <CalendarIcon className="h-4 w-4 text-gray-400" />
+                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
+                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">이번 달 총 지출</CardTitle>
+                      <CalendarIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-extrabold text-gray-900">
+                    <CardContent className="p-6 pt-0">
+                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
                         {summaryLoading ? "..." : formatCurrency(summary?.summary?.currentMonthSpending || 0)}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
@@ -530,13 +530,13 @@ export default function PurchasesPage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-500">연간 누적</CardTitle>
-                      <CalendarIcon className="h-4 w-4 text-gray-400" />
+                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
+                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">연간 누적</CardTitle>
+                      <CalendarIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-extrabold text-gray-900">
+                    <CardContent className="p-6 pt-0">
+                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
                         {summaryLoading ? "..." : formatCurrency(summary?.summary?.yearToDate || 0)}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
@@ -544,13 +544,13 @@ export default function PurchasesPage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-500">주요 벤더</CardTitle>
-                      <Filter className="h-4 w-4 text-gray-400" />
+                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
+                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">주요 벤더</CardTitle>
+                      <Filter className="h-4 w-4 text-gray-400 dark:text-slate-500" />
                     </CardHeader>
-                    <CardContent>
-                      <div className="text-xl font-bold text-gray-900">
+                    <CardContent className="p-6 pt-0">
+                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
                         {summaryLoading ? "..." : summary?.topVendors?.[0]?.vendorName || "-"}
                       </div>
                       <p className="text-sm text-gray-600 mt-1">

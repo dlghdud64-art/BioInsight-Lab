@@ -167,6 +167,16 @@ div.quote-table td.no-column-cell {
   animation-play-state: paused;
 }
 
+/* 카드 레이아웃 고정 및 텍스트 유동성 */
+@layer components {
+  .stat-card-fixed {
+    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md dark:bg-[#161d2f] dark:border-slate-800/50;
+  }
+  .text-auto-scale {
+    @apply truncate text-[clamp(0.875rem,3vw,1.5rem)] font-bold tracking-tighter;
+  }
+}
+
 /* Scrollbar Hide Utility */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */

@@ -642,7 +642,7 @@ function SettingsPageContent() {
                         팀원별로 역할을 선택하면 하단의 변경사항 저장 버튼이 활성화됩니다.
                       </p>
                     </div>
-                    <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
+                    <div className="border border-slate-100 dark:border-slate-800/50 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
                       {members.length === 0 ? (
                         <div className="p-6 text-sm text-slate-500 dark:text-slate-400 text-center">
                           아직 초대된 팀원이 없습니다.
@@ -658,7 +658,7 @@ function SettingsPageContent() {
                           return (
                             <div
                               key={member.id}
-                              className="flex items-center justify-between p-4 border-b last:border-0 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                              className="flex items-center justify-between p-4 border-b last:border-0 border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                             >
                               <div className="flex items-center gap-3 min-w-0">
                                 <Avatar className="h-9 w-9 border border-slate-200 dark:border-slate-700 flex-shrink-0">
@@ -840,7 +840,7 @@ function SettingsPageContent() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800 border-blue-500/30 dark:border-blue-500/30">
+                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800/50 border-blue-500/30 dark:border-blue-500/30">
                         <CardHeader className="pb-2">
                           <CardDescription className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
                             현재 플랜
@@ -869,11 +869,11 @@ function SettingsPageContent() {
 
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200">결제 이력</h3>
-                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800 overflow-hidden">
+                      <Card className="dark:bg-slate-900 border-slate-200 dark:border-slate-800/50 overflow-hidden">
                         <div className="overflow-x-auto">
                           <Table className="dark:bg-slate-900 min-w-[500px]">
                             <TableHeader>
-                              <TableRow className="dark:border-slate-800 dark:hover:bg-slate-900">
+                              <TableRow className="dark:border-slate-800/50 dark:hover:bg-slate-900">
                                 <TableHead className="text-slate-900 dark:text-slate-200">날짜</TableHead>
                                 <TableHead className="text-slate-900 dark:text-slate-200">항목</TableHead>
                                 <TableHead className="text-slate-900 dark:text-slate-200">금액</TableHead>
@@ -882,14 +882,14 @@ function SettingsPageContent() {
                             </TableHeader>
                             <TableBody>
                               {(billingData?.invoices || []).length === 0 ? (
-                                <TableRow className="dark:border-slate-800">
+                                <TableRow className="dark:border-slate-800/50">
                                   <TableCell colSpan={4} className="text-center py-12 text-slate-500 dark:text-slate-400">
                                     결제 내역이 없습니다.
                                   </TableCell>
                                 </TableRow>
                               ) : (
                                 (billingData?.invoices || []).map((invoice: { id: string; paidAt?: string; periodStart?: string; description?: string; amountDue?: number; amountPaid?: number; invoicePdfUrl?: string }) => (
-                                  <TableRow key={invoice.id} className="dark:border-slate-800 dark:hover:bg-slate-800/50">
+                                  <TableRow key={invoice.id} className="dark:border-slate-800/50 dark:hover:bg-slate-800/50">
                                     <TableCell className="text-slate-900 dark:text-slate-200">
                                       {invoice.paidAt
                                         ? new Date(invoice.paidAt).toLocaleDateString("ko-KR")
@@ -999,7 +999,7 @@ function SettingsPageContent() {
 
             {/* 하단 고정 저장 버튼 (청구 및 구독 탭에서는 미표시) */}
             {activeSection !== "billing" && (
-              <div className="sticky bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
+              <div className="sticky bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
                 <div className="flex justify-end">
                   <Button
                     variant="default"

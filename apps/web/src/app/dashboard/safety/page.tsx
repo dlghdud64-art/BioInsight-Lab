@@ -66,24 +66,23 @@ const GHS_CONFIG: Record<string, { label: string; iconBg: string; iconColor: str
   },
 };
 
-// GHS 픽토그램 렌더링 (다크모드 대응, 툴팁, 20% 확대, 위험 등급 글로우)
-function GHSPictogram({ type, isHighRisk }: { type: string; isHighRisk?: boolean }) {
+// GHS 픽토그램 렌더링 (선명한 벡터 아이콘, blur/box-shadow 제거)
+function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
   const config = GHS_CONFIG[type] || {
     label: "경고 (Warning)",
     iconBg: "bg-amber-100 dark:bg-amber-900/40",
     iconColor: "text-amber-500 dark:text-amber-400",
   };
-  const glowClass = isHighRisk ? "shadow-[0_0_12px_rgba(239,68,68,0.4)] dark:shadow-[0_0_12px_rgba(248,113,113,0.3)]" : "";
-  const base = `w-7 h-7 p-1.5 rounded flex-shrink-0 flex items-center justify-center ${config.iconBg} ${config.iconColor} ${glowClass}`;
+  const base = `w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center ${config.iconBg} ${config.iconColor}`;
 
   const iconEl = (
     <div className={base}>
-      {type === "corrosive" && <Droplets className="w-5 h-5" aria-hidden />}
-      {type === "toxic" && <Skull className="w-5 h-5" aria-hidden />}
-      {type === "flammable" && <Flame className="w-5 h-5" aria-hidden />}
-      {type === "oxidizer" && <FlameKindling className="w-5 h-5" aria-hidden />}
+      {type === "corrosive" && <Droplets className="w-5 h-5" strokeWidth={2.5} aria-hidden />}
+      {type === "toxic" && <Skull className="w-5 h-5" strokeWidth={2.5} aria-hidden />}
+      {type === "flammable" && <Flame className="w-5 h-5" strokeWidth={2.5} aria-hidden />}
+      {type === "oxidizer" && <FlameKindling className="w-5 h-5" strokeWidth={2.5} aria-hidden />}
       {!["corrosive", "toxic", "flammable", "oxidizer"].includes(type) && (
-        <AlertTriangle className="w-5 h-5" aria-hidden />
+        <AlertTriangle className="w-5 h-5" strokeWidth={2.5} aria-hidden />
       )}
     </div>
   );
@@ -102,7 +101,7 @@ function GHSPictogram({ type, isHighRisk }: { type: string; isHighRisk?: boolean
   );
 }
 
-// PPE 아이콘 렌더링 (필수: 브랜드 컬러, 선택: 회색)
+// PPE 아이콘 렌더링 (짝수 픽셀, 선명한 벡터)
 function PPEIcon({
   type,
   required,
@@ -110,7 +109,7 @@ function PPEIcon({
   type: string;
   required?: boolean;
 }) {
-  const base = "w-5 h-5 p-1 rounded flex-shrink-0";
+  const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
   const active = required ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50" : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
   const label =
     type === "gloves"
@@ -123,10 +122,11 @@ function PPEIcon({
             ? "마스크"
             : "PPE";
 
-  if (type === "gloves") return <Hand className={`${base} ${active}`} aria-label={label} />;
-  if (type === "goggles") return <Glasses className={`${base} ${active}`} aria-label={label} />;
-  if (type === "coat") return <Shirt className={`${base} ${active}`} aria-label={label} />;
-  if (type === "mask") return <ShieldCheck className={`${base} ${active}`} aria-label={label} />;
+  const iconClass = "w-5 h-5";
+  if (type === "gloves") return <div className={`${base} ${active}`}><Hand className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
+  if (type === "goggles") return <div className={`${base} ${active}`}><Glasses className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
+  if (type === "coat") return <div className={`${base} ${active}`}><Shirt className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
+  if (type === "mask") return <div className={`${base} ${active}`}><ShieldCheck className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
   return null;
 }
 
@@ -297,7 +297,7 @@ export default function SafetyManagerPage() {
 
         {/* 1. 상단 안전 요약 KPI */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
+          <Card className="border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-slate-900">
             <CardContent className="pt-6 flex justify-between items-center">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-400">전체 관리 물질</p>
@@ -333,7 +333,7 @@ export default function SafetyManagerPage() {
         </div>
 
         {/* 슬림 필터 바 */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-4 border rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-4 border rounded-lg border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900">
           <div className="flex flex-wrap items-center gap-2">
             <Select value={riskFilter} onValueChange={setRiskFilter}>
               <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
@@ -382,8 +382,8 @@ export default function SafetyManagerPage() {
           총 {filteredItems.length}개 제품이 검색되었습니다.
         </p>
 
-        {/* 2. 고도화된 제품 리스트 */}
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        {/* 2. 고도화된 제품 리스트 (antialiased 텍스트, 선명한 아이콘) */}
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900 antialiased">
           <CardHeader>
             <CardTitle className="text-lg dark:text-white">관리 대상 물질 리스트</CardTitle>
             <CardDescription className="dark:text-slate-400">
@@ -396,31 +396,31 @@ export default function SafetyManagerPage() {
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 antialiased">
                 {filteredItems.map((item) => (
                   <div
                     key={item.id}
-                    className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800 ${getBorderColor(item.level)}`}
+                    className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
                   >
                     {/* 좌측: 위험 아이콘 + GHS 픽토그램 + 제품 정보 */}
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex-shrink-0">
+                      <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md ${item.level === "HIGH" ? "bg-red-50 dark:bg-red-900/20" : item.level === "MEDIUM" ? "bg-orange-50 dark:bg-orange-900/20" : "bg-yellow-50 dark:bg-yellow-900/20"}`}>
                         {item.level === "HIGH" ? (
-                          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" aria-label="고위험" />
+                          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" strokeWidth={2.5} aria-label="고위험" />
                         ) : item.level === "MEDIUM" ? (
-                          <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400" aria-label="중위험" />
+                          <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400" strokeWidth={2.5} aria-label="중위험" />
                         ) : (
-                          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" aria-label="일반" />
+                          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" strokeWidth={2.5} aria-label="일반" />
                         )}
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         {item.icons.map((icon) => (
-                          <GHSPictogram key={icon} type={icon} isHighRisk={item.isHighRisk} />
+                          <GHSPictogram key={icon} type={icon} />
                         ))}
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                           CAS: {item.cas} | {item.loc}
                         </p>
                       </div>
@@ -436,7 +436,7 @@ export default function SafetyManagerPage() {
                       <div className="flex items-center gap-2">
                         {item.hasMsds && item.msdsUpdatedAt ? (
                           <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                            <Calendar className="w-4 h-4" strokeWidth={2.5} />
                             {item.msdsUpdatedAt}
                           </span>
                         ) : (
@@ -453,7 +453,7 @@ export default function SafetyManagerPage() {
                           className="h-8 w-8 shrink-0 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/50"
                           title="MSDS 보기"
                         >
-                          <FileSearch className="w-4 h-4" />
+                          <FileSearch className="w-5 h-5" strokeWidth={2.5} />
                         </Button>
                       </div>
                     </div>

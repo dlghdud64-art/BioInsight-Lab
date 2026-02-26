@@ -40,7 +40,7 @@ export default function DashboardPage() {
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+            <Card key={i} className="h-[160px] animate-pulse border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
               <CardContent className="p-6">
                 <div className="h-20 rounded bg-slate-100 dark:bg-slate-800" />
               </CardContent>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
     return (
       <div
         key={orderData.orderId}
-        className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm w-full min-w-0"
+        className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0"
       >
         <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
@@ -381,29 +381,29 @@ export default function DashboardPage() {
         {/* 2. KPI Cards - grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-0">
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
-                  <div className="rounded-full p-2 bg-blue-50 flex-shrink-0">
-                    <Package className="h-4 w-4 text-blue-600" />
+                  <div className="rounded-full p-2 bg-blue-50 dark:bg-blue-950/50 flex-shrink-0">
+                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 break-words">{stats.totalInventory.toLocaleString("ko-KR")}</div>
-                  <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% (전월 대비)</p>
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-red-100 dark:border-red-900/50 bg-red-50/10 dark:bg-red-950/30 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-red-600 truncate min-w-0">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl font-bold tracking-tight text-red-600 break-words">{stats.lowStockAlerts}</div>
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
                   <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -415,16 +415,16 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[140px] bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
                   <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
                     <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
+                <CardContent className="p-6 pt-0">
                   <div className="flex flex-col gap-2">
-                    <div className={`font-extrabold tracking-tighter text-slate-900 dark:text-white break-all min-w-0 ${stats.monthlySpending >= 100000000 ? "text-lg xl:text-xl" : stats.monthlySpending >= 10000000 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"}`}>
+                    <div className="text-auto-scale leading-none text-slate-900 dark:text-slate-200">
                       ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
                     <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
@@ -435,15 +435,15 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
-                  <div className="rounded-full p-2 bg-violet-50 flex-shrink-0">
-                    <FileText className="h-4 w-4 text-violet-600" />
+                  <div className="rounded-full p-2 bg-violet-50 dark:bg-violet-950/50 flex-shrink-0">
+                    <FileText className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 break-words">{stats.activeQuotes}</div>
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
                   <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
@@ -451,13 +451,13 @@ export default function DashboardPage() {
           </div>
 
         {/* 3. 주문 내역 & 알림 센터 탭 통합 */}
-        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
           <CardContent className="p-0">
             {ordersLoading ? (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
             ) : (
               <Tabs defaultValue="orders" className="w-full">
-                <div className="border-b border-slate-200 dark:border-slate-800 px-4 pt-4">
+                <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="orders" className="text-xs">
                       최근 주문
@@ -471,7 +471,7 @@ export default function DashboardPage() {
                 {/* 주문 내역 탭 */}
                 <TabsContent value="orders" className="m-0">
                   <Tabs defaultValue="all" className="w-full">
-                    <div className="border-b border-slate-200 dark:border-slate-800 px-4 pt-4">
+                    <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
                       <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
                         <TabsList className="inline-flex w-auto justify-start min-w-full">
                           <TabsTrigger value="all" className="text-xs whitespace-nowrap">
@@ -613,30 +613,30 @@ export default function DashboardPage() {
           {/* 1. KPI Cards - grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200 dark:border-slate-800/50 shadow-sm hover:shadow-md bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
                   <div className="rounded-full p-2 bg-blue-50 flex-shrink-0">
                     <Package className="h-4 w-4 text-blue-600" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 break-words">{stats.totalInventory.toLocaleString("ko-KR")}</div>
-                  <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% (전월 대비)</p>
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-red-100 dark:border-red-900/50 bg-red-50/10 dark:bg-red-950/30 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
                   <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
                     <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-red-600 dark:text-red-400 break-words">{stats.lowStockAlerts}</div>
-                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
+                  <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-1 flex items-center gap-1">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
@@ -647,16 +647,16 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[140px] bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
                   <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
                     <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
+                <CardContent className="p-6 pt-0">
                   <div className="flex flex-col gap-2">
-                    <div className={`font-extrabold tracking-tighter text-slate-900 dark:text-white break-all min-w-0 ${stats.monthlySpending >= 100000000 ? "text-lg xl:text-xl" : stats.monthlySpending >= 10000000 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"}`}>
+                    <div className="text-auto-scale leading-none text-slate-900 dark:text-slate-200">
                       ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
                     <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
@@ -667,15 +667,15 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200 dark:border-slate-800/50 shadow-sm hover:shadow-md bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
                   <div className="rounded-full p-2 bg-violet-50 flex-shrink-0">
                     <FileText className="h-4 w-4 text-violet-600" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 break-words">{stats.activeQuotes}</div>
+                <CardContent className="p-6 pt-0">
+                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
                   <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
@@ -683,7 +683,7 @@ export default function DashboardPage() {
           </div>
 
           {/* 2. Recent Orders - md: 카드 리스트, lg: 테이블 */}
-          <Card className="min-h-[400px] overflow-hidden bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
+          <Card className="min-h-[400px] overflow-hidden bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
             <CardHeader className="p-4">
               <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 주문 내역</CardTitle>
             </CardHeader>
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
               ) : (
                 <Tabs defaultValue="all" className="w-full">
-                  <div className="border-b border-slate-200 dark:border-slate-800 px-6 pt-4">
+                  <div className="border-b border-slate-200 dark:border-slate-800/50 px-6 pt-4">
                     <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger value="all" className="text-sm">
                         전체
@@ -883,7 +883,7 @@ export default function DashboardPage() {
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
           {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
-          <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <Card className="shadow-sm border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
             <CardHeader className="pb-4 min-w-0">
               <CardTitle className="text-lg font-bold truncate min-w-0">빠른 실행</CardTitle>
             </CardHeader>
@@ -919,7 +919,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 4. Recent Notifications (Fixed) */}
-          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
             <CardHeader className="min-w-0">
               <div className="flex items-center justify-between gap-2 min-w-0">
                 <CardTitle className="text-lg truncate min-w-0">최근 알림</CardTitle>
