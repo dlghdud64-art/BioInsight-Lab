@@ -39,12 +39,9 @@ export function UserMenu() {
     return <Button variant="ghost" disabled className="text-xs">로딩 중...</Button>;
   }
 
+  // 비로그인 시 null - MainHeader에서 [로그인] [Get Started] 버튼을 별도 렌더링
   if (!session?.user) {
-    return (
-      <Link href="/auth/signin">
-        <Button variant="ghost" className="text-xs">로그인</Button>
-      </Link>
-    );
+    return null;
   }
 
   return (

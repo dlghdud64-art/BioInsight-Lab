@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones } from "lucide-react";
+import { HeaderThemeToggle } from "@/components/layout/ThemeToggle";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -243,10 +244,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                         key={notification.id}
                         className="p-3 hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-4 min-w-0">
                           {renderNotificationIcon(notification.type)}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900">
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className="text-sm font-medium text-slate-900 truncate">
                               {notification.title}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">
@@ -308,6 +309,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* 테마 토글 */}
+          <HeaderThemeToggle />
 
           {/* 사용자 프로필 */}
           <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 flex-shrink-0">

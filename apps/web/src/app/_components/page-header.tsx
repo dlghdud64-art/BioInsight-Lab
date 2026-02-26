@@ -28,13 +28,13 @@ export function PageHeader({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {badge && <div className="mb-2">{badge}</div>}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2 min-w-0">
             {Icon && (
               <div className={cn("p-2 bg-blue-50 rounded-lg flex-shrink-0", iconColor.includes("blue") && "bg-blue-50", iconColor.includes("green") && "bg-green-50", iconColor.includes("purple") && "bg-purple-50", iconColor.includes("orange") && "bg-orange-50")}>
                 <Icon className={cn("h-6 w-6", iconColor)} />
               </div>
             )}
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 break-words">{title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 truncate min-w-0">{title}</h1>
           </div>
           {description && (
             <div className="text-muted-foreground max-w-2xl">

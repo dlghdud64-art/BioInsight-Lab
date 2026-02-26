@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/app/_components/page-header";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, ShoppingCart, FileText, Share2, Target, Activity } from "lucide-react";
+import { TrendingUp, Users, ShoppingCart, FileText, Share2, Target, LayoutDashboard, Wallet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 
@@ -98,7 +98,7 @@ export default function AdminAnalyticsPage() {
           <PageHeader
             title="KPI 대시보드"
             description="서비스 사용 현황 및 핵심 지표를 확인하세요"
-            icon={Activity}
+            icon={LayoutDashboard}
           />
           <Select value={period} onValueChange={(value: "7d" | "30d" | "90d") => setPeriod(value)}>
             <SelectTrigger className="w-[180px]">
@@ -115,10 +115,10 @@ export default function AdminAnalyticsPage() {
           {/* P0 핵심 KPI */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  검색 실행률
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <TrendingUp className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="truncate">검색 실행률</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -134,10 +134,10 @@ export default function AdminAnalyticsPage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4 text-green-600" />
-                  비교 추가율
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <ShoppingCart className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <span className="truncate">비교 추가율</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -153,10 +153,10 @@ export default function AdminAnalyticsPage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-purple-600" />
-                  내보내기율
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <FileText className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                  <span className="truncate">내보내기율</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -175,8 +175,8 @@ export default function AdminAnalyticsPage() {
           {/* Value 지표 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">산출물 생성률</CardTitle>
+              <CardHeader className="min-w-0">
+                <CardTitle className="text-sm font-medium truncate min-w-0">산출물 생성률</CardTitle>
                 <CardDescription>구매요청 리스트 생성 비율</CardDescription>
               </CardHeader>
               <CardContent>
@@ -198,8 +198,8 @@ export default function AdminAnalyticsPage() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">재방문율</CardTitle>
+              <CardHeader className="min-w-0">
+                <CardTitle className="text-sm font-medium truncate min-w-0">재방문율</CardTitle>
                 <CardDescription>7일 내 재방문 비율</CardDescription>
               </CardHeader>
               <CardContent>
@@ -217,10 +217,10 @@ export default function AdminAnalyticsPage() {
           {/* Revenue Proxy 지표 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Share2 className="h-4 w-4 text-orange-600" />
-                  공유 링크 생성률
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <Share2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                  <span className="truncate">공유 링크 생성률</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -230,10 +230,10 @@ export default function AdminAnalyticsPage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Target className="h-4 w-4 text-red-600" />
-                  견적 요청 생성률
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <Target className="h-4 w-4 text-red-600 flex-shrink-0" />
+                  <span className="truncate">견적 요청 생성률</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -243,10 +243,10 @@ export default function AdminAnalyticsPage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-indigo-600" />
-                  예산 기능 사용률
+              <CardHeader className="pb-3 min-w-0">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
+                  <Wallet className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                  <span className="truncate">예산 기능 사용률</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -258,8 +258,8 @@ export default function AdminAnalyticsPage() {
 
           {/* Quality 지표 */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">AI 신뢰도</CardTitle>
+            <CardHeader className="min-w-0">
+              <CardTitle className="text-sm font-medium truncate min-w-0">AI 신뢰도</CardTitle>
               <CardDescription>프로토콜 추출 수정 없이 확정 비율</CardDescription>
             </CardHeader>
             <CardContent>

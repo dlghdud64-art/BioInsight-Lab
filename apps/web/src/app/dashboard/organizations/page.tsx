@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Building2, Plus, Users, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +27,18 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 export default function OrganizationsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [navigatingToOrgId, setNavigatingToOrgId] = useState<number | null>(null);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [formData, setFormData] = useState({ name: "", description: "" });
+
+  const handleGoToOrgDashboard = (orgId: number) => {
+    setNavigatingToOrgId(orgId);
+    router.push(`/dashboard/organizations/${orgId}`);
+  };
 
   // 가상 저장 로직 (1초 딜레이 후 성공 처리)
   const handleCreateOrg = async () => {
@@ -203,8 +211,19 @@ export default function OrganizationsPage() {
                 <Button
                   variant="ghost"
                   className="mt-2 w-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                  onClick={() => handleGoToOrgDashboard(org.id)}
+                  disabled={navigatingToOrgId === org.id}
                 >
-                  관리 페이지로 이동 <ArrowRight className="ml-2 h-4 w-4" />
+                  {navigatingToOrgId === org.id ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      이동 중...
+                    </>
+                  ) : (
+                    <>
+                      관리 페이지로 이동 <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </CardFooter>
             </Card>

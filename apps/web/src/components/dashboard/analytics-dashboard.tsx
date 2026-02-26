@@ -84,16 +84,16 @@ export function AnalyticsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* 이번 달 지출 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">이번 달 지출</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium truncate min-w-0">이번 달 지출</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0 overflow-hidden">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold truncate min-w-0">
                   ₩{data?.thisMonthPurchaseAmount.toLocaleString("ko-KR") || "0"}
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
@@ -120,8 +120,8 @@ export function AnalyticsDashboard() {
 
         {/* 전월 대비 증감 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">전월 대비 증감</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium truncate min-w-0">전월 대비 증감</CardTitle>
             {isPositive ? (
               <TrendingUp className="h-4 w-4 text-blue-600" />
             ) : (
@@ -152,8 +152,8 @@ export function AnalyticsDashboard() {
 
         {/* 보유 자산 총액 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">보유 자산 총액</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium truncate min-w-0">보유 자산 총액</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -172,8 +172,8 @@ export function AnalyticsDashboard() {
 
         {/* 재주문 필요 품목 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">재주문 필요</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium truncate min-w-0">재주문 필요</CardTitle>
             <AlertCircle className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>

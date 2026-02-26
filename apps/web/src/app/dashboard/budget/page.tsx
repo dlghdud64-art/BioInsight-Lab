@@ -2,9 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Calendar, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Wallet, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/app/_components/page-header";
-import { trackEvent } from "@/lib/analytics";
 
 interface Budget {
   id: string;
@@ -48,35 +44,35 @@ const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
   { value: "전체(공용 예산)", label: "전체(공용 예산)" },
 ];
 
+const INITIAL_BUDGETS: Budget[] = [
+  {
+    id: "1",
+    name: "2026 상반기 시약비",
+    amount: 50000000,
+    currency: "KRW",
+    periodStart: "2026-01-01",
+    periodEnd: "2026-06-30",
+    targetDepartment: "기초연구팀",
+    projectName: "R&D 프로젝트",
+    description: "상반기 시약 및 소모품 구매 예산",
+    usage: {
+      totalSpent: 12500000,
+      usageRate: 25,
+      remaining: 37500000,
+    },
+  },
+];
+
 export default function BudgetPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { status } = useSession();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data, isLoading } = useQuery<{ budgets: Budget[] }>({
-    queryKey: ["budgets"],
-    queryFn: async () => {
-      const response = await fetch("/api/budgets");
-      if (!response.ok) throw new Error("Failed to fetch budgets");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
-
-  // API 데이터를 로컬 budgets에 동기화 (최초/갱신 시)
-  useEffect(() => {
-    if (data?.budgets && Array.isArray(data.budgets)) {
-      setBudgets(data.budgets);
-    }
-  }, [data?.budgets]);
-
-  /** 데모용: 가상 저장 (API 호출 없이 로컬 상태만 갱신) */
-  const handleMockSubmit = async (formData: {
+  /** 가상 저장: API 호출 없이 로컬 상태만 갱신 (1초 로딩 후 반영) */
+  const handleAddBudget = async (formData: {
     name: string;
     amount: number;
     currency: string;
@@ -87,134 +83,60 @@ export default function BudgetPage() {
     description?: string | null;
   }) => {
     setIsSubmitting(true);
-    // 1초 가상 로딩
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const newBudget: Budget = {
-      id: String(Date.now()),
-      name: formData.name || "신규 예산",
-      amount: formData.amount ?? 0,
-      currency: formData.currency || "KRW",
-      periodStart: formData.periodStart,
-      periodEnd: formData.periodEnd,
-      targetDepartment: formData.targetDepartment ?? null,
-      projectName: formData.projectName ?? null,
-      description: formData.description ?? null,
-      usage: {
-        totalSpent: 0,
-        usageRate: 0,
-        remaining: formData.amount ?? 0,
-      },
-    };
-
-    setBudgets((prev) => [newBudget, ...prev]);
-    toast({
-      title: "예산이 성공적으로 등록되었습니다.",
-      description: "데모 모드로 저장되었습니다.",
-    });
+    if (editingBudget) {
+      const updated: Budget = {
+        ...editingBudget,
+        name: formData.name || editingBudget.name,
+        amount: formData.amount ?? editingBudget.amount,
+        currency: formData.currency || editingBudget.currency,
+        periodStart: formData.periodStart,
+        periodEnd: formData.periodEnd,
+        targetDepartment: formData.targetDepartment ?? null,
+        projectName: formData.projectName ?? null,
+        description: formData.description ?? null,
+        usage: editingBudget.usage ?? {
+          totalSpent: 0,
+          usageRate: 0,
+          remaining: formData.amount ?? 0,
+        },
+      };
+      setBudgets((prev) =>
+        prev.map((b) => (b.id === editingBudget.id ? updated : b))
+      );
+      toast({ title: "예산이 수정되었습니다." });
+    } else {
+      const newBudget: Budget = {
+        id: String(Date.now()),
+        name: formData.name || "신규 예산",
+        amount: formData.amount ?? 0,
+        currency: formData.currency || "KRW",
+        periodStart: formData.periodStart,
+        periodEnd: formData.periodEnd,
+        targetDepartment: formData.targetDepartment ?? null,
+        projectName: formData.projectName ?? null,
+        description: formData.description ?? null,
+        usage: {
+          totalSpent: 0,
+          usageRate: 0,
+          remaining: formData.amount ?? 0,
+        },
+      };
+      setBudgets((prev) => [newBudget, ...prev]);
+      toast({ title: "새 예산이 성공적으로 등록되었습니다." });
+    }
     setIsDialogOpen(false);
     setEditingBudget(null);
     setIsSubmitting(false);
   };
 
-  const createOrUpdateMutation = useMutation({
-    mutationFn: async (data: {
-      id?: string;
-      name: string;
-      amount: number;
-      currency: string;
-      periodStart: string;
-      periodEnd: string;
-      organizationId?: string | null;
-      targetDepartment?: string | null;
-      projectName?: string | null;
-      description?: string | null;
-    }) => {
-      const url = data.id ? `/api/budgets/${data.id}` : "/api/budgets";
-      const method = data.id ? "PATCH" : "POST";
-      
-      // 콤마 제거 및 숫자 변환 (이중 체크)
-      const cleanAmount = typeof data.amount === 'string' 
-        ? Number(String(data.amount).replace(/,/g, ''))
-        : Number(data.amount);
-      
-      const payload = {
-        ...data,
-        amount: cleanAmount, // 순수 숫자로 변환
-      };
-
-      console.log("[Budget Page] Sending request:", { url, method, payload });
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      console.log("[Budget Page] Response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("[Budget Page] Error response:", errorData);
-        const errorMessage = errorData.error || errorData.details || "Failed to save budget";
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log("[Budget Page] Success response:", result);
-      return result;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
-      
-      // Analytics: budget_set 이벤트 추적
-      trackEvent("budget_set", {
-        budget_id: data.id,
-        budget_amount: data.amount,
-        currency: data.currency,
-      });
-      
-      setIsDialogOpen(false);
-      setEditingBudget(null);
-      toast({
-        title: "예산 저장 완료",
-        description: "예산이 성공적으로 저장되었습니다.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("[Budget Page] Save error:", error);
-      toast({
-        title: "예산 저장 실패",
-        description: error.message || "예산 저장에 실패했습니다. 다시 시도해주세요.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/budgets/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete budget");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      toast({
-        title: "예산 삭제 완료",
-        description: "예산이 삭제되었습니다.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "예산 삭제 실패",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const handleDeleteBudget = (id: string) => {
+    setBudgets((prev) => prev.filter((b) => b.id !== id));
+    toast({
+      title: "예산이 삭제되었습니다.",
+    });
+  };
 
   if (status === "loading") {
     return (
@@ -240,7 +162,7 @@ export default function BudgetPage() {
         <PageHeader
           title="예산 관리"
           description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
-          icon={DollarSign}
+          icon={Wallet}
           actions={
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -263,9 +185,7 @@ export default function BudgetPage() {
                   budget={editingBudget}
                   isSubmitting={isSubmitting}
                   onSubmit={(data) => {
-                    // 데모용: 가상 저장 (실제 API 호출 주석 처리)
-                    // createOrUpdateMutation.mutate({ ...data, id: editingBudget?.id });
-                    handleMockSubmit(data);
+                    handleAddBudget(data);
                   }}
                   onCancel={() => {
                     setIsDialogOpen(false);
@@ -277,16 +197,10 @@ export default function BudgetPage() {
           }
         />
 
-        {isLoading ? (
+        {budgets.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">예산 목록을 불러오는 중...</p>
-            </CardContent>
-          </Card>
-        ) : (budgets.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">등록된 예산이 없습니다.</p>
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -329,7 +243,8 @@ export default function BudgetPage() {
                     <CardContent className="space-y-4 pt-4">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-500">
+                          <span className="text-slate-500 flex items-center gap-1">
+                            <TrendingUp className="h-3.5 w-3.5" />
                             사용 금액 ({rate}%)
                           </span>
                           <span className="font-bold">
@@ -355,9 +270,7 @@ export default function BudgetPage() {
                           size="sm"
                           onClick={() => {
                             if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
-                              setBudgets((prev) =>
-                                prev.filter((b) => b.id !== budget.id)
-                              );
+                              handleDeleteBudget(budget.id);
                             }
                           }}
                         >
@@ -369,7 +282,7 @@ export default function BudgetPage() {
                 );
               })}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -780,11 +693,18 @@ function BudgetForm({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
           취소
         </Button>
         <Button type="submit" className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? (budget ? "수정 중..." : "저장 중...") : budget ? "수정" : "저장"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {budget ? "수정 중..." : "저장 중..."}
+            </>
+          ) : (
+            budget ? "수정" : "저장"
+          )}
         </Button>
       </div>
     </form>

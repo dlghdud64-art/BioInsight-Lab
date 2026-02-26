@@ -1,10 +1,14 @@
 "use client";
 
-import { Download, FileText, Lock, ArrowRight } from "lucide-react";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Download, FileText, Lock, ArrowRight, ShieldAlert } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AuditLog {
   id: string;
@@ -19,7 +23,59 @@ interface AuditLog {
 }
 
 export default function AuditTrailPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const { toast } = useToast();
+
+  const userRole = session?.user?.role as string | undefined;
+  const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace("/auth/signin?callbackUrl=/dashboard/audit");
+      return;
+    }
+    if (status === "authenticated" && !canAccessAudit) {
+      toast({
+        title: "접근 권한이 없습니다",
+        description: "감사 증적은 관리자만 열람할 수 있습니다.",
+        variant: "destructive",
+      });
+      router.replace("/dashboard");
+    }
+  }, [status, canAccessAudit, router, toast]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!canAccessAudit) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <Card className="max-w-md border-amber-200 bg-amber-50/50">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <ShieldAlert className="h-12 w-12 text-amber-600" />
+              <div>
+                <h3 className="font-semibold text-slate-900">접근 권한이 없습니다</h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.
+                </p>
+              </div>
+              <Button onClick={() => router.push("/dashboard")} variant="outline">
+                대시보드로 돌아가기
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const auditLogs: AuditLog[] = [
     {

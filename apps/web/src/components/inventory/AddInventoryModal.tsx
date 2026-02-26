@@ -67,12 +67,28 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
   const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
 
-  // 수정 모드: inventory 변경 시 폼 값 동기화
+  // 수정 모드: 모달 열릴 때 검색 단계 건너뛰고 폼 데이터 프리필
   useEffect(() => {
-    if (inventory) {
+    if (open && inventory) {
+      setStep("details");
+      setSelectedProduct({
+        id: inventory.productId,
+        name: inventory.product?.name ?? "",
+        brand: inventory.product?.brand ?? null,
+        catalogNumber: inventory.product?.catalogNumber ?? null,
+      });
+      setCurrentQuantity(String(inventory.currentQuantity ?? 0));
+      setUnit(inventory.unit || "개");
+      setSafetyStock(inventory.safetyStock != null ? String(inventory.safetyStock) : "");
+      setMinOrderQty(inventory.minOrderQty != null ? String(inventory.minOrderQty) : "");
+      setLocation(inventory.location ?? "");
+      setExpiryDate(inventory.expiryDate ? new Date(inventory.expiryDate) : undefined);
+      setNotes(inventory.notes ?? "");
+      setLotNumber(inventory.lotNumber ?? "");
+      setStorageCondition(inventory.storageCondition ?? "");
       setTestPurpose(inventory.testPurpose ?? "");
     }
-  }, [inventory]);
+  }, [open, inventory]);
 
   // 제품 검색
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
@@ -103,17 +119,18 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
     setStep("details");
   };
 
-  // 식별 정보 폼 값 (선택된 제품 또는 수동 입력에서 초기화)
-  const formProductName = selectedProduct?.name ?? "";
-  const formBrand = selectedProduct?.brand ?? "";
-  const formCatNo = selectedProduct?.catalogNumber ?? "";
+  // 식별 정보 폼 값 (수정 시 inventory, 추가 시 선택된 제품 또는 수동 입력)
+  const formProductName = inventory?.product?.name ?? selectedProduct?.name ?? "";
+  const formBrand = inventory?.product?.brand ?? selectedProduct?.brand ?? "";
+  const formCatNo = inventory?.product?.catalogNumber ?? selectedProduct?.catalogNumber ?? "";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProduct) return;
+    const productId = inventory?.productId ?? selectedProduct?.id;
+    if (!productId) return;
 
     const data = {
-      productId: selectedProduct.id,
+      productId,
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
       safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,
@@ -159,156 +176,16 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
             {inventory ? "재고 수정" : "새 재고 등록"}
           </DialogTitle>
           <DialogDescription>
-            {step === "search"
-              ? "추가할 제품을 검색하고 선택하세요."
-              : "새로운 시약이나 장비의 상세 정보를 입력해 주세요."}
+            {inventory
+              ? "재고 정보를 수정해 주세요."
+              : step === "search"
+                ? "추가할 제품을 검색하고 선택하세요."
+                : "새로운 시약이나 장비의 상세 정보를 입력해 주세요."}
           </DialogDescription>
         </DialogHeader>
 
-        {step === "search" ? (
-          isManualEntry ? (
-            <div className="space-y-4 pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsManualEntry(false)}
-                className="-ml-2 text-slate-500 hover:text-slate-700"
-              >
-                ← 다시 검색하기
-              </Button>
-              <div className="space-y-2">
-                <Label htmlFor="manual-name" className="text-sm font-medium">
-                  제품명 <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="manual-name"
-                  placeholder="예: Fetal Bovine Serum"
-                  value={manualProductName}
-                  onChange={(e) => setManualProductName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="manual-brand" className="text-sm font-medium">
-                  제조사
-                </Label>
-                <Input
-                  id="manual-brand"
-                  placeholder="예: Gibco"
-                  value={manualBrand}
-                  onChange={(e) => setManualBrand(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="manual-catalog" className="text-sm font-medium">
-                  카탈로그 번호
-                </Label>
-                <Input
-                  id="manual-catalog"
-                  placeholder="예: 16000-044"
-                  value={manualCatalogNumber}
-                  onChange={(e) => setManualCatalogNumber(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" onClick={handleClose} className="flex-1">
-                  취소
-                </Button>
-                <Button
-                  onClick={handleManualEntryNext}
-                  disabled={!manualProductName.trim()}
-                  className="flex-1"
-                >
-                  다음
-                </Button>
-              </div>
-            </div>
-          ) : (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-base font-semibold mb-2 block">상품명 또는 카탈로그 번호 검색</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="상품명 또는 카탈로그 번호 검색"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-12 text-base"
-                />
-              </div>
-            </div>
-
-            <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-              {isLoadingProducts ? (
-                <div className="p-8 text-center text-muted-foreground">검색 중...</div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="p-8 text-center">
-                  {searchQuery ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <p className="text-sm text-slate-500">검색된 제품이 없습니다.</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsManualEntry(true)}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                      >
-                        + 직접 제품 정보 입력하기
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">검색어를 입력하세요.</p>
-                  )}
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {filteredProducts.slice(0, 20).map((product: Product) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => handleProductSelect(product)}
-                      className="w-full p-4 text-left hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 rounded-lg border">
-                          <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
-                          <AvatarFallback className="bg-slate-100 text-slate-600">
-                            {product.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="font-medium">{product.name}</div>
-                          {product.brand && (
-                            <div className="text-sm text-muted-foreground">{product.brand}</div>
-                          )}
-                          {product.catalogNumber && (
-                            <div className="text-sm text-muted-foreground font-mono">
-                              {product.catalogNumber}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleClose} className="flex-1">
-                취소
-              </Button>
-              <Button
-                onClick={() => setStep("details")}
-                disabled={!selectedProduct}
-                className="flex-1"
-              >
-                다음
-              </Button>
-            </div>
-          </div>
-          )
-        ) : (
+        {/* 수정 모드: 검색 단계 건너뛰고 바로 상세 폼 표시 */}
+        {(inventory || (step === "details" && selectedProduct)) ? (
           <form onSubmit={handleSubmit} className="grid gap-6 py-4">
             {/* 1. 기본 식별 정보 */}
             <div className="space-y-4">
@@ -554,6 +431,145 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               </Button>
             </div>
           </form>
+        ) : isManualEntry ? (
+          <div className="space-y-4 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsManualEntry(false)}
+              className="-ml-2 text-slate-500 hover:text-slate-700"
+            >
+              ← 다시 검색하기
+            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="manual-name" className="text-sm font-medium">
+                제품명 <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="manual-name"
+                placeholder="예: Fetal Bovine Serum"
+                value={manualProductName}
+                onChange={(e) => setManualProductName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="manual-brand" className="text-sm font-medium">
+                제조사
+              </Label>
+              <Input
+                id="manual-brand"
+                placeholder="예: Gibco"
+                value={manualBrand}
+                onChange={(e) => setManualBrand(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="manual-catalog" className="text-sm font-medium">
+                카탈로그 번호
+              </Label>
+              <Input
+                id="manual-catalog"
+                placeholder="예: 16000-044"
+                value={manualCatalogNumber}
+                onChange={(e) => setManualCatalogNumber(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" onClick={handleClose} className="flex-1">
+                취소
+              </Button>
+              <Button
+                onClick={handleManualEntryNext}
+                disabled={!manualProductName.trim()}
+                className="flex-1"
+              >
+                다음
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-base font-semibold mb-2 block">상품명 또는 카탈로그 번호 검색</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="상품명 또는 카탈로그 번호 검색"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-12 text-base"
+                />
+              </div>
+            </div>
+            <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+              {isLoadingProducts ? (
+                <div className="p-8 text-center text-muted-foreground">검색 중...</div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="p-8 text-center">
+                  {searchQuery ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <p className="text-sm text-slate-500">검색된 제품이 없습니다.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsManualEntry(true)}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        + 직접 제품 정보 입력하기
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">검색어를 입력하세요.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredProducts.slice(0, 20).map((product: Product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => handleProductSelect(product)}
+                      className="w-full p-4 text-left hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 rounded-lg border">
+                          <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
+                          <AvatarFallback className="bg-slate-100 text-slate-600">
+                            {product.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{product.name}</div>
+                          {product.brand && (
+                            <div className="text-sm text-muted-foreground">{product.brand}</div>
+                          )}
+                          {product.catalogNumber && (
+                            <div className="text-sm text-muted-foreground font-mono">
+                              {product.catalogNumber}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose} className="flex-1">
+                취소
+              </Button>
+              <Button
+                onClick={() => setStep("details")}
+                disabled={!selectedProduct}
+                className="flex-1"
+              >
+                다음
+              </Button>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>
