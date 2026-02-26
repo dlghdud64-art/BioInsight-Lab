@@ -15,7 +15,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0b1120] p-12 lg:p-16 flex-col justify-between text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0b1120] p-16 flex-col text-white relative overflow-hidden h-full min-h-screen">
         {/* 격자 패턴 배경 */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -25,28 +25,28 @@ function SignInContent() {
             backgroundSize: "48px 48px",
           }}
         />
-        {/* 브랜드 로고 마크 - 좌측 상단 고정 (레이아웃 우선순위 최상) */}
-        <div className="absolute top-12 left-12 flex items-center gap-3 font-bold text-2xl tracking-tight z-20">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg">
+        {/* 최상단 로고 - 절대 누락 금지 */}
+        <div className="flex items-center gap-3 font-bold text-2xl z-20 shrink-0">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0">
             B
           </div>
           <span className="text-white">BioInsight Lab</span>
         </div>
-        {/* 중앙 슬로건 섹션 */}
-        <div className="relative z-10 space-y-6 pt-8 lg:pt-12">
-          <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tighter">
+        {/* 중앙 슬로건 - 수직 중앙 배치 */}
+        <div className="flex-1 flex flex-col justify-center space-y-6 pt-20 relative z-10">
+          <h1 className="text-5xl font-extrabold leading-tight text-white">
             연구에만 집중하세요.
             <br />
             <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>
-          <p className="text-slate-400 text-xl leading-relaxed max-w-lg">
+          <p className="text-white text-xl leading-relaxed max-w-lg opacity-90">
             수천 개의 시약과 예산을 데이터로 증명하세요.
             <br />
             실사(Audit) 준비가 더 이상 두렵지 않습니다.
           </p>
         </div>
-        {/* 하단 보안 지표 */}
-        <div className="relative z-10 flex items-center gap-2 text-slate-500 text-sm font-medium">
+        {/* 3. 하단 보안 지표 */}
+        <div className="flex items-center gap-2 text-white text-sm font-medium relative z-10">
           <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0" />
           <span>256-bit 엔터프라이즈급 데이터 암호화 적용 중</span>
         </div>
@@ -54,12 +54,14 @@ function SignInContent() {
 
       {/* 우측 로그인 영역 */}
       <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-white dark:bg-slate-950">
-        {/* 모바일: 좌측 상단 B BioInsight Lab 브랜드 마크 (좌측 패널 숨김 시 표시) */}
-        <div className="lg:hidden flex items-center gap-3 font-bold text-xl text-slate-900 dark:text-white p-6 pb-0">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white text-lg shrink-0">
-            B
+        {/* 모바일: B BioInsight Lab 브랜드 마크 - 상단 중앙 정렬, 선명하게 */}
+        <div className="lg:hidden flex justify-center pt-8 pb-4">
+          <div className="flex items-center gap-3 font-bold text-xl sm:text-2xl text-slate-900 dark:text-white">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg">
+              B
+            </div>
+            <span className="tracking-tighter">BioInsight Lab</span>
           </div>
-          <span className="tracking-tighter">BioInsight Lab</span>
         </div>
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="max-w-md w-full space-y-8">
@@ -129,19 +131,21 @@ function SignInContent() {
                 </div>
               </div>
 
-              {/* 이메일/비밀번호 필드 (Disabled - 확장성 표시) */}
+              {/* 이메일/비밀번호 필드 (Disabled) - 16px로 iOS 자동 확대 방지 */}
               <div className="space-y-3">
                 <Input
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
+                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed text-base"
+                  style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
+                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed text-base"
+                  style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
                   이메일 로그인은 곧 제공될 예정입니다.

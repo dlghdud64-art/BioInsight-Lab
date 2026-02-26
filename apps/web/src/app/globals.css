@@ -111,18 +111,18 @@ div.quote-table td.no-column-cell {
     --chart-5: 27 87% 67%;
   }
 
-  /* 다크모드: 전역 텍스트 및 배경 시인성 */
+  /* 다크모드: 시력 보호 색상 - slate-800(#1e293b) 이하 명도 통일 */
   .dark {
     --background: 222.2 47.4% 6%;
     --foreground: 210 40% 98%;
-    --card: 222.2 47.4% 8%;
+    --card: 215 28% 17%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 47.4% 8%;
+    --popover: 215 28% 17%;
     --popover-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 215 28% 17%;
     --muted-foreground: 215 20.2% 65.1%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
   }
 }
 

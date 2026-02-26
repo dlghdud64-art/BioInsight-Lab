@@ -31,7 +31,7 @@ export function FloatingThemeToggle() {
   };
 
   const buttonClass =
-    "fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full shadow-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:scale-110 transition-transform";
+    "fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full shadow-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:scale-110 transition-transform hidden md:flex";
 
   if (!mounted) {
     return (

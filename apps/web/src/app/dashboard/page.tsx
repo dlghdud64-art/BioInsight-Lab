@@ -40,9 +40,9 @@ export default function DashboardPage() {
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
+            <Card key={i} className="animate-pulse border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
               <CardContent className="p-6">
-                <div className="h-20 bg-slate-200 rounded"></div>
+                <div className="h-20 rounded bg-slate-100 dark:bg-slate-800" />
               </CardContent>
             </Card>
           ))}
@@ -171,7 +171,7 @@ export default function DashboardPage() {
         );
       default:
         return (
-          <Badge variant="outline" className={`${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400`}>
+          <Badge variant="outline" className={`${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400`}>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />
             {status}
           </Badge>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
     return (
       <TableRow 
         key={orderData.orderId} 
-        className="group cursor-pointer hover:bg-muted/50 transition-colors"
+        className="group cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
       >
         <TableCell className="py-4">
           <div className="flex items-center gap-4">
@@ -242,20 +242,25 @@ export default function DashboardPage() {
     return (
       <div
         key={orderData.orderId}
-        className="flex items-center justify-between p-4 rounded-lg border bg-white shadow-sm w-full min-w-0"
+        className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm w-full min-w-0"
       >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
             <Beaker className="h-5 w-5" />
           </div>
-          <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
-            <p className="text-sm font-medium leading-none truncate">{orderData.productName}</p>
-            <p className="text-xs text-muted-foreground truncate">{orderData.vendor} • {orderData.date}</p>
+          <div className="flex-1 min-w-0 overflow-hidden space-y-1">
+            <p className="text-sm font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{orderData.productName}</p>
+            <p className="text-xs text-muted-foreground truncate">{orderData.vendor}</p>
           </div>
         </div>
-        <div className="text-right flex-shrink-0 ml-2">
-          <p className="text-sm font-bold mb-1 whitespace-nowrap">₩{orderData.amount.toLocaleString("ko-KR")}</p>
-          <div className="whitespace-nowrap">{renderStatusPill(orderData.status)}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {renderStatusPill(orderData.status)}
+            <span className="text-xs text-slate-500 dark:text-slate-400">{orderData.date}</span>
+          </div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            ₩{orderData.amount.toLocaleString("ko-KR")}
+          </p>
         </div>
       </div>
     );
@@ -373,12 +378,12 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* 2. KPI Cards - 모바일 1열, sm 이상 2열 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 2. KPI Cards - grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-0">
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">총 재고 수</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
                   <div className="rounded-full p-2 bg-blue-50 flex-shrink-0">
                     <Package className="h-4 w-4 text-blue-600" />
                   </div>
@@ -390,7 +395,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-red-100 bg-red-50/10 shadow-sm hover:shadow-md overflow-hidden">
+              <Card className="cursor-pointer transition-all border-red-100 dark:border-red-900/50 bg-red-50/10 dark:bg-red-950/30 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
                   <CardTitle className="text-sm font-semibold text-red-600 truncate min-w-0">부족 알림</CardTitle>
                   <div className="rounded-full p-2 bg-red-100 flex-shrink-0">
@@ -410,7 +415,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden min-h-[140px]">
+              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[140px] bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
                   <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
                   <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
@@ -419,8 +424,8 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="flex flex-col gap-2">
-                    <div className="text-2xl xl:text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
-                      ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                    <div className={`font-extrabold tracking-tighter text-slate-900 dark:text-white break-all min-w-0 ${stats.monthlySpending >= 100000000 ? "text-lg xl:text-xl" : stats.monthlySpending >= 10000000 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"}`}>
+                      ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
                     <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
                       예산 소진율 25%
@@ -430,29 +435,29 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">진행 중인 견적</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
                   <div className="rounded-full p-2 bg-violet-50 flex-shrink-0">
                     <FileText className="h-4 w-4 text-violet-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 break-words">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-600 font-medium mt-1">최저가 분석 중 2건</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
             </Link>
           </div>
 
         {/* 3. 주문 내역 & 알림 센터 탭 통합 */}
-        <Card>
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <CardContent className="p-0">
             {ordersLoading ? (
-              <div className="p-8 text-center text-slate-500">로딩 중...</div>
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
             ) : (
               <Tabs defaultValue="orders" className="w-full">
-                <div className="border-b border-slate-200 px-4 pt-4">
+                <div className="border-b border-slate-200 dark:border-slate-800 px-4 pt-4">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="orders" className="text-xs">
                       최근 주문
@@ -466,7 +471,7 @@ export default function DashboardPage() {
                 {/* 주문 내역 탭 */}
                 <TabsContent value="orders" className="m-0">
                   <Tabs defaultValue="all" className="w-full">
-                    <div className="border-b border-slate-200 px-4 pt-4">
+                    <div className="border-b border-slate-200 dark:border-slate-800 px-4 pt-4">
                       <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
                         <TabsList className="inline-flex w-auto justify-start min-w-full">
                           <TabsTrigger value="all" className="text-xs whitespace-nowrap">
@@ -489,7 +494,7 @@ export default function DashboardPage() {
                     <TabsContent value="all" className="m-0">
                       <div className="grid gap-4 p-4 w-full min-w-0">
                         {displayOrders.length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 text-sm">
+                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
                             주문 내역이 없습니다.
                           </div>
                         ) : (
@@ -505,7 +510,7 @@ export default function DashboardPage() {
                     <TabsContent value="shipping" className="m-0">
                       <div className="grid gap-4 p-4 w-full min-w-0">
                         {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 text-sm">
+                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
                             배송 중인 주문 내역이 없습니다.
                           </div>
                         ) : (
@@ -521,7 +526,7 @@ export default function DashboardPage() {
                     <TabsContent value="pending" className="m-0">
                       <div className="grid gap-4 p-4 w-full min-w-0">
                         {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 text-sm">
+                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
                             승인 대기 중인 주문 내역이 없습니다.
                           </div>
                         ) : (
@@ -537,7 +542,7 @@ export default function DashboardPage() {
                     <TabsContent value="completed" className="m-0">
                       <div className="grid gap-4 p-4 w-full min-w-0">
                         {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 text-sm">
+                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
                             완료된 주문 내역이 없습니다.
                           </div>
                         ) : (
@@ -555,13 +560,13 @@ export default function DashboardPage() {
                 <TabsContent value="notifications" className="m-0">
                   <div className="p-4 space-y-3">
                     {notifications.length === 0 ? (
-                      <div className="text-center py-8 text-slate-500 text-sm">
+                      <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
                         알림이 없습니다.
                       </div>
                     ) : (
                       <>
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-sm font-semibold text-slate-900">최근 알림</h3>
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">최근 알림</h3>
                           <Link href="/dashboard/notifications">
                             <Button variant="ghost" size="sm" className="text-xs h-7">
                               모두 보기
@@ -573,21 +578,21 @@ export default function DashboardPage() {
                             key={notification.id}
                             href="/dashboard/notifications"
                             className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                              notification.unread ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"
+                              notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                             }`}
                           >
                             {renderNotificationIcon(notification.type)}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="font-medium text-sm text-slate-900 truncate">{notification.title}</p>
+                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
                                 {notification.unread && (
                                   <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600 flex-shrink-0">
                                     새
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-600 mb-1 line-clamp-2">{notification.content}</p>
-                              <p className="text-xs text-slate-400">{notification.time}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 line-clamp-2">{notification.content}</p>
+                              <p className="text-xs text-slate-400 dark:text-slate-500">{notification.time}</p>
                             </div>
                           </Link>
                         ))}
@@ -605,32 +610,32 @@ export default function DashboardPage() {
       <div className="hidden md:grid md:grid-cols-7 md:gap-6">
         {/* --- Left Main Content (Span 5) --- */}
         <div className="md:col-span-5 space-y-6">
-          {/* 1. KPI Cards - Mock 데이터 + 추이 강화 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* 1. KPI Cards - grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Link href="/dashboard/inventory">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md overflow-hidden">
+              <Card className="cursor-pointer transition-all border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">총 재고 수</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
                   <div className="rounded-full p-2 bg-blue-50 flex-shrink-0">
                     <Package className="h-4 w-4 text-blue-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 break-words">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 break-words">{stats.totalInventory.toLocaleString("ko-KR")}</div>
                   <p className="text-xs text-emerald-600 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="cursor-pointer transition-all border-red-100 bg-red-50/10 shadow-sm hover:shadow-md overflow-hidden">
+              <Card className="cursor-pointer transition-all border-red-100 dark:border-red-900/50 bg-red-50/10 dark:bg-red-950/30 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-red-600 truncate min-w-0">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
+                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-red-600 break-words">{stats.lowStockAlerts}</div>
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-red-600 dark:text-red-400 break-words">{stats.lowStockAlerts}</div>
                   <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -642,7 +647,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md overflow-hidden min-h-[140px]">
+              <Card className="cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[140px] bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
                   <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
                   <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
@@ -651,8 +656,8 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="flex flex-col gap-2">
-                    <div className="text-2xl xl:text-3xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
-                      ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                    <div className={`font-extrabold tracking-tighter text-slate-900 dark:text-white break-all min-w-0 ${stats.monthlySpending >= 100000000 ? "text-lg xl:text-xl" : stats.monthlySpending >= 10000000 ? "text-xl xl:text-2xl" : "text-2xl xl:text-3xl"}`}>
+                      ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
                     <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
                       예산 소진율 25%
@@ -662,32 +667,32 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes">
-              <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md overflow-hidden">
+              <Card className="cursor-pointer transition-all border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">진행 중인 견적</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
                   <div className="rounded-full p-2 bg-violet-50 flex-shrink-0">
                     <FileText className="h-4 w-4 text-violet-600" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 break-words">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-600 font-medium mt-1">최저가 분석 중 2건</p>
+                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 break-words">{stats.activeQuotes}</div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
                 </CardContent>
               </Card>
             </Link>
           </div>
 
-          {/* 2. Recent Orders Table */}
-          <Card className="min-h-[400px] overflow-hidden">
+          {/* 2. Recent Orders - md: 카드 리스트, lg: 테이블 */}
+          <Card className="min-h-[400px] overflow-hidden bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800">
             <CardHeader className="p-4">
-              <CardTitle className="truncate">최근 주문 내역</CardTitle>
+              <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 주문 내역</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {ordersLoading ? (
-                <div className="p-8 text-center text-slate-500">로딩 중...</div>
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
               ) : (
                 <Tabs defaultValue="all" className="w-full">
-                  <div className="border-b border-slate-200 px-6 pt-4">
+                  <div className="border-b border-slate-200 dark:border-slate-800 px-6 pt-4">
                     <TabsList className="grid w-full grid-cols-4">
                       <TabsTrigger value="all" className="text-sm">
                         전체
@@ -704,9 +709,21 @@ export default function DashboardPage() {
                     </TabsList>
                   </div>
 
-                  {/* 전체 탭 */}
+                  {/* 전체 탭 - md: 카드, lg: 테이블 */}
                   <TabsContent value="all" className="m-0">
-                    <div className="overflow-x-auto">
+                    {/* md 해상도: 카드 리스트 */}
+                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
+                      {displayOrders.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">주문 내역이 없습니다.</div>
+                      ) : (
+                        displayOrders.map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderCard(orderData);
+                        })
+                      )}
+                    </div>
+                    {/* lg 이상: 테이블 */}
+                    <div className="hidden lg:block overflow-x-auto">
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
@@ -720,7 +737,7 @@ export default function DashboardPage() {
                       <TableBody>
                         {displayOrders.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
                               주문 내역이 없습니다.
                             </TableCell>
                           </TableRow>
@@ -737,7 +754,17 @@ export default function DashboardPage() {
 
                   {/* 배송 중 탭 */}
                   <TabsContent value="shipping" className="m-0">
-                    <div className="overflow-x-auto">
+                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
+                      {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
+                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">배송 중인 주문 내역이 없습니다.</div>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderCard(orderData);
+                        })
+                      )}
+                    </div>
+                    <div className="hidden lg:block overflow-x-auto">
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
@@ -751,7 +778,7 @@ export default function DashboardPage() {
                       <TableBody>
                         {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
                               배송 중인 주문 내역이 없습니다.
                             </TableCell>
                           </TableRow>
@@ -768,7 +795,17 @@ export default function DashboardPage() {
 
                   {/* 승인 대기 탭 */}
                   <TabsContent value="pending" className="m-0">
-                    <div className="overflow-x-auto">
+                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
+                      {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
+                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">승인 대기 중인 주문 내역이 없습니다.</div>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderCard(orderData);
+                        })
+                      )}
+                    </div>
+                    <div className="hidden lg:block overflow-x-auto">
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
@@ -782,7 +819,7 @@ export default function DashboardPage() {
                       <TableBody>
                         {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
                               승인 대기 중인 주문 내역이 없습니다.
                             </TableCell>
                           </TableRow>
@@ -799,7 +836,17 @@ export default function DashboardPage() {
 
                   {/* 완료 탭 */}
                   <TabsContent value="completed" className="m-0">
-                    <div className="overflow-x-auto">
+                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
+                      {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
+                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">완료된 주문 내역이 없습니다.</div>
+                      ) : (
+                        filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
+                          const orderData = processOrderData(order, index);
+                          return renderOrderCard(orderData);
+                        })
+                      )}
+                    </div>
+                    <div className="hidden lg:block overflow-x-auto">
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
@@ -813,7 +860,7 @@ export default function DashboardPage() {
                       <TableBody>
                         {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
                               완료된 주문 내역이 없습니다.
                             </TableCell>
                           </TableRow>
@@ -836,7 +883,7 @@ export default function DashboardPage() {
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
           {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
-          <Card className="shadow-sm border-slate-200">
+          <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <CardHeader className="pb-4 min-w-0">
               <CardTitle className="text-lg font-bold truncate min-w-0">빠른 실행</CardTitle>
             </CardHeader>
@@ -872,7 +919,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 4. Recent Notifications (Fixed) */}
-          <Card>
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader className="min-w-0">
               <div className="flex items-center justify-between gap-2 min-w-0">
                 <CardTitle className="text-lg truncate min-w-0">최근 알림</CardTitle>
@@ -889,20 +936,20 @@ export default function DashboardPage() {
                   key={notification.id}
                   href="/dashboard/notifications"
                   className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                    notification.unread ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"
+                    notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   {renderNotificationIcon(notification.type)}
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2 mb-1 min-w-0">
-                      <p className="font-medium text-sm text-slate-900 truncate">{notification.title}</p>
+                      <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
                       {notification.unread && (
                         <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600">
                           새
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 mb-1">{notification.content}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">{notification.content}</p>
                     <p className="text-xs text-slate-400">{notification.time}</p>
                   </div>
                 </Link>

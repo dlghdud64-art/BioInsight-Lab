@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,10 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones } from "lucide-react";
+import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones, Settings, CreditCard, LogOut } from "lucide-react";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -201,8 +202,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
         {/* 중앙/우측 영역: 검색창 + 유틸리티 + 프로필 */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:justify-end">
-          {/* 전역 검색창: 모바일 100%, 데스크톱 고정 너비 */}
-          <div className="flex items-center relative flex-1 sm:flex-initial w-full min-w-0 sm:w-48 md:w-56 lg:w-64 xl:w-96">
+          {/* 전역 검색창: 모바일 전체 확장, 데스크톱 고정 너비 */}
+          <div className="flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
             <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none flex-shrink-0" />
             <Input
               type="search"
@@ -227,7 +228,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0">
+            <DropdownMenuContent align="end" className="w-80 min-w-[280px] p-0">
               <div className="p-3 border-b border-slate-200 dark:border-slate-700">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">알림</h3>
               </div>
@@ -239,10 +240,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                      >
+                    <div
+                      key={notification.id}
+                      className="p-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer touch-manipulation"
+                    >
                         <div className="flex items-start gap-4 min-w-0">
                           {renderNotificationIcon(notification.type)}
                           <div className="flex-1 min-w-0 overflow-hidden">
@@ -287,21 +288,21 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <HelpCircle className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64 min-w-[240px]">
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center">
+                <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <BookOpen className="mr-2 h-4 w-4" />
                   이용 가이드
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/faq" className="cursor-pointer w-full flex items-center">
+                <Link href="/dashboard/faq" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <HelpCircle className="mr-2 h-4 w-4" />
                   자주 묻는 질문
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/support" className="cursor-pointer w-full flex items-center">
+                <Link href="/dashboard/support" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <Headphones className="mr-2 h-4 w-4" />
                   1:1 문의하기
                 </Link>
@@ -309,30 +310,69 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 사용자 프로필 */}
-          <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-700 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-default">
-            <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
-              <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
-              <AvatarFallback className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-                {user?.name
-                  ? user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-                  : user?.email?.[0].toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden xl:block min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                {user?.name || "사용자"}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {user?.email}
-              </div>
-            </div>
-          </div>
+          {/* 사용자 프로필 - 클릭 시 메뉴 (모바일 터치 영역 확대) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-700 flex-shrink-0 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[44px] touch-manipulation">
+                <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                  <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
+                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+                    {user?.name
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)
+                      : user?.email?.[0].toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden xl:block min-w-0 text-left">
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                    {user?.name || "사용자"}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {user?.email}
+                  </div>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2">
+              <DropdownMenuLabel className="p-3">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user?.name || "사용자"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings" className="flex items-center gap-3 py-3 text-sm cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  설정
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings?tab=billing" className="flex items-center gap-3 py-3 text-sm cursor-pointer">
+                  <CreditCard className="h-4 w-4" />
+                  청구 및 구독
+                </Link>
+              </DropdownMenuItem>
+              <a href="mailto:support@bioinsight.com">
+                <DropdownMenuItem className="flex items-center gap-3 py-3 text-sm cursor-pointer">
+                  <HelpCircle className="h-4 w-4" />
+                  고객센터
+                </DropdownMenuItem>
+              </a>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="flex items-center gap-3 py-3 text-sm cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600"
+              >
+                <LogOut className="h-4 w-4" />
+                로그아웃
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

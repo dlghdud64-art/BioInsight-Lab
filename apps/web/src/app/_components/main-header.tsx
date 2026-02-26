@@ -1,17 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
 import { Menu, LayoutDashboard } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -23,50 +16,11 @@ interface MainHeaderProps {
 
 // UTF-8 인코딩 문제로 인한 한글 깨짐 수정
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
   
   // 대시보드 경로인지 확인 (대시보드에서는 사이드바에 로고가 있으므로 헤더 로고 숨김)
   const isDashboard = pathname?.startsWith("/dashboard");
-
-  const scrollToId = useCallback((id: string) => {
-    if (typeof window === "undefined") return;
-    
-    // 즉시 시도
-    const element = document.getElementById(id);
-    if (element) {
-      const headerHeight = 56;
-      const elementTop = element.offsetTop;
-      const offsetPosition = elementTop - headerHeight;
-
-      window.scrollTo({
-        top: Math.max(0, offsetPosition),
-        behavior: "smooth",
-      });
-      return;
-    }
-
-    // 요소가 없으면 잠시 후 재시도
-    const scrollToElement = (attempts = 0) => {
-      const el = document.getElementById(id);
-      if (el) {
-        const headerHeight = 56;
-        const elementTop = el.offsetTop;
-        const offsetPosition = elementTop - headerHeight;
-
-        window.scrollTo({
-          top: Math.max(0, offsetPosition),
-          behavior: "smooth",
-        });
-      } else if (attempts < 20) {
-        setTimeout(() => scrollToElement(attempts + 1), 100);
-      }
-    };
-    
-    // 약간의 지연 후 재시도 (DOM이 완전히 렌더링될 때까지)
-    setTimeout(() => scrollToElement(), 50);
-  }, []);
 
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
@@ -129,90 +83,28 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </Link>
           </nav>
 
-          {/* 모바일 햄버거 메뉴 */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden h-9 w-9"
-                aria-label="메뉴 열기"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-              <div className="flex flex-col h-full pt-28">
-                {/* 1. 네비게이션 링크 그룹 */}
-                <div className="flex flex-col space-y-2">
-                  <SheetClose asChild>
-                    <Link
-                      href="/intro"
-                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
-                    >
-                      서비스 소개
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link
-                      href="/pricing"
-                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
-                    >
-                      요금 & 도입
-                    </Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link
-                      href="/#features"
-                      className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        scrollToId("features");
-                      }}
-                    >
-                      기능 살펴보기
-                    </Link>
-                  </SheetClose>
-                </div>
-
-                {/* 구분선 */}
-                <div className="my-6 border-t border-slate-100" />
-
-                {/* 2. 하단 액션 그룹 - 로그인/Get Started 또는 대시보드 */}
-                <div className="flex flex-col space-y-3 mt-auto pb-10">
-                  {!session?.user ? (
-                    <>
-                      <SheetClose asChild>
-                        <Link
-                          href="/auth/signin"
-                          className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white px-4 py-2 transition-colors whitespace-nowrap"
-                        >
-                          로그인
-                        </Link>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Link
-                          href="/auth/signin?callbackUrl=/test/search"
-                          className="inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 transition-all shadow-md"
-                        >
-                          Get Started
-                        </Link>
-                      </SheetClose>
-                    </>
-                  ) : (
-                    <SheetClose asChild>
-                      <Link
-                        href="/dashboard"
-                        className="text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 px-4 py-3 rounded-lg transition-colors"
-                      >
-                        대시보드
-                      </Link>
-                    </SheetClose>
-                  )}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* 모바일 전용: Get Started 버튼 (햄버거 메뉴·다크모드 제거, 최우선 배치) */}
+          <div className="flex md:hidden items-center gap-2">
+            {!session?.user ? (
+              <Link href="/auth/signin?callbackUrl=/test/search">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-full h-8 shadow-sm">
+                  Get Started
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/dashboard">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1.5 border-slate-200 rounded-full px-4 h-8 text-xs font-bold text-slate-900"
+                  aria-label="대시보드로 이동"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-blue-600" strokeWidth={2.5} />
+                  대시
+                </Button>
+              </Link>
+            )}
+          </div>
           {/* 로그인(ghost) + Get Started - 비로그인 시 데스크톱에 표시, 로그인 왼쪽 / Get Started 우측 끝 */}
           {!session?.user && (
             <div className="hidden md:flex items-center gap-4 ml-auto">
@@ -231,9 +123,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Link>
             </div>
           )}
-          {/* 대시보드 버튼 - 로그인한 사용자에게만 표시 */}
+          {/* 대시보드 버튼 - 로그인한 사용자, 데스크톱에만 표시 (모바일은 위 모바일 전용 영역에서 처리) */}
           {session?.user && (
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="hidden md:inline-flex">
               <Button
                 variant="outline"
                 size="sm"

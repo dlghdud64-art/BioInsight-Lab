@@ -82,8 +82,8 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight py-2">
-            전 세계 500만 개 시약/장비, <br className="hidden sm:block" />
+          <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight tracking-tighter text-slate-900 py-2">
+            전 세계 500만 개 시약/장비, <br className="block sm:hidden" />
             <span className="text-blue-600">최저가 검색부터 견적까지</span>
           </h1>
           
@@ -93,10 +93,10 @@ export function BioInsightHeroSection() {
           </p>
         </div>
 
-        {/* 2. 중앙 대형 검색창 (구글 스타일) */}
-        <div className="mt-8 md:mt-12 w-full max-w-[90%] md:!max-w-[800px] lg:!max-w-[1000px] mx-auto px-4 relative z-10">
+        {/* 2. 중앙 대형 검색창 (구글 스타일) - 모바일: w-full, mt-4로 공간 효율 */}
+        <div className="mt-4 md:mt-12 w-full max-w-full md:max-w-[800px] lg:max-w-[1000px] mx-auto px-4 relative z-10">
           <form onSubmit={handleSearch} className="relative w-full">
-            <div className="flex items-center w-full h-14 md:h-20 bg-white rounded-full border border-slate-200 md:border-2 shadow-lg md:shadow-2xl px-2 md:px-4 focus-within:ring-4 focus-within:ring-blue-100 transition-all">
+            <div className="flex items-center w-full h-14 md:h-20 bg-white rounded-full border-2 border-slate-300 md:border-slate-200 shadow-sm md:shadow-2xl px-2 md:px-4 focus-within:ring-4 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
               {/* 돋보기 아이콘 */}
               <Search className="ml-2 md:ml-4 h-5 w-5 md:h-8 md:w-8 text-slate-400 shrink-0" />
               
@@ -106,7 +106,7 @@ export function BioInsightHeroSection() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요"
-                className="flex-1 bg-transparent px-3 md:px-6 text-base md:text-2xl text-slate-900 placeholder:text-slate-400 outline-none min-w-0 font-medium h-full border-0"
+                className="flex-1 bg-transparent px-3 md:px-6 text-slate-900 placeholder:text-slate-400 outline-none min-w-0 font-medium h-full border-0 text-[16px] md:text-2xl"
               />
               
               {/* 검색 버튼 */}
@@ -125,8 +125,8 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
-          {/* 인기 검색어 칩 - 검색창과의 간격 조정 */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-6 md:mt-8 md:gap-3">
+          {/* 인기 검색어 칩 - 모바일 터치 실수 방지용 간격 확대 */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-6 md:mt-8">
             <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
               <Flame className="h-4 w-4 text-slate-500" />
               인기:
@@ -135,7 +135,7 @@ export function BioInsightHeroSection() {
               <Badge
                 key={term}
                 variant="secondary"
-                className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-3 py-1.5 text-sm font-medium"
+                className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-4 py-2 text-sm font-medium touch-manipulation"
                 onClick={() => {
                   setSearchQuery(term);
                   router.push(`/test/search?q=${encodeURIComponent(term)}`);

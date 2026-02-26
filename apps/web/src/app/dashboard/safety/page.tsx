@@ -16,6 +16,7 @@ import {
   AlertOctagon,
   FileSearch,
   Flame,
+  FlameKindling,
   Skull,
   Droplets,
   Glasses,
@@ -34,19 +35,71 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// GHS 픽토그램 렌더링 (다크모드 대응)
-function GHSPictogram({ type }: { type: string }) {
-  const base = "w-6 h-6 p-1 rounded flex-shrink-0";
-  if (type === "corrosive")
-    return <Droplets className={`${base} text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50`} aria-label="부식성" />;
-  if (type === "toxic")
-    return <Skull className={`${base} text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50`} aria-label="독성" />;
-  if (type === "flammable")
-    return <Flame className={`${base} text-orange-500 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50`} aria-label="인화성" />;
-  if (type === "oxidizer")
-    return <Flame className={`${base} text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-950/50`} aria-label="산화성" />;
-  return <AlertTriangle className={`${base} text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50`} aria-label="경고" />;
+// GHS 픽토그램 타입별 포인트 컬러 및 라벨
+const GHS_CONFIG: Record<string, { label: string; iconBg: string; iconColor: string }> = {
+  corrosive: {
+    label: "부식성 물질 (Corrosive)",
+    iconBg: "bg-red-100 dark:bg-red-900/40",
+    iconColor: "text-red-600 dark:text-red-400",
+  },
+  toxic: {
+    label: "독성 물질 (Toxic)",
+    iconBg: "bg-yellow-100 dark:bg-yellow-900/50",
+    iconColor: "text-slate-900 dark:text-yellow-300",
+  },
+  flammable: {
+    label: "인화성 물질 (Flammable)",
+    iconBg: "bg-red-100 dark:bg-red-900/40",
+    iconColor: "text-red-600 dark:text-red-400",
+  },
+  oxidizer: {
+    label: "산화성 물질 (Oxidizer)",
+    iconBg: "bg-yellow-100 dark:bg-yellow-900/40",
+    iconColor: "text-yellow-600 dark:text-yellow-500",
+  },
+};
+
+// GHS 픽토그램 렌더링 (다크모드 대응, 툴팁, 20% 확대, 위험 등급 글로우)
+function GHSPictogram({ type, isHighRisk }: { type: string; isHighRisk?: boolean }) {
+  const config = GHS_CONFIG[type] || {
+    label: "경고 (Warning)",
+    iconBg: "bg-amber-100 dark:bg-amber-900/40",
+    iconColor: "text-amber-500 dark:text-amber-400",
+  };
+  const glowClass = isHighRisk ? "shadow-[0_0_12px_rgba(239,68,68,0.4)] dark:shadow-[0_0_12px_rgba(248,113,113,0.3)]" : "";
+  const base = `w-7 h-7 p-1.5 rounded flex-shrink-0 flex items-center justify-center ${config.iconBg} ${config.iconColor} ${glowClass}`;
+
+  const iconEl = (
+    <div className={base}>
+      {type === "corrosive" && <Droplets className="w-5 h-5" aria-hidden />}
+      {type === "toxic" && <Skull className="w-5 h-5" aria-hidden />}
+      {type === "flammable" && <Flame className="w-5 h-5" aria-hidden />}
+      {type === "oxidizer" && <FlameKindling className="w-5 h-5" aria-hidden />}
+      {!["corrosive", "toxic", "flammable", "oxidizer"].includes(type) && (
+        <AlertTriangle className="w-5 h-5" aria-hidden />
+      )}
+    </div>
+  );
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-help inline-flex">{iconEl}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs font-bold">{config.label}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 // PPE 아이콘 렌더링 (필수: 브랜드 컬러, 선택: 회색)
@@ -360,9 +413,9 @@ export default function SafetyManagerPage() {
                           <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" aria-label="일반" />
                         )}
                       </div>
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-2 flex-shrink-0">
                         {item.icons.map((icon) => (
-                          <GHSPictogram key={icon} type={icon} />
+                          <GHSPictogram key={icon} type={icon} isHighRisk={item.isHighRisk} />
                         ))}
                       </div>
                       <div className="min-w-0">
