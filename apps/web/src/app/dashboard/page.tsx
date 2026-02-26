@@ -412,16 +412,20 @@ export default function DashboardPage() {
             <Link href="/dashboard/purchases">
               <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">이번 달 지출</CardTitle>
-                  <div className="rounded-full p-2 bg-emerald-50 flex-shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
+                  <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 break-words">
-                    ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl xl:text-3xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
+                      ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">예산 소진율 25%</span>
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 font-medium mt-1">예산 소진율 25%</p>
                 </CardContent>
               </Card>
             </Link>
@@ -640,16 +644,20 @@ export default function DashboardPage() {
             <Link href="/dashboard/purchases">
               <Card className="cursor-pointer transition-all border-slate-200 shadow-sm hover:shadow-md overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-600 truncate min-w-0">이번 달 지출</CardTitle>
-                  <div className="rounded-full p-2 bg-emerald-50 flex-shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                  <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
+                  <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 break-words">
-                    ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl xl:text-3xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
+                      ₩ {stats.monthlySpending.toLocaleString("ko-KR")}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">예산 소진율 25%</span>
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 font-medium mt-1">예산 소진율 25%</p>
                 </CardContent>
               </Card>
             </Link>

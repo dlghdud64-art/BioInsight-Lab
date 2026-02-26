@@ -110,6 +110,20 @@ div.quote-table td.no-column-cell {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
+
+  /* 다크모드: 전역 텍스트 및 배경 시인성 */
+  .dark {
+    --background: 222.2 47.4% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 8%;
+    --popover-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+  }
 }
 
 @layer base {
@@ -125,7 +139,10 @@ div.quote-table td.no-column-cell {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
-    @apply bg-slate-50 text-foreground;
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+  .dark body {
+    @apply bg-[#0b1120] text-slate-100;
   }
   * {
     font-family: inherit;

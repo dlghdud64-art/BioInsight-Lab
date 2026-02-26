@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,6 +78,7 @@ export default function InventoryPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -640,14 +641,14 @@ export default function InventoryPage() {
               value="manage"
               className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
             >
-              <List className="mr-2 h-4 w-4 text-slate-500" />
+              <FlaskConical className="mr-2 h-4 w-4 text-slate-500" />
               시약 관리하기
             </TabsTrigger>
             <TabsTrigger
               value="overview"
               className="text-slate-600 dark:text-slate-300 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-slate-800"
             >
-              <LayoutDashboard className="mr-2 h-5 w-5 text-slate-500" />
+              <LayoutGrid className="mr-2 h-5 w-5 text-slate-500" />
               한눈에 보기
             </TabsTrigger>
           </TabsList>
@@ -826,6 +827,7 @@ export default function InventoryPage() {
                 {(() => {
                   const urgent = displayInventories
                     .filter((inv) => {
+                      if (dismissedAlertIds.has(inv.id)) return false;
                       const isOut = inv.currentQuantity === 0;
                       const isLow =
                         inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
@@ -846,10 +848,29 @@ export default function InventoryPage() {
                       </p>
                     );
                   }
+                  const getReason = (inv: ProductInventory) => {
+                    const reasons: string[] = [];
+                    if (inv.currentQuantity === 0) reasons.push("품절");
+                    else if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock)
+                      reasons.push("재고 부족");
+                    if (
+                      inv.expiryDate &&
+                      (() => {
+                        const d = new Date(inv.expiryDate);
+                        const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        return days > 0 && days <= 30;
+                      })()
+                    )
+                      reasons.push("유통기한 임박");
+                    return reasons.join(" · ");
+                  };
                   return (
-                    <ul className="space-y-2">
+                    <div className="space-y-3">
                       {urgent.map((inv) => (
-                        <li key={inv.id}>
+                        <div
+                          key={inv.id}
+                          className="flex items-center justify-between p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg gap-3"
+                        >
                           <button
                             type="button"
                             onClick={() => {
@@ -859,20 +880,58 @@ export default function InventoryPage() {
                               );
                               setIsSheetOpen(true);
                             }}
-                            className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/50"
+                            className="flex-1 min-w-0 text-left"
                           >
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                            <h5 className="text-sm font-bold text-red-900 dark:text-red-400 truncate">
                               {inv.product.name}
-                            </span>
-                            <span className="text-sm text-slate-500 dark:text-slate-400">
-                              {inv.currentQuantity} {inv.unit}
-                              {inv.safetyStock != null && ` / 최소 ${inv.safetyStock}`}
+                            </h5>
+                            <p className="text-xs text-red-700/70 dark:text-red-400/70 truncate mt-0.5">
+                              {getReason(inv)} | 현재 {inv.currentQuantity} {inv.unit}
+                              {inv.safetyStock != null && ` (최소 ${inv.safetyStock} ${inv.unit})`}
                               {inv.expiryDate && ` · ${format(new Date(inv.expiryDate), "yyyy.MM.dd")}`}
-                            </span>
+                            </p>
                           </button>
-                        </li>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+                              title="발주 요청"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedItem(inv);
+                                setSheetSafetyStock(
+                                  String(inv.safetyStock ?? inv.minOrderQty ?? 1)
+                                );
+                                setIsSheetOpen(true);
+                                toast({
+                                  title: "발주 요청",
+                                  description: `${inv.product.name} 상세 보기에서 견적 요청을 진행할 수 있습니다.`,
+                                });
+                              }}
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700"
+                              title="알림 처리 완료"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
+                                toast({
+                                  title: "알림 처리 완료",
+                                  description: "해당 품목의 알림이 처리되었습니다.",
+                                });
+                              }}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   );
                 })()}
               </CardContent>

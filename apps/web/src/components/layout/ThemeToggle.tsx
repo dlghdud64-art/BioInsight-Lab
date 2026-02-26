@@ -14,8 +14,19 @@ export function FloatingThemeToggle() {
     setMounted(true);
   }, []);
 
+  // next-themes: 첫 방문 시 localStorage에 theme이 없으면 명시적 설정 (setTheme 첫 호출 이슈 회피)
+  React.useEffect(() => {
+    if (!mounted || !setTheme) return;
+    const stored = typeof window !== "undefined" && localStorage.getItem("bioinsight-theme");
+    if (!stored) {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setTheme(prefersDark ? "dark" : "light");
+    }
+  }, [mounted, setTheme]);
+
   const handleToggle = () => {
-    const nextTheme = (resolvedTheme ?? theme) === "dark" ? "light" : "dark";
+    const current = resolvedTheme ?? theme ?? "light";
+    const nextTheme = current === "dark" ? "light" : "dark";
     setTheme(nextTheme);
   };
 

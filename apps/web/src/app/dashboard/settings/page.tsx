@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -26,6 +26,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   User,
   Upload,
   Lock,
@@ -35,11 +42,13 @@ import {
   Bell,
   Mail,
   Shield,
-  ShieldCheck,
   Users,
-  FileText,
   Loader2,
   ChevronRight,
+  Package,
+  Wallet,
+  BarChart3,
+  Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +60,7 @@ const ROLE_LABELS: Record<string, string> = {
   SUPPLIER: "공급사",
 };
 
-type SettingsSection = "profile" | "team" | "notifications" | "security";
+type SettingsSection = "profile" | "team" | "notifications";
 
 function SettingsPageFallback() {
   return (
@@ -84,6 +93,8 @@ function SettingsPageContent() {
   const [profileBio, setProfileBio] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [profileEmail, setProfileEmail] = useState(session?.user?.email || "");
+  const [countryCode, setCountryCode] = useState("+82");
+  const [profilePhone, setProfilePhone] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -92,9 +103,9 @@ function SettingsPageContent() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [marketingEmails, setMarketingEmails] = useState(false);
   const [securityAlerts, setSecurityAlerts] = useState(true);
-
-  const [auditTrailEnabled, setAuditTrailEnabled] = useState(true);
-  const [dataIntegrityMode, setDataIntegrityMode] = useState(false);
+  const [lowStockAlerts, setLowStockAlerts] = useState(true);
+  const [budgetOverrunAlerts, setBudgetOverrunAlerts] = useState(true);
+  const [weeklyReportEmails, setWeeklyReportEmails] = useState(false);
 
   const { theme, setTheme } = useTheme();
 
@@ -108,8 +119,67 @@ function SettingsPageContent() {
     enabled: !!session,
   });
 
+  useEffect(() => {
+    if (userData?.phone && typeof userData.phone === "string") {
+      const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
+      if (match) {
+        setCountryCode(match[1]);
+        setProfilePhone(match[2].trim());
+      } else {
+        setProfilePhone(userData.phone);
+      }
+    }
+  }, [userData?.phone]);
+
+  const { data: orgsData } = useQuery({
+    queryKey: ["organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/organizations");
+      if (!response.ok) throw new Error("Failed to fetch organizations");
+      return response.json();
+    },
+    enabled: !!session,
+  });
+
+  const currentOrgId = orgsData?.organizations?.[0]?.id;
+
+  const { data: membersData } = useQuery({
+    queryKey: ["organization-members", currentOrgId],
+    queryFn: async () => {
+      const response = await fetch(`/api/organizations/${currentOrgId}/members`);
+      if (!response.ok) throw new Error("Failed to fetch members");
+      return response.json();
+    },
+    enabled: !!session && !!currentOrgId,
+  });
+
+  const members = membersData?.members || [];
+  const currentOrgName = orgsData?.organizations?.[0]?.name || "우리 연구실";
+
+  const roleUpdateMutation = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
+      const response = await fetch(`/api/organizations/${currentOrgId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, role }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to update role");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "권한이 변경되었습니다." });
+      queryClient.invalidateQueries({ queryKey: ["organization-members", currentOrgId] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "권한 변경 실패", description: error.message, variant: "destructive" });
+    },
+  });
+
   const profileMutation = useMutation({
-    mutationFn: async (data: { name?: string; email?: string; password?: string; currentPassword?: string }) => {
+    mutationFn: async (data: { name?: string; email?: string; phone?: string; password?: string; currentPassword?: string }) => {
       const response = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -137,11 +207,15 @@ function SettingsPageContent() {
     },
   });
 
+  const savedPhone = userData?.phone;
+  const fullPhone = profilePhone.trim() ? `${countryCode} ${profilePhone.trim()}` : "";
+
   const handleProfileSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     const updates: Record<string, string> = {};
     if (profileName !== session?.user?.name) updates.name = profileName;
     if (profileEmail !== session?.user?.email) updates.email = profileEmail;
+    if (fullPhone !== (savedPhone || "")) updates.phone = fullPhone;
     if (Object.keys(updates).length > 0) {
       profileMutation.mutate(updates);
     }
@@ -165,7 +239,7 @@ function SettingsPageContent() {
     await new Promise((r) => setTimeout(r, 1000));
     toast({
       title: "설정 저장 완료",
-      description: "알림 및 보안 설정이 반영되었습니다.",
+      description: "알림 설정이 반영되었습니다.",
     });
     setIsSavingSettings(false);
   };
@@ -184,12 +258,12 @@ function SettingsPageContent() {
 
   const userRole = (session?.user?.role as string) || "USER";
   const roleLabel = ROLE_LABELS[userRole] || "사용자";
+  const isAdmin = userRole === "ADMIN";
 
   const navItems: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
     { id: "profile", label: "프로필", icon: User },
     { id: "team", label: "팀 관리", icon: Users },
     { id: "notifications", label: "알림 설정", icon: Bell },
-    { id: "security", label: "보안 및 로그", icon: ShieldCheck },
   ];
 
   return (
@@ -238,8 +312,8 @@ function SettingsPageContent() {
           <div className="flex-1 min-w-0 space-y-6">
             {/* 1. 프로필 탭 */}
             {activeSection === "profile" && (
-              <>
-                <Card>
+              <div className="animate-in fade-in-50 duration-300 space-y-6">
+                <Card className="shadow-sm border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <User className="h-5 w-5" />
@@ -268,17 +342,51 @@ function SettingsPageContent() {
 
                     <Separator />
 
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">기본 정보</h4>
-                      <div className="grid gap-4 max-w-md">
+                      <div className="grid gap-6 max-w-md">
                         <div className="grid gap-2">
-                          <Label htmlFor="name">이름</Label>
+                          <Label htmlFor="name" className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                            <User className="h-4 w-4 text-slate-400" />
+                            이름
+                          </Label>
                           <Input
                             id="name"
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
                             placeholder="이름을 입력하세요"
+                            className="border-slate-200 dark:border-slate-700 focus:ring-blue-600"
                           />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="phone" className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                            <Phone className="h-4 w-4 text-slate-400" />
+                            휴대폰 번호
+                          </Label>
+                          <div className="flex gap-2">
+                            <Select value={countryCode} onValueChange={setCountryCode}>
+                              <SelectTrigger className="w-[100px] border-slate-200 dark:border-slate-700">
+                                <SelectValue placeholder="국가" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+82">KR (+82)</SelectItem>
+                                <SelectItem value="+1">US (+1)</SelectItem>
+                                <SelectItem value="+81">JP (+81)</SelectItem>
+                                <SelectItem value="+86">CN (+86)</SelectItem>
+                                <SelectItem value="+44">UK (+44)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              id="phone"
+                              value={profilePhone}
+                              onChange={(e) => setProfilePhone(e.target.value)}
+                              placeholder="010-0000-0000"
+                              className="flex-1 border-slate-200 dark:border-slate-700 focus:ring-blue-600"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            긴급 알림 및 본인 확인용으로 사용됩니다.
+                          </p>
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="bio">소개</Label>
@@ -288,6 +396,7 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileBio(e.target.value)}
                             placeholder="자기소개를 입력하세요"
                             rows={3}
+                            className="border-slate-200 dark:border-slate-700"
                           />
                         </div>
                       </div>
@@ -295,9 +404,9 @@ function SettingsPageContent() {
 
                     <Separator />
 
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">연락처</h4>
-                      <div className="grid gap-4 max-w-md">
+                      <div className="grid gap-6 max-w-md">
                         <div className="grid gap-2">
                           <Label htmlFor="url">URL</Label>
                           <Input
@@ -306,16 +415,20 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileUrl(e.target.value)}
                             placeholder="https://example.com"
                             type="url"
+                            className="border-slate-200 dark:border-slate-700"
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="email">이메일</Label>
+                          <Label htmlFor="email" className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                            <Mail className="h-4 w-4 text-slate-400" />
+                            이메일
+                          </Label>
                           <Input
                             id="email"
                             type="email"
                             value={profileEmail}
                             disabled
-                            className="bg-slate-50 dark:bg-slate-900/50"
+                            className="bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
                           />
                         </div>
                       </div>
@@ -323,7 +436,7 @@ function SettingsPageContent() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="shadow-sm border-slate-200 dark:border-slate-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Lock className="h-5 w-5" />
@@ -418,129 +531,168 @@ function SettingsPageContent() {
                     </Dialog>
                   </CardContent>
                 </Card>
-              </>
+              </div>
             )}
 
             {/* 2. 팀 관리 탭 */}
             {activeSection === "team" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    팀 관리
-                  </CardTitle>
-                  <CardDescription>조직 및 팀원을 관리합니다.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/dashboard/organizations">
-                    <Button variant="outline">
-                      <Users className="h-4 w-4 mr-2" />
-                      조직 관리 페이지로 이동
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+              <div className="animate-in fade-in-50 duration-300">
+                <Card className="shadow-sm border-slate-200 dark:border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                      <Users className="h-5 w-5" />
+                      팀 권한 관리
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground dark:text-slate-400">
+                      {currentOrgName} 멤버들의 권한을 직접 수정합니다.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {members.length === 0 ? (
+                      <p className="text-sm text-muted-foreground dark:text-slate-400 py-4">
+                        등록된 팀원이 없습니다.
+                      </p>
+                    ) : (
+                      members.map((member: { id: string; user: { id: string; name: string | null; email: string } | null; role: string }) => {
+                        const name = member.user?.name || member.user?.email || "알 수 없음";
+                        const email = member.user?.email || "";
+                        const initial = name?.charAt(0)?.toUpperCase() || "?";
+                        const isAdminRole = member.role === "ADMIN" || member.role === "OWNER";
+                        const displayRole = isAdminRole ? "admin" : "user";
+                        return (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-medium dark:bg-slate-700 dark:text-slate-200">
+                                  {initial}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <span className="text-sm font-medium text-slate-900 dark:text-white block truncate">
+                                  {name}
+                                </span>
+                                {email && (
+                                  <span className="text-xs text-muted-foreground dark:text-slate-400 block truncate">
+                                    {email}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Select
+                              value={displayRole}
+                              onValueChange={(v) => {
+                                const newRole = v === "admin" ? "ADMIN" : "VIEWER";
+                                roleUpdateMutation.mutate({ memberId: member.id, role: newRole });
+                              }}
+                              disabled={roleUpdateMutation.isPending}
+                            >
+                              <SelectTrigger className="w-[110px] h-8 text-xs flex-shrink-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">관리자</SelectItem>
+                                <SelectItem value="user">연구원</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {/* 3. 알림 설정 탭 */}
             {activeSection === "notifications" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    알림 설정
-                  </CardTitle>
-                  <CardDescription>이메일 알림 수신 설정을 관리하세요.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="email-notifications" className="text-base font-medium">
-                          이메일 알림
-                        </Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        중요한 업데이트 및 활동 알림을 이메일로 받습니다.
-                      </p>
-                    </div>
-                    <Switch
-                      id="email-notifications"
-                      checked={emailNotifications}
-                      onCheckedChange={setEmailNotifications}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="marketing-emails" className="text-base font-medium">
-                          마케팅 수신 동의
-                        </Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        새로운 기능, 팁, 프로모션 정보를 받습니다.
-                      </p>
-                    </div>
-                    <Switch
-                      id="marketing-emails"
-                      checked={marketingEmails}
-                      onCheckedChange={setMarketingEmails}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="security-alerts" className="text-base font-medium">
-                          보안 알림
-                        </Label>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        로그인 시도 및 보안 관련 중요한 알림을 받습니다.
-                      </p>
-                    </div>
-                    <Switch
-                      id="security-alerts"
-                      checked={securityAlerts}
-                      onCheckedChange={setSecurityAlerts}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* 4. 보안 및 로그 탭 */}
-            {activeSection === "security" && (
-              <>
-                <Card>
+              <div className="animate-in fade-in-50 duration-300 space-y-6">
+                <Card className="shadow-sm border-slate-200 dark:border-slate-700">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ShieldCheck className="h-5 w-5" />
-                      보안 및 관리 설정
+                    <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                      <Bell className="h-5 w-5" />
+                      알림 설정
                     </CardTitle>
-                    <CardDescription>감사 증적 및 데이터 무결성 설정을 관리합니다.</CardDescription>
+                    <CardDescription className="text-muted-foreground dark:text-slate-400">
+                      이메일 및 앱 내 알림 수신 설정을 관리하세요.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <Label htmlFor="audit-trail" className="text-base font-medium">
-                            감사 증적(Audit Trail) 강제 활성화
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label htmlFor="low-stock-alerts" className="text-base font-medium text-slate-900 dark:text-white">
+                            재고 부족 알림
                           </Label>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          모든 데이터 변경 및 접근 기록을 추적합니다. (CFR 21 Part 11 대응)
+                        <p className="text-sm text-muted-foreground dark:text-slate-400">
+                          재고가 부족한 품목에 대해 즉시 알림을 받습니다.
                         </p>
                       </div>
                       <Switch
-                        id="audit-trail"
-                        checked={auditTrailEnabled}
-                        onCheckedChange={setAuditTrailEnabled}
+                        id="low-stock-alerts"
+                        checked={lowStockAlerts}
+                        onCheckedChange={setLowStockAlerts}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-4 w-4 text-muted-foreground" />
+                          <Label htmlFor="budget-overrun-alerts" className="text-base font-medium text-slate-900 dark:text-white">
+                            예산 초과 알림
+                          </Label>
+                        </div>
+                        <p className="text-sm text-muted-foreground dark:text-slate-400">
+                          예산 사용률이 80%를 초과하거나 초과 시 알림을 받습니다.
+                        </p>
+                      </div>
+                      <Switch
+                        id="budget-overrun-alerts"
+                        checked={budgetOverrunAlerts}
+                        onCheckedChange={setBudgetOverrunAlerts}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                          <Label htmlFor="weekly-report-emails" className="text-base font-medium text-slate-900 dark:text-white">
+                            주간 리포트 수신
+                          </Label>
+                        </div>
+                        <p className="text-sm text-muted-foreground dark:text-slate-400">
+                          매주 요약 리포트를 이메일로 받습니다.
+                        </p>
+                      </div>
+                      <Switch
+                        id="weekly-report-emails"
+                        checked={weeklyReportEmails}
+                        onCheckedChange={setWeeklyReportEmails}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <Label htmlFor="email-notifications" className="text-base font-medium text-slate-900 dark:text-white">
+                            이메일 알림
+                          </Label>
+                        </div>
+                        <p className="text-sm text-muted-foreground dark:text-slate-400">
+                          중요한 업데이트 및 활동 알림을 이메일로 받습니다.
+                        </p>
+                      </div>
+                      <Switch
+                        id="email-notifications"
+                        checked={emailNotifications}
+                        onCheckedChange={setEmailNotifications}
                       />
                     </div>
                     <Separator />
@@ -548,45 +700,30 @@ function SettingsPageContent() {
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4 text-muted-foreground" />
-                          <Label htmlFor="data-integrity" className="text-base font-medium">
-                            데이터 무결성 모드
+                          <Label htmlFor="security-alerts" className="text-base font-medium text-slate-900 dark:text-white">
+                            보안 알림
                           </Label>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          변경 이력 검증 및 무결성 체크를 활성화합니다.
+                        <p className="text-sm text-muted-foreground dark:text-slate-400">
+                          로그인 시도 및 보안 관련 중요한 알림을 받습니다.
                         </p>
                       </div>
                       <Switch
-                        id="data-integrity"
-                        checked={dataIntegrityMode}
-                        onCheckedChange={setDataIntegrityMode}
+                        id="security-alerts"
+                        checked={securityAlerts}
+                        onCheckedChange={setSecurityAlerts}
                       />
                     </div>
                   </CardContent>
                 </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>감사 증적</CardTitle>
-                    <CardDescription>시스템 내 활동 로그를 확인합니다.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href="/dashboard/audit">
-                      <Button variant="outline">
-                        <FileText className="h-4 w-4 mr-2" />
-                        감사 증적 페이지로 이동
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </>
+              </div>
             )}
 
-            {/* 5. 디스플레이 (프로필/알림에 함께 표시) */}
+            {/* 4. 디스플레이 (프로필에 함께 표시) */}
             {activeSection === "profile" && (
-              <Card>
+              <Card className="shadow-sm border-slate-200 dark:border-slate-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                     <Monitor className="h-5 w-5" />
                     테마 설정
                   </CardTitle>
@@ -650,20 +787,14 @@ function SettingsPageContent() {
                 <Button
                   variant="default"
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 min-w-[180px]"
+                  className="w-full md:w-auto px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold"
                   onClick={() => (activeSection === "profile" ? handleProfileSubmit() : handleSettingsSave())}
                   disabled={profileMutation.isPending || isSavingSettings}
                 >
                   {(profileMutation.isPending || isSavingSettings) ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      저장 중...
-                    </>
+                    "저장 중..."
                   ) : (
-                    <>
-                      <Shield className="mr-2 h-4 w-4" />
-                      변경사항 저장
-                    </>
+                    "변경사항 저장"
                   )}
                 </Button>
               </div>

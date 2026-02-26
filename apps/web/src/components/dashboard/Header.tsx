@@ -153,7 +153,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-50 h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 브레드크럼 + 햄버거 메뉴 */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -162,7 +162,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden h-9 w-9 flex-shrink-0"
+              className="lg:hidden h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
@@ -171,20 +171,20 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           )}
 
           {/* 브레드크럼 */}
-          <nav className="hidden md:flex items-center gap-1.5 text-sm text-slate-600 min-w-0">
+          <nav className="hidden md:flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 min-w-0">
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
                 {index > 0 && (
-                  <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 {index === breadcrumbs.length - 1 ? (
-                  <span className="font-medium text-slate-900 truncate">
+                  <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
                     {crumb.label}
                   </span>
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="hover:text-slate-900 truncate transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-slate-100 truncate transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -194,7 +194,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </nav>
 
           {/* 모바일에서 현재 페이지만 표시 */}
-          <div className="md:hidden text-sm font-medium text-slate-900 truncate">
+          <div className="md:hidden text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
             {breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard"}
           </div>
         </div>
@@ -203,14 +203,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:justify-end">
           {/* 전역 검색창: 모바일 100%, 데스크톱 고정 너비 */}
           <div className="flex items-center relative flex-1 sm:flex-initial w-full min-w-0 sm:w-48 md:w-56 lg:w-64 xl:w-96">
-            <Search className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none flex-shrink-0" />
+            <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none flex-shrink-0" />
             <Input
               type="search"
               placeholder="시약, 재고 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white w-full min-w-0"
+              className="pl-9 h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 w-full min-w-0 text-slate-900 dark:text-slate-100"
             />
           </div>
 
@@ -220,7 +220,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 relative flex-shrink-0"
+                className="h-9 w-9 relative flex-shrink-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
@@ -228,8 +228,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 p-0">
-              <div className="p-3 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-900">알림</h3>
+              <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">알림</h3>
               </div>
               <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length === 0 ? (
@@ -241,15 +241,15 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className="p-3 hover:bg-slate-50 transition-colors cursor-pointer"
+                        className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
                         <div className="flex items-start gap-4 min-w-0">
                           {renderNotificationIcon(notification.type)}
                           <div className="flex-1 min-w-0 overflow-hidden">
-                            <p className="text-sm font-medium text-slate-900 truncate">
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                               {notification.title}
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                               {notification.time}
                             </p>
                           </div>
@@ -281,10 +281,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 flex-shrink-0 cursor-pointer hover:text-blue-600 transition-colors hidden sm:flex"
+                className="h-9 w-9 flex-shrink-0 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden sm:flex"
                 aria-label="도움말"
               >
-                <HelpCircle className="h-5 w-5 text-slate-500" />
+                <HelpCircle className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -310,10 +310,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </DropdownMenu>
 
           {/* 사용자 프로필 */}
-          <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 flex-shrink-0">
-            <Avatar className="h-8 w-8">
+          <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-700 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-default">
+            <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
               <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
-              <AvatarFallback className="bg-blue-100 text-blue-600 text-xs font-semibold">
+              <AvatarFallback className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold">
                 {user?.name
                   ? user.name
                       .split(" ")
@@ -325,10 +325,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </AvatarFallback>
             </Avatar>
             <div className="hidden xl:block min-w-0">
-              <div className="text-sm font-medium text-slate-900 truncate">
+              <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                 {user?.name || "사용자"}
               </div>
-              <div className="text-xs text-slate-500 truncate">
+              <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {user?.email}
               </div>
             </div>

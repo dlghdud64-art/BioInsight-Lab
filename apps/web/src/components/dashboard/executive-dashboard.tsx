@@ -156,34 +156,36 @@ export function ExecutiveDashboard() {
         {/* 이번 달 지출 */}
         <Card className={cn("relative overflow-hidden", useMockData && "opacity-60")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">이번 달 지출</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">이번 달 지출</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ₩{(useMockData ? 2900000 : thisMonthSpending).toLocaleString()}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              {useMockData ? (
-                <>
-                  <TrendingDown className="h-3 w-3 text-green-600" />
-                  <span className="text-green-600">전월 대비 -7.2%</span>
-                </>
-              ) : monthOverMonthChange !== 0 ? (
-                <>
-                  {isIncrease ? (
-                    <TrendingUp className="h-3 w-3 text-red-600" />
-                  ) : (
+            <div className="flex flex-col gap-1">
+              <div className="text-2xl xl:text-3xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
+                ₩{(useMockData ? 2900000 : thisMonthSpending).toLocaleString()}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                {useMockData ? (
+                  <>
                     <TrendingDown className="h-3 w-3 text-green-600" />
-                  )}
-                  <span className={isIncrease ? "text-red-600" : "text-green-600"}>
-                    전월 대비 {Math.abs(monthOverMonthChange).toFixed(1)}%
-                    {isIncrease ? " 증가" : " 감소"}
-                  </span>
-                </>
-              ) : (
-                <span>전월 대비 변화 없음</span>
-              )}
+                    <span className="text-green-600">전월 대비 -7.2%</span>
+                  </>
+                ) : monthOverMonthChange !== 0 ? (
+                  <>
+                    {isIncrease ? (
+                      <TrendingUp className="h-3 w-3 text-red-600" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-green-600" />
+                    )}
+                    <span className={isIncrease ? "text-red-600" : "text-green-600"}>
+                      전월 대비 {Math.abs(monthOverMonthChange).toFixed(1)}%
+                      {isIncrease ? " 증가" : " 감소"}
+                    </span>
+                  </>
+                ) : (
+                  <span>전월 대비 변화 없음</span>
+                )}
+              </div>
             </div>
             {useMockData && (
               <p className="text-xs text-muted-foreground mt-2 italic">

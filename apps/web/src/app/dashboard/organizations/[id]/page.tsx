@@ -17,7 +17,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, UserPlus, Mail, Trash2, Loader2, Search, Users, Shield } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, UserPlus, Mail, Trash2, Loader2, Search, Users, ShieldCheck, MoreVertical, X, Send, FileText, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -169,22 +179,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         { id: "2", name: "김연구", email: "research.kim@bioinsight.com", role: "member" as const, initial: "KR", isMe: false },
         { id: "3", name: "박조교", email: "ta.park@bioinsight.com", role: "member" as const, initial: "PJ", isMe: false },
       ];
-
-  // 권한에 따라 뱃지를 자동으로 반환하는 헬퍼
-  const getRoleBadge = (role: string) => {
-    if (role === "admin") {
-      return (
-        <Badge variant="outline" dot="purple" className="border-purple-200 bg-purple-50 text-purple-700">
-          관리자
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" dot="slate" className="border-slate-200 bg-slate-100 text-slate-600">
-        연구원
-      </Badge>
-    );
-  };
 
   const currentUserMember = members.find((m) => m.user?.id === session?.user?.id);
   const isAdmin = currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER";
@@ -372,47 +366,47 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
       {/* 멤버 요약 KPI 카드 */}
       <div className="grid gap-4 md:grid-cols-3 mt-4">
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-600">총 멤버</CardTitle>
-            <div className="bg-blue-50 p-2 rounded-full">
-              <Users className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">총 멤버</CardTitle>
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-full">
+              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight text-slate-900">
+            <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {totalMembers}
-              <span className="text-lg font-normal text-slate-500 ml-1">명</span>
+              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-600">관리자</CardTitle>
-            <div className="bg-purple-50 p-2 rounded-full">
-              <Shield className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">관리자</CardTitle>
+            <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-full">
+              <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight text-slate-900">
+            <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {adminCount}
-              <span className="text-lg font-normal text-slate-500 ml-1">명</span>
+              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200">
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-600">초대 대기</CardTitle>
-            <div className="bg-orange-50 p-2 rounded-full">
-              <Mail className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">초대 대기</CardTitle>
+            <div className="bg-orange-50 dark:bg-orange-900/30 p-2 rounded-full">
+              <Mail className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight text-slate-900">
+            <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               {pendingCount}
-              <span className="text-lg font-normal text-slate-500 ml-1">명</span>
+              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
@@ -514,81 +508,113 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               filteredTeamMembers.map((member) => {
                 const rawMember = member.memberId ? members.find((m) => m.id === member.memberId) : null;
                 const canEdit = isAdmin && !member.isMe && rawMember;
+                const isPending = rawMember?.status === "Pending";
 
                 return (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 last:border-0"
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div
                         className={`h-10 w-10 rounded-full font-bold flex items-center justify-center shrink-0 ${
-                          member.role === "admin" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"
+                          member.role === "admin" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {member.initial}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900 truncate">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                           {member.name}
-                          {member.isMe && <span className="text-blue-600 font-normal ml-1">(나)</span>}
+                          {member.isMe && <span className="text-blue-600 dark:text-blue-400 font-normal ml-1">(나)</span>}
                         </p>
-                        <p className="text-xs text-slate-500 truncate">{member.email}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      {getRoleBadge(member.role)}
-                      {isAdmin && (
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge variant="secondary" className="text-[10px] dark:bg-slate-800 dark:text-slate-300">
+                        {ROLE_LABELS[rawMember?.role || member.rawRole || ""] || (member.role === "admin" ? "관리자" : "연구원")}
+                      </Badge>
+                      {isAdmin && canEdit && rawMember && isPending && (
                         <div className="flex items-center gap-2">
-                          {canEdit && rawMember && (
-                            <>
-                              {rawMember.status === "Pending" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 text-xs"
-                                  onClick={() => resendInviteMutation.mutate(rawMember.id)}
-                                  disabled={resendInviteMutation.isPending}
-                                  title="초대 재발송"
-                                >
-                                  재발송
-                                </Button>
-                              )}
-                              <Select
-                                value={rawMember.role}
-                                onValueChange={(role) =>
-                                  updateRoleMutation.mutate({ memberId: rawMember.id, role })
-                                }
-                                disabled={updateRoleMutation.isPending}
-                              >
-                                <SelectTrigger className="w-28 h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="VIEWER">조회자</SelectItem>
-                                  <SelectItem value="REQUESTER">요청자</SelectItem>
-                                  <SelectItem value="APPROVER">승인자</SelectItem>
-                                  <SelectItem value="ADMIN">관리자</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400 hover:text-slate-700"
-                                onClick={() => {
-                                  if (confirm("정말 이 멤버를 제거하시겠습니까?")) {
-                                    removeMemberMutation.mutate(rawMember.id);
-                                  }
-                                }}
-                                disabled={removeMemberMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </>
-                          )}
-                          {member.isMe && <span className="text-xs text-slate-400">본인</span>}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                            title="초대 취소"
+                            onClick={() => {
+                              if (confirm("정말 이 초대를 취소하시겠습니까?")) {
+                                removeMemberMutation.mutate(rawMember.id);
+                              }
+                            }}
+                            disabled={removeMemberMutation.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+                            title="초대장 재발송"
+                            onClick={() => resendInviteMutation.mutate(rawMember.id)}
+                            disabled={resendInviteMutation.isPending}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
+                      {isAdmin && canEdit && rawMember && !isPending && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <Shield className="mr-2 h-4 w-4" />
+                                권한 변경
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem
+                                  onClick={() => updateRoleMutation.mutate({ memberId: rawMember.id, role: "ADMIN" })}
+                                  disabled={updateRoleMutation.isPending}
+                                >
+                                  관리자
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => updateRoleMutation.mutate({ memberId: rawMember.id, role: "VIEWER" })}
+                                  disabled={updateRoleMutation.isPending}
+                                >
+                                  연구원
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/activity-logs?userId=${rawMember.user?.id}`}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                활동 로그 보기
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                              onClick={() => {
+                                if (confirm("정말 이 멤버를 팀에서 제외하시겠습니까?")) {
+                                  removeMemberMutation.mutate(rawMember.id);
+                                }
+                              }}
+                              disabled={removeMemberMutation.isPending}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              팀에서 제외
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      {isAdmin && member.isMe && <span className="text-xs text-slate-400 dark:text-slate-500">본인</span>}
                     </div>
                   </div>
                 );
