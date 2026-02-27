@@ -30,7 +30,7 @@ async function uploadToSupabase(
       "Content-Type": mimeType,
       "x-upsert": "true", // 덮어쓰기 허용
     },
-    body: buffer,
+    body: buffer as unknown as BodyInit,
   });
 
   if (!res.ok) {
