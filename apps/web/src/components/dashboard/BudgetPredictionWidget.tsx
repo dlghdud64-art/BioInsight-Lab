@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingDown, AlertTriangle, CalendarClock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingDown, AlertTriangle, CalendarClock, FileSpreadsheet, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   LineChart,
   Line,
@@ -36,7 +39,31 @@ function formatDate(iso: string) {
 }
 
 export function BudgetPredictionWidget({ organizationId }: { organizationId?: string }) {
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
   const params = organizationId ? `?organizationId=${organizationId}` : "";
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await fetch(`/api/budget/report${params}`);
+      if (!res.ok) throw new Error("생성 실패");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      a.href = url;
+      a.download = `budget_proposal_${yyyymmdd}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "기안서가 성공적으로 생성되었습니다." });
+    } catch {
+      toast({ title: "다운로드 실패", description: "잠시 후 다시 시도해주세요.", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const { data, isLoading } = useQuery<PredictData>({
     queryKey: ["budget-predict", organizationId],
     queryFn: async () => {
@@ -144,13 +171,35 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
         )}
         {!data.hasWarning && (
-          <div className="mx-4 mb-4 rounded-lg bg-blue-900/20 border border-blue-800/40 px-4 py-3 flex items-start gap-2.5">
+          <div className="mx-4 rounded-lg bg-blue-900/20 border border-blue-800/40 px-4 py-3 flex items-start gap-2.5">
             <AlertTriangle className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
           </div>
         )}
+
+        {/* 다운로드 버튼 */}
+        <div className="mx-4 mb-4 mt-3 flex justify-end">
+          <Button
+            size="sm"
+            disabled={isDownloading}
+            onClick={handleDownload}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                생성 중...
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                예산 증액 기안서 생성 (.xlsx)
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
