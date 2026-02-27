@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     const lastMonthSpend = monthlySpend[lastYearMonth] || 0;
 
     // 현재 사용액 계산 (scopeKey 기반 전체)
-    const totalSpentAll = purchaseRecords.reduce((s, r) => s + (r.amount || 0), 0);
+    const totalSpentAll = purchaseRecords.reduce((s: number, r: any) => s + (r.amount || 0), 0);
     const remaining = Math.max(activeBudget.amount - totalSpentAll, 0);
 
     // 고갈일 예측 (runwayDays)
