@@ -299,15 +299,15 @@ function SettingsPageContent() {
   type TeamRoleValue = "admin" | "researcher" | "guest";
 
   const mapBackendRoleToDisplay = (role: string): TeamRoleValue => {
-    if (role === "ADMIN" || role === "OWNER") return "admin";
-    if (role === "RESEARCHER" || role === "USER") return "researcher";
-    return "guest";
+    if (role === "ADMIN") return "admin";
+    if (role === "APPROVER" || role === "REQUESTER") return "researcher";
+    return "guest"; // VIEWER, 기타
   };
 
   const mapDisplayToBackendRole = (value: TeamRoleValue): string => {
     if (value === "admin") return "ADMIN";
-    if (value === "researcher") return "RESEARCHER";
-    return "VIEWER";
+    if (value === "researcher") return "APPROVER"; // APPROVER: 견적 승인 권한 (연구원)
+    return "VIEWER"; // guest
   };
 
   const [teamRoles, setTeamRoles] = useState<Record<string, TeamRoleValue>>({});
