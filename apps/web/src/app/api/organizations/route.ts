@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
     const plans = existingMemberships.map((m: any) =>
       (m.organization?.subscription?.plan as string | undefined) ?? "FREE"
     );
-    const hasPro = plans.some((p) => p === "TEAM" || p === "ORGANIZATION");
-    const hasBasic = !hasPro && plans.some((p) => p === "BASIC");
+    const hasPro = plans.some((p: string) => p === "TEAM" || p === "ORGANIZATION");
+    const hasBasic = !hasPro && plans.some((p: string) => p === "BASIC");
     const orgLimit = hasPro ? Infinity : hasBasic ? 3 : 1; // Free/Starter: 1개, Basic: 3개
 
     if (currentOrgCount >= orgLimit) {
