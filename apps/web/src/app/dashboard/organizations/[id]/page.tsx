@@ -105,10 +105,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   // 관리 탭 상태
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editSlug, setEditSlug] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "unavailable">("idle");
   // 조직 정보 조회
   const { data: orgsData, isLoading: orgLoading } = useQuery({
     queryKey: ["organizations"],
@@ -125,13 +127,40 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     description: "",
   };
 
-  // editName 초기값 세팅
+  // editName, editSlug 초기값 세팅 (조직 전환 시에만)
+  const lastInitializedOrgId = useRef<string | null>(null);
   useEffect(() => {
     if (organization?.name && !editName) {
       setEditName(organization.name);
       setEditDescription(organization.description || "");
     }
-  }, [organization?.name]);
+    if (organization?.id && organization?.slug !== undefined && lastInitializedOrgId.current !== organization.id) {
+      lastInitializedOrgId.current = organization.id;
+      setEditSlug(organization.slug || "");
+    }
+  }, [organization?.name, organization?.slug, organization?.id]);
+
+  // 슬러그 실시간 검증 (Debounce)
+  useEffect(() => {
+    const raw = editSlug.toLowerCase().trim();
+    if (!raw) {
+      setSlugStatus("idle");
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSlugStatus("checking");
+      try {
+        const res = await fetch(
+          `/api/organizations/check-slug?slug=${encodeURIComponent(raw)}&excludeOrgId=${params.id}`
+        );
+        const json = await res.json();
+        setSlugStatus(json.available ? "available" : "unavailable");
+      } catch {
+        setSlugStatus("unavailable");
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [editSlug, params.id]);
 
   // 로고 미리보기 URL 정리
   useEffect(() => {
@@ -155,6 +184,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     setLogoPreviewUrl(null);
     setLogoFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    const filtered = v.replace(/[^a-z0-9-]/g, "").toLowerCase();
+    setEditSlug(filtered);
   };
 
   // 멤버 목록 조회
@@ -297,7 +332,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       const res = await fetch(`/api/organizations/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName.trim(), description: editDescription.trim() }),
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim(),
+          slug: editSlug.trim() || null,
+        }),
       });
       if (!res.ok) {
         const json = await res.json();
@@ -672,6 +711,30 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       placeholder="조직명을 입력하세요"
                       className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-slug" className="dark:text-slate-300">고유 접속 주소 (Slug)</Label>
+                    <div className="flex rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+                      <span className="inline-flex items-center px-3 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shrink-0">
+                        bio-insight.lab/
+                      </span>
+                      <Input
+                        id="edit-slug"
+                        value={editSlug}
+                        onChange={handleSlugChange}
+                        placeholder="my-lab"
+                        className="rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
+                    {slugStatus === "checking" && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">확인 중...</p>
+                    )}
+                    {slugStatus === "available" && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">사용 가능한 주소입니다.</p>
+                    )}
+                    {slugStatus === "unavailable" && editSlug.trim() && (
+                      <p className="text-xs text-red-600 dark:text-red-400">이미 사용 중이거나 사용할 수 없는 주소입니다.</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-desc" className="dark:text-slate-300">설명 (선택)</Label>
