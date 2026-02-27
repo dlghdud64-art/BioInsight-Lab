@@ -593,6 +593,21 @@ export default function InventoryPage() {
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
 
+  // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장)
+  const issuesCount = displayInventories.filter((inv) => {
+    const isOut = inv.currentQuantity === 0;
+    const isLow = inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
+    const byLeadTime = isReorderNeededByLeadTime(inv);
+    const isExpiring =
+      inv.expiryDate &&
+      (() => {
+        const d = new Date(inv.expiryDate);
+        const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return days > 0 && days <= 30;
+      })();
+    return isOut || isLow || byLeadTime || isExpiring;
+  }).length;
+
   if (status === "loading") {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -732,6 +747,11 @@ export default function InventoryPage() {
                 >
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항
+                  {issuesCount > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-2">
+                      {issuesCount}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </div>

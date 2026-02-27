@@ -116,22 +116,34 @@ export default function BudgetPage() {
         ? Number(String(formData.amount).replace(/[^0-9]/g, ""))
         : formData.amount;
 
-      const res = await fetch("/api/budgets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          amount: cleanAmount,
-          currency: formData.currency,
-          periodStart: formData.periodStart,
-          periodEnd: formData.periodEnd,
-          projectName: formData.projectName,
-          description: formData.description,
-          // 현재 활성 조직 ID 명시적 주입
-          organizationId: activeOrgId,
-        }),
+      const isEdit = !!editingBudget;
+      const url = isEdit ? `/api/budgets/${editingBudget!.id}` : "/api/budgets";
+      const method = isEdit ? "PATCH" : "POST";
+      const body = isEdit
+        ? {
+            name: formData.name,
+            amount: cleanAmount,
+            currency: formData.currency,
+            periodStart: formData.periodStart,
+            periodEnd: formData.periodEnd,
+            projectName: formData.projectName ?? null,
+            description: formData.description ?? null,
+          }
+        : {
+            name: formData.name,
+            amount: cleanAmount,
+            currency: formData.currency,
+            periodStart: formData.periodStart,
+            periodEnd: formData.periodEnd,
+            projectName: formData.projectName,
+            description: formData.description,
+            organizationId: activeOrgId,
+          };
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       const json = await res.json().catch(() => ({}));
@@ -175,6 +187,7 @@ export default function BudgetPage() {
         setEditingBudget(null);
         toast({ title: "예산이 수정되었습니다." });
         await fetchBudgets();
+        router.refresh();
       } else {
         setBudgets((prev) => [mappedBudget, ...prev]);
         setIsDialogOpen(false);
@@ -231,7 +244,7 @@ export default function BudgetPage() {
           description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
           icon={Wallet}
           actions={
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingBudget(null); }}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
                   <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -249,6 +262,7 @@ export default function BudgetPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <BudgetForm
+                  key={editingBudget?.id ?? "create"}
                   budget={editingBudget}
                   isSubmitting={isSubmitting}
                   submitError={submitError}
@@ -289,7 +303,7 @@ export default function BudgetPage() {
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">등록된 예산이 없습니다.</p>
-              <Button onClick={() => setIsDialogOpen(true)}>
+              <Button onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 첫 예산 추가하기
               </Button>
@@ -342,6 +356,17 @@ export default function BudgetPage() {
                         <Progress value={rate} className="h-2" />
                       </div>
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingBudget(budget);
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          수정
+                        </Button>
                         <Button variant="outline" size="sm" asChild>
                           <a href={`/dashboard/budget/${budget.id}`}>상세 보기</a>
                         </Button>
