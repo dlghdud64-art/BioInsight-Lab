@@ -85,53 +85,7 @@ export default function DashboardPage() {
   };
 
   const orders = ordersData?.orders || [];
-
-  // 더미 주문 데이터 (Mock Data)
-  const mockOrders = [
-    {
-      id: "ORD-2024-001",
-      product: "Gibco FBS (500ml)",
-      vendor: "Thermo Fisher",
-      amount: 150000,
-      status: "배송 중",
-      date: "2026.01.15",
-    },
-    {
-      id: "ORD-2024-002",
-      product: "Falcon 50ml Conical Tube",
-      vendor: "Corning",
-      amount: 85000,
-      status: "승인 대기",
-      date: "2026.01.14",
-    },
-    {
-      id: "ORD-2024-003",
-      product: "DMEM Medium (500ml)",
-      vendor: "Sigma-Aldrich",
-      amount: 120000,
-      status: "배송 완료",
-      date: "2026.01.13",
-    },
-    {
-      id: "ORD-2024-004",
-      product: "Trypsin-EDTA Solution",
-      vendor: "Gibco",
-      amount: 95000,
-      status: "배송 중",
-      date: "2026.01.12",
-    },
-    {
-      id: "ORD-2024-005",
-      product: "Pipette Tips (1000μL)",
-      vendor: "Eppendorf",
-      amount: 65000,
-      status: "승인 대기",
-      date: "2026.01.11",
-    },
-  ];
-
-  // 주문 데이터가 없으면 더미 데이터 사용
-  const displayOrders = orders.length > 0 ? orders : mockOrders;
+  const displayOrders = orders;
 
 
   // OrderStatus enum → 한글 변환 맵 (실제 DB 값 기반)
@@ -142,14 +96,11 @@ export default function DashboardPage() {
     CANCELLED: "취소됨",
   };
 
-  // 주문 데이터 처리 함수 (실제 DB 데이터 + 모크 데이터 모두 지원)
+  // 주문 데이터 처리 함수 (실제 API 응답 형식)
   const processOrderData = (order: any, index: number) => {
-    // 상품명: 실제 DB → items[0].name, 모크 → product
-    const productName = order.items?.[0]?.name || order.product || "제품명 없음";
-    // 공급사: 실제 DB → items[0].brand, 모크 → vendor
-    const vendor = order.items?.[0]?.brand || order.vendor || "공급사 정보 없음";
-    const amount = order.totalAmount ?? order.amount ?? 0;
-    // OrderStatus enum → 한글 (모크 데이터는 이미 한글이므로 그대로 사용)
+    const productName = order.items?.[0]?.name || order.quote?.title || "제품명 없음";
+    const vendor = order.items?.[0]?.brand || "공급사 정보 없음";
+    const amount = order.totalAmount ?? 0;
     const status = ORDER_STATUS_MAP[order.status] ?? order.status ?? "승인 대기";
     let date = order.date;
     if (!date && order.createdAt) {
@@ -162,47 +113,37 @@ export default function DashboardPage() {
     return { orderId, productName, vendor, amount, status, date };
   };
 
-  // 프리미엄 Pill 뱃지 (Status Dot + 공통 클래스)
-  const renderStatusPill = (status: string) => {
+  // 상태별 배지 색상: 승인 대기=노란색, 배송 중=파란색, 완료=초록색
+  const getStatusBadgeClass = (status: string) => {
     const base = "h-6 px-2.5 py-0.5 rounded-full font-semibold text-[11px] tracking-wide flex items-center gap-1.5 w-fit border";
     switch (status) {
-      case "배송 중":
-        return (
-          <Badge variant="outline" className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300`}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
-            {status}
-          </Badge>
-        );
       case "승인 대기":
-        return (
-          <Badge variant="outline" className={`${base} border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300`}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-500 dark:bg-orange-400" />
-            {status}
-          </Badge>
-        );
+        return `${base} border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300`;
+      case "배송 중":
+        return `${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300`;
       case "배송 완료":
-        return (
-          <Badge variant="outline" className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300`}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-            {status}
-          </Badge>
-        );
+        return `${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300`;
       case "취소됨":
-        return (
-          <Badge variant="outline" className={`${base} border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300`}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400" />
-            {status}
-          </Badge>
-        );
+        return `${base} border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300`;
       default:
-        return (
-          <Badge variant="outline" className={`${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400`}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />
-            {status}
-          </Badge>
-        );
+        return `${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400`;
     }
   };
+  const getStatusDotClass = (status: string) => {
+    switch (status) {
+      case "승인 대기": return "bg-amber-500 dark:bg-amber-400";
+      case "배송 중": return "bg-blue-500 dark:bg-blue-400";
+      case "배송 완료": return "bg-emerald-500 dark:bg-emerald-400";
+      case "취소됨": return "bg-red-500 dark:bg-red-400";
+      default: return "bg-slate-500";
+    }
+  };
+  const renderStatusPill = (status: string) => (
+    <Badge variant="outline" className={getStatusBadgeClass(status)}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDotClass(status)}`} />
+      {status}
+    </Badge>
+  );
 
   // 주문 행 렌더링 함수 (데스크탑 테이블용)
   const renderOrderRow = (orderData: {
@@ -722,6 +663,14 @@ export default function DashboardPage() {
             <CardContent className="p-0">
               {ordersLoading ? (
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
+              ) : displayOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 px-6">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                    <Package className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">최근 주문 내역이 없습니다.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">주문을 진행하면 여기에 표시됩니다.</p>
+                </div>
               ) : (
                 <Tabs defaultValue="all" className="w-full">
                   <div className="border-b border-slate-200 dark:border-slate-800/50 px-6 pt-4">
