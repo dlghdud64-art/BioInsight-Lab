@@ -287,12 +287,27 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const status = searchParams.get("status");
+    const organizationId = searchParams.get("organizationId");
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      userId: session.user.id,
-    };
+    // organizationId가 주어진 경우 조직 멤버 권한 확인
+    if (organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: { organizationId, userId: session.user.id },
+      });
+      if (!membership) {
+        return NextResponse.json(
+          { error: "해당 조직에 접근 권한이 없습니다." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // organizationId 있으면 조직 주문, 없으면 개인 주문
+    const where: any = organizationId
+      ? { organizationId }
+      : { userId: session.user.id };
 
     if (status) {
       where.status = status;

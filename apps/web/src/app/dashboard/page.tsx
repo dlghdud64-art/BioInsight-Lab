@@ -25,15 +25,32 @@ export default function DashboardPage() {
     enabled: status === "authenticated",
   });
 
-  // 최근 주문 내역 조회
-  const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ["recent-orders"],
+  // 사용자 조직 목록 조회 (최근 주문 필터링에 사용)
+  const { data: orgsData, isSuccess: orgsLoaded } = useQuery({
+    queryKey: ["user-organizations-dashboard"],
     queryFn: async () => {
-      const response = await fetch("/api/orders?limit=10");
+      const res = await fetch("/api/organizations");
+      if (!res.ok) return { organizations: [] };
+      return res.json();
+    },
+    enabled: status === "authenticated",
+    staleTime: 60_000,
+  });
+  // 첫 번째 조직 ID (없으면 null, 미로드이면 undefined)
+  const primaryOrgId: string | null | undefined = orgsLoaded
+    ? (orgsData?.organizations?.[0]?.id ?? null)
+    : undefined;
+
+  // 최근 주문 내역 조회 (조직 또는 개인, 최신 5건)
+  const { data: ordersData, isLoading: ordersLoading } = useQuery({
+    queryKey: ["recent-orders", primaryOrgId],
+    queryFn: async () => {
+      const qs = primaryOrgId ? `&organizationId=${primaryOrgId}` : "";
+      const response = await fetch(`/api/orders?limit=5${qs}`);
       if (!response.ok) throw new Error("Failed to fetch orders");
       return response.json();
     },
-    enabled: status === "authenticated",
+    enabled: status === "authenticated" && primaryOrgId !== undefined,
   });
 
   if (status === "loading" || statsLoading) {
@@ -117,32 +134,32 @@ export default function DashboardPage() {
   const displayOrders = orders.length > 0 ? orders : mockOrders;
 
 
-  // 주문 데이터 처리 함수
+  // OrderStatus enum → 한글 변환 맵 (실제 DB 값 기반)
+  const ORDER_STATUS_MAP: Record<string, string> = {
+    ORDERED: "승인 대기",
+    SHIPPING: "배송 중",
+    DELIVERED: "배송 완료",
+    CANCELLED: "취소됨",
+  };
+
+  // 주문 데이터 처리 함수 (실제 DB 데이터 + 모크 데이터 모두 지원)
   const processOrderData = (order: any, index: number) => {
-    const productName = order.product || order.items?.[0]?.productName || "제품명 없음";
-    const vendor = order.vendor || "공급사 정보 없음";
-    const amount = order.amount || order.totalAmount || 0;
-    let status = order.status;
-    if (!status) {
-      if (order.status === "SHIPPING") status = "배송 중";
-      else if (order.status === "DELIVERED") status = "배송 완료";
-      else status = "승인 대기";
-    }
+    // 상품명: 실제 DB → items[0].name, 모크 → product
+    const productName = order.items?.[0]?.name || order.product || "제품명 없음";
+    // 공급사: 실제 DB → items[0].brand, 모크 → vendor
+    const vendor = order.items?.[0]?.brand || order.vendor || "공급사 정보 없음";
+    const amount = order.totalAmount ?? order.amount ?? 0;
+    // OrderStatus enum → 한글 (모크 데이터는 이미 한글이므로 그대로 사용)
+    const status = ORDER_STATUS_MAP[order.status] ?? order.status ?? "승인 대기";
     let date = order.date;
     if (!date && order.createdAt) {
       const dateObj = new Date(order.createdAt);
       date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
     }
-    const orderId = order.id || `order-${index}`;
+    // 주문번호 표시: orderNumber 우선, 없으면 id
+    const orderId = order.orderNumber || order.id || `order-${index}`;
 
-    return {
-      orderId,
-      productName,
-      vendor,
-      amount,
-      status,
-      date,
-    };
+    return { orderId, productName, vendor, amount, status, date };
   };
 
   // 프리미엄 Pill 뱃지 (Status Dot + 공통 클래스)
@@ -167,6 +184,13 @@ export default function DashboardPage() {
         return (
           <Badge variant="outline" className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300`}>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+            {status}
+          </Badge>
+        );
+      case "취소됨":
+        return (
+          <Badge variant="outline" className={`${base} border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300`}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400" />
             {status}
           </Badge>
         );
@@ -267,16 +291,11 @@ export default function DashboardPage() {
     );
   };
 
-  // 상태별 주문 필터링 함수
+  // 상태별 주문 필터링 함수 (OrderStatus enum → 한글 변환 후 비교)
   const filterOrdersByStatus = (orders: any[], status: string) => {
     return orders.filter((order: any) => {
-      let orderStatus = order.status;
-      if (!orderStatus) {
-        if (order.status === "SHIPPING") orderStatus = "배송 중";
-        else if (order.status === "DELIVERED") orderStatus = "배송 완료";
-        else orderStatus = "승인 대기";
-      }
-      return orderStatus === status;
+      const mapped = ORDER_STATUS_MAP[order.status] ?? order.status ?? "승인 대기";
+      return mapped === status;
     });
   };
 
