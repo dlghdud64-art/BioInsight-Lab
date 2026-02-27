@@ -69,7 +69,7 @@ export default function IntroPage() {
                 <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50 text-amber-500">
                   <Zap size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2 pt-12">
+                <CardHeader className="pb-2 pt-6">
                   <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     R&D 연구자
                   </CardTitle>
@@ -91,7 +91,7 @@ export default function IntroPage() {
                 <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-500">
                   <ShieldCheck size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2 pt-12">
+                <CardHeader className="pb-2 pt-6">
                   <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     QC/QA 매니저
                   </CardTitle>
@@ -113,7 +113,7 @@ export default function IntroPage() {
                 <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-500">
                   <Layers size={24} strokeWidth={2.5} />
                 </div>
-                <CardHeader className="pb-2 pt-12">
+                <CardHeader className="pb-2 pt-6">
                   <CardTitle className="text-xl font-bold text-slate-900 pr-14">
                     구매 담당자
                   </CardTitle>

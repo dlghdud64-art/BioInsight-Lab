@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ import {
 import Link from "next/link";
 import {
   Wallet,
-  Calendar,
   ArrowLeft,
   FileSpreadsheet,
   FileText,
@@ -60,105 +60,114 @@ type Budget = {
   };
 };
 
-// 다크모드 친화적 차트 컬러 (네온/소프트)
 const CHART_COLORS = [
-  "#3b82f6", // blue-500
-  "#10b981", // emerald-500
-  "#06b6d4", // cyan-500
-  "#8b5cf6", // violet-500
-  "#f59e0b", // amber-500
-  "#ec4899", // pink-500
+  "#3b82f6",
+  "#10b981",
+  "#06b6d4",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ec4899",
 ];
 
-const MOCK_BUDGETS: Budget[] = [
-  {
-    id: "1",
-    name: "2026 상반기 시약비",
-    amount: 50000000,
-    currency: "KRW",
-    periodStart: "2026-01-01",
-    periodEnd: "2026-06-30",
-    targetDepartment: "기초연구팀",
-    projectName: "R&D 프로젝트",
-    description: "상반기 시약 및 소모품 구매 예산",
-    usage: {
-      totalSpent: 12500000,
-      usageRate: 25,
-      remaining: 37500000,
-    },
-  },
-];
-
-// 월별 집행 추이 (Mock)
 const MOCK_SPENDING_TREND = [
   { month: "1월", amount: 0 },
-  { month: "2월", amount: 2800000 },
-  { month: "3월", amount: 4200000 },
-  { month: "4월", amount: 5500000 },
+  { month: "2월", amount: 0 },
+  { month: "3월", amount: 0 },
+  { month: "4월", amount: 0 },
 ];
 
-// 항목별 지출 비중 (Mock)
 const MOCK_CATEGORY_DATA = [
-  { name: "시약", value: 5200000, color: CHART_COLORS[0] },
-  { name: "소모품", value: 3800000, color: CHART_COLORS[1] },
-  { name: "장비", value: 2500000, color: CHART_COLORS[2] },
-  { name: "기타", value: 1000000, color: CHART_COLORS[3] },
+  { name: "시약", value: 0, color: CHART_COLORS[0] },
+  { name: "소모품", value: 0, color: CHART_COLORS[1] },
+  { name: "장비", value: 0, color: CHART_COLORS[2] },
 ];
 
-// 최근 집행 내역 (Mock)
-const MOCK_RECENT_SPENDING = [
-  {
-    id: "1",
-    date: "2026-04-15",
-    item: "Gibco FBS (500ml)",
-    vendor: "Thermo Fisher",
-    amount: 1850000,
-    category: "시약",
-    reportUrl: null as string | null,
-  },
-  {
-    id: "2",
-    date: "2026-04-10",
-    item: "Pipette Tips (1000μL)",
-    vendor: "Eppendorf",
-    amount: 420000,
-    category: "소모품",
-    reportUrl: null as string | null,
-  },
-  {
-    id: "3",
-    date: "2026-04-05",
-    item: "DMEM Medium (500ml)",
-    vendor: "Sigma-Aldrich",
-    amount: 890000,
-    category: "시약",
-    reportUrl: null as string | null,
-  },
-  {
-    id: "4",
-    date: "2026-03-28",
-    item: "Centrifuge Tube (50ml)",
-    vendor: "Corning",
-    amount: 320000,
-    category: "소모품",
-    reportUrl: null as string | null,
-  },
-  {
-    id: "5",
-    date: "2026-03-20",
-    item: "Microplate Reader",
-    vendor: "BioTek",
-    amount: 2500000,
-    category: "장비",
-    reportUrl: null as string | null,
-  },
-];
+function BudgetDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] py-8 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-8 w-24" />
+          </div>
+        </div>
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+          <CardContent className="p-4 md:p-6">
+            <div className="grid grid-cols-3 gap-4 md:gap-6">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-32" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-32" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-32" />
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+              <Skeleton className="h-2 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="md:col-span-2 h-[332px] rounded-xl" />
+          <Skeleton className="h-[332px] rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BudgetDetailPage({ params }: { params: { id: string } }) {
   const id = params?.id;
   const { toast } = useToast();
+  const [budget, setBudget] = useState<Budget | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [selectedSpending, setSelectedSpending] = useState<typeof MOCK_RECENT_SPENDING[0] | null>(null);
+  const [selectedSpending, setSelectedSpending] = useState<null | {
+    id: string; date: string; item: string; vendor: string; amount: number; category: string;
+  }>(null);
+
+  const fetchBudget = useCallback(async () => {
+    if (!id) return;
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/budgets/${id}`);
+      if (res.status === 404) {
+        setNotFound(true);
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch budget");
+      const json = await res.json();
+      setBudget(json.budget ?? null);
+      if (!json.budget) setNotFound(true);
+    } catch (err) {
+      console.error("[BudgetDetailPage] Error fetching budget:", err);
+      setNotFound(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchBudget();
+  }, [fetchBudget]);
 
   if (!id) {
     return (
@@ -168,9 +177,11 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
     );
   }
 
-  const budget = MOCK_BUDGETS.find((b) => b.id === id);
+  if (isLoading) {
+    return <BudgetDetailSkeleton />;
+  }
 
-  if (!budget) {
+  if (notFound || !budget) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0b1120]">
         <div className="text-center space-y-4">
@@ -191,11 +202,6 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const usageRate = usage?.usageRate ?? 0;
   const startStr = new Date(budget.periodStart).toLocaleDateString("ko-KR");
   const endStr = new Date(budget.periodEnd).toLocaleDateString("ko-KR");
-
-  const handleRowClick = (item: typeof MOCK_RECENT_SPENDING[0]) => {
-    setSelectedSpending(item);
-    setReportDialogOpen(true);
-  };
 
   const handleExcelDownload = () => {
     toast({ title: "엑셀 다운로드", description: "집행 내역이 다운로드됩니다. (준비 중)" });
@@ -219,7 +225,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
-                예산 상세: {budget.name}
+                {budget.name}
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400">{startStr} ~ {endStr}</span>
@@ -265,7 +271,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </div>
         </div>
 
-        {/* Top: 3단 수치 요약 (콤팩트) */}
+        {/* 수치 요약 */}
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
           <CardContent className="p-4 md:p-6">
             <div className="grid grid-cols-3 gap-4 md:gap-6">
@@ -300,7 +306,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </CardContent>
         </Card>
 
-        {/* Middle: 차트 2열 */}
+        {/* 차트 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-2 shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
             <CardHeader className="pb-2">
@@ -326,16 +332,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                       color: "hsl(var(--card-foreground))",
                     }}
                     formatter={(value: number) => [formatAmount(value), "집행액"]}
-                    labelFormatter={(label) => label}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorAmount)"
-                  />
+                  <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -379,58 +377,26 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </Card>
         </div>
 
-        {/* Bottom: 최근 집행 내역 테이블 */}
+        {/* 집행 내역 */}
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
           <CardHeader>
-            <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">최근 집행 내역</CardTitle>
+            <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">집행 내역</CardTitle>
             <CardDescription className="text-slate-500 dark:text-slate-400">
-              항목 클릭 시 관련 구매 보고서를 확인할 수 있습니다.
+              구매 데이터가 연동되면 실제 집행 내역이 표시됩니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-200 dark:border-slate-800">
-                    <TableHead className="text-slate-600 dark:text-slate-400">날짜</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400">항목</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400">벤더</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400">카테고리</TableHead>
-                    <TableHead className="text-right text-slate-600 dark:text-slate-400">금액</TableHead>
-                    <TableHead className="w-[50px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MOCK_RECENT_SPENDING.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-slate-100 dark:border-slate-800"
-                      onClick={() => handleRowClick(item)}
-                    >
-                      <TableCell className="text-slate-700 dark:text-slate-300">{formatDate(item.date)}</TableCell>
-                      <TableCell className="font-medium text-slate-900 dark:text-white">{item.item}</TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400">{item.vendor}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {item.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-slate-900 dark:text-white">
-                        {formatAmount(item.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                아직 집행 내역이 없습니다.
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* 구매 보고서 팝업 */}
+      {/* 보고서 팝업 (placeholder) */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
         <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader>

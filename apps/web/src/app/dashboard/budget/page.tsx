@@ -57,6 +57,23 @@ export default function BudgetPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(true);
+  // 현재 활성 조직 ID (예산 저장 시 주입)
+  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+
+  /** 사용자 소속 조직 ID 조회 */
+  const fetchActiveOrg = useCallback(async () => {
+    try {
+      const res = await fetch("/api/organizations");
+      if (!res.ok) return;
+      const json = await res.json();
+      const orgs = Array.isArray(json.organizations) ? json.organizations : [];
+      if (orgs.length > 0) {
+        setActiveOrgId(orgs[0].id);
+      }
+    } catch (e) {
+      console.error("[BudgetPage] Failed to fetch active org:", e);
+    }
+  }, []);
 
   /** 예산 목록 서버에서 불러오기 */
   const fetchBudgets = useCallback(async () => {
@@ -76,7 +93,8 @@ export default function BudgetPage() {
 
   useEffect(() => {
     fetchBudgets();
-  }, [fetchBudgets]);
+    fetchActiveOrg();
+  }, [fetchBudgets, fetchActiveOrg]);
 
   /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
   const handleAddBudget = async (formData: {
@@ -93,6 +111,11 @@ export default function BudgetPage() {
     setSubmitError(null);
 
     try {
+      // 금액 전처리: 숫자 외 문자 제거
+      const cleanAmount = typeof formData.amount === 'string'
+        ? Number(String(formData.amount).replace(/[^0-9]/g, ""))
+        : formData.amount;
+
       const res = await fetch("/api/budgets", {
         method: "POST",
         headers: {
@@ -100,12 +123,14 @@ export default function BudgetPage() {
         },
         body: JSON.stringify({
           name: formData.name,
-          amount: formData.amount,
+          amount: cleanAmount,
           currency: formData.currency,
           periodStart: formData.periodStart,
           periodEnd: formData.periodEnd,
           projectName: formData.projectName,
           description: formData.description,
+          // 현재 활성 조직 ID 명시적 주입
+          organizationId: activeOrgId,
         }),
       });
 
@@ -119,12 +144,7 @@ export default function BudgetPage() {
 
         console.error("[BudgetPage] Failed to save budget:", json);
         setSubmitError(message);
-        toast({
-          title: "예산 저장 실패",
-          description:
-            "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다.",
-          variant: "destructive",
-        });
+        // 토스트 대신 인라인 에러만 표시 (다이얼로그 내 붉은색 텍스트)
         return;
       }
 
@@ -151,28 +171,28 @@ export default function BudgetPage() {
         setBudgets((prev) =>
           prev.map((b) => (b.id === editingBudget.id ? mappedBudget : b))
         );
+        setIsDialogOpen(false);
+        setEditingBudget(null);
         toast({ title: "예산이 수정되었습니다." });
+        await fetchBudgets();
       } else {
         setBudgets((prev) => [mappedBudget, ...prev]);
-        toast({ title: "새 예산이 성공적으로 등록되었습니다." });
+        setIsDialogOpen(false);
+        setEditingBudget(null);
+        // 신규 예산: 상세 페이지로 이동 (ID가 있을 때만)
+        const newId = apiBudget?.id;
+        if (newId) {
+          router.push(`/dashboard/budget/${newId}`);
+        } else {
+          toast({ title: "새 예산이 성공적으로 등록되었습니다." });
+          await fetchBudgets();
+        }
       }
-
-      setIsDialogOpen(false);
-      setEditingBudget(null);
-
-      await fetchBudgets();
-      router.refresh();
     } catch (error) {
       console.error("[BudgetPage] Unexpected error while saving budget:", error);
       setSubmitError(
         "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다. 잠시 후 다시 시도해주세요."
       );
-      toast({
-        title: "예산 저장 실패",
-        description:
-          "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다.",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }

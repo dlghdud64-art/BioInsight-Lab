@@ -31,6 +31,12 @@ import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Info, FileText, BellRing, Save } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProductInventory {
   id: string;
@@ -681,7 +687,7 @@ export default function InventoryPage() {
                   className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  한눈에 보기
+                  점검 사항
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -792,10 +798,10 @@ export default function InventoryPage() {
             )}
           </TabsContent>
 
-            {/* 2. 한눈에 보기 (대시보드 전용 뷰) */}
+            {/* 2. 점검 사항 (대시보드 전용 뷰) */}
             <TabsContent value="overview" className="m-0 p-6 space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col md:flex-row gap-4">
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                     전체 재고
@@ -812,7 +818,7 @@ export default function InventoryPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-red-100 bg-red-50/10 shadow-sm dark:border-red-900/50 dark:bg-red-950/20">
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
                     부족/품절
@@ -829,7 +835,7 @@ export default function InventoryPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-orange-100 bg-orange-50/10 shadow-sm dark:border-orange-900/50 dark:bg-orange-950/20">
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 border-orange-100 bg-orange-50/10 dark:border-orange-900/50 dark:bg-orange-950/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
                     폐기 임박
@@ -847,11 +853,11 @@ export default function InventoryPage() {
               </Card>
             </div>
 
-            <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+            <Card className="shadow-sm border-slate-100 dark:border-slate-800">
               <CardHeader>
                 <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
                   <AlertTriangle className="mr-2 h-5 w-5" />
-                  긴급 발주/폐기 필요 품목
+                  주요 점검 이슈
                 </CardTitle>
                 <CardDescription>
                   재고 부족 또는 유통기한 임박 항목입니다. 클릭하면 상세 보기에서 조치할 수 있습니다.
@@ -905,7 +911,7 @@ export default function InventoryPage() {
                       {urgent.map((inv) => (
                         <div
                           key={inv.id}
-                          className="flex items-center justify-between p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg gap-3"
+                          className="flex items-center justify-between p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                         >
                           <button
                             type="button"
@@ -928,12 +934,14 @@ export default function InventoryPage() {
                             </p>
                           </button>
                           <div className="flex gap-2 flex-shrink-0">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
-                              title="발주 요청"
-                              onClick={(e) => {
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+                                    onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedItem(inv);
                                 setSheetSafetyStock(
@@ -941,13 +949,17 @@ export default function InventoryPage() {
                                 );
                                 setIsSheetOpen(true);
                                 toast({
-                                  title: "발주 요청",
+                                  title: "구매 요청",
                                   description: `${inv.product.name} 상세 보기에서 견적 요청을 진행할 수 있습니다.`,
                                 });
                               }}
-                            >
-                              <ShoppingCart className="h-4 w-4" />
-                            </Button>
+                                  >
+                                    <ShoppingCart className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>구매 요청</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                             <Button
                               size="icon"
                               variant="ghost"

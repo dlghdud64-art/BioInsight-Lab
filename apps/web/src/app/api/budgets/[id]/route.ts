@@ -2,6 +2,87 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+// 예산 단건 조회
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const budget = await db.budget.findUnique({ where: { id } });
+
+    if (!budget) {
+      return NextResponse.json({ error: "Budget not found" }, { status: 404 });
+    }
+
+    // 접근 권한 확인
+    const userScopeKey = `user-${session.user.id}`;
+    if (budget.scopeKey !== userScopeKey) {
+      const isOrgMember = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: budget.scopeKey },
+      });
+      if (!isOrgMember) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    const [year, month] = budget.yearMonth.split("-").map(Number);
+    const periodStart = new Date(year, month - 1, 1);
+    const periodEnd = new Date(year, month, 0, 23, 59, 59);
+
+    // 사용액 계산 (조직 예산인 경우)
+    let totalSpent = 0;
+    if (!budget.scopeKey.startsWith("user-")) {
+      const purchaseRecords = await db.purchaseRecord.findMany({
+        where: {
+          organizationId: budget.scopeKey,
+          purchasedAt: { gte: periodStart, lte: periodEnd },
+        },
+      });
+      totalSpent = purchaseRecords.reduce(
+        (sum: number, r: any) => sum + (r.amount || 0),
+        0
+      );
+    }
+
+    const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
+    const remaining = budget.amount - totalSpent;
+
+    // description에서 name, projectName 추출
+    let name = `${budget.yearMonth} Budget`;
+    let projectName: string | null = null;
+    if (budget.description) {
+      const nameMatch = budget.description.match(/^\[([^\]]+)\]/);
+      if (nameMatch) name = nameMatch[1];
+      const projectMatch = budget.description.match(/프로젝트: ([^|]+)/);
+      if (projectMatch) projectName = projectMatch[1].trim();
+    }
+
+    return NextResponse.json({
+      budget: {
+        ...budget,
+        name,
+        projectName,
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+        usage: { totalSpent, usageRate, remaining },
+      },
+    });
+  } catch (error: any) {
+    console.error("[Budget API] Error fetching budget:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to fetch budget" },
+      { status: 500 }
+    );
+  }
+}
+
 // 예산 수정
 export async function PATCH(
   request: NextRequest,

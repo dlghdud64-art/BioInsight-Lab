@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const trimmedName = name.trim();
     const trimmedDescription = description?.trim();
 
-    // 2. 요금제별 조직 생성 한도 체크 (Basic: 3개, Pro 이상: 무제한)
+    // 2. 요금제별 조직 생성 한도 체크 (Free/Starter: 1개, Basic: 3개, Pro 이상: 무제한)
     const existingMemberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       include: {
@@ -85,16 +85,20 @@ export async function POST(request: NextRequest) {
     });
 
     const currentOrgCount = existingMemberships.length;
-    const hasPremiumPlan = existingMemberships.some((m: any) => {
-      const plan: string | undefined = m.organization?.subscription?.plan;
-      return plan && plan !== "FREE" && plan !== "BASIC";
-    });
+    const plans = existingMemberships.map((m: any) =>
+      (m.organization?.subscription?.plan as string | undefined) ?? "FREE"
+    );
+    const hasPro = plans.some((p) => p === "TEAM" || p === "ORGANIZATION");
+    const hasBasic = !hasPro && plans.some((p) => p === "BASIC");
+    const orgLimit = hasPro ? Infinity : hasBasic ? 3 : 1; // Free/Starter: 1개, Basic: 3개
 
-    if (!hasPremiumPlan && currentOrgCount >= 3) {
-      console.warn("[Organizations API] Plan limit exceeded:", { currentOrgCount, hasPremiumPlan });
+    if (currentOrgCount >= orgLimit) {
+      const planName = hasPro ? "Pro" : hasBasic ? "Basic" : "Free/Starter";
+      const limitLabel = hasPro ? "무제한" : hasBasic ? "3개" : "1개";
+      console.warn("[Organizations API] Plan limit exceeded:", { currentOrgCount, orgLimit, planName });
       return NextResponse.json(
         {
-          error: "Basic 요금제에서는 최대 3개의 조직만 생성할 수 있습니다. Pro 요금제로 업그레이드하면 무제한으로 생성할 수 있습니다.",
+          error: `${planName} 요금제에서는 최대 ${limitLabel}의 조직만 생성할 수 있습니다. 더 많은 조직이 필요하다면 요금제를 업그레이드하세요.`,
           code: "PLAN_LIMIT_EXCEEDED",
         },
         { status: 403 }

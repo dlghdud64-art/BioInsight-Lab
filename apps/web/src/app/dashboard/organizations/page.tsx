@@ -150,18 +150,17 @@ export default function OrganizationsPage() {
       }
 
       const createdOrg = (json as any).organization;
+      const newOrgId: string | null = createdOrg?.id ?? null;
 
-      // 로컬 목록 즉시 반영 (API 응답을 카드 형식에 맞게 매핑)
-      if (createdOrg) {
-        const mapped = {
-          id: createdOrg.id,
-          name: createdOrg.name ?? formData.name.trim(),
-          description: createdOrg.description ?? formData.description.trim() ?? "",
-          memberCount: Array.isArray(createdOrg.members) ? createdOrg.members.length : 1,
-          role: createdOrg.role ?? "최고 관리자",
-        };
-        setOrganizations((prev) => [mapped, ...prev]);
-      }
+      // 로컬 목록 즉시 반영 — refetch 없이 로컬 state만 업데이트 (race condition 방지)
+      const mapped = {
+        id: newOrgId ?? String(Date.now()),
+        name: createdOrg?.name ?? formData.name.trim(),
+        description: createdOrg?.description ?? formData.description.trim() ?? "",
+        memberCount: Array.isArray(createdOrg?.members) ? createdOrg.members.length : 1,
+        role: "관리자",
+      };
+      setOrganizations((prev) => [mapped, ...prev]);
 
       toast({
         title: "조직 생성 완료",
@@ -171,8 +170,10 @@ export default function OrganizationsPage() {
       setIsOpen(false);
       setFormData({ name: "", description: "" });
 
-      await refetchOrganizations();
-      router.refresh();
+      // 생성된 조직 상세 페이지로 이동 (예산 설정 등 다음 단계 유도)
+      if (newOrgId) {
+        router.push(`/dashboard/organizations/${newOrgId}`);
+      }
     } catch (error) {
       console.error("[OrganizationsPage] Unexpected error creating organization:", error);
       toast({

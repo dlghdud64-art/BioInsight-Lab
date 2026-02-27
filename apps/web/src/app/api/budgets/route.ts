@@ -197,36 +197,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Team ID 세션에서 주입 (요청 바디를 믿지 않음)
-    // scopeKey 결정: 세션에서 사용자의 조직 ID를 가져와 강제 주입
+    // 3. scopeKey 결정: 요청의 organizationId를 우선 사용, 없으면 세션에서 자동 조회
     let scopeKey: string;
 
-    console.log("[Budget API] Fetching user organization...");
-
-    // 사용자의 조직이 있는지 확인
-    const userOrg = await db.organizationMember.findFirst({
-      where: { userId: session.user.id },
-      select: { organizationId: true },
-    });
-
-    console.log("[Budget API] User Organization:", userOrg);
-
-    if (userOrg) {
-      // 조직이 있으면 해당 조직 ID 사용 (요청의 organizationId는 무시)
-      scopeKey = userOrg.organizationId;
-      console.log("[Budget API] Using organization scopeKey:", scopeKey);
+    if (requestedOrgId && typeof requestedOrgId === 'string') {
+      // 요청으로 조직 ID가 전달된 경우 — 멤버십 검증 후 사용
+      const membership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: requestedOrgId },
+        select: { organizationId: true },
+      });
+      if (membership) {
+        scopeKey = membership.organizationId;
+        console.log("[Budget API] Using requested organizationId:", scopeKey);
+      } else {
+        // 해당 조직의 멤버가 아니면 세션에서 자동 조회 (fallback)
+        const userOrg = await db.organizationMember.findFirst({
+          where: { userId: session.user.id },
+          select: { organizationId: true },
+        });
+        scopeKey = userOrg ? userOrg.organizationId : `user-${session.user.id}`;
+        console.log("[Budget API] Requested org not a member, fallback scopeKey:", scopeKey);
+      }
     } else {
-      // 조직이 없으면 사용자 ID를 scopeKey로 사용
-      scopeKey = `user-${session.user.id}`;
-      console.log("[Budget API] Using user scopeKey:", scopeKey);
-    }
-
-    if (!scopeKey) {
-      console.error("[Budget API] scopeKey is missing!");
-      return NextResponse.json(
-        { error: "조직 정보를 찾을 수 없습니다. 조직에 가입하거나 관리자에게 문의하세요." },
-        { status: 400 }
-      );
+      // organizationId 미전달 시 세션에서 자동 조회
+      const userOrg = await db.organizationMember.findFirst({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      scopeKey = userOrg ? userOrg.organizationId : `user-${session.user.id}`;
+      console.log("[Budget API] Auto scopeKey:", scopeKey);
     }
 
     // 금액을 정수로 변환 (Prisma 스키마에서 Int로 정의됨)
