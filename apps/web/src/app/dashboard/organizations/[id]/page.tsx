@@ -391,7 +391,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       <Tabs defaultValue="members" className="space-y-4">
         <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <TabsTrigger value="dashboard" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
-            개요
+            조직활동
           </TabsTrigger>
           <TabsTrigger value="members" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
             멤버
