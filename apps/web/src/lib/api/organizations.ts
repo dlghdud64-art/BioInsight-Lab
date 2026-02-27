@@ -73,12 +73,22 @@ export async function leaveOrganization(organizationId: string, userId: string) 
   });
 }
 
+// 조직 유형 옵션 (프론트와 동기화)
+export const ORGANIZATION_TYPE_OPTIONS = [
+  "R&D 연구소",
+  "QC/QA 품질관리",
+  "시험·검사 기관",
+  "대학 연구실",
+  "기타",
+] as const;
+
 // 조직 생성 (RLS 권한 문제 해결을 위해 트랜잭션 사용)
 export async function createOrganization(
   userId: string,
   data: {
     name: string;
     description?: string;
+    organizationType?: string;
   }
 ) {
   // 트랜잭션으로 조직 생성과 멤버 등록을 원자적으로 처리
@@ -88,6 +98,7 @@ export async function createOrganization(
       data: {
         name: data.name,
         description: data.description,
+        organizationType: data.organizationType ?? null,
         plan: "FREE",
       },
     });

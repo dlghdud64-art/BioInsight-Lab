@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -106,6 +106,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // 조직 정보 조회
   const { data: orgsData, isLoading: orgLoading } = useQuery({
     queryKey: ["organizations"],
@@ -129,6 +132,30 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       setEditDescription(organization.description || "");
     }
   }, [organization?.name]);
+
+  // 로고 미리보기 URL 정리
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return;
+    if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    setLogoPreviewUrl(URL.createObjectURL(file));
+    setLogoFile(file);
+    e.target.value = "";
+  };
+
+  const handleLogoRemove = () => {
+    if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    setLogoPreviewUrl(null);
+    setLogoFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // 멤버 목록 조회
   const { data: membersData, isLoading: membersLoading } = useQuery({
@@ -594,6 +621,48 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <CardDescription className="dark:text-slate-400">조직명과 설명을 수정합니다.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* 연구실 로고 업로드 */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 overflow-hidden flex items-center justify-center">
+                      {logoPreviewUrl ? (
+                        <img
+                          src={logoPreviewUrl}
+                          alt="조직 로고"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl font-bold text-slate-500 dark:text-slate-400">
+                          {(editName || organization?.name || "조")[0]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg, image/png, image/webp"
+                        className="hidden"
+                        onChange={handleLogoSelect}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-fit"
+                      >
+                        이미지 업로드
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={handleLogoRemove}
+                        className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 underline underline-offset-2"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="edit-name" className="dark:text-slate-300">조직명</Label>
                     <Input

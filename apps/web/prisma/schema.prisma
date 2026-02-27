@@ -53,6 +53,7 @@ model Organization {
   id                String           @id @default(cuid())
   name              String
   description       String?          @db.Text
+  organizationType  String?          // R&D 연구소, QC/QA 품질관리, 시험·검사 기관, 대학 연구실, 기타
   plan              SubscriptionPlan @default(FREE) // 구독 ?랜
   planExpiresAt     DateTime? // ?랜 만료??
   maxMembers        Int? // 최? 멤버 ??(?랜??한)

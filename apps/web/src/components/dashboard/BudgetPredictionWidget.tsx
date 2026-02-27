@@ -76,7 +76,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (isLoading) {
     return (
-      <Card className="border-blue-900/30 bg-[#0b1120] animate-pulse">
+      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-slate-900 dark:border-slate-800 animate-pulse">
         <CardContent className="p-5 h-[140px]" />
       </Card>
     );
@@ -88,9 +88,10 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
   const exhaustLabel = data.exhaustDate
     ? `D-${dDay} (${formatDate(data.exhaustDate)} 고갈 예상)`
     : "데이터 부족";
+  const hasWarning = data.hasWarning;
 
   return (
-    <Card className="border-blue-900/30 bg-[#0b1120] text-white overflow-hidden">
+    <Card className={`border border-slate-200 shadow-sm overflow-hidden dark:border-slate-800 ${hasWarning ? "bg-red-50/30 dark:bg-red-950/20" : "bg-white dark:bg-slate-900"}`}>
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}
@@ -101,7 +102,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
               </span>
-              <span className="text-xs font-medium text-blue-400 tracking-wide">
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wide">
                 AI 예측 분석 중
               </span>
             </div>
@@ -109,24 +110,24 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
             {/* 예상 고갈일 */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-red-400 shrink-0" />
-                <p className="text-xs text-slate-400">예산 고갈 예측</p>
+                <CalendarClock className="h-4 w-4 text-red-500 shrink-0" />
+                <p className="text-xs text-slate-600 dark:text-slate-400">예산 고갈 예측</p>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-red-400 leading-tight tracking-tight">
+              <p className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 leading-tight tracking-tight">
                 {exhaustLabel}
               </p>
             </div>
 
             {/* 소진 속도 */}
             <div className="flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
-              <p className="text-xs text-slate-400">
+              <TrendingDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 월평균{" "}
-                <span className="text-slate-200 font-medium">
+                <span className="text-slate-900 dark:text-slate-200 font-medium">
                   {formatKRW(data.avgMonthlyBurnRate)}
                 </span>{" "}
                 소진 중 &middot; 잔여{" "}
-                <span className="text-emerald-400 font-medium">
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                   {formatKRW(data.remaining)}
                 </span>
               </p>
@@ -139,11 +140,12 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               <LineChart data={data.sparkline}>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #334155",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e2e8f0",
                     borderRadius: "6px",
-                    color: "#e2e8f0",
+                    color: "#0f172a",
                     fontSize: 12,
+                    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                   }}
                   formatter={(v: number) => [formatKRW(v), "소진액"]}
                   labelFormatter={(l) => l}
@@ -163,17 +165,17 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
         {/* AI 인사이트 영역 */}
         {data.hasWarning && data.warningMessage && (
-          <div className="mx-4 mb-4 rounded-lg bg-blue-900/20 border border-blue-800/40 px-4 py-3 flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-300 leading-relaxed">
+          <div className="mx-4 mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-700 dark:text-amber-200 leading-relaxed">
               {data.warningMessage}
             </p>
           </div>
         )}
         {!data.hasWarning && (
-          <div className="mx-4 rounded-lg bg-blue-900/20 border border-blue-800/40 px-4 py-3 flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-300 leading-relaxed">
+          <div className="mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
           </div>
@@ -183,9 +185,10 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         <div className="mx-4 mb-4 mt-3 flex justify-end">
           <Button
             size="sm"
+            variant="outline"
             disabled={isDownloading}
             onClick={handleDownload}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3"
+            className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50 text-xs h-8 px-3"
           >
             {isDownloading ? (
               <>

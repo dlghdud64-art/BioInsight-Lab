@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { createOrganization } from "@/lib/api/organizations";
+import { createOrganization, ORGANIZATION_TYPE_OPTIONS } from "@/lib/api/organizations";
+import { z } from "zod";
+
+const createOrganizationSchema = z.object({
+  name: z.string().min(1, "조직 이름을 입력해주세요.").max(200),
+  description: z.string().max(1000).optional().nullable(),
+  organizationType: z
+    .string()
+    .max(100)
+    .optional()
+    .nullable()
+    .refine(
+      (v) => !v || ORGANIZATION_TYPE_OPTIONS.includes(v as (typeof ORGANIZATION_TYPE_OPTIONS)[number]),
+      "유효하지 않은 조직 유형입니다."
+    ),
+});
 
 // ì¬ì©ìê° ììë ì¡°ì§ ëª©ë¡ ì¡°í
 export async function GET(request: NextRequest) {
@@ -58,21 +73,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("[Organizations API] Request Body:", JSON.stringify(body, null, 2));
 
-    const { name, description } = body;
-
-    // 입력 검증
-    console.log("[Organizations API] Validating input - Name:", name, "Type:", typeof name);
-
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      console.error("[Organizations API] Validation failed - Invalid name");
-      return NextResponse.json(
-        { error: "조직 이름을 입력해주세요." },
-        { status: 400 }
-      );
+    const parsed = createOrganizationSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.flatten().fieldErrors;
+      const msg = firstError.name?.[0] ?? firstError.organizationType?.[0] ?? "입력값을 확인해주세요.";
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
 
+    const { name, description, organizationType } = parsed.data;
     const trimmedName = name.trim();
-    const trimmedDescription = description?.trim();
+    const trimmedDescription = description?.trim() || undefined;
+    const trimmedOrgType = organizationType?.trim() || undefined;
 
     // 2. 요금제별 조직 생성 한도 체크 (Free/Starter: 1개, Basic: 3개, Pro 이상: 무제한)
     const existingMemberships = await db.organizationMember.findMany({
@@ -109,12 +120,14 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       name: trimmedName,
       description: trimmedDescription,
+      organizationType: trimmedOrgType,
     });
 
     // 3. 조직 생성 및 멤버 등록 (트랜잭션으로 처리)
     const organization = await createOrganization(session.user.id, {
       name: trimmedName,
       description: trimmedDescription,
+      organizationType: trimmedOrgType,
     });
 
     console.log("[Organizations API] Organization created successfully:", organization.id);

@@ -34,7 +34,7 @@ function SignInContent() {
         {/* 2. 슬로건: 수직 중앙 배치 */}
         <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-8">
           <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tighter antialiased">
-            연구에만 집중하세요.
+            연구와 분석에만 집중하세요.
             <br />
             <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
           </h1>

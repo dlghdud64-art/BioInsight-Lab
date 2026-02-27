@@ -21,6 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +41,7 @@ export default function OrganizationsPage() {
   const [isFetching, setIsFetching] = useState(true);
   const [navigatingToOrgId, setNavigatingToOrgId] = useState<string | number | null>(null);
   const [organizations, setOrganizations] = useState<any[]>([]);
-  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [formData, setFormData] = useState({ name: "", description: "", organizationType: "" });
 
   // 조직 목록 불러오기
   useEffect(() => {
@@ -129,6 +136,7 @@ export default function OrganizationsPage() {
         body: JSON.stringify({
           name: formData.name.trim(),
           description: formData.description.trim(),
+          organizationType: formData.organizationType.trim() || undefined,
         }),
       });
 
@@ -168,7 +176,7 @@ export default function OrganizationsPage() {
       });
 
       setIsOpen(false);
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "", description: "", organizationType: "" });
 
       // 생성된 조직 상세 페이지로 이동 (예산 설정 등 다음 단계 유도)
       if (newOrgId) {
@@ -233,6 +241,26 @@ export default function OrganizationsPage() {
                   setFormData({ ...formData, name: e.target.value })
                 }
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-type">조직 유형</Label>
+              <Select
+                value={formData.organizationType || undefined}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, organizationType: v })
+                }
+              >
+                <SelectTrigger id="org-type">
+                  <SelectValue placeholder="조직 유형을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="R&D 연구소">R&D 연구소</SelectItem>
+                  <SelectItem value="QC/QA 품질관리">QC/QA 품질관리</SelectItem>
+                  <SelectItem value="시험·검사 기관">시험·검사 기관</SelectItem>
+                  <SelectItem value="대학 연구실">대학 연구실</SelectItem>
+                  <SelectItem value="기타">기타</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="org-desc">간단한 설명 (선택)</Label>
