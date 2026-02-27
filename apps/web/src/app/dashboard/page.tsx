@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, LayoutDashboard } from "lucide-react";
+import { BudgetPredictionWidget } from "@/components/dashboard/BudgetPredictionWidget";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -353,6 +354,9 @@ export default function DashboardPage() {
           안녕하세요! 오늘도 효율적인 연구와 업무를 지원합니다. 🚀
         </p>
       </div>
+
+      {/* 예산 소진 예측 위젯 */}
+      <BudgetPredictionWidget />
 
       {/* 모바일 전용 레이아웃 */}
       <div className="md:hidden space-y-4">
