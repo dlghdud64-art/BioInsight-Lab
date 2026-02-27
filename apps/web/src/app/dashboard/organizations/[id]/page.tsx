@@ -30,7 +30,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
-  Settings, Wallet, PauseCircle, X, Send, AlertTriangle, Building2,
+  Settings, Wallet, PauseCircle, X, Send, Building2,
   FileText, Package, ShoppingCart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -106,9 +106,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [isDeletingOrg, setIsDeletingOrg] = useState(false);
-
   // 조직 정보 조회
   const { data: orgsData, isLoading: orgLoading } = useQuery({
     queryKey: ["organizations"],
@@ -285,24 +282,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       toast({ title: "수정 실패", description: e.message, variant: "destructive" });
     } finally {
       setIsSavingName(false);
-    }
-  };
-
-  // 조직 삭제
-  const handleDeleteOrg = async () => {
-    if (deleteConfirmText !== organization.name) return;
-    setIsDeletingOrg(true);
-    try {
-      const res = await fetch(`/api/organizations/${params.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.error || "삭제 실패");
-      }
-      toast({ title: "조직이 삭제되었습니다." });
-      router.push("/dashboard/organizations");
-    } catch (e: any) {
-      toast({ title: "삭제 실패", description: e.message, variant: "destructive" });
-      setIsDeletingOrg(false);
     }
   };
 
@@ -648,44 +627,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
 
-              {/* 위험 구역 */}
-              <Card className="shadow-sm border-red-200 dark:border-red-800/50 bg-white dark:bg-slate-900">
-                <CardHeader>
-                  <CardTitle className="text-base text-red-600 dark:text-red-400 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    위험 구역
-                  </CardTitle>
-                  <CardDescription className="dark:text-slate-400">
-                    아래 작업은 되돌릴 수 없습니다. 신중하게 진행하세요.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-lg border border-red-200 dark:border-red-800/50 p-4 space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">조직 삭제</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        조직을 삭제하면 모든 멤버, 데이터가 영구 삭제됩니다. 계속하려면 아래에 <span className="font-semibold text-red-600 dark:text-red-400">"{organization.name}"</span>을 입력하세요.
-                      </p>
-                    </div>
-                    <Input
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder={`"${organization.name}" 을 입력하세요`}
-                      className="dark:bg-slate-800 dark:border-slate-700 dark:text-white border-red-200 dark:border-red-800/50 focus:border-red-400"
-                    />
-                    <Button
-                      variant="destructive"
-                      disabled={deleteConfirmText !== organization.name || isDeletingOrg}
-                      onClick={handleDeleteOrg}
-                      className="w-full"
-                    >
-                      {isDeletingOrg ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />삭제 중...</>
-                      ) : "조직 영구 삭제"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
         )}
