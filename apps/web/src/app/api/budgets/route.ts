@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         if (!budget.scopeKey.startsWith('user-')) {
           const purchaseRecords = await db.purchaseRecord.findMany({
             where: {
-              organizationId: budget.scopeKey,
+              scopeKey: budget.scopeKey,
               purchasedAt: {
                 gte: periodStart,
                 lte: periodEnd,
