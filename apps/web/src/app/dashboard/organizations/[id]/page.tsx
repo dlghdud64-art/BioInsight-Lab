@@ -687,7 +687,6 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <SelectItem value="VIEWER">연구원 (조회자)</SelectItem>
                     <SelectItem value="REQUESTER">요청자</SelectItem>
                     <SelectItem value="APPROVER">승인자</SelectItem>
-                    <SelectItem value="ADMIN">관리자</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
