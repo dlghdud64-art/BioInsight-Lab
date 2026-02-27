@@ -255,26 +255,32 @@ export async function POST(request: NextRequest) {
       projectName: sanitizedProjectName,
     });
 
-    const budget = await db.budget.upsert({
-      where: {
-        scopeKey_yearMonth: {
+    // upsert 대신 findFirst + create/update 방식 사용 (복합 유니크 키 의존성 제거)
+    const existing = await db.budget.findFirst({
+      where: { scopeKey, yearMonth: finalYearMonth },
+    });
+
+    let budget;
+    if (existing) {
+      budget = await db.budget.update({
+        where: { id: existing.id },
+        data: {
+          amount: amountInt,
+          currency: currency || "KRW",
+          description: finalDescription,
+        },
+      });
+    } else {
+      budget = await db.budget.create({
+        data: {
           scopeKey,
           yearMonth: finalYearMonth,
+          amount: amountInt,
+          currency: currency || "KRW",
+          description: finalDescription,
         },
-      },
-      create: {
-        scopeKey,
-        yearMonth: finalYearMonth,
-        amount: amountInt,
-        currency: currency || "KRW",
-        description: finalDescription,
-      },
-      update: {
-        amount: amountInt,
-        currency: currency || "KRW",
-        description: finalDescription,
-      },
-    });
+      });
+    }
 
     // 프론트엔드가 기대하는 형식으로 응답 변환
     const [year, month] = finalYearMonth.split("-").map(Number);
