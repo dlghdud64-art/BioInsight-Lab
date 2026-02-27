@@ -2,14 +2,17 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -18,16 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -35,11 +28,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, UserPlus, Mail, Trash2, Loader2, Search, Users, ShieldCheck, MoreVertical, X, Send, FileText, Shield, Settings, Wallet, PauseCircle } from "lucide-react";
+import {
+  ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
+  Settings, Wallet, PauseCircle, X, Send, AlertTriangle, Building2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { Textarea } from "@/components/ui/textarea";
 
 // 역할 라벨 매핑
 const ROLE_LABELS: Record<string, string> = {
@@ -51,7 +46,6 @@ const ROLE_LABELS: Record<string, string> = {
   MEMBER: "멤버",
 };
 
-// 팀원 리스트용 플랫 데이터 타입 (동적 매핑 / 추후 API 데이터로 대체)
 interface TeamMemberRow {
   id: string;
   name: string;
@@ -66,13 +60,6 @@ interface TeamMemberRow {
   reagentCount?: number;
   lastActive?: string;
 }
-
-// 상태 라벨 매핑
-const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  Active: { label: "활성", variant: "default" },
-  Pending: { label: "대기중", variant: "secondary" },
-  Inactive: { label: "비활성", variant: "outline" },
-};
 
 interface Member {
   id: string;
@@ -91,20 +78,22 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("VIEWER");
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
   const [permissionDialogMember, setPermissionDialogMember] = useState<TeamMemberRow | null>(null);
 
-  const openPermissionDialog = (member: TeamMemberRow) => {
-    setPermissionDialogMember(member);
-    setPermissionDialogOpen(true);
-  };
+  // 관리 탭 상태
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeletingOrg, setIsDeletingOrg] = useState(false);
 
-  // 조직 정보 조회 (조직 목록에서 필터링)
+  // 조직 정보 조회
   const { data: orgsData, isLoading: orgLoading } = useQuery({
     queryKey: ["organizations"],
     queryFn: async () => {
@@ -116,9 +105,17 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   const organization = orgsData?.organizations?.find((org: any) => org.id === params.id) || {
     id: params.id,
-    name: "BioInsight Lab",
-    description: "메인 연구소",
+    name: "조직",
+    description: "",
   };
+
+  // editName 초기값 세팅
+  useEffect(() => {
+    if (organization?.name && !editName) {
+      setEditName(organization.name);
+      setEditDescription(organization.description || "");
+    }
+  }, [organization?.name]);
 
   // 멤버 목록 조회
   const { data: membersData, isLoading: membersLoading } = useQuery({
@@ -130,129 +127,55 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     },
   });
 
-  // Mock Data (실제 API 데이터가 없을 때 사용)
-  const mockMembers: Member[] = [
-    {
-      id: "1",
-      user: { id: "1", name: "김연구", email: "kim@lab.com" },
-      role: "ADMIN",
-      status: "Active",
-      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "2",
-      user: { id: "2", name: "이매니저", email: "lee@lab.com" },
-      role: "APPROVER",
-      status: "Active",
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "3",
-      user: { id: "3", name: "박인턴", email: "park@lab.com" },
-      role: "VIEWER",
-      status: "Pending",
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "4",
-      user: { id: "4", name: "최연구원", email: "choi@lab.com" },
-      role: "REQUESTER",
-      status: "Active",
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
-
-
-  const members: Member[] = membersData?.members?.length > 0 
-    ? membersData.members.map((m: any) => ({
-        ...m,
-        status: m.status || "Active",
-      }))
-    : mockMembers;
-
-  // Mock: 멤버별 최근 7일 지출액, 담당 시약 수 (추후 API 연동)
-  const memberStats: Record<string, { spent: number; reagentCount: number }> = {
-    "1": { spent: 4200000, reagentCount: 28 },
-    "2": { spent: 1850000, reagentCount: 12 },
-    "3": { spent: 0, reagentCount: 0 },
-    "4": { spent: 890000, reagentCount: 7 },
-  };
-
-  // Mock: 조직 활동 로그
-  const organizationLogs = [
-    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고했습니다.", time: "10분 전" },
-    { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전" },
-    { id: "3", actor: "최연구원", action: "Pipette Tips 재고를 2개 등록했습니다.", time: "1시간 전" },
-    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 승인했습니다.", time: "2시간 전" },
-    { id: "5", actor: "김연구", action: "Conical Tube 50ml을 발주했습니다.", time: "어제" },
-  ];
-
-  // 팀원 데이터 배열 (API 멤버 → 플랫 구조 매핑, 없으면 가상 데이터 사용)
-  const teamMembers: TeamMemberRow[] = members.length > 0
-    ? members.map((m) => {
-        const name = m.user?.name || "이름 없음";
-        const email = m.user?.email || "";
-        const initial =
-          name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) ||
-          email.slice(0, 2).toUpperCase() ||
-          "?";
-        const isAdminRole = m.role === "ADMIN" || m.role === "OWNER";
-        const stats = memberStats[m.id] || { spent: 0, reagentCount: 0 };
-        return {
-          id: m.id,
-          name,
-          email,
-          role: isAdminRole ? "admin" : "member",
-          initial,
-          isMe: m.user?.id === session?.user?.id,
-          memberId: m.id,
-          rawRole: m.role,
-          status: m.status,
-          spent: stats.spent,
-          reagentCount: stats.reagentCount,
-          lastActive: m.status === "Pending" ? "초대 대기" : "오늘",
-        };
-      })
-    : [
-        { id: "1", name: "이호영", email: "hoyoung@bioinsight.com", role: "admin" as const, initial: "HY", isMe: true, spent: 4200000, reagentCount: 28, lastActive: "오늘" },
-        { id: "2", name: "김연구", email: "research.kim@bioinsight.com", role: "member" as const, initial: "KR", isMe: false, spent: 1850000, reagentCount: 12, lastActive: "25분 전" },
-        { id: "3", name: "박조교", email: "ta.park@bioinsight.com", role: "member" as const, initial: "PJ", isMe: false, spent: 890000, reagentCount: 7, lastActive: "1시간 전" },
-      ];
+  const members: Member[] = membersData?.members?.length > 0
+    ? membersData.members.map((m: any) => ({ ...m, status: m.status || "Active" }))
+    : [];
 
   const currentUserMember = members.find((m) => m.user?.id === session?.user?.id);
   const isAdmin = currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER";
 
-  // 통계 계산
+  // 통계
   const totalMembers = members.length;
   const adminCount = members.filter((m) => m.role === "ADMIN" || m.role === "OWNER").length;
   const pendingCount = members.filter((m) => m.status === "Pending").length;
 
-  // 필터링된 멤버 (members 기반, mutations용)
-  const filteredMembers = members.filter((member) => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch =
-        member.user?.name?.toLowerCase().includes(query) ||
-        member.user?.email?.toLowerCase().includes(query);
-      if (!matchesSearch) return false;
-    }
-    if (roleFilter !== "all") {
-      if (roleFilter === "admin" && member.role !== "ADMIN" && member.role !== "OWNER") return false;
-      if (roleFilter === "member" && (member.role === "ADMIN" || member.role === "OWNER")) return false;
-      if (roleFilter !== "admin" && roleFilter !== "member" && member.role !== roleFilter) return false;
-    }
-    if (statusFilter !== "all" && member.status !== statusFilter) return false;
-    return true;
+  // 팀원 리스트 변환
+  const teamMembers: TeamMemberRow[] = members.map((m) => {
+    const name = m.user?.name || "이름 없음";
+    const email = m.user?.email || "";
+    const initial = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || email.slice(0, 2).toUpperCase() || "?";
+    const isAdminRole = m.role === "ADMIN" || m.role === "OWNER";
+    return {
+      id: m.id,
+      name,
+      email,
+      role: isAdminRole ? "admin" : "member",
+      initial,
+      isMe: m.user?.id === session?.user?.id,
+      memberId: m.id,
+      rawRole: m.role,
+      status: m.status,
+      spent: 0,
+      reagentCount: 0,
+      lastActive: m.status === "Pending" ? "초대 대기" : "오늘",
+    };
   });
 
-  // 팀원 리스트용 필터 (teamMembers 기반, 검색만 적용)
   const filteredTeamMembers = teamMembers.filter((m) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
   });
 
-  // 초대 재발송 Mutation
+  // Mock 활동 피드
+  const organizationLogs = [
+    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고했습니다.", time: "10분 전" },
+    { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전" },
+    { id: "3", actor: "최연구원", action: "Pipette Tips 재고를 2개 등록했습니다.", time: "1시간 전" },
+    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 승인했습니다.", time: "2시간 전" },
+  ];
+
+  // 초대 재발송
   const resendInviteMutation = useMutation({
     mutationFn: async (memberId: string) => {
       const response = await fetch(`/api/organizations/${params.id}/members/resend-invite`, {
@@ -265,21 +188,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
-      toast({
-        title: "초대 재발송 완료",
-        description: "초대 이메일이 재발송되었습니다.",
-      });
+      toast({ title: "초대 재발송 완료", description: "초대 이메일이 재발송되었습니다." });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "재발송 실패",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => toast({ title: "재발송 실패", variant: "destructive" }),
   });
 
-  // 멤버 초대 Mutation
+  // 멤버 초대
   const inviteMemberMutation = useMutation({
     mutationFn: async (data: { userEmail: string; role: string }) => {
       const response = await fetch(`/api/organizations/${params.id}/members`, {
@@ -297,21 +211,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
       setInviteEmail("");
       setInviteRole("VIEWER");
-      toast({
-        title: "초대 완료",
-        description: "멤버 초대가 완료되었습니다.",
-      });
+      setInviteModalOpen(false);
+      toast({ title: "초대 완료", description: "멤버 초대가 완료되었습니다." });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "초대 실패",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: (error: Error) => toast({ title: "초대 실패", description: error.message, variant: "destructive" }),
   });
 
-  // 역할 변경 Mutation
+  // 역할 변경
   const updateRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
       const response = await fetch(`/api/organizations/${params.id}/members`, {
@@ -324,87 +230,106 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
-      toast({
-        title: "역할 변경 완료",
-        description: "멤버의 역할이 성공적으로 변경되었습니다.",
-      });
+      toast({ title: "역할 변경 완료" });
     },
-    onError: () => {
-      toast({
-        title: "역할 변경 실패",
-        description: "역할 변경에 실패했습니다.",
-        variant: "destructive",
-      });
-    },
+    onError: () => toast({ title: "역할 변경 실패", variant: "destructive" }),
   });
 
-  // 멤버 제거 Mutation
+  // 멤버 제거
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const response = await fetch(
-        `/api/organizations/${params.id}/members?memberId=${memberId}`,
-        { method: "DELETE" }
-      );
+      const response = await fetch(`/api/organizations/${params.id}/members?memberId=${memberId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to remove member");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
-      toast({
-        title: "멤버 제거 완료",
-        description: "멤버가 성공적으로 제거되었습니다.",
-      });
+      toast({ title: "멤버 제거 완료" });
     },
-    onError: () => {
-      toast({
-        title: "멤버 제거 실패",
-        description: "멤버 제거에 실패했습니다.",
-        variant: "destructive",
-      });
-    },
+    onError: () => toast({ title: "멤버 제거 실패", variant: "destructive" }),
   });
+
+  // 조직명 수정
+  const handleSaveName = async () => {
+    if (!editName.trim()) return;
+    setIsSavingName(true);
+    try {
+      const res = await fetch(`/api/organizations/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName.trim(), description: editDescription.trim() }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "수정 실패");
+      }
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      toast({ title: "조직 정보가 수정되었습니다." });
+    } catch (e: any) {
+      toast({ title: "수정 실패", description: e.message, variant: "destructive" });
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  // 조직 삭제
+  const handleDeleteOrg = async () => {
+    if (deleteConfirmText !== organization.name) return;
+    setIsDeletingOrg(true);
+    try {
+      const res = await fetch(`/api/organizations/${params.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "삭제 실패");
+      }
+      toast({ title: "조직이 삭제되었습니다." });
+      router.push("/dashboard/organizations");
+    } catch (e: any) {
+      toast({ title: "삭제 실패", description: e.message, variant: "destructive" });
+      setIsDeletingOrg(false);
+    }
+  };
 
   if (orgLoading || membersLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* 헤더 섹션 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
           <Link href="/dashboard/organizations">
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {organization.name}
             </h1>
             {organization.description && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{organization.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{organization.description}</p>
             )}
           </div>
         </div>
         {isAdmin && (
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white" asChild>
-            <Link href="#invite-form">
-              <UserPlus className="h-4 w-4 mr-2" />
-              멤버 초대
-            </Link>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setInviteModalOpen(true)}
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            멤버 초대
           </Button>
         )}
       </div>
 
-      {/* 멤버 요약 KPI 카드 */}
-      <div className="grid gap-4 md:grid-cols-3 mt-4">
+      {/* KPI 카드 */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">총 멤버</CardTitle>
@@ -414,12 +339,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {totalMembers}
-              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
+              {totalMembers}<span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
-
         <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">관리자</CardTitle>
@@ -429,12 +352,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {adminCount}
-              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
+              {adminCount}<span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
-
         <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">초대 대기</CardTitle>
@@ -444,269 +365,364 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {pendingCount}
-              <span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
+              {pendingCount}<span className="text-lg font-normal text-slate-500 dark:text-slate-400 ml-1">명</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* 초대 폼 (관리자 전용) */}
-      {isAdmin && (
-        <Card id="invite-form" className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <CardHeader>
-            <CardTitle className="text-lg dark:text-white">새 팀원 초대</CardTitle>
-            <CardDescription className="dark:text-slate-400">초대 링크가 이메일로 발송됩니다.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!inviteEmail.trim()) return;
-                inviteMemberMutation.mutate({ userEmail: inviteEmail.trim(), role: inviteRole });
-              }}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <div className="relative flex-1">
-                <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  type="email"
-                  className="pl-9"
-                  placeholder="colleague@univ.edu"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
-              </div>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="w-full sm:w-[180px] border-slate-200 dark:border-slate-700">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="VIEWER">연구원 (조회자)</SelectItem>
-                  <SelectItem value="REQUESTER">요청자</SelectItem>
-                  <SelectItem value="APPROVER">승인자</SelectItem>
-                  <SelectItem value="ADMIN">관리자</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={inviteMemberMutation.isPending}>
-                {inviteMemberMutation.isPending ? "발송 중..." : "초대 메일 발송"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      {/* 탭 구조 */}
+      <Tabs defaultValue="members" className="space-y-4">
+        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+            대시보드
+          </TabsTrigger>
+          <TabsTrigger value="members" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+            멤버
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="settings" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+              관리
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-      {/* 멤버 관리 + 활동 피드 그리드 */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg dark:text-white">멤버 관리 ({filteredTeamMembers.length})</h3>
-            <div className="relative w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              <Input
-                placeholder="이름, 이메일 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm border-slate-200 dark:border-slate-700"
-              />
-            </div>
-          </div>
-
-          {filteredTeamMembers.length === 0 ? (
+        {/* 대시보드 탭 */}
+        <TabsContent value="dashboard">
+          <div className="space-y-4">
+            <h3 className="font-bold text-lg dark:text-white">조직 활동 피드</h3>
             <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <CardContent className="py-12 text-center">
-                <Mail className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                <p className="text-slate-500 dark:text-slate-400 mb-4">
-                  {teamMembers.length === 0 ? "멤버가 없습니다." : "검색 조건에 맞는 멤버가 없습니다."}
-                </p>
-                {isAdmin && teamMembers.length === 0 && (
-                  <Button className="bg-blue-600 hover:bg-blue-700" asChild>
-                    <Link href="#invite-form">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      첫 멤버 초대하기
-                    </Link>
-                  </Button>
-                )}
+              <CardContent className="p-0">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[480px] overflow-y-auto">
+                  {organizationLogs.map((log) => (
+                    <div key={log.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <p className="text-sm text-slate-900 dark:text-white">
+                        <span className="font-semibold">{log.actor}</span>님이 {log.action}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{log.time}</p>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-4">
-              {filteredTeamMembers.map((member) => {
-                const rawMember = member.memberId ? members.find((m) => m.id === member.memberId) : null;
-                const canEdit = isAdmin && !member.isMe && rawMember;
-                const isPending = rawMember?.status === "Pending";
+          </div>
+        </TabsContent>
 
-                return (
-                  <Card
-                    key={member.id}
-                    className="hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all cursor-pointer border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-                  >
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <Avatar className="h-10 w-10 shrink-0 border border-slate-200 dark:border-slate-700">
-                          <AvatarFallback
-                            className={
-                              member.role === "admin"
-                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                            }
-                          >
-                            {member.initial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="font-bold text-sm dark:text-white truncate">
-                            {member.name}
-                            {member.isMe && <span className="text-blue-600 dark:text-blue-400 font-normal ml-1">(나)</span>}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.email}</p>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                            최근 활동: {member.lastActive}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6 sm:gap-8 text-right shrink-0">
-                        <div>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">최근 7일 지출</p>
-                          <p className="text-sm font-bold dark:text-blue-400">
-                            ₩ {(member.spent ?? 0).toLocaleString("ko-KR")}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">담당 시약</p>
-                          <p className="text-sm font-bold dark:text-white">{(member.reagentCount ?? 0)}개</p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-                          {ROLE_LABELS[rawMember?.role || member.rawRole || ""] || (member.role === "admin" ? "관리자" : "연구원")}
-                        </Badge>
-                        <div className="flex items-center gap-1">
-                          {isAdmin && canEdit && rawMember && !isPending && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="권한 수정"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openPermissionDialog(member);
-                                }}
-                              >
-                                <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="예산 할당"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({ title: "예산 할당", description: `${member.name}님에게 예산을 할당합니다. (준비 중)` });
-                                }}
-                              >
-                                <Wallet className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="활동 일시정지"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({ title: "활동 일시정지", description: `${member.name}님의 활동을 일시정지합니다. (준비 중)` });
-                                }}
-                              >
-                                <PauseCircle className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              </Button>
-                            </>
-                          )}
-                          {isAdmin && canEdit && rawMember && isPending && (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                                title="초대 취소"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm("정말 이 초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id);
-                                }}
-                                disabled={removeMemberMutation.isPending}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
-                                title="초대장 재발송"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  resendInviteMutation.mutate(rawMember.id);
-                                }}
-                                disabled={resendInviteMutation.isPending}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                          {isAdmin && member.isMe && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="상세 권한 설정"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openPermissionDialog(member);
-                                }}
-                              >
-                                <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              </Button>
-                              <span className="text-xs text-slate-400 dark:text-slate-500">본인</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* 조직 활동 피드 */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-lg dark:text-white">조직 활동 피드</h3>
-          <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <CardContent className="p-0">
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[480px] overflow-y-auto">
-                {organizationLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <p className="text-sm text-slate-900 dark:text-white">
-                      <span className="font-semibold">{log.actor}</span>님이 {log.action}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{log.time}</p>
-                  </div>
-                ))}
+        {/* 멤버 탭 */}
+        <TabsContent value="members">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg dark:text-white">멤버 관리 ({filteredTeamMembers.length})</h3>
+              <div className="relative w-48">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Input
+                  placeholder="이름, 이메일 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 text-sm border-slate-200 dark:border-slate-700"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
 
-      {/* 상세 권한 설정 팝업 */}
-      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+            {filteredTeamMembers.length === 0 ? (
+              <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <CardContent className="py-12 text-center">
+                  <Mail className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-500 dark:text-slate-400 mb-4">
+                    {teamMembers.length === 0 ? "멤버가 없습니다." : "검색 조건에 맞는 멤버가 없습니다."}
+                  </p>
+                  {isAdmin && teamMembers.length === 0 && (
+                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setInviteModalOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      첫 멤버 초대하기
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {filteredTeamMembers.map((member) => {
+                  const rawMember = member.memberId ? members.find((m) => m.id === member.memberId) : null;
+                  const isPending = rawMember?.status === "Pending";
+                  // Self-demotion block: 본인이 ADMIN이면 권한 변경 불가
+                  const isSelfAdmin = member.isMe && (member.rawRole === "ADMIN" || member.rawRole === "OWNER");
+                  const canEdit = isAdmin && !isSelfAdmin && rawMember;
+
+                  return (
+                    <Card
+                      key={member.id}
+                      className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-500/40 transition-colors"
+                    >
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                          <Avatar className="h-10 w-10 shrink-0 border border-slate-200 dark:border-slate-700">
+                            <AvatarFallback
+                              className={
+                                member.role === "admin"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              }
+                            >
+                              {member.initial}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm dark:text-white truncate">
+                              {member.name}
+                              {member.isMe && <span className="text-blue-600 dark:text-blue-400 font-normal ml-1">(나)</span>}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.email}</p>
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">최근 활동: {member.lastActive}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <Badge variant="outline" className="text-[10px] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                            {ROLE_LABELS[rawMember?.role || member.rawRole || ""] || (member.role === "admin" ? "관리자" : "연구원")}
+                          </Badge>
+                          {isPending && (
+                            <Badge variant="secondary" className="text-[10px]">대기중</Badge>
+                          )}
+                          <div className="flex items-center gap-1">
+                            {/* Self-demotion block: 본인 관리자는 수정 버튼 비활성 */}
+                            {isSelfAdmin ? (
+                              <span className="text-xs text-slate-400 dark:text-slate-500 px-2">본인</span>
+                            ) : canEdit && rawMember && !isPending ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="권한 수정"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPermissionDialogMember(member);
+                                    setPermissionDialogOpen(true);
+                                  }}
+                                >
+                                  <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                                  title="멤버 제거"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`${member.name}님을 제거하시겠습니까?`)) {
+                                      removeMemberMutation.mutate(rawMember.id);
+                                    }
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : canEdit && rawMember && isPending ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="초대장 재발송"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    resendInviteMutation.mutate(rawMember.id);
+                                  }}
+                                >
+                                  <Send className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                                  title="초대 취소"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm("이 초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id);
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* 관리 탭 (관리자 전용) */}
+        {isAdmin && (
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              {/* 기본 정보 수정 */}
+              <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <CardHeader>
+                  <CardTitle className="text-base dark:text-white">조직 기본 정보</CardTitle>
+                  <CardDescription className="dark:text-slate-400">조직명과 설명을 수정합니다.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name" className="dark:text-slate-300">조직명</Label>
+                    <Input
+                      id="edit-name"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="조직명을 입력하세요"
+                      className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-desc" className="dark:text-slate-300">설명 (선택)</Label>
+                    <Textarea
+                      id="edit-desc"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="조직에 대한 간단한 설명"
+                      rows={3}
+                      className="resize-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSaveName}
+                    disabled={isSavingName || !editName.trim()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isSavingName ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />저장 중...</>
+                    ) : "변경 사항 저장"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* 위험 구역 */}
+              <Card className="shadow-sm border-red-200 dark:border-red-800/50 bg-white dark:bg-slate-900">
+                <CardHeader>
+                  <CardTitle className="text-base text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    위험 구역
+                  </CardTitle>
+                  <CardDescription className="dark:text-slate-400">
+                    아래 작업은 되돌릴 수 없습니다. 신중하게 진행하세요.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-lg border border-red-200 dark:border-red-800/50 p-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">조직 삭제</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        조직을 삭제하면 모든 멤버, 데이터가 영구 삭제됩니다. 계속하려면 아래에 <span className="font-semibold text-red-600 dark:text-red-400">"{organization.name}"</span>을 입력하세요.
+                      </p>
+                    </div>
+                    <Input
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder={`"${organization.name}" 을 입력하세요`}
+                      className="dark:bg-slate-800 dark:border-slate-700 dark:text-white border-red-200 dark:border-red-800/50 focus:border-red-400"
+                    />
+                    <Button
+                      variant="destructive"
+                      disabled={deleteConfirmText !== organization.name || isDeletingOrg}
+                      onClick={handleDeleteOrg}
+                      className="w-full"
+                    >
+                      {isDeletingOrg ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />삭제 중...</>
+                      ) : "조직 영구 삭제"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+
+      {/* 멤버 초대 모달 */}
+      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader>
-            <DialogTitle className="dark:text-white">상세 권한 설정</DialogTitle>
+            <DialogTitle className="dark:text-white">멤버 초대</DialogTitle>
             <DialogDescription className="dark:text-slate-400">
-              {permissionDialogMember?.name}님의 조직 내 권한을 설정합니다.
+              이메일로 초대하거나 협력 조직을 연결하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <Tabs defaultValue="email" className="mt-2">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800">
+              <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+                이메일 초대
+              </TabsTrigger>
+              <TabsTrigger value="org" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+                협력사 연결
+              </TabsTrigger>
+            </TabsList>
+
+            {/* 이메일 초대 탭 */}
+            <TabsContent value="email" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-email" className="dark:text-slate-300">이메일 주소</Label>
+                <div className="relative">
+                  <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    className="pl-9 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    placeholder="colleague@univ.edu"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="dark:text-slate-300">역할</Label>
+                <Select value={inviteRole} onValueChange={setInviteRole}>
+                  <SelectTrigger className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="VIEWER">연구원 (조회자)</SelectItem>
+                    <SelectItem value="REQUESTER">요청자</SelectItem>
+                    <SelectItem value="APPROVER">승인자</SelectItem>
+                    <SelectItem value="ADMIN">관리자</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
+                onClick={() => inviteMemberMutation.mutate({ userEmail: inviteEmail.trim(), role: inviteRole })}
+              >
+                {inviteMemberMutation.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />발송 중...</>
+                ) : "초대 메일 발송"}
+              </Button>
+            </TabsContent>
+
+            {/* 협력사 연결 탭 */}
+            <TabsContent value="org" className="pt-4">
+              <PartnerOrgTab
+                currentOrgId={params.id}
+                allOrgs={orgsData?.organizations || []}
+                onLink={(orgId) => {
+                  toast({ title: "협력 조직 연결", description: "해당 기능은 준비 중입니다." });
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* 권한 변경 모달 */}
+      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white">권한 변경</DialogTitle>
+            <DialogDescription className="dark:text-slate-400">
+              {permissionDialogMember?.name}님의 역할을 변경합니다.
             </DialogDescription>
           </DialogHeader>
           {permissionDialogMember && (
@@ -723,7 +739,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-slate-300">역할</label>
+                <Label className="text-sm font-medium dark:text-slate-300">역할</Label>
                 <Select
                   value={permissionDialogMember.rawRole || "VIEWER"}
                   onValueChange={(v) => {
@@ -732,7 +748,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     setPermissionDialogOpen(false);
                   }}
                 >
-                  <SelectTrigger className="border-slate-200 dark:border-slate-700">
+                  <SelectTrigger className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -751,3 +767,61 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
   );
 }
 
+// 협력사 연결 탭 컴포넌트
+function PartnerOrgTab({
+  currentOrgId,
+  allOrgs,
+  onLink,
+}: {
+  currentOrgId: string;
+  allOrgs: any[];
+  onLink: (orgId: string) => void;
+}) {
+  const otherOrgs = allOrgs.filter((org) => org.id !== currentOrgId);
+
+  if (otherOrgs.length === 0) {
+    return (
+      <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+        <Building2 className="h-10 w-10 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+        <p className="text-sm">연결 가능한 협력 조직이 없습니다.</p>
+        <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">다른 조직을 먼저 생성하거나 초대받아야 합니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        가입된 조직을 협력 조직으로 연결합니다. 연결 시 해당 조직의 멤버가 협력 파트너로 등록됩니다.
+      </p>
+      <div className="space-y-2 max-h-[240px] overflow-y-auto">
+        {otherOrgs.map((org) => (
+          <div
+            key={org.id}
+            className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium dark:text-white">{org.name}</p>
+                {org.description && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[180px]">{org.description}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 text-xs border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+              onClick={() => onLink(org.id)}
+            >
+              연결
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
