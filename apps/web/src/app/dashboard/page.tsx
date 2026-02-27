@@ -689,7 +689,16 @@ export default function DashboardPage() {
           {/* 2. Recent Orders - md: 카드 리스트, lg: 테이블 */}
           <Card className="min-h-[400px] overflow-hidden bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
             <CardHeader className="p-4">
-              <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 주문 내역</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 주문 내역</CardTitle>
+                <Link
+                  href="/dashboard/purchases"
+                  className="flex items-center text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
+                >
+                  모두 보기
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {ordersLoading ? (

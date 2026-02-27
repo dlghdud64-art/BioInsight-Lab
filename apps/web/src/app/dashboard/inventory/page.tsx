@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -87,6 +87,7 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
+  const [isExportingLabels, setIsExportingLabels] = useState(false);
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -638,6 +639,49 @@ export default function InventoryPage() {
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               재고 등록
+            </Button>
+            <Button
+              variant="outline"
+              disabled={isExportingLabels}
+              onClick={async () => {
+                setIsExportingLabels(true);
+                try {
+                  const res = await fetch("/api/inventory/export-labels");
+                  if (!res.ok) {
+                    const json = await res.json().catch(() => ({}));
+                    throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
+                  }
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                  a.href = url;
+                  a.download = `Label_Data_${yyyymmdd}.xlsx`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast({ title: "라벨 데이터가 다운로드되었습니다." });
+                } catch (e: unknown) {
+                  toast({
+                    title: "라벨 데이터 내보내기 실패",
+                    description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsExportingLabels(false);
+                }
+              }}
+            >
+              {isExportingLabels ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  추출 중...
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  라벨 데이터 내보내기
+                </>
+              )}
             </Button>
             <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
               <DialogTrigger asChild>
