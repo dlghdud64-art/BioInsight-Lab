@@ -31,10 +31,26 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
   Settings, Wallet, PauseCircle, X, Send, AlertTriangle, Building2,
+  FileText, Package, ShoppingCart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
+
+// 활동 피드 카테고리별 스타일 (재고/파일=teal, 구매/예산=blue, 팀/멤버=purple)
+type ActivityCategory = "inventory" | "purchase" | "team";
+const ACTIVITY_CATEGORY_STYLES: Record<ActivityCategory, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string }> = {
+  inventory: { icon: Package, bg: "bg-teal-50 dark:bg-teal-950/40", text: "text-teal-600 dark:text-teal-400" },
+  purchase: { icon: ShoppingCart, bg: "bg-blue-50 dark:bg-blue-950/40", text: "text-blue-600 dark:text-blue-400" },
+  team: { icon: UserPlus, bg: "bg-purple-50 dark:bg-purple-950/40", text: "text-purple-600 dark:text-purple-400" },
+};
+function getActivityCategory(action: string): ActivityCategory {
+  const lower = action.toLowerCase();
+  if (/입고|등록|재고|파일|upload|file/.test(lower)) return "inventory";
+  if (/견적|예산|주문|order|budget/.test(lower)) return "purchase";
+  if (/초대|멤버|team|member/.test(lower)) return "team";
+  return "inventory";
+}
 
 // 역할 라벨 매핑
 const ROLE_LABELS: Record<string, string> = {
@@ -167,12 +183,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
   });
 
-  // Mock 활동 피드
-  const organizationLogs = [
-    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고했습니다.", time: "10분 전" },
-    { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전" },
-    { id: "3", actor: "최연구원", action: "Pipette Tips 재고를 2개 등록했습니다.", time: "1시간 전" },
-    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 승인했습니다.", time: "2시간 전" },
+  // Mock 활동 피드 (target: 하이라이트할 대상)
+  const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [
+    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고했습니다.", time: "10분 전", target: "DMEM 시약" },
+    { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전", target: "FBS" },
+    { id: "3", actor: "최연구원", action: "Pipette Tips 재고를 2개 등록했습니다.", time: "1시간 전", target: "Pipette Tips" },
+    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 승인했습니다.", time: "2시간 전", target: "예산 2026 상반기 시약비" },
   ];
 
   // 초대 재발송
@@ -375,7 +391,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       <Tabs defaultValue="members" className="space-y-4">
         <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <TabsTrigger value="dashboard" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
-            대시보드
+            개요
           </TabsTrigger>
           <TabsTrigger value="members" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
             멤버
@@ -387,21 +403,54 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           )}
         </TabsList>
 
-        {/* 대시보드 탭 */}
+        {/* 개요 탭 */}
         <TabsContent value="dashboard">
           <div className="space-y-4">
             <h3 className="font-bold text-lg dark:text-white">조직 활동 피드</h3>
             <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
               <CardContent className="p-0">
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[480px] overflow-y-auto">
-                  {organizationLogs.map((log) => (
-                    <div key={log.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <p className="text-sm text-slate-900 dark:text-white">
-                        <span className="font-semibold">{log.actor}</span>님이 {log.action}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{log.time}</p>
-                    </div>
-                  ))}
+                <div className="max-h-[480px] overflow-y-auto">
+                  {organizationLogs.map((log, idx) => {
+                    const category = getActivityCategory(log.action);
+                    const style = ACTIVITY_CATEGORY_STYLES[category];
+                    const Icon = style.icon;
+                    const actionParts = log.target && log.action.includes(log.target)
+                      ? (() => {
+                          const i = log.action.indexOf(log.target);
+                          return {
+                            before: log.action.slice(0, i),
+                            target: log.target,
+                            after: log.action.slice(i + log.target.length),
+                          };
+                        })()
+                      : null;
+                    return (
+                      <div
+                        key={log.id}
+                        className={`flex items-start gap-4 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${idx < organizationLogs.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                      >
+                        <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm">
+                            <span className="font-semibold text-slate-900 dark:text-white">{log.actor}</span>
+                            <span className="text-slate-500 dark:text-slate-400">님이 </span>
+                            {actionParts ? (
+                              <>
+                                <span className="text-slate-500 dark:text-slate-400">{actionParts.before}</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">{actionParts.target}</span>
+                                <span className="text-slate-500 dark:text-slate-400">{actionParts.after}</span>
+                              </>
+                            ) : (
+                              <span className="text-slate-500 dark:text-slate-400">{log.action}</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{log.time}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
