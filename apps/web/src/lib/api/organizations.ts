@@ -139,6 +139,8 @@ export async function updateOrganization(
   data: {
     name?: string;
     description?: string;
+    slug?: string | null;
+    logoUrl?: string | null;
   }
 ) {
   return await db.organization.update({

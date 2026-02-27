@@ -51,15 +51,38 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, slug, logoUrl } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: "조직명을 입력해주세요." }, { status: 400 });
     }
 
+    // slug 유효성 검사 (전달된 경우)
+    if (slug !== undefined && slug !== null && slug !== "") {
+      const SLUG_REGEX = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
+      if (!SLUG_REGEX.test(slug)) {
+        return NextResponse.json(
+          { error: "슬러그는 3~32자의 소문자 영문, 숫자, 하이픈(-)만 사용 가능합니다." },
+          { status: 400 }
+        );
+      }
+      // DB 중복 확인 (자신 제외)
+      const slugConflict = await db.organization.findFirst({
+        where: { slug, id: { not: id } },
+      });
+      if (slugConflict) {
+        return NextResponse.json(
+          { error: `'${slug}'는 이미 사용 중인 주소입니다.` },
+          { status: 409 }
+        );
+      }
+    }
+
     const updated = await updateOrganization(id, {
       name: name.trim(),
       description: description?.trim() || undefined,
+      slug: slug === "" ? null : slug?.trim() || undefined,
+      logoUrl: logoUrl !== undefined ? logoUrl : undefined,
     });
 
     return NextResponse.json({ organization: updated });

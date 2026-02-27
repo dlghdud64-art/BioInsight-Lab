@@ -58,7 +58,9 @@ model Organization {
   planExpiresAt     DateTime? // ?랜 만료??
   maxMembers        Int? // 최? 멤버 ??(?랜??한)
   maxQuotesPerMonth Int? // ?별 최? ?목 리스????
-  maxSharedLinks    Int? // 최? 공유 링크 ??
+  maxSharedLinks    Int? // 최대 공유 링크 수
+  logoUrl           String?          // 조직 로고 이미지 URL
+  slug              String?          @unique // 조직 고유 주소 (예: my-lab)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
