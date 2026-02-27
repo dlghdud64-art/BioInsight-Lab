@@ -236,7 +236,7 @@ export async function PATCH(
       if (projectMatch) existingProjectName = projectMatch[1].trim();
       const parts = budget.description.split(" | ");
       const rawDesc = parts.find(
-        (p) => !p.startsWith("[") && !p.startsWith("프로젝트: ")
+        (p: string) => !p.startsWith("[") && !p.startsWith("프로젝트: ")
       );
       existingDesc = rawDesc ?? null;
     }
