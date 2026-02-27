@@ -63,12 +63,12 @@ export async function PATCH(
       );
     }
 
-    // 관리자 권한 확인
+    // 관리자 권한 확인 (ADMIN 또는 OWNER)
     const adminMembership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.ADMIN, OrganizationRole.OWNER] },
       },
     });
 
@@ -153,12 +153,12 @@ export async function DELETE(
       );
     }
 
-    // 관리자 권한 확인
+    // 관리자 권한 확인 (ADMIN 또는 OWNER)
     const adminMembership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.ADMIN, OrganizationRole.OWNER] },
       },
     });
 

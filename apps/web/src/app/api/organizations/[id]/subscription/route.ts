@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { SubscriptionPlan } from "@/lib/plans";
+import { SubscriptionPlan, PLAN_LIMITS } from "@/lib/plans";
 
 // 조직의 구독 정보 조회
 export async function GET(
@@ -98,18 +98,18 @@ export async function POST(
       );
     }
 
-    // 관리자 권한 확인
+    // 관리자 권한 확인 (ADMIN 또는 OWNER)
     const membership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: "ADMIN",
+        role: { in: ["ADMIN", "OWNER"] },
       },
     });
 
     if (!membership) {
       return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
+        { error: "Forbidden: 관리자만 플랜을 변경할 수 있습니다." },
         { status: 403 }
       );
     }
@@ -119,12 +119,18 @@ export async function POST(
       ? new Date(Date.now() + periodMonths * 30 * 24 * 60 * 60 * 1000)
       : null;
 
-    // Organization 업데이트
+    // 플랜별 제한 가져오기
+    const limits = PLAN_LIMITS[plan as SubscriptionPlan];
+
+    // Organization 업데이트 (플랜 + 제한값 동기화)
     const updatedOrg = await db.organization.update({
       where: { id },
       data: {
         plan: plan as SubscriptionPlan,
         planExpiresAt,
+        maxMembers: limits?.maxMembers ?? null,
+        maxQuotesPerMonth: limits?.maxQuotesPerMonth ?? null,
+        maxSharedLinks: limits?.maxSharedLinks ?? null,
       },
     });
 
