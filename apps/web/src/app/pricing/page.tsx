@@ -128,7 +128,7 @@ export default function PricingPage() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 items-stretch pt-8">
               {plans.map((plan) => {
                 const Icon = plan.icon;
                 const isRecommended = plan.isRecommended;
@@ -138,11 +138,12 @@ export default function PricingPage() {
                     key={plan.id}
                     className={cn(
                       "relative flex flex-col h-full",
+                      plan.badge && "overflow-visible",
                       isRecommended && "border-2 border-blue-500 shadow-xl ring-2 ring-blue-500/20"
                     )}
                   >
                     {plan.badge && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                         <Badge className="bg-blue-600 text-white px-4 py-1.5 text-sm font-bold shadow-lg">
                           {plan.badge}
                         </Badge>

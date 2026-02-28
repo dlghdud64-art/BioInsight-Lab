@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -331,10 +331,12 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                   {groupByVendor ? "켜짐" : "꺼짐"}
                 </span>
               </div>
-              <Button variant="secondary" size="sm" className="text-xs w-full sm:w-auto" disabled>
-                <Plus className="h-3 w-3 mr-1" />
-                품목 추가
-              </Button>
+              <Link href="/test/search">
+                <Button variant="outline" size="sm" className="text-xs w-full sm:w-auto text-blue-600 hover:text-blue-800 hover:border-blue-300">
+                  <Plus className="w-4 h-4 mr-2" />
+                  품목 추가
+                </Button>
+              </Link>
             </div>
           </div>
         </CardHeader>
@@ -1491,15 +1493,33 @@ export function SharePanel() {
   );
 }
 
+const QUOTE_FORM_DRAFT_KEY = "quote-form-draft";
+
+interface QuoteFormDraft {
+  title: string;
+  message: string;
+  deliveryDate: string;
+  deliveryDateOption: "asap" | "custom" | "none";
+  deliveryLocation: "none" | "saved" | "custom";
+  deliveryLocationCustom: string;
+  specialNotes: string;
+  vendorNotes: Record<string, string>;
+  savedAt: number;
+}
+
+export interface QuoteRequestPanelRef {
+  markDirty: () => void;
+}
+
 interface QuoteRequestPanelProps {
   vendorNotes?: Record<string, string>;
   onVendorNoteChange?: (vendorId: string, note: string) => void;
 }
 
-export function QuoteRequestPanel({ 
+export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPanelProps>(function QuoteRequestPanel({ 
   vendorNotes = {},
   onVendorNoteChange
-}: QuoteRequestPanelProps = {}) {
+}, ref) {
   const { quoteItems, products } = useTestFlow();
   const { toast } = useToast();
   const router = useRouter();
@@ -1532,10 +1552,47 @@ export function QuoteRequestPanel({
   const [copied, setCopied] = useState(false);
   const [isCreatingShareLink, setIsCreatingShareLink] = useState(false);
 
+  // markDirty 노출 (vendor notes 변경 시 부모에서 호출)
+  useImperativeHandle(ref, () => ({
+    markDirty: () => {
+      if (saveStatus !== "saving") setSaveStatus("unsaved");
+    },
+  }), [saveStatus]);
+
   // guestKey 초기화
   useEffect(() => {
     setGuestKey(getGuestKey());
   }, []);
+
+  // URL에 quoteId가 없을 때 localStorage 임시저장 데이터 복원
+  const isDraftRestoredRef = React.useRef(false);
+  useEffect(() => {
+    if (quoteId || isDraftRestoredRef.current) return;
+    try {
+      const raw = localStorage.getItem(QUOTE_FORM_DRAFT_KEY);
+      if (!raw) return;
+      const draft: QuoteFormDraft = JSON.parse(raw);
+      isDraftRestoredRef.current = true;
+      if (draft.title) setTitle(draft.title);
+      if (draft.message) setMessage(draft.message);
+      if (draft.deliveryDate) setDeliveryDate(draft.deliveryDate);
+      if (draft.deliveryDateOption) setDeliveryDateOption(draft.deliveryDateOption);
+      if (draft.deliveryLocation) setDeliveryLocation(draft.deliveryLocation);
+      if (draft.deliveryLocationCustom) setDeliveryLocationCustom(draft.deliveryLocationCustom);
+      if (draft.specialNotes) setSpecialNotes(draft.specialNotes);
+      if (draft.savedAt) {
+        setLastSavedAt(new Date(draft.savedAt));
+        setSaveStatus("temp_saved");
+      }
+      if (draft.vendorNotes && typeof draft.vendorNotes === "object" && onVendorNoteChange) {
+        Object.entries(draft.vendorNotes).forEach(([vendorId, note]) => {
+          onVendorNoteChange(vendorId, note);
+        });
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [quoteId, onVendorNoteChange]);
 
   // URL에 quoteId가 있으면 기존 견적 요청 리스트 불러오기
   const { data: existingQuoteList, isLoading: isLoadingQuoteList } = useQuery({
@@ -1650,9 +1707,40 @@ export function QuoteRequestPanel({
     }
   }, [quoteItems, message, vendorGroups]);
 
+  // 임시저장 (localStorage)
+  const handleSaveDraft = useCallback(() => {
+    const draft: QuoteFormDraft = {
+      title,
+      message,
+      deliveryDate,
+      deliveryDateOption,
+      deliveryLocation,
+      deliveryLocationCustom,
+      specialNotes,
+      vendorNotes: { ...vendorNotes },
+      savedAt: Date.now(),
+    };
+    try {
+      localStorage.setItem(QUOTE_FORM_DRAFT_KEY, JSON.stringify(draft));
+      setSaveStatus("temp_saved");
+      setLastSavedAt(new Date());
+      toast({
+        title: "임시저장 완료",
+        description: "폼 데이터가 로컬에 저장되었습니다.",
+      });
+    } catch {
+      toast({
+        title: "임시저장 실패",
+        description: "저장 공간이 부족할 수 있습니다.",
+        variant: "destructive",
+      });
+    }
+  }, [title, message, deliveryDate, deliveryDateOption, deliveryLocation, deliveryLocationCustom, specialNotes, vendorNotes, toast]);
+
   // 납기 희망일 옵션 변경 핸들러
   const handleDeliveryDateOptionChange = (option: "asap" | "custom" | "none") => {
     setDeliveryDateOption(option);
+    if (saveStatus !== "saving") setSaveStatus("unsaved");
     if (option === "asap") {
       // 최대한 빨리 = 오늘로부터 7일 후
       const date = new Date();
@@ -2010,11 +2098,23 @@ export function QuoteRequestPanel({
             })()}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
           {/* 저장 상태 표시 */}
-          <div className="text-xs text-slate-500 whitespace-nowrap">
+          <div className={`text-xs whitespace-nowrap ${
+            saveStatus === "unsaved" ? "text-slate-500" : "text-blue-600"
+          }`}>
             {getSaveStatusText()}
           </div>
+          {/* 임시저장 버튼 */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleSaveDraft}
+            className="text-xs h-8"
+          >
+            임시저장
+          </Button>
           {/* 공유 버튼 */}
           <Button
             variant="outline"
@@ -2064,7 +2164,10 @@ export function QuoteRequestPanel({
               <Textarea
                 id="quote-message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  if (saveStatus !== "saving") setSaveStatus("unsaved");
+                }}
                 placeholder="예: 점심시간(12-1시) 배송 제외, 102호로 배송 부탁드립니다."
                 className="text-sm min-h-[100px]"
               />
@@ -2102,7 +2205,10 @@ export function QuoteRequestPanel({
                     id="delivery-date"
                     type="date"
                     value={deliveryDate}
-                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    onChange={(e) => {
+                      setDeliveryDate(e.target.value);
+                      if (saveStatus !== "saving") setSaveStatus("unsaved");
+                    }}
                     className="text-sm mt-2"
                   />
                 )}
@@ -2120,6 +2226,7 @@ export function QuoteRequestPanel({
                     if (value !== "custom") {
                       setDeliveryLocationCustom("");
                     }
+                    if (saveStatus !== "saving") setSaveStatus("unsaved");
                   }}
                 >
                   <SelectTrigger className="text-sm">
@@ -2138,7 +2245,10 @@ export function QuoteRequestPanel({
                     <Input
                       id="delivery-location-custom"
                       value={deliveryLocationCustom}
-                      onChange={(e) => setDeliveryLocationCustom(e.target.value)}
+                      onChange={(e) => {
+                        setDeliveryLocationCustom(e.target.value);
+                        if (saveStatus !== "saving") setSaveStatus("unsaved");
+                      }}
                       placeholder="납품 장소를 입력하세요"
                       className="text-sm"
                     />
@@ -2213,7 +2323,10 @@ export function QuoteRequestPanel({
               <Textarea
                 id="special-notes"
                 value={specialNotes}
-                onChange={(e) => setSpecialNotes(e.target.value)}
+                onChange={(e) => {
+                  setSpecialNotes(e.target.value);
+                  if (saveStatus !== "saving") setSaveStatus("unsaved");
+                }}
                 placeholder="특이사항이나 추가 요청사항"
                 className="text-sm min-h-[80px]"
               />
@@ -2375,7 +2488,7 @@ export function QuoteRequestPanel({
       </Dialog>
     </div>
   );
-}
+});
 
 interface QuoteItemsSummaryPanelProps {
   vendorNotes?: Record<string, string>;

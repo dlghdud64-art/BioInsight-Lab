@@ -2,8 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useState } from "react";
-import { QuoteRequestPanel, QuoteItemsSummaryPanel } from "../../_components/quote-panel";
+import { Suspense, useState, useRef } from "react";
+import { QuoteRequestPanel, QuoteItemsSummaryPanel, type QuoteRequestPanelRef } from "../../_components/quote-panel";
 import { QuoteRepliesPanel } from "../../_components/quote-replies-panel";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function QuoteRequestPageContent() {
   const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
+  const requestPanelRef = useRef<QuoteRequestPanelRef>(null);
 
   const handleVendorNoteChange = (vendorId: string, note: string) => {
     setVendorNotes((prev) => ({
       ...prev,
       [vendorId]: note,
     }));
+    requestPanelRef.current?.markDirty();
   };
 
   return (
@@ -48,7 +50,7 @@ function QuoteRequestPageContent() {
           <div className="grid gap-4 md:gap-6 lg:grid-cols-12">
             {/* 좌측: 견적 요청 폼 (8칸) */}
             <div className="w-full order-2 lg:order-1 lg:col-span-8">
-              <QuoteRequestPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
+              <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
             </div>
 
             {/* 우측: 견적 요청 품목 요약 패널 (4칸) */}
