@@ -283,7 +283,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: clientMessage },
+      {
+        error: clientMessage,
+        // 디버깅용: 실제 에러 메시지 포함 (추후 확인 후 제거)
+        _debug: { message: error?.message, code: error?.code },
+      },
       { status: 500 }
     );
   }
