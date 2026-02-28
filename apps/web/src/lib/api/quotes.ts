@@ -112,7 +112,7 @@ export async function createQuote(params: CreateQuoteParams) {
             return {
               productId: item.productId && existingIdSet.has(item.productId) ? item.productId : null,
               name: item.productName ?? null,
-              vendor: item.vendorName ?? null,
+              // NOTE: QuoteListItem 스키마에 vendor 컬럼 없음 → raw(snapshot)에 포함
               brand: item.brand ?? null,
               lineNumber: item.lineNumber ?? idx + 1,
               quantity,
@@ -120,7 +120,7 @@ export async function createQuote(params: CreateQuoteParams) {
               currency: item.currency ?? "KRW",
               lineTotal,
               notes: item.notes ?? null,
-              snapshot,
+              raw: snapshot, // 스키마 컬럼명: raw (snapshot → raw)
             };
           }),
         },
@@ -216,7 +216,7 @@ export async function createQuote(params: CreateQuoteParams) {
         quoteId: quote.id,
         productId,
         name: product?.name || null,
-        vendor: vendor?.vendor?.name || null,
+        // NOTE: QuoteListItem 스키마에 vendor 컬럼 없음 → raw(snapshot)에 포함
         brand: product?.brand || null,
         catalogNumber: product?.catalogNumber || null,
         lineNumber: index + 1,
@@ -225,7 +225,7 @@ export async function createQuote(params: CreateQuoteParams) {
         currency: vendor?.currency || "KRW",
         lineTotal,
         notes: notes[productId] || null,
-        snapshot,
+        raw: snapshot, // 스키마 컬럼명: raw (snapshot → raw)
       },
     });
   }

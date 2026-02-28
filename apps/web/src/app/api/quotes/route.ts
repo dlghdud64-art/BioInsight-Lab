@@ -6,6 +6,7 @@ import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
+import { generateShareToken } from "@/lib/api/share-token";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
@@ -201,10 +202,35 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create activity log:", error);
     });
 
-    return NextResponse.json({ quote }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating quote:", error);
-    
+    // 견적 생성 성공 후 공유 링크 자동 생성 (비동기 실패 허용)
+    let shareToken: string | null = null;
+    let shareUrl: string | null = null;
+    try {
+      const token = generateShareToken();
+      const share = await db.quoteShare.create({
+        data: {
+          quoteId: quote.id,
+          shareToken: token,
+          enabled: true,
+        },
+      });
+      shareToken = share.shareToken;
+      shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/share/${share.shareToken}`;
+    } catch (shareErr) {
+      // 공유 링크 생성 실패는 견적 생성 자체를 실패로 처리하지 않음
+      console.error("[quotes/POST] QuoteShare 생성 실패 (견적은 정상 생성됨):", shareErr);
+    }
+
+    return NextResponse.json({ quote, shareToken, shareUrl }, { status: 201 });
+  } catch (error: any) {
+    // 상세 에러 로깅 (Prisma 에러 코드/메타 포함)
+    console.error("[quotes/POST] Error creating quote:", {
+      message: error?.message,
+      code: error?.code,          // Prisma: P2002, P2003 등
+      meta: error?.meta,          // Prisma: 실패 필드명 등
+      stack: error?.stack,
+    });
+
     // 데모 모드에서는 더미 응답 반환
     if (isDemoMode() || !isPrismaAvailable) {
       return NextResponse.json({
@@ -218,9 +244,21 @@ export async function POST(request: NextRequest) {
         message: "데모 환경에서는 실제 저장되지 않습니다.",
       }, { status: 201 });
     }
-    
+
+    // 클라이언트에 의미있는 에러 메시지 반환
+    let clientMessage = "견적 생성에 실패했습니다.";
+    if (error?.code === "P2003" || error?.message?.includes("Foreign key")) {
+      clientMessage = "존재하지 않는 제품 또는 조직 정보가 포함되어 있습니다.";
+    } else if (error?.code === "P2002") {
+      clientMessage = "이미 동일한 견적이 존재합니다.";
+    } else if (error?.message?.includes("organizationId") || error?.message?.includes("userId")) {
+      clientMessage = "조직 또는 사용자 정보가 올바르지 않습니다.";
+    } else if (error?.message?.includes("No valid products")) {
+      clientMessage = error.message;
+    }
+
     return NextResponse.json(
-      { error: "Failed to create quote" },
+      { error: clientMessage },
       { status: 500 }
     );
   }
