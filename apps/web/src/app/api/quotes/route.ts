@@ -31,8 +31,32 @@ export async function POST(request: NextRequest) {
       productIds, // 기존 형식 (하위 호환성)
       quantities,
       notes,
-      organizationId,
+      organizationId: clientOrganizationId,
     } = body;
+
+    // 서버 세션 기반 organizationId 결정 (클라이언트 값 직접 신뢰 금지 → P2003 방지)
+    let serverOrgId: string | null = null;
+    const clientOrgId = (typeof clientOrganizationId === "string" ? clientOrganizationId.trim() : null) || null;
+    if (clientOrgId) {
+      const membership = await db.organizationMember.findUnique({
+        where: { userId_organizationId: { userId: session.user.id, organizationId: clientOrgId } },
+        select: { organizationId: true },
+      });
+      serverOrgId = membership?.organizationId ?? null;
+      if (!serverOrgId) {
+        console.warn(
+          `[quotes/POST] organizationId 검증 실패: 클라이언트 값(${clientOrgId})으로 사용자(${session.user.id}) 멤버십 없음.`
+        );
+      }
+    }
+    if (!serverOrgId) {
+      const firstMembership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "asc" },
+        select: { organizationId: true },
+      });
+      serverOrgId = firstMembership?.organizationId ?? null;
+    }
 
     // items가 있으면 새로운 형식, 없으면 기존 형식
     const quoteItems = items || (productIds ? productIds.map((pid: string, idx: number) => ({
@@ -95,7 +119,7 @@ export async function POST(request: NextRequest) {
 
       const quote = await createQuote({
         userId: session.user.id,
-        organizationId,
+        organizationId: serverOrgId ?? undefined,
         title: vendorTitle,
         message: vendorMessage,
         deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
@@ -190,7 +214,7 @@ export async function POST(request: NextRequest) {
       entityType: "quote",
       entityId: quote.id,
       userId: session.user.id,
-      organizationId: organizationId || quote.organizationId || undefined,
+      organizationId: serverOrgId || quote.organizationId || undefined,
       metadata: {
         title: quote.title,
         itemCount: quote.items?.length || 0,

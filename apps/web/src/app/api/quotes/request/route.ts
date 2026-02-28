@@ -180,9 +180,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, commonRequest, vendorMessages = {}, organizationId, expiresInDays } = parsed.data;
+    const { items, commonRequest, vendorMessages = {}, organizationId: clientOrganizationId, expiresInDays } = parsed.data;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    // 4-a. 서버 세션 기반 organizationId 결정 (클라이언트 값 직접 신뢰 금지)
+    //      P2003 방지: DB에 없는 organizationId를 사용하면 FK 위반 발생
+    let serverOrgId: string | null = null;
+    const clientOrgId = clientOrganizationId?.trim() || null;
+    if (clientOrgId) {
+      // 클라이언트가 보낸 organizationId가 실제 사용자가 속한 조직인지 검증
+      const membership = await db.organizationMember.findUnique({
+        where: { userId_organizationId: { userId: session.user.id, organizationId: clientOrgId } },
+        select: { organizationId: true },
+      });
+      serverOrgId = membership?.organizationId ?? null;
+      if (!serverOrgId) {
+        console.warn(
+          `[quotes/request] organizationId 검증 실패: 클라이언트 값(${clientOrgId})으로 사용자(${session.user.id}) 멤버십 없음. 기본 조직으로 폴백.`
+        );
+      }
+    }
+    if (!serverOrgId) {
+      // 클라이언트가 organizationId를 안 보냈거나 검증 실패 시 사용자의 첫 번째 조직 사용
+      const firstMembership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "asc" },
+        select: { organizationId: true },
+      });
+      serverOrgId = firstMembership?.organizationId ?? null;
+    }
 
     // 4. 벤더별 품목 그룹화 (vendorId 우선, fallback: vendorName)
     const vendorGroupMap = new Map<string, RequestItem[]>();
@@ -253,7 +280,7 @@ export async function POST(request: NextRequest) {
           const quote = await tx.quote.create({
             data: {
               userId: session.user.id,
-              organizationId: organizationId ?? null,
+              organizationId: serverOrgId,
               title: vendorTitle,
               description: composedMessage ?? null,
               items: {
@@ -403,10 +430,12 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    console.error("Quote Request DB Error Details:", error);
     console.error("[quotes/request] Error:", {
       message: error?.message,
       code: error?.code,
       meta: error?.meta,
+      stack: error?.stack,
     });
 
     let clientMessage = "견적 요청 생성에 실패했습니다.";
