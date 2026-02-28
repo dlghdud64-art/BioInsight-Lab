@@ -76,7 +76,7 @@ export function BulkImportModal({
   const organizationId = adminOrg?.id ?? organizations[0]?.id;
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS]);
+    const ws = XLSX.utils.aoa_to_sheet([[...TEMPLATE_HEADERS]]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "재고 템플릿");
     XLSX.writeFile(wb, "재고_일괄등록_템플릿.xlsx");
@@ -95,10 +95,10 @@ export function BulkImportModal({
           const workbook = XLSX.read(data, { type: "binary" });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+          const rows = (XLSX.utils.sheet_to_json(sheet, {
             header: 1,
             defval: "",
-          }) as unknown[][];
+          }) as unknown) as unknown[][];
 
           if (rows.length < 2) {
             reject(new Error("데이터 행이 없습니다. 헤더와 최소 1개 이상의 데이터 행이 필요합니다."));
