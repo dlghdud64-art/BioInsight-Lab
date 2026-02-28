@@ -132,19 +132,15 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // URL query parameter에서 검색어를 읽어서 자동으로 검색 시작 (재고에서 재구매 버튼으로 진입한 경우)
+  // URL query parameter에서 검색어를 읽어서 검색창 초기값 설정 및 자동 검색 (랜딩/재고 등)
   useEffect(() => {
     if (queryParamInitialized) return;
 
     const qParam = searchParams?.get("q");
-    const fromParam = searchParams?.get("from");
 
-    if (qParam && fromParam === "inventory") {
-      // 재고에서 왔고 검색어가 있으면 자동으로 검색 실행
-      setSearchQuery(qParam);
+    if (qParam && qParam.trim()) {
+      setSearchQuery(qParam.trim());
       setQueryParamInitialized(true);
-
-      // 검색 트리거 (약간의 지연을 두어 state가 완전히 설정되도록 함)
       setTimeout(() => {
         setHasSearched(true);
         setSearchTrigger(1);
