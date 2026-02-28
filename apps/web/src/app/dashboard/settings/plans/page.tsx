@@ -27,14 +27,18 @@ export default function PlansPage() {
   const [isAnnual, setIsAnnual] = useState(false);
 
   // 사용자의 조직 목록 및 구독 정보 조회
-  const { data: organizationsData, isLoading } = useQuery({
+  const { data: organizationsData, isLoading, isError } = useQuery({
     queryKey: ["user-organizations"],
     queryFn: async () => {
       const response = await fetch("/api/organizations");
-      if (!response.ok) throw new Error("Failed to fetch organizations");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as { error?: string })?.error ?? "조직 목록을 불러오지 못했습니다.");
+      }
       return response.json();
     },
     enabled: status === "authenticated",
+    retry: 1,
   });
 
   const upgradeMutation = useMutation({
@@ -79,6 +83,21 @@ export default function PlansPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
           <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // API 오류 시 에러 바운더리 대신 안전한 fallback UI 반환
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">구독 플랜 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -155,7 +174,11 @@ export default function PlansPage() {
     );
   }
 
-  const currentPlan = selectedOrg.plan || SubscriptionPlan.FREE;
+  // plan 필드가 DB에 있는 SubscriptionPlan enum 값인지 확인, 아니면 FREE 기본값 사용
+  const validPlans = Object.values(SubscriptionPlan) as string[];
+  const currentPlan: SubscriptionPlan = validPlans.includes(selectedOrg?.plan)
+    ? (selectedOrg.plan as SubscriptionPlan)
+    : SubscriptionPlan.FREE;
   const limits = getPlanLimits(currentPlan);
 
   // 기능 목록 정의
@@ -297,7 +320,7 @@ export default function PlansPage() {
                     {/* 기능 목록 */}
                     <div className="space-y-3">
                       {featureList.map((feature) => {
-                        const hasFeature = plan.features.features[feature.key as keyof typeof plan.features.features];
+                        const hasFeature = plan.features?.features?.[feature.key as keyof typeof plan.features.features] ?? false;
                         return (
                           <div key={feature.key} className="flex items-center gap-3">
                             {hasFeature ? (

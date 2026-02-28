@@ -190,8 +190,9 @@ export async function POST(request: NextRequest) {
     const clientOrgId = clientOrganizationId?.trim() || null;
     if (clientOrgId) {
       // 클라이언트가 보낸 organizationId가 실제 사용자가 속한 조직인지 검증
-      const membership = await db.organizationMember.findUnique({
-        where: { userId_organizationId: { userId: session.user.id, organizationId: clientOrgId } },
+      // findUnique with compound key 대신 findFirst 사용 (db가 any 타입 → 런타임 안전성 확보)
+      const membership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: clientOrgId },
         select: { organizationId: true },
       });
       serverOrgId = membership?.organizationId ?? null;

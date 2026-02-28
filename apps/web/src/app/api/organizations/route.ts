@@ -18,7 +18,7 @@ const createOrganizationSchema = z.object({
     ),
 });
 
-// ì¬ì©ìê° ììë ì¡°ì§ ëª©ë¡ ì¡°í
+// 사용자가 소속된 조직 목록 조회
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -26,11 +26,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ì¬ì©ìê° ë©¤ë²ë¡ ììë ì¡°ì§ ì¡°í
+    // userId로 소속된 OrganizationMember 조회 (organization 포함)
     const memberships = await db.organizationMember.findMany({
-      where: {
-        userId: session.user.id,
-      },
+      where: { userId: session.user.id },
       include: {
         organization: {
           include: {
@@ -38,19 +36,32 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      orderBy: { createdAt: "asc" },
     });
 
-    // role은 membership에 있으므로 organization에 병합
-    const organizations = memberships.map((m: any) => ({
-      ...m.organization,
-      role: m.role ?? '멤버',
-    }));
+    // 소속 조직이 없는 경우(신규 가입자 등) → 빈 배열로 정상 200 응답
+    if (memberships.length === 0) {
+      return NextResponse.json({ organizations: [] });
+    }
+
+    // organization이 null인 경우(데이터 불일치) 필터링 후 role 병합
+    const organizations = memberships
+      .filter((m: any) => m.organization != null)
+      .map((m: any) => ({
+        ...m.organization,
+        role: m.role ?? "VIEWER",
+      }));
 
     return NextResponse.json({ organizations });
   } catch (error: any) {
-    console.error("Error fetching organizations:", error);
+    console.error("[organizations/GET] Error:", {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+      stack: error?.stack,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch organizations" },
+      { error: "조직 목록을 불러오지 못했습니다." },
       { status: 500 }
     );
   }
