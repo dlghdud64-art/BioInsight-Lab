@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin, Package } from "lucide-react";
+import { Copy, Download, Share2, MoreVertical, Plus, Minus, Trash2, X, GitCompare, Languages, Check, ShoppingCart, Ban, CheckCircle2, Search, TrendingDown, Sparkles, ArrowRight, Settings, Target, Loader2, Thermometer, AlertTriangle, AlertCircle, FileText, UploadCloud, Calendar, MapPin, Package, MessageSquarePlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { QuoteVersionCompare } from "./quote-version-compare";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -2491,10 +2491,10 @@ export function QuoteItemsSummaryPanel({
                     </div>
                     {/* 벤더별 개별 메시지 입력창 (접기/열기) */}
                     {vendorGroups.size > 1 && onVendorNoteChange && (
-                      <div className="mt-3 pt-3 border-t border-slate-200">
+                      <div className="mt-2 pt-2 border-t border-slate-200">
                         {expandedVendorNotes[vendorId] ? (
                           <div className="animate-in slide-in-from-top-2 duration-200">
-                            <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center justify-between mb-1.5">
                               <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-700">
                                 이 벤더에게만 보낼 메시지
                               </Label>
@@ -2502,10 +2502,11 @@ export function QuoteItemsSummaryPanel({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-auto py-1 px-2 text-sm text-slate-500 hover:text-slate-700"
+                                className="h-auto py-0.5 px-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                                 onClick={() => toggleVendorNote(vendorId)}
                               >
-                                - 개별 메시지 숨기기
+                                <Minus className="w-3.5 h-3.5 mr-1" />
+                                개별 메시지 숨기기
                               </Button>
                             </div>
                             <Textarea
@@ -2513,19 +2514,22 @@ export function QuoteItemsSummaryPanel({
                               value={vendorNotes[vendorId] || ""}
                               onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
                               placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
-                              className="bg-gray-50 border rounded p-2 text-sm w-full min-h-[60px]"
+                              className="bg-slate-50 border border-slate-200 rounded p-2 text-sm w-full min-h-[60px]"
                             />
                           </div>
                         ) : (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto py-1 px-0 text-sm text-slate-500 hover:text-slate-700"
-                            onClick={() => toggleVendorNote(vendorId)}
-                          >
-                            + 개별 메시지 추가
-                          </Button>
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto py-0.5 px-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              onClick={() => toggleVendorNote(vendorId)}
+                            >
+                              <MessageSquarePlus className="w-3.5 h-3.5 mr-1" />
+                              개별 메시지 추가
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}
