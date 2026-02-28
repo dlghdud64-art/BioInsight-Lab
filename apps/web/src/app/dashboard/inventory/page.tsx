@@ -743,7 +743,7 @@ export default function InventoryPage() {
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항
                   {issuesCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-2">
+                    <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold text-white shadow-sm ring-2 ring-white/50 animate-in zoom-in-95 duration-300 ml-2">
                       {issuesCount}
                     </span>
                   )}
