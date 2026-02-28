@@ -68,7 +68,23 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
   } = useTestFlow();
   const { toast } = useToast();
   const { addProduct, hasProduct } = useCompareStore();
-  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>(() =>
+    quoteItems.map((item) => item.id)
+  );
+
+  const prevQuoteItemIdsRef = React.useRef<Set<string>>(new Set());
+
+  // quoteItems 변경 시(품목 추가/삭제) 전체 선택으로 동기화. 사용자 체크 해제는 유지.
+  useEffect(() => {
+    const currentIds = new Set(quoteItems.map((item) => item.id));
+    const prevIds = prevQuoteItemIdsRef.current;
+    const idsChanged =
+      currentIds.size !== prevIds.size || [...currentIds].some((id) => !prevIds.has(id));
+    if (idsChanged) {
+      prevQuoteItemIdsRef.current = currentIds;
+      setSelectedQuoteIds(quoteItems.map((item) => item.id));
+    }
+  }, [quoteItems]);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [groupByVendor, setGroupByVendor] = useState(false);
   const [showAdvancedOptimization, setShowAdvancedOptimization] = useState(false);
@@ -383,7 +399,9 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                         <TableHead className="text-xs font-bold text-gray-500 uppercase w-16">
                           {quoteItems.length > 0 && (
                             <Checkbox
-                              checked={allSelected || someSelected}
+                              checked={
+                                allSelected ? true : someSelected ? "indeterminate" : false
+                              }
                               onCheckedChange={(checked) => {
                                 if (checked) {
                                   selectAllQuotes();
@@ -2371,7 +2389,15 @@ export function QuoteItemsSummaryPanel({
   const { quoteItems, products } = useTestFlow();
   const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [expandedVendorNotes, setExpandedVendorNotes] = useState<Record<string, boolean>>({});
+
+  const toggleVendorNote = useCallback((vendorId: string) => {
+    setExpandedVendorNotes((prev) => ({
+      ...prev,
+      [vendorId]: !prev[vendorId],
+    }));
+  }, []);
+
   // 벤더별로 그룹화
   const vendorGroups = useMemo(() => {
     const groups = new Map<string, { vendorName: string; items: typeof quoteItems }>();
@@ -2463,19 +2489,44 @@ export function QuoteItemsSummaryPanel({
                         );
                       })}
                     </div>
-                    {/* 벤더별 개별 메시지 입력창 */}
+                    {/* 벤더별 개별 메시지 입력창 (접기/열기) */}
                     {vendorGroups.size > 1 && onVendorNoteChange && (
                       <div className="mt-3 pt-3 border-t border-slate-200">
-                        <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-700 mb-1 block">
-                          이 벤더에게만 보낼 메시지
-                        </Label>
-                        <Textarea
-                          id={`vendor-note-${vendorId}`}
-                          value={vendorNotes[vendorId] || ""}
-                          onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
-                          placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
-                          className="bg-gray-50 border rounded p-2 text-sm w-full min-h-[60px]"
-                        />
+                        {expandedVendorNotes[vendorId] ? (
+                          <div className="animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex items-center justify-between mb-1">
+                              <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-700">
+                                이 벤더에게만 보낼 메시지
+                              </Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto py-1 px-2 text-sm text-slate-500 hover:text-slate-700"
+                                onClick={() => toggleVendorNote(vendorId)}
+                              >
+                                - 개별 메시지 숨기기
+                              </Button>
+                            </div>
+                            <Textarea
+                              id={`vendor-note-${vendorId}`}
+                              value={vendorNotes[vendorId] || ""}
+                              onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
+                              placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
+                              className="bg-gray-50 border rounded p-2 text-sm w-full min-h-[60px]"
+                            />
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto py-1 px-0 text-sm text-slate-500 hover:text-slate-700"
+                            onClick={() => toggleVendorNote(vendorId)}
+                          >
+                            + 개별 메시지 추가
+                          </Button>
+                        )}
                       </div>
                     )}
                     {vendorGroups.size > 1 && (

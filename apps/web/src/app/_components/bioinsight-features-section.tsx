@@ -53,12 +53,12 @@ export function BioInsightFeaturesSection() {
             return (
               <Card
                 key={index}
-                className={`${feature.bgColor} border-2 border-transparent hover:border-slate-300 transition-all duration-300 hover:shadow-xl`}
+                className={`${feature.bgColor} border-2 border-transparent hover:border-slate-300 transition-all duration-300 hover:shadow-xl p-6`}
               >
-                <CardHeader>
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
-                    <Icon className="h-7 w-7 text-white" />
-                  </div>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <CardHeader className="p-0">
                   <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
                     {feature.title}
                     {feature.titleSub && (
@@ -71,7 +71,7 @@ export function BioInsightFeaturesSection() {
                     {feature.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 pt-4">
                   <p className="text-sm md:text-base text-slate-600 leading-relaxed">
                     {feature.details}
                   </p>

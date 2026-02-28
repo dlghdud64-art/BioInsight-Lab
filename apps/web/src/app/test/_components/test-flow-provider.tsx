@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect, Suspense } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useRef, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useCompareStore } from "@/lib/store/compare-store";
@@ -42,6 +42,7 @@ interface TestFlowContextType {
   // 비교/견적 요청 리스트
   compareIds: string[];
   quoteItems: any[];
+  isCartHydrated: boolean;
   
   // 공유
   shareLink: string | null;
@@ -81,7 +82,48 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const [protocolText, setProtocolText] = useState("");
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [quoteItems, setQuoteItems] = useState<any[]>([]);
+  const [isCartHydrated, setIsCartHydrated] = useState(false);
+  const isRestoringFromStorageRef = useRef(true);
   const [shareLink, setShareLink] = useState<string | null>(null);
+
+  const STORAGE_KEY = "quote-cart-storage";
+
+  // 클라이언트 마운트 후 localStorage에서 장바구니 복원 (Hydration 에러 방지)
+  useEffect(() => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setQuoteItems(parsed);
+        }
+      }
+    } catch {
+      // 무시
+    }
+    // 다음 틱에 복원 완료 표시 (save effect가 먼저 실행되어 덮어쓰는 것 방지)
+    const id = setTimeout(() => {
+      isRestoringFromStorageRef.current = false;
+      setIsCartHydrated(true);
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  // 장바구니 변경 시 localStorage에 저장 (복원 중에는 저장 생략)
+  useEffect(() => {
+    if (isRestoringFromStorageRef.current || !isCartHydrated) return;
+    try {
+      if (typeof window !== "undefined") {
+        if (quoteItems.length > 0) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteItems));
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    } catch {
+      // 무시
+    }
+  }, [quoteItems, isCartHydrated]);
   const [gptEnabled, setGptEnabled] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [queryParamInitialized, setQueryParamInitialized] = useState(false);
@@ -473,6 +515,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
         isExtracting: extractProtocolMutation.isPending,
         compareIds: productIds, // useCompareStore의 productIds 사용
         quoteItems,
+        isCartHydrated,
         shareLink,
         isGeneratingShareLink: generateShareLinkMutation.isPending,
         gptEnabled,
@@ -540,6 +583,7 @@ function TestFlowProviderFallback({ children }: { children: ReactNode }) {
         isExtracting: false,
         compareIds: productIds,
         quoteItems: [],
+        isCartHydrated: false,
         shareLink: null,
         isGeneratingShareLink: false,
         gptEnabled: false,

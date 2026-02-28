@@ -65,69 +65,81 @@ export default function IntroPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
               {/* R&D 연구자 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
-                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50 text-amber-500">
-                  <Zap size={24} strokeWidth={2.5} />
+              <Card className="flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full p-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <CardHeader className="p-0 pb-2">
+                      <CardTitle className="text-xl font-bold text-slate-900">
+                        R&D 연구자
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 pt-4 space-y-4">
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                        <p className="text-sm text-slate-700">시약 검색·스펙 비교에 매번 20분 이상 소요</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                        <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">해결책</p>
+                        <p className="text-sm font-medium text-blue-900">AI 통합 검색으로 1초 만에 500만 개 제품 비교</p>
+                      </div>
+                    </CardContent>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-50 text-amber-500">
+                    <Zap size={24} strokeWidth={2.5} />
+                  </div>
                 </div>
-                <CardHeader className="pb-2 pt-6">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
-                    R&D 연구자
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
-                    <p className="text-sm text-slate-700">시약 검색·스펙 비교에 매번 20분 이상 소요</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
-                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">해결책</p>
-                    <p className="text-sm font-medium text-blue-900">AI 통합 검색으로 1초 만에 500만 개 제품 비교</p>
-                  </div>
-                </CardContent>
               </Card>
 
               {/* QC/QA 매니저 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
-                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-500">
-                  <ShieldCheck size={24} strokeWidth={2.5} />
+              <Card className="flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full p-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <CardHeader className="p-0 pb-2">
+                      <CardTitle className="text-xl font-bold text-slate-900">
+                        QC/QA 매니저
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 pt-4 space-y-4">
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                        <p className="text-sm text-slate-700">Lot No.·유효기간 수기 관리, GMP 감사 대비 부담</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">해결책</p>
+                        <p className="text-sm font-medium text-emerald-900">배치 추적·유효기간 자동 알림, CFR 21 Part 11 준수</p>
+                      </div>
+                    </CardContent>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-emerald-50 text-emerald-500">
+                    <ShieldCheck size={24} strokeWidth={2.5} />
+                  </div>
                 </div>
-                <CardHeader className="pb-2 pt-6">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
-                    QC/QA 매니저
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
-                    <p className="text-sm text-slate-700">Lot No.·유효기간 수기 관리, GMP 감사 대비 부담</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-                    <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">해결책</p>
-                    <p className="text-sm font-medium text-emerald-900">배치 추적·유효기간 자동 알림, CFR 21 Part 11 준수</p>
-                  </div>
-                </CardContent>
               </Card>
 
               {/* 구매 담당자 */}
-              <Card className="relative bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full">
-                <div className="absolute top-8 right-8 w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-500">
-                  <Layers size={24} strokeWidth={2.5} />
+              <Card className="flex flex-col bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow overflow-hidden h-full p-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <CardHeader className="p-0 pb-2">
+                      <CardTitle className="text-xl font-bold text-slate-900">
+                        구매 담당자
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 pt-4 space-y-4">
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
+                        <p className="text-sm text-slate-700">벤더별 견적 수집·정리·비교에 45분 이상 소요</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100">
+                        <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">해결책</p>
+                        <p className="text-sm font-medium text-indigo-900">통합 견적 요청·가격 비교표 자동 생성, ~5분 완료</p>
+                      </div>
+                    </CardContent>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-50 text-indigo-500">
+                    <Layers size={24} strokeWidth={2.5} />
+                  </div>
                 </div>
-                <CardHeader className="pb-2 pt-6">
-                  <CardTitle className="text-xl font-bold text-slate-900 pr-14">
-                    구매 담당자
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">페인포인트</p>
-                    <p className="text-sm text-slate-700">벤더별 견적 수집·정리·비교에 45분 이상 소요</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100">
-                    <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">해결책</p>
-                    <p className="text-sm font-medium text-indigo-900">통합 견적 요청·가격 비교표 자동 생성, ~5분 완료</p>
-                  </div>
-                </CardContent>
               </Card>
             </div>
           </div>
@@ -147,11 +159,11 @@ export default function IntroPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {/* 자동화 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
-                    <Zap className="h-7 w-7 text-white" />
-                  </div>
+              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow p-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5 shadow-lg">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <CardHeader className="p-0">
                   <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
                     자동화
                   </CardTitle>
@@ -159,7 +171,7 @@ export default function IntroPage() {
                     배송 완료와 동시에 인벤토리 등록
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 pt-4">
                   <p className="text-sm md:text-base text-slate-600 leading-relaxed">
                     주문 내역이 자동으로 인벤토리에 반영되어 수동 입력이 필요 없습니다.
                   </p>
@@ -167,11 +179,11 @@ export default function IntroPage() {
               </Card>
 
               {/* 중복 구매 방지 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg">
-                    <Users className="h-7 w-7 text-white" />
-                  </div>
+              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow p-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-5 shadow-lg">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <CardHeader className="p-0">
                   <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
                     중복 구매 방지
                     <span className="text-xs md:text-sm font-normal text-slate-500 ml-2">
@@ -182,7 +194,7 @@ export default function IntroPage() {
                     옆 실험대에 있는데 또 주문하셨나요?
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 pt-4">
                   <p className="text-sm md:text-base text-slate-600 leading-relaxed">
                     연구실 전체 재고를 통합 검색하세요. 불필요한 지출을 막고, 급할 땐 동료의 시약을 바로 찾을 수 있습니다.
                   </p>
@@ -190,11 +202,11 @@ export default function IntroPage() {
               </Card>
 
               {/* AI 예측 */}
-              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg">
-                    <Brain className="h-7 w-7 text-white" />
-                  </div>
+              <Card className="bg-white border border-slate-200 shadow-sm rounded-xl hover:shadow-md transition-shadow p-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-5 shadow-lg">
+                  <Brain className="h-6 w-6 text-white" />
+                </div>
+                <CardHeader className="p-0">
                   <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
                     AI 예측
                   </CardTitle>
@@ -202,7 +214,7 @@ export default function IntroPage() {
                     떨어질 때를 미리 알려주는 스마트 알림
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 pt-4">
                   <p className="text-sm md:text-base text-slate-600 leading-relaxed">
                     과거 주문 패턴을 분석하여 재구매 시점을 예측하고 알림을 보내드립니다.
                   </p>

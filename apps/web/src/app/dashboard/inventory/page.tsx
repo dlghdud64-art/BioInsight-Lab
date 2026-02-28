@@ -23,7 +23,9 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ImportWizard } from "@/components/inventory/import-wizard";
+import { BulkImportModal } from "@/components/inventory/BulkImportModal";
+import { InventorySearch } from "@/components/inventory/InventorySearch";
+import { useDebounce } from "@/hooks/use-debounce";
 import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
@@ -79,6 +81,7 @@ export default function InventoryPage() {
   const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
   const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -531,11 +534,11 @@ export default function InventoryPage() {
     },
   });
 
-  // 필터링된 인벤토리 (검색어 + 기타 필터)
+  // 필터링된 인벤토리 (디바운스된 검색어 + 기타 필터)
   const filteredInventories = displayInventories.filter((inv) => {
     // 검색 필터: 품목명, 제조사, 카탈로그 번호, Lot, 공급사
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim();
       const name = (inv.product?.name ?? "").toLowerCase();
       const brand = (inv.product?.brand ?? "").toLowerCase();
       const catNo = (inv.product?.catalogNumber ?? "").toLowerCase();
@@ -698,29 +701,21 @@ export default function InventoryPage() {
                 </>
               )}
             </Button>
-            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  엑셀 업로드
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>인벤토리 일괄 등록</DialogTitle>
-                  <DialogDescription>
-                    엑셀 파일을 업로드하여 여러 제품의 재고를 한 번에 등록합니다.
-                  </DialogDescription>
-                </DialogHeader>
-                <ImportWizard
-                  onSuccess={() => {
-                    setIsImportDialogOpen(false);
-                    queryClient.invalidateQueries({ queryKey: ["inventories"] });
-                    queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+            <BulkImportModal
+              open={isImportDialogOpen}
+              onOpenChange={setIsImportDialogOpen}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ["inventories"] });
+                queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => setIsImportDialogOpen(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              엑셀 업로드
+            </Button>
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               내보내기
@@ -760,25 +755,11 @@ export default function InventoryPage() {
             {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
             <TabsContent value="manage" className="m-0 p-6 space-y-4">
               <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
-              <div className="relative flex-1 min-w-0 w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none flex-shrink-0" />
-                <Input
-                  placeholder="품목명, 제조사, CAS No. 또는 카탈로그 번호로 검색하세요"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 min-w-0 w-full"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
-                    aria-label="검색어 지우기"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+              <InventorySearch
+                value={searchQuery}
+                onChange={setSearchQuery}
+                isLoading={isLoading}
+              />
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="위치별" />
@@ -850,12 +831,12 @@ export default function InventoryPage() {
                       setIsSheetOpen(true);
                     }}
                     emptyMessage={
-                      searchQuery.trim()
-                        ? "검색 결과가 없습니다. 품목명이나 카탈로그 번호를 다시 확인해 주세요."
+                      debouncedSearchQuery.trim()
+                        ? `검색어 '${debouncedSearchQuery.trim()}'에 대한 결과를 찾을 수 없습니다.`
                         : "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
                     }
-                    emptyAction={searchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
-                    emptyActionLabel={searchQuery.trim() ? "검색 초기화" : "첫 재고 등록하기"}
+                    emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
+                    emptyActionLabel={debouncedSearchQuery.trim() ? "모든 재고 보기" : "첫 재고 등록하기"}
                   />
                 </CardContent>
               </Card>
