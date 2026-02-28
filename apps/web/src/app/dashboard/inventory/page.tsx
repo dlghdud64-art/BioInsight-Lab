@@ -1002,7 +1002,7 @@ export default function InventoryPage() {
                                     <ShoppingCart className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>구매 요청</TooltipContent>
+                                <TooltipContent className="whitespace-nowrap w-max">구매 요청</TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                             <Button

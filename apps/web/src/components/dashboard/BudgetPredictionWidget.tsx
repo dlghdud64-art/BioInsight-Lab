@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TrendingDown, AlertTriangle, CalendarClock, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -13,7 +20,9 @@ import {
   Tooltip,
 } from "recharts";
 
-type PredictData = {
+type PredictItem = {
+  scopeKey: string;
+  organizationId: string | null;
   hasBudget: boolean;
   budgetName: string;
   totalBudget: number;
@@ -41,11 +50,53 @@ function formatDate(iso: string) {
 export function BudgetPredictionWidget({ organizationId }: { organizationId?: string }) {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
-  const params = organizationId ? `?organizationId=${organizationId}` : "";
+  const [selectedScopeKey, setSelectedScopeKey] = useState<string | null>(null);
+
+  const { data: listData, isLoading } = useQuery<{ budgets: PredictItem[] }>({
+    queryKey: ["budget-predict-list"],
+    queryFn: async () => {
+      const res = await fetch("/api/budget/predict/list");
+      if (!res.ok) throw new Error("fetch failed");
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !organizationId,
+  });
+
+  const { data: singleData, isLoading: singleLoading } = useQuery<PredictItem & { hasBudget: boolean }>({
+    queryKey: ["budget-predict", organizationId],
+    queryFn: async () => {
+      const params = organizationId ? `?organizationId=${organizationId}` : "";
+      const res = await fetch(`/api/budget/predict${params}`);
+      if (!res.ok) throw new Error("fetch failed");
+      const json = await res.json();
+      return {
+        ...json,
+        scopeKey: organizationId,
+        organizationId,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!organizationId,
+  });
+
+  const budgets = organizationId
+    ? singleData?.hasBudget
+      ? [{ ...singleData, scopeKey: organizationId, organizationId }]
+      : []
+    : listData?.budgets ?? [];
+  const effectiveSelected = selectedScopeKey ?? budgets[0]?.scopeKey ?? null;
+  const selectedBudget = useMemo(
+    () => budgets.find((b) => b.scopeKey === effectiveSelected) ?? budgets[0],
+    [budgets, effectiveSelected]
+  );
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
+      const params = selectedBudget?.organizationId
+        ? `?organizationId=${selectedBudget.organizationId}`
+        : "";
       const res = await fetch(`/api/budget/report${params}`);
       if (!res.ok) throw new Error("생성 실패");
       const blob = await res.blob();
@@ -64,17 +115,9 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
     }
   };
 
-  const { data, isLoading } = useQuery<PredictData>({
-    queryKey: ["budget-predict", organizationId],
-    queryFn: async () => {
-      const res = await fetch(`/api/budget/predict${params}`);
-      if (!res.ok) throw new Error("fetch failed");
-      return res.json();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const isLoadingState = organizationId ? singleLoading : isLoading;
 
-  if (isLoading) {
+  if (isLoadingState) {
     return (
       <Card className="border border-slate-200 shadow-sm bg-white dark:bg-slate-900 dark:border-slate-800 animate-pulse">
         <CardContent className="p-5 h-[140px]" />
@@ -82,13 +125,18 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
     );
   }
 
-  if (!data || !data.hasBudget) return null;
+  if (!selectedBudget || !selectedBudget.hasBudget) return null;
 
-  const dDay = data.runwayDays !== null ? data.runwayDays : null;
-  const exhaustLabel = data.exhaustDate
-    ? `D-${dDay} (${formatDate(data.exhaustDate)} 고갈 예상)`
+  const dDay = selectedBudget.runwayDays;
+  const exhaustLabel = selectedBudget.exhaustDate
+    ? `D-${dDay} (${formatDate(selectedBudget.exhaustDate)} 고갈 예상)`
     : "데이터 부족";
-  const hasWarning = data.hasWarning;
+  const hasWarning = selectedBudget.hasWarning;
+
+  const otherWarningBudgets = budgets.filter(
+    (b) => b.scopeKey !== effectiveSelected && b.hasWarning
+  );
+  const otherWarningCount = otherWarningBudgets.length;
 
   return (
     <Card className={`border border-slate-200 shadow-sm overflow-hidden dark:border-slate-800 ${hasWarning ? "bg-red-50/30 dark:bg-red-950/20" : "bg-white dark:bg-slate-900"}`}>
@@ -96,25 +144,44 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}
           <div className="flex-1 p-5 space-y-3">
-            {/* 상태 배지 */}
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
-              </span>
-              <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wide">
-                AI 예측 분석 중
-              </span>
+            {/* 헤더: AI 배지 + 예산 셀렉터 */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                </span>
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wide">
+                  AI 예측 분석 중
+                </span>
+              </div>
+              {budgets.length > 1 && (
+                <Select
+                  value={effectiveSelected}
+                  onValueChange={setSelectedScopeKey}
+                >
+                  <SelectTrigger className="h-7 w-[140px] text-xs border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {budgets.map((b) => (
+                      <SelectItem key={b.scopeKey} value={b.scopeKey} className="text-xs">
+                        {b.budgetName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
-            {/* 예상 고갈일 */}
+            {/* 예상 고갈일 (타이틀에 예산명 포함) */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-red-500 shrink-0" />
                 <p className="text-xs text-slate-600 dark:text-slate-400">예산 고갈 예측</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 leading-tight tracking-tight">
-                {exhaustLabel}
+                [{selectedBudget.budgetName}] {exhaustLabel}
               </p>
             </div>
 
@@ -124,11 +191,11 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 월평균{" "}
                 <span className="text-slate-900 dark:text-slate-200 font-medium">
-                  {formatKRW(data.avgMonthlyBurnRate)}
+                  {formatKRW(selectedBudget.avgMonthlyBurnRate)}
                 </span>{" "}
                 소진 중 &middot; 잔여{" "}
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                  {formatKRW(data.remaining)}
+                  {formatKRW(selectedBudget.remaining)}
                 </span>
               </p>
             </div>
@@ -137,7 +204,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           {/* 우측: Sparkline */}
           <div className="sm:w-[160px] h-[80px] sm:h-auto flex items-end px-4 pb-4 sm:pb-5 sm:pt-5">
             <ResponsiveContainer width="100%" height={70}>
-              <LineChart data={data.sparkline}>
+              <LineChart data={selectedBudget.sparkline}>
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#ffffff",
@@ -164,15 +231,15 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         </div>
 
         {/* AI 인사이트 영역 */}
-        {data.hasWarning && data.warningMessage && (
+        {selectedBudget.hasWarning && selectedBudget.warningMessage && (
           <div className="mx-4 mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-2.5">
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-700 dark:text-amber-200 leading-relaxed">
-              {data.warningMessage}
+              {selectedBudget.warningMessage}
             </p>
           </div>
         )}
-        {!data.hasWarning && (
+        {!selectedBudget.hasWarning && (
           <div className="mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start gap-2.5">
             <AlertTriangle className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -181,27 +248,38 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
         )}
 
-        {/* 다운로드 버튼 */}
-        <div className="mx-4 mb-4 mt-3 flex justify-end">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isDownloading}
-            onClick={handleDownload}
-            className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50 text-xs h-8 px-3"
-          >
-            {isDownloading ? (
-              <>
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                생성 중...
-              </>
-            ) : (
-              <>
-                <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
-                예산 증액 기안서 생성 (.xlsx)
-              </>
-            )}
-          </Button>
+        {/* 추가 위험 알림 + 다운로드 버튼 */}
+        <div className="mx-4 mb-4 mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          {otherWarningCount > 0 && (
+            <button
+              type="button"
+              onClick={() => otherWarningBudgets[0] && setSelectedScopeKey(otherWarningBudgets[0].scopeKey)}
+              className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              + 주의가 필요한 다른 예산 {otherWarningCount}건이 있습니다.
+            </button>
+          )}
+          <div className={otherWarningCount > 0 ? "sm:ml-auto" : "w-full flex justify-end"}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isDownloading}
+              onClick={handleDownload}
+              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50 text-xs h-8 px-3"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                  예산 증액 기안서 생성 (.xlsx)
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
