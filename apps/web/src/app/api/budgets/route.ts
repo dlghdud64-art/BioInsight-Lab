@@ -12,12 +12,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
 
-    // 사용자의 조직 ID 목록 조회
-    const userOrganizations = await db.organizationMember.findMany({
-      where: { userId: session.user.id },
-      select: { organizationId: true },
-    });
-    const userOrgIds = userOrganizations.map((m: { organizationId: string }) => m.organizationId);
+    // 사용자의 조직 ID 목록 조회 (실패해도 개인 예산은 보이도록 방어적 처리)
+    let userOrgIds: string[] = [];
+    try {
+      const userOrganizations = await db.organizationMember.findMany({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      userOrgIds = userOrganizations.map((m: { organizationId: string }) => m.organizationId);
+    } catch (orgErr: any) {
+      console.warn("[Budget API] organizationMember lookup failed:", orgErr?.message);
+    }
 
     // scopeKey 목록 구성 (사용자 ID 기반 + 조직 ID들)
     const scopeKeys = [
@@ -27,6 +32,29 @@ export async function GET(request: NextRequest) {
 
     if (organizationId && !scopeKeys.includes(organizationId)) {
       scopeKeys.push(organizationId);
+    }
+
+    // organizationId가 없을 때: DB에서 해당 user의 모든 budget scopeKey도 포함 (orphan 방지)
+    if (userOrgIds.length === 0) {
+      try {
+        const allUserBudgets = await db.budget.findMany({
+          where: {
+            OR: [
+              { scopeKey: `user-${session.user.id}` },
+              { scopeKey: { not: { startsWith: "user-" } } },
+            ],
+          },
+          select: { scopeKey: true },
+          distinct: ["scopeKey"],
+        });
+        for (const b of allUserBudgets) {
+          if (!scopeKeys.includes(b.scopeKey)) {
+            scopeKeys.push(b.scopeKey);
+          }
+        }
+      } catch {
+        // 무시 - 기본 scopeKeys로 진행
+      }
     }
 
     const budgets = await db.budget.findMany({

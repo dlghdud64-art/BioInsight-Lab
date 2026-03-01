@@ -26,55 +26,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Step 1: userId로 멤버십 목록 조회 (include 없이 단순 select)
+    // 가장 단순한 쿼리: organizationMember + organization include만 사용
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
-      select: { organizationId: true, role: true, createdAt: true },
+      include: { organization: true },
       orderBy: { createdAt: "asc" },
     });
 
     // 소속 조직이 없는 경우(신규 가입자 등) → 빈 배열로 정상 200 응답
-    if (memberships.length === 0) {
+    if (!memberships || memberships.length === 0) {
       return NextResponse.json({ organizations: [] });
     }
 
-    // Step 2: 조직 ID 목록으로 조직 정보 조회
-    const orgIds = memberships.map((m: any) => m.organizationId);
-    const orgs = await db.organization.findMany({
-      where: { id: { in: orgIds } },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        organizationType: true,
-        plan: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    // Step 3: 조직별 멤버 수 조회
-    const memberCounts = await db.organizationMember.groupBy({
-      by: ["organizationId"],
-      where: { organizationId: { in: orgIds } },
-      _count: { id: true },
-    });
-    const memberCountMap: Record<string, number> = {};
-    for (const mc of memberCounts) {
-      memberCountMap[mc.organizationId] = mc._count.id;
-    }
-
-    // Step 4: 멤버십 role과 조직 정보 병합
-    const roleMap: Record<string, string> = {};
-    for (const m of memberships) {
-      roleMap[m.organizationId] = m.role ?? "VIEWER";
-    }
-
-    const organizations = orgs.map((org: any) => ({
-      ...org,
-      members: Array.from({ length: memberCountMap[org.id] ?? 0 }),
-      role: roleMap[org.id] ?? "VIEWER",
-    }));
+    // organization이 null인 경우 필터링 후 role 병합
+    const organizations = memberships
+      .filter((m: any) => m.organization != null)
+      .map((m: any) => ({
+        ...m.organization,
+        members: [],  // 멤버 수는 조직 상세에서 조회
+        role: m.role ?? "VIEWER",
+      }));
 
     return NextResponse.json({ organizations });
   } catch (error: any) {

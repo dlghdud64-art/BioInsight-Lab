@@ -34,29 +34,39 @@ export async function POST(request: NextRequest) {
       organizationId: clientOrganizationId,
     } = body;
 
-    // 서버 세션 기반 organizationId 결정 (클라이언트 값 직접 신뢰 금지 → P2003 방지)
+    // 서버 세션 기반 organizationId 결정 (P2003 방지: 실제 Organization 존재 여부까지 검증)
     let serverOrgId: string | null = null;
-    const clientOrgId = (typeof clientOrganizationId === "string" ? clientOrganizationId.trim() : null) || null;
-    if (clientOrgId) {
-      // findUnique with compound key 대신 findFirst 사용 (db가 any 타입 → 런타임 안전성 확보)
-      const membership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id, organizationId: clientOrgId },
-        select: { organizationId: true },
-      });
-      serverOrgId = membership?.organizationId ?? null;
-      if (!serverOrgId) {
-        console.warn(
-          `[quotes/POST] organizationId 검증 실패: 클라이언트 값(${clientOrgId})으로 사용자(${session.user.id}) 멤버십 없음.`
-        );
+    try {
+      const clientOrgId = (typeof clientOrganizationId === "string" ? clientOrganizationId.trim() : null) || null;
+      if (clientOrgId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: clientOrgId },
+          select: { organizationId: true },
+        });
+        serverOrgId = membership?.organizationId ?? null;
       }
-    }
-    if (!serverOrgId) {
-      const firstMembership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: "asc" },
-        select: { organizationId: true },
-      });
-      serverOrgId = firstMembership?.organizationId ?? null;
+      if (!serverOrgId) {
+        const firstMembership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id },
+          orderBy: { createdAt: "asc" },
+          select: { organizationId: true },
+        });
+        serverOrgId = firstMembership?.organizationId ?? null;
+      }
+      // organizationId가 있으면 실제 Organization 테이블에 존재하는지 확인 (P2003 방지)
+      if (serverOrgId) {
+        const orgExists = await db.organization.findUnique({
+          where: { id: serverOrgId },
+          select: { id: true },
+        });
+        if (!orgExists) {
+          console.warn(`[quotes/POST] Organization ${serverOrgId} not found in DB. Setting to null.`);
+          serverOrgId = null;
+        }
+      }
+    } catch (orgErr: any) {
+      console.warn("[quotes/POST] organizationId lookup failed, proceeding without org:", orgErr?.message);
+      serverOrgId = null;
     }
 
     // items가 있으면 새로운 형식, 없으면 기존 형식
