@@ -851,8 +851,8 @@ export default function InventoryPage() {
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                     전체 재고
                   </CardTitle>
-                  <div className="rounded-full bg-blue-50 p-2 dark:bg-blue-900/40">
-                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40">
+                    <Package className="h-4 w-4 -translate-y-[1px] text-blue-600 dark:text-blue-400" />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -868,8 +868,8 @@ export default function InventoryPage() {
                   <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
                     부족/품절
                   </CardTitle>
-                  <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
+                    <AlertTriangle className="h-4 w-4 -translate-y-[1px] text-red-600 dark:text-red-400" />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -885,8 +885,8 @@ export default function InventoryPage() {
                   <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
                     폐기 임박
                   </CardTitle>
-                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/40">
-                    <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40">
+                    <Calendar className="h-4 w-4 -translate-y-[1px] text-orange-600 dark:text-orange-400" />
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -1,12 +1,14 @@
 /**
- * 특정 사용자를 모든 조직에서 ADMIN으로 승격시키는 스크립트
+ * 특정 사용자를 모든 조직의 ADMIN으로 승격시키는 스크립트
  *
  * 실행 방법:
- *   pnpm --filter web db:make-admin
- * 또는:
- *   cd apps/web && npx tsx scripts/make-admin.ts
+ *   cd apps/web
+ *   npx tsx scripts/make-admin.ts
  *
- * 주의: DIRECT_URL 환경 변수가 필요합니다 (.env.local)
+ * 또는:
+ *   pnpm --filter web db:make-admin
+ *
+ * 주의: DIRECT_URL 환경 변수가 필요할 수 있습니다 (.env.local)
  */
 
 import { PrismaClient, OrganizationRole } from "@prisma/client";
@@ -28,8 +30,8 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  console.log("🔑 Admin 승격 스크립트 시작");
-  console.log(`📧 대상 이메일: ${TARGET_EMAIL}\n`);
+  console.log("Admin 승격 스크립트 시작");
+  console.log(`대상 이메일: ${TARGET_EMAIL}\n`);
 
   // 1. 사용자 조회
   const user = await prisma.user.findUnique({
@@ -37,55 +39,66 @@ async function main() {
   });
 
   if (!user) {
-    console.error(`❌ 사용자를 찾을 수 없습니다: ${TARGET_EMAIL}`);
-    console.error("   이메일 주소를 확인하거나 ADMIN_EMAIL 환경 변수를 설정하세요.");
+    console.error(`사용자를 찾을 수 없습니다: ${TARGET_EMAIL}`);
+    console.error("이메일 주소를 확인하거나 ADMIN_EMAIL 환경 변수를 설정하세요.");
     process.exit(1);
   }
 
-  console.log(`✅ 사용자 발견: ${user.name ?? user.email} (id: ${user.id})`);
+  console.log(`사용자 발견: ${user.name ?? user.email} (id: ${user.id})`);
 
-  // 2. 현재 멤버십 조회
-  const memberships = await prisma.organizationMember.findMany({
-    where: { userId: user.id },
-    include: { organization: { select: { name: true } } },
+  // 2. 모든 조직 조회
+  const organizations = await prisma.organization.findMany({
+    select: { id: true, name: true },
   });
 
-  if (memberships.length === 0) {
-    console.warn("⚠️  해당 사용자의 조직 멤버십이 없습니다.");
-    console.warn("   조직을 먼저 생성하세요.");
+  if (organizations.length === 0) {
+    console.warn("등록된 조직이 없습니다.");
     process.exit(0);
   }
 
-  console.log(`\n📋 현재 멤버십 (${memberships.length}개):`);
-  for (const m of memberships) {
-    console.log(`   - ${m.organization.name}: ${m.role}`);
+  console.log(`\n조직 ${organizations.length}개에 ADMIN으로 추가/승격합니다.`);
+
+  // 3. 각 조직에 대해 upsert (없으면 생성, 있으면 ADMIN으로 업데이트)
+  let created = 0;
+  let updated = 0;
+
+  for (const org of organizations) {
+    const existing = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: { userId: user.id, organizationId: org.id },
+      },
+    });
+
+    if (existing) {
+      if (existing.role !== OrganizationRole.ADMIN) {
+        await prisma.organizationMember.update({
+          where: { id: existing.id },
+          data: { role: OrganizationRole.ADMIN },
+        });
+        updated++;
+        console.log(`  - ${org.name}: ${existing.role} -> ADMIN`);
+      } else {
+        console.log(`  - ${org.name}: 이미 ADMIN`);
+      }
+    } else {
+      await prisma.organizationMember.create({
+        data: {
+          userId: user.id,
+          organizationId: org.id,
+          role: OrganizationRole.ADMIN,
+        },
+      });
+      created++;
+      console.log(`  - ${org.name}: 새로 추가 (ADMIN)`);
+    }
   }
 
-  // 3. 모든 멤버십을 ADMIN으로 업데이트
-  const result = await prisma.organizationMember.updateMany({
-    where: { userId: user.id },
-    data: { role: OrganizationRole.ADMIN },
-  });
-
-  console.log(`\n✅ ${result.count}개 멤버십이 ADMIN으로 승격되었습니다.`);
-
-  // 4. 결과 확인
-  const updated = await prisma.organizationMember.findMany({
-    where: { userId: user.id },
-    include: { organization: { select: { name: true } } },
-  });
-
-  console.log("\n📋 업데이트 후 멤버십:");
-  for (const m of updated) {
-    console.log(`   - ${m.organization.name}: ${m.role} ✅`);
-  }
-
-  console.log("\n🎉 완료! 이제 모든 조직에서 관리자 권한을 가집니다.");
+  console.log(`\n완료: ${created}개 추가, ${updated}개 승격`);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ 오류 발생:", e.message);
+    console.error("오류 발생:", e.message);
     process.exit(1);
   })
   .finally(async () => {
