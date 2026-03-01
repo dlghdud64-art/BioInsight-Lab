@@ -186,30 +186,34 @@ export async function POST(request: NextRequest) {
 
     // 4-a. 서버 세션 기반 organizationId 결정 (클라이언트 값 직접 신뢰 금지)
     //      P2003 방지: DB에 없는 organizationId를 사용하면 FK 위반 발생
+    //      try-catch: organizationMember 조회 실패 시 null로 폴백 (전체 요청 실패 방지)
     let serverOrgId: string | null = null;
-    const clientOrgId = clientOrganizationId?.trim() || null;
-    if (clientOrgId) {
-      // 클라이언트가 보낸 organizationId가 실제 사용자가 속한 조직인지 검증
-      // findUnique with compound key 대신 findFirst 사용 (db가 any 타입 → 런타임 안전성 확보)
-      const membership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id, organizationId: clientOrgId },
-        select: { organizationId: true },
-      });
-      serverOrgId = membership?.organizationId ?? null;
-      if (!serverOrgId) {
-        console.warn(
-          `[quotes/request] organizationId 검증 실패: 클라이언트 값(${clientOrgId})으로 사용자(${session.user.id}) 멤버십 없음. 기본 조직으로 폴백.`
-        );
+    try {
+      const clientOrgId = clientOrganizationId?.trim() || null;
+      if (clientOrgId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: clientOrgId },
+          select: { organizationId: true },
+        });
+        serverOrgId = membership?.organizationId ?? null;
+        if (!serverOrgId) {
+          console.warn(
+            `[quotes/request] organizationId 검증 실패: 클라이언트 값(${clientOrgId})으로 사용자(${session.user.id}) 멤버십 없음. 기본 조직으로 폴백.`
+          );
+        }
       }
-    }
-    if (!serverOrgId) {
-      // 클라이언트가 organizationId를 안 보냈거나 검증 실패 시 사용자의 첫 번째 조직 사용
-      const firstMembership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: "asc" },
-        select: { organizationId: true },
-      });
-      serverOrgId = firstMembership?.organizationId ?? null;
+      if (!serverOrgId) {
+        // 클라이언트가 organizationId를 안 보냈거나 검증 실패 시 사용자의 첫 번째 조직 사용
+        const firstMembership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id },
+          orderBy: { createdAt: "asc" },
+          select: { organizationId: true },
+        });
+        serverOrgId = firstMembership?.organizationId ?? null;
+      }
+    } catch (orgErr: any) {
+      console.warn("[quotes/request] organizationId lookup failed, proceeding without org:", orgErr?.message);
+      serverOrgId = null;
     }
 
     // 4. 벤더별 품목 그룹화 (vendorId 우선, fallback: vendorName)

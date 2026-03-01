@@ -318,13 +318,31 @@ export async function GET(request: NextRequest) {
     const statusFilter = searchParams.get("status") || "all";
     const sortBy = searchParams.get("sortBy") || "newest";
 
-    const where: Record<string, unknown> = {
-      userId: session.user.id,
+    // 사용자가 속한 조직 ID 목록 조회 (실패해도 userId 조건으로 폴백)
+    let userOrgIds: string[] = [];
+    try {
+      const memberships = await db.organizationMember.findMany({
+        where: { userId: session.user.id },
+        select: { organizationId: true },
+      });
+      userOrgIds = memberships.map((m: any) => m.organizationId).filter(Boolean);
+    } catch (orgErr: any) {
+      console.warn("[quotes/GET] organizationMember lookup failed:", orgErr?.message);
+    }
+
+    // userId 또는 소속 조직의 organizationId 로 OR 조회
+    // → organizationId만 저장된 견적도 목록에 포함 (누락 방지)
+    const ownerCondition: Record<string, unknown> = {
+      OR: [
+        { userId: session.user.id },
+        ...(userOrgIds.length > 0 ? [{ organizationId: { in: userOrgIds } }] : []),
+      ],
     };
 
-    if (statusFilter && statusFilter !== "all") {
-      where.status = statusFilter;
-    }
+    const where: Record<string, unknown> =
+      statusFilter && statusFilter !== "all"
+        ? { AND: [ownerCondition, { status: statusFilter }] }
+        : ownerCondition;
 
     const orderBy: Record<string, string> =
       sortBy === "oldest"
