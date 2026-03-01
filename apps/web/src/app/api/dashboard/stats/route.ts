@@ -359,6 +359,23 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
+
+      // 최근 구매 기록 (PurchaseRecord, 최근 5건)
+      recentPurchases: await db.purchaseRecord.findMany({
+        where: purchaseOwnerWhere,
+        orderBy: { purchasedAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          itemName: true,
+          vendorName: true,
+          amount: true,
+          purchasedAt: true,
+          category: true,
+          qty: true,
+          unit: true,
+        },
+      }),
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);

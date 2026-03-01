@@ -189,9 +189,9 @@ export default function ReportsPage() {
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full">
       {/* 1. 헤더 영역 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">구매 리포트</h2>
-          <p className="text-muted-foreground mt-1 text-sm">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
+        <div className="space-y-2">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-normal text-slate-900 dark:text-slate-100 leading-tight">구매 리포트</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed tracking-normal">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -291,59 +291,59 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* 2. 상단 KPI 통계 (전진 배치) */}
+      {/* 2. 상단 KPI 통계 (Key Metrics) */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
+            <Card key={i} className="animate-pulse border border-gray-100 dark:border-slate-800 shadow-sm">
               <CardContent className="p-6">
-                <div className="h-16 bg-slate-200 rounded" />
+                <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-blue-100 bg-blue-50/30 dark:border-blue-900/50 dark:bg-blue-950/20 overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 금액</CardTitle>
               <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className={`text-2xl md:text-3xl font-bold break-words ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
-                {formatCurrency(totalAmount)}
+            <CardContent className="px-6 pb-6 pt-0">
+              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {formatCurrency(totalAmount, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/30 overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 건수</CardTitle>
               <Package className="h-4 w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className={`text-2xl md:text-3xl font-bold break-words ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="px-6 pb-6 pt-0">
+              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {itemCount}건
               </div>
             </CardContent>
           </Card>
-          <Card className="border-emerald-100 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/20 overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">평균 단가</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className={`text-2xl md:text-3xl font-bold break-words ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
-                {formatCurrency(avgPrice)}
+            <CardContent className="px-6 pb-6 pt-0">
+              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+                {formatCurrency(avgPrice, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="border-violet-100 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/20 overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">벤더 수</CardTitle>
               <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className={`text-2xl md:text-3xl font-bold break-words ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+            <CardContent className="px-6 pb-6 pt-0">
+              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {vendorCount}개
               </div>
             </CardContent>
@@ -496,16 +496,16 @@ export default function ReportsPage() {
 
           {/* 월별 구매 추이 차트 */}
           {monthlyData && monthlyData.length > 0 && (
-            <Card>
+            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
               <CardHeader>
-                <CardTitle>기간별 구매 추이</CardTitle>
+                <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="min-h-[300px]">
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" />
-                    <YAxis />
+                    <YAxis tickFormatter={(v) => (v >= 1000000 ? `₩${(v / 1000000).toFixed(0)}M` : `₩${(v / 1000).toFixed(0)}K`)} />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{
@@ -513,12 +513,13 @@ export default function ReportsPage() {
                         border: "none",
                         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
+                      formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                     />
                     <Legend />
                     <Bar
                       dataKey="amount"
                       fill="#3b82f6"
-                      name="구매 금액"
+                      name="구매 금액 (₩)"
                       barSize={40}
                       radius={[4, 4, 0, 0]}
                     />
@@ -530,16 +531,16 @@ export default function ReportsPage() {
 
           {/* 벤더별 구매 현황 */}
           {vendorData && vendorData.length > 0 && (
-            <Card>
+            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
               <CardHeader>
-                <CardTitle>벤더별 구매 현황</CardTitle>
+                <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="min-h-[300px]">
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={vendorData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="vendor" />
-                    <YAxis />
+                    <YAxis tickFormatter={(v) => (v >= 1000000 ? `₩${(v / 1000000).toFixed(0)}M` : `₩${(v / 1000).toFixed(0)}K`)} />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{
@@ -547,12 +548,13 @@ export default function ReportsPage() {
                         border: "none",
                         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
+                      formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                     />
                     <Legend />
                     <Bar
                       dataKey="amount"
                       fill="#10b981"
-                      name="구매 금액"
+                      name="구매 금액 (₩)"
                       barSize={40}
                       radius={[4, 4, 0, 0]}
                     />
@@ -564,11 +566,11 @@ export default function ReportsPage() {
 
           {/* 카테고리별 구매 현황 (파이 차트) */}
           {categoryData && categoryData.length > 0 && (
-            <Card>
+            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
               <CardHeader>
-                <CardTitle>카테고리별 구매 현황</CardTitle>
+                <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="min-h-[300px]">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -591,6 +593,7 @@ export default function ReportsPage() {
                         border: "none",
                         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
+                      formatter={(value: number) => formatCurrency(value, "KRW")}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -598,36 +601,39 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 상세 테이블 */}
+          {/* 상세 테이블 (Detailed Logs) */}
           {details && details.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>상세 내역</CardTitle>
+            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm">
+              <CardHeader className="space-y-1">
+                <CardTitle className="tracking-normal leading-relaxed">상세 내역</CardTitle>
+                <CardDescription className="text-sm leading-relaxed tracking-normal text-muted-foreground">
+                  기간 내 구매 건별 상세 로그입니다.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                 <Table className="min-w-[600px]">
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>날짜</TableHead>
-                      <TableHead>제품명</TableHead>
-                      <TableHead>벤더</TableHead>
-                      <TableHead>수량</TableHead>
-                      <TableHead>단가</TableHead>
-                      <TableHead>총액</TableHead>
+                    <TableRow className="bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">날짜</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">제품명</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">벤더</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">수량</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">단가</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">총액</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {details.map((item: any, index: number) => (
-                      <TableRow key={index}>
-                        <TableCell>
+                      <TableRow key={index} className="py-4 leading-relaxed">
+                        <TableCell className="py-4 align-middle tracking-normal">
                           {formatDate(item.date || item.purchaseDate, { format: "date" })}
                         </TableCell>
-                        <TableCell>{item.productName || item.product || "-"}</TableCell>
-                        <TableCell>{item.vendorName || item.vendor || "-"}</TableCell>
-                        <TableCell>{item.quantity || "-"}</TableCell>
-                        <TableCell>{formatCurrency(item.unitPrice || item.price || 0)}</TableCell>
-                        <TableCell>{formatCurrency(item.totalAmount || item.amount || 0)}</TableCell>
+                        <TableCell className="py-4 align-middle tracking-normal">{item.productName || item.product || "-"}</TableCell>
+                        <TableCell className="py-4 align-middle tracking-normal">{item.vendorName || item.vendor || "-"}</TableCell>
+                        <TableCell className="py-4 text-right align-middle">{item.quantity ?? "-"}</TableCell>
+                        <TableCell className="py-4 text-right align-middle font-medium">{formatCurrency(item.unitPrice || item.price || 0, "KRW")}</TableCell>
+                        <TableCell className="py-4 text-right align-middle font-bold">{formatCurrency(item.totalAmount || item.amount || 0, "KRW")}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -345,25 +345,16 @@ export default function PurchasesPage() {
     }
   };
 
-  const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
-    if (amount === null || amount === undefined || isNaN(amount)) {
+  // 전 서비스 원화(KRW) 통일: currency 값에 관계없이 항상 ₩ 원화로 표시
+  const formatCurrency = (amount: number | null | undefined, _currency?: string) => {
+    if (amount === null || amount === undefined || isNaN(Number(amount))) {
       return "₩0";
     }
     const safeAmount = Number(amount);
     if (isNaN(safeAmount) || safeAmount < 0) {
       return "₩0";
     }
-    if (currency === "KRW" || !currency) {
-      return "₩" + new Intl.NumberFormat("ko-KR").format(safeAmount);
-    }
-    try {
-      return new Intl.NumberFormat("ko-KR", {
-        style: "currency",
-        currency: currency,
-      }).format(safeAmount);
-    } catch (error) {
-      return `${currency} ${safeAmount.toLocaleString("ko-KR")}`;
-    }
+    return "₩" + new Intl.NumberFormat("ko-KR").format(safeAmount);
   };
 
   // 구매 내역 리스트 조회
@@ -761,11 +752,9 @@ export default function PurchasesPage() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="currency">통화</Label>
-                            <Input 
-                              id="currency" 
-                              value={currency}
-                              onChange={(e) => setCurrency(e.target.value)}
-                            />
+                            <div id="currency" className="flex h-10 w-full rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-600 items-center">
+                              ₩ 원화 (KRW)
+                            </div>
                           </div>
                         </div>
                         <Button 

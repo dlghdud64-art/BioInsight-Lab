@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, LayoutDashboard, Calendar } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, LayoutDashboard, Calendar } from "lucide-react";
 import { BudgetPredictionWidget } from "@/components/dashboard/BudgetPredictionWidget";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,44 +26,7 @@ export default function DashboardPage() {
     enabled: status === "authenticated",
   });
 
-  // 사용자 조직 목록 조회 (최근 주문 필터링에 사용)
-  const { data: orgsData, isSuccess: orgsLoaded } = useQuery({
-    queryKey: ["user-organizations-dashboard"],
-    queryFn: async () => {
-      const res = await fetch("/api/organizations");
-      if (!res.ok) return { organizations: [] };
-      return res.json();
-    },
-    enabled: status === "authenticated",
-    staleTime: 60_000,
-  });
-  // 첫 번째 조직 ID (없으면 null, 미로드이면 undefined)
-  const primaryOrgId: string | null | undefined = orgsLoaded
-    ? (orgsData?.organizations?.[0]?.id ?? null)
-    : undefined;
-
-  // 최근 주문 내역 조회 (조직 또는 개인, 최신 5건)
-  const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ["recent-orders", primaryOrgId],
-    queryFn: async () => {
-      const qs = primaryOrgId ? `&organizationId=${primaryOrgId}` : "";
-      const response = await fetch(`/api/orders?limit=5${qs}`);
-      if (!response.ok) throw new Error("Failed to fetch orders");
-      return response.json();
-    },
-    enabled: status === "authenticated" && primaryOrgId !== undefined,
-  });
-
-  // 최근 구매 내역 조회 (주문이 없을 때 대시보드에 표시용, 원화 기준)
-  const { data: purchasesData } = useQuery({
-    queryKey: ["recent-purchases-dashboard"],
-    queryFn: async () => {
-      const response = await fetch("/api/purchases?limit=5&page=1");
-      if (!response.ok) throw new Error("Failed to fetch purchases");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-  });
+  // 최근 구매 내역은 dashboardStats.recentPurchases 에서 가져옴 (별도 쿼리 불필요)
 
   if (status === "loading" || statsLoading) {
     return (
@@ -101,179 +64,79 @@ export default function DashboardPage() {
       currentQuantity: number; safetyStock: number; unit: string;
     }>,
     expiringCount: rawStats.expiringCount ?? 0,
+    // 최근 구매 기록 (PurchaseRecord, stats API에서 가져옴)
+    recentPurchases: (rawStats.recentPurchases ?? []) as Array<{
+      id: string; itemName: string | null; vendorName: string | null;
+      amount: number | null; purchasedAt: string; category: string | null;
+      qty: number | null; unit: string | null;
+    }>,
   };
 
-  const orders = ordersData?.orders || [];
-  const recentPurchases = purchasesData?.items || [];
-
-  // 주문이 없으면 최근 구매 내역을 주문 형태로 표시 (원화 통일)
-  const purchaseToOrderLike = (p: { id: string; itemName?: string | null; vendorName?: string | null; amount?: number | null; purchasedAt?: string | Date | null }) => ({
-    id: p.id,
-    orderNumber: p.id,
-    status: "DELIVERED",
-    totalAmount: p.amount ?? 0,
-    createdAt: p.purchasedAt,
-    items: [{ name: p.itemName ?? "-", brand: p.vendorName ?? "-" }],
-    quote: null,
-  });
-
-  const displayOrders =
-    orders.length > 0
-      ? orders
-      : recentPurchases.map((p: any) => purchaseToOrderLike(p));
-
-
-  // OrderStatus enum → 한글 변환 맵 (실제 DB 값 기반)
-  const ORDER_STATUS_MAP: Record<string, string> = {
-    ORDERED: "승인 대기",
-    SHIPPING: "배송 중",
-    DELIVERED: "배송 완료",
-    CANCELLED: "취소됨",
+  // 최근 구매 내역 표시용 가공 함수
+  const processPurchaseData = (p: typeof stats.recentPurchases[0], index: number) => {
+    const productName = p.itemName || "품목명 없음";
+    const vendor = p.vendorName || "공급사 정보 없음";
+    const amount = p.amount ?? 0;
+    const dateObj = new Date(p.purchasedAt);
+    const date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
+    return { id: p.id || `p-${index}`, productName, vendor, amount, date };
   };
 
-  // 주문 데이터 처리 함수 (실제 API 응답 형식)
-  const processOrderData = (order: any, index: number) => {
-    const productName = order.items?.[0]?.name || order.quote?.title || "제품명 없음";
-    const vendor = order.items?.[0]?.brand || "공급사 정보 없음";
-    const amount = order.totalAmount ?? 0;
-    const status = ORDER_STATUS_MAP[order.status] ?? order.status ?? "승인 대기";
-    let date = order.date;
-    if (!date && order.createdAt) {
-      const dateObj = new Date(order.createdAt);
-      date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
-    }
-    // 주문번호 표시: orderNumber 우선, 없으면 id
-    const orderId = order.orderNumber || order.id || `order-${index}`;
 
-    return { orderId, productName, vendor, amount, status, date };
-  };
+  // 구매 완료 배지 공통 스타일
+  const purchaseBadgeClass = "h-6 px-2.5 py-0.5 rounded-full font-semibold text-[11px] tracking-wide flex items-center gap-1.5 w-fit border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300";
 
-  // 상태별 배지 색상: 승인 대기=노란색, 배송 중=파란색, 완료=초록색
-  const getStatusBadgeClass = (status: string) => {
-    const base = "h-6 px-2.5 py-0.5 rounded-full font-semibold text-[11px] tracking-wide flex items-center gap-1.5 w-fit border";
-    switch (status) {
-      case "승인 대기":
-        return `${base} border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300`;
-      case "배송 중":
-        return `${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300`;
-      case "배송 완료":
-        return `${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300`;
-      case "취소됨":
-        return `${base} border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300`;
-      default:
-        return `${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400`;
-    }
-  };
-  const getStatusDotClass = (status: string) => {
-    switch (status) {
-      case "승인 대기": return "bg-amber-500 dark:bg-amber-400";
-      case "배송 중": return "bg-blue-500 dark:bg-blue-400";
-      case "배송 완료": return "bg-emerald-500 dark:bg-emerald-400";
-      case "취소됨": return "bg-red-500 dark:bg-red-400";
-      default: return "bg-slate-500";
-    }
-  };
-  const renderStatusPill = (status: string) => (
-    <Badge variant="outline" className={getStatusBadgeClass(status)}>
-      <span className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDotClass(status)}`} />
-      {status}
-    </Badge>
-  );
-
-  // 주문 행 렌더링 함수 (데스크탑 테이블용)
-  const renderOrderRow = (orderData: {
-    orderId: string;
-    productName: string;
-    vendor: string;
-    amount: number;
-    status: string;
-    date: string;
-  }) => {
-    return (
-      <TableRow 
-        key={orderData.orderId} 
-        className="group cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <TableCell className="py-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
-              <Beaker className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col min-w-0 overflow-hidden">
-              <span className="font-medium text-sm text-slate-900 truncate">{orderData.productName}</span>
-              <span className="text-xs text-muted-foreground mt-0.5 truncate">{orderData.vendor}</span>
-            </div>
-          </div>
-        </TableCell>
-        <TableCell className="py-4">
-          {renderStatusPill(orderData.status)}
-        </TableCell>
-        <TableCell className="py-4 text-sm text-slate-500">
-          {orderData.date}
-        </TableCell>
-        <TableCell className="py-4 text-right font-bold text-slate-900">
-          ₩{orderData.amount.toLocaleString("ko-KR")}
-        </TableCell>
-        <TableCell className="py-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-slate-400 group-hover:text-blue-600 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              // 상세보기 로직 추가 가능
-            }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  };
-
-  // 주문 카드 렌더링 함수 (모바일용)
-  const renderOrderCard = (orderData: {
-    orderId: string;
-    productName: string;
-    vendor: string;
-    amount: number;
-    status: string;
-    date: string;
-  }) => {
-    return (
-      <div
-        key={orderData.orderId}
-        className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0"
-      >
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+  // 구매 내역 행 렌더링 (데스크탑 테이블용)
+  const renderPurchaseRow = (p: { id: string; productName: string; vendor: string; amount: number; date: string }) => (
+    <TableRow key={p.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+      <TableCell className="py-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
             <Beaker className="h-5 w-5" />
           </div>
-          <div className="flex-1 min-w-0 overflow-hidden space-y-1">
-            <p className="text-sm font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{orderData.productName}</p>
-            <p className="text-xs text-muted-foreground truncate">{orderData.vendor}</p>
+          <div className="flex flex-col min-w-0 overflow-hidden">
+            <span className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{p.productName}</span>
+            <span className="text-xs text-muted-foreground mt-0.5 truncate">{p.vendor}</span>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            {renderStatusPill(orderData.status)}
-            <span className="text-xs text-slate-500 dark:text-slate-400">{orderData.date}</span>
-          </div>
-          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            ₩{orderData.amount.toLocaleString("ko-KR")}
-          </p>
+      </TableCell>
+      <TableCell className="py-4">
+        <Badge variant="outline" className={purchaseBadgeClass}>
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          구매 완료
+        </Badge>
+      </TableCell>
+      <TableCell className="py-4 text-sm text-slate-500">{p.date}</TableCell>
+      <TableCell className="py-4 text-right font-bold text-slate-900 dark:text-slate-100">
+        ₩{p.amount.toLocaleString("ko-KR")}
+      </TableCell>
+    </TableRow>
+  );
+
+  // 구매 내역 카드 렌더링 (모바일용)
+  const renderPurchaseCard = (p: { id: string; productName: string; vendor: string; amount: number; date: string }) => (
+    <div key={p.id} className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+          <Beaker className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0 overflow-hidden space-y-1">
+          <p className="text-sm font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{p.productName}</p>
+          <p className="text-xs text-muted-foreground truncate">{p.vendor}</p>
         </div>
       </div>
-    );
-  };
-
-  // 상태별 주문 필터링 함수 (OrderStatus enum → 한글 변환 후 비교)
-  const filterOrdersByStatus = (orders: any[], status: string) => {
-    return orders.filter((order: any) => {
-      const mapped = ORDER_STATUS_MAP[order.status] ?? order.status ?? "승인 대기";
-      return mapped === status;
-    });
-  };
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={purchaseBadgeClass}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            구매 완료
+          </Badge>
+          <span className="text-xs text-slate-500 dark:text-slate-400">{p.date}</span>
+        </div>
+        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">₩{p.amount.toLocaleString("ko-KR")}</p>
+      </div>
+    </div>
+  );
 
   // 알림 데이터 (Mock Data)
   const notifications = [
@@ -458,111 +321,39 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-        {/* 3. 주문 내역 & 알림 센터 탭 통합 */}
+        {/* 3. 최근 구매 내역 & 알림 센터 탭 통합 */}
         <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
           <CardContent className="p-0">
-            {ordersLoading ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
-            ) : (
-              <Tabs defaultValue="orders" className="w-full">
-                <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="orders" className="text-xs">
-                      최근 주문
-                    </TabsTrigger>
-                    <TabsTrigger value="notifications" className="text-xs">
-                      알림 센터
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+            <Tabs defaultValue="purchases" className="w-full">
+              <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="purchases" className="text-xs">
+                    최근 구매
+                  </TabsTrigger>
+                  <TabsTrigger value="notifications" className="text-xs">
+                    알림 센터
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                {/* 주문 내역 탭 */}
-                <TabsContent value="orders" className="m-0">
-                  <Tabs defaultValue="all" className="w-full">
-                    <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
-                      <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
-                        <TabsList className="inline-flex w-auto justify-start min-w-full">
-                          <TabsTrigger value="all" className="text-xs whitespace-nowrap">
-                            전체
-                          </TabsTrigger>
-                          <TabsTrigger value="shipping" className="text-xs whitespace-nowrap">
-                            배송 중
-                          </TabsTrigger>
-                          <TabsTrigger value="pending" className="text-xs whitespace-nowrap">
-                            승인 대기
-                          </TabsTrigger>
-                          <TabsTrigger value="completed" className="text-xs whitespace-nowrap">
-                            완료
-                          </TabsTrigger>
-                        </TabsList>
-                      </div>
+              {/* 최근 구매 내역 탭 */}
+              <TabsContent value="purchases" className="m-0">
+                <div className="grid gap-4 p-4 w-full min-w-0">
+                  {stats.recentPurchases.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                      구매 내역이 없습니다.
                     </div>
-
-                    {/* 전체 탭 */}
-                    <TabsContent value="all" className="m-0">
-                      <div className="grid gap-4 p-4 w-full min-w-0">
-                        {displayOrders.length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
-                            주문 내역이 없습니다.
-                          </div>
-                        ) : (
-                          displayOrders.map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderCard(orderData);
-                          })
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    {/* 배송 중 탭 */}
-                    <TabsContent value="shipping" className="m-0">
-                      <div className="grid gap-4 p-4 w-full min-w-0">
-                        {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
-                            배송 중인 주문 내역이 없습니다.
-                          </div>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderCard(orderData);
-                          })
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    {/* 승인 대기 탭 */}
-                    <TabsContent value="pending" className="m-0">
-                      <div className="grid gap-4 p-4 w-full min-w-0">
-                        {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
-                            승인 대기 중인 주문 내역이 없습니다.
-                          </div>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderCard(orderData);
-                          })
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    {/* 완료 탭 */}
-                    <TabsContent value="completed" className="m-0">
-                      <div className="grid gap-4 p-4 w-full min-w-0">
-                        {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
-                          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
-                            완료된 주문 내역이 없습니다.
-                          </div>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderCard(orderData);
-                          })
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </TabsContent>
+                  ) : (
+                    stats.recentPurchases.map((p, index) => {
+                      const pData = processPurchaseData(p, index);
+                      return renderPurchaseCard(pData);
+                    })
+                  )}
+                  <Link href="/dashboard/purchases" className="block mt-1">
+                    <Button variant="outline" className="w-full text-xs h-9">모두 보기</Button>
+                  </Link>
+                </div>
+              </TabsContent>
 
                 {/* 알림 센터 탭 */}
                 <TabsContent value="notifications" className="m-0">
@@ -699,11 +490,11 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* 2. Recent Orders - md: 카드 리스트, lg: 테이블 */}
+          {/* 2. 최근 구매 내역 */}
           <Card className="min-h-[400px] overflow-hidden bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
             <CardHeader className="p-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 주문 내역</CardTitle>
+                <CardTitle className="truncate text-slate-900 dark:text-slate-100">최근 구매 내역</CardTitle>
                 <Link
                   href="/dashboard/purchases"
                   className="flex items-center text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
@@ -714,201 +505,46 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {ordersLoading ? (
-                <div className="p-8 text-center text-slate-500 dark:text-slate-400">로딩 중...</div>
-              ) : displayOrders.length === 0 ? (
+              {stats.recentPurchases.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-6">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
                     <Package className="h-8 w-8 text-slate-400 dark:text-slate-500" />
                   </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">최근 주문 내역이 없습니다.</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">주문을 진행하면 여기에 표시됩니다.</p>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">최근 구매 내역이 없습니다.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">구매 내역을 등록하면 여기에 표시됩니다.</p>
+                  <Link href="/dashboard/purchases" className="mt-4">
+                    <Button variant="outline" size="sm">구매 내역 등록하기</Button>
+                  </Link>
                 </div>
               ) : (
-                <Tabs defaultValue="all" className="w-full">
-                  <div className="border-b border-slate-200 dark:border-slate-800/50 px-6 pt-4">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="all" className="text-sm">
-                        전체
-                      </TabsTrigger>
-                      <TabsTrigger value="shipping" className="text-sm">
-                        배송 중
-                      </TabsTrigger>
-                      <TabsTrigger value="pending" className="text-sm">
-                        승인 대기
-                      </TabsTrigger>
-                      <TabsTrigger value="completed" className="text-sm">
-                        완료
-                      </TabsTrigger>
-                    </TabsList>
+                <>
+                  {/* md 해상도: 카드 리스트 */}
+                  <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
+                    {stats.recentPurchases.map((p, index) => {
+                      const pData = processPurchaseData(p, index);
+                      return renderPurchaseCard(pData);
+                    })}
                   </div>
-
-                  {/* 전체 탭 - md: 카드, lg: 테이블 */}
-                  <TabsContent value="all" className="m-0">
-                    {/* md 해상도: 카드 리스트 */}
-                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
-                      {displayOrders.length === 0 ? (
-                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">주문 내역이 없습니다.</div>
-                      ) : (
-                        displayOrders.map((order: any, index: number) => {
-                          const orderData = processOrderData(order, index);
-                          return renderOrderCard(orderData);
-                        })
-                      )}
-                    </div>
-                    {/* lg 이상: 테이블 */}
-                    <div className="hidden lg:block overflow-x-auto">
+                  {/* lg 이상: 테이블 */}
+                  <div className="hidden lg:block overflow-x-auto">
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
-                          <TableHead>주문 정보</TableHead>
+                          <TableHead>품목 정보</TableHead>
                           <TableHead>상태</TableHead>
                           <TableHead>날짜</TableHead>
                           <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {displayOrders.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
-                              주문 내역이 없습니다.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          displayOrders.map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderRow(orderData);
-                          })
-                        )}
+                        {stats.recentPurchases.map((p, index) => {
+                          const pData = processPurchaseData(p, index);
+                          return renderPurchaseRow(pData);
+                        })}
                       </TableBody>
                     </Table>
-                    </div>
-                  </TabsContent>
-
-                  {/* 배송 중 탭 */}
-                  <TabsContent value="shipping" className="m-0">
-                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
-                      {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
-                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">배송 중인 주문 내역이 없습니다.</div>
-                      ) : (
-                        filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
-                          const orderData = processOrderData(order, index);
-                          return renderOrderCard(orderData);
-                        })
-                      )}
-                    </div>
-                    <div className="hidden lg:block overflow-x-auto">
-                    <Table className="min-w-[600px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>주문 정보</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>날짜</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filterOrdersByStatus(displayOrders, "배송 중").length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
-                              배송 중인 주문 내역이 없습니다.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "배송 중").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderRow(orderData);
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                    </div>
-                  </TabsContent>
-
-                  {/* 승인 대기 탭 */}
-                  <TabsContent value="pending" className="m-0">
-                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
-                      {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
-                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">승인 대기 중인 주문 내역이 없습니다.</div>
-                      ) : (
-                        filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
-                          const orderData = processOrderData(order, index);
-                          return renderOrderCard(orderData);
-                        })
-                      )}
-                    </div>
-                    <div className="hidden lg:block overflow-x-auto">
-                    <Table className="min-w-[600px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>주문 정보</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>날짜</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filterOrdersByStatus(displayOrders, "승인 대기").length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
-                              승인 대기 중인 주문 내역이 없습니다.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "승인 대기").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderRow(orderData);
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                    </div>
-                  </TabsContent>
-
-                  {/* 완료 탭 */}
-                  <TabsContent value="completed" className="m-0">
-                    <div className="lg:hidden grid gap-4 p-4 w-full min-w-0">
-                      {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
-                        <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">완료된 주문 내역이 없습니다.</div>
-                      ) : (
-                        filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
-                          const orderData = processOrderData(order, index);
-                          return renderOrderCard(orderData);
-                        })
-                      )}
-                    </div>
-                    <div className="hidden lg:block overflow-x-auto">
-                    <Table className="min-w-[600px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>주문 정보</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>날짜</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filterOrdersByStatus(displayOrders, "배송 완료").length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-slate-500 dark:text-slate-400">
-                              완료된 주문 내역이 없습니다.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filterOrdersByStatus(displayOrders, "배송 완료").map((order: any, index: number) => {
-                            const orderData = processOrderData(order, index);
-                            return renderOrderRow(orderData);
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
