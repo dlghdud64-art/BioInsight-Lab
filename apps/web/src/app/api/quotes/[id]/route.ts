@@ -210,6 +210,7 @@ export async function PATCH(
 
         revalidatePath("/dashboard/purchases");
         revalidatePath("/dashboard");
+        revalidatePath(`/quotes/${id}`);
 
         // 예산 차감 로직: 활성 예산이 있으면 usedAmount 증가
         if (!purchaseResult.alreadyPurchased) {

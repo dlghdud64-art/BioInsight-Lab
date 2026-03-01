@@ -247,7 +247,14 @@ export default function QuoteDetailPage() {
       if (!response.ok) throw new Error("Failed to update status");
       return response.json();
     },
-    onSuccess: (_data, newStatus) => {
+    onSuccess: (data: { quote?: { status?: string } }, newStatus) => {
+      if (data?.quote?.status) {
+        queryClient.setQueryData(["quote", quoteId], (prev: unknown) => {
+          const p = prev as { quote?: Record<string, unknown> } | undefined;
+          if (!p?.quote || typeof p.quote !== "object") return prev;
+          return { quote: { ...p.quote, status: data.quote!.status } };
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
@@ -255,6 +262,7 @@ export default function QuoteDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["purchases"] });
         queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
         queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       }
       router.refresh();
       if (newStatus === "COMPLETED") {
@@ -456,9 +464,9 @@ ${itemLines}
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+        <div className="max-w-5xl mx-auto flex flex-col gap-8">
         {/* 헤더 */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8 leading-relaxed tracking-normal">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
           <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
@@ -527,7 +535,7 @@ ${itemLines}
         </Card>
 
         {/* 견적 정보 (Summary Card) */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8 leading-relaxed tracking-normal">
           <CardHeader className="px-0 pt-0 pb-6">
             <CardTitle className="text-lg md:text-xl font-semibold">견적 정보</CardTitle>
           </CardHeader>
@@ -615,7 +623,7 @@ ${itemLines}
             {(quote.description || quote.message) && (
               <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">요청 메시지</p>
-                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                <blockquote className="rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border-l-4 border-blue-200 dark:border-blue-800 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed tracking-normal">
                   {quote.description || quote.message || "-"}
                 </blockquote>
               </div>
@@ -623,7 +631,7 @@ ${itemLines}
             {quote.specialNotes && (
               <div className="mt-6">
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">특이사항</p>
-                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                <blockquote className="rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border-l-4 border-blue-200 dark:border-blue-800 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed tracking-normal">
                   {quote.specialNotes}
                 </blockquote>
               </div>
@@ -631,7 +639,7 @@ ${itemLines}
             {quote.messageEn && (
               <div className="mt-6">
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">요청 메시지 (영문)</p>
-                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
+                <blockquote className="rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border-l-4 border-blue-200 dark:border-blue-800 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed tracking-normal">
                   {quote.messageEn}
                 </blockquote>
               </div>
@@ -640,10 +648,10 @@ ${itemLines}
         </Card>
 
         {/* 견적 요청 품목 테이블 */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8 leading-relaxed tracking-normal">
           <CardHeader className="px-0 pt-0 pb-4">
             <CardTitle className="text-base md:text-lg font-semibold">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
-            <CardDescription className="text-xs md:text-sm mt-1">
+            <CardDescription className="text-xs md:text-sm mt-1 leading-relaxed">
               견적 요청 생성 시점의 품목 스냅샷입니다.
             </CardDescription>
           </CardHeader>
