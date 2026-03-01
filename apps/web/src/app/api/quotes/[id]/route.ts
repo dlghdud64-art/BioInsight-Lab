@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getQuoteById } from "@/lib/api/quotes";
 import { db } from "@/lib/db";
+import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { sendEmail } from "@/lib/email/sender";
@@ -126,7 +128,10 @@ export async function PATCH(
     }
 
     const previousStatus = quote.status;
-    const isCompletingPurchase = status === "PURCHASED" && previousStatus !== "PURCHASED";
+    const isCompletingPurchase =
+      (status === "PURCHASED" || status === "COMPLETED") &&
+      previousStatus !== "PURCHASED" &&
+      previousStatus !== "COMPLETED";
 
     // 견적 수정
     const updatedQuote = await db.quote.update({
@@ -148,14 +153,14 @@ export async function PATCH(
     // 구매 완료 시 PurchaseRecord 자동 생성 (멱등성 보장)
     if (isCompletingPurchase && quote.items.length > 0) {
       try {
-        const scopeKey = request.headers.get("x-guest-key");
-        if (!scopeKey) {
-          throw new Error("x-guest-key header is required to create purchase records");
-        }
+        const scope = await getScope(request);
+        const scopeKey = getScopeKey(scope);
+        const workspaceId = scope.type === "workspace" ? scope.workspaceId : undefined;
 
         const purchaseResult = await markQuoteAsPurchased({
           quoteId: quote.id,
           scopeKey,
+          workspaceId,
         });
 
         if (!purchaseResult.alreadyPurchased) {
@@ -194,6 +199,9 @@ export async function PATCH(
             logger.error("Failed to send purchase complete email", emailError);
           }
         }
+
+        revalidatePath("/dashboard/purchases");
+        revalidatePath("/dashboard");
       } catch (error) {
         logger.error("Failed to create purchase records", error);
         // PurchaseRecord 생성 실패해도 Quote 업데이트는 성공으로 처리

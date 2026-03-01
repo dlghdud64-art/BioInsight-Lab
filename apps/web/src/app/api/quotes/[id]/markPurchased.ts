@@ -13,6 +13,7 @@ const logger = createLogger("quotes/markPurchased");
 interface MarkPurchasedParams {
   quoteId: string;
   scopeKey: string;
+  workspaceId?: string | null;
 }
 
 /**
@@ -22,7 +23,7 @@ interface MarkPurchasedParams {
  * - Prisma Interactive Transaction 사용 (Serializable Isolation Level)
  * - 멱등성 체크와 생성을 원자적으로 처리
  */
-export async function markQuoteAsPurchased({ quoteId, scopeKey }: MarkPurchasedParams) {
+export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId }: MarkPurchasedParams) {
   logger.info(`Marking quote ${quoteId} as purchased for scopeKey: ${scopeKey}`);
 
   // Prisma Interactive Transaction으로 Race Condition 방지
@@ -77,13 +78,14 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey }: MarkPurchasedP
 
           return {
             scopeKey,
+            workspaceId: workspaceId ?? null,
             quoteId,
             purchasedAt: new Date(),
             vendorName: productVendor?.vendor?.name || "Unknown Vendor",
             category: item.product?.category || null,
-            itemName: item.product?.name || "Unknown Item",
-            catalogNumber: item.product?.catalogNumber || null,
-            unit: "ea",
+            itemName: item.product?.name || item.name || "Unknown Item",
+            catalogNumber: item.product?.catalogNumber || item.catalogNumber || null,
+            unit: item.unit || "ea",
             qty,
             unitPrice,
             amount,

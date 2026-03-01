@@ -14,8 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
-  Calendar,
-  MapPin,
   CheckCircle2,
   Clock,
   XCircle,
@@ -245,16 +243,32 @@ export default function QuoteDetailPage() {
       if (!response.ok) throw new Error("Failed to update status");
       return response.json();
     },
-    onSuccess: (data, newStatus) => {
+    onSuccess: (_data, newStatus) => {
       queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
-      toast({
-        title: newStatus === "COMPLETED" ? "구매 완료 처리됨" : "상태 업데이트 완료",
-        description: newStatus === "COMPLETED" 
-          ? "구매 내역이 자동으로 기록되었습니다."
-          : "견적 상태가 업데이트되었습니다.",
-      });
+      if (newStatus === "COMPLETED") {
+        queryClient.invalidateQueries({ queryKey: ["purchases"] });
+        queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
+        queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
+      }
+      router.refresh();
+      if (newStatus === "COMPLETED") {
+        toast({
+          title: "구매 완료 처리됨",
+          description: "구매 내역이 자동으로 기록되었습니다.",
+        });
+      } else if (newStatus === "CANCELLED") {
+        toast({
+          title: "견적이 취소되었습니다",
+          description: "견적 요청이 취소 상태로 변경되었습니다.",
+        });
+      } else {
+        toast({
+          title: "상태 업데이트 완료",
+          description: "견적 상태가 업데이트되었습니다.",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -297,6 +311,12 @@ export default function QuoteDetailPage() {
   const handleMarkAsCompleted = () => {
     if (confirm("이 견적을 구매 완료로 표시하시겠습니까? 구매 내역이 자동으로 기록됩니다.")) {
       updateStatusMutation.mutate("COMPLETED");
+    }
+  };
+
+  const handleCancelQuote = () => {
+    if (confirm("정말 이 견적 요청을 취소하시겠습니까?")) {
+      updateStatusMutation.mutate("CANCELLED");
     }
   };
 
@@ -385,9 +405,11 @@ ${itemLines}
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -401,17 +423,19 @@ ${itemLines}
 
   if (!quoteData?.quote) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground py-8">견적을 찾을 수 없습니다</p>
-            <div className="text-center">
-              <Link href="/quotes">
-                <Button variant="outline">견적 목록으로 돌아가기</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="container mx-auto px-4 py-8">
+          <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground py-8">견적을 찾을 수 없습니다</p>
+              <div className="text-center">
+                <Link href="/quotes">
+                  <Button variant="outline">견적 목록으로 돌아가기</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -426,9 +450,11 @@ ${itemLines}
   const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
 
   return (
-    <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
         {/* 헤더 */}
+        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 md:p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
           <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
@@ -487,51 +513,85 @@ ${itemLines}
             )}
           </Button>
         </div>
+        </Card>
 
-        {/* 기본 정보 */}
-        <Card className="p-3 md:p-6">
-          <CardHeader className="px-0 pt-0 pb-3">
-            <CardTitle className="text-sm md:text-lg">견적 정보</CardTitle>
+        {/* 견적 정보 */}
+        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="text-base md:text-lg font-semibold">견적 정보</CardTitle>
           </CardHeader>
-          <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
-            {quote.deliveryDate && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs md:text-sm">
-                  <strong>납기 희망일:</strong>{" "}
-                  {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
-                </span>
-              </div>
-            )}
-            {quote.deliveryLocation && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs md:text-sm truncate">
-                  <strong>납품 장소:</strong> {quote.deliveryLocation}
-                </span>
-              </div>
-            )}
-            {quote.message && (
-              <div>
-                <strong className="text-xs md:text-sm">요청 메시지:</strong>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
-                  {quote.message}
+          <CardContent className="px-0 pb-0">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">요청자</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {quote.user?.name || quote.user?.email || "-"}
                 </p>
               </div>
-            )}
-            {quote.messageEn && (
-              <div>
-                <strong className="text-xs md:text-sm">요청 메시지 (영문):</strong>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
-                  {quote.messageEn}
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">조직</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {quote.organization?.name || "-"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">생성일</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {quote.createdAt
+                    ? new Date(quote.createdAt).toLocaleDateString("ko-KR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "-"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">납기 희망일</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {quote.deliveryDate
+                    ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
+                    : quote.validUntil
+                    ? new Date(quote.validUntil).toLocaleDateString("ko-KR")
+                    : "-"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">납품 장소</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100 truncate">
+                  {quote.deliveryLocation || "-"}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">총 예상 금액</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
+                  {quote.totalAmount != null
+                    ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}`
+                    : "-"}
+                </p>
+              </div>
+            </div>
+            {(quote.description || quote.message) && (
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">요청 메시지</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
+                  {quote.description || quote.message || "-"}
                 </p>
               </div>
             )}
             {quote.specialNotes && (
-              <div>
-                <strong className="text-xs md:text-sm">특이사항:</strong>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
+              <div className="mt-4 space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">특이사항</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
                   {quote.specialNotes}
+                </p>
+              </div>
+            )}
+            {quote.messageEn && (
+              <div className="mt-4 space-y-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400">요청 메시지 (영문)</p>
+                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
+                  {quote.messageEn}
                 </p>
               </div>
             )}
@@ -539,7 +599,7 @@ ${itemLines}
         </Card>
 
         {/* 견적 요청 품목 테이블 */}
-        <Card className="p-3 md:p-6">
+        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-sm md:text-lg">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
             <CardDescription className="text-xs md:text-sm mt-1">
@@ -713,7 +773,7 @@ ${itemLines}
 
           {/* 회신 입력 탭 */}
           <TabsContent value="items" className="mt-4 md:mt-6">
-            <Card className="p-3 md:p-6">
+            <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 입력</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
@@ -742,7 +802,7 @@ ${itemLines}
                             <td className="p-2 md:p-3">
                               <Input
                                 placeholder="벤더명"
-                                className="text-xs md:text-sm h-8 md:h-10"
+                                className="text-xs md:text-sm h-8 md:h-10 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                             <td className="p-2 md:p-3">
@@ -755,19 +815,19 @@ ${itemLines}
                                 type="number"
                                 placeholder="수량"
                                 defaultValue={item.quantity}
-                                className="text-xs md:text-sm h-8 md:h-10 w-20"
+                                className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                             <td className="p-2 md:p-3">
                               <Input
                                 type="number"
                                 placeholder="단가"
-                                className="text-xs md:text-sm h-8 md:h-10 w-24"
+                                className="text-xs md:text-sm h-8 md:h-10 w-24 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                             <td className="p-2 md:p-3 hidden md:table-cell">
                               <Select defaultValue="KRW">
-                                <SelectTrigger className="text-xs md:text-sm h-8 md:h-10 w-20">
+                                <SelectTrigger className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -780,21 +840,21 @@ ${itemLines}
                             <td className="p-2 md:p-3 hidden md:table-cell">
                               <Input
                                 placeholder="납기"
-                                className="text-xs md:text-sm h-8 md:h-10 w-24"
+                                className="text-xs md:text-sm h-8 md:h-10 w-24 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                             <td className="p-2 md:p-3 hidden md:table-cell">
                               <Input
                                 type="number"
                                 placeholder="MOQ"
-                                className="text-xs md:text-sm h-8 md:h-10 w-20"
+                                className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                             <td className="p-2 md:p-3 hidden md:table-cell">
                               <Textarea
                                 placeholder="비고"
                                 rows={1}
-                                className="text-xs md:text-sm"
+                                className="text-xs md:text-sm rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               />
                             </td>
                           </tr>
@@ -802,13 +862,13 @@ ${itemLines}
                       </tbody>
                     </table>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    <Button className="w-full sm:w-auto">
-                      <Save className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
+                      <Save className="h-4 w-4 mr-2 shrink-0" />
                       회신 저장
                     </Button>
                     <Button variant="outline" className="w-full sm:w-auto">
-                      <GitCompare className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <GitCompare className="h-4 w-4 mr-2 shrink-0" />
                       비교에 반영
                     </Button>
                   </div>
@@ -819,7 +879,7 @@ ${itemLines}
 
           {/* 회신 수신함 탭 */}
           <TabsContent value="inbox" className="mt-4 md:mt-6">
-            <Card className="p-3 md:p-6">
+            <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 수신함</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
@@ -867,6 +927,21 @@ ${itemLines}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {/* 견적 취소 - PENDING 상태일 때만 표시 */}
+          {quote.status === "PENDING" && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelQuote}
+              disabled={updateStatusMutation.isPending}
+              className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950/30"
+            >
+              <X className="h-4 w-4 mr-2 shrink-0" />
+              {updateStatusMutation.isPending && updateStatusMutation.variables === "CANCELLED"
+                ? "처리 중..."
+                : "견적 취소"}
+            </Button>
+          )}
           {/* 주문 요청하기 버튼 - COMPLETED 상태일 때만 표시 */}
           {quote.status === "COMPLETED" && !quote.order && (
             <TooltipProvider>
@@ -875,9 +950,9 @@ ${itemLines}
                   <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
                     <DialogTrigger asChild>
                       <Button
-                        className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                       >
-                        <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                        <ShoppingCart className="h-4 w-4 mr-2 shrink-0" />
                         주문 요청하기
                       </Button>
                     </DialogTrigger>
@@ -1043,9 +1118,9 @@ ${itemLines}
             <Button
               onClick={handleMarkAsCompleted}
               disabled={updateStatusMutation.isPending}
-              className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 shadow-md hover:shadow-lg transition-all"
             >
-              <Package className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <Package className="h-4 w-4 mr-2 shrink-0" />
               {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
             </Button>
           )}
@@ -1071,7 +1146,7 @@ ${itemLines}
                       variant="secondary"
                       className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
                     >
-                      <Send className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                      <Send className="h-4 w-4 mr-2 shrink-0" />
                       구매 요청 보내기
                     </Button>
                   </DialogTrigger>
@@ -1151,12 +1226,13 @@ ${itemLines}
             </Badge>
           )}
           <Link href="/compare/quote" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
-              <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+            <Button variant="outline" className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
+              <ShoppingCart className="h-4 w-4 mr-2 shrink-0" />
               <span className="hidden sm:inline">새 견적 요청</span>
               <span className="sm:hidden">새 요청</span>
             </Button>
           </Link>
+        </div>
         </div>
       </div>
     </div>

@@ -82,6 +82,7 @@ export async function PATCH(
       minOrderQty,
       autoReorderEnabled,
       autoReorderThreshold,
+      lotNumber,
     } = body;
 
     // 업데이트할 데이터 준비
@@ -105,6 +106,11 @@ export async function PATCH(
     // location 업데이트
     if (location !== undefined) {
       updateData.location = location || null;
+    }
+
+    // lotNumber 업데이트
+    if (lotNumber !== undefined) {
+      updateData.lotNumber = typeof lotNumber === "string" && lotNumber.trim() !== "" ? lotNumber.trim() : null;
     }
 
     // notes 업데이트 (date 정보를 notes에 포함시킬 수도 있음)
