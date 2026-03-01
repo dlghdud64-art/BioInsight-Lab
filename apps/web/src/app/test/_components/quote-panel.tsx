@@ -1909,14 +1909,24 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         throw new Error(error.error || "견적 요청에 실패했습니다.");
       }
 
-      const quote = await response.json();
+      await response.json();
       toast({
         title: "견적 요청 완료",
         description: "견적 요청이 성공적으로 전송되었습니다.",
       });
-      
-      // 견적 상세 페이지로 이동
-      router.push(`/quotes/${quote.id}`);
+
+      // 장바구니/임시저장 초기화
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("quote-cart-storage");
+          localStorage.removeItem(QUOTE_FORM_DRAFT_KEY);
+        }
+      } catch {
+        // 무시
+      }
+
+      // 다중 견적 생성 시 목록 페이지로 이동
+      router.push("/dashboard/quotes");
     } catch (error: any) {
       toast({
         title: "견적 요청 실패",

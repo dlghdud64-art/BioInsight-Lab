@@ -430,15 +430,16 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
         const error = await quoteResponse.json().catch(() => ({ error: "견적 요청 리스트 생성에 실패했습니다." }));
         throw new Error(error.error || "견적 요청 리스트 생성에 실패했습니다.");
       }
-      const quote = await quoteResponse.json();
+      const quoteData = await quoteResponse.json();
+      const quote = quoteData.quote ?? quoteData;
 
       // 공유 링크 생성
       const shareResponse = await fetch("/api/shared-lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          quoteId: quote.id,
-          title: title || quote.title,
+          quoteId: quote?.id,
+          title: title || quote?.title,
           expiresInDays: expiresInDays || 30, // 기본값 30일
         }),
       });
