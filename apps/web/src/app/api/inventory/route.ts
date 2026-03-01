@@ -182,10 +182,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // notes에 lotNumber, testPurpose 병합 (스키마 미지원 필드)
+    // notes에 testPurpose 병합 (lotNumber는 전용 DB 컬럼으로 저장)
     const mergedNotes = [
       notes,
-      lotNumber ? `[Lot: ${lotNumber}]` : null,
       testPurpose ? `[시험항목: ${testPurpose}]` : null,
     ]
       .filter(Boolean)
@@ -207,6 +206,7 @@ export async function POST(request: NextRequest) {
           : null,
       location: location || null,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
+      lotNumber: lotNumber?.trim() || null,
       notes: mergedNotes,
       autoReorderEnabled: Boolean(autoReorderEnabled),
       autoReorderThreshold:
