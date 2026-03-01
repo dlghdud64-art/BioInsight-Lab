@@ -5,7 +5,7 @@ import { getQuoteById } from "@/lib/api/quotes";
 import { db } from "@/lib/db";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
-import { ActivityType } from "@prisma/client";
+import { ActivityType, Prisma } from "@prisma/client";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 import { handleApiError } from "@/lib/api-error-handler";
@@ -210,6 +210,60 @@ export async function PATCH(
 
         revalidatePath("/dashboard/purchases");
         revalidatePath("/dashboard");
+
+        // 예산 차감 로직: 활성 예산이 있으면 usedAmount 증가
+        if (!purchaseResult.alreadyPurchased) {
+          try {
+            const purchaseTotalAmount = purchaseResult.purchaseData
+              ? purchaseResult.purchaseData.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0)
+              : 0;
+
+            if (purchaseTotalAmount > 0) {
+              // 유저 개인 예산 또는 조직 예산 조회
+              const activeBudget = await db.userBudget.findFirst({
+                where: {
+                  isActive: true,
+                  OR: [
+                    { userId: session.user.id },
+                    ...(quote.organizationId ? [{ organizationId: quote.organizationId }] : []),
+                  ],
+                },
+              });
+
+              if (activeBudget) {
+                await db.$transaction(async (tx: Prisma.TransactionClient) => {
+                  const budgetBefore = activeBudget.remainingAmount;
+                  const budgetAfter = budgetBefore - purchaseTotalAmount;
+
+                  await tx.userBudget.update({
+                    where: { id: activeBudget.id },
+                    data: {
+                      usedAmount: { increment: purchaseTotalAmount },
+                      remainingAmount: { decrement: purchaseTotalAmount },
+                    },
+                  });
+
+                  await tx.userBudgetTransaction.create({
+                    data: {
+                      budgetId: activeBudget.id,
+                      type: "DEBIT",
+                      amount: purchaseTotalAmount,
+                      description: `견적 구매 완료: ${quote.title}`,
+                      balanceBefore: budgetBefore,
+                      balanceAfter: budgetAfter,
+                    },
+                  });
+                });
+
+                revalidatePath("/dashboard/budget");
+                logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${activeBudget.id}`);
+              }
+            }
+          } catch (budgetError) {
+            logger.error("Failed to deduct budget", budgetError);
+            // 예산 차감 실패해도 구매 완료는 성공으로 처리
+          }
+        }
       } catch (error) {
         logger.error("Failed to create purchase records", error);
         // PurchaseRecord 생성 실패해도 Quote 업데이트는 성공으로 처리

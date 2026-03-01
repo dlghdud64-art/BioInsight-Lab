@@ -400,7 +400,6 @@ export default function DashboardPage() {
                   </div>
                 </TabsContent>
               </Tabs>
-            )}
           </CardContent>
         </Card>
       </div>
