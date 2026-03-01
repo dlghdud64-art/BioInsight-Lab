@@ -3,16 +3,40 @@ import { db } from "@/lib/db";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
+import { auth } from "@/auth";
 
 const logger = createLogger("purchases/summary");
 
 export async function GET(request: NextRequest) {
   try {
-    const scopeKey = request.headers.get("x-guest-key");
-    if (!scopeKey) {
-      logger.warn("Missing x-guest-key header");
-      throw new Error("x-guest-key header is required");
+    // 인증된 유저: session 기반, guestKey는 하위 호환용
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const guestKey = request.headers.get("x-guest-key");
+
+    // 유저의 워크스페이스 목록 조회
+    const memberships = await db.workspaceMember.findMany({
+      where: { userId: session.user.id },
+      select: { workspaceId: true },
+    });
+    const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
+
+    // scopeKey 목록
+    const scopeKeyValues: string[] = [
+      session.user.id,
+      ...workspaceIds,
+      ...(guestKey ? [guestKey] : []),
+    ];
+
+    const ownerWhere: any = {
+      OR: [
+        { scopeKey: { in: scopeKeyValues } },
+        ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+      ],
+    };
 
     const { searchParams } = new URL(request.url);
     const fromStr = searchParams.get("from");
@@ -21,11 +45,11 @@ export async function GET(request: NextRequest) {
     const from = fromStr ? new Date(fromStr) : startOfMonth(new Date());
     const to = toStr ? new Date(toStr) : endOfMonth(new Date());
 
-    logger.debug("Fetching purchase summary", { scopeKey, from, to });
+    logger.debug("Fetching purchase summary", { userId: session.user.id, from, to });
 
     const purchases = await db.purchaseRecord.findMany({
       where: {
-        scopeKey,
+        ...ownerWhere,
         purchasedAt: {
           gte: from,
           lte: to,

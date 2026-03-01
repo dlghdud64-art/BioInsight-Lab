@@ -104,21 +104,19 @@ export default function PurchasesPage() {
   const guestKey = getGuestKey();
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ["purchase-summary", guestKey, dateRange],
+    queryKey: ["purchase-summary", session?.user?.id, dateRange],
     queryFn: async () => {
       const params = new URLSearchParams({
         from: from.toISOString(),
         to: to.toISOString(),
       });
-      const response = await fetch(`/api/purchases/summary?${params}`, {
-        headers: {
-          "x-guest-key": guestKey,
-        },
-      });
+      const headers: Record<string, string> = {};
+      if (guestKey) headers["x-guest-key"] = guestKey;
+      const response = await fetch(`/api/purchases/summary?${params}`, { headers });
       if (!response.ok) throw new Error("Failed to fetch purchase summary");
       return response.json();
     },
-    enabled: !!guestKey,
+    enabled: !!session,
   });
 
   // TSV/CSV 파싱 함수
@@ -370,7 +368,7 @@ export default function PurchasesPage() {
 
   // 구매 내역 리스트 조회
   const { data: purchasesData, isLoading: purchasesLoading } = useQuery({
-    queryKey: ["purchases-list", guestKey, dateRange, customDateRange],
+    queryKey: ["purchases-list", session?.user?.id, dateRange, customDateRange],
     queryFn: async () => {
       const dateFrom = customDateRange?.from || from.toISOString();
       const dateTo = customDateRange?.to || to.toISOString();
@@ -378,15 +376,13 @@ export default function PurchasesPage() {
         from: dateFrom,
         to: dateTo,
       });
-      const response = await fetch(`/api/purchases?${params}`, {
-        headers: {
-          "x-guest-key": guestKey,
-        },
-      });
+      const headers: Record<string, string> = {};
+      if (guestKey) headers["x-guest-key"] = guestKey;
+      const response = await fetch(`/api/purchases?${params}`, { headers });
       if (!response.ok) throw new Error("Failed to fetch purchases");
       return response.json();
     },
-    enabled: !!guestKey,
+    enabled: !!session,
   });
 
   // 필터링된 구매 내역

@@ -153,14 +153,22 @@ export async function PATCH(
     // 구매 완료 시 PurchaseRecord 자동 생성 (멱등성 보장)
     if (isCompletingPurchase && quote.items.length > 0) {
       try {
-        const scope = await getScope(request);
-        const scopeKey = getScopeKey(scope);
-        const workspaceId = scope.type === "workspace" ? scope.workspaceId : undefined;
+        // getScope 실패(워크스페이스 없는 유저) 시 userId를 scopeKey로 폴백
+        let scopeKey = session.user.id;
+        let purchaseWorkspaceId: string | null = null;
+        try {
+          const scope = await getScope(request);
+          scopeKey = getScopeKey(scope);
+          purchaseWorkspaceId = scope.type === "workspace" ? (scope.workspaceId ?? null) : null;
+        } catch {
+          // 워크스페이스/게스트키 없는 유저: userId를 scopeKey로 사용
+          logger.info(`No workspace scope for user ${session.user.id}, using userId as scopeKey`);
+        }
 
         const purchaseResult = await markQuoteAsPurchased({
           quoteId: quote.id,
           scopeKey,
-          workspaceId,
+          workspaceId: purchaseWorkspaceId,
         });
 
         if (!purchaseResult.alreadyPurchased) {
