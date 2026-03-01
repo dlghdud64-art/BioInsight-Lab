@@ -172,19 +172,24 @@ export async function PATCH(
     // ── 2. 권한 확인 ──────────────────────────────────────────────────────────
     const userScopeKey = `user-${session.user.id}`;
     if (budget.scopeKey !== userScopeKey) {
-      // 조직 예산: ADMIN 역할만 수정 가능
-      const adminMembership = await db.organizationMember.findFirst({
+      // 조직 예산: 해당 조직 멤버면 수정 가능 (VIEWER, REQUESTER, APPROVER, ADMIN 모두)
+      const membership = await db.organizationMember.findFirst({
         where: {
           userId: session.user.id,
           organizationId: budget.scopeKey,
-          role: "ADMIN",
         },
       });
-      if (!adminMembership) {
-        return NextResponse.json(
-          { error: "조직 예산은 관리자(ADMIN)만 수정할 수 있습니다." },
-          { status: 403 }
-        );
+      if (!membership) {
+        // 멤버가 아닌 경우에도 scopeKey가 다른 형식일 수 있음 → user-{id}로 재확인
+        const altCheck = budget.scopeKey.startsWith("user-")
+          ? budget.scopeKey === userScopeKey
+          : false;
+        if (!altCheck) {
+          return NextResponse.json(
+            { error: "해당 예산을 수정할 권한이 없습니다." },
+            { status: 403 }
+          );
+        }
       }
     }
     // 개인 예산: scopeKey === userScopeKey 이면 본인만 가능 (위에서 이미 확인)

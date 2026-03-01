@@ -26,16 +26,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // userId로 소속된 OrganizationMember 조회 (organization + 멤버 수)
+    // Step 1: userId로 멤버십 목록 조회 (include 없이 단순 select)
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
-      include: {
-        organization: {
-          include: {
-            _count: { select: { members: true } },
-          },
-        },
-      },
+      select: { organizationId: true, role: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     });
 
@@ -44,15 +38,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ organizations: [] });
     }
 
-    // organization이 null인 경우(데이터 불일치) 필터링 후 role 병합
-    const organizations = memberships
-      .filter((m: any) => m.organization != null)
-      .map((m: any) => ({
-        ...m.organization,
-        // 프론트엔드에서 org.members.length를 사용하므로 _count로 대체
-        members: Array.from({ length: m.organization._count?.members ?? 0 }),
-        role: m.role ?? "VIEWER",
-      }));
+    // Step 2: 조직 ID 목록으로 조직 정보 조회
+    const orgIds = memberships.map((m: any) => m.organizationId);
+    const orgs = await db.organization.findMany({
+      where: { id: { in: orgIds } },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        organizationType: true,
+        plan: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Step 3: 조직별 멤버 수 조회
+    const memberCounts = await db.organizationMember.groupBy({
+      by: ["organizationId"],
+      where: { organizationId: { in: orgIds } },
+      _count: { id: true },
+    });
+    const memberCountMap: Record<string, number> = {};
+    for (const mc of memberCounts) {
+      memberCountMap[mc.organizationId] = mc._count.id;
+    }
+
+    // Step 4: 멤버십 role과 조직 정보 병합
+    const roleMap: Record<string, string> = {};
+    for (const m of memberships) {
+      roleMap[m.organizationId] = m.role ?? "VIEWER";
+    }
+
+    const organizations = orgs.map((org: any) => ({
+      ...org,
+      members: Array.from({ length: memberCountMap[org.id] ?? 0 }),
+      role: roleMap[org.id] ?? "VIEWER",
+    }));
 
     return NextResponse.json({ organizations });
   } catch (error: any) {
