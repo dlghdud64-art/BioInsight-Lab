@@ -347,14 +347,14 @@ export default function PurchasesPage() {
 
   const formatCurrency = (amount: number | null | undefined, currency: string = "KRW") => {
     if (amount === null || amount === undefined || isNaN(amount)) {
-      return "0원";
+      return "₩0";
     }
     const safeAmount = Number(amount);
     if (isNaN(safeAmount) || safeAmount < 0) {
-      return "0원";
+      return "₩0";
     }
-    if (currency === "KRW") {
-      return new Intl.NumberFormat('ko-KR').format(safeAmount) + '원';
+    if (currency === "KRW" || !currency) {
+      return "₩" + new Intl.NumberFormat("ko-KR").format(safeAmount);
     }
     try {
       return new Intl.NumberFormat("ko-KR", {
@@ -857,107 +857,6 @@ export default function PurchasesPage() {
                 </Dialog>
 
 
-                {/* Top Vendors */}
-                {summary?.topVendors && summary.topVendors.length > 0 && (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardHeader className="bg-gray-50/50 pb-3">
-                      <CardTitle className="text-lg font-semibold">Top Vendors</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        Vendors by total spending
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                Vendor
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                Purchases
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                Total Amount
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {summary.topVendors?.map((vendor: any, idx: number) => (
-                              <TableRow
-                                key={vendor?.vendorName || `vendor-${idx}`}
-                                className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
-                              >
-                                <TableCell className="py-4 px-6 font-medium text-gray-900">
-                                  {vendor?.vendorName || "-"}
-                                </TableCell>
-                                <TableCell className="py-4 px-6 text-right text-gray-600">
-                                  {vendor?.count ?? 0}
-                                </TableCell>
-                                <TableCell className="py-4 px-6 text-right">
-                                  <span className="font-bold text-gray-900">
-                                    {formatCurrency(vendor?.totalAmount)}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Top Categories */}
-                {summary?.topCategories && summary.topCategories.length > 0 && (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardHeader className="bg-gray-50/50 pb-3">
-                      <CardTitle className="text-lg font-semibold">Top Categories</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        Categories by total spending
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6">
-                                Category
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                Purchases
-                              </TableHead>
-                              <TableHead className="text-xs font-medium text-gray-500 uppercase py-3 px-6 text-right">
-                                Total Amount
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {summary.topCategories?.map((category: any, idx: number) => (
-                              <TableRow
-                                key={category?.category || `category-${idx}`}
-                                className="border-b border-gray-100 hover:bg-gray-50/80 transition-colors"
-                              >
-                                <TableCell className="py-4 px-6 font-medium text-gray-900">
-                                  {category?.category || "-"}
-                                </TableCell>
-                                <TableCell className="py-4 px-6 text-right text-gray-600">
-                                  {category?.count ?? 0}
-                                </TableCell>
-                                <TableCell className="py-4 px-6 text-right">
-                                  <span className="font-bold text-gray-900">
-                                    {formatCurrency(category?.totalAmount)}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </>
             )}
       </div>

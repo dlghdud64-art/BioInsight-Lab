@@ -2,14 +2,15 @@
 
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, LayoutDashboard } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, ShoppingCart, TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, LayoutDashboard, Calendar } from "lucide-react";
 import { BudgetPredictionWidget } from "@/components/dashboard/BudgetPredictionWidget";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -53,6 +54,17 @@ export default function DashboardPage() {
     enabled: status === "authenticated" && primaryOrgId !== undefined,
   });
 
+  // 최근 구매 내역 조회 (주문이 없을 때 대시보드에 표시용, 원화 기준)
+  const { data: purchasesData } = useQuery({
+    queryKey: ["recent-purchases-dashboard"],
+    queryFn: async () => {
+      const response = await fetch("/api/purchases?limit=5&page=1");
+      if (!response.ok) throw new Error("Failed to fetch purchases");
+      return response.json();
+    },
+    enabled: status === "authenticated",
+  });
+
   if (status === "loading" || statsLoading) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
@@ -69,23 +81,46 @@ export default function DashboardPage() {
     );
   }
 
-  const rawStats = dashboardStats || {
-    totalInventory: 0,
-    lowStockAlerts: 0,
-    monthlySpending: 0,
-    activeQuotes: 0,
-  };
+  const rawStats = dashboardStats || {};
 
-  // 데모 생동감: API 값이 0이면 Mock 값 사용
+  // API 필드를 UI 변수에 정확히 매핑 (mock 폴백 제거)
   const stats = {
-    totalInventory: rawStats.totalInventory || 1245,
-    lowStockAlerts: rawStats.lowStockAlerts || 12,
-    monthlySpending: rawStats.monthlySpending || 12500000,
-    activeQuotes: rawStats.activeQuotes || 3,
+    totalInventory: rawStats.totalInventory ?? 0,
+    lowStockAlerts: rawStats.lowStockAlerts ?? 0,
+    monthlySpending: rawStats.thisMonthPurchaseAmount ?? 0,   // PurchaseRecord 기반
+    activeQuotes: rawStats.quoteStats?.pending ?? 0,           // PENDING 견적 수
+    monthOverMonthChange: parseFloat(rawStats.monthOverMonthChange ?? "0"),
+    budgetUsageRate: parseFloat(rawStats.budgetUsageRate ?? "0"),
+    monthlySpendingChart: (rawStats.monthlySpending ?? []) as Array<{ month: string; amount: number }>,
+    expiringItems: (rawStats.expiringItems ?? []) as Array<{
+      id: string; productName: string; catalogNumber?: string;
+      expiryDate: string; currentQuantity: number; unit: string; daysLeft: number;
+    }>,
+    lowStockItems: (rawStats.lowStockItems ?? []) as Array<{
+      id: string; productName: string; catalogNumber?: string;
+      currentQuantity: number; safetyStock: number; unit: string;
+    }>,
+    expiringCount: rawStats.expiringCount ?? 0,
   };
 
   const orders = ordersData?.orders || [];
-  const displayOrders = orders;
+  const recentPurchases = purchasesData?.items || [];
+
+  // 주문이 없으면 최근 구매 내역을 주문 형태로 표시 (원화 통일)
+  const purchaseToOrderLike = (p: { id: string; itemName?: string | null; vendorName?: string | null; amount?: number | null; purchasedAt?: string | Date | null }) => ({
+    id: p.id,
+    orderNumber: p.id,
+    status: "DELIVERED",
+    totalAmount: p.amount ?? 0,
+    createdAt: p.purchasedAt,
+    items: [{ name: p.itemName ?? "-", brand: p.vendorName ?? "-" }],
+    quote: null,
+  });
+
+  const displayOrders =
+    orders.length > 0
+      ? orders
+      : recentPurchases.map((p: any) => purchaseToOrderLike(p));
 
 
   // OrderStatus enum → 한글 변환 맵 (실제 DB 값 기반)
@@ -373,7 +408,7 @@ export default function DashboardPage() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
                     </span>
-                    즉시 발주 필요 5건
+                    즉시 발주 필요 {stats.lowStockAlerts}건
                   </p>
                 </CardContent>
               </Card>
@@ -391,8 +426,13 @@ export default function DashboardPage() {
                     <div className="text-auto-scale leading-none text-slate-900 dark:text-slate-200">
                       ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
-                    <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
-                      예산 소진율 25%
+                    <div className={`flex items-center text-xs font-medium w-fit px-2 py-0.5 rounded ${
+                      stats.monthOverMonthChange >= 0
+                        ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
+                        : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
+                    }`}>
+                      {stats.monthOverMonthChange >= 0 ? "▲" : "▼"}{" "}
+                      {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
                     </div>
                   </div>
                 </CardContent>
@@ -408,7 +448,11 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">
+                    {rawStats?.quoteStats?.responded > 0
+                      ? `응답 수신 ${rawStats.quoteStats.responded}건`
+                      : "새 견적 요청하기"}
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -605,7 +649,7 @@ export default function DashboardPage() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
                     </span>
-                    즉시 발주 필요 5건
+                    즉시 발주 필요 {stats.lowStockAlerts}건
                   </p>
                 </CardContent>
               </Card>
@@ -623,8 +667,13 @@ export default function DashboardPage() {
                     <div className="text-auto-scale leading-none text-slate-900 dark:text-slate-200">
                       ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
-                    <div className="flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-fit px-2 py-0.5 rounded">
-                      예산 소진율 25%
+                    <div className={`flex items-center text-xs font-medium w-fit px-2 py-0.5 rounded ${
+                      stats.monthOverMonthChange >= 0
+                        ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
+                        : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
+                    }`}>
+                      {stats.monthOverMonthChange >= 0 ? "▲" : "▼"}{" "}
+                      {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
                     </div>
                   </div>
                 </CardContent>
@@ -640,7 +689,11 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">최저가 분석 중 2건</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">
+                    {rawStats?.quoteStats?.responded > 0
+                      ? `응답 수신 ${rawStats.quoteStats.responded}건`
+                      : "새 견적 요청하기"}
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -863,6 +916,113 @@ export default function DashboardPage() {
 
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
+
+          {/* 지출 추이 차트 (최근 6개월) */}
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold truncate">지출 추이 (최근 6개월)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {stats.monthlySpendingChart.every((d) => d.amount === 0) ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 mb-3">
+                    <TrendingUp className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">데이터를 쌓는 중입니다</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">구매 내역이 생기면 차트가 표시됩니다</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis
+                      dataKey="month"
+                      tickFormatter={(v: string) => v.slice(5)}
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <YAxis
+                      tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
+                      labelFormatter={(label: string) => `${label}`}
+                    />
+                    <Bar dataKey="amount" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 유통기한 임박 위젯 */}
+          {stats.expiringCount > 0 && (
+            <Card className="bg-amber-50/30 dark:bg-[#161d2f] border-amber-100 dark:border-slate-800/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    유통기한 임박 ({stats.expiringCount}건)
+                  </CardTitle>
+                  <Link href="/dashboard/inventory">
+                    <Button variant="ghost" size="sm" className="text-xs h-6 text-amber-600">확인</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-2">
+                {stats.expiringItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-amber-100 dark:border-slate-800/30 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.currentQuantity} {item.unit}</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`ml-2 text-xs flex-shrink-0 ${
+                        item.daysLeft <= 7
+                          ? "border-red-200 bg-red-50 text-red-700 dark:text-red-400"
+                          : "border-amber-200 bg-amber-50 text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      {item.daysLeft}일 남음
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 부족 재고 위젯 */}
+          {stats.lowStockItems.length > 0 && (
+            <Card className="bg-red-50/20 dark:bg-[#161d2f] border-red-100 dark:border-slate-800/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    부족 재고 알림
+                  </CardTitle>
+                  <Link href="/dashboard/inventory">
+                    <Button variant="ghost" size="sm" className="text-xs h-6 text-red-600">발주</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-2">
+                {stats.lowStockItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 dark:border-slate-800/30 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
+                      <p className="text-xs text-red-500">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
+                    </div>
+                    <span className="relative flex h-2 w-2 ml-2 flex-shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
           <Card className="shadow-sm border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
             <CardHeader className="pb-4 min-w-0">

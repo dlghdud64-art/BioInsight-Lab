@@ -59,31 +59,11 @@ export async function GET(request: NextRequest) {
       {} as Record<string, number>
     );
 
-    // 이번 달 주문
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonthOrders = orders.filter(
       (order: { createdAt: Date | string }) => new Date(order.createdAt) >= monthStart
     );
-    const thisMonthPurchaseAmount = thisMonthOrders.reduce(
-      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
-      0
-    );
-
-    // 전월 주문 (증감률 계산용)
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const lastMonthOrders = orders.filter((order: { createdAt: Date | string }) => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= lastMonthStart && orderDate <= lastMonthEnd;
-    });
-    const lastMonthPurchaseAmount = lastMonthOrders.reduce(
-      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
-      0
-    );
-    const monthOverMonthChange = lastMonthPurchaseAmount > 0
-      ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
-      : 0;
 
     // 3. 견적 통계 조회
     const quotes = await db.quote.findMany({
@@ -119,27 +99,60 @@ export async function GET(request: NextRequest) {
       ? (activeBudget.usedAmount / activeBudget.totalAmount) * 100
       : 0;
 
-    // 5. 월별 지출 추이 (최근 6개월)
+    // 5. PurchaseRecord 기반 지출 통계 (이번 달 / 전월 / 최근 6개월)
+    const memberships = await db.workspaceMember.findMany({
+      where: { userId },
+      select: { workspaceId: true },
+    });
+    const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
+    const scopeKeyValues = [userId, ...workspaceIds];
+    const purchaseOwnerWhere: any = {
+      OR: [
+        { scopeKey: { in: scopeKeyValues } },
+        ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+      ],
+    };
+
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const [recentPurchaseRecords, lastMonthRecords] = await Promise.all([
+      db.purchaseRecord.findMany({
+        where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
+        select: { amount: true, purchasedAt: true },
+      }),
+      db.purchaseRecord.findMany({
+        where: { ...purchaseOwnerWhere, purchasedAt: { gte: lastMonthStart, lte: lastMonthEnd } },
+        select: { amount: true },
+      }),
+    ]);
+
+    // 이번 달 PurchaseRecord 합산
+    const thisMonthPurchaseAmount = recentPurchaseRecords
+      .filter((p: any) => new Date(p.purchasedAt) >= monthStart)
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+    // 전월 대비 증감률
+    const lastMonthPurchaseAmount = lastMonthRecords.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const monthOverMonthChange = lastMonthPurchaseAmount > 0
+      ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
+      : 0;
+
+    // 최근 6개월 월별 지출 (차트용)
     const monthlySpending: Array<{ month: string; amount: number }> = [];
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-      const monthOrders = orders.filter((order: { createdAt: Date | string }) => {
-        const orderDate = new Date(order.createdAt);
-        return orderDate >= date && orderDate <= monthEnd;
-      });
-
-      const monthAmount = monthOrders.reduce(
-        (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
-        0
-      );
-
-      monthlySpending.push({
-        month: monthStr,
-        amount: monthAmount,
-      });
+      const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const monthStr = `${mStart.getFullYear()}-${String(mStart.getMonth() + 1).padStart(2, "0")}`;
+      const monthAmount = recentPurchaseRecords
+        .filter((p: any) => {
+          const d = new Date(p.purchasedAt);
+          return d >= mStart && d <= mEnd;
+        })
+        .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      monthlySpending.push({ month: monthStr, amount: monthAmount });
     }
 
     // 6. 카테고리별 지출 비중
@@ -194,12 +207,44 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 8. 재주문 필요 품목 수 (안전재고 + 리드타임 기반)
-    const allInventories = await db.productInventory.findMany({
-      where: {
-        OR: [{ userId }, { organizationId: { in: [] } }],
-      },
+    // 8. 재고 현황 (재주문 필요 + 유통기한 임박 30일)
+    // 유저의 조직 목록도 포함
+    const userOrgMemberships = await db.organizationMember.findMany({
+      where: { userId },
+      select: { organizationId: true },
     });
+    const userOrgIds = userOrgMemberships.map((m: { organizationId: string }) => m.organizationId);
+
+    const inventoryOwnerWhere: any = {
+      OR: [
+        { userId },
+        ...(userOrgIds.length > 0 ? [{ organizationId: { in: userOrgIds } }] : []),
+      ],
+    };
+
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const [allInventories, expiringInventories] = await Promise.all([
+      db.productInventory.findMany({
+        where: inventoryOwnerWhere,
+        include: {
+          product: { select: { name: true, catalogNumber: true, brand: true } },
+        },
+      }),
+      db.productInventory.findMany({
+        where: {
+          ...inventoryOwnerWhere,
+          expiryDate: { gte: now, lte: thirtyDaysLater },
+          NOT: { expiryDate: null },
+        },
+        include: {
+          product: { select: { name: true, catalogNumber: true } },
+        },
+        orderBy: { expiryDate: "asc" },
+        take: 10,
+      }),
+    ]);
+
     const reorderNeededCount = allInventories.filter((inv: any) => {
       const dailyUsage = inv.averageDailyUsage ?? 0;
       const leadTime = inv.leadTimeDays ?? 0;
@@ -211,6 +256,19 @@ export async function GET(request: NextRequest) {
       }
       return inv.currentQuantity <= 0;
     }).length;
+
+    // 부족 재고 상위 5건
+    const lowStockItems = allInventories
+      .filter((inv: any) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock)
+      .slice(0, 5)
+      .map((inv: any) => ({
+        id: inv.id,
+        productName: inv.product?.name || "Unknown",
+        catalogNumber: inv.product?.catalogNumber,
+        currentQuantity: inv.currentQuantity,
+        safetyStock: inv.safetyStock,
+        unit: inv.unit || "ea",
+      }));
 
     return NextResponse.json({
       // 예산 정보
@@ -245,9 +303,26 @@ export async function GET(request: NextRequest) {
       // 재주문 필요 품목 수
       reorderNeededCount,
 
-      // 대시보드 KPI 카드용 (lowStockAlerts = 재주문 필요 건수)
+      // 대시보드 KPI 카드용
       lowStockAlerts: reorderNeededCount,
       totalInventory: allInventories.length,
+
+      // 유통기한 임박 (30일 이내)
+      expiringItems: expiringInventories.map((inv: any) => ({
+        id: inv.id,
+        productName: inv.product?.name || "Unknown",
+        catalogNumber: inv.product?.catalogNumber,
+        expiryDate: inv.expiryDate,
+        currentQuantity: inv.currentQuantity,
+        unit: inv.unit || "ea",
+        daysLeft: Math.ceil(
+          (new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        ),
+      })),
+      expiringCount: expiringInventories.length,
+
+      // 부족 재고 상위 5건
+      lowStockItems,
 
       // 카테고리별 지출 비중
       categorySpending: categorySpendingArray,

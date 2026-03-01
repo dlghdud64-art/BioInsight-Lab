@@ -1,22 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Users, Building2, Building, ArrowRight } from "lucide-react";
+import { Check, Package, Users, Building2, Building, CheckCircle2 } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const TEAM_MONTHLY = 49000;
 const BUSINESS_MONTHLY = 149000;
 
+export type PlanId = "starter" | "team" | "business" | "enterprise";
+
 export default function PricingPage() {
+  const router = useRouter();
   const [isAnnual, setIsAnnual] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("business");
 
   const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.8);
   const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.8);
@@ -132,18 +136,60 @@ export default function PricingPage() {
     { category: "보안/관리", feature: "SLA 및 전담 지원", starter: false, team: false, business: false, enterprise: true },
   ];
 
+  const getCheckoutUrl = useCallback(
+    (planId: PlanId): string => {
+      if (planId === "starter") return "/test/search";
+      if (planId === "enterprise") return "/intro";
+      const params = new URLSearchParams();
+      params.set("plan", planId);
+      params.set("annual", isAnnual ? "1" : "0");
+      const callbackUrl = `/billing?${params.toString()}`;
+      return `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    },
+    [isAnnual]
+  );
+
+  const handleCardSelect = useCallback((planId: PlanId) => {
+    setSelectedPlan(planId);
+  }, []);
+
+  const handlePrimaryAction = useCallback(
+    (e: React.MouseEvent, planId: PlanId) => {
+      e.stopPropagation();
+      const url = getCheckoutUrl(planId);
+      router.push(url);
+    },
+    [getCheckoutUrl, router]
+  );
+
   const renderPrice = (plan: (typeof plans)[0]) => {
     if (plan.priceMonthly == null) return plan.price;
     if (isAnnual && plan.priceAnnualPerMonth != null) {
       return (
-        <span className="flex flex-col items-center gap-0.5">
+        <span
+          key={isAnnual ? "annual" : "monthly"}
+          className="flex flex-col items-center gap-1 animate-in slide-in-from-bottom-2 fade-in duration-300"
+        >
           <span className="text-slate-500 line-through text-lg font-normal">{plan.price}</span>
-          <span>₩{plan.priceAnnualPerMonth.toLocaleString()}<span className="text-sm font-normal text-slate-600">/월</span></span>
-          <span className="text-xs text-green-600 font-medium">연간 결제 시 20% 할인</span>
+          <span className="text-2xl md:text-3xl font-bold text-slate-900">
+            ₩{plan.priceAnnualPerMonth.toLocaleString()}
+            <span className="text-sm font-normal text-slate-600">/월</span>
+          </span>
+          <span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800 ring-1 ring-green-600/20">
+            연간 결제 시 20% 할인 (2개월 무료)
+          </span>
         </span>
       );
     }
-    return <>{plan.price}{plan.pricePeriod}</>;
+    return (
+      <span
+        key={isAnnual ? "annual" : "monthly"}
+        className="animate-in slide-in-from-bottom-2 fade-in duration-300"
+      >
+        {plan.price}
+        {plan.pricePeriod}
+      </span>
+    );
   };
 
   return (
@@ -163,48 +209,76 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              {/* Billing Toggle: Monthly / Annual (20% off) */}
+              {/* Billing Toggle: Monthly / Annual (20% off, 2 months free) */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 md:mb-12">
-                <span className={cn("text-sm font-medium", !isAnnual && "text-slate-900")}>월간 결제</span>
+                <span className={cn("text-sm font-medium transition-colors", !isAnnual && "text-slate-900")}>
+                  월간 결제
+                </span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={isAnnual}
+                  aria-label={isAnnual ? "연간 결제 선택됨" : "월간 결제 선택됨"}
                   onClick={() => setIsAnnual((v) => !v)}
                   className={cn(
-                    "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
+                    "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
                     isAnnual ? "bg-slate-900" : "bg-slate-200"
                   )}
                 >
                   <span
                     className={cn(
-                      "pointer-events-none block h-6 w-6 rounded-full bg-white shadow-lg ring-0 transition-transform",
+                      "pointer-events-none block h-6 w-6 rounded-full bg-white shadow-lg ring-0 transition-transform duration-300",
                       isAnnual ? "translate-x-5" : "translate-x-0.5"
                     )}
                   />
                 </button>
                 <div className="flex items-center gap-2">
-                  <span className={cn("text-sm font-medium", isAnnual && "text-slate-900")}>연간 결제</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs font-semibold">
-                    20% 할인
+                  <span className={cn("text-sm font-medium transition-colors", isAnnual && "text-slate-900")}>
+                    연간 결제
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-xs font-bold transition-all duration-300",
+                      isAnnual
+                        ? "bg-green-200 text-green-900 border-green-400 ring-1 ring-green-500/30 shadow-sm"
+                        : "bg-green-100 text-green-800 border-green-200"
+                    )}
+                  >
+                    {isAnnual ? "20% 할인 · 2개월 무료" : "20% 할인"}
                   </Badge>
                 </div>
               </div>
 
-              {/* Pricing Cards */}
+              {/* Pricing Cards (radio-style selection) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 items-end">
                 {plans.map((plan) => {
                   const Icon = plan.icon;
                   const isRecommended = plan.isRecommended;
+                  const isSelected = selectedPlan === plan.id;
 
                   return (
                     <Card
                       key={plan.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
+                      aria-label={`${plan.name} 플랜 ${isSelected ? "선택됨" : "선택하기"}`}
+                      onClick={() => handleCardSelect(plan.id as PlanId)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleCardSelect(plan.id as PlanId);
+                        }
+                      }}
                       className={cn(
-                        "relative flex flex-col transition-all",
+                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isRecommended && "border-2 border-blue-500 shadow-xl ring-2 ring-blue-500/20 scale-[1.02] z-10"
+                        isSelected && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-700",
+                        !isSelected && "hover:border-slate-300 hover:bg-slate-50/50",
+                        isRecommended && !isSelected && "border-2 border-blue-200 shadow-lg scale-[1.01]",
+                        isRecommended && isSelected && "border-2 border-blue-500 shadow-xl ring-2 ring-blue-500 ring-offset-2 scale-[1.02] z-10"
                       )}
                     >
                       {plan.badge && (
@@ -218,56 +292,60 @@ export default function PricingPage() {
                         <div className="flex justify-center mb-4">
                           <div
                             className={cn(
-                              "p-3 rounded-full",
-                              isRecommended ? "bg-blue-100" : "bg-slate-100"
+                              "p-3 rounded-full transition-colors",
+                              isSelected || isRecommended ? "bg-blue-100" : "bg-slate-100"
                             )}
                           >
                             <Icon
                               className={cn(
                                 "h-6 w-6",
-                                isRecommended ? "text-blue-600" : "text-slate-600"
+                                isSelected || isRecommended ? "text-blue-600" : "text-slate-600"
                               )}
                             />
                           </div>
                         </div>
                         <CardTitle className="text-xl md:text-2xl font-bold mb-2">{plan.name}</CardTitle>
-                        <div className="flex flex-col items-center gap-0.5 mb-2 min-h-[3.5rem]">
-                          <span className="text-2xl md:text-3xl font-bold text-slate-900">
+                        <div className="flex flex-col items-center gap-0.5 mb-2 min-h-[4.5rem] overflow-hidden">
+                          <span className="text-2xl md:text-3xl font-bold text-slate-900 text-center">
                             {renderPrice(plan)}
                           </span>
                           {plan.pricePeriod && !isAnnual && (
                             <span className="text-sm text-slate-600">{plan.pricePeriod}</span>
                           )}
                         </div>
-                        <CardDescription className="text-sm text-slate-600">{plan.description}</CardDescription>
+                        <CardDescription className="text-sm text-slate-600 tracking-normal leading-relaxed">
+                          {plan.description}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col pt-0">
-                        <ul className="space-y-3 mb-6 flex-1">
+                      <CardContent className="flex-1 flex flex-col pt-0" onClick={(e) => e.stopPropagation()}>
+                        <ul className="space-y-4 mb-6 flex-1">
                           {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-start gap-2">
+                            <li key={index} className="flex items-start gap-2.5 leading-relaxed tracking-normal">
                               <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-slate-700">{feature}</span>
+                              <span className="text-sm text-slate-700 tracking-normal">{feature}</span>
                             </li>
                           ))}
                         </ul>
-                        <Button
-                          variant={plan.buttonVariant}
-                          className={cn(
-                            "w-full",
-                            isRecommended && "bg-blue-600 hover:bg-blue-700 text-white",
-                            plan.buttonVariant === "outline" &&
-                              !isRecommended &&
-                              "border-slate-300 hover:bg-slate-50"
-                          )}
-                          asChild
-                        >
-                          <Link href={plan.buttonHref} className="flex items-center justify-center gap-2">
-                            {plan.buttonText}
-                            {(plan.buttonText === "시작하기" || plan.buttonVariant === "default") && (
-                              <ArrowRight className="h-4 w-4" />
-                            )}
-                          </Link>
-                        </Button>
+                        {isSelected ? (
+                          <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                            onClick={(e) => handlePrimaryAction(e, plan.id as PlanId)}
+                          >
+                            <CheckCircle2 className="h-5 w-5 mr-2 shrink-0" />
+                            선택됨
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            className="w-full border-slate-300 hover:bg-slate-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCardSelect(plan.id as PlanId);
+                            }}
+                          >
+                            이 플랜 선택
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   );
