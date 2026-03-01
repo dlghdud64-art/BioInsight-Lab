@@ -104,10 +104,15 @@ export async function createOrganization(
     });
 
     // 2. 생성자를 멤버로 즉시 등록 (RLS 권한 문제 해결)
-    await tx.organizationMember.create({
-      data: {
+    //    upsert: 레이스 컨디션/트랜잭션 재시도 시 P2002 방지
+    await tx.organizationMember.upsert({
+      where: {
+        userId_organizationId: { userId, organizationId: organization.id },
+      },
+      update: { role: "ADMIN" },
+      create: {
         organizationId: organization.id,
-        userId: userId,
+        userId,
         role: "ADMIN",
       },
     });
