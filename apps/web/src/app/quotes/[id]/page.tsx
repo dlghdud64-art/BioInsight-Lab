@@ -14,6 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
+  User,
+  Building2,
+  Calendar,
+  MapPin,
+  DollarSign,
   CheckCircle2,
   Clock,
   XCircle,
@@ -26,7 +31,6 @@ import {
   GitCompare,
   Share2,
   MessageSquare,
-  Copy,
   Pencil,
   Check,
   X,
@@ -452,19 +456,19 @@ ${itemLines}
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-        <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
         {/* 헤더 */}
-        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 md:p-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
-          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
+          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
-              <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-3xl font-bold truncate">{quote.title}</h1>
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 mt-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
                 <Badge
                   variant={
                     quote.status === "COMPLETED"
@@ -473,25 +477,32 @@ ${itemLines}
                       ? "secondary"
                       : "outline"
                   }
-                  className="flex items-center gap-1 text-xs md:text-sm"
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-semibold px-3 py-1",
+                    quoteStatus === "PENDING" && "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-400",
+                    quoteStatus === "SENT" && "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-400",
+                    quoteStatus === "RESPONDED" && "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/50 dark:text-green-400",
+                    quoteStatus === "COMPLETED" && "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-400",
+                    quoteStatus === "CANCELLED" && "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/50 dark:text-red-400"
+                  )}
                 >
-                  {quoteStatus === "PENDING" && <Clock className="h-4 w-4 text-yellow-500" />}
-                  {quoteStatus === "SENT" && <CheckCircle2 className="h-4 w-4 text-blue-500" />}
-                  {quoteStatus === "RESPONDED" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                  {quoteStatus === "COMPLETED" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                  {quoteStatus === "CANCELLED" && <XCircle className="h-4 w-4 text-red-500" />}
+                  {quoteStatus === "PENDING" && <Clock className="h-4 w-4" />}
+                  {quoteStatus === "SENT" && <CheckCircle2 className="h-4 w-4" />}
+                  {quoteStatus === "RESPONDED" && <CheckCircle2 className="h-4 w-4" />}
+                  {quoteStatus === "COMPLETED" && <CheckCircle2 className="h-4 w-4" />}
+                  {quoteStatus === "CANCELLED" && <XCircle className="h-4 w-4" />}
                   {QUOTE_STATUS[quoteStatus]}
                 </Badge>
-                <span className="text-xs md:text-sm text-muted-foreground">
-                  {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
               </div>
+              <span className="text-sm text-muted-foreground mt-2 block">
+                {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
           </div>
           {/* 스마트 공유 버튼 */}
@@ -515,93 +526,123 @@ ${itemLines}
         </div>
         </Card>
 
-        {/* 견적 정보 */}
-        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-          <CardHeader className="px-0 pt-0 pb-4">
-            <CardTitle className="text-base md:text-lg font-semibold">견적 정보</CardTitle>
+        {/* 견적 정보 (Summary Card) */}
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+          <CardHeader className="px-0 pt-0 pb-6">
+            <CardTitle className="text-lg md:text-xl font-semibold">견적 정보</CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">요청자</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                  {quote.user?.name || quote.user?.email || "-"}
-                </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">요청자</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {quote.user?.name || quote.user?.email || "-"}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">조직</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                  {quote.organization?.name || "-"}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">조직</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {quote.organization?.name || "-"}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">생성일</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                  {quote.createdAt
-                    ? new Date(quote.createdAt).toLocaleDateString("ko-KR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "-"}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">생성일</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {quote.createdAt
+                      ? new Date(quote.createdAt).toLocaleDateString("ko-KR", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "-"}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">납기 희망일</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                  {quote.deliveryDate
-                    ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
-                    : quote.validUntil
-                    ? new Date(quote.validUntil).toLocaleDateString("ko-KR")
-                    : "-"}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">납기 희망일</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {quote.deliveryDate
+                      ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
+                      : quote.validUntil
+                      ? new Date(quote.validUntil).toLocaleDateString("ko-KR")
+                      : "-"}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">납품 장소</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100 truncate">
-                  {quote.deliveryLocation || "-"}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">납품 장소</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {quote.deliveryLocation || "-"}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">총 예상 금액</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100">
-                  {quote.totalAmount != null
-                    ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}`
-                    : "-"}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+                  <DollarSign className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">총 예상 금액</p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {quote.totalAmount != null
+                      ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}`
+                      : "-"}
+                  </p>
+                </div>
               </div>
             </div>
             {(quote.description || quote.message) && (
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">요청 메시지</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">요청 메시지</p>
+                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
                   {quote.description || quote.message || "-"}
-                </p>
+                </blockquote>
               </div>
             )}
             {quote.specialNotes && (
-              <div className="mt-4 space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">특이사항</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
+              <div className="mt-6">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">특이사항</p>
+                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
                   {quote.specialNotes}
-                </p>
+                </blockquote>
               </div>
             )}
             {quote.messageEn && (
-              <div className="mt-4 space-y-1">
-                <p className="text-sm text-slate-500 dark:text-slate-400">요청 메시지 (영문)</p>
-                <p className="text-base font-medium text-slate-900 dark:text-slate-100 whitespace-pre-wrap break-words">
+              <div className="mt-6">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">요청 메시지 (영문)</p>
+                <blockquote className="rounded-lg bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-200 dark:border-slate-700 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
                   {quote.messageEn}
-                </p>
+                </blockquote>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* 견적 요청 품목 테이블 */}
-        <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-          <CardHeader className="px-0 pt-0 pb-3">
-            <CardTitle className="text-sm md:text-lg">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+          <CardHeader className="px-0 pt-0 pb-4">
+            <CardTitle className="text-base md:text-lg font-semibold">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
             <CardDescription className="text-xs md:text-sm mt-1">
               견적 요청 생성 시점의 품목 스냅샷입니다.
             </CardDescription>
@@ -613,9 +654,9 @@ ${itemLines}
                 const vendor = item.product?.vendors?.[0]?.vendor;
                 const isEditing = editingNoteId === item.id;
                 return (
-                  <Card key={item.id} className="p-3 border">
+                  <Card key={item.id} className="p-4 border border-slate-200 dark:border-slate-700">
                     <div className="space-y-2">
-                      <div className="font-medium text-sm">{item.product?.name || item.name || "제품 정보 없음"}</div>
+                      <div className="font-semibold text-base text-slate-900 dark:text-slate-100">{item.product?.name || item.name || "제품 정보 없음"}</div>
                       <div className="text-xs text-muted-foreground space-y-1">
                         {(vendor?.name || item.product?.brand) && <div>벤더: {vendor?.name || item.product?.brand}</div>}
                         {item.product?.spec && <div>규격: {item.product.spec}</div>}
@@ -672,12 +713,12 @@ ${itemLines}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">제품명</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">벤더</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">규격</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
-                    <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm min-w-[200px]">메모</th>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">제품명</th>
+                    <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">벤더</th>
+                    <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">규격</th>
+                    <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">수량</th>
+                    <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 min-w-[200px]">메모</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -685,18 +726,18 @@ ${itemLines}
                     const vendor = item.product?.vendors?.[0]?.vendor;
                     const isEditing = editingNoteId === item.id;
                     return (
-                      <tr key={item.id} className="border-b hover:bg-muted/30">
-                        <td className="p-2 md:p-3 font-medium text-xs md:text-sm min-w-[120px]">
-                          <div className="truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
+                      <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                        <td className="py-3 px-4 min-w-[180px]">
+                          <div className="font-semibold text-base text-slate-900 dark:text-slate-100 truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
                         </td>
-                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
+                        <td className="py-3 px-4 text-sm text-muted-foreground">
                           {vendor?.name || item.product?.brand || "-"}
                         </td>
-                        <td className="p-2 md:p-3 text-xs md:text-sm text-muted-foreground">
+                        <td className="py-3 px-4 text-sm text-muted-foreground">
                           {item.product?.spec || "-"}
                         </td>
-                        <td className="p-2 md:p-3 text-xs md:text-sm">{item.quantity}</td>
-                        <td className="p-2 md:p-3 text-xs md:text-sm">
+                        <td className="py-3 px-4 text-sm font-medium">{item.quantity}</td>
+                        <td className="py-3 px-4 text-sm">
                           {isEditing ? (
                             <div className="flex items-center gap-2">
                               <Input
@@ -772,8 +813,8 @@ ${itemLines}
           </TabsList>
 
           {/* 회신 입력 탭 */}
-          <TabsContent value="items" className="mt-4 md:mt-6">
-            <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+          <TabsContent value="items" className="mt-6 md:mt-8">
+            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 입력</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
@@ -785,15 +826,15 @@ ${itemLines}
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">벤더명</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">품목명</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">수량</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm">단가</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">통화</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">납기</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">MOQ</th>
-                          <th className="text-left p-2 md:p-3 font-semibold text-xs md:text-sm hidden md:table-cell">비고</th>
+                        <tr className="border-b border-slate-200 dark:border-slate-700">
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">벤더명</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">품목명</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">수량</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">단가</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">통화</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">납기</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">MOQ</th>
+                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">비고</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -878,8 +919,8 @@ ${itemLines}
           </TabsContent>
 
           {/* 회신 수신함 탭 */}
-          <TabsContent value="inbox" className="mt-4 md:mt-6">
-            <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+          <TabsContent value="inbox" className="mt-6 md:mt-8">
+            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 수신함</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
@@ -902,46 +943,58 @@ ${itemLines}
         </Tabs>
 
 
-        {/* 액션 버튼 */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Link href="/quotes" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
-              목록으로
-            </Button>
-          </Link>
-          {/* PDF 다운로드 버튼 (향후 구현) */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
-                  disabled
-                >
-                  <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  PDF 다운로드
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>PDF 다운로드 기능은 곧 제공됩니다</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {/* 견적 취소 - PENDING 상태일 때만 표시 */}
-          {quote.status === "PENDING" && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancelQuote}
-              disabled={updateStatusMutation.isPending}
-              className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950/30"
-            >
-              <X className="h-4 w-4 mr-2 shrink-0" />
-              {updateStatusMutation.isPending && updateStatusMutation.variables === "CANCELLED"
-                ? "처리 중..."
-                : "견적 취소"}
-            </Button>
-          )}
+        {/* 하단 액션 버튼 그룹 (Floating Action Bar) */}
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
+            {/* Primary: 구매 완료로 표시 - 가장 눈에 띄게 */}
+            {quote.status !== "COMPLETED" && (
+              <Button
+                onClick={handleMarkAsCompleted}
+                disabled={updateStatusMutation.isPending}
+                className="order-first w-full sm:w-auto text-sm md:text-base h-10 md:h-11 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all font-semibold"
+              >
+                <Package className="h-4 w-4 mr-2 shrink-0" />
+                {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
+              </Button>
+            )}
+            {/* Outline: 목록, PDF, 견적 취소 */}
+            <Link href="/quotes" className="w-full sm:w-auto order-2 sm:order-2">
+              <Button variant="outline" className="w-full sm:w-auto text-sm h-10 md:h-11">
+                <ArrowLeft className="h-4 w-4 mr-2 shrink-0" />
+                목록으로
+              </Button>
+            </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto text-sm h-10 md:h-11 order-3"
+                    disabled
+                  >
+                    <Download className="h-4 w-4 mr-2 shrink-0" />
+                    PDF 다운로드
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>PDF 다운로드 기능은 곧 제공됩니다</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {quote.status === "PENDING" && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancelQuote}
+                disabled={updateStatusMutation.isPending}
+                className="w-full sm:w-auto text-sm h-10 md:h-11 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950/30 order-4"
+              >
+                <XCircle className="h-4 w-4 mr-2 shrink-0" />
+                {updateStatusMutation.isPending && updateStatusMutation.variables === "CANCELLED"
+                  ? "처리 중..."
+                  : "견적 취소"}
+              </Button>
+            )}
           {/* 주문 요청하기 버튼 - COMPLETED 상태일 때만 표시 */}
           {quote.status === "COMPLETED" && !quote.order && (
             <TooltipProvider>
@@ -950,7 +1003,7 @@ ${itemLines}
                   <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
                     <DialogTrigger asChild>
                       <Button
-                        className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                        className="w-full sm:w-auto text-sm h-10 md:h-11 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all font-semibold"
                       >
                         <ShoppingCart className="h-4 w-4 mr-2 shrink-0" />
                         주문 요청하기
@@ -1114,16 +1167,6 @@ ${itemLines}
               </Tooltip>
             </TooltipProvider>
           )}
-          {quote.status !== "COMPLETED" && (
-            <Button
-              onClick={handleMarkAsCompleted}
-              disabled={updateStatusMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto text-xs md:text-sm h-8 md:h-10 shadow-md hover:shadow-lg transition-all"
-            >
-              <Package className="h-4 w-4 mr-2 shrink-0" />
-              {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
-            </Button>
-          )}
           {quote.status === "COMPLETED" && !quote.order && canCheckout && (
             <>
               {/* 기존 결제하기 버튼은 유지 (하위 호환성) */}
@@ -1131,9 +1174,9 @@ ${itemLines}
                 onClick={() => createOrderMutation.mutate({})}
                 disabled={createOrderMutation.isPending}
                 variant="outline"
-                className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+                className="w-full sm:w-auto text-sm h-10 md:h-11"
               >
-                <CreditCard className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <CreditCard className="h-4 w-4 mr-2 shrink-0" />
                 {createOrderMutation.isPending ? "처리 중..." : "결제하기"}
               </Button>
             </>
@@ -1143,8 +1186,8 @@ ${itemLines}
               <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
                   <DialogTrigger asChild>
                     <Button
-                      variant="secondary"
-                      className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10"
+                      variant="outline"
+                      className="w-full sm:w-auto text-sm h-10 md:h-11"
                     >
                       <Send className="h-4 w-4 mr-2 shrink-0" />
                       구매 요청 보내기
@@ -1226,13 +1269,14 @@ ${itemLines}
             </Badge>
           )}
           <Link href="/compare/quote" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto text-xs md:text-sm h-8 md:h-10">
+            <Button variant="outline" className="w-full sm:w-auto text-sm h-10 md:h-11">
               <ShoppingCart className="h-4 w-4 mr-2 shrink-0" />
               <span className="hidden sm:inline">새 견적 요청</span>
               <span className="sm:hidden">새 요청</span>
             </Button>
           </Link>
-        </div>
+          </div>
+        </Card>
         </div>
       </div>
     </div>
