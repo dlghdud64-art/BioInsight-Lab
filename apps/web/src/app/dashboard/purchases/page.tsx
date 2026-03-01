@@ -507,8 +507,8 @@ export default function PurchasesPage() {
           description="구매 영수증과 내역을 이곳에서 관리하세요."
           icon={Download}
         />
-            {/* Purchase Summary - Always visible with guest-key */}
-            {guestKey && (
+            {/* Purchase Summary - 로그인 유저 또는 guestKey 보유 시 표시 */}
+            {(!!session || !!guestKey) && (
               <>
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
