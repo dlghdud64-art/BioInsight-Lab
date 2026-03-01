@@ -133,10 +133,20 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const productId = inventory?.productId ?? selectedProduct?.id;
-    if (!productId) return;
+    // selectedProduct가 없으면 제출 불가
+    if (!productId && !selectedProduct) return;
+
+    // 수기 입력 감지: "manual-" 접두사인 임시 ID는 DB에 존재하지 않음
+    const isManual = typeof productId === "string" && productId.startsWith("manual-");
 
     const data = {
-      productId,
+      // 수기 입력이면 productId 대신 제품 메타 정보를 전달 (API에서 Find-or-Create 처리)
+      productId: isManual ? undefined : productId,
+      ...(isManual && {
+        productName: selectedProduct?.name ?? undefined,
+        brand: selectedProduct?.brand ?? undefined,
+        catalogNumber: selectedProduct?.catalogNumber ?? undefined,
+      }),
       currentQuantity: parseFloat(currentQuantity) || 0,
       unit,
       safetyStock: safetyStock ? parseFloat(safetyStock) : undefined,

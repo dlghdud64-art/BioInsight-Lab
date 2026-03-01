@@ -147,7 +147,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      productId,
+      productId: rawProductId,
+      // 수기 입력 시 클라이언트가 전달하는 제품 메타 정보 (Find-or-Create 에 사용)
+      productName,
+      brand,
+      catalogNumber,
+      manufacturer,
+      category: clientCategory,
       currentQuantity,
       unit,
       safetyStock,
@@ -163,14 +169,131 @@ export async function POST(request: NextRequest) {
       testPurpose,
     } = body;
 
-    if (!productId) {
+    // productId가 없거나 "manual-" 접두사(수기 임시 ID)인 경우 수기 입력으로 판별
+    const isManual =
+      !rawProductId ||
+      (typeof rawProductId === "string" && rawProductId.startsWith("manual-"));
+
+    // 수기 입력 시 품목명은 필수
+    if (isManual && !productName?.trim()) {
       return NextResponse.json(
-        { error: "productId는 필수입니다." },
+        { error: "수기 입력 시 품목명(productName)은 필수입니다." },
         { status: 400 }
       );
     }
 
-    // 제품 존재 여부 확인
+    // notes에 lotNumber, testPurpose 병합 (스키마 미지원 필드)
+    const mergedNotes = [
+      notes,
+      lotNumber ? `[Lot: ${lotNumber}]` : null,
+      testPurpose ? `[시험항목: ${testPurpose}]` : null,
+    ]
+      .filter(Boolean)
+      .join("\n") || null;
+
+    // 공통 재고 데이터 (productId 제외)
+    const inventoryData = {
+      userId: organizationId ? null : session.user.id,
+      organizationId: organizationId || null,
+      currentQuantity: parseFloat(String(currentQuantity)) || 0,
+      unit: unit || "ea",
+      safetyStock:
+        safetyStock !== undefined && safetyStock !== null && safetyStock !== ""
+          ? parseFloat(String(safetyStock))
+          : null,
+      minOrderQty:
+        minOrderQty !== undefined && minOrderQty !== null && minOrderQty !== ""
+          ? parseFloat(String(minOrderQty))
+          : null,
+      location: location || null,
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
+      notes: mergedNotes,
+      autoReorderEnabled: Boolean(autoReorderEnabled),
+      autoReorderThreshold:
+        autoReorderThreshold !== undefined &&
+        autoReorderThreshold !== null &&
+        autoReorderThreshold !== ""
+          ? parseFloat(String(autoReorderThreshold))
+          : null,
+    };
+
+    const inventoryInclude = {
+      product: {
+        include: {
+          vendors: {
+            include: { vendor: true },
+            take: 1,
+            orderBy: { priceInKRW: "asc" },
+          },
+        },
+      },
+    } as const;
+
+    // -----------------------------------------------------------------------
+    // 수기 입력 경로: Find-or-Create Product → Create Inventory (트랜잭션)
+    // -----------------------------------------------------------------------
+    if (isManual) {
+      const resolvedBrand = (brand || manufacturer || "").trim() || null;
+      const resolvedCatalog = (catalogNumber || "").trim() || null;
+      const resolvedName = productName.trim();
+
+      const inventory = await db.$transaction(async (tx: any) => {
+        // 1. 동일 품목명+카탈로그번호로 기존 제품 검색 (중복 생성 방지)
+        const existingProduct = await tx.product.findFirst({
+          where: {
+            name: { equals: resolvedName, mode: "insensitive" },
+            ...(resolvedCatalog
+              ? { catalogNumber: { equals: resolvedCatalog, mode: "insensitive" } }
+              : {}),
+          },
+          select: { id: true },
+        });
+
+        // 2. 없으면 새 제품 마스터 생성
+        const product = existingProduct
+          ? existingProduct
+          : await tx.product.create({
+              data: {
+                name: resolvedName,
+                brand: resolvedBrand,
+                catalogNumber: resolvedCatalog,
+                manufacturer: resolvedBrand, // manufacturer 컬럼도 동일 값으로 저장
+                category: clientCategory ?? "REAGENT", // 미지정 시 기본값 REAGENT
+              },
+              select: { id: true },
+            });
+
+        // 3. 중복 재고 확인 (동일 user/org + product)
+        const duplicateCheck = organizationId
+          ? await tx.productInventory.findFirst({
+              where: { organizationId, productId: product.id },
+            })
+          : await tx.productInventory.findFirst({
+              where: { userId: session.user.id, productId: product.id },
+            });
+
+        if (duplicateCheck) {
+          // 트랜잭션 내에서 에러를 throw하면 롤백 처리됨
+          throw Object.assign(new Error("이미 등록된 재고입니다. 수정 기능을 이용해 주세요."), {
+            statusCode: 409,
+          });
+        }
+
+        // 4. 재고 생성 (Find-or-Create 된 productId 사용)
+        return await tx.productInventory.create({
+          data: { productId: product.id, ...inventoryData },
+          include: inventoryInclude,
+        });
+      });
+
+      return NextResponse.json({ inventory }, { status: 201 });
+    }
+
+    // -----------------------------------------------------------------------
+    // 기존 경로: productId로 직접 조회 후 재고 생성
+    // -----------------------------------------------------------------------
+    const productId = rawProductId as string;
+
     const product = await db.product.findUnique({ where: { id: productId } });
     if (!product) {
       return NextResponse.json(
@@ -195,60 +318,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // notes에 lotNumber, testPurpose 병합 (스키마 미지원 필드)
-    const mergedNotes = [
-      notes,
-      lotNumber ? `[Lot: ${lotNumber}]` : null,
-      testPurpose ? `[시험항목: ${testPurpose}]` : null,
-    ]
-      .filter(Boolean)
-      .join("\n") || null;
-
     const inventory = await db.productInventory.create({
-      data: {
-        productId,
-        userId: organizationId ? null : session.user.id,
-        organizationId: organizationId || null,
-        currentQuantity: parseFloat(String(currentQuantity)) || 0,
-        unit: unit || "ea",
-        safetyStock:
-          safetyStock !== undefined && safetyStock !== null && safetyStock !== ""
-            ? parseFloat(String(safetyStock))
-            : null,
-        minOrderQty:
-          minOrderQty !== undefined && minOrderQty !== null && minOrderQty !== ""
-            ? parseFloat(String(minOrderQty))
-            : null,
-        location: location || null,
-        expiryDate: expiryDate ? new Date(expiryDate) : null,
-        notes: mergedNotes,
-        autoReorderEnabled: Boolean(autoReorderEnabled),
-        autoReorderThreshold:
-          autoReorderThreshold !== undefined &&
-          autoReorderThreshold !== null &&
-          autoReorderThreshold !== ""
-            ? parseFloat(String(autoReorderThreshold))
-            : null,
-      },
-      include: {
-        product: {
-          include: {
-            vendors: {
-              include: { vendor: true },
-              take: 1,
-              orderBy: { priceInKRW: "asc" },
-            },
-          },
-        },
-      },
+      data: { productId, ...inventoryData },
+      include: inventoryInclude,
     });
 
     return NextResponse.json({ inventory }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating inventory:", error);
+    const status = error?.statusCode ?? 500;
     return NextResponse.json(
       { error: error.message || "재고 등록에 실패했습니다." },
-      { status: 500 }
+      { status }
     );
   }
 }
