@@ -1925,6 +1925,10 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         // 무시
       }
 
+      // React Query 캐시 무효화 (목록 페이지 최신 데이터 표시)
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      router.refresh();
+
       // 다중 견적 생성 시 목록 페이지로 이동
       router.push("/dashboard/quotes");
     } catch (error: any) {

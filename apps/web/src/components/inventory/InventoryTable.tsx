@@ -1,10 +1,8 @@
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, ShoppingCart, Trash2, AlertTriangle, Thermometer, Snowflake } from "lucide-react";
+import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
 import {
@@ -13,6 +11,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+const BADGE_SIZE = "h-8 w-8";
+const BADGE_BASE = "inline-flex items-center justify-center rounded-full shadow-sm ring-2 ring-white/50 shrink-0";
+const ICON_OFFSET = "-translate-y-[1.5px]";
 
 interface InventoryItem {
   id: string;
@@ -103,34 +105,45 @@ export function InventoryTable({
   };
 
   const renderStatusBadge = (status: string, tooltipText?: string) => {
-    const badgeClass = "antialiased";
     const wrapWithTooltip = (content: React.ReactNode) =>
       tooltipText ? (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-block cursor-help">{content}</span>
+              <span className="inline-flex items-center gap-2 cursor-help">{content}</span>
             </TooltipTrigger>
-            <TooltipContent className="antialiased">
-              {tooltipText}
-            </TooltipContent>
+            <TooltipContent className="antialiased">{tooltipText}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
         content
       );
 
-    // 소진 임박 (D-N) 또는 재주문 권장 (동적 라벨)
+    const CircularBadge = ({
+      children,
+      className,
+      label,
+    }: {
+      children: React.ReactNode;
+      className: string;
+      label: string;
+    }) => (
+      <span className="inline-flex items-center gap-2 antialiased">
+        <span className={`${BADGE_SIZE} ${BADGE_BASE} ${className}`}>
+          <span className={`flex items-center justify-center ${ICON_OFFSET}`}>{children}</span>
+        </span>
+        <span className="text-[11px] font-semibold">{label}</span>
+      </span>
+    );
+
     if (status.startsWith("소진 임박") || status === "재주문 권장") {
       const badge = (
-        <Badge
-          variant="outline"
-          dot="red"
-          dotPulse={status.startsWith("소진 임박")}
-          className={`${badgeClass} bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800`}
+        <CircularBadge
+          className="bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400"
+          label={status}
         >
-          {status}
-        </Badge>
+          <Ban className="h-4 w-4" strokeWidth={2.25} />
+        </CircularBadge>
       );
       return wrapWithTooltip(badge);
     }
@@ -140,58 +153,64 @@ export function InventoryTable({
       case "out_of_stock":
       case "low":
         return (
-          <Badge
-            variant="outline"
-            dot="red"
-            dotPulse
-            className={`${badgeClass} bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800`}
+          <CircularBadge
+            className="bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400"
+            label="부족"
           >
-            부족
-          </Badge>
+            <Ban className="h-4 w-4" strokeWidth={2.25} />
+          </CircularBadge>
         );
       case "주의":
       case "warning":
         return (
-          <Badge
-            variant="outline"
-            dot="amber"
-            className={`${badgeClass} bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800`}
+          <CircularBadge
+            className="bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400"
+            label="주의"
           >
-            주의
-          </Badge>
+            <AlertTriangle className="h-4 w-4" strokeWidth={2.25} />
+          </CircularBadge>
         );
       case "정상":
       case "in_stock":
       case "normal":
         return (
-          <Badge
-            variant="outline"
-            className={`${badgeClass} h-6 w-fit shrink-0 rounded-full border-emerald-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 text-[11px] tracking-wide dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400`}
+          <CircularBadge
+            className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
+            label="정상"
           >
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            정상
-          </Badge>
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          </CircularBadge>
         );
       case "임박":
       case "expiring_soon":
         return (
-          <Badge
-            variant="outline"
-            className={`${badgeClass} h-6 w-fit shrink-0 rounded-full border-amber-200 bg-amber-50 px-2.5 font-semibold text-amber-700 text-[11px] tracking-wide dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400`}
+          <CircularBadge
+            className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400"
+            label="임박"
           >
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-            임박
-          </Badge>
+            <span className="flex items-center justify-center gap-px">
+              <Clock className="h-3.5 w-3.5" strokeWidth={2.25} />
+              <Leaf className="h-2 w-2 opacity-90" strokeWidth={2.5} />
+            </span>
+          </CircularBadge>
+        );
+      case "폐기":
+        return (
+          <CircularBadge
+            className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            label="폐기"
+          >
+            <Infinity className="h-4 w-4" strokeWidth={2} />
+          </CircularBadge>
         );
       default:
         return (
-          <Badge
-            variant="outline"
-            dot="slate"
-            className={`${badgeClass} bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400`}
+          <CircularBadge
+            className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            label="알 수 없음"
           >
-            알 수 없음
-          </Badge>
+            <Infinity className="h-4 w-4" strokeWidth={2} />
+          </CircularBadge>
         );
     }
   };
@@ -251,8 +270,7 @@ export function InventoryTable({
                 index > 0 && inventories[index - 1].productId === inventory.productId;
               const isSameProductAsNext =
                 index < inventories.length - 1 && inventories[index + 1].productId === inventory.productId;
-              const statusLabel =
-                expirySoon && !expired ? "임박" : status.label;
+              const statusLabel = expired ? "폐기" : expirySoon && !expired ? "임박" : status.label;
               const tooltipText =
                 "exhaustionDate" in status && status.exhaustionDate
                   ? `현재 사용량 기준 ${status.exhaustionDate} 소진 예상`
