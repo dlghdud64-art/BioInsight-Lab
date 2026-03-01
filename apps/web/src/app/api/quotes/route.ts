@@ -94,23 +94,27 @@ export async function POST(request: NextRequest) {
       vendorGroups.get(vendorId)!.push(item);
     });
 
-    // 각 벤더별로 견적 생성
-    const quotes = [];
+    // 각 벤더별로 견적 생성 + 공유 링크 생성
+    // shareToken은 루프 내부에서 벤더별로 독립 생성 → P2002(Unique Constraint) 방지
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    type QuoteWithShare = { quote: any; shareToken: string | null; shareUrl: string | null };
+    const quoteResults: QuoteWithShare[] = [];
+
     for (const [vendorId, items] of vendorGroups.entries()) {
       const productIds = items.map((item: any) => item.productId);
       const quantities = Object.fromEntries(items.map((item: any) => [item.productId, item.quantity || 1]));
       const itemNotes = Object.fromEntries(items.map((item: any) => [item.productId, item.notes || ""]));
       const vendorIds = Object.fromEntries(items.map((item: any) => [item.productId, item.vendorId]).filter(([_, vid]: [string, any]) => vid));
-      
+
       // 벤더별 제목 생성
-      const vendorTitle = vendorId !== "unknown" 
+      const vendorTitle = vendorId !== "unknown"
         ? `${title} (${items.length}건)`
         : title;
 
       // 벤더별 메시지 생성 (개별 메시지가 있으면 우선 사용)
       const vendorProductCount = items.length;
       const vendorTotalAmount = items.reduce((sum: number, item: any) => sum + (item.lineTotal || 0), 0);
-      
+
       let vendorMessage = "";
       if (vendorMessages && vendorMessages[vendorId]) {
         // 벤더별 개별 메시지가 있으면 사용 (이미 공통 메시지와 합쳐져 있음)
@@ -141,12 +145,26 @@ export async function POST(request: NextRequest) {
         notes: itemNotes,
         vendorIds,
       });
-      
-      quotes.push(quote);
+
+      // 벤더별 공유 링크 생성: token을 루프 내부에서 매번 새로 생성 (P2002 방지)
+      let quoteShareToken: string | null = null;
+      let quoteShareUrl: string | null = null;
+      try {
+        const token = generateShareToken();
+        const share = await db.quoteShare.create({
+          data: { quoteId: quote.id, shareToken: token, enabled: true },
+        });
+        quoteShareToken = share.shareToken;
+        quoteShareUrl = `${appUrl}/share/${share.shareToken}`;
+      } catch (shareErr) {
+        console.error("[quotes/POST] QuoteShare 생성 실패 (견적은 정상 생성됨):", shareErr);
+      }
+
+      quoteResults.push({ quote, shareToken: quoteShareToken, shareUrl: quoteShareUrl });
     }
 
     // 첫 번째 견적을 메인으로 사용 (하위 호환성)
-    const quote = quotes[0];
+    const quote = quoteResults[0]?.quote;
 
     // 관련 벤더 이메일 수집
     const vendorIds = Array.from(vendorGroups.keys()).filter(id => id !== "unknown");
@@ -237,24 +255,9 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create activity log:", error);
     });
 
-    // 견적 생성 성공 후 공유 링크 자동 생성 (비동기 실패 허용)
-    let shareToken: string | null = null;
-    let shareUrl: string | null = null;
-    try {
-      const token = generateShareToken();
-      const share = await db.quoteShare.create({
-        data: {
-          quoteId: quote.id,
-          shareToken: token,
-          enabled: true,
-        },
-      });
-      shareToken = share.shareToken;
-      shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/share/${share.shareToken}`;
-    } catch (shareErr) {
-      // 공유 링크 생성 실패는 견적 생성 자체를 실패로 처리하지 않음
-      console.error("[quotes/POST] QuoteShare 생성 실패 (견적은 정상 생성됨):", shareErr);
-    }
+    // 공유 링크는 벤더별 루프 내에서 이미 생성됨 → 첫 번째 결과 추출 (하위 호환성)
+    const shareToken = quoteResults[0]?.shareToken ?? null;
+    const shareUrl = quoteResults[0]?.shareUrl ?? null;
 
     return NextResponse.json({ quote, shareToken, shareUrl }, { status: 201 });
   } catch (error: any) {

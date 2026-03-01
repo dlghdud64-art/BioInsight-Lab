@@ -180,11 +180,21 @@ export default function BudgetPage() {
       };
 
       if (editingBudget) {
-        await fetchBudgets(true);
-        router.refresh();
+        // Optimistic Update: 서버 재조회 전에 수정된 데이터를 즉시 반영
+        // usage는 서버에서만 계산되므로 기존 값 유지 (화면 깜빡임 방지)
+        setBudgets((prev) =>
+          prev.map((b) =>
+            b.id === editingBudget.id
+              ? { ...mappedBudget, usage: editingBudget.usage }
+              : b
+          )
+        );
         setIsDialogOpen(false);
         setEditingBudget(null);
         toast({ title: "예산이 수정되었습니다." });
+        // 백그라운드 동기화 (최신 서버 데이터 반영, 실패해도 UI는 이미 갱신됨)
+        fetchBudgets(true);
+        router.refresh();
       } else {
         setBudgets((prev) => [mappedBudget, ...prev]);
         setIsDialogOpen(false);

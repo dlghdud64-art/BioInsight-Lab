@@ -136,14 +136,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. 견적번호 생성
-    const quoteNumber = await generateQuoteNumber();
-
-    // 5. 유효기간 계산
+    // 4. 유효기간 계산
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validDays);
 
-    // 6. 총액 계산
+    // 5. 총액 계산
     let totalAmount = 0;
     const quoteItemsData = cart.items.map((item: any) => {
       const unitPrice = item.product?.vendors[0]?.priceInKRW || item.unitPrice || 0;
@@ -163,13 +160,15 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // 7. 트랜잭션으로 Quote + QuoteListItem 생성
+    // 6. 트랜잭션으로 Quote + QuoteListItem 생성
+    //    quoteNumber를 트랜잭션 외부에서 generateQuoteNumber()로 생성하면
+    //    동시 요청 시 동일 번호 충돌(P2002) 발생 가능 → quote.id 기반으로 생성하여 방지
+    const today = new Date();
     const result = await db.$transaction(async (tx: any) => {
-      // Quote 생성
+      // Quote 먼저 생성 (quoteNumber 없이)
       const quote = await tx.quote.create({
         data: {
           userId,
-          quoteNumber,
           title,
           description,
           status: "PENDING",
@@ -177,6 +176,14 @@ export async function POST(req: NextRequest) {
           totalAmount,
           validUntil,
         },
+      });
+
+      // quote.id가 확정된 후 고유한 quoteNumber 생성 (race condition 원천 차단)
+      const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+      const quoteNumber = `Q-${dateStr}-${quote.id.slice(-6).toUpperCase()}`;
+      await tx.quote.update({
+        where: { id: quote.id },
+        data: { quoteNumber },
       });
 
       // QuoteListItem 생성
@@ -201,7 +208,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return quote;
+      return { ...quote, quoteNumber };
     });
 
     // 8. 생성된 견적 상세 조회
