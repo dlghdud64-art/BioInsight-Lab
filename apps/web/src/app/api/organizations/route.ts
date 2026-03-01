@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // userId로 소속된 OrganizationMember 조회 (organization 포함)
+    // userId로 소속된 OrganizationMember 조회 (organization + 멤버 수)
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
       include: {
         organization: {
           include: {
-            members: { select: { id: true, userId: true, role: true } },
+            _count: { select: { members: true } },
           },
         },
       },
@@ -49,6 +49,8 @@ export async function GET(request: NextRequest) {
       .filter((m: any) => m.organization != null)
       .map((m: any) => ({
         ...m.organization,
+        // 프론트엔드에서 org.members.length를 사용하므로 _count로 대체
+        members: Array.from({ length: m.organization._count?.members ?? 0 }),
         role: m.role ?? "VIEWER",
       }));
 
@@ -61,7 +63,10 @@ export async function GET(request: NextRequest) {
       stack: error?.stack,
     });
     return NextResponse.json(
-      { error: "조직 목록을 불러오지 못했습니다." },
+      {
+        error: "조직 목록을 불러오지 못했습니다.",
+        _debug: { message: error?.message, code: error?.code },
+      },
       { status: 500 }
     );
   }
