@@ -145,7 +145,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           {/* 좌측: 텍스트 요약 */}
           <div className="flex-1 p-5 space-y-3">
             {/* 헤더: AI 배지 + 예산 셀렉터 */}
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex justify-between items-center gap-2">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
@@ -155,23 +155,21 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   AI 예측 분석 중
                 </span>
               </div>
-              {budgets.length > 1 && (
-                <Select
-                  value={effectiveSelected}
-                  onValueChange={setSelectedScopeKey}
-                >
-                  <SelectTrigger className="h-7 w-[140px] text-xs border-slate-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {budgets.map((b) => (
-                      <SelectItem key={b.scopeKey} value={b.scopeKey} className="text-xs">
-                        {b.budgetName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <Select
+                value={effectiveSelected ?? ""}
+                onValueChange={(v) => setSelectedScopeKey(v || null)}
+              >
+                <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="예산 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {budgets.map((b) => (
+                    <SelectItem key={b.scopeKey} value={b.scopeKey} className="text-xs">
+                      {b.budgetName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 예상 고갈일 (타이틀에 예산명 포함) */}
