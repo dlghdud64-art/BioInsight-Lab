@@ -75,10 +75,10 @@ export default function BudgetPage() {
     }
   }, []);
 
-  /** 예산 목록 서버에서 불러오기 */
-  const fetchBudgets = useCallback(async () => {
+  /** 예산 목록 서버에서 불러오기 (silent: true 시 로딩 UI 없이 백그라운드 갱신) */
+  const fetchBudgets = useCallback(async (silent = false) => {
     try {
-      setIsFetching(true);
+      if (!silent) setIsFetching(true);
       const res = await fetch("/api/budgets");
       if (!res.ok) return;
       const json = await res.json();
@@ -87,7 +87,7 @@ export default function BudgetPage() {
     } catch (e) {
       console.error("[BudgetPage] Failed to fetch budgets:", e);
     } finally {
-      setIsFetching(false);
+      if (!silent) setIsFetching(false);
     }
   }, []);
 
@@ -180,14 +180,11 @@ export default function BudgetPage() {
       };
 
       if (editingBudget) {
-        setBudgets((prev) =>
-          prev.map((b) => (b.id === editingBudget.id ? mappedBudget : b))
-        );
+        await fetchBudgets(true);
+        router.refresh();
         setIsDialogOpen(false);
         setEditingBudget(null);
         toast({ title: "예산이 수정되었습니다." });
-        await fetchBudgets();
-        router.refresh();
       } else {
         setBudgets((prev) => [mappedBudget, ...prev]);
         setIsDialogOpen(false);
