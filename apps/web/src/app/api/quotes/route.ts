@@ -307,3 +307,83 @@ export async function POST(request: NextRequest) {
 }
 
 // 사용자의 견적 목록 조회
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized", quotes: [] }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const statusFilter = searchParams.get("status") || "all";
+    const sortBy = searchParams.get("sortBy") || "newest";
+
+    const where: Record<string, unknown> = {
+      userId: session.user.id,
+    };
+
+    if (statusFilter && statusFilter !== "all") {
+      where.status = statusFilter;
+    }
+
+    const orderBy: Record<string, string> =
+      sortBy === "oldest"
+        ? { createdAt: "asc" }
+        : { createdAt: "desc" };
+
+    const quotes = await db.quote.findMany({
+      where,
+      orderBy,
+      include: {
+        items: {
+          orderBy: { lineNumber: "asc" },
+          include: {
+            product: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        responses: {
+          include: {
+            vendor: { select: { name: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    const mapped = quotes.map((q: { id: string; title: string; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }> }) => ({
+      id: q.id,
+      title: q.title,
+      status: q.status,
+      createdAt: q.createdAt.toISOString(),
+      deliveryDate: null,
+      deliveryLocation: null,
+      items: (q.items || []).map((item: { id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }) => ({
+        id: item.id,
+        product: item.product
+          ? { id: item.product.id, name: item.product.name }
+          : { id: "", name: item.name || "(품목)" },
+        quantity: item.quantity,
+      })),
+      responses: (q.responses || []).map((r: { id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }) => ({
+        id: r.id,
+        vendor: { name: r.vendor?.name || "" },
+        totalPrice: r.totalPrice ?? undefined,
+        createdAt: r.createdAt.toISOString(),
+      })),
+    }));
+
+    return NextResponse.json({ quotes: mapped });
+  } catch (error: any) {
+    console.error("[quotes/GET] Error fetching quotes:", {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
+    return NextResponse.json(
+      { error: "견적 목록 조회에 실패했습니다.", quotes: [] },
+      { status: 500 }
+    );
+  }
+}

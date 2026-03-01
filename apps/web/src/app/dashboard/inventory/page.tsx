@@ -742,11 +742,11 @@ export default function InventoryPage() {
                 >
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항
-                  {issuesCount > 0 && (
-                    <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold text-white shadow-sm ring-2 ring-white/50 animate-in zoom-in-95 duration-300 ml-2">
+                  {issuesCount > 0 ? (
+                    <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 font-medium px-1.5 text-[11px] shadow-sm ring-2 ring-white/50 dark:bg-rose-950/50 dark:text-rose-400 animate-in zoom-in-95 duration-300 ml-2">
                       {issuesCount}
                     </span>
-                  )}
+                  ) : null}
                 </TabsTrigger>
               </TabsList>
             </div>
