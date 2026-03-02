@@ -52,7 +52,6 @@ import {
   Bell,
   Mail,
   Shield,
-  Users,
   Loader2,
   ChevronRight,
   Package,
@@ -72,7 +71,7 @@ const ROLE_LABELS: Record<string, string> = {
   SUPPLIER: "공급사",
 };
 
-type SettingsSection = "profile" | "team" | "notifications" | "billing";
+type SettingsSection = "profile" | "notifications" | "billing";
 
 function SettingsPageFallback() {
   return (
@@ -150,28 +149,6 @@ function SettingsPageContent() {
     }
   }, [userData?.phone]);
 
-  const { data: orgsData } = useQuery({
-    queryKey: ["organizations"],
-    queryFn: async () => {
-      const response = await fetch("/api/organizations");
-      if (!response.ok) throw new Error("Failed to fetch organizations");
-      return response.json();
-    },
-    enabled: !!session,
-  });
-
-  const currentOrgId = orgsData?.organizations?.[0]?.id;
-
-  const { data: membersData } = useQuery({
-    queryKey: ["organization-members", currentOrgId],
-    queryFn: async () => {
-      const response = await fetch(`/api/organizations/${currentOrgId}/members`);
-      if (!response.ok) throw new Error("Failed to fetch members");
-      return response.json();
-    },
-    enabled: !!session && !!currentOrgId,
-  });
-
   const { data: billingData, isLoading: billingLoading } = useQuery({
     queryKey: ["billing"],
     queryFn: async () => {
@@ -180,31 +157,6 @@ function SettingsPageContent() {
       return response.json();
     },
     enabled: activeSection === "billing",
-  });
-
-  const members = membersData?.members || [];
-  const currentOrgName = orgsData?.organizations?.[0]?.name || "우리 연구실";
-
-  const roleUpdateMutation = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
-      const response = await fetch(`/api/organizations/${currentOrgId}/members`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, role }),
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Failed to update role");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "권한이 변경되었습니다." });
-      queryClient.invalidateQueries({ queryKey: ["organization-members", currentOrgId] });
-    },
-    onError: (error: Error) => {
-      toast({ title: "권한 변경 실패", description: error.message, variant: "destructive" });
-    },
   });
 
   const profileMutation = useMutation({
@@ -291,67 +243,9 @@ function SettingsPageContent() {
 
   const navItems: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
     { id: "profile", label: "프로필", icon: User },
-    { id: "team", label: "팀 관리", icon: Users },
     { id: "notifications", label: "알림 설정", icon: Bell },
     { id: "billing", label: "청구 및 구독", icon: CreditCard },
   ];
-
-  type TeamRoleValue = "admin" | "researcher" | "guest";
-
-  const mapBackendRoleToDisplay = (role: string): TeamRoleValue => {
-    if (role === "ADMIN") return "admin";
-    if (role === "APPROVER" || role === "REQUESTER") return "researcher";
-    return "guest"; // VIEWER, 기타
-  };
-
-  const mapDisplayToBackendRole = (value: TeamRoleValue): string => {
-    if (value === "admin") return "ADMIN";
-    if (value === "researcher") return "APPROVER"; // APPROVER: 견적 승인 권한 (연구원)
-    return "VIEWER"; // guest
-  };
-
-  const [teamRoles, setTeamRoles] = useState<Record<string, TeamRoleValue>>({});
-  const [isTeamDirty, setIsTeamDirty] = useState(false);
-  const [isSavingTeam, setIsSavingTeam] = useState(false);
-
-  useEffect(() => {
-    if (members?.length) {
-      const initial: Record<string, TeamRoleValue> = {};
-      members.forEach((member: { id: string; role: string }) => {
-        initial[member.id] = mapBackendRoleToDisplay(member.role);
-      });
-      setTeamRoles(initial);
-      setIsTeamDirty(false);
-    }
-  }, [members]);
-
-  const handleTeamSave = async () => {
-    if (!members?.length) return;
-
-    const changes = members.filter((member: { id: string; role: string }) => {
-      const currentDisplay = mapBackendRoleToDisplay(member.role);
-      const selected = teamRoles[member.id] ?? currentDisplay;
-      return selected !== currentDisplay;
-    });
-
-    if (changes.length === 0) {
-      setIsTeamDirty(false);
-      return;
-    }
-
-    setIsSavingTeam(true);
-    try {
-      for (const member of changes) {
-        const displayRole = teamRoles[member.id] ?? mapBackendRoleToDisplay(member.role);
-        const backendRole = mapDisplayToBackendRole(displayRole);
-        // @ts-ignore mutateAsync는 런타임에서 지원됩니다.
-        await roleUpdateMutation.mutateAsync({ memberId: member.id, role: backendRole });
-      }
-      setIsTeamDirty(false);
-    } finally {
-      setIsSavingTeam(false);
-    }
-  };
 
   return (
     <div className="w-full px-4 md:px-6 py-6 pt-6">
@@ -621,111 +515,7 @@ function SettingsPageContent() {
               </div>
             )}
 
-            {/* 2. 팀 관리 탭 */}
-            {activeSection === "team" && (
-              <div className="animate-in fade-in-50 duration-300">
-                <Card className="overflow-hidden shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                      <Users className="h-5 w-5" />
-                      팀 권한 관리
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground dark:text-slate-400">
-                      {currentOrgName} 멤버들의 시스템 접근 권한을 이 자리에서 바로 조정합니다.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                        팀원 목록
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        팀원별로 역할을 선택한 뒤 하단의 변경사항 저장 버튼을 눌러 반영합니다.
-                      </p>
-                    </div>
-                    <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60 max-h-[400px] overflow-y-auto">
-                      {members.length === 0 ? (
-                        <div className="p-6 text-sm text-slate-500 dark:text-slate-400 text-center w-full">
-                          아직 초대된 팀원이 없습니다.
-                        </div>
-                      ) : (
-                        members.map((member: { id: string; user: { id: string; name: string | null; email: string } | null; role: string }) => {
-                          const name = member.user?.name || member.user?.email || "알 수 없음";
-                          const email = member.user?.email || "";
-                          const initial = name?.charAt(0)?.toUpperCase() || "?";
-                          const currentDisplayRole = mapBackendRoleToDisplay(member.role);
-                          const selectedRole = teamRoles[member.id] ?? currentDisplayRole;
-
-                          return (
-                            <div
-                              key={member.id}
-                              className="flex items-center justify-between p-4 border-b last:border-0 border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <Avatar className="h-9 w-9 border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold dark:bg-slate-700 dark:text-slate-200">
-                                    {initial}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0">
-                                  <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">
-                                    {name}
-                                  </span>
-                                  {email && (
-                                    <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
-                                      {email}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <Select
-                                value={selectedRole}
-                                onValueChange={(v: TeamRoleValue) => {
-                                  setTeamRoles((prev) => ({
-                                    ...prev,
-                                    [member.id]: v,
-                                  }));
-                                  setIsTeamDirty(true);
-                                }}
-                                disabled={roleUpdateMutation.isPending || isSavingTeam}
-                              >
-                                <SelectTrigger className="w-[130px] h-9 text-xs font-medium flex-shrink-0">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin">관리자</SelectItem>
-                                  <SelectItem value="researcher">연구원</SelectItem>
-                                  <SelectItem value="guest">게스트</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </CardContent>
-                  {/* 카드 내부 통합 저장 버튼: 팀원이 있을 때만 노출 */}
-                  <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-t dark:border-slate-800 flex justify-end">
-                    {members.length > 0 && (
-                      <Button
-                        size="lg"
-                        className="antialiased bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
-                        onClick={handleTeamSave}
-                        disabled={!isTeamDirty || roleUpdateMutation.isPending || isSavingTeam}
-                      >
-                        {roleUpdateMutation.isPending || isSavingTeam ? (
-                          "저장 중..."
-                        ) : (
-                          "변경사항 저장"
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* 3. 알림 설정 탭 */}
+            {/* 2. 알림 설정 탭 */}
             {activeSection === "notifications" && (
               <div className="animate-in fade-in-50 duration-300 space-y-6">
                 <Card className="shadow-sm border-slate-200 dark:border-slate-700">
@@ -1062,8 +852,8 @@ function SettingsPageContent() {
               </Card>
             )}
 
-            {/* 하단 고정 저장 버튼 (청구·구독 탭 미표시, 팀 탭은 카드 내부 버튼 사용) */}
-            {activeSection !== "billing" && activeSection !== "team" && (
+            {/* 하단 고정 저장 버튼 (청구·구독 탭 미표시) */}
+            {activeSection !== "billing" && (
               <div className="sticky bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
                 <div className="flex justify-end">
                   <Button
