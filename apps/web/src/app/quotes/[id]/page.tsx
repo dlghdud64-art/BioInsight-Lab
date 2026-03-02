@@ -539,35 +539,35 @@ ${itemLines}
           </CardHeader>
           <CardContent className="px-0 pb-0">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <User className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">요청자</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">요청자</p>
+                  <p className="text-base font-semibold text-slate-900 truncate">
                     {quote.user?.name || quote.user?.email || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <Building2 className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">조직</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">조직</p>
+                  <p className="text-base font-semibold text-slate-900 truncate">
                     {quote.organization?.name || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <Calendar className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">생성일</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">생성일</p>
+                  <p className="text-base font-semibold text-slate-900">
                     {quote.createdAt
                       ? new Date(quote.createdAt).toLocaleDateString("ko-KR", {
                           year: "numeric",
@@ -578,13 +578,13 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <Calendar className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">납기 희망일</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">납기 희망일</p>
+                  <p className="text-base font-semibold text-slate-900">
                     {quote.deliveryDate
                       ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
                       : quote.validUntil
@@ -593,24 +593,24 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <MapPin className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">납품 장소</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">납품 장소</p>
+                  <p className="text-base font-semibold text-slate-900 truncate">
                     {quote.deliveryLocation || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 shrink-0">
                   <DollarSign className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">총 예상 금액</p>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm text-slate-500 font-medium">총 예상 금액</p>
+                  <p className="text-base font-semibold text-slate-900">
                     {quote.totalAmount != null
                       ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}`
                       : "-"}
