@@ -120,7 +120,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
   if (isLoadingState) {
     return (
       <Card className="border border-slate-200 shadow-sm bg-white dark:bg-slate-900 dark:border-slate-800 animate-pulse">
-        <CardContent className="p-5 h-[140px]" />
+        <CardContent className="p-4 h-[100px] sm:p-5 sm:h-[140px]" />
       </Card>
     );
   }
@@ -143,7 +143,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}
-          <div className="flex-1 p-5 space-y-3">
+          <div className="flex-1 p-3 sm:p-5 space-y-2 sm:space-y-3">
             {/* 헤더: AI 배지 + 예산 셀렉터 */}
             <div className="flex justify-between items-center gap-2">
               <div className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
 
           {/* 우측: Sparkline */}
-          <div className="sm:w-[160px] h-[80px] sm:h-auto flex items-end px-4 pb-4 sm:pb-5 sm:pt-5">
+          <div className="hidden sm:flex sm:w-[160px] sm:h-auto items-end px-4 pb-5 pt-5">
             <ResponsiveContainer width="100%" height={70}>
               <LineChart data={selectedBudget.sparkline}>
                 <Tooltip
@@ -230,16 +230,16 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
         {/* AI 인사이트 영역 */}
         {selectedBudget.hasWarning && selectedBudget.warningMessage && (
-          <div className="mx-4 mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-3 py-2.5 sm:px-4 sm:py-3 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-700 dark:text-amber-200 leading-relaxed">
               {selectedBudget.warningMessage}
             </p>
           </div>
         )}
         {!selectedBudget.hasWarning && (
-          <div className="mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
+          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-3 py-2 sm:px-4 sm:py-3 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
@@ -247,7 +247,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         )}
 
         {/* 추가 위험 알림 + 다운로드 버튼 */}
-        <div className="mx-4 mb-4 mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="mx-3 mb-3 mt-2 sm:mx-4 sm:mb-4 sm:mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           {otherWarningCount > 0 && (
             <button
               type="button"

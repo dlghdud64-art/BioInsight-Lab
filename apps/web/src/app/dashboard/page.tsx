@@ -41,11 +41,11 @@ export default function DashboardPage() {
   if (status === "loading" || statsLoading) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="h-[160px] animate-pulse border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
-              <CardContent className="p-6">
-                <div className="h-20 rounded bg-slate-100 dark:bg-slate-800" />
+            <Card key={i} className="h-[110px] md:h-[160px] animate-pulse border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
+              <CardContent className="p-4 md:p-6">
+                <div className="h-12 md:h-20 rounded bg-slate-100 dark:bg-slate-800" />
               </CardContent>
             </Card>
           ))}
@@ -125,25 +125,25 @@ export default function DashboardPage() {
 
   // 구매 내역 카드 렌더링 (모바일용)
   const renderPurchaseCard = (p: { id: string; productName: string; vendor: string; amount: number; date: string }) => (
-    <div key={p.id} className="flex flex-col gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0">
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-          <Beaker className="h-5 w-5" />
+    <div key={p.id} className="flex flex-col gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0">
+      <div className="flex items-start gap-2.5 min-w-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+          <Beaker className="h-4 w-4" />
         </div>
-        <div className="flex-1 min-w-0 overflow-hidden space-y-1">
-          <p className="text-sm font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{p.productName}</p>
-          <p className="text-xs text-muted-foreground truncate">{p.vendor}</p>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <p className="text-xs font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{p.productName}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{p.vendor}</p>
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5">
           <Badge variant="outline" className={purchaseBadgeClass}>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
             구매 완료
           </Badge>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{p.date}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">{p.date}</span>
         </div>
-        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">₩{p.amount.toLocaleString("ko-KR")}</p>
+        <p className="text-xs font-bold text-slate-900 dark:text-slate-100">₩{p.amount.toLocaleString("ko-KR")}</p>
       </div>
     </div>
   );
@@ -227,130 +227,102 @@ export default function DashboardPage() {
       <BudgetPredictionWidget />
 
       {/* 모바일 전용 레이아웃 */}
-      <div className="md:hidden space-y-4">
-        {/* 1. 빠른 실행 (최상단, 컴팩트) - 계층별 스타일 */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-          <Link href="/test/search" className="flex-shrink-0">
-            <Button variant="outline" size="sm" className="h-10 px-3 text-xs bg-slate-50 text-slate-500 hover:bg-slate-100 border-dashed">
-              <Search className="mr-1.5 h-3.5 w-3.5" />
-              통합 검색
-            </Button>
+      <div className="md:hidden space-y-3 pb-20">
+        {/* KPI 카드 2x2 그리드 */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/dashboard/inventory">
+            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
+                <CardTitle className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
+                <div className="rounded-full p-1.5 bg-blue-50 dark:bg-blue-950/50 flex-shrink-0">
+                  <Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">↑ 12% 전월 대비</p>
+              </CardContent>
+            </Card>
           </Link>
-          <Link href="/dashboard/inventory" className="flex-shrink-0">
-            <Button variant="outline" size="sm" className="h-10 px-3 text-xs border-blue-200 text-blue-700 hover:bg-blue-50">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              재고 등록
-            </Button>
+          <Link href="/dashboard/inventory?filter=low">
+            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
+                <CardTitle className="text-xs font-semibold text-red-600 dark:text-red-400 truncate min-w-0">부족 알림</CardTitle>
+                <div className="rounded-full p-1.5 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
+                <p className="text-[10px] text-red-500 font-medium mt-0.5 flex items-center gap-1">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
+                  </span>
+                  발주 필요 {stats.lowStockAlerts}건
+                </p>
+              </CardContent>
+            </Card>
           </Link>
-          <Link href="/test/quote" className="flex-shrink-0">
-            <Button size="sm" className="h-10 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all">
-              <FileText className="mr-1.5 h-3.5 w-3.5" />
-              견적 요청
-            </Button>
+          <Link href="/dashboard/purchases">
+            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
+                <CardTitle className="text-xs font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
+                <div className="rounded-full p-1.5 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
+                  <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <div className="flex flex-col gap-1">
+                  <div className="text-lg font-bold leading-tight text-slate-900 dark:text-slate-200">
+                    ₩{stats.monthlySpending.toLocaleString("ko-KR")}
+                  </div>
+                  <div className={`flex items-center text-[10px] font-medium w-fit px-1.5 py-0.5 rounded ${
+                    stats.monthOverMonthChange >= 0
+                      ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
+                      : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
+                  }`}>
+                    {stats.monthOverMonthChange >= 0 ? "▲" : "▼"} {Math.abs(stats.monthOverMonthChange).toFixed(1)}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/dashboard/quotes">
+            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
+                <CardTitle className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
+                <div className="rounded-full p-1.5 bg-violet-50 dark:bg-violet-950/50 flex-shrink-0">
+                  <FileText className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
+                <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+                  {rawStats?.quoteStats?.responded > 0
+                    ? `응답 ${rawStats.quoteStats.responded}건`
+                    : "새 견적 요청하기"}
+                </p>
+              </CardContent>
+            </Card>
           </Link>
         </div>
 
-        {/* 2. KPI Cards - grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-0">
-            <Link href="/dashboard/inventory">
-              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
-                  <div className="rounded-full p-2 bg-blue-50 dark:bg-blue-950/50 flex-shrink-0">
-                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 pt-0">
-                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">↑ 12% (전월 대비)</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/inventory?filter=low">
-              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0 antialiased">부족 알림</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0 antialiased">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 pt-0">
-                  <div className="text-auto-scale text-red-600 dark:text-red-400 antialiased">{stats.lowStockAlerts}</div>
-                  <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1 antialiased">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
-                    </span>
-                    즉시 발주 필요 {stats.lowStockAlerts}건
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/purchases">
-              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
-                  <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 pt-0">
-                  <div className="flex flex-col gap-2">
-                    <div className="text-auto-scale leading-none text-slate-900 dark:text-slate-200">
-                      ₩{stats.monthlySpending.toLocaleString("ko-KR")}
-                    </div>
-                    <div className={`flex items-center text-xs font-medium w-fit px-2 py-0.5 rounded ${
-                      stats.monthOverMonthChange >= 0
-                        ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
-                        : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
-                    }`}>
-                      {stats.monthOverMonthChange >= 0 ? "▲" : "▼"}{" "}
-                      {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href="/dashboard/quotes">
-              <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-400 border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
-                  <div className="rounded-full p-2 bg-violet-50 dark:bg-violet-950/50 flex-shrink-0">
-                    <FileText className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 pt-0">
-                  <div className="text-auto-scale text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">
-                    {rawStats?.quoteStats?.responded > 0
-                      ? `응답 수신 ${rawStats.quoteStats.responded}건`
-                      : "새 견적 요청하기"}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-
-        {/* 3. 최근 구매 내역 & 알림 센터 탭 통합 */}
+        {/* 최근 구매 내역 & 알림 센터 탭 */}
         <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
           <CardContent className="p-0">
             <Tabs defaultValue="purchases" className="w-full">
-              <div className="border-b border-slate-200 dark:border-slate-800/50 px-4 pt-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="purchases" className="text-xs">
-                    최근 구매
-                  </TabsTrigger>
-                  <TabsTrigger value="notifications" className="text-xs">
-                    알림 센터
-                  </TabsTrigger>
+              <div className="border-b border-slate-200 dark:border-slate-800/50 px-3 pt-3">
+                <TabsList className="grid w-full grid-cols-2 h-8">
+                  <TabsTrigger value="purchases" className="text-xs">최근 구매</TabsTrigger>
+                  <TabsTrigger value="notifications" className="text-xs">알림 센터</TabsTrigger>
                 </TabsList>
               </div>
 
-              {/* 최근 구매 내역 탭 */}
               <TabsContent value="purchases" className="m-0">
-                <div className="grid gap-4 p-4 w-full min-w-0">
+                <div className="grid gap-2 p-3 w-full min-w-0">
                   {stats.recentPurchases.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                    <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
                       구매 내역이 없습니다.
                     </div>
                   ) : (
@@ -359,57 +331,52 @@ export default function DashboardPage() {
                       return renderPurchaseCard(pData);
                     })
                   )}
-                  <Link href="/dashboard/purchases" className="block mt-1">
-                    <Button variant="outline" className="w-full text-xs h-9">모두 보기</Button>
+                  <Link href="/dashboard/purchases" className="block mt-0.5">
+                    <Button variant="outline" className="w-full text-xs h-8">모두 보기</Button>
                   </Link>
                 </div>
               </TabsContent>
 
-                {/* 알림 센터 탭 */}
-                <TabsContent value="notifications" className="m-0">
-                  <div className="p-4 space-y-3">
-                    {notifications.length === 0 ? (
-                      <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-400 text-sm">
-                        알림이 없습니다.
+              <TabsContent value="notifications" className="m-0">
+                <div className="p-3 space-y-1.5">
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
+                      알림이 없습니다.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100">최근 알림</h3>
+                        <Link href="/dashboard/notifications">
+                          <Button variant="ghost" size="sm" className="text-xs h-6 px-2">모두 보기</Button>
+                        </Link>
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">최근 알림</h3>
-                          <Link href="/dashboard/notifications">
-                            <Button variant="ghost" size="sm" className="text-xs h-7">
-                              모두 보기
-                            </Button>
-                          </Link>
-                        </div>
-                        {notifications.map((notification) => (
-                          <Link
-                            key={notification.id}
-                            href="/dashboard/notifications"
-                            className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                              notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                            }`}
-                          >
-                            {renderNotificationIcon(notification.type)}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
-                                {notification.unread && (
-                                  <Badge variant="default" className="h-4 px-1.5 text-[10px] bg-blue-600 flex-shrink-0">
-                                    새
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 line-clamp-2">{notification.content}</p>
-                              <p className="text-xs text-slate-400 dark:text-slate-500">{notification.time}</p>
+                      {notifications.map((notification) => (
+                        <Link
+                          key={notification.id}
+                          href="/dashboard/notifications"
+                          className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors ${
+                            notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          {renderNotificationIcon(notification.type)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <p className="font-medium text-xs text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
+                              {notification.unread && (
+                                <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>
+                              )}
                             </div>
-                          </Link>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                            <p className="text-[10px] text-slate-600 dark:text-slate-400 line-clamp-1">{notification.content}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{notification.time}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
@@ -742,6 +709,30 @@ export default function DashboardPage() {
               ))}
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      {/* 모바일 하단 고정 빠른 실행 바 */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#0f1623]/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800/50 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <Link href="/test/search" className="flex-1">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1 bg-slate-50 text-slate-600 hover:bg-slate-100 border-dashed">
+              <Search className="h-3.5 w-3.5" />
+              통합 검색
+            </Button>
+          </Link>
+          <Link href="/dashboard/inventory" className="flex-1">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+              <Plus className="h-3.5 w-3.5" />
+              재고 등록
+            </Button>
+          </Link>
+          <Link href="/test/quote" className="flex-1">
+            <Button size="sm" className="w-full h-11 text-xs gap-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+              <FileText className="h-3.5 w-3.5" />
+              견적 요청
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

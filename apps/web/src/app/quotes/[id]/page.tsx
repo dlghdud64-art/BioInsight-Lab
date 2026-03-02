@@ -467,20 +467,20 @@ ${itemLines}
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-        <div className="max-w-5xl mx-auto flex flex-col gap-8">
+        <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-8">
         {/* 헤더 */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8 leading-relaxed tracking-normal">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
-          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 md:p-8 leading-relaxed tracking-normal">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
-              <Button variant="ghost" className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 text-slate-600 hover:text-slate-900">
+              <Button variant="ghost" className="h-8 md:h-10 px-2 md:px-3 flex items-center gap-1 text-slate-600 hover:text-slate-900">
                 <ChevronLeft className="h-5 w-5" />
                 <span className="hidden sm:inline text-sm font-medium">목록으로</span>
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="text-lg sm:text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
                 <Badge
                   variant="outline"
                   className={cn(
@@ -533,15 +533,15 @@ ${itemLines}
         </Card>
 
         {/* 견적 정보 (Summary Card) */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8 leading-relaxed tracking-normal">
-          <CardHeader className="px-0 pt-0 pb-6">
-            <CardTitle className="text-lg md:text-xl font-semibold">견적 정보</CardTitle>
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8 leading-relaxed tracking-normal">
+          <CardHeader className="px-0 pt-0 pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg md:text-xl font-semibold">견적 정보</CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <User className="h-5 w-5" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 md:gap-8">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <User className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">요청자</p>
@@ -550,9 +550,9 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <Building2 className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <Building2 className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">조직</p>
@@ -561,9 +561,9 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <Calendar className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <Calendar className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">생성일</p>
@@ -578,9 +578,9 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <Calendar className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <Calendar className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">납기 희망일</p>
@@ -593,9 +593,9 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <MapPin className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <MapPin className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">납품 장소</p>
@@ -604,9 +604,9 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
-                  <DollarSign className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2">
+                  <DollarSign className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <p className="text-xs text-slate-500 dark:text-slate-400">총 예상 금액</p>
@@ -619,7 +619,7 @@ ${itemLines}
               </div>
             </div>
             {(quote.description || quote.message) && (
-              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+              <div className="mt-4 pt-4 sm:mt-8 sm:pt-6 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">요청 메시지</p>
                 <blockquote className="rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border-l-4 border-blue-200 dark:border-blue-800 pl-4 pr-4 py-3 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed tracking-normal">
                   {quote.description || quote.message || "-"}
@@ -646,7 +646,7 @@ ${itemLines}
         </Card>
 
         {/* 견적 요청 품목 테이블 */}
-        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8 leading-relaxed tracking-normal">
+        <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8 leading-relaxed tracking-normal">
           <CardHeader className="px-0 pt-0 pb-4">
             <CardTitle className="text-base md:text-lg font-semibold">견적 요청 품목 ({quote.items?.length || 0}개)</CardTitle>
             <CardDescription className="text-xs md:text-sm mt-1 leading-relaxed">
@@ -826,7 +826,7 @@ ${itemLines}
 
           {/* 회신 입력 탭 */}
           <TabsContent value="items" className="mt-6 md:mt-8">
-            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 입력</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
@@ -932,7 +932,7 @@ ${itemLines}
 
           {/* 회신 수신함 탭 */}
           <TabsContent value="inbox" className="mt-6 md:mt-8">
-            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-8">
+            <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 수신함</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
