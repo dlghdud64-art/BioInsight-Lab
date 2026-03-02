@@ -256,6 +256,7 @@ export default function QuoteDetailPage() {
           return { quote: { ...p.quote, status: data.quote!.status } };
         });
       }
+      // 모든 관련 쿼리 캐시 즉시 무효화
       queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
@@ -265,6 +266,7 @@ export default function QuoteDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       }
+      // router.refresh(): 서버 컴포넌트 포함 Next.js 라우터 캐시 전체 갱신
       router.refresh();
       if (newStatus === "COMPLETED") {
         toast({
@@ -537,35 +539,35 @@ ${itemLines}
           </CardHeader>
           <CardContent className="px-0 pb-0">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <User className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">요청자</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">요청자</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {quote.user?.name || quote.user?.email || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <Building2 className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">조직</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">조직</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {quote.organization?.name || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <Calendar className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">생성일</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">생성일</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {quote.createdAt
                       ? new Date(quote.createdAt).toLocaleDateString("ko-KR", {
                           year: "numeric",
@@ -576,13 +578,13 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <Calendar className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">납기 희망일</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">납기 희망일</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {quote.deliveryDate
                       ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
                       : quote.validUntil
@@ -591,24 +593,24 @@ ${itemLines}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <MapPin className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">납품 장소</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">납품 장소</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {quote.deliveryLocation || "-"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
-                  <DollarSign className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 p-2.5">
+                  <DollarSign className="h-5 w-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">총 예상 금액</p>
-                  <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">총 예상 금액</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {quote.totalAmount != null
                       ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}`
                       : "-"}

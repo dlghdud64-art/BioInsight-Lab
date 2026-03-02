@@ -66,6 +66,8 @@ export default function QuotesPage() {
   const [sortBy, setSortBy] = useState<string>("newest");
 
   // 견적 목록 조회
+  // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)
+  // refetchOnMount: "always" - 페이지 재방문 시 항상 재요청 (Next.js 라우터 캐시 우회)
   const { data: quotesData, isLoading } = useQuery({
     queryKey: ["quotes", statusFilter, sortBy],
     queryFn: async () => {
@@ -77,6 +79,9 @@ export default function QuotesPage() {
       return response.json();
     },
     enabled: status === "authenticated",
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   if (status === "loading") {
