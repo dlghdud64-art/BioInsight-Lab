@@ -32,7 +32,7 @@ export default function PricingPage() {
       price: "무료",
       priceMonthly: null as number | null,
       priceAnnualPerMonth: null as number | null,
-      description: "기업 도입 전 체험용. 개인 전용, 재고 최대 100개.",
+      description: "기업 도입 전 체험용. 개인 전용, 등록 품목(SKU) 최대 30개.",
       icon: Package,
       badge: null as string | null,
       isRecommended: false,
@@ -42,7 +42,7 @@ export default function PricingPage() {
       buttonHref: "/test/search",
       features: [
         "개인 전용 (팀원 초대 불가)",
-        "재고 최대 100개",
+        "등록 품목(SKU) 최대 30개",
         "엑셀 업로드",
         "기본 검색 및 비교",
       ],
@@ -66,7 +66,7 @@ export default function PricingPage() {
         "팀원 공유 재고",
         "구매 요청 워크플로우",
         "팀원 5명까지",
-        "재고 최대 500개",
+        "등록 품목(SKU) 최대 100개",
         "엑셀 업로드 및 기본 검색",
       ],
     },
@@ -89,7 +89,7 @@ export default function PricingPage() {
         "전자결재 승인 라인 구축",
         "MSDS 자동 연동",
         "예산 통합 관리 (Audit Trail)",
-        "재고 무제한",
+        "등록 품목(SKU) 무제한",
         "팀원 무제한",
         "Lot 관리 및 재고 소진 알림",
       ],
@@ -121,7 +121,7 @@ export default function PricingPage() {
   const comparisonFeatures = [
     { category: "협업 및 재고", feature: "팀원 공유 재고", starter: false, team: true, business: true, enterprise: true },
     { category: "협업 및 재고", feature: "구매 요청 워크플로우", starter: false, team: true, business: true, enterprise: true },
-    { category: "협업 및 재고", feature: "재고 개수", starter: "100개", team: "500개", business: "무제한", enterprise: "무제한" },
+    { category: "협업 및 재고", feature: "등록 품목(SKU) 개수", starter: "30개", team: "100개", business: "무제한", enterprise: "무제한" },
     { category: "협업 및 재고", feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한" },
     { category: "비즈니스", feature: "전자결재 승인 라인", starter: false, team: false, business: true, enterprise: true },
     { category: "비즈니스", feature: "MSDS 자동 연동", starter: false, team: false, business: true, enterprise: true },
@@ -397,6 +397,50 @@ export default function PricingPage() {
                 </Card>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      {/* 하단 결제 정보 요약 바 */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200 shadow-[0_-4px_12px_rgba(15,23,42,0.08)]">
+        <div className="mx-auto max-w-[90rem] px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-y-3 gap-x-12">
+          <div className="space-y-0.5">
+            <p className="text-sm md:text-base font-semibold text-slate-900">
+              현재 적용 중인 결제 정보 요약
+            </p>
+            <p className="text-xs md:text-sm text-slate-500">
+              선택한 플랜 기준으로 조직과 예산 한도를 한눈에 확인하세요.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs md:text-sm">
+            <div className="flex flex-col">
+              <span className="text-xs md:text-sm text-slate-500 font-medium">조직:</span>
+              <span className="text-sm md:text-base font-semibold text-slate-900">
+                로그인 후 조직이 연동됩니다
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs md:text-sm text-slate-500 font-medium">요금제:</span>
+              <span className="text-sm md:text-base font-semibold text-slate-900">
+                {selectedPlan === "starter"
+                  ? "Starter"
+                  : selectedPlan === "team"
+                  ? "Team"
+                  : selectedPlan === "business"
+                  ? "Business"
+                  : "Enterprise"}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs md:text-sm text-slate-500 font-medium">예산:</span>
+              <span className="text-sm md:text-base font-semibold text-slate-900">
+                도입 시 별도 협의
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <Button className="px-4 md:px-6 py-2 md:py-2.5 text-base font-semibold">
+              요금 & 도입 문의
+            </Button>
           </div>
         </div>
       </div>
