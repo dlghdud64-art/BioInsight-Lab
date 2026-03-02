@@ -494,14 +494,16 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 월별 구매 추이 차트 */}
+          {/* 차트 영역: 2단 Grid (기간별 전체폭 / 벤더·카테고리 좌우 배치) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 월별 구매 추이 차트 — 상단 전체 너비 */}
           {monthlyData && monthlyData.length > 0 && (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
-              <CardHeader>
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 lg:col-span-2 h-[350px] flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
               </CardHeader>
-              <CardContent className="min-h-[300px]">
-                <ResponsiveContainer width="100%" height={300}>
+              <CardContent className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" />
@@ -529,14 +531,14 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 벤더별 구매 현황 */}
+          {/* 벤더별 구매 현황 — 좌측 */}
           {vendorData && vendorData.length > 0 && (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
-              <CardHeader>
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 col-span-1 h-[350px] flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
               </CardHeader>
-              <CardContent className="min-h-[300px]">
-                <ResponsiveContainer width="100%" height={300}>
+              <CardContent className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={vendorData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="vendor" />
@@ -564,14 +566,14 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 카테고리별 구매 현황 (파이 차트) */}
+          {/* 카테고리별 구매 현황 (파이 차트) — 우측 */}
           {categoryData && categoryData.length > 0 && (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
-              <CardHeader>
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 col-span-1 h-[350px] flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
               </CardHeader>
-              <CardContent className="min-h-[300px]">
-                <ResponsiveContainer width="100%" height={300}>
+              <CardContent className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={categoryData}
@@ -600,6 +602,7 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
           )}
+          </div>
 
           {/* 상세 테이블 (Detailed Logs) */}
           {details && details.length > 0 && (

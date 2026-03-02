@@ -66,6 +66,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const [lotNumber, setLotNumber] = useState(inventory?.lotNumber ?? "");
   const [storageCondition, setStorageCondition] = useState(inventory?.storageCondition ?? "");
   const [testPurpose, setTestPurpose] = useState(inventory?.testPurpose ?? "");
+  const [expiryDatePopoverOpen, setExpiryDatePopoverOpen] = useState(false);
 
   // 수정 모드: 모달 열릴 때 검색 단계 건너뛰고 폼 데이터 프리필
   useEffect(() => {
@@ -346,7 +347,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="expiryDate">유효 기한</Label>
-                  <Popover>
+                  <Popover open={expiryDatePopoverOpen} onOpenChange={setExpiryDatePopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         id="expiryDate"
@@ -364,11 +365,14 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100]" align="start">
                       <Calendar
                         mode="single"
                         selected={expiryDate}
-                        onSelect={setExpiryDate}
+                        onSelect={(date) => {
+                          setExpiryDate(date);
+                          setExpiryDatePopoverOpen(false);
+                        }}
                         initialFocus
                         locale={ko}
                         captionLayout="dropdown"
