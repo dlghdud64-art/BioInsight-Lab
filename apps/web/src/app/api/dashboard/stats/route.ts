@@ -75,9 +75,19 @@ export async function GET(request: NextRequest) {
       (order: { createdAt: Date | string }) => new Date(order.createdAt) >= monthStart
     );
 
-    // 3. 견적 통계 조회
-    const quotes = await db.quote.findMany({
+    // 3. 견적 통계 조회 (본인 + 조직 소속 견적 포함)
+    const userOrgMembershipsForQuote = await db.organizationMember.findMany({
       where: { userId },
+      select: { organizationId: true },
+    });
+    const orgIdsForQuoteStats = userOrgMembershipsForQuote.map((m: { organizationId: string }) => m.organizationId);
+    const quotes = await db.quote.findMany({
+      where: {
+        OR: [
+          { userId },
+          ...(orgIdsForQuoteStats.length > 0 ? [{ organizationId: { in: orgIdsForQuoteStats } }] : []),
+        ],
+      },
       select: {
         id: true,
         status: true,
@@ -162,23 +172,49 @@ export async function GET(request: NextRequest) {
       select: { workspaceId: true },
     });
     const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
+
     // guestKey: 구매 내역 가져올 때 localStorage의 biocompare_guest_key로 저장된 항목 포함
     const scopeKeyValues = [
       userId,
       ...workspaceIds,
       ...(guestKey ? [guestKey] : []),
     ];
+
+    // 유저가 소유한 Quote ID 목록 - scopeKey 불일치 시 quoteId 기반 폴백 조회용
+    const userOrgIdsForQuote = await db.organizationMember.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    const orgIdsForQuote = userOrgIdsForQuote.map((m: { organizationId: string }) => m.organizationId);
+    const userQuoteIds = await db.quote.findMany({
+      where: {
+        OR: [
+          { userId },
+          ...(orgIdsForQuote.length > 0 ? [{ organizationId: { in: orgIdsForQuote } }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    const userQuoteIdList = userQuoteIds.map((q: { id: string }) => q.id);
+
+    console.log("[DASHBOARD_STATS] scopeKeyValues:", scopeKeyValues);
+    console.log("[DASHBOARD_STATS] userQuoteIdList length:", userQuoteIdList.length);
+
+    // purchaseOwnerWhere: scopeKey OR workspaceId OR quoteId 기반 3중 매칭
+    // (scopeKey 불일치 시에도 자신의 견적에서 생성된 구매 내역 포함)
     const purchaseOwnerWhere: any = {
       OR: [
         { scopeKey: { in: scopeKeyValues } },
         ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+        ...(userQuoteIdList.length > 0 ? [{ quoteId: { in: userQuoteIdList } }] : []),
       ],
     };
 
+    // 날짜 범위: 말일 23:59:59.999 까지 포함 (기존 00:00:00 버그 수정)
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
     const [recentPurchaseRecords, lastMonthRecords] = await Promise.all([
       db.purchaseRecord.findMany({
@@ -195,6 +231,10 @@ export async function GET(request: NextRequest) {
     const thisMonthPurchaseAmount = recentPurchaseRecords
       .filter((p: any) => new Date(p.purchasedAt) >= monthStart)
       .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+    console.log("[DASHBOARD_STATS] recentPurchaseRecords count:", recentPurchaseRecords.length);
+    console.log("[DASHBOARD_STATS] monthStart:", monthStart.toISOString(), "thisMonthEnd:", thisMonthEnd.toISOString());
+    console.log("[DASHBOARD_STATS] thisMonthPurchaseAmount:", thisMonthPurchaseAmount);
 
     // 전월 대비 증감률
     const lastMonthPurchaseAmount = lastMonthRecords.reduce((s: number, p: any) => s + (p.amount || 0), 0);

@@ -27,7 +27,10 @@ export default function DashboardPage() {
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
 
-      const response = await fetch("/api/dashboard/stats", { headers });
+      const response = await fetch("/api/dashboard/stats", {
+        headers,
+        cache: "no-store",  // Next.js 라우터 캐시 원천 차단
+      });
       if (!response.ok) throw new Error("Failed to fetch dashboard stats");
       return response.json();
     },
