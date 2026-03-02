@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { getGuestKey } from "@/lib/guest-key";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -19,11 +20,9 @@ export default function DashboardPage() {
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      // localStorage의 guestKey를 헤더에 포함 (guestKey scopeKey로 저장된 구매 내역 포함)
-      const guestKey =
-        typeof window !== "undefined"
-          ? localStorage.getItem("biocompare_guest_key") || ""
-          : "";
+      // getGuestKey(): purchases 페이지와 동일한 방식 (항상 "guest-demo" 반환)
+      // 이전에 localStorage.getItem("biocompare_guest_key") 를 사용해 빈 값이 전달되던 버그 수정
+      const guestKey = getGuestKey();
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
 
