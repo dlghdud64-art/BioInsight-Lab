@@ -299,10 +299,12 @@ export async function PATCH(
 
     // 견적 상태 변경 후 모든 관련 페이지 캐시 강제 무효화
     // (isCompletingPurchase 여부와 무관하게 모든 PATCH에 적용)
+    revalidatePath("/dashboard", "layout");  // 레이아웃 포함 전체 대시보드 캐시 제거
     revalidatePath("/dashboard/quotes");
+    revalidatePath("/dashboard/purchases");
+    revalidatePath("/dashboard/budget");
     revalidatePath("/quotes");
     revalidatePath(`/quotes/${id}`);
-    revalidatePath("/dashboard");
 
     return NextResponse.json({ quote: updatedQuote });
   } catch (error) {
