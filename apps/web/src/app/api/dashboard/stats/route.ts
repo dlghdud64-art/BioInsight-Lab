@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+// Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * 대시보드 통계 API
  * GET /api/dashboard/stats
@@ -20,9 +24,12 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
+    const sessionOrgId = (session.user as { orgId?: string }).orgId ?? null;
+    console.log("[DASHBOARD_STATS] userId:", userId, "orgId:", sessionOrgId);
 
     // x-guest-key 헤더: localStorage에서 dashboard 페이지가 전달
     const guestKey = request.headers.get("x-guest-key") || null;
+    console.log("[DASHBOARD_STATS] guestKey:", guestKey ? "[present]" : "[none]");
 
     // 1. 활성 예산 조회
     const activeBudget = await db.userBudget.findFirst({

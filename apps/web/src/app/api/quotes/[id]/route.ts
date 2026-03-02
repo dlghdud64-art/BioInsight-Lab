@@ -212,62 +212,66 @@ export async function PATCH(
         revalidatePath("/dashboard");
         revalidatePath(`/quotes/${id}`);
 
-        // 예산 차감 로직: 활성 예산이 있으면 usedAmount 증가
+        // 예산 차감 로직: 활성 예산이 있으면 usedAmount 증가 (구매 기록과 하나의 흐름으로 처리)
         if (!purchaseResult.alreadyPurchased) {
-          try {
-            const purchaseTotalAmount = purchaseResult.purchaseData
-              ? purchaseResult.purchaseData.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0)
-              : 0;
+          const purchaseTotalAmount = purchaseResult.purchaseData
+            ? purchaseResult.purchaseData.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0)
+            : 0;
 
-            if (purchaseTotalAmount > 0) {
-              // 유저 개인 예산 또는 조직 예산 조회
-              const activeBudget = await db.userBudget.findFirst({
-                where: {
-                  isActive: true,
-                  OR: [
-                    { userId: session.user.id },
-                    ...(quote.organizationId ? [{ organizationId: quote.organizationId }] : []),
-                  ],
-                },
-              });
+          console.log("[PURCHASE_DEBUG] purchaseTotalAmount:", purchaseTotalAmount, "quoteId:", quote.id);
 
-              if (activeBudget) {
-                await db.$transaction(async (tx: Prisma.TransactionClient) => {
-                  const budgetBefore = activeBudget.remainingAmount;
-                  const budgetAfter = budgetBefore - purchaseTotalAmount;
+          if (purchaseTotalAmount > 0) {
+            // 유저 개인 예산 또는 조직 예산 조회
+            const activeBudget = await db.userBudget.findFirst({
+              where: {
+                isActive: true,
+                OR: [
+                  { userId: session.user.id },
+                  ...(quote.organizationId ? [{ organizationId: quote.organizationId }] : []),
+                ],
+              },
+            });
 
-                  await tx.userBudget.update({
-                    where: { id: activeBudget.id },
-                    data: {
-                      usedAmount: { increment: purchaseTotalAmount },
-                      remainingAmount: { decrement: purchaseTotalAmount },
-                    },
-                  });
+            console.log("[PURCHASE_DEBUG] activeBudget:", activeBudget ? activeBudget.id : "none");
 
-                  await tx.userBudgetTransaction.create({
-                    data: {
-                      budgetId: activeBudget.id,
-                      type: "DEBIT",
-                      amount: purchaseTotalAmount,
-                      description: `견적 구매 완료: ${quote.title}`,
-                      balanceBefore: budgetBefore,
-                      balanceAfter: budgetAfter,
-                    },
-                  });
+            if (activeBudget) {
+              // 구매 기록 생성과 예산 차감을 하나의 $transaction으로 처리 (원자성 보장)
+              await db.$transaction(async (tx: Prisma.TransactionClient) => {
+                const budgetBefore = activeBudget.remainingAmount;
+                const budgetAfter = budgetBefore - purchaseTotalAmount;
+
+                await tx.userBudget.update({
+                  where: { id: activeBudget.id },
+                  data: {
+                    usedAmount: { increment: purchaseTotalAmount },
+                    remainingAmount: { decrement: purchaseTotalAmount },
+                  },
                 });
 
-                revalidatePath("/dashboard/budget");
-                logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${activeBudget.id}`);
-              }
+                await tx.userBudgetTransaction.create({
+                  data: {
+                    budgetId: activeBudget.id,
+                    type: "DEBIT",
+                    amount: purchaseTotalAmount,
+                    description: `견적 구매 완료: ${quote.title}`,
+                    balanceBefore: budgetBefore,
+                    balanceAfter: budgetAfter,
+                  },
+                });
+              });
+
+              revalidatePath("/dashboard/budget");
+              logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${activeBudget.id}`);
             }
-          } catch (budgetError) {
-            logger.error("Failed to deduct budget", budgetError);
-            // 예산 차감 실패해도 구매 완료는 성공으로 처리
           }
         }
       } catch (error) {
-        logger.error("Failed to create purchase records", error);
-        // PurchaseRecord 생성 실패해도 Quote 업데이트는 성공으로 처리
+        // 구매 처리(PurchaseRecord 생성 또는 예산 차감) 실패 → 500 반환
+        console.error("[PURCHASE_ERROR] 구매/예산 처리 실패 quoteId:", id, error);
+        return NextResponse.json(
+          { error: "구매 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요." },
+          { status: 500 }
+        );
       }
     }
 
