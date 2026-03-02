@@ -280,6 +280,13 @@ export default function PlansPage() {
                       </Badge>
                     </div>
                   )}
+                  {isCurrentPlan && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px]">
+                        현재 플랜
+                      </Badge>
+                    </div>
+                  )}
 
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -294,7 +301,9 @@ export default function PlansPage() {
                       </div>
                       <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
                     </div>
-                    <CardDescription className="text-sm">{plan.description}</CardDescription>
+                    <CardDescription className="text-sm text-slate-500 dark:text-slate-300">
+                      {plan.description}
+                    </CardDescription>
                     
                     {/* 가격 */}
                     <div className="mt-6">
@@ -324,13 +333,13 @@ export default function PlansPage() {
                         return (
                           <div key={feature.key} className="flex items-center gap-3">
                             {hasFeature ? (
-                              <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                              <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
                             ) : (
                               <span className="h-5 w-5 flex-shrink-0" />
                             )}
                             <span className={cn(
                               "text-sm",
-                              hasFeature ? "text-slate-900" : "text-gray-400"
+                              hasFeature ? "text-slate-700" : "text-slate-400"
                             )}>
                               {feature.label}
                             </span>
@@ -343,10 +352,10 @@ export default function PlansPage() {
                     <div className="pt-4">
                       {isCurrentPlan ? (
                         <Button
-                          className="w-full bg-gray-100 text-gray-500 hover:bg-gray-100 cursor-default"
+                          className="w-full bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-not-allowed"
                           disabled
                         >
-                          현재 플랜
+                          현재 사용 중인 플랜
                         </Button>
                       ) : (
                         <Button
@@ -379,8 +388,8 @@ export default function PlansPage() {
           {/* 현재 플랜 정보 요약 */}
           <Card className="bg-white/80 backdrop-blur-sm border border-slate-200/50 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg">현재 플랜 정보</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg text-slate-900">현재 플랜 정보</CardTitle>
+              <CardDescription className="text-slate-600">
                 {selectedOrg.name} - {plans.find((p) => p.id === currentPlan)?.name}
               </CardDescription>
             </CardHeader>

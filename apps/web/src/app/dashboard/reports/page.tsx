@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Package, Building2, DollarSign, FileSpreadsheet, Download, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, PieChart as PieChartIcon } from "lucide-react";
+import { TrendingUp, Package, Building2, DollarSign, FileSpreadsheet, Download, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, PieChart as PieChartIcon, FolderOpen } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -505,16 +505,27 @@ export default function ReportsPage() {
               {monthlyData && monthlyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`}
+                    />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                       formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                     />
                     <Legend />
-                    <Bar dataKey="amount" fill="#3b82f6" name="구매 금액 (₩)" barSize={40} radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="amount"
+                      fill="#3b82f6"
+                      name="구매 금액 (₩)"
+                      barSize={40}
+                      maxBarSize={48}
+                      radius={[6, 6, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -535,16 +546,27 @@ export default function ReportsPage() {
               {vendorData && vendorData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={vendorData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="vendor" />
-                    <YAxis tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="vendor" axisLine={false} tickLine={false} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`}
+                    />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                       formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                     />
                     <Legend />
-                    <Bar dataKey="amount" fill="#10b981" name="구매 금액 (₩)" barSize={40} radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="amount"
+                      fill="#10b981"
+                      name="구매 금액 (₩)"
+                      barSize={40}
+                      maxBarSize={48}
+                      radius={[6, 6, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -586,9 +608,9 @@ export default function ReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
-                  <PieChartIcon className="h-10 w-10" />
-                  <p className="text-sm">해당 기간의 데이터가 없습니다</p>
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                  <FolderOpen className="h-10 w-10 mb-2" />
+                  <p className="text-sm">해당 기간의 구매 데이터가 없습니다.</p>
                 </div>
               )}
             </CardContent>
