@@ -296,7 +296,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse border border-gray-100 dark:border-slate-800 shadow-sm">
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded" />
               </CardContent>
             </Card>
@@ -304,46 +304,70 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 금액</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+                총 구매액
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
-              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+              <div
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
+                  totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                }`}
+              >
                 {formatCurrency(totalAmount, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 건수</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+                총 건수
+              </CardTitle>
               <Package className="h-4 w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
-              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+              <div
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
+                  itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                }`}
+              >
                 {itemCount}건
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">평균 단가</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+                평균가
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
-              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+              <div
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
+                  avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                }`}
+              >
                 {formatCurrency(avgPrice, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">벤더 수</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+                거래처
+              </CardTitle>
               <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
-              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
+              <div
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
+                  vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                }`}
+              >
                 {vendorCount}개
               </div>
             </CardContent>
