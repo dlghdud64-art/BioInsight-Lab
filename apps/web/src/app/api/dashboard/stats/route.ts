@@ -266,27 +266,33 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. 카테고리별 지출 비중 (최근 200건 제한)
+    // OrderItem 모델에는 Product relation이 없으므로 productId로 별도 조회
     const ordersWithItems = await db.order.findMany({
       where: { userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                category: true,
-              },
-            },
-          },
-        },
-      },
+      include: { items: true },
       orderBy: { createdAt: "desc" },
       take: 200,
     });
 
+    // productId 기반 카테고리 일괄 조회
+    const allProductIds = ordersWithItems
+      .flatMap((o: any) => o.items.map((i: any) => i.productId))
+      .filter(Boolean) as string[];
+    const productCategoryMap = new Map<string, string>();
+    if (allProductIds.length > 0) {
+      const products = await db.product.findMany({
+        where: { id: { in: allProductIds } },
+        select: { id: true, category: true },
+      });
+      products.forEach((p: { id: string; category: string | null }) =>
+        productCategoryMap.set(p.id, p.category || "기타")
+      );
+    }
+
     const categorySpending: Record<string, number> = {};
     ordersWithItems.forEach((order: any) => {
       order.items.forEach((item: any) => {
-        const category = item.product?.category || "기타";
+        const category = (item.productId && productCategoryMap.get(item.productId)) || "기타";
         const amount = (item.unitPrice || 0) * (item.quantity || 0);
         categorySpending[category] = (categorySpending[category] || 0) + amount;
       });
