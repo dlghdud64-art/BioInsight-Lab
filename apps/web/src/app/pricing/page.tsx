@@ -209,44 +209,36 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              {/* Billing Toggle: Monthly / Annual (20% off, 2 months free) */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 md:mb-12">
-                <span className={cn("text-sm font-medium transition-colors", !isAnnual && "text-slate-900")}>
-                  월간 결제
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isAnnual}
-                  aria-label={isAnnual ? "연간 결제 선택됨" : "월간 결제 선택됨"}
-                  onClick={() => setIsAnnual((v) => !v)}
-                  className={cn(
-                    "relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
-                    isAnnual ? "bg-slate-900" : "bg-slate-200"
-                  )}
-                >
-                  <span
+              {/* Billing Segmented Control */}
+              <div className="flex items-center justify-center mb-10 md:mb-12">
+                <div className="bg-slate-100 rounded-full p-1 inline-flex">
+                  <button
+                    type="button"
+                    onClick={() => setIsAnnual(false)}
                     className={cn(
-                      "pointer-events-none block h-6 w-6 rounded-full bg-white shadow-lg ring-0 transition-transform duration-300",
-                      isAnnual ? "translate-x-5" : "translate-x-0.5"
-                    )}
-                  />
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className={cn("text-sm font-medium transition-colors", isAnnual && "text-slate-900")}>
-                    연간 결제
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "text-xs font-bold transition-all duration-300",
-                      isAnnual
-                        ? "bg-green-200 text-green-900 border-green-400 ring-1 ring-green-500/30 shadow-sm"
-                        : "bg-green-100 text-green-800 border-green-200"
+                      "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
+                      !isAnnual
+                        ? "bg-white shadow-sm text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
                     )}
                   >
-                    {isAnnual ? "20% 할인 · 2개월 무료" : "20% 할인"}
-                  </Badge>
+                    월간 결제
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAnnual(true)}
+                    className={cn(
+                      "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 flex items-center gap-2",
+                      isAnnual
+                        ? "bg-white shadow-sm text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
+                    )}
+                  >
+                    연간 결제
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+                      20% 할인
+                    </span>
+                  </button>
                 </div>
               </div>
 
