@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
+    // x-guest-key 헤더: localStorage에서 dashboard 페이지가 전달
+    const guestKey = request.headers.get("x-guest-key") || null;
+
     // 1. 활성 예산 조회
     const activeBudget = await db.userBudget.findFirst({
       where: {
@@ -117,9 +120,10 @@ export async function GET(request: NextRequest) {
         });
         if (monthlyBudget) {
           // thisMonthPurchaseAmount는 아래에서 계산되므로 먼저 임시 계산
+          const tmpScopeKeys = [userId, `user-${userId}`, ...(guestKey ? [guestKey] : [])];
           const tmpThisMonthRecords = await db.purchaseRecord.findMany({
             where: {
-              OR: [{ scopeKey: userId }, { scopeKey: `user-${userId}` }],
+              OR: tmpScopeKeys.map((k) => ({ scopeKey: k })),
               purchasedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1), lte: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) },
             },
             select: { amount: true },
@@ -151,7 +155,12 @@ export async function GET(request: NextRequest) {
       select: { workspaceId: true },
     });
     const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
-    const scopeKeyValues = [userId, ...workspaceIds];
+    // guestKey: 구매 내역 가져올 때 localStorage의 biocompare_guest_key로 저장된 항목 포함
+    const scopeKeyValues = [
+      userId,
+      ...workspaceIds,
+      ...(guestKey ? [guestKey] : []),
+    ];
     const purchaseOwnerWhere: any = {
       OR: [
         { scopeKey: { in: scopeKeyValues } },

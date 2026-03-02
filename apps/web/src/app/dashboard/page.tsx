@@ -19,11 +19,21 @@ export default function DashboardPage() {
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/dashboard/stats");
+      // localStorage의 guestKey를 헤더에 포함 (guestKey scopeKey로 저장된 구매 내역 포함)
+      const guestKey =
+        typeof window !== "undefined"
+          ? localStorage.getItem("biocompare_guest_key") || ""
+          : "";
+      const headers: Record<string, string> = {};
+      if (guestKey) headers["x-guest-key"] = guestKey;
+
+      const response = await fetch("/api/dashboard/stats", { headers });
       if (!response.ok) throw new Error("Failed to fetch dashboard stats");
       return response.json();
     },
     enabled: status === "authenticated",
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // 최근 구매 내역은 dashboardStats.recentPurchases 에서 가져옴 (별도 쿼리 불필요)
