@@ -16,7 +16,8 @@ try {
   db =
     globalForPrisma.prisma ??
     new PrismaClient({
-      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+      // "query" 로그 제거: HMR 시마다 수천 줄 쿼리 로그가 서버 터미널 부하를 일으킴
+      log: ["error"],
     });
 
   if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

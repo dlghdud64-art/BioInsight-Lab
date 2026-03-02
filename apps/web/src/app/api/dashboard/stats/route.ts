@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // 2. 주문 통계 조회
+    // 2. 주문 통계 조회 (최근 500건 제한: 대량 row 로드로 인한 메모리 과부하 방지)
     const orders = await db.order.findMany({
       where: { userId },
       select: {
@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
       },
+      orderBy: { createdAt: "desc" },
+      take: 500,
     });
 
     const totalPurchaseAmount = orders.reduce(
@@ -94,6 +96,8 @@ export async function GET(request: NextRequest) {
         totalAmount: true,
         createdAt: true,
       },
+      orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     const quotesByStatus = quotes.reduce(
@@ -194,11 +198,12 @@ export async function GET(request: NextRequest) {
         ],
       },
       select: { id: true },
+      take: 500,
     });
     const userQuoteIdList = userQuoteIds.map((q: { id: string }) => q.id);
 
-    console.log("[DASHBOARD_STATS] scopeKeyValues:", scopeKeyValues);
-    console.log("[DASHBOARD_STATS] userQuoteIdList length:", userQuoteIdList.length);
+    // 배열 전체 대신 길이만 로그 (대용량 배열 로그 → 터미널 부하 방지)
+    console.log("[DASHBOARD_STATS] scopeKeyValues count:", scopeKeyValues.length, "| quoteIds count:", userQuoteIdList.length);
 
     // purchaseOwnerWhere: scopeKey OR workspaceId OR quoteId 기반 3중 매칭
     // (scopeKey 불일치 시에도 자신의 견적에서 생성된 구매 내역 포함)
@@ -220,10 +225,13 @@ export async function GET(request: NextRequest) {
       db.purchaseRecord.findMany({
         where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
         select: { amount: true, purchasedAt: true },
+        orderBy: { purchasedAt: "desc" },
+        take: 1000,  // 6개월 구매 내역 최대 1000건 제한
       }),
       db.purchaseRecord.findMany({
         where: { ...purchaseOwnerWhere, purchasedAt: { gte: lastMonthStart, lte: lastMonthEnd } },
         select: { amount: true },
+        take: 500,
       }),
     ]);
 
@@ -257,7 +265,7 @@ export async function GET(request: NextRequest) {
       monthlySpending.push({ month: monthStr, amount: monthAmount });
     }
 
-    // 6. 카테고리별 지출 비중
+    // 6. 카테고리별 지출 비중 (최근 200건 제한)
     const ordersWithItems = await db.order.findMany({
       where: { userId },
       include: {
@@ -271,6 +279,8 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     const categorySpending: Record<string, number> = {};
@@ -332,6 +342,7 @@ export async function GET(request: NextRequest) {
         include: {
           product: { select: { name: true, catalogNumber: true, brand: true } },
         },
+        take: 500,  // 전체 재고 최대 500건 제한
       }),
       db.productInventory.findMany({
         where: {
