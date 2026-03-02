@@ -186,7 +186,7 @@ export default function ReportsPage() {
   const hasData = reportData != null;
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full">
+    <div className="flex-1 space-y-6 bg-slate-50 min-h-screen p-6 max-w-7xl mx-auto w-full">
       {/* 1. 헤더 영역 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div className="space-y-2">
@@ -304,45 +304,45 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 금액</CardTitle>
               <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="px-6 pb-6 pt-0">
+            <CardContent className="px-0 pb-0 pt-3">
               <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {formatCurrency(totalAmount, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">총 구매 건수</CardTitle>
               <Package className="h-4 w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="px-6 pb-6 pt-0">
+            <CardContent className="px-0 pb-0 pt-3">
               <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {itemCount}건
               </div>
             </CardContent>
           </Card>
-          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">평균 단가</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="px-6 pb-6 pt-0">
+            <CardContent className="px-0 pb-0 pt-3">
               <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {formatCurrency(avgPrice, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-6 pt-6">
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate min-w-0">벤더 수</CardTitle>
               <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400 flex-shrink-0" />
             </CardHeader>
-            <CardContent className="px-6 pb-6 pt-0">
+            <CardContent className="px-0 pb-0 pt-3">
               <div className={`text-2xl md:text-3xl lg:text-4xl font-bold break-words tracking-normal leading-tight ${vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {vendorCount}개
               </div>
@@ -352,7 +352,7 @@ export default function ReportsPage() {
       )}
 
       {/* 3. 압축된 한 줄 필터 바 */}
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="space-y-1.5">
@@ -496,7 +496,7 @@ export default function ReportsPage() {
 
           {/* 월별 구매 추이 차트 */}
           {monthlyData && monthlyData.length > 0 && (
-            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
               <CardHeader>
                 <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
               </CardHeader>
@@ -505,7 +505,7 @@ export default function ReportsPage() {
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(v) => (v >= 1000000 ? `₩${(v / 1000000).toFixed(0)}M` : `₩${(v / 1000).toFixed(0)}K`)} />
+                    <YAxis tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`} />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{
@@ -531,7 +531,7 @@ export default function ReportsPage() {
 
           {/* 벤더별 구매 현황 */}
           {vendorData && vendorData.length > 0 && (
-            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
               <CardHeader>
                 <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
               </CardHeader>
@@ -540,7 +540,7 @@ export default function ReportsPage() {
                   <BarChart data={vendorData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="vendor" />
-                    <YAxis tickFormatter={(v) => (v >= 1000000 ? `₩${(v / 1000000).toFixed(0)}M` : `₩${(v / 1000).toFixed(0)}K`)} />
+                    <YAxis tickFormatter={(value) => `₩${(value / 10000).toLocaleString()}만`} />
                     <Tooltip
                       cursor={{ fill: "transparent" }}
                       contentStyle={{
@@ -566,7 +566,7 @@ export default function ReportsPage() {
 
           {/* 카테고리별 구매 현황 (파이 차트) */}
           {categoryData && categoryData.length > 0 && (
-            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm min-h-[300px]">
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 min-h-[300px]">
               <CardHeader>
                 <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
               </CardHeader>
@@ -603,7 +603,7 @@ export default function ReportsPage() {
 
           {/* 상세 테이블 (Detailed Logs) */}
           {details && details.length > 0 && (
-            <Card className="border border-gray-100 dark:border-slate-800 shadow-sm">
+            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
               <CardHeader className="space-y-1">
                 <CardTitle className="tracking-normal leading-relaxed">상세 내역</CardTitle>
                 <CardDescription className="text-sm leading-relaxed tracking-normal text-muted-foreground">
