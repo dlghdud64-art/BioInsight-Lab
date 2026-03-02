@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
@@ -117,14 +118,21 @@ export async function GET(
     const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
     const remaining = budget.amount - totalSpent;
 
-    // description에서 name, projectName 추출
+    // description에서 name, projectName, 정확한 period 날짜 추출
     let name = `${budget.yearMonth} Budget`;
     let projectName: string | null = null;
+    let parsedPeriodStart: Date | null = null;
+    let parsedPeriodEnd: Date | null = null;
     if (budget.description) {
       const nameMatch = budget.description.match(/^\[([^\]]+)\]/);
       if (nameMatch) name = nameMatch[1];
       const projectMatch = budget.description.match(/프로젝트: ([^|]+)/);
-      if (projectMatch) projectName = projectMatch[1].trim();
+      if (projectMatch) projectName = projectMatch[1].trim().replace(/\|.*$/, "").trim();
+      const periodMatchGet = budget.description.match(/period:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
+      if (periodMatchGet) {
+        parsedPeriodStart = new Date(periodMatchGet[1]);
+        parsedPeriodEnd = new Date(periodMatchGet[2] + "T23:59:59");
+      }
     }
 
     return NextResponse.json({
@@ -132,8 +140,8 @@ export async function GET(
         ...budget,
         name,
         projectName,
-        periodStart: periodStart.toISOString(),
-        periodEnd: periodEnd.toISOString(),
+        periodStart: (parsedPeriodStart ?? periodStart).toISOString(),
+        periodEnd: (parsedPeriodEnd ?? periodEnd).toISOString(),
         usage: { totalSpent, usageRate, remaining },
       },
     });
@@ -229,19 +237,26 @@ export async function PATCH(
       yearMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
     }
 
-    // ── 6. description 합성 (name · projectName · description → 1개 컬럼) ──────
-    // 기존 description에서 이름/프로젝트명 추출 (변경 없는 필드는 유지)
+    // ── 6. description 합성 (name · projectName · period · description → 1개 컬럼) ──────
+    // 기존 description에서 이름/프로젝트명/기간/설명 추출 (변경 없는 필드는 유지)
     let existingName: string | null = null;
     let existingProjectName: string | null = null;
     let existingDesc: string | null = null;
+    let existingPeriodStart: string | null = null;
+    let existingPeriodEnd: string | null = null;
     if (budget.description) {
       const nameMatch = budget.description.match(/^\[([^\]]+)\]/);
       if (nameMatch) existingName = nameMatch[1];
       const projectMatch = budget.description.match(/프로젝트: ([^|]+)/);
-      if (projectMatch) existingProjectName = projectMatch[1].trim();
+      if (projectMatch) existingProjectName = projectMatch[1].trim().replace(/\|.*$/, "").trim();
+      const periodMatch = budget.description.match(/period:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
+      if (periodMatch) {
+        existingPeriodStart = periodMatch[1];
+        existingPeriodEnd = periodMatch[2];
+      }
       const parts = budget.description.split(" | ");
       const rawDesc = parts.find(
-        (p: string) => !p.startsWith("[") && !p.startsWith("프로젝트: ")
+        (p: string) => !p.startsWith("[") && !p.startsWith("프로젝트: ") && !p.startsWith("period:")
       );
       existingDesc = rawDesc ?? null;
     }
@@ -250,12 +265,18 @@ export async function PATCH(
     const finalProjectName = projectName !== undefined ? projectName : existingProjectName;
     const finalDesc        = description !== undefined ? description : existingDesc;
 
+    // 기간: 요청에서 받은 값 우선, 없으면 기존 저장값, 없으면 yearMonth 파생
+    const [updYear, updMonth] = yearMonth.split("-").map(Number);
+    const finalPeriodStart = periodStart ?? existingPeriodStart ?? `${yearMonth}-01`;
+    const lastDayNum = new Date(updYear, updMonth, 0).getDate();
+    const finalPeriodEnd = periodEnd ?? existingPeriodEnd ?? `${yearMonth}-${String(lastDayNum).padStart(2, "0")}`;
+
     const descParts: string[] = [];
     if (finalName)        descParts.push(`[${finalName}]`);
     if (finalProjectName) descParts.push(`프로젝트: ${finalProjectName}`);
+    descParts.push(`period:${finalPeriodStart}~${finalPeriodEnd}`);
     if (finalDesc)        descParts.push(finalDesc);
-    const combinedDescription =
-      descParts.length > 0 ? descParts.join(" | ") : budget.description;
+    const combinedDescription = descParts.join(" | ");
 
     // ── 7. DB 업데이트 ────────────────────────────────────────────────────────
     const updated = await db.budget.update({
@@ -268,15 +289,18 @@ export async function PATCH(
       },
     });
 
+    // 캐시 무효화: 예산 및 대시보드 페이지 즉시 갱신
+    revalidatePath("/dashboard/budget");
+    revalidatePath("/dashboard");
+
     // ── 8. 응답 변환 ──────────────────────────────────────────────────────────
-    const [updYear, updMonth] = updated.yearMonth.split("-").map(Number);
     return NextResponse.json({
       budget: {
         ...updated,
         name: finalName ?? `${updated.yearMonth} Budget`,
         projectName: finalProjectName,
-        periodStart: new Date(updYear, updMonth - 1, 1).toISOString(),
-        periodEnd: new Date(updYear, updMonth, 0, 23, 59, 59).toISOString(),
+        periodStart: new Date(finalPeriodStart).toISOString(),
+        periodEnd: new Date(finalPeriodEnd + "T23:59:59").toISOString(),
       },
     });
   } catch (error: any) {

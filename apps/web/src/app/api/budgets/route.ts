@@ -71,44 +71,49 @@ export async function GET(request: NextRequest) {
     const budgetsWithUsage = await Promise.all(
       budgetsArray.map(async (budget: any) => {
         const [year, month] = budget.yearMonth.split("-").map(Number);
-        const periodStart = new Date(year, month - 1, 1);
-        const periodEnd = new Date(year, month, 0, 23, 59, 59);
+        // 기본 기간: yearMonth 기반 월 경계
+        let periodStart = new Date(year, month - 1, 1);
+        let periodEnd = new Date(year, month, 0, 23, 59, 59);
 
-        // scopeKey가 조직 ID인 경우 해당 조직의 구매 기록 조회
-        let totalSpent = 0;
-        if (!budget.scopeKey.startsWith('user-')) {
-          const purchaseRecords = await db.purchaseRecord.findMany({
-            where: {
-              scopeKey: budget.scopeKey,
-              purchasedAt: {
-                gte: periodStart,
-                lte: periodEnd,
-              },
-            },
-          });
-
-          totalSpent = purchaseRecords.reduce(
-            (sum: number, record: any) => sum + (record.amount || 0),
-            0
-          );
-        }
-
-        const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
-        const remaining = budget.amount - totalSpent;
-
-        // description에서 name과 projectName 추출
+        // description에서 name, projectName, 정확한 period 날짜 추출
         let name = `${budget.yearMonth} Budget`;
         let projectName = null;
         if (budget.description) {
           const nameMatch = budget.description.match(/^\[([^\]]+)\]/);
-          if (nameMatch) {
-            name = nameMatch[1];
-          }
+          if (nameMatch) name = nameMatch[1];
           const projectMatch = budget.description.match(/프로젝트: ([^|]+)/);
-          if (projectMatch) {
-            projectName = projectMatch[1].trim();
+          if (projectMatch) projectName = projectMatch[1].trim().replace(/\|.*$/, "").trim();
+          // 저장된 정확한 날짜가 있으면 우선 사용
+          const periodMatch = budget.description.match(/period:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
+          if (periodMatch) {
+            periodStart = new Date(periodMatch[1]);
+            periodEnd = new Date(periodMatch[2] + "T23:59:59");
           }
         }
+
+        // 모든 예산 유형(개인/조직)에 대해 PurchaseRecord 사용액 계산
+        // user-{userId} 형식이면 userId 추출, 아니면 scopeKey 그대로 사용
+        const purchaseScopeKey = budget.scopeKey.startsWith("user-")
+          ? budget.scopeKey.slice("user-".length)
+          : budget.scopeKey;
+
+        const purchaseRecords = await db.purchaseRecord.findMany({
+          where: {
+            OR: [
+              { scopeKey: purchaseScopeKey },
+              { scopeKey: budget.scopeKey },
+            ],
+            purchasedAt: { gte: periodStart, lte: periodEnd },
+          },
+          select: { amount: true },
+        });
+
+        const totalSpent = purchaseRecords.reduce(
+          (sum: number, record: any) => sum + (record.amount || 0),
+          0
+        );
+        const usageRate = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
+        const remaining = budget.amount - totalSpent;
 
         return {
           ...budget,
@@ -265,10 +270,19 @@ export async function POST(request: NextRequest) {
     const sanitizedDescription = description && description.trim() !== '' ? description.trim() : null;
     const sanitizedName = name && name.trim() !== '' ? name.trim() : null;
 
-    // 설명 필드 구성 (name, projectName, description 통합)
+    // 설명 필드 구성 (name, projectName, 정확한 기간, description 통합)
     const descriptionParts: string[] = [];
     if (sanitizedName) descriptionParts.push(`[${sanitizedName}]`);
     if (sanitizedProjectName) descriptionParts.push(`프로젝트: ${sanitizedProjectName}`);
+    // 정확한 기간 날짜 저장 (periodStart~periodEnd)
+    if (periodStart || periodEnd) {
+      const ps = periodStart ?? `${finalYearMonth}-01`;
+      const [pyear, pmonth] = finalYearMonth.split('-').map(Number);
+      const lastDayNum = new Date(pyear, pmonth, 0).getDate();
+      const defaultEnd = `${finalYearMonth}-${String(lastDayNum).padStart(2, '0')}`;
+      const pe = periodEnd ?? defaultEnd;
+      descriptionParts.push(`period:${ps}~${pe}`);
+    }
     if (sanitizedDescription) descriptionParts.push(sanitizedDescription);
     const finalDescription = descriptionParts.length > 0 ? descriptionParts.join(' | ') : null;
 
@@ -311,11 +325,17 @@ export async function POST(request: NextRequest) {
 
     // 프론트엔드가 기대하는 형식으로 응답 변환
     const [year, month] = finalYearMonth.split("-").map(Number);
+    const responsePeriodStart = periodStart
+      ? new Date(periodStart).toISOString()
+      : new Date(year, month - 1, 1).toISOString();
+    const responsePeriodEnd = periodEnd
+      ? new Date(periodEnd + "T23:59:59").toISOString()
+      : new Date(year, month, 0, 23, 59, 59).toISOString();
     const responseBudget = {
       ...budget,
       name: sanitizedName || `${finalYearMonth} Budget`,
-      periodStart: new Date(year, month - 1, 1).toISOString(),
-      periodEnd: new Date(year, month, 0, 23, 59, 59).toISOString(),
+      periodStart: responsePeriodStart,
+      periodEnd: responsePeriodEnd,
       projectName: sanitizedProjectName,
     };
 

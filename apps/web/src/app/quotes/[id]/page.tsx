@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
+  ChevronLeft,
   User,
   Building2,
   Calendar,
@@ -470,23 +471,18 @@ ${itemLines}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
           <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             <Link href="/quotes">
-              <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10">
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="ghost" className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 text-slate-600 hover:text-slate-900">
+                <ChevronLeft className="h-5 w-5" />
+                <span className="hidden sm:inline text-sm font-medium">목록으로</span>
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
                 <Badge
-                  variant={
-                    quote.status === "COMPLETED"
-                      ? "default"
-                      : quote.status === "RESPONDED"
-                      ? "secondary"
-                      : "outline"
-                  }
+                  variant="outline"
                   className={cn(
-                    "flex items-center gap-1.5 text-sm font-semibold px-3 py-1",
+                    "flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full",
                     quoteStatus === "PENDING" && "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-400",
                     quoteStatus === "SENT" && "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-400",
                     quoteStatus === "RESPONDED" && "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/50 dark:text-green-400",
@@ -807,14 +803,20 @@ ${itemLines}
 
         {/* 탭 구조: 회신 입력, 회신 수신함 */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 gap-1">
-            <TabsTrigger value="items" className="text-xs md:text-sm whitespace-nowrap">
-              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+          <TabsList className="flex bg-transparent border-b border-slate-200 dark:border-slate-800 gap-0 rounded-none p-0 h-auto w-full justify-start">
+            <TabsTrigger
+              value="items"
+              className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-3 pt-0 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium transition-colors"
+            >
+              <FileText className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">회신 입력</span>
               <span className="sm:hidden">입력</span>
             </TabsTrigger>
-            <TabsTrigger value="inbox" className="text-xs md:text-sm whitespace-nowrap">
-              <Inbox className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 flex-shrink-0" />
+            <TabsTrigger
+              value="inbox"
+              className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 pb-3 pt-0 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium transition-colors"
+            >
+              <Inbox className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">회신 수신함</span>
               <span className="sm:hidden">수신함</span>
             </TabsTrigger>
@@ -968,7 +970,7 @@ ${itemLines}
             {/* Outline: 목록, PDF, 견적 취소 */}
             <Link href="/quotes" className="w-full sm:w-auto order-2 sm:order-2">
               <Button variant="outline" className="w-full sm:w-auto text-sm h-10 md:h-11">
-                <ArrowLeft className="h-4 w-4 mr-2 shrink-0" />
+                <ChevronLeft className="h-4 w-4 mr-2 shrink-0" />
                 목록으로
               </Button>
             </Link>

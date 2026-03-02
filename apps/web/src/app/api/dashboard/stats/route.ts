@@ -94,10 +94,56 @@ export async function GET(request: NextRequest) {
       .filter((q: any) => q.status === "RESPONDED" || q.status === "COMPLETED")
       .reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0);
 
-    // 4. 예산 사용률 계산
-    const budgetUsageRate = activeBudget && activeBudget.totalAmount > 0
+    // 4. 예산 사용률 계산 (UserBudget 우선, 없으면 Budget 모델 폴백)
+    let budgetUsageRate = activeBudget && activeBudget.totalAmount > 0
       ? (activeBudget.usedAmount / activeBudget.totalAmount) * 100
       : 0;
+
+    // UserBudget이 없으면 Budget 모델(예산 관리 페이지용)에서 이번 달 예산 조회
+    let fallbackBudgetInfo: { id: string; name: string; totalAmount: number; usedAmount: number; remainingAmount: number; usageRate: string } | null = null;
+    if (!activeBudget) {
+      try {
+        const userOrgMembershipsForBudget = await db.organizationMember.findMany({
+          where: { userId },
+          select: { organizationId: true },
+        });
+        const orgIdsForBudget = userOrgMembershipsForBudget.map((m: { organizationId: string }) => m.organizationId);
+        const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const monthlyBudget = await db.budget.findFirst({
+          where: {
+            scopeKey: { in: [`user-${userId}`, userId, ...orgIdsForBudget] },
+            yearMonth: currentYearMonth,
+          },
+        });
+        if (monthlyBudget) {
+          // thisMonthPurchaseAmount는 아래에서 계산되므로 먼저 임시 계산
+          const tmpThisMonthRecords = await db.purchaseRecord.findMany({
+            where: {
+              OR: [{ scopeKey: userId }, { scopeKey: `user-${userId}` }],
+              purchasedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1), lte: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) },
+            },
+            select: { amount: true },
+          });
+          const tmpMonthlySpent = tmpThisMonthRecords.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+          budgetUsageRate = monthlyBudget.amount > 0 ? (tmpMonthlySpent / monthlyBudget.amount) * 100 : 0;
+          let budgetName = `${currentYearMonth} Budget`;
+          if (monthlyBudget.description) {
+            const nm = monthlyBudget.description.match(/^\[([^\]]+)\]/);
+            if (nm) budgetName = nm[1];
+          }
+          fallbackBudgetInfo = {
+            id: monthlyBudget.id,
+            name: budgetName,
+            totalAmount: monthlyBudget.amount,
+            usedAmount: tmpMonthlySpent,
+            remainingAmount: monthlyBudget.amount - tmpMonthlySpent,
+            usageRate: budgetUsageRate.toFixed(1),
+          };
+        }
+      } catch {
+        // 폴백 실패해도 0%로 유지
+      }
+    }
 
     // 5. PurchaseRecord 기반 지출 통계 (이번 달 / 전월 / 최근 6개월)
     const memberships = await db.workspaceMember.findMany({
@@ -271,7 +317,7 @@ export async function GET(request: NextRequest) {
       }));
 
     return NextResponse.json({
-      // 예산 정보
+      // 예산 정보 (UserBudget 우선, 없으면 Budget 모델 폴백)
       budget: activeBudget
         ? {
             id: activeBudget.id,
@@ -283,7 +329,7 @@ export async function GET(request: NextRequest) {
             fiscalYear: activeBudget.fiscalYear,
             recentTransactions: activeBudget.transactions,
           }
-        : null,
+        : fallbackBudgetInfo,
 
       // 예산 사용률 (%)
       budgetUsageRate: budgetUsageRate.toFixed(1),

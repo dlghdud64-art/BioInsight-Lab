@@ -478,16 +478,17 @@ export default function PurchasesPage() {
     },
   ], []);
 
-  // 상태에 따른 뱃지 (Status Dot + Pill)
+  // 상태에 따른 뱃지 (PurchaseRecord는 이미 완료된 구매 내역이므로 항상 "구매 완료")
   const getStatusBadge = (purchase: any) => {
     const daysAgo = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysAgo > 14) {
+      return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    }
     if (daysAgo > 7) {
-      return { label: "배송완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
     }
-    if (daysAgo > 3) {
-      return { label: "배송중", dot: "blue" as const, dotPulse: false, className: "bg-blue-50 text-blue-700 border-blue-200" };
-    }
-    return { label: "대기", dot: "amber" as const, dotPulse: false, className: "bg-amber-50 text-amber-700 border-amber-200" };
+    // 최근 구매도 완료 처리 (PurchaseRecord = 완료된 구매)
+    return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   };
 
   return (
