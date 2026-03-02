@@ -494,17 +494,20 @@ export default function ReportsPage() {
             </Card>
           )}
 
-          {/* 차트 영역: 2단 Grid (기간별 전체폭 / 벤더·카테고리 좌우 배치) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 월별 구매 추이 차트 — 상단 전체 너비 */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 lg:col-span-2 h-[240px] flex flex-col">
+          {/* 차트 영역: 3단 Grid (기간별 / 벤더별 / 카테고리별 균등 배치) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 월별 구매 추이 차트 */}
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
               {monthlyData && monthlyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
+                  <BarChart
+                    data={monthlyData}
+                    margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} strokeOpacity={0.1} />
                     <XAxis dataKey="month" axisLine={false} tickLine={false} />
                     <YAxis
@@ -536,15 +539,18 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* 벤더별 구매 현황 — 좌측 */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[240px] flex flex-col">
+          {/* 벤더별 구매 현황 */}
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
               {vendorData && vendorData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={vendorData}>
+                  <BarChart
+                    data={vendorData}
+                    margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} strokeOpacity={0.1} />
                     <XAxis dataKey="vendor" axisLine={false} tickLine={false} />
                     <YAxis
@@ -576,8 +582,8 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          {/* 카테고리별 구매 현황 (파이 차트) — 우측 */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[240px] flex flex-col">
+          {/* 카테고리별 구매 현황 (파이 차트) */}
+          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
             </CardHeader>
@@ -606,7 +612,7 @@ export default function ReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-[240px]">
+                <div className="flex items-center justify-center h-[280px]">
                   <p className="text-sm text-slate-400">데이터 없음</p>
                 </div>
               )}
