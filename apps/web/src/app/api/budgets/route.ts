@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { OrganizationRole } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,56 +11,45 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get("organizationId");
+    const filterOrgId = searchParams.get("organizationId");
 
-    // 사용자의 조직 ID 목록 조회 (실패해도 개인 예산은 보이도록 방어적 처리)
+    // ── 1. 사용자가 속한 조직 ID 목록 확보 (서버 세션 기반, 위변조 불가) ──────
     let userOrgIds: string[] = [];
     try {
-      const userOrganizations = await db.organizationMember.findMany({
+      const memberships = await db.organizationMember.findMany({
         where: { userId: session.user.id },
         select: { organizationId: true },
       });
-      userOrgIds = userOrganizations.map((m: { organizationId: string }) => m.organizationId);
+      userOrgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
     } catch (orgErr: any) {
       console.warn("[Budget API] organizationMember lookup failed:", orgErr?.message);
     }
 
-    // scopeKey 목록 구성 (사용자 ID 기반 + 조직 ID들)
+    // ── 2. 쿼리 필터: organizationId 1순위(데이터 격리) + 레거시 scopeKey 병행 ──
+    // 쿼리 파라미터로 특정 조직 필터링 시, 본인이 속한 조직인지 서버에서 검증
+    let allowedOrgIds = userOrgIds;
+    if (filterOrgId) {
+      if (!userOrgIds.includes(filterOrgId)) {
+        return NextResponse.json({ budgets: [] }); // 소속 조직이 아니면 빈 배열 반환
+      }
+      allowedOrgIds = [filterOrgId];
+    }
+
+    // 레거시 scopeKey 목록 (개인 예산 + 조직 예산)
     const scopeKeys = [
       `user-${session.user.id}`,
       ...userOrgIds,
     ];
 
-    if (organizationId && !scopeKeys.includes(organizationId)) {
-      scopeKeys.push(organizationId);
-    }
-
-    // organizationId가 없을 때: DB에서 해당 user의 모든 budget scopeKey도 포함 (orphan 방지)
-    if (userOrgIds.length === 0) {
-      try {
-        const allUserBudgets = await db.budget.findMany({
-          where: {
-            OR: [
-              { scopeKey: `user-${session.user.id}` },
-              { scopeKey: { not: { startsWith: "user-" } } },
-            ],
-          },
-          select: { scopeKey: true },
-          distinct: ["scopeKey"],
-        });
-        for (const b of allUserBudgets) {
-          if (!scopeKeys.includes(b.scopeKey)) {
-            scopeKeys.push(b.scopeKey);
-          }
-        }
-      } catch {
-        // 무시 - 기본 scopeKeys로 진행
-      }
-    }
-
+    // ── 3. 데이터 격리: organizationId가 있으면 organizationId 기반, 없으면 scopeKey 기반 ──
     const budgets = await db.budget.findMany({
       where: {
-        scopeKey: { in: scopeKeys },
+        OR: [
+          // 신규: organizationId 컬럼 기반 필터 (정확한 데이터 격리)
+          ...(allowedOrgIds.length > 0 ? [{ organizationId: { in: allowedOrgIds } }] : []),
+          // 레거시: scopeKey 기반 (개인 예산 + 아직 organizationId 없는 구버전 레코드)
+          { scopeKey: { in: scopeKeys }, organizationId: null },
+        ],
       },
       orderBy: {
         yearMonth: "desc",
@@ -162,10 +152,33 @@ export async function POST(request: NextRequest) {
       periodEnd,
       projectName,
       description,
-      // Legacy fields (for backward compatibility)
-      organizationId: requestedOrgId,
+      teamId,
+      // organizationId를 body에서 받더라도 서버 세션으로 덮어씌움 (위변조 방지)
       yearMonth,
     } = body;
+
+    // ── [RBAC] organizationId는 body에서 받지 않고 서버 세션에서 추출 ──────────
+    // OWNER 또는 ADMIN 만 예산 생성 가능 (Viewer/Requester/Approver 금지)
+    const membership = await db.organizationMember.findFirst({
+      where: { userId: session.user.id },
+      select: { organizationId: true, role: true },
+      orderBy: { createdAt: "asc" }, // 가장 먼저 가입한 조직 우선
+    });
+
+    const isPersonalBudget = !membership; // 조직 소속 없음 → 개인 예산
+
+    if (membership) {
+      const allowedRoles: OrganizationRole[] = [OrganizationRole.OWNER, OrganizationRole.ADMIN];
+      if (!allowedRoles.includes(membership.role)) {
+        return NextResponse.json(
+          { error: "예산 생성 권한이 없습니다. 조직의 Owner 또는 Admin만 예산을 생성할 수 있습니다." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 서버에서 결정된 organizationId (body의 값 무시 — 위변조 방지)
+    const resolvedOrganizationId: string | null = membership?.organizationId ?? null;
 
     // 1. 필수 필드 검증 (신규 형식 우선, 레거시 형식도 지원)
     if (!rawAmount && rawAmount !== 0) {
@@ -230,35 +243,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. scopeKey 결정: 요청의 organizationId를 우선 사용, 없으면 세션에서 자동 조회
-    let scopeKey: string;
+    // 3. scopeKey 결정: 서버 세션 기반 organizationId → body의 값은 무시 (위변조 방지)
+    const scopeKey: string = resolvedOrganizationId ?? `user-${session.user.id}`;
+    console.log("[Budget API] Server-resolved scopeKey:", scopeKey, "organizationId:", resolvedOrganizationId);
 
-    if (requestedOrgId && typeof requestedOrgId === 'string') {
-      // 요청으로 조직 ID가 전달된 경우 — 멤버십 검증 후 사용
-      const membership = await db.organizationMember.findFirst({
-        where: { userId: session.user.id, organizationId: requestedOrgId },
-        select: { organizationId: true },
+    // teamId 검증: 해당 팀이 실제로 이 조직에 속하는지 확인
+    let resolvedTeamId: string | null = null;
+    if (teamId && resolvedOrganizationId) {
+      const team = await db.team.findFirst({
+        where: { id: teamId, organizationId: resolvedOrganizationId },
+        select: { id: true },
       });
-      if (membership) {
-        scopeKey = membership.organizationId;
-        console.log("[Budget API] Using requested organizationId:", scopeKey);
-      } else {
-        // 해당 조직의 멤버가 아니면 세션에서 자동 조회 (fallback)
-        const userOrg = await db.organizationMember.findFirst({
-          where: { userId: session.user.id },
-          select: { organizationId: true },
-        });
-        scopeKey = userOrg ? userOrg.organizationId : `user-${session.user.id}`;
-        console.log("[Budget API] Requested org not a member, fallback scopeKey:", scopeKey);
-      }
-    } else {
-      // organizationId 미전달 시 세션에서 자동 조회
-      const userOrg = await db.organizationMember.findFirst({
-        where: { userId: session.user.id },
-        select: { organizationId: true },
-      });
-      scopeKey = userOrg ? userOrg.organizationId : `user-${session.user.id}`;
-      console.log("[Budget API] Auto scopeKey:", scopeKey);
+      resolvedTeamId = team?.id ?? null;
     }
 
     // 금액을 정수로 변환 (Prisma 스키마에서 Int로 정의됨)
@@ -306,6 +302,8 @@ export async function POST(request: NextRequest) {
       budget = await db.budget.update({
         where: { id: existing.id },
         data: {
+          organizationId: resolvedOrganizationId,
+          teamId: resolvedTeamId,
           amount: amountInt,
           currency: currency || "KRW",
           description: finalDescription,
@@ -314,6 +312,8 @@ export async function POST(request: NextRequest) {
     } else {
       budget = await db.budget.create({
         data: {
+          organizationId: resolvedOrganizationId,  // 서버 세션에서 주입 (위변조 방지)
+          teamId: resolvedTeamId,
           scopeKey,
           yearMonth: finalYearMonth,
           amount: amountInt,

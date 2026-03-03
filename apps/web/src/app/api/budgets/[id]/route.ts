@@ -3,6 +3,20 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { OrganizationRole } from "@prisma/client";
+
+// OWNER/ADMIN 여부 확인 헬퍼
+async function isOrgAdminOrOwner(userId: string, organizationId: string): Promise<boolean> {
+  const membership = await db.organizationMember.findFirst({
+    where: { userId, organizationId },
+    select: { role: true },
+  });
+  if (!membership) return false;
+  return (
+    membership.role === OrganizationRole.OWNER ||
+    membership.role === OrganizationRole.ADMIN
+  );
+}
 
 // ─── PATCH 요청 Zod 검증 스키마 ───────────────────────────────────────────────
 const updateBudgetSchema = z
@@ -85,11 +99,13 @@ export async function GET(
       return NextResponse.json({ error: "Budget not found" }, { status: 404 });
     }
 
-    // 접근 권한 확인
+    // 접근 권한 확인 (organizationId FK 우선, 레거시는 scopeKey 기반)
     const userScopeKey = `user-${session.user.id}`;
     if (budget.scopeKey !== userScopeKey) {
+      // organizationId가 있으면 그걸로 멤버십 확인, 없으면 scopeKey로 fallback
+      const orgId = budget.organizationId ?? budget.scopeKey;
       const isOrgMember = await db.organizationMember.findFirst({
-        where: { userId: session.user.id, organizationId: budget.scopeKey },
+        where: { userId: session.user.id, organizationId: orgId },
       });
       if (!isOrgMember) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -177,30 +193,24 @@ export async function PATCH(
       );
     }
 
-    // ── 2. 권한 확인 ──────────────────────────────────────────────────────────
+    // ── 2. 권한 확인 (RBAC: 조직 예산은 OWNER/ADMIN만 수정 가능) ─────────────
     const userScopeKey = `user-${session.user.id}`;
-    if (budget.scopeKey !== userScopeKey) {
-      // 조직 예산: 해당 조직 멤버면 수정 가능 (VIEWER, REQUESTER, APPROVER, ADMIN 모두)
-      const membership = await db.organizationMember.findFirst({
-        where: {
-          userId: session.user.id,
-          organizationId: budget.scopeKey,
-        },
-      });
-      if (!membership) {
-        // 멤버가 아닌 경우에도 scopeKey가 다른 형식일 수 있음 → user-{id}로 재확인
-        const altCheck = budget.scopeKey.startsWith("user-")
-          ? budget.scopeKey === userScopeKey
-          : false;
-        if (!altCheck) {
-          return NextResponse.json(
-            { error: "해당 예산을 수정할 권한이 없습니다." },
-            { status: 403 }
-          );
-        }
+    const isPersonalBudget = budget.scopeKey === userScopeKey;
+
+    if (!isPersonalBudget) {
+      // 조직 예산: OWNER 또는 ADMIN만 수정 가능
+      const orgId = budget.organizationId ?? budget.scopeKey; // organizationId 우선, 레거시는 scopeKey
+      const canEdit = await isOrgAdminOrOwner(session.user.id, orgId);
+      if (!canEdit) {
+        return NextResponse.json(
+          { error: "예산 수정 권한이 없습니다. 조직의 Owner 또는 Admin만 예산을 수정할 수 있습니다." },
+          { status: 403 }
+        );
       }
+    } else if (budget.scopeKey !== userScopeKey) {
+      // 개인 예산인데 본인이 아닌 경우 (비정상)
+      return NextResponse.json({ error: "해당 예산을 수정할 권한이 없습니다." }, { status: 403 });
     }
-    // 개인 예산: scopeKey === userScopeKey 이면 본인만 가능 (위에서 이미 확인)
 
     // ── 3. 요청 바디 파싱 ──────────────────────────────────────────────────────
     let rawBody: unknown;
@@ -336,19 +346,16 @@ export async function DELETE(
       );
     }
 
-    // 권한 확인: scopeKey가 사용자 ID 기반이거나, 조직 멤버인 경우만 허용
+    // 권한 확인 (RBAC: 조직 예산은 OWNER/ADMIN만 삭제 가능)
     const userScopeKey = `user-${session.user.id}`;
     if (budget.scopeKey !== userScopeKey) {
-      // 조직 예산인 경우 조직 멤버인지 확인
-      const isOrgMember = await db.organizationMember.findFirst({
-        where: {
-          userId: session.user.id,
-          organizationId: budget.scopeKey,
-        },
-      });
-
-      if (!isOrgMember) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      const orgId = budget.organizationId ?? budget.scopeKey;
+      const canDelete = await isOrgAdminOrOwner(session.user.id, orgId);
+      if (!canDelete) {
+        return NextResponse.json(
+          { error: "예산 삭제 권한이 없습니다. 조직의 Owner 또는 Admin만 예산을 삭제할 수 있습니다." },
+          { status: 403 }
+        );
       }
     }
 

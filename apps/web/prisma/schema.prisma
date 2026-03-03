@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ?용???권한
@@ -76,6 +77,8 @@ model Organization {
   orders       Order[]
   userBudgets  UserBudget[]
   invites      OrganizationInvite[]
+  budgets      Budget[]
+  teams        Team[]
 
   @@index([name])
   @@index([plan])
@@ -748,25 +751,31 @@ model PurchaseRecord {
   @@index([workspaceId])
 }
 
-// Budget management (MVP: guestKey-based scope)
+// Budget management (Multi-tenant: organizationId-scoped)
 model Budget {
-  id          String   @id @default(cuid())
-  scopeKey    String // guestKey for MVP, workspaceId for future
-  workspaceId String? // Optional workspace association
-  yearMonth   String // Format: "YYYY-MM" (e.g., "2025-01")
-  amount      Int // Budget amount
-  currency    String   @default("KRW")
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String?  // FK to Organization (null = personal budget)
+  teamId         String?  // FK to Team (null = no team scope) — optional sub-scope
+  scopeKey       String   // Legacy: "user-{userId}" or "{organizationId}" (keep for backward compat)
+  workspaceId    String?  // Optional workspace association
+  yearMonth      String   // Format: "YYYY-MM" (e.g., "2025-01")
+  amount         Int      // Budget amount
+  currency       String   @default("KRW")
+  description    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  team         Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  workspace    Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@unique([scopeKey, yearMonth])
   @@index([scopeKey])
   @@index([yearMonth])
   @@index([workspaceId])
+  @@index([organizationId])
+  @@index([teamId])
 }
 
 // Import job tracking (for file-based imports)
@@ -1429,16 +1438,20 @@ model UserInventory {
 
 // 팀/랩
 model Team {
-  id          String   @id @default(cuid())
-  name        String
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String?  // FK to Organization (null = standalone team)
+  name           String
+  description    String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members          TeamMember[]
   purchaseRequests PurchaseRequest[]
+  budgets          Budget[]
 
+  @@index([organizationId])
   @@index([name])
 }
 
