@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   ChevronLeft,
+  Home,
   User,
   Building2,
   Calendar,
@@ -83,6 +84,8 @@ export default function QuoteDetailPage() {
   const [requestMessage, setRequestMessage] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [purchaseBudgetId, setPurchaseBudgetId] = useState("");
   const [orderForm, setOrderForm] = useState({
     expectedDelivery: "",
     paymentMethod: "",
@@ -237,18 +240,21 @@ export default function QuoteDetailPage() {
     },
   });
 
-  // 구매 완료 상태 업데이트
+  // 구매 완료 상태 업데이트 (budgetId 포함)
   const updateStatusMutation = useMutation({
-    mutationFn: async (newStatus: QuoteStatus) => {
+    mutationFn: async ({ status, budgetId }: { status: QuoteStatus; budgetId?: string }) => {
       const response = await fetch(`/api/quotes/${quoteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status, ...(budgetId ? { budgetId } : {}) }),
       });
-      if (!response.ok) throw new Error("Failed to update status");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to update status");
+      }
       return response.json();
     },
-    onSuccess: (data: { quote?: { status?: string } }, newStatus) => {
+    onSuccess: (data: { quote?: { status?: string } }, variables) => {
       if (data?.quote?.status) {
         queryClient.setQueryData(["quote", quoteId], (prev: unknown) => {
           const p = prev as { quote?: Record<string, unknown> } | undefined;
@@ -260,20 +266,21 @@ export default function QuoteDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
-      if (newStatus === "COMPLETED") {
+      if (variables.status === "COMPLETED") {
         queryClient.invalidateQueries({ queryKey: ["purchases"] });
         queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
         queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+        queryClient.invalidateQueries({ queryKey: ["user-budgets"] });
       }
       // router.refresh(): 서버 컴포넌트 포함 Next.js 라우터 캐시 전체 갱신
       router.refresh();
-      if (newStatus === "COMPLETED") {
+      if (variables.status === "COMPLETED") {
         toast({
           title: "구매 완료 처리됨",
-          description: "구매 내역이 자동으로 기록되었습니다.",
+          description: "구매 내역 및 예산이 자동으로 기록되었습니다.",
         });
-      } else if (newStatus === "CANCELLED") {
+      } else if (variables.status === "CANCELLED") {
         toast({
           title: "견적이 취소되었습니다",
           description: "견적 요청이 취소 상태로 변경되었습니다.",
@@ -324,14 +331,13 @@ export default function QuoteDetailPage() {
   });
 
   const handleMarkAsCompleted = () => {
-    if (confirm("이 견적을 구매 완료로 표시하시겠습니까? 구매 내역이 자동으로 기록됩니다.")) {
-      updateStatusMutation.mutate("COMPLETED");
-    }
+    setPurchaseBudgetId("");
+    setShowPurchaseDialog(true);
   };
 
   const handleCancelQuote = () => {
     if (confirm("정말 이 견적 요청을 취소하시겠습니까?")) {
-      updateStatusMutation.mutate("CANCELLED");
+      updateStatusMutation.mutate({ status: "CANCELLED" });
     }
   };
 
@@ -465,53 +471,75 @@ ${itemLines}
   const canCheckout = !isMemberOnly || !userTeam; // 팀이 없거나 ADMIN/OWNER인 경우
 
   return (
+    <>
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-8">
         {/* 헤더 */}
         <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 md:p-8 leading-relaxed tracking-normal">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
-          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-            <Link href="/quotes">
-              <Button
-                variant="ghost"
-                className="h-8 md:h-10 px-3 py-2 md:px-3 flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 font-medium rounded-md whitespace-nowrap transition-colors"
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            {/* 브레드크럼 네비게이션 */}
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs text-slate-400">
+              <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+                <Home className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Home</span>
+              </Link>
+              <span className="text-slate-300">/</span>
+              <Link
+                href="/dashboard/quotes"
+                className="hover:text-slate-700 transition-colors whitespace-nowrap"
               >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="text-xs sm:text-sm font-medium">목록으로</span>
-              </Button>
-            </Link>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h1 className="text-lg sm:text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full",
-                    quoteStatus === "PENDING" && "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-400",
-                    quoteStatus === "SENT" && "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-400",
-                    quoteStatus === "RESPONDED" && "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/50 dark:text-green-400",
-                    quoteStatus === "COMPLETED" && "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-400",
-                    quoteStatus === "CANCELLED" && "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/50 dark:text-red-400"
-                  )}
-                >
-                  {quoteStatus === "PENDING" && <Clock className="h-4 w-4" />}
-                  {quoteStatus === "SENT" && <CheckCircle2 className="h-4 w-4" />}
-                  {quoteStatus === "RESPONDED" && <CheckCircle2 className="h-4 w-4" />}
-                  {quoteStatus === "COMPLETED" && <CheckCircle2 className="h-4 w-4" />}
-                  {quoteStatus === "CANCELLED" && <XCircle className="h-4 w-4" />}
-                  {QUOTE_STATUS[quoteStatus]}
-                </Badge>
-              </div>
-              <span className="text-sm text-muted-foreground mt-2 block">
-                {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                견적 요청 관리
+              </Link>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-500 truncate max-w-[140px] sm:max-w-xs md:max-w-sm">
+                {quote.title || "견적 상세"}
               </span>
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-4">
+              <Link href="/quotes">
+                <Button
+                  variant="ghost"
+                  className="h-8 md:h-10 px-3 py-2 md:px-3 flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 font-medium rounded-md whitespace-nowrap transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm font-medium">목록으로</span>
+                </Button>
+              </Link>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h1 className="text-lg sm:text-xl md:text-3xl font-bold truncate">{quote.title}</h1>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full",
+                      quoteStatus === "PENDING" && "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-400",
+                      quoteStatus === "SENT" && "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-400",
+                      quoteStatus === "RESPONDED" && "bg-green-100 text-green-800 border-green-300 dark:bg-green-950/50 dark:text-green-400",
+                      quoteStatus === "COMPLETED" && "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-400",
+                      quoteStatus === "CANCELLED" && "bg-red-100 text-red-800 border-red-300 dark:bg-red-950/50 dark:text-red-400"
+                    )}
+                  >
+                    {quoteStatus === "PENDING" && <Clock className="h-4 w-4" />}
+                    {quoteStatus === "SENT" && <CheckCircle2 className="h-4 w-4" />}
+                    {quoteStatus === "RESPONDED" && <CheckCircle2 className="h-4 w-4" />}
+                    {quoteStatus === "COMPLETED" && <CheckCircle2 className="h-4 w-4" />}
+                    {quoteStatus === "CANCELLED" && <XCircle className="h-4 w-4" />}
+                    {QUOTE_STATUS[quoteStatus]}
+                  </Badge>
+                </div>
+                <span className="text-sm text-muted-foreground mt-2 block">
+                  {new Date(quote.createdAt).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
             </div>
           </div>
           {/* 스마트 공유 버튼 */}
@@ -1005,7 +1033,7 @@ ${itemLines}
                 className="w-full sm:w-auto text-sm h-10 md:h-11 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950/30 order-4"
               >
                 <XCircle className="h-4 w-4 mr-2 shrink-0" />
-                {updateStatusMutation.isPending && updateStatusMutation.variables === "CANCELLED"
+                {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "CANCELLED"
                   ? "처리 중..."
                   : "견적 취소"}
               </Button>
@@ -1295,5 +1323,117 @@ ${itemLines}
         </div>
       </div>
     </div>
+
+    {/* ── 구매 확정 다이얼로그: 예산 선택 필수 ── */}
+    <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-600" />
+            구매 완료 처리
+          </DialogTitle>
+          <DialogDescription>
+            차감할 예산을 선택하세요. 구매 내역과 예산 사용액이 자동으로 기록됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {/* 견적 금액 요약 */}
+          {quoteTotal > 0 && (
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-sm">
+              <span className="text-muted-foreground font-medium">견적 총액</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                ₩{quoteTotal.toLocaleString("ko-KR")}
+              </span>
+            </div>
+          )}
+
+          {/* 예산 선택 */}
+          <div className="space-y-2">
+            <Label htmlFor="purchase-budget">
+              결제 예산 <span className="text-red-500">*</span>
+            </Label>
+            <Select value={purchaseBudgetId} onValueChange={setPurchaseBudgetId}>
+              <SelectTrigger id="purchase-budget">
+                <SelectValue placeholder="예산을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {budgets.length === 0 ? (
+                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                    등록된 활성 예산이 없습니다.
+                    <br />
+                    <span className="text-xs">예산 관리 페이지에서 먼저 예산을 등록해주세요.</span>
+                  </div>
+                ) : (
+                  budgets.map((b: any) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name} — 잔액 ₩{b.remainingAmount.toLocaleString("ko-KR")}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 예산 잔액 미리보기 */}
+          {(() => {
+            const selBudget = budgets.find((b: any) => b.id === purchaseBudgetId);
+            if (!selBudget) return null;
+            const afterAmount = selBudget.remainingAmount - quoteTotal;
+            return (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-800 space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">현재 잔액</span>
+                  <span className="font-semibold">₩{selBudget.remainingAmount.toLocaleString("ko-KR")}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">차감 금액</span>
+                  <span className="font-semibold text-red-600">- ₩{quoteTotal.toLocaleString("ko-KR")}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200 dark:border-blue-700">
+                  <span className="font-medium">차감 후 잔액</span>
+                  <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-600" : "text-emerald-600")}>
+                    ₩{afterAmount.toLocaleString("ko-KR")}
+                  </span>
+                </div>
+                {afterAmount < 0 && (
+                  <p className="text-xs text-red-600 flex items-center gap-1 pt-0.5">
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
+                    예산 잔액이 부족합니다. 다른 예산을 선택하거나 예산을 증액하세요.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowPurchaseDialog(false)}
+          >
+            취소
+          </Button>
+          <Button
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            disabled={
+              !purchaseBudgetId ||
+              updateStatusMutation.isPending ||
+              (() => {
+                const b = budgets.find((b: any) => b.id === purchaseBudgetId);
+                return b ? b.remainingAmount < quoteTotal : false;
+              })()
+            }
+            onClick={() => {
+              setShowPurchaseDialog(false);
+              updateStatusMutation.mutate({ status: "COMPLETED", budgetId: purchaseBudgetId });
+            }}
+          >
+            {updateStatusMutation.isPending ? "처리 중..." : "구매 확정"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

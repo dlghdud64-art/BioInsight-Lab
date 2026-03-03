@@ -47,6 +47,8 @@ export function DateRangePicker({
     }
   }, [startDate, endDate]);
 
+  const [open, setOpen] = React.useState(false);
+
   const handleDateSelect = (range: DateRange | undefined) => {
     setDate(range);
     if (range?.from && range?.to) {
@@ -54,6 +56,8 @@ export function DateRangePicker({
         format(range.from, "yyyy-MM-dd"),
         format(range.to, "yyyy-MM-dd")
       );
+      // 시작일과 종료일이 모두 선택된 경우에만 팝업을 닫는다
+      setOpen(false);
     } else if (range?.from) {
       // 시작일만 선택된 경우
       onDateChange(format(range.from, "yyyy-MM-dd"), "");
@@ -89,11 +93,13 @@ export function DateRangePicker({
     const range = { from, to };
     setDate(range);
     onDateChange(format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd"));
+    // 프리셋 선택 시에는 전체 구간이 확정되므로 즉시 팝업을 닫는다
+    setOpen(false);
   };
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
