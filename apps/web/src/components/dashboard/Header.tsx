@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -15,7 +15,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones, Settings, CreditCard, LogOut } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useQRScanner } from "@/contexts/QRScannerContext";
+import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones, Settings, CreditCard, LogOut, ScanLine } from "lucide-react";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -25,7 +27,20 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "q") {
+        e.preventDefault();
+        openQRScanner();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [openQRScanner]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
@@ -223,6 +238,24 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               className="pl-9 h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 w-full min-w-0 text-slate-900 dark:text-slate-100"
             />
           </div>
+
+          {/* QR 스캔 버튼 */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="QR 스캔"
+                title="QR 스캔 (단축키: Ctrl+Q)"
+                onClick={openQRScanner}
+              >
+                <ScanLine className="h-5 w-5" aria-hidden />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>QR 스캔 (단축키: Ctrl+Q)</TooltipContent>
+          </Tooltip>
 
           {/* 알림 드롭다운 */}
           <DropdownMenu>

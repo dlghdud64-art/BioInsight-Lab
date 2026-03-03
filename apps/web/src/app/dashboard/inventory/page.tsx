@@ -674,14 +674,14 @@ export default function InventoryPage() {
     <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* 상단 타이틀 및 액션 버튼 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-end lg:justify-between mb-4">
           <div className="flex flex-col space-y-2">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
             <p className="text-muted-foreground">
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3">
             <AddInventoryModal
               open={isDialogOpen}
               onOpenChange={(open) => {
