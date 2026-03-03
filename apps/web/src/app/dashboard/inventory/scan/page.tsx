@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import { useSession } from "next-auth/react";
  * 1) URL에 ?id= 파라미터가 있으면 즉시 해당 재고 상세를 표시 (QR 스캔 착지 페이지)
  * 2) 파라미터가 없으면 카메라 스캐너를 띄워 직접 스캔
  */
-export default function InventoryScanPage() {
+function InventoryScanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -431,5 +431,19 @@ export default function InventoryScanPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function InventoryScanPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-slate-900">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+        </div>
+      }
+    >
+      <InventoryScanContent />
+    </Suspense>
   );
 }
