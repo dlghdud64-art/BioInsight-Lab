@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity } from "lucide-react";
+import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity, PackagePlus } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
 import {
@@ -52,17 +52,19 @@ interface InventoryTableProps {
   onDelete?: (inventory: InventoryItem) => void;
   onReorder: (inventory: InventoryItem) => void;
   onDetailClick?: (inventory: InventoryItem) => void;
+  onRestock?: (inventory: InventoryItem) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
   emptyActionLabel?: string;
 }
 
-export function InventoryTable({ 
-  inventories, 
-  onEdit, 
+export function InventoryTable({
+  inventories,
+  onEdit,
   onDelete,
   onReorder,
   onDetailClick,
+  onRestock,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction,
   emptyActionLabel = "첫 재고 등록하기"
@@ -376,17 +378,33 @@ export function InventoryTable({
                     )}
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 dark:text-blue-400 font-semibold"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDetailClick?.(inventory);
-                      }}
-                    >
-                      상세 보기
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      {onRestock && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:border-emerald-400 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/30 font-semibold gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRestock(inventory);
+                          }}
+                        >
+                          <PackagePlus className="h-3 w-3" />
+                          입고
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-blue-600 dark:text-blue-400 font-semibold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDetailClick?.(inventory);
+                        }}
+                      >
+                        상세
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

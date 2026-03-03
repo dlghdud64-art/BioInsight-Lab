@@ -91,6 +91,8 @@ export default function InventoryPage() {
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
+  const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
+  const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -534,6 +536,35 @@ export default function InventoryPage() {
     },
   });
 
+  // 입고 mutation
+  const restockMutation = useMutation({
+    mutationFn: async ({ id, addQty, currentQty, lotNumber, expiryDate }: { id: string; addQty: number; currentQty: number; lotNumber?: string; expiryDate?: string }) => {
+      const response = await fetch(`/api/inventory/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: currentQty + addQty,
+          ...(lotNumber ? { lotNumber } : {}),
+          ...(expiryDate ? { expiryDate } : {}),
+        }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error || "입고에 실패했습니다.");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      setRestockItem(null);
+      setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+      toast({ title: "입고 완료", description: "재고 수량이 업데이트되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "입고 실패", description: error.message, variant: "destructive" });
+    },
+  });
+
   // 필터링된 인벤토리 (디바운스된 검색어 + 기타 필터)
   const filteredInventories = displayInventories.filter((inv) => {
     // 검색 필터: 품목명, 제조사, 카탈로그 번호, Lot, 공급사
@@ -829,6 +860,10 @@ export default function InventoryPage() {
                         String(inventory.safetyStock ?? inventory.minOrderQty ?? 1)
                       );
                       setIsSheetOpen(true);
+                    }}
+                    onRestock={(inventory) => {
+                      setRestockItem(inventory);
+                      setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
                     }}
                     emptyMessage={
                       debouncedSearchQuery.trim()
@@ -1236,6 +1271,91 @@ export default function InventoryPage() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* 입고 Dialog */}
+        <Dialog open={!!restockItem} onOpenChange={(open) => { if (!open) { setRestockItem(null); setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" }); } }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-700">
+                <span>입고 수량 추가</span>
+              </DialogTitle>
+              <DialogDescription>
+                {restockItem?.product.name}
+                {restockItem?.product.catalogNumber && (
+                  <span className="ml-1 text-xs text-slate-400">{restockItem.product.catalogNumber}</span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {restockItem && (
+              <div className="space-y-4 pt-1">
+                <div className="rounded-lg bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm flex justify-between">
+                  <span className="text-slate-500">현재 재고</span>
+                  <span className="font-semibold">{restockItem.currentQuantity.toLocaleString()} {restockItem.unit}</span>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="restock-qty">추가 수량 <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="restock-qty"
+                    type="number"
+                    min="1"
+                    placeholder="추가할 수량 입력"
+                    value={restockForm.addQty}
+                    onChange={(e) => setRestockForm((f) => ({ ...f, addQty: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="restock-lot">Lot 번호 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
+                  <Input
+                    id="restock-lot"
+                    placeholder="예: LOT-2024-001"
+                    value={restockForm.lotNumber}
+                    onChange={(e) => setRestockForm((f) => ({ ...f, lotNumber: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="restock-expiry">유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
+                  <Input
+                    id="restock-expiry"
+                    type="date"
+                    value={restockForm.expiryDate}
+                    onChange={(e) => setRestockForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                  />
+                </div>
+                {restockForm.addQty && Number(restockForm.addQty) > 0 && (
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
+                    <span className="text-emerald-700">입고 후 재고</span>
+                    <span className="font-bold text-emerald-700">
+                      {(restockItem.currentQuantity + Number(restockForm.addQty)).toLocaleString()} {restockItem.unit}
+                    </span>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setRestockItem(null); setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" }); }}>
+                    취소
+                  </Button>
+                  <Button
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    disabled={!restockForm.addQty || Number(restockForm.addQty) <= 0 || restockMutation.isPending}
+                    onClick={() => {
+                      const addQty = Number(restockForm.addQty);
+                      if (!addQty || addQty <= 0) return;
+                      restockMutation.mutate({
+                        id: restockItem.id,
+                        addQty,
+                        currentQty: restockItem.currentQuantity,
+                        lotNumber: restockForm.lotNumber || undefined,
+                        expiryDate: restockForm.expiryDate || undefined,
+                      });
+                    }}
+                  >
+                    {restockMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                    입고 확정
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* 기존 탭 구조는 숨김 처리 (필요시 나중에 복원 가능) */}
         {false && (

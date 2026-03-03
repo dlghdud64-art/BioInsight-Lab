@@ -72,7 +72,7 @@ function WorkspaceSettingsPageContent() {
   const currentMembership = currentOrg?.members?.find(
     (m: any) => m.userId === session?.user?.id
   );
-  const isAdmin = currentMembership?.role === OrganizationRole.ADMIN;
+  const isAdmin = currentMembership?.role === OrganizationRole.ADMIN || currentMembership?.role === OrganizationRole.OWNER;
 
   // 멤버 목록 조회
   const { data: membersData, isLoading: membersLoading } = useQuery({
@@ -249,6 +249,7 @@ function WorkspaceSettingsPageContent() {
   // 역할 표시 이름 매핑
   const getRoleLabel = (role: OrganizationRole) => {
     const roleMap: Record<OrganizationRole, string> = {
+      [OrganizationRole.OWNER]: "최고 관리자",
       [OrganizationRole.ADMIN]: "admin",
       [OrganizationRole.APPROVER]: "purchaser",
       [OrganizationRole.REQUESTER]: "member",
@@ -483,7 +484,8 @@ function WorkspaceSettingsPageContent() {
                         <div className="space-y-2">
                           {members.map((member: any) => {
                             const isCurrentUser = member.userId === session?.user?.id;
-                            const canEdit = isAdmin && !isCurrentUser;
+                            const isOwner = member.role === OrganizationRole.OWNER;
+                            const canEdit = isAdmin && !isCurrentUser && !isOwner;
 
                             return (
                               <div
@@ -539,10 +541,13 @@ function WorkspaceSettingsPageContent() {
                                   ) : (
                                     <Badge
                                       variant={
-                                        member.role === OrganizationRole.ADMIN
+                                        isOwner
+                                          ? "default"
+                                          : member.role === OrganizationRole.ADMIN
                                           ? "default"
                                           : "secondary"
                                       }
+                                      className={isOwner ? "bg-violet-600 hover:bg-violet-600 text-white border-violet-600" : undefined}
                                     >
                                       {getRoleLabel(member.role)}
                                     </Badge>

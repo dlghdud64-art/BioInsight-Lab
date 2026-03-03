@@ -91,7 +91,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, status } = body;
+    const { title, description, status, budgetId } = body;
 
     const quote = await db.quote.findUnique({
       where: { id },
@@ -212,57 +212,82 @@ export async function PATCH(
         revalidatePath("/dashboard");
         revalidatePath(`/quotes/${id}`);
 
-        // 예산 차감 로직: 활성 예산이 있으면 usedAmount 증가 (구매 기록과 하나의 흐름으로 처리)
+        // 예산 차감 로직: 클라이언트가 선택한 budgetId로 명시적 차감
         if (!purchaseResult.alreadyPurchased) {
           const purchaseTotalAmount = purchaseResult.purchaseData
             ? purchaseResult.purchaseData.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0)
             : 0;
 
-          console.log("[PURCHASE_DEBUG] purchaseTotalAmount:", purchaseTotalAmount, "quoteId:", quote.id);
+          logger.info(`[PURCHASE] purchaseTotalAmount: ${purchaseTotalAmount}, budgetId: ${budgetId ?? "none"}`);
 
-          if (purchaseTotalAmount > 0) {
-            // 유저 개인 예산 또는 조직 예산 조회
-            const activeBudget = await db.userBudget.findFirst({
-              where: {
-                isActive: true,
-                OR: [
-                  { userId: session.user.id },
-                  ...(quote.organizationId ? [{ organizationId: quote.organizationId }] : []),
-                ],
-              },
+          if (purchaseTotalAmount > 0 && budgetId) {
+            // 1. 예산 조회
+            const targetBudget = await db.userBudget.findUnique({
+              where: { id: budgetId },
             });
 
-            console.log("[PURCHASE_DEBUG] activeBudget:", activeBudget ? activeBudget.id : "none");
+            if (!targetBudget) {
+              return NextResponse.json(
+                { error: "선택한 예산을 찾을 수 없습니다." },
+                { status: 400 }
+              );
+            }
 
-            if (activeBudget) {
-              // 구매 기록 생성과 예산 차감을 하나의 $transaction으로 처리 (원자성 보장)
-              await db.$transaction(async (tx: Prisma.TransactionClient) => {
-                const budgetBefore = activeBudget.remainingAmount;
-                const budgetAfter = budgetBefore - purchaseTotalAmount;
+            // 2. 보안 검증: 본인 예산 또는 소속 조직 예산인지 이중 확인
+            const isOwnerBudget = targetBudget.userId === session.user.id;
+            let isOrgBudget = false;
+            if (!isOwnerBudget && targetBudget.organizationId) {
+              const membership = await db.organizationMember.findFirst({
+                where: {
+                  userId: session.user.id,
+                  organizationId: targetBudget.organizationId,
+                },
+              });
+              isOrgBudget = !!membership;
+            }
 
-                await tx.userBudget.update({
-                  where: { id: activeBudget.id },
-                  data: {
-                    usedAmount: { increment: purchaseTotalAmount },
-                    remainingAmount: { decrement: purchaseTotalAmount },
-                  },
-                });
+            if (!isOwnerBudget && !isOrgBudget) {
+              return NextResponse.json(
+                { error: "해당 예산에 접근 권한이 없습니다." },
+                { status: 403 }
+              );
+            }
 
-                await tx.userBudgetTransaction.create({
-                  data: {
-                    budgetId: activeBudget.id,
-                    type: "DEBIT",
-                    amount: purchaseTotalAmount,
-                    description: `견적 구매 완료: ${quote.title}`,
-                    balanceBefore: budgetBefore,
-                    balanceAfter: budgetAfter,
-                  },
-                });
+            // 3. 잔액 검증 (부족 시 400)
+            if (targetBudget.remainingAmount < purchaseTotalAmount) {
+              return NextResponse.json(
+                { error: "예산 잔액이 부족합니다." },
+                { status: 400 }
+              );
+            }
+
+            // 4. 트랜잭션: 예산 차감 + 거래 내역 기록 (원자성 보장)
+            await db.$transaction(async (tx: Prisma.TransactionClient) => {
+              const budgetBefore = targetBudget.remainingAmount;
+              const budgetAfter = budgetBefore - purchaseTotalAmount;
+
+              await tx.userBudget.update({
+                where: { id: targetBudget.id },
+                data: {
+                  usedAmount: { increment: purchaseTotalAmount },
+                  remainingAmount: { decrement: purchaseTotalAmount },
+                },
               });
 
-              revalidatePath("/dashboard/budget");
-              logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${activeBudget.id}`);
-            }
+              await tx.userBudgetTransaction.create({
+                data: {
+                  budgetId: targetBudget.id,
+                  type: "DEBIT",
+                  amount: purchaseTotalAmount,
+                  description: `견적 구매 완료: ${quote.title}`,
+                  balanceBefore: budgetBefore,
+                  balanceAfter: budgetAfter,
+                },
+              });
+            });
+
+            revalidatePath("/dashboard/budget");
+            logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${targetBudget.id}`);
           }
         }
       } catch (error) {

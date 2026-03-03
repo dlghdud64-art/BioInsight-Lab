@@ -13,10 +13,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // 소속 조직 ID 목록 조회 (멀티 테넌트 격리: 본인 + 소속 조직 예산만 반환)
+    const orgMemberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const orgIds = orgMemberships.map((m: { organizationId: string }) => m.organizationId);
+
     const budgets = await db.userBudget.findMany({
       where: {
-        userId: session.user.id,
         isActive: true,
+        OR: [
+          { userId: session.user.id },
+          ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+        ],
       },
       orderBy: {
         createdAt: "desc",

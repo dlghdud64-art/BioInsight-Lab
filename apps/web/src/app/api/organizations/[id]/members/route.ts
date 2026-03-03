@@ -63,24 +63,24 @@ export async function PATCH(
       );
     }
 
-    // 관리자 권한 확인 (ADMIN)
-    const adminMembership = await db.organizationMember.findFirst({
+    // 관리자 권한 확인 (OWNER 또는 ADMIN)
+    const requesterMembership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
       },
     });
 
-    if (!adminMembership) {
+    if (!requesterMembership) {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
         { status: 403 }
       );
     }
 
-    // OrganizationRole enum 유효성 검증
-    const validRoles = Object.values(OrganizationRole);
+    // OrganizationRole enum 유효성 검증 (OWNER는 직접 할당 불가)
+    const validRoles = Object.values(OrganizationRole).filter((r) => r !== OrganizationRole.OWNER);
     if (!validRoles.includes(role as OrganizationRole)) {
       return NextResponse.json(
         { error: `Invalid role. Valid roles: ${validRoles.join(", ")}` },
@@ -92,7 +92,7 @@ export async function PATCH(
     const targetMember = await db.organizationMember.findFirst({
       where: {
         id: memberId,
-        organizationId: id, // 조직 ID 검증 추가
+        organizationId: id,
       },
     });
 
@@ -100,6 +100,14 @@ export async function PATCH(
       return NextResponse.json(
         { error: "Member not found in this organization" },
         { status: 404 }
+      );
+    }
+
+    // OWNER는 역할 변경 불가 (보안: 최고 관리자 보호)
+    if (targetMember.role === OrganizationRole.OWNER) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot change the role of the organization owner" },
+        { status: 403 }
       );
     }
 
@@ -153,16 +161,16 @@ export async function DELETE(
       );
     }
 
-    // 관리자 권한 확인 (ADMIN)
-    const adminMembership = await db.organizationMember.findFirst({
+    // 관리자 권한 확인 (OWNER 또는 ADMIN)
+    const requesterMembershipForDelete = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
       },
     });
 
-    if (!adminMembership) {
+    if (!requesterMembershipForDelete) {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
         { status: 403 }
@@ -173,7 +181,7 @@ export async function DELETE(
     const memberToDelete = await db.organizationMember.findFirst({
       where: {
         id: memberId,
-        organizationId: id, // 조직 ID 검증 추가
+        organizationId: id,
       },
     });
 
@@ -181,6 +189,14 @@ export async function DELETE(
       return NextResponse.json(
         { error: "Member not found in this organization" },
         { status: 404 }
+      );
+    }
+
+    // OWNER는 삭제 불가 (보안: 최고 관리자 보호)
+    if (memberToDelete.role === OrganizationRole.OWNER) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot remove the organization owner" },
+        { status: 403 }
       );
     }
 

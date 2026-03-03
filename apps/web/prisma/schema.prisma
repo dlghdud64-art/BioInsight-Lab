@@ -24,6 +24,7 @@ enum OrganizationRole {
   REQUESTER // 견적 ?청 가??
   APPROVER // 견적 ?인 가??
   ADMIN // 조직 관리자
+  OWNER // 최고 관리자 (조직 생성자, 1인 제한)
 }
 
 // 구독 ?랜 ???
