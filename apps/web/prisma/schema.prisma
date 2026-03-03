@@ -75,6 +75,7 @@ model Organization {
   auditLogs    AuditLog[]
   orders       Order[]
   userBudgets  UserBudget[]
+  invites      OrganizationInvite[]
 
   @@index([name])
   @@index([plan])
@@ -884,6 +885,27 @@ model WorkspaceInvite {
   @@index([token])
   @@index([workspaceId])
   @@index([email])
+}
+
+// 조직 초대 링크
+model OrganizationInvite {
+  id               String           @id @default(cuid())
+  organizationId   String
+  token            String           @unique // URL-safe random invite token
+  email            String?          // 특정 이메일 초대 (null이면 누구나 사용 가능)
+  role             OrganizationRole @default(VIEWER)
+  expiresAt        DateTime         // 만료 일시 (필수)
+  acceptedAt       DateTime?        // 수락된 일시
+  acceptedByUserId String?          // 수락한 유저 ID
+  revokedAt        DateTime?        // 취소된 일시
+  createdByUserId  String           // 생성한 관리자 ID
+  createdAt        DateTime         @default(now())
+
+  // 관계
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([organizationId])
 }
 
 // 구독 정보 (Team/Org 플랜) - Production Level

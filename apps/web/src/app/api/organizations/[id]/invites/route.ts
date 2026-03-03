@@ -17,75 +17,67 @@ export async function POST(
 
     const { id } = await params;
     const body = await request.json();
-    const { expiresInDays = 7 } = body;
+    const { expiresInDays = 7, role = OrganizationRole.VIEWER, email } = body;
 
-    // 조직 확인
-    const organization = await db.organization.findUnique({
-      where: { id },
-      include: {
-        members: true,
-      },
-    });
-
+    // 조직 존재 확인
+    const organization = await db.organization.findUnique({ where: { id } });
     if (!organization) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    // 관리자 권한 확인
+    // 권한 확인 (OWNER 또는 ADMIN)
     const membership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
       },
     });
-
     if (!membership) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
+    // role 유효성 검증 (OWNER는 초대 불가)
+    const validRoles: string[] = Object.values(OrganizationRole).filter(
+      (r) => r !== OrganizationRole.OWNER
+    );
+    if (!validRoles.includes(role)) {
       return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
+        { error: `유효하지 않은 역할입니다. 가능한 역할: ${validRoles.join(", ")}` },
+        { status: 400 }
       );
     }
 
-    // 기존 활성 초대 링크 확인 (선택사항: 하나만 유지)
-    // 여기서는 여러 개 허용
+    // 만료 일시 계산
+    const expiresAt = new Date(
+      Date.now() + Math.max(1, Number(expiresInDays)) * 24 * 60 * 60 * 1000
+    );
 
-    // 초대 토큰 생성
+    // 토큰 생성 + DB 저장
     const token = randomBytes(32).toString("base64url");
-    const expiresAt = expiresInDays > 0
-      ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
-      : null;
-
-    // 초대 링크 저장 (OrganizationInvite 모델이 없다면 임시로 다른 방식 사용)
-    // Prisma 스키마에 OrganizationInvite 모델이 없다면, 여기서는 간단한 토큰 기반 시스템 사용
-    // 실제로는 별도 테이블이 필요하지만, 현재는 메모리/캐시 기반으로 구현
-    
-    // 임시: JSON 파일이나 다른 저장소 사용 (실제로는 DB 모델 필요)
-    // 여기서는 응답만 반환하고, 실제 초대 처리는 /api/invite/[token]에서 처리
-
-    return NextResponse.json({
-      invite: {
-        token,
+    const invite = await db.organizationInvite.create({
+      data: {
         organizationId: id,
-        expiresAt: expiresAt?.toISOString() || null,
-        createdAt: new Date().toISOString(),
+        token,
+        email: email || null,
+        role: role as OrganizationRole,
+        expiresAt,
+        createdByUserId: session.user.id,
       },
     });
-  } catch (error: any) {
-    console.error("Error creating invite link:", error);
-    return NextResponse.json(
-      { error: "Failed to create invite link" },
-      { status: 500 }
-    );
+
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invite/${token}`;
+
+    return NextResponse.json({ invite: { ...invite, inviteUrl } });
+  } catch (error) {
+    console.error("[OrgInvites/POST]", error);
+    return NextResponse.json({ error: "초대 링크 생성에 실패했습니다." }, { status: 500 });
   }
 }
 
 // 초대 링크 목록 조회
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -96,55 +88,89 @@ export async function GET(
 
     const { id } = await params;
 
-    // 조직 확인
-    const organization = await db.organization.findUnique({
-      where: { id },
-    });
-
-    if (!organization) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 404 }
-      );
-    }
-
-    // 관리자 권한 확인
+    // 권한 확인 (OWNER 또는 ADMIN)
     const membership = await db.organizationMember.findFirst({
       where: {
         userId: session.user.id,
         organizationId: id,
-        role: OrganizationRole.ADMIN,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
       },
     });
-
     if (!membership) {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
-    // 실제로는 OrganizationInvite 테이블에서 조회해야 하지만,
-    // 현재 스키마에 없으므로 빈 배열 반환
-    // TODO: Prisma 스키마에 OrganizationInvite 모델 추가 필요
-
-    return NextResponse.json({
-      invites: [],
+    // 활성(미수락 + 미취소 + 미만료) 초대 목록
+    const now = new Date();
+    const invites = await db.organizationInvite.findMany({
+      where: {
+        organizationId: id,
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: now },
+      },
+      orderBy: { createdAt: "desc" },
     });
-  } catch (error: any) {
-    console.error("Error fetching invite links:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch invite links" },
-      { status: 500 }
-    );
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const invitesWithUrl = invites.map((inv: any) => ({
+      ...inv,
+      inviteUrl: `${appUrl}/invite/${inv.token}`,
+    }));
+
+    return NextResponse.json({ invites: invitesWithUrl });
+  } catch (error) {
+    console.error("[OrgInvites/GET]", error);
+    return NextResponse.json({ error: "초대 목록 조회에 실패했습니다." }, { status: 500 });
   }
 }
 
+// 초대 링크 취소 (revoke)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const inviteId = searchParams.get("inviteId");
 
+    if (!inviteId) {
+      return NextResponse.json({ error: "inviteId가 필요합니다." }, { status: 400 });
+    }
 
+    // 권한 확인 (OWNER 또는 ADMIN)
+    const membership = await db.organizationMember.findFirst({
+      where: {
+        userId: session.user.id,
+        organizationId: id,
+        role: { in: [OrganizationRole.OWNER, OrganizationRole.ADMIN] },
+      },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
 
+    const invite = await db.organizationInvite.findFirst({
+      where: { id: inviteId, organizationId: id },
+    });
+    if (!invite) {
+      return NextResponse.json({ error: "초대 링크를 찾을 수 없습니다." }, { status: 404 });
+    }
 
+    await db.organizationInvite.update({
+      where: { id: inviteId },
+      data: { revokedAt: new Date() },
+    });
 
-
-
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[OrgInvites/DELETE]", error);
+    return NextResponse.json({ error: "초대 취소에 실패했습니다." }, { status: 500 });
+  }
+}
