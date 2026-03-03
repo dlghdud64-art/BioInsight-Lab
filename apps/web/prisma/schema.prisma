@@ -124,6 +124,7 @@ model User {
   templates           QuoteTemplate[]
   inventories         ProductInventory[]
   inventoryUsage      InventoryUsage[]
+  inventoryRestocks   InventoryRestock[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
   orders              Order[]
@@ -639,7 +640,8 @@ model ProductInventory {
   user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  usageRecords InventoryUsage[]
+  usageRecords   InventoryUsage[]
+  restockRecords InventoryRestock[]
 
   @@unique([userId, productId]) // ?용?별 ?품???나???고 기록
   @@unique([organizationId, productId]) // 조직??품???나???고 기록
@@ -667,6 +669,28 @@ model InventoryUsage {
   @@index([inventoryId])
   @@index([userId])
   @@index([usageDate])
+}
+
+// 재고 입고 이력
+model InventoryRestock {
+  id           String    @id @default(cuid())
+  inventoryId  String
+  userId       String
+  quantity     Float     // 입고 수량
+  unit         String?   // 단위
+  lotNumber    String?   // Lot 번호
+  expiryDate   DateTime? // 유효기간
+  notes        String?   @db.Text
+  restockedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  // 관계
+  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+  @@index([userId])
+  @@index([restockedAt])
 }
 
 // 공유 링크 (?냅??방식)

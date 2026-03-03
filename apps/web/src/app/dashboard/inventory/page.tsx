@@ -93,6 +93,7 @@ export default function InventoryPage() {
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
+  const [showRestockHistory, setShowRestockHistory] = useState(false);
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -402,6 +403,17 @@ export default function InventoryPage() {
   const usageRecords = usageData?.records || [];
   const usageStats = usageData?.stats;
 
+  // 선택된 재고의 입고 이력 조회
+  const { data: restockHistoryData, isLoading: isLoadingRestockHistory } = useQuery<{ records: any[] }>({
+    queryKey: ["inventory-restock-history", selectedItem?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/inventory/${selectedItem!.id}/restock?limit=20`);
+      if (!response.ok) throw new Error("Failed to fetch restock history");
+      return response.json();
+    },
+    enabled: !!selectedItem?.id && isSheetOpen && showRestockHistory,
+  });
+
   const createOrUpdateMutation = useMutation({
     mutationFn: async (data: {
       id?: string;
@@ -536,14 +548,14 @@ export default function InventoryPage() {
     },
   });
 
-  // 입고 mutation
+  // 입고 mutation (POST /api/inventory/[id]/restock — 트랜잭션 기반 이력 기록)
   const restockMutation = useMutation({
-    mutationFn: async ({ id, addQty, currentQty, lotNumber, expiryDate }: { id: string; addQty: number; currentQty: number; lotNumber?: string; expiryDate?: string }) => {
-      const response = await fetch(`/api/inventory/${id}`, {
-        method: "PATCH",
+    mutationFn: async ({ id, addQty, lotNumber, expiryDate }: { id: string; addQty: number; lotNumber?: string; expiryDate?: string }) => {
+      const response = await fetch(`/api/inventory/${id}/restock`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          quantity: currentQty + addQty,
+          quantity: addQty,
           ...(lotNumber ? { lotNumber } : {}),
           ...(expiryDate ? { expiryDate } : {}),
         }),
@@ -1069,7 +1081,7 @@ export default function InventoryPage() {
         </div>
 
         {/* 우측 상세 Sheet (Drawer) */}
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => { setIsSheetOpen(open); if (!open) setShowRestockHistory(false); }}>
           <SheetContent className="w-[90vw] overflow-y-auto sm:max-w-[500px]">
             {selectedItem && (
               <>
@@ -1242,7 +1254,48 @@ export default function InventoryPage() {
                     </p>
                   </div>
 
-                  <div className="flex w-full gap-2 pt-6">
+                  {/* 입고 이력 토글 섹션 */}
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                    <button
+                      className="flex w-full items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 transition-colors"
+                      onClick={() => setShowRestockHistory((v) => !v)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <History className="h-4 w-4 text-emerald-600" />
+                        입고 이력
+                      </span>
+                      <span className="text-xs text-slate-400">{showRestockHistory ? "접기" : "펼치기"}</span>
+                    </button>
+                    {showRestockHistory && (
+                      <div className="mt-3 space-y-2">
+                        {isLoadingRestockHistory ? (
+                          <p className="text-xs text-slate-400 py-2 text-center">불러오는 중...</p>
+                        ) : !restockHistoryData?.records?.length ? (
+                          <p className="text-xs text-slate-400 py-2 text-center">입고 이력이 없습니다.</p>
+                        ) : (
+                          restockHistoryData.records.map((r: any) => (
+                            <div key={r.id} className="rounded-lg border border-slate-100 dark:border-slate-800 px-3 py-2.5 text-xs">
+                              <div className="flex justify-between items-center">
+                                <span className="font-semibold text-emerald-700">+{r.quantity.toLocaleString()} {r.unit || selectedItem.unit}</span>
+                                <span className="text-slate-400">{format(new Date(r.restockedAt), "yyyy.MM.dd HH:mm", { locale: ko })}</span>
+                              </div>
+                              {(r.lotNumber || r.expiryDate) && (
+                                <div className="mt-1 flex gap-3 text-slate-500">
+                                  {r.lotNumber && <span>Lot: {r.lotNumber}</span>}
+                                  {r.expiryDate && <span>유효: {format(new Date(r.expiryDate), "yyyy.MM.dd", { locale: ko })}</span>}
+                                </div>
+                              )}
+                              {r.user && (
+                                <div className="mt-0.5 text-slate-400">{r.user.name || r.user.email}</div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex w-full gap-2 pt-4">
                     <Button
                       variant="outline"
                       className="flex-1"
@@ -1342,7 +1395,6 @@ export default function InventoryPage() {
                       restockMutation.mutate({
                         id: restockItem.id,
                         addQty,
-                        currentQty: restockItem.currentQuantity,
                         lotNumber: restockForm.lotNumber || undefined,
                         expiryDate: restockForm.expiryDate || undefined,
                       });
