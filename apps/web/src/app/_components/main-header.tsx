@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, LayoutDashboard } from "lucide-react";
+import { Menu, LayoutDashboard, ScanLine } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
+import { useQRScanner } from "@/contexts/QRScannerContext";
 
 interface MainHeaderProps {
   onMenuClick?: () => void;
@@ -18,6 +20,20 @@ interface MainHeaderProps {
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { toast } = useToast();
+  const { open: openQRScanner } = useQRScanner();
+
+  const handleScanClick = () => {
+    if (!session?.user) {
+      toast({
+        title: "로그인 후 이용 가능한 기능입니다.",
+        description: "재고 QR 스캔은 로그인 후 사용할 수 있습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    openQRScanner();
+  };
   
   // 대시보드 경로인지 확인 (대시보드에서는 사이드바에 로고가 있으므로 헤더 로고 숨김)
   const isDashboard = pathname?.startsWith("/dashboard");
@@ -130,6 +146,15 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Button>
             </Link>
           )}
+          <button
+            type="button"
+            onClick={handleScanClick}
+            className="hidden md:inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+            aria-label="재고 QR 스캔"
+            title="재고 QR 스캔"
+          >
+            <ScanLine className="h-4 w-4" />
+          </button>
           <UserMenu />
         </div>
       </div>

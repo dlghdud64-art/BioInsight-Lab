@@ -14,16 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useSession } from "next-auth/react";
-import { useQRScanner } from "@/contexts/QRScannerContext";
-import { Search, MessageSquareText, UploadCloud, Loader2, Flame, ScanLine } from "lucide-react";
+import { Search, MessageSquareText, UploadCloud, Loader2, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session, status } = useSession();
-  const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [inquiryText, setInquiryText] = useState("");
@@ -36,19 +32,6 @@ export function BioInsightHeroSection() {
     if (searchQuery.trim()) {
       router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
-  };
-
-  const handleScanClick = () => {
-    if (status === "loading") return;
-    if (!session?.user) {
-      toast({
-        title: "로그인 후 이용 가능한 기능입니다.",
-        description: "재고 QR 스캔은 로그인 후 사용할 수 있습니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-    openQRScanner();
   };
 
   const popularSearches = ["FBS", "Pipette", "Conical Tube", "Centrifuge", "DMEM", "Trypsin"];
@@ -125,17 +108,6 @@ export function BioInsightHeroSection() {
                 placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요"
                 className="flex-1 bg-transparent px-3 md:px-6 text-slate-900 placeholder:text-slate-400 outline-none min-w-0 font-medium h-full border-0 text-[16px] md:text-2xl"
               />
-
-              {/* QR 스캔 버튼 (검색 버튼 좌측) */}
-              <button
-                type="button"
-                onClick={handleScanClick}
-                className="flex items-center justify-center h-10 w-10 md:h-12 md:w-12 rounded-full shrink-0 text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                aria-label="재고 QR 스캔"
-                title="재고 QR 스캔"
-              >
-                <ScanLine className="h-5 w-5 md:h-6 md:w-6" />
-              </button>
 
               {/* 검색 버튼 */}
               <Button
