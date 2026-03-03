@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { AuthSessionProvider } from "@/providers/session-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
+import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
 import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
@@ -84,7 +85,9 @@ export default function RootLayout({
           <LocaleProvider>
             <AuthSessionProvider>
               <QueryProvider>
-                {children}
+                <QRScannerProviderWrapper>
+                  {children}
+                </QRScannerProviderWrapper>
                 <Toaster />
                 <FloatingThemeToggle />
                 <Analytics />
