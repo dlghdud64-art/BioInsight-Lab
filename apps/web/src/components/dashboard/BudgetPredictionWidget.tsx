@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,39 @@ type PredictItem = {
   sparkline: { month: string; amount: number }[];
   hasWarning: boolean;
   warningMessage: string | null;
+};
+
+// TODO: 실제 AI 예측 API (GET /api/dashboard/ai-prediction) 연동 시 이 객체를 응답 데이터로 교체할 것
+const mockAIPredictionData = {
+  totalBudget: 50_000_000,
+  spentAmount: 32_500_000,
+  predictedExhaustionDate: "2026-10-15",
+  aiInsightMessage:
+    "현재 지출 속도 유지 시, 10월 중순 예산 소진이 예상됩니다. 하반기 추가 예산 편성을 권장합니다.",
+  status: "warning",
+} as const;
+
+const MOCK_PREDICT_BUDGET: PredictItem = {
+  scopeKey: "mock-default-budget",
+  organizationId: null,
+  hasBudget: true,
+  budgetName: "연구실 기본 예산",
+  totalBudget: mockAIPredictionData.totalBudget,
+  totalSpent: mockAIPredictionData.spentAmount,
+  remaining: mockAIPredictionData.totalBudget - mockAIPredictionData.spentAmount,
+  avgMonthlyBurnRate: Math.round(mockAIPredictionData.spentAmount / 6),
+  runwayDays: 180,
+  exhaustDate: mockAIPredictionData.predictedExhaustionDate,
+  sparkline: [
+    { month: "4월", amount: 4_800_000 },
+    { month: "5월", amount: 5_200_000 },
+    { month: "6월", amount: 5_400_000 },
+    { month: "7월", amount: 5_600_000 },
+    { month: "8월", amount: 5_800_000 },
+    { month: "9월", amount: 5_700_000 },
+  ],
+  hasWarning: mockAIPredictionData.status === "warning",
+  warningMessage: mockAIPredictionData.aiInsightMessage,
 };
 
 function formatKRW(n: number) {
@@ -85,11 +119,25 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
       ? [{ ...singleData, scopeKey: organizationId, organizationId }]
       : []
     : listData?.budgets ?? [];
-  const effectiveSelected = selectedScopeKey ?? budgets[0]?.scopeKey ?? null;
+
+  const hasRealBudgetData =
+    budgets.length > 0 && budgets.some((b) => b.hasBudget && b.totalBudget > 0);
+
+  const effectiveBudgets = hasRealBudgetData ? budgets : [MOCK_PREDICT_BUDGET];
+
+  const effectiveSelected = selectedScopeKey ?? effectiveBudgets[0]?.scopeKey ?? null;
+
   const selectedBudget = useMemo(
-    () => budgets.find((b) => b.scopeKey === effectiveSelected) ?? budgets[0],
-    [budgets, effectiveSelected]
+    () =>
+      effectiveBudgets.find((b) => b.scopeKey === effectiveSelected) ??
+      effectiveBudgets[0],
+    [effectiveBudgets, effectiveSelected]
   );
+
+  const usageRate =
+    selectedBudget && selectedBudget.totalBudget > 0
+      ? Math.round((selectedBudget.totalSpent / selectedBudget.totalBudget) * 100)
+      : 0;
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -155,21 +203,27 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   AI 예측 분석 중
                 </span>
               </div>
-              <Select
-                value={effectiveSelected ?? ""}
-                onValueChange={(v) => setSelectedScopeKey(v || null)}
-              >
-                <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder="예산 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {budgets.map((b) => (
-                    <SelectItem key={b.scopeKey} value={b.scopeKey} className="text-xs">
-                      {b.budgetName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {effectiveBudgets.length > 1 ? (
+                <Select
+                  value={effectiveSelected ?? ""}
+                  onValueChange={(v) => setSelectedScopeKey(v || null)}
+                >
+                  <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 dark:border-slate-700">
+                    <SelectValue placeholder="예산 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {effectiveBudgets.map((b) => (
+                      <SelectItem key={b.scopeKey} value={b.scopeKey} className="text-xs">
+                        {b.budgetName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="px-2 py-1.5 rounded-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] text-slate-600 dark:text-slate-300">
+                  {effectiveBudgets[0]?.budgetName}
+                </div>
+              )}
             </div>
 
             {/* 예상 고갈일 (타이틀에 예산명 포함) */}
@@ -195,6 +249,28 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                   {formatKRW(selectedBudget.remaining)}
                 </span>
+              </p>
+            </div>
+
+            {/* 예산 소진률 Progress Bar */}
+            <div className="space-y-1 pt-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span>
+                  사용 예산{" "}
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {formatKRW(selectedBudget.totalSpent)}
+                  </span>
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                  {usageRate}%
+                </span>
+              </div>
+              <Progress
+                value={usageRate}
+                className="h-2.5 bg-slate-100 dark:bg-slate-800/60"
+              />
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                총 예산 {formatKRW(selectedBudget.totalBudget)} 기준
               </p>
             </div>
           </div>
