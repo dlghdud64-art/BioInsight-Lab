@@ -3,6 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity, PackagePlus } from "lucide-react";
+import { InventoryQRCode } from "./InventoryQRCode";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
 import {
@@ -404,6 +405,16 @@ export function InventoryTable({
                       >
                         상세
                       </Button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <InventoryQRCode
+                          inventoryId={inventory.id}
+                          productName={inventory.product.name}
+                          catalogNumber={inventory.product.catalogNumber}
+                          location={inventory.location}
+                          unit={inventory.unit}
+                          currentQuantity={inventory.currentQuantity}
+                        />
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
