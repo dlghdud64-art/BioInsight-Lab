@@ -80,8 +80,8 @@ export async function PATCH(
     }
 
     // OrganizationRole enum 유효성 검증 (OWNER는 직접 할당 불가)
-    const validRoles = Object.values(OrganizationRole).filter((r) => r !== OrganizationRole.OWNER);
-    if (!validRoles.includes(role as OrganizationRole)) {
+    const validRoles: string[] = Object.values(OrganizationRole).filter((r) => r !== OrganizationRole.OWNER);
+    if (!validRoles.includes(role)) {
       return NextResponse.json(
         { error: `Invalid role. Valid roles: ${validRoles.join(", ")}` },
         { status: 400 }
