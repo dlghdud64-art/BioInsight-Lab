@@ -93,6 +93,12 @@ export default function QuoteDetailPage() {
     notes: "",
   });
 
+  // 회신 입력 탭 상태
+  const [replyVendorName, setReplyVendorName] = useState("");
+  const [replyItems, setReplyItems] = useState<Record<string, {
+    unitPrice: string; currency: string; leadTimeDays: string; moq: string; notes: string;
+  }>>({});
+
   // 견적서 조회
   const { data: quoteData, isLoading } = useQuery({
     queryKey: ["quote", quoteId],
@@ -122,6 +128,21 @@ export default function QuoteDetailPage() {
     ? selectedBudget.remainingAmount - quoteTotal 
     : null;
 
+  // 벤더 회신 목록 조회 (저장된 회신 비교용)
+  const { data: vendorRequestsData, refetch: refetchVendorRequests } = useQuery<{ vendorRequests: any[] }>({
+    queryKey: ["vendor-requests", quoteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/quotes/${quoteId}/vendor-requests`);
+      if (!response.ok) throw new Error("Failed to fetch vendor requests");
+      return response.json();
+    },
+    enabled: !!quoteId && status === "authenticated",
+  });
+
+  const vendorRequests = vendorRequestsData?.vendorRequests || [];
+  // RESPONDED 상태만 비교 테이블에 표시
+  const respondedVendors = vendorRequests.filter((vr: any) => vr.status === "RESPONDED");
+
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
     queryKey: ["user-teams"],
@@ -132,6 +153,54 @@ export default function QuoteDetailPage() {
     },
     enabled: status === "authenticated",
   });
+
+  // 수동 벤더 회신 저장 mutation
+  const saveVendorReplyMutation = useMutation({
+    mutationFn: async () => {
+      const quote = quoteData?.quote;
+      if (!quote) throw new Error("Quote not found");
+      if (!replyVendorName.trim()) throw new Error("벤더명을 입력하세요.");
+
+      const items = quote.items?.map((item: any) => {
+        const ri = replyItems[item.id] || {};
+        return {
+          quoteItemId: item.id,
+          unitPrice: parseInt(ri.unitPrice || "0") || 0,
+          currency: ri.currency || "KRW",
+          leadTimeDays: ri.leadTimeDays ? parseInt(ri.leadTimeDays) : undefined,
+          moq: ri.moq ? parseInt(ri.moq) : undefined,
+          notes: ri.notes || undefined,
+        };
+      }) || [];
+
+      const res = await fetch(`/api/quotes/${quoteId}/vendor-replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendorName: replyVendorName.trim(), items }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "저장 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
+      setReplyVendorName("");
+      setReplyItems({});
+      toast({ title: "회신이 저장되었습니다.", description: "비교 테이블에서 확인하세요." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "회신 저장 실패", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateReplyItem = (itemId: string, field: string, value: string) => {
+    setReplyItems((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], [field]: value },
+    }));
+  };
 
   // 구매 요청 mutation
   const purchaseRequestMutation = useMutation({
@@ -856,109 +925,238 @@ ${itemLines}
           </TabsList>
 
           {/* 회신 입력 탭 */}
-          <TabsContent value="items" className="mt-6 md:mt-8">
+          <TabsContent value="items" className="mt-6 md:mt-8 space-y-6">
+            {/* 회신 입력 폼 */}
             <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8">
               <CardHeader className="px-0 pt-0 pb-3">
                 <CardTitle className="text-sm md:text-lg">회신 입력</CardTitle>
                 <CardDescription className="text-xs md:text-sm">
-                  견적서는 검토 후 수동으로 입력하세요.
+                  벤더명을 입력하고 각 품목의 단가를 기록하세요. 저장 후 아래 비교 테이블에 자동 반영됩니다.
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0 pb-0">
                 <div className="space-y-4">
+                  {/* 벤더명 입력 */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-sm font-semibold whitespace-nowrap">벤더명 *</Label>
+                    <Input
+                      placeholder="예: 한국바이오, Sigma-Aldrich Korea..."
+                      value={replyVendorName}
+                      onChange={(e) => setReplyVendorName(e.target.value)}
+                      className="max-w-xs text-sm h-9 rounded-md"
+                    />
+                  </div>
+
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-slate-700">
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">벤더명</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">품목명</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">수량</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300">단가</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">통화</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">납기</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">MOQ</th>
-                          <th className="text-left py-3 px-4 font-bold text-sm text-slate-700 dark:text-slate-300 hidden md:table-cell">비고</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300">품목명</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300">수량</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300">단가 *</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300 hidden md:table-cell">통화</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300 hidden md:table-cell">납기(일)</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300 hidden md:table-cell">MOQ</th>
+                          <th className="text-left py-3 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300 hidden lg:table-cell">비고</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {quote.items?.map((item: any, index: number) => (
-                          <tr key={item.id} className="border-b">
-                            <td className="p-2 md:p-3">
-                              <Input
-                                placeholder="벤더명"
-                                className="text-xs md:text-sm h-8 md:h-10 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                            <td className="p-2 md:p-3">
-                              <div className="text-xs md:text-sm font-medium">
-                                {item.product?.name || "제품 정보 없음"}
-                              </div>
-                            </td>
-                            <td className="p-2 md:p-3">
-                              <Input
-                                type="number"
-                                placeholder="수량"
-                                defaultValue={item.quantity}
-                                className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                            <td className="p-2 md:p-3">
-                              <Input
-                                type="number"
-                                placeholder="단가"
-                                className="text-xs md:text-sm h-8 md:h-10 w-24 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                            <td className="p-2 md:p-3 hidden md:table-cell">
-                              <Select defaultValue="KRW">
-                                <SelectTrigger className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="KRW">KRW</SelectItem>
-                                  <SelectItem value="USD">USD</SelectItem>
-                                  <SelectItem value="EUR">EUR</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </td>
-                            <td className="p-2 md:p-3 hidden md:table-cell">
-                              <Input
-                                placeholder="납기"
-                                className="text-xs md:text-sm h-8 md:h-10 w-24 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                            <td className="p-2 md:p-3 hidden md:table-cell">
-                              <Input
-                                type="number"
-                                placeholder="MOQ"
-                                className="text-xs md:text-sm h-8 md:h-10 w-20 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                            <td className="p-2 md:p-3 hidden md:table-cell">
-                              <Textarea
-                                placeholder="비고"
-                                rows={1}
-                                className="text-xs md:text-sm rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              />
-                            </td>
-                          </tr>
-                        ))}
+                        {quote.items?.map((item: any) => {
+                          const ri = replyItems[item.id] || {};
+                          return (
+                            <tr key={item.id} className="border-b">
+                              <td className="p-2 md:p-3">
+                                <div className="text-xs md:text-sm font-medium text-slate-800 dark:text-slate-200">
+                                  {item.name || item.product?.name || "제품 정보 없음"}
+                                </div>
+                                {item.catalogNumber && (
+                                  <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>
+                                )}
+                              </td>
+                              <td className="p-2 md:p-3">
+                                <span className="text-xs text-slate-500">{item.quantity} {item.unit || ""}</span>
+                              </td>
+                              <td className="p-2 md:p-3">
+                                <Input
+                                  type="number"
+                                  placeholder="단가"
+                                  value={ri.unitPrice || ""}
+                                  onChange={(e) => updateReplyItem(item.id, "unitPrice", e.target.value)}
+                                  className="text-xs md:text-sm h-8 w-28 rounded-md focus:ring-2 focus:ring-blue-500"
+                                />
+                              </td>
+                              <td className="p-2 md:p-3 hidden md:table-cell">
+                                <Select
+                                  value={ri.currency || "KRW"}
+                                  onValueChange={(v) => updateReplyItem(item.id, "currency", v)}
+                                >
+                                  <SelectTrigger className="text-xs h-8 w-20 rounded-md">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="KRW">KRW</SelectItem>
+                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value="EUR">EUR</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </td>
+                              <td className="p-2 md:p-3 hidden md:table-cell">
+                                <Input
+                                  type="number"
+                                  placeholder="일수"
+                                  value={ri.leadTimeDays || ""}
+                                  onChange={(e) => updateReplyItem(item.id, "leadTimeDays", e.target.value)}
+                                  className="text-xs h-8 w-20 rounded-md"
+                                />
+                              </td>
+                              <td className="p-2 md:p-3 hidden md:table-cell">
+                                <Input
+                                  type="number"
+                                  placeholder="MOQ"
+                                  value={ri.moq || ""}
+                                  onChange={(e) => updateReplyItem(item.id, "moq", e.target.value)}
+                                  className="text-xs h-8 w-20 rounded-md"
+                                />
+                              </td>
+                              <td className="p-2 md:p-3 hidden lg:table-cell">
+                                <Input
+                                  placeholder="비고"
+                                  value={ri.notes || ""}
+                                  onChange={(e) => updateReplyItem(item.id, "notes", e.target.value)}
+                                  className="text-xs h-8 w-32 rounded-md"
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button
+                      onClick={() => saveVendorReplyMutation.mutate()}
+                      disabled={saveVendorReplyMutation.isPending || !replyVendorName.trim()}
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                    >
                       <Save className="h-4 w-4 mr-2 shrink-0" />
-                      회신 저장
+                      {saveVendorReplyMutation.isPending ? "저장 중..." : "회신 저장"}
                     </Button>
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => refetchVendorRequests()}
+                      className="w-full sm:w-auto"
+                    >
                       <GitCompare className="h-4 w-4 mr-2 shrink-0" />
-                      비교에 반영
+                      비교 새로고침
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* 벤더 가격 비교 테이블 */}
+            {respondedVendors.length > 0 && (
+              <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 sm:p-8">
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <CardTitle className="text-sm md:text-lg flex items-center gap-2">
+                    <GitCompare className="h-4 w-4 text-blue-600" />
+                    벤더 가격 비교
+                  </CardTitle>
+                  <CardDescription className="text-xs md:text-sm">
+                    {respondedVendors.length}개 벤더 회신 비교 — 최저가 항목이 강조됩니다.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-700">
+                          <th className="text-left py-2 px-3 font-semibold text-slate-600">품목</th>
+                          {respondedVendors.map((vr: any) => (
+                            <th key={vr.id} className="text-center py-2 px-3 font-semibold text-slate-600 min-w-[110px]">
+                              {vr.vendorName || vr.vendorEmail || "벤더"}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {quote.items?.map((item: any) => {
+                          // 이 품목에 대한 각 벤더의 응답 단가 수집
+                          const prices = respondedVendors.map((vr: any) => {
+                            const ri = vr.responseItems?.find((r: any) => r.quoteItemId === item.id);
+                            return ri?.unitPrice ?? null;
+                          });
+                          const validPrices = prices.filter((p: number | null) => p !== null && p > 0) as number[];
+                          const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : null;
+
+                          return (
+                            <tr key={item.id} className="border-b hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <td className="py-3 px-3">
+                                <div className="font-medium text-slate-800 dark:text-slate-200">
+                                  {item.name || item.product?.name}
+                                </div>
+                                {item.catalogNumber && (
+                                  <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>
+                                )}
+                              </td>
+                              {respondedVendors.map((vr: any, vi: number) => {
+                                const ri = vr.responseItems?.find((r: any) => r.quoteItemId === item.id);
+                                const price = ri?.unitPrice ?? null;
+                                const isLowest = price !== null && price > 0 && price === minPrice && validPrices.length > 1;
+                                return (
+                                  <td key={vr.id} className="py-3 px-3 text-center">
+                                    {price !== null ? (
+                                      <div className={`inline-flex flex-col items-center gap-0.5 px-2 py-1 rounded-md ${isLowest ? "bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20" : ""}`}>
+                                        <span className={`font-semibold ${isLowest ? "text-emerald-700 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}>
+                                          {price > 0 ? price.toLocaleString() : "—"} {ri?.currency || "KRW"}
+                                        </span>
+                                        {isLowest && (
+                                          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wide">최저가</span>
+                                        )}
+                                        {ri?.leadTimeDays && (
+                                          <span className="text-[10px] text-slate-400">{ri.leadTimeDays}일 납기</span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-slate-300">—</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                        {/* 합계 행 */}
+                        <tr className="border-t-2 border-slate-300 bg-slate-50 dark:bg-slate-800/30">
+                          <td className="py-3 px-3 font-bold text-sm text-slate-700 dark:text-slate-300">총 합계</td>
+                          {respondedVendors.map((vr: any) => {
+                            const total = quote.items?.reduce((sum: number, item: any) => {
+                              const ri = vr.responseItems?.find((r: any) => r.quoteItemId === item.id);
+                              return sum + (ri?.unitPrice ?? 0) * (item.quantity ?? 1);
+                            }, 0) ?? 0;
+                            const allTotals = respondedVendors.map((v: any) =>
+                              quote.items?.reduce((s: number, it: any) => {
+                                const r = v.responseItems?.find((ri: any) => ri.quoteItemId === it.id);
+                                return s + (r?.unitPrice ?? 0) * (it.quantity ?? 1);
+                              }, 0) ?? 0
+                            );
+                            const minTotal = Math.min(...allTotals.filter((t: number) => t > 0));
+                            const isLowestTotal = total > 0 && total === minTotal && allTotals.filter((t: number) => t > 0).length > 1;
+                            return (
+                              <td key={vr.id} className="py-3 px-3 text-center">
+                                <span className={`font-bold text-sm ${isLowestTotal ? "text-emerald-700 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}>
+                                  {total > 0 ? `${total.toLocaleString()} KRW` : "—"}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* 회신 수신함 탭 */}

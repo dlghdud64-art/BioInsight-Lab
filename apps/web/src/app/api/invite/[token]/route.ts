@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 /**
  * GET /api/invite/[token]
@@ -136,7 +137,7 @@ export async function POST(
     }
 
     // 트랜잭션: 멤버 추가 + 초대 수락 표시
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.organizationMember.create({
         data: {
           userId: session.user.id,
