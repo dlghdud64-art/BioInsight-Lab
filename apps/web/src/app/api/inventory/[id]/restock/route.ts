@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
+import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 
 // 입고 이력 조회
 export async function GET(
@@ -57,7 +58,7 @@ export async function GET(
   }
 }
 
-// 입고 처리 (수량 증가 + 이력 기록 — 원자적 트랜잭션)
+// 입고 처리 (수량 증가 + 이력 기록 + 감사 로그 — 원자적 트랜잭션)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -82,7 +83,13 @@ export async function POST(
     // 재고 존재 + 권한 확인
     const inventory = await db.productInventory.findUnique({
       where: { id },
-      select: { id: true, userId: true, organizationId: true, unit: true, currentQuantity: true },
+      select: {
+        id: true,
+        userId: true,
+        organizationId: true,
+        unit: true,
+        currentQuantity: true,
+      },
     });
 
     if (!inventory) {
@@ -101,16 +108,16 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 트랜잭션: 수량 증가 + 신규 Lot 이력 기록 (기존 Lot 보존 — 덮어쓰기 금지)
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+    const quantityBefore = inventory.currentQuantity;
+
+    // 트랜잭션: 수량 증가 + 신규 Lot 이력 기록 + 감사 로그 (원자적)
     const [updatedInventory, restockRecord] = await db.$transaction(
       async (tx: Prisma.TransactionClient) => {
-        // currentQuantity만 증가 — lotNumber/expiryDate는 ProductInventory에서 수정하지 않음
-        // 각 Lot 이력은 InventoryRestock 레코드에 개별 보존됨
+        // currentQuantity만 증가 — 각 Lot 이력은 InventoryRestock에 개별 보존
         const updated = await tx.productInventory.update({
           where: { id },
-          data: {
-            currentQuantity: { increment: quantity },
-          },
+          data: { currentQuantity: { increment: quantity } },
           include: {
             product: { select: { id: true, name: true, catalogNumber: true } },
           },
@@ -119,26 +126,47 @@ export async function POST(
         const restock = await tx.inventoryRestock.create({
           data: {
             inventoryId: id,
-            userId: session.user.id,
+            userId:      session.user.id,
             quantity,
-            unit: inventory.unit,
-            lotNumber: lotNumber || null,
+            unit:       inventory.unit,
+            lotNumber:  lotNumber  || null,
             expiryDate: expiryDate ? new Date(expiryDate) : null,
-            notes: notes || null,
+            notes:      notes      || null,
           },
           include: {
             user: { select: { id: true, name: true, email: true } },
           },
         });
 
+        // 감사 로그: INVENTORY_RESTOCK CREATE (같은 트랜잭션으로 원자성 보장)
+        await createAuditLog(
+          {
+            userId:         session.user.id,
+            organizationId: inventory.organizationId,
+            action:         AuditAction.CREATE,
+            entityType:     AuditEntityType.INVENTORY_RESTOCK,
+            entityId:       restock.id,
+            previousData: { currentQuantity: quantityBefore },
+            newData: {
+              restockId:           restock.id,
+              inventoryId:         id,
+              quantity,
+              lotNumber:           lotNumber  || null,
+              expiryDate:          expiryDate || null,
+              notes:               notes      || null,
+              currentQuantityAfter: updated.currentQuantity,
+            },
+            ipAddress,
+            userAgent,
+          },
+          tx
+        );
+
         return [updated, restock];
       }
     );
 
-    return NextResponse.json({
-      inventory: updatedInventory,
-      restock: restockRecord,
-    });
+    return NextResponse.json({ inventory: updatedInventory, restock: restockRecord });
   } catch (error) {
     console.error("[InventoryRestock/POST]", error);
     return NextResponse.json({ error: "입고 처리에 실패했습니다." }, { status: 500 });

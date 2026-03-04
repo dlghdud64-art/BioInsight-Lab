@@ -72,13 +72,14 @@ model Organization {
   templates    QuoteTemplate[]
   inventories  ProductInventory[]
   subscription Subscription? // 구독 ?보
-  activityLogs ActivityLog[]
-  auditLogs    AuditLog[]
-  orders       Order[]
-  userBudgets  UserBudget[]
-  invites      OrganizationInvite[]
-  budgets      Budget[]
-  teams        Team[]
+  activityLogs  ActivityLog[]
+  auditLogs     AuditLog[]
+  dataAuditLogs DataAuditLog[]
+  orders        Order[]
+  userBudgets   UserBudget[]
+  invites       OrganizationInvite[]
+  budgets       Budget[]
+  teams         Team[]
 
   @@index([name])
   @@index([plan])
@@ -131,6 +132,7 @@ model User {
   inventoryRestocks   InventoryRestock[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
+  dataAuditLogs       DataAuditLog[]
   orders              Order[]
   userBudgets         UserBudget[]
   userInventories     UserInventory[]
@@ -1553,4 +1555,51 @@ model CartItem {
   @@index([cartId])
   @@index([productId])
   @@index([catalogNumber])
+}
+
+// ─── DataAuditLog: CRUD 데이터 추적성(Traceability) ──────────────────────────
+// 재고·예산·견적·조직 등 주요 도메인의 CREATE/UPDATE/DELETE 이력을 보관.
+// ActivityLog(사용자 행동 로그)·AuditLog(시스템 이벤트)와 역할이 다름.
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum AuditEntityType {
+  INVENTORY          // 재고 수량·메타 수정
+  INVENTORY_RESTOCK  // 입고 처리
+  INVENTORY_USE      // 출고(사용) 처리
+  BUDGET             // 예산 생성·변경·차감
+  QUOTE              // 견적 생성·수정·삭제
+  QUOTE_STATUS       // 견적 상태 변경(구매 완료 등)
+  USER               // 사용자 생성·수정·삭제
+  ORGANIZATION       // 조직 설정 변경
+  SETTINGS           // 시스템 설정 변경
+}
+
+model DataAuditLog {
+  id             String          @id @default(cuid())
+  organizationId String?                          // 조직 격리용 FK (RLS)
+  userId         String?                          // 행위 수행자 (null = 시스템 자동)
+  action         AuditAction                      // CREATE | UPDATE | DELETE
+  entityType     AuditEntityType                  // 대상 도메인
+  entityId       String                           // 변경 대상 레코드 ID
+  previousData   Json?                            // UPDATE·DELETE 시 변경 전 스냅샷
+  newData        Json?                            // CREATE·UPDATE 시 변경 후 스냅샷
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime        @default(now())
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([entityType, entityId]) // 특정 엔티티 이력 조회 최적화
+  @@index([createdAt])
 }

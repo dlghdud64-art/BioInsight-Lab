@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType, Prisma } from "@prisma/client";
+import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 import { handleApiError } from "@/lib/api-error-handler";
@@ -363,6 +364,27 @@ export async function PATCH(
       logger.error("Failed to create activity log", error);
     });
 
+    // DataAuditLog: QUOTE UPDATE (상태 변경 포함 — best-effort, 메인 로직과 무관)
+    createAuditLog({
+      userId:         session.user.id,
+      organizationId: quote.organizationId,
+      action:         isCompletingPurchase ? AuditAction.UPDATE : AuditAction.UPDATE,
+      entityType:     isCompletingPurchase ? AuditEntityType.QUOTE_STATUS : AuditEntityType.QUOTE,
+      entityId:       quote.id,
+      previousData: {
+        title:       quote.title,
+        status:      previousStatus,
+        description: quote.description,
+      },
+      newData: {
+        title:       updatedQuote.title,
+        status:      updatedQuote.status,
+        description: updatedQuote.description,
+      },
+      ipAddress,
+      userAgent,
+    }).catch(() => { /* best-effort */ });
+
     // 견적 상태 변경 후 모든 관련 페이지 캐시 강제 무효화
     // (isCompletingPurchase 여부와 무관하게 모든 PATCH에 적용)
     revalidatePath("/dashboard", "layout");  // 레이아웃 포함 전체 대시보드 캐시 제거
@@ -429,18 +451,30 @@ export async function DELETE(
       entityId: quote.id,
       userId: session.user.id,
       organizationId: quote.organizationId || undefined,
-      metadata: {
-        title: quote.title,
-      },
+      metadata: { title: quote.title },
       ipAddress,
       userAgent,
     }).catch((error) => {
       logger.error("Failed to create activity log", error);
     });
 
-    await db.quote.delete({
-      where: { id },
-    });
+    // DataAuditLog: QUOTE DELETE (삭제 전 기록 — onDelete: SetNull이므로 순서 무관)
+    createAuditLog({
+      userId:         session.user.id,
+      organizationId: quote.organizationId,
+      action:         AuditAction.DELETE,
+      entityType:     AuditEntityType.QUOTE,
+      entityId:       quote.id,
+      previousData: {
+        title:  quote.title,
+        status: quote.status,
+      },
+      newData: null,
+      ipAddress,
+      userAgent,
+    }).catch(() => { /* best-effort */ });
+
+    await db.quote.delete({ where: { id } });
 
     logger.info(`Deleted quote ${id}`);
 

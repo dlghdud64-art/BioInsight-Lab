@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 
 // 개별 재고 조회
 export async function GET(
@@ -78,7 +80,7 @@ export async function PATCH(
       location,
       notes,
       expiryDate,
-      date, // 새로 추가된 날짜 필드
+      date,
       minOrderQty,
       autoReorderEnabled,
       autoReorderThreshold,
@@ -88,67 +90,47 @@ export async function PATCH(
     // 업데이트할 데이터 준비
     const updateData: any = {};
 
-    // quantity를 숫자로 변환
     if (quantity !== undefined) {
       const parsedQuantity = typeof quantity === 'string'
         ? Number(quantity.replace(/,/g, ''))
         : Number(quantity);
-
       if (isNaN(parsedQuantity)) {
-        return NextResponse.json(
-          { error: "Invalid quantity value" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid quantity value" }, { status: 400 });
       }
       updateData.currentQuantity = parsedQuantity;
     }
 
-    // location 업데이트
-    if (location !== undefined) {
-      updateData.location = location || null;
-    }
+    if (location !== undefined) updateData.location = location || null;
 
-    // lotNumber 업데이트
     if (lotNumber !== undefined) {
-      updateData.lotNumber = typeof lotNumber === "string" && lotNumber.trim() !== "" ? lotNumber.trim() : null;
+      updateData.lotNumber = typeof lotNumber === "string" && lotNumber.trim() !== ""
+        ? lotNumber.trim()
+        : null;
     }
 
-    // notes 업데이트 (date 정보를 notes에 포함시킬 수도 있음)
     if (notes !== undefined || date !== undefined) {
       let updatedNotes = notes || existingInventory.notes || '';
-
-      // date가 제공되면 notes에 추가하거나 별도 처리
       if (date) {
         const dateNote = `\n[입고일: ${date}]`;
-        if (!updatedNotes.includes(dateNote)) {
-          updatedNotes = updatedNotes + dateNote;
-        }
+        if (!updatedNotes.includes(dateNote)) updatedNotes = updatedNotes + dateNote;
       }
-
       updateData.notes = updatedNotes || null;
     }
 
-    // expiryDate 업데이트
     if (expiryDate !== undefined) {
       updateData.expiryDate = expiryDate ? new Date(expiryDate) : null;
     }
 
-    // minOrderQty 업데이트
     if (minOrderQty !== undefined) {
       const parsedMinOrderQty = typeof minOrderQty === 'string'
         ? Number(minOrderQty.replace(/,/g, ''))
         : Number(minOrderQty);
-
       if (isNaN(parsedMinOrderQty)) {
-        return NextResponse.json(
-          { error: "Invalid minOrderQty value" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid minOrderQty value" }, { status: 400 });
       }
       updateData.minOrderQty = parsedMinOrderQty;
     }
 
-    // autoReorder 설정 업데이트
     if (autoReorderEnabled !== undefined) {
       updateData.autoReorderEnabled = Boolean(autoReorderEnabled);
     }
@@ -157,44 +139,60 @@ export async function PATCH(
       const parsedThreshold = typeof autoReorderThreshold === 'string'
         ? Number(autoReorderThreshold.replace(/,/g, ''))
         : Number(autoReorderThreshold);
-
       if (isNaN(parsedThreshold)) {
-        return NextResponse.json(
-          { error: "Invalid autoReorderThreshold value" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid autoReorderThreshold value" }, { status: 400 });
       }
       updateData.autoReorderThreshold = parsedThreshold;
     }
 
-    // 업데이트 실행
-    const updatedInventory = await db.productInventory.update({
-      where: { id: params.id },
-      data: updateData,
-      include: {
-        product: {
-          include: {
-            vendors: {
-              include: {
-                vendor: true,
-              },
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+
+    // 트랜잭션: 업데이트 + 감사 로그를 원자적으로 처리
+    const updatedInventory = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.productInventory.update({
+        where: { id: params.id },
+        data: updateData,
+        include: {
+          product: {
+            include: {
+              vendors: { include: { vendor: true } },
             },
           },
         },
-      },
+      });
+
+      await createAuditLog(
+        {
+          userId:         session.user.id,
+          organizationId: existingInventory.organizationId,
+          action:         AuditAction.UPDATE,
+          entityType:     AuditEntityType.INVENTORY,
+          entityId:       params.id,
+          previousData: {
+            currentQuantity: existingInventory.currentQuantity,
+            location:        existingInventory.location,
+            lotNumber:       existingInventory.lotNumber,
+            notes:           existingInventory.notes,
+            expiryDate:      existingInventory.expiryDate,
+            minOrderQty:     existingInventory.minOrderQty,
+            autoReorderEnabled:   (existingInventory as any).autoReorderEnabled,
+            autoReorderThreshold: (existingInventory as any).autoReorderThreshold,
+          },
+          newData: updateData,
+          ipAddress,
+          userAgent,
+        },
+        tx
+      );
+
+      return updated;
     });
 
-    return NextResponse.json({
-      success: true,
-      data: updatedInventory,
-    });
+    return NextResponse.json({ success: true, data: updatedInventory });
   } catch (error: any) {
     console.error("Error updating inventory:", error);
     return NextResponse.json(
-      {
-        error: "Failed to update inventory",
-        details: error.message
-      },
+      { error: "Failed to update inventory", details: error.message },
       { status: 500 }
     );
   }
@@ -225,22 +223,40 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 삭제 실행
-    await db.productInventory.delete({
-      where: { id: params.id },
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+
+    // 트랜잭션: 감사 로그 먼저 기록(FK 참조 전) → 삭제 순서 보장
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      // DataAuditLog는 onDelete: SetNull이므로 삭제 전에 기록해도 FK 문제 없음
+      await createAuditLog(
+        {
+          userId:         session.user.id,
+          organizationId: existingInventory.organizationId,
+          action:         AuditAction.DELETE,
+          entityType:     AuditEntityType.INVENTORY,
+          entityId:       params.id,
+          previousData: {
+            currentQuantity: existingInventory.currentQuantity,
+            location:        existingInventory.location,
+            lotNumber:       existingInventory.lotNumber,
+            notes:           existingInventory.notes,
+            expiryDate:      existingInventory.expiryDate,
+          },
+          newData: null,
+          ipAddress,
+          userAgent,
+        },
+        tx
+      );
+
+      await tx.productInventory.delete({ where: { id: params.id } });
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Inventory deleted successfully",
-    });
+    return NextResponse.json({ success: true, message: "Inventory deleted successfully" });
   } catch (error: any) {
     console.error("Error deleting inventory:", error);
     return NextResponse.json(
-      {
-        error: "Failed to delete inventory",
-        details: error.message
-      },
+      { error: "Failed to delete inventory", details: error.message },
       { status: 500 }
     );
   }
