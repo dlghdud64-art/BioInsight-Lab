@@ -259,9 +259,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
 
         {/* 중앙/우측 영역: 검색창 + 유틸리티 + 프로필 */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-initial sm:justify-end">
-          {/* 전역 검색창: 모바일 전체 확장, 데스크톱 고정 너비 */}
-          <div className="flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 sm:flex-initial sm:justify-end">
+          {/* 전역 검색창: 데스크톱 전용 (모바일은 하단 플로팅 검색 사용) */}
+          <div className="hidden md:flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
             <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none flex-shrink-0" />
             <Input
               type="search"
@@ -280,7 +280,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-transparent dark:hover:bg-transparent transition-colors"
                 aria-label="QR 스캔"
                 title="QR 스캔 (단축키: Ctrl+Q)"
                 onClick={openQRScanner}
@@ -297,7 +297,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 relative flex-shrink-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-transparent dark:hover:bg-transparent"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
@@ -378,7 +378,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 flex-shrink-0 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden sm:flex"
+                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-transparent dark:hover:bg-transparent transition-colors hidden sm:flex"
                 aria-label="도움말"
               >
                 <HelpCircle className="h-5 w-5" />
