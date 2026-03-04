@@ -101,18 +101,15 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 트랜잭션: 수량 증가 + 이력 동시 기록
+    // 트랜잭션: 수량 증가 + 신규 Lot 이력 기록 (기존 Lot 보존 — 덮어쓰기 금지)
     const [updatedInventory, restockRecord] = await db.$transaction(
       async (tx: Prisma.TransactionClient) => {
+        // currentQuantity만 증가 — lotNumber/expiryDate는 ProductInventory에서 수정하지 않음
+        // 각 Lot 이력은 InventoryRestock 레코드에 개별 보존됨
         const updated = await tx.productInventory.update({
           where: { id },
           data: {
             currentQuantity: { increment: quantity },
-            // Lot/유효기간은 가장 최근 입고 정보로 갱신
-            ...(lotNumber !== undefined ? { lotNumber } : {}),
-            ...(expiryDate !== undefined
-              ? { expiryDate: expiryDate ? new Date(expiryDate) : null }
-              : {}),
           },
           include: {
             product: { select: { id: true, name: true, catalogNumber: true } },

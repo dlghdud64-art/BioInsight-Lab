@@ -45,6 +45,60 @@ interface InventoryItem {
     brand: string | null;
     catalogNumber: string | null;
   };
+  // 다중 Lot 지원: InventoryRestock 레코드
+  restockRecords?: Array<{
+    id: string;
+    lotNumber: string | null;
+    expiryDate: string | null;
+    quantity: number;
+  }>;
+}
+
+/**
+ * 다중 Lot 중 가장 유통기한이 임박한 Lot을 대표로 선택하고 전체 Lot 수를 반환
+ * FIFO 원칙: 유통기한이 가장 이른 것을 먼저 사용
+ */
+function getLotDisplay(inventory: InventoryItem): {
+  representativeLotNumber: string | null;
+  representativeExpiryDate: string | null;
+  totalLotCount: number;
+} {
+  const now = new Date();
+
+  // 초기 Lot (ProductInventory.lotNumber) + 입고 이력의 Lot 합산
+  const candidates: Array<{ lotNumber: string | null; expiryDate: string | null }> = [];
+
+  // 입고 이력에서 distinct lot 추출
+  const restocks = inventory.restockRecords ?? [];
+  const seenLots = new Set<string>();
+  for (const r of restocks) {
+    const key = r.lotNumber ?? "__no_lot__";
+    if (!seenLots.has(key)) {
+      seenLots.add(key);
+      candidates.push({ lotNumber: r.lotNumber, expiryDate: r.expiryDate ? new Date(r.expiryDate).toISOString() : null });
+    }
+  }
+
+  // 입고 이력이 없으면 ProductInventory의 초기 Lot 사용
+  if (candidates.length === 0) {
+    candidates.push({ lotNumber: inventory.lotNumber ?? null, expiryDate: inventory.expiryDate });
+  }
+
+  // 유통기한이 있는 것만 필터 후 가장 이른 날짜 우선 정렬 (null expiry는 후순위)
+  candidates.sort((a, b) => {
+    if (!a.expiryDate && !b.expiryDate) return 0;
+    if (!a.expiryDate) return 1;
+    if (!b.expiryDate) return -1;
+    return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+  });
+
+  const representative = candidates[0] ?? { lotNumber: null, expiryDate: null };
+
+  return {
+    representativeLotNumber: representative.lotNumber,
+    representativeExpiryDate: representative.expiryDate,
+    totalLotCount: candidates.filter(c => c.lotNumber !== null || c.expiryDate !== null).length,
+  };
 }
 
 interface InventoryTableProps {
@@ -267,18 +321,22 @@ export function InventoryTable({
             inventories.map((inventory, index) => {
               const status = getStockStatus(inventory);
               const isLowQuantity = inventory.currentQuantity <= minQty(inventory);
-              const expirySoon = isExpiringSoon(inventory.expiryDate);
-              const expired = isExpired(inventory.expiryDate);
               const isSameProductAsPrevious =
                 index > 0 && inventories[index - 1].productId === inventory.productId;
               const isSameProductAsNext =
                 index < inventories.length - 1 && inventories[index + 1].productId === inventory.productId;
-              const statusLabel = expired ? "폐기" : expirySoon && !expired ? "임박" : status.label;
+              // 다중 Lot: 가장 유통기한 임박한 Lot을 대표로
+              const lotDisplay = getLotDisplay(inventory);
+              const representativeExpiry = lotDisplay.representativeExpiryDate;
+              const representativeExpirySoon = isExpiringSoon(representativeExpiry);
+              const representativeExpired = isExpired(representativeExpiry);
+
+              const statusLabel = representativeExpired ? "폐기" : representativeExpirySoon ? "임박" : status.label;
               const tooltipText =
                 "exhaustionDate" in status && status.exhaustionDate
                   ? `현재 사용량 기준 ${status.exhaustionDate} 소진 예상`
                   : undefined;
-              const rowIsExpirySoon = expirySoon && !expired;
+              const rowIsExpirySoon = representativeExpirySoon && !representativeExpired;
               const handleRowClick = () => onDetailClick?.(inventory);
 
               return (
@@ -325,16 +383,24 @@ export function InventoryTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="font-mono text-sm text-slate-700 dark:text-slate-300">
-                      {inventory.lotNumber ?? "-"}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
+                        {lotDisplay.representativeLotNumber ?? "-"}
+                      </span>
+                      {/* 외 N개 뱃지: Lot가 2개 이상일 때 표시 */}
+                      {lotDisplay.totalLotCount > 1 && (
+                        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                          외 {lotDisplay.totalLotCount - 1}개
+                        </span>
+                      )}
                     </div>
                     <div
                       className={`text-xs mt-0.5 font-medium ${
-                        rowIsExpirySoon || expired ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
-                      } ${expired ? "text-red-600 dark:text-red-400" : ""}`}
+                        rowIsExpirySoon ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
+                      } ${representativeExpired ? "text-red-600 dark:text-red-400" : ""}`}
                     >
-                      {inventory.expiryDate
-                        ? format(new Date(inventory.expiryDate), "yyyy.MM.dd")
+                      {representativeExpiry
+                        ? format(new Date(representativeExpiry), "yyyy.MM.dd")
                         : "-"}
                     </div>
                   </TableCell>

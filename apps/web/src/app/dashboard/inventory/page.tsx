@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -1090,44 +1090,46 @@ export default function InventoryPage() {
 
         {/* 우측 상세 Sheet (Drawer) */}
         <Sheet open={isSheetOpen} onOpenChange={(open) => { setIsSheetOpen(open); if (!open) setShowRestockHistory(false); }}>
-          <SheetContent className="w-[90vw] overflow-y-auto sm:max-w-[500px]">
+          <SheetContent className="w-[90vw] overflow-y-auto sm:max-w-[480px]">
             {selectedItem && (
               <>
-                <SheetHeader className="mb-6 mt-4 border-b border-slate-100 pb-6 dark:border-slate-800">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Badge className="border-none bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300">
+                {/* ── 헤더: 여백 압축 ── */}
+                <SheetHeader className="mb-3 mt-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <Badge className="border-none bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300 text-xs">
                       시약 상세 정보
                     </Badge>
                     {selectedItem.hazard && (
-                      <Badge className="border-none bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400">
+                      <Badge className="border-none bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 text-xs">
                         <AlertTriangle className="mr-1 h-3 w-3" />
                         유해 물질
                       </Badge>
                     )}
                   </div>
-                  <SheetTitle className="text-2xl font-bold">
+                  <SheetTitle className="text-lg font-bold leading-tight">
                     {selectedItem.product.name}
                   </SheetTitle>
-                  <SheetDescription className="flex items-center gap-2 text-base text-slate-600 dark:text-slate-400">
+                  <SheetDescription className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                     <span>{selectedItem.product.brand ?? "-"}</span>
                     <span className="text-slate-300 dark:text-slate-600">|</span>
-                    <span className="font-mono text-sm">
+                    <span className="font-mono text-xs">
                       {selectedItem.product.catalogNumber ?? "-"}
                     </span>
                   </SheetDescription>
                 </SheetHeader>
 
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900/50">
-                      <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">Lot Number</p>
-                      <p className="font-mono font-bold">
+                <div className="space-y-3">
+                  {/* ── Lot / 유효기한 카드: 패딩 압축 ── */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-900/50">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Lot Number</p>
+                      <p className="font-mono text-sm font-bold mt-0.5">
                         {selectedItem.lotNumber ?? "-"}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900/50">
-                      <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">유효 기한</p>
-                      <p className="font-bold text-slate-900 dark:text-slate-100">
+                    <div className="rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-900/50">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">유효 기한</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5">
                         {selectedItem.expiryDate
                           ? format(new Date(selectedItem.expiryDate), "yyyy.MM.dd", { locale: ko })
                           : "-"}
@@ -1135,130 +1137,124 @@ export default function InventoryPage() {
                     </div>
                   </div>
 
+                  {/* ── 기본 정보 + 관리 정보: 2단 그리드 배치 ── */}
                   <div>
-                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
-                      <Info className="mr-2 h-4 w-4 text-slate-400" />
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                      <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       기본 정보
                     </h4>
-                    <div className="grid grid-cols-2 gap-y-4 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
-                      <div className="text-slate-500 dark:text-slate-400">제조사</div>
-                      <div className="font-medium">
-                        {selectedItem.product.brand ?? "-"}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">제조사</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.product.brand ?? "-"}</span>
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">Cat.No.</div>
-                      <div className="font-mono font-medium">
-                        {selectedItem.product.catalogNumber ?? "-"}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">Cat.No.</span>
+                        <span className="font-mono text-xs font-medium truncate text-right">{selectedItem.product.catalogNumber ?? "-"}</span>
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">구매처</div>
-                      <div className="font-medium">{selectedItem.vendor ?? "-"}</div>
-                      <div className="text-slate-500 dark:text-slate-400">배송기간</div>
-                      <div className="font-medium">{selectedItem.deliveryPeriod ?? "-"}</div>
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">구매처</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.vendor ?? "-"}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">배송기간</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.deliveryPeriod ?? "-"}</span>
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
-                      <Info className="mr-2 h-4 w-4 text-slate-400" />
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                      <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       관리 정보
                     </h4>
-                    <div className="grid grid-cols-2 gap-y-4 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
-                      <div className="text-slate-500 dark:text-slate-400">사용 중/미개봉</div>
-                      <div className="font-medium">
-                        {selectedItem.inUseOrUnopened ?? "-"}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">사용/미개봉</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.inUseOrUnopened ?? "-"}</span>
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">평균 유효기한</div>
-                      <div className="font-medium">
-                        {selectedItem.averageExpiry ?? "-"}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">평균유효기한</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.averageExpiry ?? "-"}</span>
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">시험항목</div>
-                      <div className="font-medium">
-                        {selectedItem.testPurpose ?? "-"}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">시험항목</span>
+                        <span className="text-xs font-medium truncate text-right">{selectedItem.testPurpose ?? "-"}</span>
                       </div>
-                      <div className="text-slate-500 dark:text-slate-400">보관조건</div>
-                      <div className="font-medium">
-                        {getStorageConditionLabel(selectedItem.storageCondition)}
+                      <div className="flex items-center justify-between gap-1 min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">보관조건</span>
+                        <span className="text-xs font-medium truncate text-right">{getStorageConditionLabel(selectedItem.storageCondition)}</span>
                       </div>
                     </div>
                   </div>
 
+                  {/* ── 특이사항: min-h 축소 ── */}
                   <div>
-                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
-                      <FileText className="mr-2 h-4 w-4 text-slate-400" />
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                      <FileText className="mr-1.5 h-3 w-3 text-slate-400" />
                       특이사항
                     </h4>
-                    <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm leading-relaxed text-slate-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-slate-300">
+                    <div className="rounded-md border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs leading-relaxed text-slate-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-slate-300 min-h-[40px]">
                       {selectedItem.notes || "등록된 특이사항이 없습니다."}
                     </div>
                   </div>
 
-                  {/* 재고 부족 알림 기준 설정 */}
-                  <div className="mt-6 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
-                    <h4 className="mb-3 flex items-center font-semibold text-slate-900 dark:text-slate-100">
-                      <BellRing className="mr-2 h-4 w-4 text-blue-500" />
-                      재고 부족 알림 기준 설정
-                    </h4>
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1 space-y-1">
-                        <Label
-                          htmlFor="sheet-minQty"
-                          className="text-xs text-slate-500 dark:text-slate-400"
-                        >
-                          최소 유지 수량 (안전 재고)
-                        </Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id="sheet-minQty"
-                            type="number"
-                            min={0}
-                            value={sheetSafetyStock}
-                            onChange={(e) => setSheetSafetyStock(e.target.value)}
-                            className="w-24 bg-white dark:bg-slate-950"
-                          />
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                            {selectedItem.unit || "개"}
-                          </span>
-                        </div>
+                  {/* ── 재고 부족 알림 기준: 한 줄 inline 배치 ── */}
+                  <div className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/30">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <BellRing className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">안전 재고 기준</span>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 border-blue-200 bg-white text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:bg-slate-950 dark:text-blue-400 dark:hover:bg-blue-950/50"
-                        disabled={createOrUpdateMutation.isPending}
-                        onClick={() => {
-                          const value = parseInt(sheetSafetyStock, 10);
-                          if (isNaN(value) || value < 0) return;
-                          const payload = {
-                            id: selectedItem.id,
-                            productId: selectedItem.productId,
-                            currentQuantity: selectedItem.currentQuantity,
-                            unit: selectedItem.unit,
-                            safetyStock: value,
-                            minOrderQty: selectedItem.minOrderQty ?? undefined,
-                            location: selectedItem.location ?? undefined,
-                            notes: selectedItem.notes ?? undefined,
-                            expiryDate: selectedItem.expiryDate ?? undefined,
-                          };
-                          createOrUpdateMutation.mutate(payload, {
-                            onSuccess: () => {
-                              setSelectedItem((prev) =>
-                                prev ? { ...prev, safetyStock: value } : null
-                              );
-                              toast({
-                                title: "알림 기준 저장됨",
-                                description: `최소 유지 수량이 ${value} ${selectedItem.unit || "개"}(으)로 설정되었습니다.`,
-                              });
-                            },
-                          });
-                        }}
-                      >
-                        <Save className="mr-1 h-3 w-3" />
-                        변경 저장
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          id="sheet-minQty"
+                          type="number"
+                          min={0}
+                          value={sheetSafetyStock}
+                          onChange={(e) => setSheetSafetyStock(e.target.value)}
+                          className="w-20 h-7 text-xs bg-white dark:bg-slate-950"
+                        />
+                        <span className="text-xs text-slate-500">{selectedItem.unit || "개"}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs shrink-0 border-blue-200 bg-white text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:bg-slate-950 dark:text-blue-400"
+                          disabled={createOrUpdateMutation.isPending}
+                          onClick={() => {
+                            const value = parseInt(sheetSafetyStock, 10);
+                            if (isNaN(value) || value < 0) return;
+                            const payload = {
+                              id: selectedItem.id,
+                              productId: selectedItem.productId,
+                              currentQuantity: selectedItem.currentQuantity,
+                              unit: selectedItem.unit,
+                              safetyStock: value,
+                              minOrderQty: selectedItem.minOrderQty ?? undefined,
+                              location: selectedItem.location ?? undefined,
+                              notes: selectedItem.notes ?? undefined,
+                              expiryDate: selectedItem.expiryDate ?? undefined,
+                            };
+                            createOrUpdateMutation.mutate(payload, {
+                              onSuccess: () => {
+                                setSelectedItem((prev) =>
+                                  prev ? { ...prev, safetyStock: value } : null
+                                );
+                                toast({
+                                  title: "알림 기준 저장됨",
+                                  description: `최소 유지 수량이 ${value} ${selectedItem.unit || "개"}(으)로 설정되었습니다.`,
+                                });
+                              },
+                            });
+                          }}
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                      설정된 수량 이하로 재고가 떨어지면 대시보드와 앱 내 알림으로 즉시 경고가 발생하며,
-                      원클릭 재발주가 활성화됩니다.
+                    <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400 dark:text-slate-500">
+                      이 수량 이하로 떨어지면 대시보드에서 경고 알림이 발생합니다.
                     </p>
                   </div>
 
@@ -1349,6 +1345,11 @@ export default function InventoryPage() {
             </DialogHeader>
             {restockItem && (
               <div className="space-y-4 pt-1">
+                {/* 신규 Lot 이력 안내 */}
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
+                  <PackagePlus className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>입고 수량과 Lot 정보는 <strong>신규 입고 이력</strong>으로 별도 기록됩니다. 기존 Lot 데이터는 유지됩니다.</span>
+                </div>
                 <div className="rounded-lg bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm flex justify-between">
                   <span className="text-slate-500">현재 재고</span>
                   <span className="font-semibold">{restockItem.currentQuantity.toLocaleString()} {restockItem.unit}</span>

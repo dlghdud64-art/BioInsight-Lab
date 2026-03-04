@@ -121,6 +121,16 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        // 다중 Lot 표시를 위한 입고 이력 포함 (Lot 번호 + 유효기한만 조회)
+        restockRecords: {
+          select: {
+            id: true,
+            lotNumber: true,
+            expiryDate: true,
+            quantity: true,
+          },
+          orderBy: { restockedAt: "desc" },
+        },
       },
       orderBy: {
         currentQuantity: "asc",
