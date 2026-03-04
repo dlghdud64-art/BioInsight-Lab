@@ -221,73 +221,110 @@ export async function PATCH(
           logger.info(`[PURCHASE] purchaseTotalAmount: ${purchaseTotalAmount}, budgetId: ${budgetId ?? "none"}`);
 
           if (purchaseTotalAmount > 0 && budgetId) {
-            // 1. 예산 조회
-            const targetBudget = await db.userBudget.findUnique({
+            // 1. 예산 조회: UserBudget 테이블 먼저 확인 → 없으면 Budget 테이블 확인
+            //    (user-budgets API는 두 테이블을 통합 반환하므로 양쪽 모두 커버 필요)
+            const targetUserBudget = await db.userBudget.findUnique({
               where: { id: budgetId },
             });
 
-            if (!targetBudget) {
-              return NextResponse.json(
-                { error: "선택한 예산을 찾을 수 없습니다." },
-                { status: 400 }
-              );
-            }
+            if (targetUserBudget) {
+              // ─── UserBudget 경로: 명시적 잔액 차감 ───────────────────────────
 
-            // 2. 보안 검증: 본인 예산 또는 소속 조직 예산인지 이중 확인
-            const isOwnerBudget = targetBudget.userId === session.user.id;
-            let isOrgBudget = false;
-            if (!isOwnerBudget && targetBudget.organizationId) {
-              const membership = await db.organizationMember.findFirst({
-                where: {
-                  userId: session.user.id,
-                  organizationId: targetBudget.organizationId,
-                },
+              // 2a. 보안 검증: 본인 예산 또는 소속 조직 예산인지 이중 확인
+              const isOwnerBudget = targetUserBudget.userId === session.user.id;
+              let isOrgBudget = false;
+              if (!isOwnerBudget && targetUserBudget.organizationId) {
+                const membership = await db.organizationMember.findFirst({
+                  where: {
+                    userId: session.user.id,
+                    organizationId: targetUserBudget.organizationId,
+                  },
+                });
+                isOrgBudget = !!membership;
+              }
+
+              if (!isOwnerBudget && !isOrgBudget) {
+                return NextResponse.json(
+                  { error: "해당 예산에 접근 권한이 없습니다." },
+                  { status: 403 }
+                );
+              }
+
+              // 3a. 잔액 검증 (부족 시 400)
+              if (targetUserBudget.remainingAmount < purchaseTotalAmount) {
+                return NextResponse.json(
+                  { error: "예산 잔액이 부족합니다." },
+                  { status: 400 }
+                );
+              }
+
+              // 4a. 트랜잭션: UserBudget 차감 + 거래 내역 기록
+              await db.$transaction(async (tx: Prisma.TransactionClient) => {
+                const budgetBefore = targetUserBudget.remainingAmount;
+                const budgetAfter = budgetBefore - purchaseTotalAmount;
+
+                await tx.userBudget.update({
+                  where: { id: targetUserBudget.id },
+                  data: {
+                    usedAmount: { increment: purchaseTotalAmount },
+                    remainingAmount: { decrement: purchaseTotalAmount },
+                  },
+                });
+
+                await tx.userBudgetTransaction.create({
+                  data: {
+                    budgetId: targetUserBudget.id,
+                    type: "DEBIT",
+                    amount: purchaseTotalAmount,
+                    description: `견적 구매 완료: ${quote.title}`,
+                    balanceBefore: budgetBefore,
+                    balanceAfter: budgetAfter,
+                  },
+                });
               });
-              isOrgBudget = !!membership;
-            }
 
-            if (!isOwnerBudget && !isOrgBudget) {
-              return NextResponse.json(
-                { error: "해당 예산에 접근 권한이 없습니다." },
-                { status: 403 }
-              );
-            }
-
-            // 3. 잔액 검증 (부족 시 400)
-            if (targetBudget.remainingAmount < purchaseTotalAmount) {
-              return NextResponse.json(
-                { error: "예산 잔액이 부족합니다." },
-                { status: 400 }
-              );
-            }
-
-            // 4. 트랜잭션: 예산 차감 + 거래 내역 기록 (원자성 보장)
-            await db.$transaction(async (tx: Prisma.TransactionClient) => {
-              const budgetBefore = targetBudget.remainingAmount;
-              const budgetAfter = budgetBefore - purchaseTotalAmount;
-
-              await tx.userBudget.update({
-                where: { id: targetBudget.id },
-                data: {
-                  usedAmount: { increment: purchaseTotalAmount },
-                  remainingAmount: { decrement: purchaseTotalAmount },
-                },
+              revalidatePath("/dashboard/budget");
+              logger.info(`[BUDGET] UserBudget deducted: ${purchaseTotalAmount} from ${targetUserBudget.id}`);
+            } else {
+              // ─── Budget 테이블 경로 (예산 관리 페이지에서 생성한 예산) ────────
+              //   Budget.remainingAmount는 PurchaseRecord 합계로 자동 계산되므로
+              //   markQuoteAsPurchased()가 이미 PurchaseRecord를 생성한 시점에
+              //   잔액이 자동 반영됨. 여기서는 존재 여부 + 접근 권한만 검증.
+              const targetBudget = await db.budget.findUnique({
+                where: { id: budgetId },
               });
 
-              await tx.userBudgetTransaction.create({
-                data: {
-                  budgetId: targetBudget.id,
-                  type: "DEBIT",
-                  amount: purchaseTotalAmount,
-                  description: `견적 구매 완료: ${quote.title}`,
-                  balanceBefore: budgetBefore,
-                  balanceAfter: budgetAfter,
-                },
-              });
-            });
+              if (!targetBudget) {
+                return NextResponse.json(
+                  { error: "선택한 예산을 찾을 수 없습니다." },
+                  { status: 400 }
+                );
+              }
 
-            revalidatePath("/dashboard/budget");
-            logger.info(`Budget deducted: ${purchaseTotalAmount} from budget ${targetBudget.id}`);
+              // 2b. 보안 검증: scopeKey(userId 기반) 또는 소속 조직 예산
+              const isScopedToUser = targetBudget.scopeKey === session.user.id;
+              let isBudgetOrgMember = false;
+              if (!isScopedToUser && targetBudget.organizationId) {
+                const membership = await db.organizationMember.findFirst({
+                  where: {
+                    userId: session.user.id,
+                    organizationId: targetBudget.organizationId,
+                  },
+                });
+                isBudgetOrgMember = !!membership;
+              }
+
+              if (!isScopedToUser && !isBudgetOrgMember) {
+                return NextResponse.json(
+                  { error: "해당 예산에 접근 권한이 없습니다." },
+                  { status: 403 }
+                );
+              }
+
+              // Budget 모델은 PurchaseRecord 기반 자동 차감이므로 별도 트랜잭션 불필요
+              revalidatePath("/dashboard/budget");
+              logger.info(`[BUDGET] Budget (management) verified: ${targetBudget.id}, deduction handled via PurchaseRecords`);
+            }
           }
         }
       } catch (error) {

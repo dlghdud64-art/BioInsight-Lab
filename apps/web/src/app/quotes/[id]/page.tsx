@@ -123,9 +123,22 @@ export default function QuoteDetailPage() {
 
   const budgets = budgetsData?.budgets || [];
   const selectedBudget = budgets.find((b) => b.id === orderForm.budgetId);
-  const quoteTotal = quoteData?.quote?.totalAmount || 0;
-  const expectedRemaining = selectedBudget 
-    ? selectedBudget.remainingAmount - quoteTotal 
+
+  // quoteTotal: items 기반 동적 계산 (unitPrice 회신 반영) → DB totalAmount는 fallback
+  // markQuoteAsPurchased의 amount 계산 로직과 동일하게: lineTotal > unitPrice*qty > 0
+  const quoteItems = quoteData?.quote?.items || [];
+  const computedTotal = (quoteItems as any[]).reduce((sum: number, item: any) => {
+    const line = item.lineTotal
+      ? Math.round(item.lineTotal)
+      : item.unitPrice
+      ? Math.round(item.unitPrice) * (item.quantity || 1)
+      : 0;
+    return sum + line;
+  }, 0);
+  const quoteTotal = computedTotal || quoteData?.quote?.totalAmount || 0;
+
+  const expectedRemaining = selectedBudget
+    ? selectedBudget.remainingAmount - quoteTotal
     : null;
 
   // 벤더 회신 목록 조회 (저장된 회신 비교용)
