@@ -131,22 +131,29 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
   const organization = orgsData?.organizations?.find((org: any) => org.id === params.id) || {
     id: params.id,
-    name: "조직",
+    name: "",
     description: "",
+    slug: "",
   };
 
-  // editName, editSlug 초기값 세팅 (조직 전환 시에만)
+  // editName, editSlug, editDescription 초기값 세팅
+  // orgLoading 중에는 fallback 빈값이 트리거되지 않도록 대기
   const lastInitializedOrgId = useRef<string | null>(null);
   useEffect(() => {
-    if (organization?.name && !editName) {
-      setEditName(organization.name);
-      setEditDescription(organization.description || "");
+    // 실제 API 데이터가 로드되기 전(loading 중)에는 초기화 건너뜀
+    if (orgLoading) return;
+
+    const realOrg = orgsData?.organizations?.find((org: any) => org.id === params.id);
+    if (!realOrg) return; // 조직을 찾지 못한 경우 초기화 건너뜀
+
+    // 조직 전환 시 또는 최초 로드 시 폼 필드 전체 초기화
+    if (lastInitializedOrgId.current !== realOrg.id) {
+      lastInitializedOrgId.current = realOrg.id;
+      setEditName(realOrg.name || "");
+      setEditDescription(realOrg.description || "");
+      setEditSlug(realOrg.slug || "");
     }
-    if (organization?.id && organization?.slug !== undefined && lastInitializedOrgId.current !== organization.id) {
-      lastInitializedOrgId.current = organization.id;
-      setEditSlug(organization.slug || "");
-    }
-  }, [organization?.name, organization?.slug, organization?.id]);
+  }, [orgLoading, orgsData, params.id]);
 
   // 슬러그 실시간 검증 (Debounce)
   useEffect(() => {
