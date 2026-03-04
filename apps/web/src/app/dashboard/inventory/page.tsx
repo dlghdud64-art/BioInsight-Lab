@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -693,7 +694,7 @@ export default function InventoryPage() {
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
-          <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3">
+          <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3 w-full">
             <AddInventoryModal
               open={isDialogOpen}
               onOpenChange={(open) => {
@@ -709,18 +710,95 @@ export default function InventoryPage() {
               inventory={editingInventory}
               isLoading={createOrUpdateMutation.isPending}
             />
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              재고 등록
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard/inventory/scan")}
-              className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
-            >
-              <QrCode className="h-4 w-4" />
-              QR 스캔
-            </Button>
+            {/* 메인 액션: 재고 등록 + QR 스캔 (모바일에서는 2열 그리드) */}
+            <div className="w-full md:w-auto grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                className="w-full justify-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                재고 등록
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/inventory/scan")}
+                className="w-full justify-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
+              >
+                <QrCode className="h-4 w-4" />
+                QR 스캔
+              </Button>
+            </div>
+
+            {/* 서브 액션: 라벨 내보내기 / 엑셀 업로드 / 내보내기 */}
+            <BulkImportModal
+              open={isImportDialogOpen}
+              onOpenChange={setIsImportDialogOpen}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ["inventories"] });
+                queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+              }}
+            />
+            {/* 모바일: 서브 액션 더보기 메뉴 */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="md:hidden h-10 w-10 shrink-0"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onClick={async () => {
+                    if (isExportingLabels) return;
+                    setIsExportingLabels(true);
+                    try {
+                      const res = await fetch("/api/inventory/export-labels");
+                      if (!res.ok) {
+                        const json = await res.json().catch(() => ({}));
+                        throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
+                      }
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                      a.href = url;
+                      a.download = `Label_Data_${yyyymmdd}.xlsx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast({ title: "라벨 데이터가 다운로드되었습니다." });
+                    } catch (e: unknown) {
+                      toast({
+                        title: "라벨 데이터 내보내기 실패",
+                        description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsExportingLabels(false);
+                    }
+                  }}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  라벨 데이터 내보내기
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsImportDialogOpen(true)}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  엑셀 업로드
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center gap-2 text-xs">
+                  <Download className="h-3.5 w-3.5" />
+                  내보내기
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* 데스크톱: 서브 액션 버튼 그대로 노출 */}
             <Button
               variant="outline"
               disabled={isExportingLabels}
@@ -751,6 +829,7 @@ export default function InventoryPage() {
                   setIsExportingLabels(false);
                 }
               }}
+              className="hidden md:inline-flex"
             >
               {isExportingLabels ? (
                 <>
@@ -764,22 +843,15 @@ export default function InventoryPage() {
                 </>
               )}
             </Button>
-            <BulkImportModal
-              open={isImportDialogOpen}
-              onOpenChange={setIsImportDialogOpen}
-              onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ["inventories"] });
-                queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
-              }}
-            />
             <Button
               variant="outline"
               onClick={() => setIsImportDialogOpen(true)}
+              className="hidden md:inline-flex"
             >
               <Upload className="h-4 w-4 mr-2" />
               엑셀 업로드
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="hidden md:inline-flex">
               <Download className="h-4 w-4 mr-2" />
               내보내기
             </Button>
@@ -817,48 +889,50 @@ export default function InventoryPage() {
             {/* 하단 통합 콘텐츠 */}
             {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
             <TabsContent value="manage" className="m-0 p-6 space-y-4">
-              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
-              <InventorySearch
-                value={searchQuery}
-                onChange={setSearchQuery}
-                isLoading={isLoading}
-              />
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="위치별" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 위치</SelectItem>
-                  <SelectItem value="none">위치 미지정</SelectItem>
-                  {uniqueLocations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="상태별" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 상태</SelectItem>
-                  <SelectItem value="low">부족</SelectItem>
-                  <SelectItem value="normal">정상</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="카테고리별" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 카테고리</SelectItem>
-                  <SelectItem value="reagent">시약</SelectItem>
-                  <SelectItem value="equipment">장비</SelectItem>
-                  <SelectItem value="consumable">소모품</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="flex flex-col gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
+                <InventorySearch
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  isLoading={isLoading}
+                />
+                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 scrollbar-hide md:flex-wrap md:overflow-visible">
+                  <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <SelectTrigger className="w-[120px] md:w-[140px]">
+                      <SelectValue placeholder="위치별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 위치</SelectItem>
+                      <SelectItem value="none">위치 미지정</SelectItem>
+                      {uniqueLocations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[120px] md:w-[140px]">
+                      <SelectValue placeholder="상태별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 상태</SelectItem>
+                      <SelectItem value="low">부족</SelectItem>
+                      <SelectItem value="normal">정상</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-[130px] md:w-[140px]">
+                      <SelectValue placeholder="카테고리별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 카테고리</SelectItem>
+                      <SelectItem value="reagent">시약</SelectItem>
+                      <SelectItem value="equipment">장비</SelectItem>
+                      <SelectItem value="consumable">소모품</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
             {isLoading ? (
               <Card>

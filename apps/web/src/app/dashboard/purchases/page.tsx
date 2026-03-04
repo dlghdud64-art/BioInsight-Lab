@@ -492,7 +492,7 @@ export default function PurchasesPage() {
   };
 
   return (
-    <div className="w-full px-4 md:px-6 py-6">
+    <div className="w-full px-4 md:px-6 py-4 md:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="구매 내역"
@@ -553,9 +553,9 @@ export default function PurchasesPage() {
                 {/* Action Bar: [+ 내역 등록] 버튼 및 필터 */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   {/* 필터 바 */}
-                  <div className="flex flex-wrap items-center gap-3 flex-1">
+                  <div className="flex flex-col gap-2 flex-1">
                     {/* 검색창 */}
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative w-full">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         placeholder="품명 검색"
@@ -564,31 +564,32 @@ export default function PurchasesPage() {
                         className="pl-9"
                       />
                     </div>
-                    {/* 기간 설정 */}
-                    <DateRangePicker
-                      startDate={customDateRange?.from}
-                      endDate={customDateRange?.to}
-                      onDateChange={(from, to) => setCustomDateRange({ from, to })}
-                    />
-                    {/* 공급사 필터 */}
-                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="공급사 필터" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체 공급사</SelectItem>
-                        {uniqueVendors.map((vendor) => (
-                          <SelectItem key={vendor} value={vendor}>
-                            {vendor}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {/* 기간 설정 + 공급사 필터: 모바일 가로 스크롤 */}
+                    <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0 scrollbar-hide">
+                      <DateRangePicker
+                        startDate={customDateRange?.from}
+                        endDate={customDateRange?.to}
+                        onDateChange={(from, to) => setCustomDateRange({ from, to })}
+                      />
+                      <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                        <SelectTrigger className="w-[150px] sm:w-[180px]">
+                          <SelectValue placeholder="공급사 필터" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 공급사</SelectItem>
+                          {uniqueVendors.map((vendor) => (
+                            <SelectItem key={vendor} value={vendor}>
+                              {vendor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   {/* [+ 내역 등록] 버튼 */}
                   <Button
                     onClick={() => setIsImportDialogOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     내역 등록

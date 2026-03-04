@@ -164,7 +164,7 @@ export default function QuotesPage() {
         {/* 필터 및 검색 */}
         <Card className="p-3 md:p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
           <CardContent className="px-0 pt-0 pb-0">
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+            <div className="flex flex-col gap-3 md:gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -176,30 +176,32 @@ export default function QuotesPage() {
                   />
                 </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px] text-xs md:text-sm h-8 md:h-10">
-                  <Filter className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <SelectValue placeholder="상태 필터" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="PENDING">대기 중</SelectItem>
-                  <SelectItem value="SENT">발송 완료</SelectItem>
-                  <SelectItem value="RESPONDED">응답 받음</SelectItem>
-                  <SelectItem value="COMPLETED">완료</SelectItem>
-                  <SelectItem value="CANCELLED">취소</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[180px] text-xs md:text-sm h-8 md:h-10">
-                  <SelectValue placeholder="정렬" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">최신순</SelectItem>
-                  <SelectItem value="oldest">오래된순</SelectItem>
-                  <SelectItem value="status">상태순</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 scrollbar-hide md:overflow-visible md:flex-wrap">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[130px] md:w-[180px] text-xs md:text-sm h-8 md:h-10">
+                    <Filter className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                    <SelectValue placeholder="상태 필터" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="PENDING">대기 중</SelectItem>
+                    <SelectItem value="SENT">발송 완료</SelectItem>
+                    <SelectItem value="RESPONDED">응답 받음</SelectItem>
+                    <SelectItem value="COMPLETED">완료</SelectItem>
+                    <SelectItem value="CANCELLED">취소</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[110px] md:w-[180px] text-xs md:text-sm h-8 md:h-10">
+                    <SelectValue placeholder="정렬" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">최신순</SelectItem>
+                    <SelectItem value="oldest">오래된순</SelectItem>
+                    <SelectItem value="status">상태순</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
