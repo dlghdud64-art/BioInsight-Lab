@@ -3,9 +3,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Rocket } from "lucide-react";
+import { useSession } from "next-auth/react";
 
-/** 모바일 전용 플로팅 CTA - 최하단 고정, 가입/문의 유도 */
+/** 모바일 전용 플로팅 CTA - 최하단 고정, 가입/문의 유도 (비로그인 전용) */
 export function MobileFloatingCTA() {
+  const { data: session } = useSession();
+
+  // 로그인 상태에서는 플로팅 바 미표시
+  if (session?.user) return null;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       <div className="flex items-center justify-center gap-3 px-4 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">

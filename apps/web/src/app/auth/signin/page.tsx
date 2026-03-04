@@ -12,7 +12,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") || "/";
+  const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
