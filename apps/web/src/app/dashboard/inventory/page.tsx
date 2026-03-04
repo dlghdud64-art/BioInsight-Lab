@@ -2,7 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,6 +77,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
@@ -85,8 +87,17 @@ export default function InventoryPage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  // URL ?filter= 파라미터가 있으면 초기 필터로 세팅 (대시보드 '부족 알림' 카드 진입)
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get("filter") ?? "all"
+  );
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // URL 파라미터 변경 시 필터 동기화
+  useEffect(() => {
+    const f = searchParams.get("filter");
+    if (f) setStatusFilter(f);
+  }, [searchParams]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");

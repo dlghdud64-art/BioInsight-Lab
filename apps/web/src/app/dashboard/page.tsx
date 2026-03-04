@@ -290,7 +290,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </Link>
-          <Link href="/dashboard/quotes">
+          <Link href="/dashboard/quotes?status=PENDING">
             <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
                 <CardTitle className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>
@@ -448,7 +448,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/dashboard/quotes">
+            <Link href="/dashboard/quotes?status=PENDING">
               <Card className="h-[160px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200 dark:border-slate-800/50 shadow-sm hover:shadow-md bg-white dark:bg-[#161d2f]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
                   <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중인 견적</CardTitle>

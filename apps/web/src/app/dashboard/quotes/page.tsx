@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,9 +62,19 @@ interface Quote {
 export default function QuotesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // URL ?status= 파라미터가 있으면 초기 필터로 세팅 (대시보드 카드 원클릭 진입)
+  const [statusFilter, setStatusFilter] = useState<string>(
+    searchParams.get("status") ?? "all"
+  );
   const [sortBy, setSortBy] = useState<string>("newest");
+
+  // URL 파라미터 변경 시 필터 동기화 (뒤로가기 후 재진입 등)
+  useEffect(() => {
+    const s = searchParams.get("status");
+    if (s) setStatusFilter(s);
+  }, [searchParams]);
 
   // 견적 목록 조회
   // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)
