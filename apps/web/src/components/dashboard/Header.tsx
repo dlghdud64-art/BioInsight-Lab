@@ -23,12 +23,46 @@ interface DashboardHeaderProps {
   onMenuClick?: () => void;
 }
 
+type HeaderNotificationType = "alert" | "quote" | "delivery";
+
+interface HeaderNotification {
+  id: number;
+  type: HeaderNotificationType;
+  title: string;
+  time: string;
+  unread: boolean;
+}
+
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
   const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState<HeaderNotification[]>([
+    {
+      id: 1,
+      type: "alert",
+      title: "재고 부족: FBS (남은 수량 1개)",
+      time: "10분 전",
+      unread: true,
+    },
+    {
+      id: 2,
+      type: "quote",
+      title: "견적 도착: Thermo Fisher 외 2건",
+      time: "1시간 전",
+      unread: true,
+    },
+    {
+      id: 3,
+      type: "delivery",
+      title: "입고 완료: 50ml Conical Tube",
+      time: "어제",
+      unread: false,
+    },
+  ]);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
   useEffect(() => {
@@ -130,7 +164,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const user = session?.user;
 
   // 알림 아이콘 렌더링 함수
-  const renderNotificationIcon = (type: string) => {
+  const renderNotificationIcon = (type: HeaderNotificationType) => {
     switch (type) {
       case "alert":
         return (
@@ -155,27 +189,27 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     }
   };
 
-  // 알림 데이터 (Dummy Data)
-  const notifications = [
-    {
-      id: 1,
-      type: "alert",
-      title: "재고 부족: FBS (남은 수량 1개)",
-      time: "10분 전",
-    },
-    {
-      id: 2,
-      type: "quote",
-      title: "견적 도착: Thermo Fisher 외 2건",
-      time: "1시간 전",
-    },
-    {
-      id: 3,
-      type: "delivery",
-      title: "입고 완료: 50ml Conical Tube",
-      time: "어제",
-    },
-  ];
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleNotificationClick = (notification: HeaderNotification) => {
+    // 읽음 처리
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, unread: false } : n))
+    );
+
+    // 타입에 따른 라우팅
+    let targetHref = "/dashboard/notifications";
+    if (notification.type === "alert") {
+      targetHref = "/dashboard/inventory?filter=low";
+    } else if (notification.type === "quote") {
+      targetHref = "/dashboard/quotes";
+    } else if (notification.type === "delivery") {
+      targetHref = "/dashboard/purchases";
+    }
+
+    setIsNotificationOpen(false);
+    router.push(targetHref);
+  };
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
@@ -258,7 +292,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </Tooltip>
 
           {/* 알림 드롭다운 */}
-          <DropdownMenu>
+          <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -267,12 +301,25 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex items-center justify-center h-3.5 min-w-[14px] rounded-full bg-red-500 text-[10px] font-semibold text-white px-0.5">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 min-w-[280px] p-0">
               <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">알림</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    알림
+                  </h3>
+                  {unreadCount > 0 && (
+                    <span className="text-[11px] text-slate-500">
+                      읽지 않은 알림 {unreadCount}개
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length === 0 ? (
@@ -280,24 +327,31 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     <p className="text-sm text-slate-500">새로운 알림이 없습니다</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className="p-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer touch-manipulation"
-                    >
-                        <div className="flex items-start gap-4 min-w-0">
-                          {renderNotificationIcon(notification.type)}
-                          <div className="flex-1 min-w-0 overflow-hidden">
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                              {notification.title}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                              {notification.time}
-                            </p>
-                          </div>
+                      <button
+                        key={notification.id}
+                        type="button"
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`w-full text-left p-3 flex items-start gap-3 min-w-0 transition-colors touch-manipulation ${
+                          notification.unread
+                            ? "bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {renderNotificationIcon(notification.type)}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {notification.title}
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {notification.time}
+                          </p>
                         </div>
-                      </div>
+                        {notification.unread && (
+                          <span className="mt-1 h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                        )}
+                      </button>
                     ))}
                   </div>
                 )}
