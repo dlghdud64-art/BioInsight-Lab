@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -73,7 +73,7 @@ interface ProductInventory {
   };
 }
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -2486,5 +2486,19 @@ function TeamInventoryCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <InventoryPageContent />
+    </Suspense>
   );
 }

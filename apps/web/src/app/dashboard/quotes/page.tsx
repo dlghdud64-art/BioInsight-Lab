@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
@@ -59,7 +59,7 @@ interface Quote {
   }>;
 }
 
-export default function QuotesPage() {
+function QuotesPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -326,5 +326,19 @@ export default function QuotesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function QuotesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <QuotesPageContent />
+    </Suspense>
   );
 }
