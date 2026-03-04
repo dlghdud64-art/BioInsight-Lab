@@ -69,61 +69,175 @@ export function InventoryQRCode({
   };
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open("", "_blank", "width=560,height=460");
     if (!printWindow || !dataUrl) return;
+
+    // productName XSS 방어 (print window는 innerHTML 삽입)
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="ko">
         <head>
-          <title>재고 QR 라벨 — ${productName}</title>
+          <meta charset="UTF-8" />
+          <title>QR 라벨 — ${esc(productName)}</title>
           <style>
-            @page { size: 80mm 60mm; margin: 4mm; }
-            body {
-              margin: 0;
-              font-family: 'Malgun Gothic', sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
+            /* ━━ 브라우저 Header/Footer 완전 제거 ━━━━━━━━━━━━━━━━━━━━ */
+            @page {
+              size: 60mm 40mm;   /* 범용 감열 라벨 규격 (폼텍 OA / 롤 프린터) */
+              margin: 0mm;       /* 상하좌우 0 → URL·날짜 헤더 제거         */
             }
-            .label {
-              border: 1.5px solid #334155;
-              border-radius: 6px;
-              padding: 8px 12px;
+
+            /* ━━ 리셋 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+            /* ━━ 라벨 컨테이너 공통 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+            .label-container {
+              width: 60mm;
+              height: 40mm;
+              overflow: hidden;
               display: flex;
               flex-direction: row;
               align-items: center;
-              gap: 12px;
-              width: 72mm;
-              box-sizing: border-box;
+              padding: 3mm 3.5mm;
+              gap: 3mm;
             }
-            .qr { flex-shrink: 0; }
-            .qr img { width: 56px; height: 56px; display: block; }
-            .info { flex: 1; overflow: hidden; }
-            .name {
-              font-size: 9pt;
+            .qr-col         { flex-shrink: 0; }
+            .qr-col img     { width: 29mm; height: 29mm; display: block; }
+            .info-col       { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+            .prod-name {
+              font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+              font-size: 7.5pt;
               font-weight: 700;
               color: #0f172a;
-              margin-bottom: 2px;
-              word-break: break-word;
+              line-height: 1.3;
+              word-break: break-all;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              margin-bottom: 1.2mm;
             }
-            .meta { font-size: 7pt; color: #475569; margin-top: 2px; }
-            .id { font-size: 6pt; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+            .meta-row {
+              font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+              font-size: 6pt;
+              color: #475569;
+              margin-top: 0.6mm;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .inv-id {
+              font-family: 'Courier New', monospace;
+              font-size: 5pt;
+              color: #94a3b8;
+              margin-top: 1.5mm;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            /* ━━ 화면(Screen) 미리보기 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+            @media screen {
+              html, body {
+                background: #f1f5f9;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+                font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+                padding: 32px;
+              }
+              .screen-hint {
+                font-size: 13px;
+                color: #64748b;
+                text-align: center;
+                line-height: 1.6;
+              }
+              .label-container {
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                box-shadow: 0 6px 24px rgba(0,0,0,0.12), 0 1px 6px rgba(0,0,0,0.07);
+              }
+              .btn-row { display: flex; gap: 10px; }
+              .btn-print {
+                padding: 10px 28px;
+                background: #2563eb;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-family: inherit;
+                cursor: pointer;
+                letter-spacing: 0.02em;
+                transition: background 0.15s;
+              }
+              .btn-print:hover { background: #1d4ed8; }
+              .btn-close {
+                padding: 10px 20px;
+                background: transparent;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 13px;
+                font-family: inherit;
+                cursor: pointer;
+              }
+            }
+
+            /* ━━ 인쇄(Print): 라벨만 남기고 나머지 숨김 ━━━━━━━━━━━━━━ */
+            @media print {
+              .screen-hint,
+              .btn-row        { display: none !important; }
+
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+                width: 60mm !important;
+                height: 40mm !important;
+              }
+              .label-container {
+                background: #ffffff !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+              }
+            }
           </style>
         </head>
         <body>
-          <div class="label">
-            <div class="qr"><img src="${dataUrl}" /></div>
-            <div class="info">
-              <div class="name">${productName}</div>
-              ${catalogNumber ? `<div class="meta">Cat#: ${catalogNumber}</div>` : ""}
-              ${location ? `<div class="meta">위치: ${location}</div>` : ""}
-              ${currentQuantity !== undefined ? `<div class="meta">현재 재고: ${currentQuantity} ${unit || ""}</div>` : ""}
-              <div class="id">${inventoryId.slice(0, 16)}…</div>
+          <p class="screen-hint">
+            📄 인쇄 미리보기 &nbsp;—&nbsp; 규격: <strong>60 × 40 mm</strong><br />
+            <span style="font-size:11px;">범용 감열 라벨 / 폼텍 OA 라벨 호환</span>
+          </p>
+
+          <div class="label-container">
+            <div class="qr-col">
+              <img src="${dataUrl}" alt="QR Code" />
+            </div>
+            <div class="info-col">
+              <div class="prod-name">${esc(productName)}</div>
+              ${catalogNumber ? `<div class="meta-row">Cat#: ${esc(catalogNumber)}</div>` : ""}
+              ${location     ? `<div class="meta-row">📍 ${esc(location)}</div>`         : ""}
+              ${currentQuantity !== undefined
+                ? `<div class="meta-row">재고: ${currentQuantity}${unit ? ` ${esc(unit)}` : ""}</div>`
+                : ""}
+              <div class="inv-id">${esc(inventoryId.slice(0, 20))}…</div>
             </div>
           </div>
-          <script>window.onload = () => { window.print(); window.close(); }<\/script>
+
+          <div class="btn-row">
+            <button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button>
+            <button class="btn-close" onclick="window.close()">닫기</button>
+          </div>
         </body>
       </html>
     `);
