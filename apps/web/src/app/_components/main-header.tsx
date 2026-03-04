@@ -9,6 +9,16 @@ import { Menu, LayoutDashboard, ScanLine } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 interface MainHeaderProps {
   onMenuClick?: () => void;
@@ -41,43 +51,179 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        {/* 좌측: 메뉴 아이콘 (모바일) 또는 로고 */}
-        <div className="flex items-center gap-2 md:gap-6 min-w-0 flex-1 overflow-hidden">
-          {showMenuIcon && onMenuClick ? (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onMenuClick();
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onMenuClick();
-              }}
-              className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-[70] relative touch-manipulation"
-              aria-label="메뉴 열기"
-              type="button"
+        {/* 좌측: 모바일 햄버거 + 로고 */}
+        <Sheet>
+          <div className="flex items-center gap-2 md:gap-6 min-w-0 flex-1 overflow-hidden">
+            <SheetTrigger asChild>
+              <button
+                className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-[70] relative touch-manipulation"
+                aria-label="전체 메뉴 열기"
+                type="button"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+
+            {/* 로고 - 랜딩 페이지에서는 항상 표시, 대시보드에서는 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
+            <Link
+              href="/"
+              className={`${isDashboard ? "md:hidden" : ""} flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative`}
             >
-              <Menu className="h-5 w-5" />
-            </button>
-          ) : null}
-          
-          {/* 로고 - 랜딩 페이지에서는 항상 표시, 대시보드에서는 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
-          <Link 
-            href="/" 
-            className={`${isDashboard ? "md:hidden" : ""} flex items-center gap-1.5 md:gap-2 flex-shrink-0 mr-4 md:mr-6 z-10 relative`}
-          >
-            <BioInsightLogo showText={true} />
-          </Link>
-          
-          {/* 페이지 타이틀 - 모바일에서만 표시, truncate로 말줄임표 처리, flex-1로 남은 공간 차지 */}
-          {pageTitle ? (
-            <h1 className="text-sm md:text-lg font-semibold text-gray-900 truncate md:hidden flex-1 min-w-0 relative z-10">
-              {pageTitle}
-            </h1>
-          ) : null}
-        </div>
+              <BioInsightLogo showText={true} />
+            </Link>
+
+            {/* 페이지 타이틀 - 모바일에서만 표시, truncate로 말줄임표 처리, flex-1로 남은 공간 차지 */}
+            {pageTitle ? (
+              <h1 className="text-sm md:text-lg font-semibold text-gray-900 truncate md:hidden flex-1 min-w-0 relative z-10">
+                {pageTitle}
+              </h1>
+            ) : null}
+          </div>
+
+          {/* 모바일 전용 글로벌 메뉴 Sheet */}
+          <SheetContent side="left" className="md:hidden w-full sm:max-w-xs p-0 flex flex-col">
+            <SheetHeader className="px-6 py-7 border-b-2 border-slate-100 bg-slate-50">
+              <SheetTitle className="flex items-center gap-4 text-xl font-bold text-slate-900">
+                <BioInsightLogo showText={true} />
+              </SheetTitle>
+              <SheetDescription className="mt-2 text-xs text-slate-500">
+                자주 사용하는 메뉴로 바로 이동하세요.
+              </SheetDescription>
+            </SheetHeader>
+
+            <nav className="flex-1 overflow-y-auto">
+              <div className="px-2 pt-6 pb-2 space-y-1">
+                <SheetClose asChild>
+                  <Link
+                    href="/dashboard"
+                    className="block px-3 py-4 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md"
+                  >
+                    대시보드
+                  </Link>
+                </SheetClose>
+
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="purchases">
+                    <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">
+                      구매 및 예산
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3">
+                      <div className="flex flex-col">
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/purchases"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            구매 내역
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/reports"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            구매 리포트
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/budget"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            예산 관리
+                          </Link>
+                        </SheetClose>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="inventory">
+                    <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">
+                      재고 및 견적
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3">
+                      <div className="flex flex-col">
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/inventory"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            재고 관리
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/quotes"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            견적 요청 관리
+                          </Link>
+                        </SheetClose>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="system">
+                    <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">
+                      시스템 관리
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3">
+                      <div className="flex flex-col">
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/organizations"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            조직 관리
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/dashboard/settings"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            설정
+                          </Link>
+                        </SheetClose>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="help">
+                    <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">
+                      도움말 & 지원
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3">
+                      <div className="flex flex-col">
+                        <SheetClose asChild>
+                          <Link
+                            href="/help"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            도움말 센터
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/changelog"
+                            className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2"
+                          >
+                            업데이트 로그
+                          </Link>
+                        </SheetClose>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </nav>
+
+            <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-400 flex items-center justify-between">
+              <span>BioInsight Lab v0.9.0-beta</span>
+              <span>© {new Date().getFullYear()}</span>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* 우측: CTA/유틸 */}
         <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
