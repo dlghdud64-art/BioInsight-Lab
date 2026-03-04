@@ -30,6 +30,7 @@ import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge"
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Info, FileText, BellRing, Save } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
@@ -1375,12 +1376,16 @@ export default function InventoryPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="restock-expiry">유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
-                  <Input
-                    id="restock-expiry"
-                    type="date"
-                    value={restockForm.expiryDate}
-                    onChange={(e) => setRestockForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                  <Label>유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
+                  <DatePicker
+                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : null}
+                    onDateChange={(date) =>
+                      setRestockForm((f) => ({
+                        ...f,
+                        expiryDate: date ? date.toISOString().split("T")[0] : "",
+                      }))
+                    }
+                    placeholder="유효기한 선택"
                   />
                 </div>
                 {restockForm.addQty && Number(restockForm.addQty) > 0 && (

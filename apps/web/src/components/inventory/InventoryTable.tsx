@@ -12,6 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const BADGE_SIZE = "h-8 w-8";
 const BADGE_BASE = "inline-flex items-center justify-center rounded-full shadow-sm ring-2 ring-white/50 shrink-0";
@@ -62,6 +67,8 @@ function getLotDisplay(inventory: InventoryItem): {
   representativeLotNumber: string | null;
   representativeExpiryDate: string | null;
   totalLotCount: number;
+  /** 대표 Lot을 제외한 나머지 Lot 목록 (HoverCard 표시용) */
+  otherLots: Array<{ lotNumber: string | null; expiryDate: string | null }>;
 } {
   const now = new Date();
 
@@ -93,11 +100,13 @@ function getLotDisplay(inventory: InventoryItem): {
   });
 
   const representative = candidates[0] ?? { lotNumber: null, expiryDate: null };
+  const validCandidates = candidates.filter(c => c.lotNumber !== null || c.expiryDate !== null);
 
   return {
     representativeLotNumber: representative.lotNumber,
     representativeExpiryDate: representative.expiryDate,
-    totalLotCount: candidates.filter(c => c.lotNumber !== null || c.expiryDate !== null).length,
+    totalLotCount: validCandidates.length,
+    otherLots: validCandidates.slice(1),
   };
 }
 
@@ -387,11 +396,52 @@ export function InventoryTable({
                       <span className="font-mono text-sm text-slate-700 dark:text-slate-300">
                         {lotDisplay.representativeLotNumber ?? "-"}
                       </span>
-                      {/* 외 N개 뱃지: Lot가 2개 이상일 때 표시 */}
+                      {/* 외 N개 HoverCard: Lot가 2개 이상일 때 나머지 Lot 팝업 표시 */}
                       {lotDisplay.totalLotCount > 1 && (
-                        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                          외 {lotDisplay.totalLotCount - 1}개
-                        </span>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <span className="inline-flex cursor-pointer items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                              외 {lotDisplay.totalLotCount - 1}개
+                            </span>
+                          </HoverCardTrigger>
+                          <HoverCardContent
+                            className="w-64 p-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+                              전체 Lot 목록 ({lotDisplay.totalLotCount}개)
+                            </p>
+                            <ul className="space-y-1.5">
+                              {/* 대표 Lot */}
+                              <li className="flex items-start justify-between gap-2 text-xs rounded bg-blue-50 dark:bg-blue-900/30 px-2 py-1">
+                                <span className="font-mono font-semibold text-blue-700 dark:text-blue-300 shrink-0">
+                                  {lotDisplay.representativeLotNumber ?? "Lot 미지정"}
+                                </span>
+                                <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                                  {lotDisplay.representativeExpiryDate
+                                    ? format(new Date(lotDisplay.representativeExpiryDate), "yyyy.MM.dd")
+                                    : "-"}
+                                </span>
+                              </li>
+                              {/* 나머지 Lot */}
+                              {lotDisplay.otherLots.map((lot, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-start justify-between gap-2 text-xs px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                >
+                                  <span className="font-mono text-slate-700 dark:text-slate-300 shrink-0">
+                                    {lot.lotNumber ?? "Lot 미지정"}
+                                  </span>
+                                  <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                                    {lot.expiryDate
+                                      ? format(new Date(lot.expiryDate), "yyyy.MM.dd")
+                                      : "-"}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </HoverCardContent>
+                        </HoverCard>
                       )}
                     </div>
                     <div
