@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useQRScanner } from "@/contexts/QRScannerContext";
@@ -67,6 +67,8 @@ function ScannerContent() {
   const [inventoryResult, setInventoryResult] = useState<InventoryResult | null>(null);
   const [useQty, setUseQty] = useState("1");
   const [useNotes, setUseNotes] = useState("");
+  // 직접 입력 전환 시 포커스 대상
+  const manualInputRef = useRef<HTMLInputElement>(null);
 
   // 재고 조회
   const fetchInventory = useCallback(async (id: string) => {
@@ -116,8 +118,16 @@ function ScannerContent() {
     fetchInventory(id);
   }, [fetchInventory]);
 
-  const handleScanError = useCallback((error: string) => {
+  const handleScanError = useCallback((_error: string) => {
     // QRScanner가 이미 에러 UI를 보여주므로 추가 처리 없음
+  }, []);
+
+  /** 카메라 에러 시 직접 입력 필드로 스크롤 + 포커스 */
+  const handleSwitchToManual = useCallback(() => {
+    setTimeout(() => {
+      manualInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      manualInputRef.current?.focus();
+    }, 100);
   }, []);
 
   // 차감 처리 mutation
@@ -199,6 +209,7 @@ function ScannerContent() {
             onScanSuccess={handleScanSuccess}
             onScanError={handleScanError}
             paused={scannerPaused}
+            onSwitchToManual={handleSwitchToManual}
             className="w-full"
           />
         )}
@@ -221,6 +232,7 @@ function ScannerContent() {
               }}
             >
               <Input
+                ref={manualInputRef}
                 name="manualId"
                 placeholder="재고 ID 입력..."
                 className="flex-1"

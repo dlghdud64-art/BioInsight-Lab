@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   QrCode,
   RotateCcw,
+  Keyboard,
 } from "lucide-react";
 
 type ScannerState = "idle" | "requesting" | "scanning" | "paused" | "error";
@@ -18,28 +19,36 @@ interface QRScannerProps {
   onScanError?: (error: string) => void;
   /** 외부에서 스캐너 일시정지/재개 제어 */
   paused?: boolean;
+  /** 카메라 에러 시 "직접 입력으로 전환" 버튼 클릭 핸들러 */
+  onSwitchToManual?: () => void;
   className?: string;
 }
-
-const SCANNER_ELEMENT_ID = "bio-qr-scanner-container";
 
 /**
  * QRScanner — html5-qrcode 기반 카메라 QR 스캐너 컴포넌트
  *
- * - 모바일: 후면 카메라(environment) 기본 활성화
- * - 카메라 권한 거부 시 명확한 에러 UI
- * - 외부 QR / 유효하지 않은 QR은 onScanError로 전달 (스캐너 재개)
+ * - 모바일: 후면 카메라(environment exact) 우선 → soft fallback
+ * - 카메라 권한 거부 시 "권한 재요청" / "직접 입력으로 전환" 버튼
+ * - 언마운트 시 스트림 트랙 강제 정리 → Black Screen 방지
+ * - 마운트마다 고유 ID 사용 → 재오픈 시 DOM 충돌 방지
  */
 export function QRScanner({
   onScanSuccess,
   onScanError,
   paused = false,
+  onSwitchToManual,
   className = "",
 }: QRScannerProps) {
   const [state, setState] = useState<ScannerState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isPermissionError, setIsPermissionError] = useState(false);
   const scannerRef = useRef<any>(null);
   const mountedRef = useRef(true);
+
+  // 마운트마다 고유 ID 생성 → 재오픈 시 이전 DOM 잔여물과 충돌 방지
+  const scannerIdRef = useRef(
+    `bio-qr-scanner-${Math.random().toString(36).slice(2)}`
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -47,6 +56,7 @@ export function QRScanner({
       mountedRef.current = false;
       stopScanner();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 외부 paused prop 변화 처리
@@ -56,9 +66,29 @@ export function QRScanner({
     } else if (!paused && state === "paused") {
       resumeScanner();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
 
+  /**
+   * html5-qrcode가 내부적으로 트랙 정리를 완료하지 못한 경우를 대비한
+   * 강제 비디오 스트림 트랙 종료 → 카메라 LED 소등 및 다음 오픈 시 Black Screen 방지
+   */
+  const stopVideoTracks = useCallback((elementId: string) => {
+    try {
+      const container = document.getElementById(elementId);
+      const videoEl = container?.querySelector("video");
+      if (videoEl?.srcObject) {
+        const stream = videoEl.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+        videoEl.srcObject = null;
+      }
+    } catch {
+      // ignore — 이미 정리된 경우
+    }
+  }, []);
+
   const stopScanner = useCallback(async () => {
+    const id = scannerIdRef.current;
     if (scannerRef.current) {
       try {
         if (scannerRef.current.isScanning) {
@@ -70,7 +100,9 @@ export function QRScanner({
       }
       scannerRef.current = null;
     }
-  }, []);
+    // html5-qrcode 내부 정리가 불완전할 경우 트랙 강제 종료
+    stopVideoTracks(id);
+  }, [stopVideoTracks]);
 
   const pauseScanner = useCallback(async () => {
     if (scannerRef.current?.isScanning) {
@@ -92,20 +124,24 @@ export function QRScanner({
 
   const startScanner = useCallback(async () => {
     setErrorMsg(null);
+    setIsPermissionError(false);
     setState("requesting");
+
+    const id = scannerIdRef.current;
 
     try {
       // 동적 import — SSR 안전
       const { Html5Qrcode } = await import("html5-qrcode");
 
-      // 이전 인스턴스 정리
+      // 이전 인스턴스 완전 정리
       await stopScanner();
 
-      const html5QrCode = new Html5Qrcode(SCANNER_ELEMENT_ID);
-      scannerRef.current = html5QrCode;
+      // DOM 잔여 요소(video, canvas 등) 강제 클리어 → Black Screen 방지
+      const container = document.getElementById(id);
+      if (container) container.innerHTML = "";
 
-      // 후면 카메라 우선 (모바일 대응)
-      const facingMode = { exact: "environment" };
+      const html5QrCode = new Html5Qrcode(id);
+      scannerRef.current = html5QrCode;
 
       const config = {
         fps: 10,
@@ -114,24 +150,26 @@ export function QRScanner({
         showTorchButtonIfSupported: true,
       };
 
+      const successCb = (decodedText: string) => {
+        if (mountedRef.current) onScanSuccess(decodedText);
+      };
+      const qrNotFoundCb = () => { /* QR 미감지, silent */ };
+
       try {
+        // 1차: 후면 카메라 exact 지정 (iOS Safari / Android Chrome 권장)
         await html5QrCode.start(
-          { facingMode },
+          { facingMode: { exact: "environment" } },
           config,
-          (decodedText) => {
-            if (mountedRef.current) onScanSuccess(decodedText);
-          },
-          () => { /* qr not found, silent */ }
+          successCb,
+          qrNotFoundCb,
         );
       } catch {
-        // 후면 카메라 실패 시 기본 카메라로 재시도
+        // 2차 fallback: exact 없이 environment (구형 기기 / 브라우저 호환)
         await html5QrCode.start(
-          { facingMode: "user" },
+          { facingMode: "environment" },
           config,
-          (decodedText) => {
-            if (mountedRef.current) onScanSuccess(decodedText);
-          },
-          () => {}
+          successCb,
+          qrNotFoundCb,
         );
       }
 
@@ -141,19 +179,25 @@ export function QRScanner({
       console.error("QR Scanner error:", err);
 
       let msg = "카메라를 시작할 수 없습니다.";
+      let isPermErr = false;
+
       if (
         err?.name === "NotAllowedError" ||
         err?.message?.includes("Permission") ||
         err?.message?.includes("permission")
       ) {
-        msg = "카메라 권한이 필요합니다. 브라우저 주소창 왼쪽의 자물쇠 아이콘을 눌러 카메라를 허용해주세요.";
+        msg =
+          "카메라 접근 권한이 필요합니다. 브라우저 설정에서 카메라 권한을 허용해 주세요.";
+        isPermErr = true;
       } else if (err?.name === "NotFoundError") {
         msg = "카메라를 찾을 수 없습니다. 카메라가 연결되어 있는지 확인하세요.";
       } else if (err?.name === "NotReadableError") {
-        msg = "카메라가 다른 앱에서 사용 중입니다. 다른 앱을 종료한 후 다시 시도하세요.";
+        msg =
+          "카메라가 다른 앱에서 사용 중입니다. 다른 앱을 종료한 후 다시 시도하세요.";
       }
 
       setErrorMsg(msg);
+      setIsPermissionError(isPermErr);
       setState("error");
       onScanError?.(msg);
       await stopScanner();
@@ -164,15 +208,16 @@ export function QRScanner({
     await stopScanner();
     setState("idle");
     setErrorMsg(null);
+    setIsPermissionError(false);
   }, [stopScanner]);
 
   return (
     <div className={`flex flex-col items-center gap-4 ${className}`}>
       {/* 뷰파인더 영역 */}
       <div className="relative w-full max-w-sm">
-        {/* html5-qrcode 마운트 포인트 */}
+        {/* html5-qrcode 마운트 포인트 — 마운트마다 고유 ID */}
         <div
-          id={SCANNER_ELEMENT_ID}
+          id={scannerIdRef.current}
           className={`w-full rounded-2xl overflow-hidden bg-black aspect-square ${
             state === "scanning" || state === "paused" ? "block" : "hidden"
           }`}
@@ -201,7 +246,7 @@ export function QRScanner({
           </div>
         )}
 
-        {/* idle 상태 플레이스홀더 */}
+        {/* idle / requesting 상태 플레이스홀더 */}
         {(state === "idle" || state === "requesting") && (
           <div className="w-full aspect-square bg-slate-900 rounded-2xl flex flex-col items-center justify-center gap-4 text-white/60">
             {state === "requesting" ? (
@@ -223,15 +268,30 @@ export function QRScanner({
           <div className="w-full aspect-square bg-red-950/80 rounded-2xl flex flex-col items-center justify-center gap-4 p-6 text-center border border-red-800">
             <AlertTriangle className="h-12 w-12 text-red-400 flex-shrink-0" />
             <p className="text-sm text-red-300 leading-relaxed">{errorMsg}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleReset}
-              className="border-red-700 text-red-300 hover:bg-red-900/50 gap-1.5"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              다시 시도
-            </Button>
+            <div className="flex flex-col gap-2 w-full">
+              {/* 권한 재요청 또는 다시 시도 */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={startScanner}
+                className="border-red-700 text-red-300 hover:bg-red-900/50 gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {isPermissionError ? "권한 재요청" : "다시 시도"}
+              </Button>
+              {/* 직접 입력 전환 (onSwitchToManual 제공 시에만 표시) */}
+              {onSwitchToManual && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onSwitchToManual}
+                  className="text-red-400/70 hover:text-red-300 hover:bg-red-900/30 gap-1.5"
+                >
+                  <Keyboard className="h-3.5 w-3.5" />
+                  직접 입력으로 전환
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
