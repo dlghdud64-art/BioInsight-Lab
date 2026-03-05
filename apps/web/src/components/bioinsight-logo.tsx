@@ -22,7 +22,7 @@ export function BioInsightLogo({
         alt="BioInsight Lab"
         width={60}
         height={60}
-        className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14 rounded-lg object-contain"
+        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain"
       />
 
       {/* 텍스트: BioInsight Lab - 모바일에서 겹침 방지 유동 크기 */}
@@ -30,13 +30,13 @@ export function BioInsightLogo({
         <div className="leading-tight">
           <div className="flex items-baseline gap-1">
             <span className={cn(
-              "text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight",
+              "text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight",
               isDark ? "text-white" : "text-blue-900"
             )}>
               BioInsight
             </span>
             <span className={cn(
-              "text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight",
+              "text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight",
               isDark ? "text-teal-300" : "text-teal-500"
             )}>
               Lab

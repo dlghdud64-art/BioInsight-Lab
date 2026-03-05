@@ -50,20 +50,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        {/* 좌측: 모바일 햄버거 + 로고 */}
-        <Sheet>
+      <Sheet>
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 relative">
+          {/* 좌측: 로고 및 페이지 타이틀 */}
           <div className="flex items-center gap-2 md:gap-6 min-w-0 flex-1 overflow-hidden">
-            <SheetTrigger asChild>
-              <button
-                className="md:hidden p-2 -ml-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 z-[70] relative touch-manipulation"
-                aria-label="전체 메뉴 열기"
-                type="button"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            </SheetTrigger>
-
             {/* 로고 - 랜딩 페이지에서는 항상 표시, 대시보드에서는 모바일에서만 표시 (데스크탑에서는 사이드바에 로고가 있으므로 숨김) */}
             <Link
               href="/"
@@ -223,9 +213,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               <span>© {new Date().getFullYear()}</span>
             </div>
           </SheetContent>
-        </Sheet>
 
-        {/* 우측: CTA/유틸 */}
+        {/* 우측: CTA/유틸 + 모바일 햄버거 */}
         <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
           {/* 데스크탑 내비게이션 메뉴 */}
           <nav className="hidden md:flex items-center gap-6">
@@ -302,8 +291,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             <ScanLine className="h-4 w-4" />
           </button>
           <UserMenu />
+          {/* 모바일 햄버거 메뉴 트리거 (우측 끝) */}
+          <SheetTrigger asChild>
+            <button
+              className="md:hidden p-2 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
+              aria-label="전체 메뉴 열기"
+              type="button"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </SheetTrigger>
         </div>
-      </div>
+        </div>
+      </Sheet>
     </header>
   );
 }
