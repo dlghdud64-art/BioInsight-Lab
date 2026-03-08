@@ -54,7 +54,7 @@ export function PricingSection() {
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
               <div className="text-xs font-semibold text-slate-600 bg-slate-100 rounded px-2 py-1 inline-block">
-                등록 품목 최대 50개
+                등록 품목 최대 30개
               </div>
               <ul className="space-y-1 text-xs text-slate-500 list-disc list-inside">
                 <li>팀 워크스페이스</li>
@@ -89,7 +89,7 @@ export function PricingSection() {
               </CardHeader>
               <CardContent className="p-3 pt-0 space-y-2">
                 <div className="text-xs font-bold text-blue-700 bg-blue-50 rounded px-2 py-1 inline-flex items-center gap-1">
-                  등록 품목 무제한 ♾️
+                  등록 품목 최대 100개 / 무제한 ♾️
                 </div>
                 <ul className="space-y-1 text-xs text-slate-500 list-disc list-inside">
                   <li>다수 팀/부서 관리</li>

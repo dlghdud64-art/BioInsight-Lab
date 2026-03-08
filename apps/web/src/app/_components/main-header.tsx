@@ -49,7 +49,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <Sheet>
-        <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
+        <div className="w-full flex h-14 items-center justify-between px-6 md:max-w-6xl md:mx-auto">
 
           {/* ── LEFT: 로고 (모바일 최좌측) ──────────────────────────────── */}
           <Link
@@ -75,7 +75,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {session?.user ? (
               /* ── 로그인: Private 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-6 pb-2 space-y-1">
+                <div className="px-2 pt-6 pb-2 space-y-2">
                   <SheetClose asChild>
                     <Link href="/dashboard" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">
                       대시보드
@@ -129,7 +129,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             ) : (
               /* ── 비로그인: Public 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-6 pb-2 space-y-1">
+                <div className="px-2 pt-6 pb-2 space-y-2">
                   <SheetClose asChild>
                     <Link href="/" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
                   </SheetClose>
