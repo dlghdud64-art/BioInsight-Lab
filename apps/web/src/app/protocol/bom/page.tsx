@@ -507,7 +507,7 @@ export default function ProtocolBOMPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50/50">
       <MainHeader />
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 max-w-7xl">
         <div className="mb-4 md:mb-6">
@@ -529,7 +529,7 @@ export default function ProtocolBOMPage() {
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-[1fr,1.5fr]">
           {/* 좌측: 프로토콜 입력 */}
-          <Card className="p-3 md:p-6">
+          <Card className="p-3 md:p-6 shadow-md border-slate-200">
             <CardHeader className="px-0 pt-0 pb-3">
               <CardTitle className="text-xs md:text-sm font-semibold text-slate-900 flex items-center gap-1.5 md:gap-2">
                 <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -569,11 +569,11 @@ export default function ProtocolBOMPage() {
                         onDrop={handleDrop}
                         className={`
                           relative border-2 border-dashed rounded-lg p-8 text-center transition-all
-                          ${isDragging 
-                            ? "border-blue-500 bg-blue-50" 
-                            : pdfFile 
-                            ? "border-green-500 bg-green-50" 
-                            : "border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100"
+                          ${isDragging
+                            ? "border-blue-500 bg-blue-50 scale-[1.01]"
+                            : pdfFile
+                            ? "border-green-500 bg-green-50"
+                            : "border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
                           }
                         `}
                       >
@@ -650,18 +650,18 @@ export default function ProtocolBOMPage() {
                         }
                       }}
                       disabled={!pdfFile || extractFromFileMutation.isPending}
-                      className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                       size="lg"
                     >
                       {extractFromFileMutation.isPending ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          PDF 분석 중...
+                          AI 분석 중...
                         </>
                       ) : (
                         <>
-                          <Brain className="h-4 w-4 mr-2" />
-                          시약 추출 실행
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          AI 시약 추출 실행
                         </>
                       )}
                     </Button>
@@ -690,17 +690,17 @@ export default function ProtocolBOMPage() {
                   <Button
                     onClick={handleExtract}
                     disabled={!protocolText.trim() || extractMutation.isPending}
-                    className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                   >
                     {extractMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        분석 중...
+                        AI 분석 중...
                       </>
                     ) : (
                       <>
-                        <Brain className="h-4 w-4 mr-2" />
-                        시약 추출 실행
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        AI 시약 추출 실행
                       </>
                     )}
                   </Button>
@@ -710,7 +710,7 @@ export default function ProtocolBOMPage() {
           </Card>
 
           {/* 우측: 추출 결과 및 BOM 설정 */}
-          <Card>
+          <Card className="shadow-md border-slate-200">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -1136,9 +1136,38 @@ export default function ProtocolBOMPage() {
                     </div>
                   </div>
                 </>
+              ) : extractMutation.isPending || extractFromFileMutation.isPending ? (
+                /* ── 로딩 스켈레톤 ── */
+                <div className="space-y-3 animate-pulse">
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 mb-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 flex-shrink-0" />
+                    <p className="text-sm text-blue-700 font-medium">AI가 프로토콜을 읽고 시약 목록을 추출 중입니다...</p>
+                  </div>
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <div className="h-8 w-8 rounded-md bg-slate-200 flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-3/4 rounded bg-slate-200" />
+                        <div className="h-2.5 w-1/2 rounded bg-slate-200" />
+                      </div>
+                      <div className="h-6 w-16 rounded-full bg-slate-200 flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-8 text-sm text-slate-500">
-                  프로토콜 텍스트를 입력하고 "시약 추출 실행"을 클릭해주세요.
+                /* ── Empty State ── */
+                <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+                  <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                    <FlaskConical className="h-8 w-8 text-slate-300" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-600 mb-1">분석 결과가 여기에 표시됩니다</p>
+                  <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    좌측에 프로토콜을 입력하시면 AI가 필요한 시약과 장비를 자동으로 추출합니다.
+                  </p>
+                  <div className="mt-4 flex items-center gap-2 text-[10px] text-slate-400">
+                    <Sparkles className="h-3 w-3 text-blue-400" />
+                    <span>GPT-4 기반 자동 추출</span>
+                  </div>
                 </div>
               )}
             </CardContent>

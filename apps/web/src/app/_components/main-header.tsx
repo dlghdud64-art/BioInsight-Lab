@@ -108,9 +108,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               /* ── 비로그인: Public 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
                 <div className="px-2 pt-20 pb-2 space-y-1">
-                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">AI 기능</div>
+                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">AI 시약 검색</Link>
+                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">AI 데이터 분석</Link>
                   </SheetClose>
                   <SheetClose asChild>
                     <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">프로토콜 분석</Link>
