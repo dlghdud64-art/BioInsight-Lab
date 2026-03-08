@@ -92,7 +92,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, status, budgetId } = body;
+    const { title, description, status, budgetId, vendorRequestId } = body;
 
     const quote = await db.quote.findUnique({
       where: { id },
@@ -170,6 +170,7 @@ export async function PATCH(
           quoteId: quote.id,
           scopeKey,
           workspaceId: purchaseWorkspaceId,
+          vendorRequestId: vendorRequestId || undefined,
         });
 
         if (!purchaseResult.alreadyPurchased) {

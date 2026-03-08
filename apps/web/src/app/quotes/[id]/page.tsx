@@ -86,6 +86,7 @@ export default function QuoteDetailPage() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [purchaseBudgetId, setPurchaseBudgetId] = useState("");
+  const [purchaseVendorRequestId, setPurchaseVendorRequestId] = useState("");
   const [orderForm, setOrderForm] = useState({
     expectedDelivery: "",
     paymentMethod: "",
@@ -136,6 +137,20 @@ export default function QuoteDetailPage() {
     return sum + line;
   }, 0);
   const quoteTotal = computedTotal || quoteData?.quote?.totalAmount || 0;
+
+  // 벤더 회신 기준 실제 결제 금액 계산 (quoteItemId → quantity 맵)
+  const qtyMap = new Map((quoteItems as any[]).map((item: any) => [item.id, item.quantity || 1]));
+  const computeVendorReplyTotal = (vrId: string): number => {
+    const vr = respondedVendors.find((v: any) => v.id === vrId);
+    if (!vr || !(vr as any).responseItems?.length) return quoteTotal;
+    return ((vr as any).responseItems as any[]).reduce((sum: number, ri: any) => {
+      const qty = qtyMap.get(ri.quoteItemId) || 1;
+      return sum + Math.round(ri.unitPrice || 0) * qty;
+    }, 0);
+  };
+  // 단일 벤더라면 자동 선택, 복수라면 purchaseVendorRequestId 사용
+  const effectiveVrId = purchaseVendorRequestId || (respondedVendors.length === 1 ? (respondedVendors[0] as any)?.id : "");
+  const purchaseTotal = effectiveVrId ? computeVendorReplyTotal(effectiveVrId) : quoteTotal;
 
   const expectedRemaining = selectedBudget
     ? selectedBudget.remainingAmount - quoteTotal
@@ -326,11 +341,15 @@ export default function QuoteDetailPage() {
 
   // 구매 완료 상태 업데이트 (budgetId 포함)
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ status, budgetId }: { status: QuoteStatus; budgetId?: string }) => {
+    mutationFn: async ({ status, budgetId, vendorRequestId }: { status: QuoteStatus; budgetId?: string; vendorRequestId?: string }) => {
       const response = await fetch(`/api/quotes/${quoteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, ...(budgetId ? { budgetId } : {}) }),
+        body: JSON.stringify({
+          status,
+          ...(budgetId ? { budgetId } : {}),
+          ...(vendorRequestId ? { vendorRequestId } : {}),
+        }),
       });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -416,6 +435,10 @@ export default function QuoteDetailPage() {
 
   const handleMarkAsCompleted = () => {
     setPurchaseBudgetId("");
+    // 회신 벤더가 1개면 자동 선택, 여러 개면 사용자가 선택
+    setPurchaseVendorRequestId(
+      respondedVendors.length === 1 ? (respondedVendors[0] as any).id : ""
+    );
     setShowPurchaseDialog(true);
   };
 
@@ -1551,12 +1574,38 @@ ${itemLines}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          {/* 견적 금액 요약 */}
-          {quoteTotal > 0 && (
+          {/* 복수 벤더 회신 시 벤더 선택 */}
+          {respondedVendors.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="purchase-vendor">
+                구매할 벤더 선택 <span className="text-red-500">*</span>
+              </Label>
+              <Select value={purchaseVendorRequestId} onValueChange={setPurchaseVendorRequestId}>
+                <SelectTrigger id="purchase-vendor">
+                  <SelectValue placeholder="벤더를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {respondedVendors.map((vr: any) => (
+                    <SelectItem key={vr.id} value={vr.id}>
+                      {vr.vendorName || vr.vendorEmail || "벤더"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* 실제 결제 금액 (벤더 회신 기준) */}
+          {purchaseTotal > 0 && (
             <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 text-sm">
-              <span className="text-muted-foreground font-medium">견적 총액</span>
+              <span className="text-muted-foreground font-medium">
+                결제 금액
+                {effectiveVrId && (
+                  <span className="ml-1 text-[10px] text-blue-600 font-normal">(벤더 회신 기준)</span>
+                )}
+              </span>
               <span className="font-bold text-slate-900 dark:text-slate-100">
-                ₩{quoteTotal.toLocaleString("ko-KR")}
+                ₩{purchaseTotal.toLocaleString("ko-KR")}
               </span>
             </div>
           )}
@@ -1592,7 +1641,7 @@ ${itemLines}
           {(() => {
             const selBudget = budgets.find((b: any) => b.id === purchaseBudgetId);
             if (!selBudget) return null;
-            const afterAmount = selBudget.remainingAmount - quoteTotal;
+            const afterAmount = selBudget.remainingAmount - purchaseTotal;
             return (
               <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-800 space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
@@ -1601,7 +1650,7 @@ ${itemLines}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">차감 금액</span>
-                  <span className="font-semibold text-red-600">- ₩{quoteTotal.toLocaleString("ko-KR")}</span>
+                  <span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200 dark:border-blue-700">
                   <span className="font-medium">차감 후 잔액</span>
@@ -1632,15 +1681,20 @@ ${itemLines}
             className="flex-1 bg-blue-600 hover:bg-blue-700"
             disabled={
               !purchaseBudgetId ||
+              (respondedVendors.length > 1 && !purchaseVendorRequestId) ||
               updateStatusMutation.isPending ||
               (() => {
                 const b = budgets.find((b: any) => b.id === purchaseBudgetId);
-                return b ? b.remainingAmount < quoteTotal : false;
+                return b ? b.remainingAmount < purchaseTotal : false;
               })()
             }
             onClick={() => {
               setShowPurchaseDialog(false);
-              updateStatusMutation.mutate({ status: "COMPLETED", budgetId: purchaseBudgetId });
+              updateStatusMutation.mutate({
+                status: "COMPLETED",
+                budgetId: purchaseBudgetId,
+                vendorRequestId: effectiveVrId || undefined,
+              });
             }}
           >
             {updateStatusMutation.isPending ? "처리 중..." : "구매 확정"}

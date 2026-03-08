@@ -14,6 +14,7 @@ interface MarkPurchasedParams {
   quoteId: string;
   scopeKey: string;
   workspaceId?: string | null;
+  vendorRequestId?: string; // 선택된 벤더의 회신 ID (있으면 회신 가격 우선 적용)
 }
 
 /**
@@ -23,7 +24,7 @@ interface MarkPurchasedParams {
  * - Prisma Interactive Transaction 사용 (Serializable Isolation Level)
  * - 멱등성 체크와 생성을 원자적으로 처리
  */
-export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId }: MarkPurchasedParams) {
+export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId, vendorRequestId }: MarkPurchasedParams) {
   logger.info(`Marking quote ${quoteId} as purchased for scopeKey: ${scopeKey}`);
 
   // Prisma Interactive Transaction으로 Race Condition 방지
@@ -55,6 +56,18 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId }: M
         throw new Error("Quote not found or has no items");
       }
 
+      // 벤더 회신 가격 맵 구성 (quoteItemId → unitPrice)
+      const vendorReplyPriceMap = new Map<string, number>();
+      if (vendorRequestId) {
+        const replyItems = await tx.quoteVendorResponseItem.findMany({
+          where: { vendorRequestId },
+        });
+        for (const ri of replyItems) {
+          vendorReplyPriceMap.set(ri.quoteItemId, Math.round((ri.unitPrice as any) || 0));
+        }
+        logger.info(`Loaded ${replyItems.length} vendor reply prices for vendorRequestId: ${vendorRequestId}`);
+      }
+
       // Build purchase records from QuoteListItem snapshots
       const purchaseData = await Promise.all(
         quote.items.map(async (item: any) => {
@@ -64,7 +77,10 @@ export async function markQuoteAsPurchased({ quoteId, scopeKey, workspaceId }: M
             include: { vendor: true },
           });
 
-          const unitPrice = item.unitPrice
+          // 가격 우선순위: 벤더 회신 > QuoteListItem.unitPrice > ProductVendor.priceInKRW
+          const unitPrice = vendorReplyPriceMap.has(item.id)
+            ? vendorReplyPriceMap.get(item.id)!
+            : item.unitPrice
             ? Math.round(item.unitPrice)
             : productVendor?.priceInKRW
             ? Math.round(productVendor.priceInKRW)
