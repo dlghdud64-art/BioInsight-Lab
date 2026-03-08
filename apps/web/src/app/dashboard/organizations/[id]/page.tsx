@@ -393,24 +393,43 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             )}
           </div>
         </div>
-        {isAdmin && (
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => setInviteModalOpen(true)}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            멤버 초대
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link href="/dashboard/settings/plans">
+              <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300">
+                <Wallet className="h-4 w-4 mr-1.5" />
+                플랜 관리
+              </Button>
+            </Link>
+          )}
+          {isAdmin && (
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setInviteModalOpen(true)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              멤버 초대
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* 조직 기본 정보 요약 카드 */}
       <Card className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-            조직 정보
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+              조직 정보
+            </CardTitle>
+            {(organization as any).plan && (
+              <Link href="/dashboard/settings/plans">
+                <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 cursor-pointer text-xs">
+                  {(organization as any).plan === "ORGANIZATION" ? "Pro" : (organization as any).plan === "TEAM" ? "Basic" : "Starter"} 플랜
+                </Badge>
+              </Link>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

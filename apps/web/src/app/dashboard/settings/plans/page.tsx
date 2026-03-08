@@ -255,10 +255,11 @@ export default function PlansPage() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-start">
             {plans.map((plan) => {
               const isCurrentPlan = plan.id === currentPlan;
               const isTeamPlan = plan.id === SubscriptionPlan.TEAM;
+              const isOrgPlan = plan.id === SubscriptionPlan.ORGANIZATION;
               const Icon = plan.icon;
               const displayPrice = getDisplayPrice(plan);
               const priceLabel = getPriceLabel(plan);
@@ -267,9 +268,10 @@ export default function PlansPage() {
                 <Card
                   key={plan.id}
                   className={cn(
-                    "relative transition-all duration-300 hover:shadow-xl",
-                    isTeamPlan && "scale-105 ring-2 ring-blue-500 shadow-lg",
-                    isCurrentPlan && !isTeamPlan && "border-2 border-slate-300"
+                    "relative flex flex-col transition-all duration-300 hover:shadow-xl",
+                    isTeamPlan && "scale-105 ring-2 ring-blue-500 shadow-lg z-10",
+                    isOrgPlan && "ring-2 ring-indigo-400 shadow-lg z-10",
+                    isCurrentPlan && !isTeamPlan && !isOrgPlan && "border-2 border-slate-300"
                   )}
                 >
                   {/* Most Popular Badge */}
@@ -325,7 +327,7 @@ export default function PlansPage() {
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4">
+                  <CardContent className="flex flex-col flex-1 space-y-4">
                     {/* 기능 목록 */}
                     <div className="space-y-3">
                       {featureList.map((feature) => {
@@ -349,7 +351,7 @@ export default function PlansPage() {
                     </div>
 
                     {/* 버튼 */}
-                    <div className="pt-4">
+                    <div className="pt-4 mt-auto">
                       {isCurrentPlan ? (
                         <Button
                           className="w-full bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-not-allowed"
