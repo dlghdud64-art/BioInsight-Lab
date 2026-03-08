@@ -303,6 +303,29 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
             </nav>
           </div>
         )}
+
+        {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            BioInsight Lab
+          </p>
+          <nav className="space-y-1">
+            {[
+              { title: "서비스 소개", href: "/intro" },
+              { title: "요금 & 도입", href: "/pricing" },
+              { title: "고객 지원 및 문의", href: "/support" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileOpen(false)}
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <span className="truncate whitespace-nowrap">{item.title}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
