@@ -159,10 +159,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
-      {/* 사이드바 헤더 (로고) */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-        <Link 
-          href="/" 
+      {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+        <Link
+          href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
           <BioInsightLogo showText={true} className="h-6" />
@@ -170,7 +170,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       </div>
 
       {/* 메뉴 영역 (스크롤 가능) */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-8 md:pt-8">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-16 lg:pt-8">
         {/* 모바일/태블릿 헤더 */}
         <div className="flex items-center justify-between mb-6 lg:hidden">
           <h2 className="text-xs font-semibold text-slate-900 dark:text-slate-100">메뉴</h2>

@@ -118,7 +118,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               <nav className="flex-1 overflow-y-auto">
                 <div className="px-2 pt-12 pb-2 space-y-2">
                   <SheetClose asChild>
-                    <Link href="/" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
+                    <Link href="/intro" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
                   </SheetClose>
                   <SheetClose asChild>
                     <Link href="/pricing" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">요금 &amp; 도입</Link>
@@ -187,15 +187,17 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Link>
             )}
 
-            {/* QR 스캔 - 모바일만 노출 */}
-            <button
-              type="button"
-              onClick={handleScanClick}
-              className="inline-flex md:hidden items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
-              aria-label="재고 QR 스캔"
-            >
-              <ScanLine className="h-4 w-4" />
-            </button>
+            {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
+            {session?.user && (
+              <button
+                type="button"
+                onClick={handleScanClick}
+                className="inline-flex md:hidden items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+                aria-label="재고 QR 스캔"
+              >
+                <ScanLine className="h-4 w-4" />
+              </button>
+            )}
 
             {/* 프로필 메뉴 */}
             <UserMenu />

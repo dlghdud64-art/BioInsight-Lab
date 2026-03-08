@@ -50,23 +50,23 @@ export function KeyValueSection() {
             검색 사이트가 아니라, 구매 준비/정리 도구입니다
           </p>
         </div>
-        <div className="grid gap-2 md:gap-6 grid-cols-3 md:grid-cols-3">
+        <div className="grid gap-3 md:gap-6 grid-cols-1 md:grid-cols-3">
           {values.map((value, idx) => {
             const Icon = value.icon;
             return (
-              <Card 
-                key={idx} 
-                className={`border-2 ${value.borderColor} bg-gradient-to-br ${value.bgGradient} ${value.hoverBorder} ${value.hoverBg} transition-all hover:shadow-lg hover:-translate-y-1 rounded-lg md:rounded-xl group`}
+              <Card
+                key={idx}
+                className="border border-gray-100 bg-white rounded-2xl shadow-sm transition-all hover:shadow-md"
               >
-                <CardContent className="flex flex-col items-center text-center gap-2 md:flex-row md:items-start md:text-left md:gap-3 md:gap-4 p-2 md:p-6">
-                  <div className={`${value.iconBg} p-2 md:p-3 rounded-lg md:rounded-xl flex-shrink-0 shadow-md group-hover:scale-110 transition-transform`}>
-                    <Icon className="h-4 w-4 md:h-6 md:w-6 text-white" strokeWidth={2} />
+                <CardContent className="flex flex-row md:flex-col items-start md:items-center text-left md:text-center p-5 md:p-8 gap-4">
+                  <div className="shrink-0 p-3 md:p-4 rounded-xl bg-blue-50/50">
+                    <Icon className="w-7 h-7 md:w-12 md:h-12 text-blue-600" strokeWidth={2} />
                   </div>
-                  <div className="space-y-1 md:space-y-2 min-w-0 flex-1">
-                    <h3 className="text-[10px] md:text-lg font-bold text-slate-900 leading-tight">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base md:text-xl font-bold text-gray-900">
                       {value.title}
                     </h3>
-                    <p className="hidden md:block text-base leading-relaxed text-slate-700">
+                    <p className="text-sm md:text-base mt-1 text-gray-500 leading-snug break-keep">
                       {value.description}
                     </p>
                   </div>
