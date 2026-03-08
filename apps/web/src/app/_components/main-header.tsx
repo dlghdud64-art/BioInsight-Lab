@@ -87,6 +87,16 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                       </AccordionContent>
                     </AccordionItem>
 
+                    <AccordionItem value="ai-analysis">
+                      <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">AI &amp; 분석</AccordionTrigger>
+                      <AccordionContent className="px-3">
+                        <div className="flex flex-col">
+                          <SheetClose asChild><Link href="/dashboard/ai-analysis" className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2">AI 데이터 분석</Link></SheetClose>
+                          <SheetClose asChild><Link href="/dashboard/protocol" className="py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-md px-2">프로토콜 분석</Link></SheetClose>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
                     <AccordionItem value="system">
                       <AccordionTrigger className="px-3 text-base font-semibold text-slate-900">시스템 관리</AccordionTrigger>
                       <AccordionContent className="px-3">

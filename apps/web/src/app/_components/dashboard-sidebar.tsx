@@ -22,6 +22,8 @@ import {
   CreditCard,
   PieChart,
   Home,
+  Sparkles,
+  FlaskConical,
 } from "lucide-react";
 
 interface NavItem {
@@ -60,6 +62,21 @@ const sidebarGroups: SidebarGroup[] = [
         title: "예산 관리",
         href: "/dashboard/budget",
         icon: CreditCard,
+      },
+    ],
+  },
+  {
+    label: "AI & 분석 (AI & ANALYSIS)",
+    items: [
+      {
+        title: "AI 데이터 분석",
+        href: "/dashboard/ai-analysis",
+        icon: Sparkles,
+      },
+      {
+        title: "프로토콜 분석",
+        href: "/dashboard/protocol",
+        icon: FlaskConical,
       },
     ],
   },
