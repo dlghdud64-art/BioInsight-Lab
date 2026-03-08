@@ -338,16 +338,16 @@ export async function GET(request: NextRequest) {
 
     // 보유 자산 총액 (N+1 제거: orderItemMap 배치 조회 결과 활용)
     const orderItemMap = new Map(
-      orderItems.map((item: { id: string; unitPrice: number | null }) => [
+      (orderItems as Array<{ id: string; unitPrice: unknown }>).map((item) => [
         item.id,
-        item.unitPrice || 0,
+        Number(item.unitPrice || 0),
       ])
     );
     let totalAssetValue = 0;
     for (const inventory of userInventories as any[]) {
       if (inventory.orderItemId) {
-        const unitPrice = orderItemMap.get(inventory.orderItemId) || 0;
-        totalAssetValue += unitPrice * inventory.quantity;
+        const unitPrice = Number(orderItemMap.get(inventory.orderItemId) || 0);
+        totalAssetValue += unitPrice * Number(inventory.quantity || 0);
       }
     }
 
