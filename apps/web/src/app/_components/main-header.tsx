@@ -171,6 +171,16 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </button>
             )}
 
+            {/* Get Started CTA - 비로그인 · PC 전용 */}
+            {!session?.user && (
+              <Link
+                href="/auth/signin?callbackUrl=/dashboard"
+                className="hidden md:inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
+              >
+                Get Started
+              </Link>
+            )}
+
             {/* 프로필 메뉴 */}
             <UserMenu />
 
