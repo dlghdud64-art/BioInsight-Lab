@@ -5,14 +5,31 @@ import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 
+// 빈 문자열 → undefined 변환 헬퍼
+const emptyToUndefined = z.preprocess(
+  (v) => (v === "" || v === null ? undefined : v),
+  z.number().int().nonnegative().optional()
+);
+const emptyToUndefinedPositive = z.preprocess(
+  (v) => (v === "" || v === null ? undefined : v),
+  z.number().int().positive().optional()
+);
+const emptyStringToUndefined = z.preprocess(
+  (v) => (v === "" || v === null ? undefined : v),
+  z.string().optional()
+);
+
 const ReplyItemSchema = z.object({
   quoteItemId: z.string(),
-  unitPrice: z.number().nonnegative(),
+  unitPrice: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? 0 : Number(v)),
+    z.number().nonnegative()
+  ),
   currency: z.string().min(1).default("KRW"),
-  leadTimeDays: z.number().int().nonnegative().optional(),
-  moq: z.number().int().positive().optional(),
-  vendorSku: z.string().optional(),
-  notes: z.string().optional(),
+  leadTimeDays: emptyToUndefined,
+  moq: emptyToUndefinedPositive,
+  vendorSku: emptyStringToUndefined,
+  notes: emptyStringToUndefined,
 });
 
 const SaveVendorReplySchema = z.object({
@@ -128,7 +145,7 @@ export async function POST(
           data: {
             quoteId,
             vendorName,
-            vendorEmail: null as any, // 수동 입력: 이메일 없음
+            vendorEmail: null, // 수동 입력: 이메일 없음 (schema nullable)
             token: generateVendorRequestToken(),
             status: "RESPONDED",
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1년
@@ -139,8 +156,9 @@ export async function POST(
         txVendorRequestId = newRequest.id;
       }
 
-      // 각 항목별 회신 가격 upsert
+      // 각 항목별 회신 가격 upsert (unitPrice float→Int 반올림)
       for (const item of items) {
+        const unitPriceInt = Math.round(item.unitPrice);
         await tx.quoteVendorResponseItem.upsert({
           where: {
             vendorRequestId_quoteItemId: {
@@ -151,20 +169,20 @@ export async function POST(
           create: {
             vendorRequestId: txVendorRequestId,
             quoteItemId: item.quoteItemId,
-            unitPrice: item.unitPrice,
+            unitPrice: unitPriceInt,
             currency: item.currency,
-            leadTimeDays: item.leadTimeDays,
-            moq: item.moq,
-            vendorSku: item.vendorSku,
-            notes: item.notes,
+            leadTimeDays: item.leadTimeDays ?? null,
+            moq: item.moq ?? null,
+            vendorSku: item.vendorSku ?? null,
+            notes: item.notes ?? null,
           },
           update: {
-            unitPrice: item.unitPrice,
+            unitPrice: unitPriceInt,
             currency: item.currency,
-            leadTimeDays: item.leadTimeDays,
-            moq: item.moq,
-            vendorSku: item.vendorSku,
-            notes: item.notes,
+            leadTimeDays: item.leadTimeDays ?? null,
+            moq: item.moq ?? null,
+            vendorSku: item.vendorSku ?? null,
+            notes: item.notes ?? null,
             updatedAt: new Date(),
           },
         });
@@ -175,7 +193,11 @@ export async function POST(
 
     return NextResponse.json({ success: true, vendorRequestId: resolvedVendorRequestId! });
   } catch (error) {
-    console.error("[VendorReplies/POST]", error);
-    return NextResponse.json({ error: "회신 저장에 실패했습니다." }, { status: 500 });
+    console.error("[VendorReplies/POST] ERROR:", error);
+    const message = error instanceof Error ? error.message : "알 수 없는 에러";
+    return NextResponse.json(
+      { error: message, details: String(error) },
+      { status: 500 }
+    );
   }
 }

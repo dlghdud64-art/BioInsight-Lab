@@ -1242,7 +1242,7 @@ model QuoteVendorRequest {
   id                String              @id @default(cuid())
   quoteId           String // FK to Quote (견적요청서)
   vendorName        String? // Optional vendor name
-  vendorEmail       String // Required vendor email
+  vendorEmail       String? // Vendor email (null = manual/offline reply)
   message           String?             @db.Text // Request message
   token             String              @unique // Public access token (32-48 chars random)
   status            VendorRequestStatus @default(SENT)
