@@ -23,7 +23,7 @@ export default function IntroPage() {
       {/* 전체 레이아웃 컨테이너 */}
       <div className="w-full">
         {/* 1. Hero Section */}
-        <section className="relative py-10 md:py-32 bg-gradient-to-b from-blue-50/80 via-white to-white overflow-hidden">
+        <section className="relative py-8 md:py-16 bg-gradient-to-b from-blue-50/80 via-white to-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0 opacity-[0.03]" style={{
               backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
@@ -50,9 +50,9 @@ export default function IntroPage() {
         </section>
 
         {/* 2. 직군별 고민 & 해결책 */}
-        <section className="py-8 md:py-24 bg-white">
+        <section className="py-8 md:py-12 bg-white">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
-            <div className="text-center mb-5 md:mb-12">
+            <div className="text-center mb-5 md:mb-8">
               <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-1.5 md:mb-4 break-keep">
                 누가 쓰나요?
               </h2>
@@ -140,9 +140,9 @@ export default function IntroPage() {
         </section>
 
         {/* 3. Feature Grid */}
-        <section className="py-8 md:py-24 bg-slate-50">
+        <section className="py-8 md:py-12 bg-slate-50">
           <div className="mx-auto max-w-7xl px-4 md:px-6">
-            <div className="text-center mb-5 md:mb-16">
+            <div className="text-center mb-5 md:mb-10">
               <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-1.5 md:mb-4 break-keep">
                 연구에만 집중하세요
               </h2>

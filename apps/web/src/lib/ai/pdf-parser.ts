@@ -1,3 +1,62 @@
+// ─── DOMMatrix polyfill for Node.js (required by pdfjs-dist) ───────────────
+// pdfjs-dist internally references DOMMatrix which is a browser-only API.
+// We provide a minimal shim so that pdf-parse works in Node/Edge runtimes.
+if (typeof (globalThis as any).DOMMatrix === "undefined") {
+  (globalThis as any).DOMMatrix = class DOMMatrix {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+    m11 = 1; m12 = 0; m13 = 0; m14 = 0;
+    m21 = 0; m22 = 1; m23 = 0; m24 = 0;
+    m31 = 0; m32 = 0; m33 = 1; m34 = 0;
+    m41 = 0; m42 = 0; m43 = 0; m44 = 1;
+    is2D = true; isIdentity = true;
+    constructor(init?: string | number[]) {
+      if (Array.isArray(init) && init.length === 6) {
+        [this.a, this.b, this.c, this.d, this.e, this.f] = init;
+        this.m11 = init[0]; this.m12 = init[1];
+        this.m21 = init[2]; this.m22 = init[3];
+        this.m41 = init[4]; this.m42 = init[5];
+      }
+    }
+    static fromMatrix() { return new (globalThis as any).DOMMatrix(); }
+    static fromFloat32Array(a: Float32Array) { return new (globalThis as any).DOMMatrix(Array.from(a)); }
+    static fromFloat64Array(a: Float64Array) { return new (globalThis as any).DOMMatrix(Array.from(a)); }
+    multiply() { return new (globalThis as any).DOMMatrix(); }
+    translate(tx = 0, ty = 0) {
+      const m = new (globalThis as any).DOMMatrix();
+      m.e = this.e + tx; m.f = this.f + ty;
+      m.m41 = m.e; m.m42 = m.f; return m;
+    }
+    scale() { return new (globalThis as any).DOMMatrix(); }
+    scale3d() { return new (globalThis as any).DOMMatrix(); }
+    rotate() { return new (globalThis as any).DOMMatrix(); }
+    rotateFromVector() { return new (globalThis as any).DOMMatrix(); }
+    rotateAxisAngle() { return new (globalThis as any).DOMMatrix(); }
+    skewX() { return new (globalThis as any).DOMMatrix(); }
+    skewY() { return new (globalThis as any).DOMMatrix(); }
+    flipX() { return new (globalThis as any).DOMMatrix(); }
+    flipY() { return new (globalThis as any).DOMMatrix(); }
+    inverse() { return new (globalThis as any).DOMMatrix(); }
+    transformPoint(p?: any) { return { x: p?.x ?? 0, y: p?.y ?? 0, z: p?.z ?? 0, w: p?.w ?? 1 }; }
+    toFloat32Array() { return new Float32Array([this.m11, this.m12, this.m13, this.m14, this.m21, this.m22, this.m23, this.m24, this.m31, this.m32, this.m33, this.m34, this.m41, this.m42, this.m43, this.m44]); }
+    toFloat64Array() { return new Float64Array([this.m11, this.m12, this.m13, this.m14, this.m21, this.m22, this.m23, this.m24, this.m31, this.m32, this.m33, this.m34, this.m41, this.m42, this.m43, this.m44]); }
+    toJSON() { return { a: this.a, b: this.b, c: this.c, d: this.d, e: this.e, f: this.f, is2D: this.is2D, isIdentity: this.isIdentity }; }
+    toString() { return `matrix(${this.a}, ${this.b}, ${this.c}, ${this.d}, ${this.e}, ${this.f})`; }
+    multiplySelf() { return this; }
+    preMultiplySelf() { return this; }
+    translateSelf(tx = 0, ty = 0) { this.e += tx; this.f += ty; return this; }
+    scaleSelf() { return this; }
+    scale3dSelf() { return this; }
+    rotateSelf() { return this; }
+    rotateFromVectorSelf() { return this; }
+    rotateAxisAngleSelf() { return this; }
+    skewXSelf() { return this; }
+    skewYSelf() { return this; }
+    invertSelf() { return this; }
+    setMatrixValue() { return this; }
+  };
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 /**
  * PDF 파싱 결과 인터페이스
  */
