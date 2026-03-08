@@ -531,149 +531,7 @@ export default function DashboardPage() {
         {/* --- Right Side Panel (Span 2) --- */}
         <div className="md:col-span-2 space-y-6">
 
-          {/* 지출 추이 차트 (최근 6개월) */}
-          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold truncate">지출 추이 (최근 6개월)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              {stats.monthlySpendingChart.every((d) => d.amount === 0) ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 mb-3">
-                    <TrendingUp className="h-6 w-6 text-slate-400" />
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">데이터를 쌓는 중입니다</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">구매 내역이 생기면 차트가 표시됩니다</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis
-                      dataKey="month"
-                      tickFormatter={(v: string) => v.slice(5)}
-                      tick={{ fontSize: 11, fill: "#94a3b8" }}
-                    />
-                    <YAxis
-                      tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
-                      tick={{ fontSize: 11, fill: "#94a3b8" }}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
-                      labelFormatter={(label: string) => `${label}`}
-                    />
-                    <Bar dataKey="amount" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 유통기한 임박 위젯 */}
-          {stats.expiringCount > 0 && (
-            <Card className="bg-amber-50/30 dark:bg-[#161d2f] border-amber-100 dark:border-slate-800/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    유통기한 임박 ({stats.expiringCount}건)
-                  </CardTitle>
-                  <Link href="/dashboard/inventory">
-                    <Button variant="ghost" size="sm" className="text-xs h-6 text-amber-600">확인</Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                {stats.expiringItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-amber-100 dark:border-slate-800/30 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.currentQuantity} {item.unit}</p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`ml-2 text-xs flex-shrink-0 ${
-                        item.daysLeft <= 7
-                          ? "border-red-200 bg-red-50 text-red-700 dark:text-red-400"
-                          : "border-amber-200 bg-amber-50 text-amber-700 dark:text-amber-400"
-                      }`}
-                    >
-                      {item.daysLeft}일 남음
-                    </Badge>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 부족 재고 위젯 */}
-          {stats.lowStockItems.length > 0 && (
-            <Card className="bg-red-50/20 dark:bg-[#161d2f] border-red-100 dark:border-slate-800/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    부족 재고 알림
-                  </CardTitle>
-                  <Link href="/dashboard/inventory">
-                    <Button variant="ghost" size="sm" className="text-xs h-6 text-red-600">발주</Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                {stats.lowStockItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 dark:border-slate-800/30 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
-                      <p className="text-xs text-red-500">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
-                    </div>
-                    <span className="relative flex h-2 w-2 ml-2 flex-shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
-                    </span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 3. Quick Actions - 답답함 해소, Affordance 강화 */}
-          <Card className="shadow-sm border-slate-200/60 dark:border-slate-800/50 rounded-xl bg-white dark:bg-[#161d2f]">
-            <CardHeader className="pb-4 min-w-0">
-              <CardTitle className="text-lg font-bold truncate min-w-0">빠른 실행</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Link href="/test/search" className="block">
-                <Button variant="outline" className="w-full h-12 justify-between rounded-lg bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:-translate-y-0.5 transition-all">
-                  <div className="flex items-center">
-                    <Search className="mr-3 h-4 w-4 text-slate-500" />
-                    통합 검색
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400" />
-                </Button>
-              </Link>
-              <Link href="/dashboard/inventory" className="block">
-                <Button variant="outline" className="w-full h-12 justify-between rounded-lg border-blue-200 text-blue-700 bg-blue-50/30 hover:bg-blue-50 hover:-translate-y-0.5 transition-all">
-                  <div className="flex items-center">
-                    <Plus className="mr-3 h-4 w-4" />
-                    새 재고 등록
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-300" />
-                </Button>
-              </Link>
-              <Link href="/test/quote" className="block">
-                <Button className="w-full h-12 justify-between rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:-translate-y-0.5 transition-all">
-                  <div className="flex items-center">
-                    <FileText className="mr-3 h-4 w-4" />
-                    견적 요청하기
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-300" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* 4. Recent Notifications (Fixed) */}
+          {/* 1. 최근 알림 */}
           <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
             <CardHeader className="min-w-0">
               <div className="flex items-center justify-between gap-2 min-w-0">
@@ -711,6 +569,148 @@ export default function DashboardPage() {
               ))}
             </CardContent>
           </Card>
+
+          {/* 2. 빠른 실행 */}
+          <Card className="shadow-sm border-slate-200/60 dark:border-slate-800/50 rounded-xl bg-white dark:bg-[#161d2f]">
+            <CardHeader className="pb-4 min-w-0">
+              <CardTitle className="text-lg font-bold truncate min-w-0">빠른 실행</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <Link href="/test/search" className="block">
+                <Button variant="outline" className="w-full h-12 justify-between rounded-lg bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <Search className="mr-3 h-4 w-4 text-slate-500" />
+                    통합 검색
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                </Button>
+              </Link>
+              <Link href="/dashboard/inventory" className="block">
+                <Button variant="outline" className="w-full h-12 justify-between rounded-lg border-blue-200 text-blue-700 bg-blue-50/30 hover:bg-blue-50 hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <Plus className="mr-3 h-4 w-4" />
+                    새 재고 등록
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-blue-300" />
+                </Button>
+              </Link>
+              <Link href="/test/quote" className="block">
+                <Button className="w-full h-12 justify-between rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center">
+                    <FileText className="mr-3 h-4 w-4" />
+                    견적 요청하기
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-blue-300" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* 3. 지출 추이 차트 (최근 6개월) */}
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold truncate">지출 추이 (최근 6개월)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {stats.monthlySpendingChart.every((d) => d.amount === 0) ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 mb-3">
+                    <TrendingUp className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">데이터를 쌓는 중입니다</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">구매 내역이 생기면 차트가 표시됩니다</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis
+                      dataKey="month"
+                      tickFormatter={(v: string) => v.slice(5)}
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <YAxis
+                      tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
+                      labelFormatter={(label: string) => `${label}`}
+                    />
+                    <Bar dataKey="amount" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 4. 유통기한 임박 위젯 (조건부) */}
+          {stats.expiringCount > 0 && (
+            <Card className="bg-amber-50/30 dark:bg-[#161d2f] border-amber-100 dark:border-slate-800/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    유통기한 임박 ({stats.expiringCount}건)
+                  </CardTitle>
+                  <Link href="/dashboard/inventory">
+                    <Button variant="ghost" size="sm" className="text-xs h-6 text-amber-600">확인</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-2">
+                {stats.expiringItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-amber-100 dark:border-slate-800/30 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.currentQuantity} {item.unit}</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`ml-2 text-xs flex-shrink-0 ${
+                        item.daysLeft <= 7
+                          ? "border-red-200 bg-red-50 text-red-700 dark:text-red-400"
+                          : "border-amber-200 bg-amber-50 text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      {item.daysLeft}일 남음
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 5. 부족 재고 위젯 (조건부) */}
+          {stats.lowStockItems.length > 0 && (
+            <Card className="bg-red-50/20 dark:bg-[#161d2f] border-red-100 dark:border-slate-800/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    부족 재고 알림
+                  </CardTitle>
+                  <Link href="/dashboard/inventory">
+                    <Button variant="ghost" size="sm" className="text-xs h-6 text-red-600">발주</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-2">
+                {stats.lowStockItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 dark:border-slate-800/30 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
+                      <p className="text-xs text-red-500">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
+                    </div>
+                    <span className="relative flex h-2 w-2 ml-2 flex-shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
