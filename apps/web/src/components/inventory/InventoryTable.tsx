@@ -2,7 +2,8 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity, PackagePlus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertTriangle, Thermometer, Snowflake, Clock, Ban, Leaf, Infinity, PackagePlus, MoreVertical, Pencil, Eye, Trash2 } from "lucide-react";
 import { InventoryQRCode } from "./InventoryQRCode";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
@@ -357,6 +358,10 @@ export function InventoryTable({
                     onDetailClick ? "cursor-pointer" : ""
                   }`}
                   onClick={onDetailClick ? handleRowClick : undefined}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(inventory);
+                  }}
                 >
                   <TableCell>
                     <span className="text-xs whitespace-nowrap antialiased">
@@ -510,27 +515,44 @@ export function InventoryTable({
                           입고
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-blue-600 dark:text-blue-400 font-semibold"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDetailClick?.(inventory);
-                        }}
-                      >
-                        상세
-                      </Button>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <InventoryQRCode
-                          inventoryId={inventory.id}
-                          productName={inventory.product.name}
-                          catalogNumber={inventory.product.catalogNumber}
-                          location={inventory.location}
-                          unit={inventory.unit}
-                          currentQuantity={inventory.currentQuantity}
-                        />
-                      </div>
+                      {/* ⋮ 더보기 드롭다운: 상세 보기 / 정보 수정 / 삭제 */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); onDetailClick?.(inventory); }}
+                            className="gap-2 text-sm"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-blue-500" />
+                            상세 보기
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); onEdit(inventory); }}
+                            className="gap-2 text-sm"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                            정보 수정
+                          </DropdownMenuItem>
+                          {onDelete && (
+                            <DropdownMenuItem
+                              onClick={(e) => { e.stopPropagation(); onDelete(inventory); }}
+                              className="gap-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              삭제
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>

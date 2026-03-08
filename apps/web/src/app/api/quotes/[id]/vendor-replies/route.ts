@@ -7,8 +7,8 @@ import { Prisma } from "@prisma/client";
 
 const ReplyItemSchema = z.object({
   quoteItemId: z.string(),
-  unitPrice: z.number().int().nonnegative(),
-  currency: z.string().default("KRW"),
+  unitPrice: z.number().nonnegative(),
+  currency: z.string().min(1).default("KRW"),
   leadTimeDays: z.number().int().nonnegative().optional(),
   moq: z.number().int().positive().optional(),
   vendorSku: z.string().optional(),
@@ -64,8 +64,11 @@ export async function POST(
     const body = await request.json();
     const validation = SaveVendorReplySchema.safeParse(body);
     if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      const fieldPath = firstError?.path?.join(".") ?? "";
+      const message = firstError?.message ?? "입력값을 확인하세요.";
       return NextResponse.json(
-        { error: "입력값 오류", details: validation.error.errors },
+        { error: fieldPath ? `${fieldPath}: ${message}` : message, details: validation.error.errors },
         { status: 400 }
       );
     }

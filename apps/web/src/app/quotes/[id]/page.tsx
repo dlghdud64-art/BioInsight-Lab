@@ -176,13 +176,15 @@ export default function QuoteDetailPage() {
 
       const items = quote.items?.map((item: any) => {
         const ri = replyItems[item.id] || {};
+        const rawPrice = ri.unitPrice?.trim() ?? "";
+        const unitPrice = rawPrice === "" ? 0 : parseFloat(rawPrice);
         return {
           quoteItemId: item.id,
-          unitPrice: parseInt(ri.unitPrice || "0") || 0,
-          currency: ri.currency || "KRW",
+          unitPrice: isNaN(unitPrice) ? 0 : unitPrice,
+          currency: ri.currency?.trim() || "KRW",
           leadTimeDays: ri.leadTimeDays ? parseInt(ri.leadTimeDays) : undefined,
           moq: ri.moq ? parseInt(ri.moq) : undefined,
-          notes: ri.notes || undefined,
+          notes: ri.notes?.trim() || undefined,
         };
       }) || [];
 
@@ -192,7 +194,7 @@ export default function QuoteDetailPage() {
         body: JSON.stringify({ vendorName: replyVendorName.trim(), items }),
       });
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "저장 실패");
       }
       return res.json();
