@@ -49,43 +49,15 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <Sheet>
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 relative">
+        <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
-          {/* ── LEFT ─────────────────────────────────────────────────────── */}
-          <div className="flex items-center z-10">
-            {/* 모바일: 햄버거 좌측 */}
-            <SheetTrigger asChild>
-              <button
-                className="md:hidden -ml-1 p-2 text-gray-700 hover:text-gray-900 transition-colors touch-manipulation"
-                aria-label="전체 메뉴 열기"
-                type="button"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-            </SheetTrigger>
-
-            {/* 데스크탑: 로고 좌측 */}
-            <Link
-              href="/"
-              className={`hidden md:flex items-center gap-2 flex-shrink-0 ${isDashboard ? "md:hidden" : ""}`}
-            >
-              <BioInsightLogo showText={true} />
-            </Link>
-          </div>
-
-          {/* ── MOBILE CENTER: 로고 절대 중앙 ──────────────────────────── */}
-          {isDashboard && pageTitle ? (
-            <h1 className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900 truncate max-w-[50%] pointer-events-none">
-              {pageTitle}
-            </h1>
-          ) : (
-            <Link
-              href="/"
-              className="md:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center scale-[1.15] origin-center"
-            >
-              <BioInsightLogo showText={true} />
-            </Link>
-          )}
+          {/* ── LEFT: 로고 (모바일 최좌측) ──────────────────────────────── */}
+          <Link
+            href="/"
+            className={`flex items-center gap-2 flex-shrink-0 ${isDashboard ? "md:hidden" : ""}`}
+          >
+            <BioInsightLogo showText={true} />
+          </Link>
 
           {/* Sheet 드로어 내용 */}
           <SheetContent side="left" className="md:hidden w-full sm:max-w-xs p-0 flex flex-col">
@@ -192,8 +164,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </div>
           </SheetContent>
 
-          {/* ── RIGHT ────────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0 z-10">
+          {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 햄버거 ── */}
+          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
             {/* 데스크탑 내비게이션 */}
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/intro" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors whitespace-nowrap rounded px-2 py-1">
@@ -240,7 +212,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
             {/* 프로필 메뉴 */}
             <UserMenu />
+
+            {/* 모바일 햄버거 (최우측 끝) */}
+            <SheetTrigger asChild>
+              <button
+                className="md:hidden p-2 -mr-1 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
+                aria-label="전체 메뉴 열기"
+                type="button"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+            </SheetTrigger>
           </div>
+
         </div>
       </Sheet>
     </header>
