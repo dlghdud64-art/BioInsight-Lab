@@ -88,9 +88,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
                 {/* 랜딩 기본 링크 */}
                 <nav className="px-2 pt-2 pb-2 space-y-1">
-                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">AI 기능</div>
+                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">AI 시약 검색</Link>
+                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">AI 데이터 분석</Link>
                   </SheetClose>
                   <SheetClose asChild>
                     <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">프로토콜 분석</Link>

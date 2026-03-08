@@ -165,7 +165,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
-          <BioInsightLogo showText={true} compact={true} />
+          <BioInsightLogo showText={true} size="md" />
         </Link>
       </div>
 

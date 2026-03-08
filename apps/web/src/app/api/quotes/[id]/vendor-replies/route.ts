@@ -115,12 +115,13 @@ export async function POST(
       })),
     };
 
-    // 동일 벤더명의 수동 회신 요청이 이미 있는지 확인 (vendorEmail null = 수동 입력)
+    // 동일 벤더명의 수동 회신 요청이 이미 있는지 확인
+    // vendorEmail null 또는 "" 모두 수동 입력으로 처리
     const existingRequest = await db.quoteVendorRequest.findFirst({
       where: {
         quoteId,
         vendorName,
-        vendorEmail: null,
+        OR: [{ vendorEmail: null }, { vendorEmail: "" }],
       },
     });
 
@@ -145,7 +146,9 @@ export async function POST(
           data: {
             quoteId,
             vendorName,
-            vendorEmail: null, // 수동 입력: 이메일 없음 (schema nullable)
+            // vendorEmail: null 대신 빈 문자열로 fallback (DB NOT NULL 제약 대비)
+            // schema.prisma String? (nullable) 이지만 migrate deploy 미적용 환경 방어
+            vendorEmail: "" as any, // "" = 수동 입력 식별자
             token: generateVendorRequestToken(),
             status: "RESPONDED",
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1년

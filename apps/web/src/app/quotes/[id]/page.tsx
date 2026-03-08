@@ -1202,12 +1202,13 @@ ${itemLines}
         {/* 하단 액션 버튼 그룹 (Floating Action Bar) */}
         <Card className="bg-white rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
-            {/* Primary: 구매 완료로 표시 - 가장 눈에 띄게 */}
+            {/* Primary: 구매 완료로 표시 - 회신이 1건 이상일 때만 활성화 */}
             {quote.status !== "COMPLETED" && (
               <Button
                 onClick={handleMarkAsCompleted}
-                disabled={updateStatusMutation.isPending}
-                className="order-first w-full sm:w-auto text-sm md:text-base h-10 md:h-11 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all font-semibold"
+                disabled={updateStatusMutation.isPending || respondedVendors.length === 0}
+                title={respondedVendors.length === 0 ? "회신이 없으면 구매 완료 처리할 수 없습니다." : undefined}
+                className="order-first w-full sm:w-auto text-sm md:text-base h-10 md:h-11 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 <Package className="h-4 w-4 mr-2 shrink-0" />
                 {updateStatusMutation.isPending ? "처리 중..." : "구매 완료로 표시"}
