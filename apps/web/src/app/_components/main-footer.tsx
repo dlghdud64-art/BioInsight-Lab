@@ -46,8 +46,8 @@ export function MainFooter() {
                 Beta
               </span>
             </div>
-            <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-              연구·QC 현장의 시약·장비를 한 번에 검색·비교하고, 견적요청/구매요청용 리스트로 정리해 공유하는 도구입니다.
+            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+              시약 검색부터 견적, 구매, 재고 관리까지. 연구에만 집중할 수 있도록 돕는 AI 통합 솔루션입니다.
             </p>
             <div className="flex items-center gap-3 text-slate-600">
               {/* GitHub */}
