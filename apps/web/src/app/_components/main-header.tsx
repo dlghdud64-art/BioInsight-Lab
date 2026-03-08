@@ -53,7 +53,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
           </Link>
 
           {/* Sheet 드로어 내용 */}
-          <SheetContent side="left" className="w-full sm:max-w-xs p-0 flex flex-col">
+          <SheetContent side="right" className="w-full sm:max-w-xs p-0 flex flex-col">
 
             {session?.user ? (
               /* ── 로그인: Private 메뉴 ── */
