@@ -10,11 +10,11 @@ export const revalidate = 0;
  * 대시보드 통계 API
  * GET /api/dashboard/stats
  *
- * 반환 데이터:
- * - budgetUsageRate: 예산 사용률 (%)
- * - totalPurchaseAmount: 총 구매 금액
- * - orderStats: 주문 통계
- * - quoteStats: 견적 통계
+ * [성능 최적화] 순차 실행 → 4단계 병렬 파이프라인으로 리팩토링
+ * - Phase 1: 완전 독립 쿼리 4개 동시 실행
+ * - Phase 2: Phase 1 결과 의존 쿼리 6개 동시 실행
+ * - Phase 3: quoteId 포함 구매 기록 4개 동시 실행
+ * - Phase 4: N+1 제거용 배치 조회 2개 동시 실행
  */
 export async function GET(request: NextRequest) {
   try {
@@ -24,189 +24,125 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const sessionOrgId = (session.user as { orgId?: string }).orgId ?? null;
-    console.log("[DASHBOARD_STATS] userId:", userId, "orgId:", sessionOrgId);
-
-    // x-guest-key 헤더: localStorage에서 dashboard 페이지가 전달
     const guestKey = request.headers.get("x-guest-key") || null;
-    console.log("[DASHBOARD_STATS] guestKey:", guestKey ? "[present]" : "[none]");
+    console.log("[DASHBOARD_STATS] userId:", userId, "guestKey:", guestKey ? "[present]" : "[none]");
 
-    // 1. 활성 예산 조회
-    const activeBudget = await db.userBudget.findFirst({
-      where: {
-        userId,
-        isActive: true,
-      },
-      include: {
-        transactions: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-      },
-    });
-
-    // 2. 주문 통계 조회 (최근 500건 제한: 대량 row 로드로 인한 메모리 과부하 방지)
-    const orders = await db.order.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        totalAmount: true,
-        status: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 500,
-    });
-
-    const totalPurchaseAmount = orders.reduce(
-      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
-      0
-    );
-
-    const ordersByStatus = orders.reduce(
-      (acc: Record<string, number>, order: { status: string }) => {
-        acc[order.status] = (acc[order.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
+    // 날짜 계산 (공통)
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthOrders = orders.filter(
-      (order: { createdAt: Date | string }) => new Date(order.createdAt) >= monthStart
-    );
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-    // 3. 견적 통계 조회 (본인 + 조직 소속 견적 포함)
-    const userOrgMembershipsForQuote = await db.organizationMember.findMany({
-      where: { userId },
-      select: { organizationId: true },
-    });
-    const orgIdsForQuoteStats = userOrgMembershipsForQuote.map((m: { organizationId: string }) => m.organizationId);
-    const quotes = await db.quote.findMany({
-      where: {
-        OR: [
-          { userId },
-          ...(orgIdsForQuoteStats.length > 0 ? [{ organizationId: { in: orgIdsForQuoteStats } }] : []),
-        ],
-      },
-      select: {
-        id: true,
-        status: true,
-        totalAmount: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    });
+    // ── Phase 1: 완전 독립 쿼리 4개 동시 실행 ─────────────────────────
+    // 이전: 순차 await 4개 (activeBudget → orders → memberships → orgMemberships)
+    // 이후: Promise.all로 1번의 DB 라운드트립으로 처리
+    const [activeBudget, orders, memberships, orgMemberships] = await Promise.all([
+      db.userBudget.findFirst({
+        where: { userId, isActive: true },
+        include: {
+          transactions: { orderBy: { createdAt: "desc" }, take: 5 },
+        },
+      }),
+      db.order.findMany({
+        where: { userId },
+        select: { id: true, totalAmount: true, status: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 500,
+      }),
+      db.workspaceMember.findMany({ where: { userId }, select: { workspaceId: true } }),
+      // 중복 제거: organizationMember를 1회만 조회 (기존 코드는 3회 중복 조회)
+      db.organizationMember.findMany({ where: { userId }, select: { organizationId: true } }),
+    ]);
 
-    const quotesByStatus = quotes.reduce(
-      (acc: Record<string, number>, quote: { status: string }) => {
-        acc[quote.status] = (acc[quote.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    const pendingQuotes = quotesByStatus["PENDING"] || 0;
-    const completedQuotes = quotesByStatus["COMPLETED"] || 0;
-    const purchasedQuotes = quotesByStatus["PURCHASED"] || 0;
-    const respondedQuotes = quotesByStatus["RESPONDED"] || 0;
-
-    // 진행 중인 견적 금액 (RESPONDED, COMPLETED 상태의 총액)
-    const pendingQuotesAmount = quotes
-      .filter((q: any) => q.status === "RESPONDED" || q.status === "COMPLETED")
-      .reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0);
-
-    // 4. 예산 사용률 계산 (UserBudget 우선, 없으면 Budget 모델 폴백)
-    let budgetUsageRate = activeBudget && activeBudget.totalAmount > 0
-      ? (activeBudget.usedAmount / activeBudget.totalAmount) * 100
-      : 0;
-
-    // UserBudget이 없으면 Budget 모델(예산 관리 페이지용)에서 이번 달 예산 조회
-    let fallbackBudgetInfo: { id: string; name: string; totalAmount: number; usedAmount: number; remainingAmount: number; usageRate: string } | null = null;
-    if (!activeBudget) {
-      try {
-        const userOrgMembershipsForBudget = await db.organizationMember.findMany({
-          where: { userId },
-          select: { organizationId: true },
-        });
-        const orgIdsForBudget = userOrgMembershipsForBudget.map((m: { organizationId: string }) => m.organizationId);
-        const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-        const monthlyBudget = await db.budget.findFirst({
-          where: {
-            scopeKey: { in: [`user-${userId}`, userId, ...orgIdsForBudget] },
-            yearMonth: currentYearMonth,
-          },
-        });
-        if (monthlyBudget) {
-          // thisMonthPurchaseAmount는 아래에서 계산되므로 먼저 임시 계산
-          const tmpScopeKeys = [userId, `user-${userId}`, ...(guestKey ? [guestKey] : [])];
-          const tmpThisMonthRecords = await db.purchaseRecord.findMany({
-            where: {
-              OR: tmpScopeKeys.map((k) => ({ scopeKey: k })),
-              purchasedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1), lte: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) },
-            },
-            select: { amount: true },
-          });
-          const tmpMonthlySpent = tmpThisMonthRecords.reduce((s: number, p: any) => s + (p.amount || 0), 0);
-          budgetUsageRate = monthlyBudget.amount > 0 ? (tmpMonthlySpent / monthlyBudget.amount) * 100 : 0;
-          let budgetName = `${currentYearMonth} Budget`;
-          if (monthlyBudget.description) {
-            const nm = monthlyBudget.description.match(/^\[([^\]]+)\]/);
-            if (nm) budgetName = nm[1];
-          }
-          fallbackBudgetInfo = {
-            id: monthlyBudget.id,
-            name: budgetName,
-            totalAmount: monthlyBudget.amount,
-            usedAmount: tmpMonthlySpent,
-            remainingAmount: monthlyBudget.amount - tmpMonthlySpent,
-            usageRate: budgetUsageRate.toFixed(1),
-          };
-        }
-      } catch {
-        // 폴백 실패해도 0%로 유지
-      }
-    }
-
-    // 5. PurchaseRecord 기반 지출 통계 (이번 달 / 전월 / 최근 6개월)
-    const memberships = await db.workspaceMember.findMany({
-      where: { userId },
-      select: { workspaceId: true },
-    });
     const workspaceIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
+    const orgIds = orgMemberships.map((m: { organizationId: string }) => m.organizationId);
 
-    // guestKey: 구매 내역 가져올 때 localStorage의 biocompare_guest_key로 저장된 항목 포함
-    const scopeKeyValues = [
-      userId,
-      ...workspaceIds,
-      ...(guestKey ? [guestKey] : []),
-    ];
+    // where 조건 사전 정의 (재사용)
+    const inventoryOwnerWhere: any = {
+      OR: [
+        { userId },
+        ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+      ],
+    };
+    const quoteOwnerWhere: any = {
+      OR: [
+        { userId },
+        ...(orgIds.length > 0 ? [{ organizationId: { in: orgIds } }] : []),
+      ],
+    };
 
-    // 유저가 소유한 Quote ID 목록 - scopeKey 불일치 시 quoteId 기반 폴백 조회용
-    const userOrgIdsForQuote = await db.organizationMember.findMany({
-      where: { userId },
-      select: { organizationId: true },
-    });
-    const orgIdsForQuote = userOrgIdsForQuote.map((m: { organizationId: string }) => m.organizationId);
-    const userQuoteIds = await db.quote.findMany({
-      where: {
-        OR: [
-          { userId },
-          ...(orgIdsForQuote.length > 0 ? [{ organizationId: { in: orgIdsForQuote } }] : []),
-        ],
-      },
-      select: { id: true },
-      take: 500,
-    });
-    const userQuoteIdList = userQuoteIds.map((q: { id: string }) => q.id);
+    // ── Phase 2: Phase 1 결과 의존 쿼리 6개 동시 실행 ─────────────────
+    // 이전: quotes → ordersWithItems → userInventories → (fallback budget) 순차 실행
+    // 이후: 모두 병렬
+    const [
+      quotes,
+      ordersWithItems,
+      allInventories,
+      expiringInventories,
+      userInventories,
+      fallbackBudget,
+    ] = await Promise.all([
+      db.quote.findMany({
+        where: quoteOwnerWhere,
+        select: { id: true, status: true, totalAmount: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
+      // Select only needed fields (기존: include: { items: true } → 모든 필드 로드)
+      db.order.findMany({
+        where: { userId },
+        include: {
+          items: {
+            select: { productId: true, unitPrice: true, quantity: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
+      db.productInventory.findMany({
+        where: inventoryOwnerWhere,
+        include: {
+          product: { select: { name: true, catalogNumber: true, brand: true } },
+        },
+        take: 500,
+      }),
+      db.productInventory.findMany({
+        where: {
+          ...inventoryOwnerWhere,
+          expiryDate: { gte: now, lte: thirtyDaysLater },
+          NOT: { expiryDate: null },
+        },
+        include: {
+          product: { select: { name: true, catalogNumber: true } },
+        },
+        orderBy: { expiryDate: "asc" },
+        take: 10,
+      }),
+      db.userInventory.findMany({
+        where: { userId },
+        // 필요 필드만 select (기존: include: { user: true } 불필요 join)
+        select: { id: true, orderItemId: true, quantity: true },
+      }),
+      // fallback 예산: UserBudget 없을 때만 조회 (조건부 병렬)
+      activeBudget
+        ? Promise.resolve(null)
+        : db.budget.findFirst({
+            where: {
+              scopeKey: { in: [`user-${userId}`, userId, ...orgIds] },
+              yearMonth: currentYearMonth,
+            },
+          }),
+    ]);
 
-    // 배열 전체 대신 길이만 로그 (대용량 배열 로그 → 터미널 부하 방지)
-    console.log("[DASHBOARD_STATS] scopeKeyValues count:", scopeKeyValues.length, "| quoteIds count:", userQuoteIdList.length);
-
-    // purchaseOwnerWhere: scopeKey OR workspaceId OR quoteId 기반 3중 매칭
-    // (scopeKey 불일치 시에도 자신의 견적에서 생성된 구매 내역 포함)
+    // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
+    // 이전: recentOrders, recentPurchases가 return문 안에서 순차 실행
+    // 이후: 모두 병렬 (quoteId 의존성 해소 후 실행)
+    const userQuoteIdList = quotes.map((q: { id: string }) => q.id);
+    const scopeKeyValues = [userId, ...workspaceIds, ...(guestKey ? [guestKey] : [])];
     const purchaseOwnerWhere: any = {
       OR: [
         { scopeKey: { in: scopeKeyValues } },
@@ -215,40 +151,121 @@ export async function GET(request: NextRequest) {
       ],
     };
 
-    // 날짜 범위: 말일 23:59:59.999 까지 포함 (기존 00:00:00 버그 수정)
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    console.log("[DASHBOARD_STATS] scopeKeyValues count:", scopeKeyValues.length, "| quoteIds count:", userQuoteIdList.length);
 
-    const [recentPurchaseRecords, lastMonthRecords] = await Promise.all([
-      db.purchaseRecord.findMany({
-        where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
-        select: { amount: true, purchasedAt: true },
-        orderBy: { purchasedAt: "desc" },
-        take: 1000,  // 6개월 구매 내역 최대 1000건 제한
-      }),
-      db.purchaseRecord.findMany({
-        where: { ...purchaseOwnerWhere, purchasedAt: { gte: lastMonthStart, lte: lastMonthEnd } },
-        select: { amount: true },
-        take: 500,
-      }),
+    const [recentPurchaseRecords, lastMonthRecords, recentOrders, recentPurchases] =
+      await Promise.all([
+        db.purchaseRecord.findMany({
+          where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
+          select: { amount: true, purchasedAt: true },
+          orderBy: { purchasedAt: "desc" },
+          take: 1000,
+        }),
+        db.purchaseRecord.findMany({
+          where: { ...purchaseOwnerWhere, purchasedAt: { gte: lastMonthStart, lte: lastMonthEnd } },
+          select: { amount: true },
+          take: 500,
+        }),
+        // 기존: return문 안에서 순차 await → 이제 병렬
+        db.order.findMany({
+          where: { userId },
+          include: { quote: { select: { title: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        }),
+        db.purchaseRecord.findMany({
+          where: purchaseOwnerWhere,
+          orderBy: { purchasedAt: "desc" },
+          take: 5,
+          select: {
+            id: true,
+            itemName: true,
+            vendorName: true,
+            amount: true,
+            purchasedAt: true,
+            category: true,
+            qty: true,
+            unit: true,
+          },
+        }),
+      ]);
+
+    // ── Phase 4: N+1 제거 배치 조회 2개 동시 실행 ──────────────────────
+    // 이전: userInventories 루프에서 매 항목마다 db.orderItem.findUnique 호출 (N+1)
+    // 이후: orderItemId 목록으로 한 번에 batch 조회
+    const allProductIds = ordersWithItems
+      .flatMap((o: any) => o.items.map((i: any) => i.productId))
+      .filter(Boolean) as string[];
+    const orderItemIds = (userInventories as any[])
+      .map((inv) => inv.orderItemId)
+      .filter(Boolean) as string[];
+
+    const [products, orderItems] = await Promise.all([
+      allProductIds.length > 0
+        ? db.product.findMany({
+            where: { id: { in: allProductIds } },
+            select: { id: true, category: true },
+          })
+        : Promise.resolve([] as { id: string; category: string | null }[]),
+      orderItemIds.length > 0
+        ? db.orderItem.findMany({
+            where: { id: { in: orderItemIds } },
+            select: { id: true, unitPrice: true },
+          })
+        : Promise.resolve([] as { id: string; unitPrice: number | null }[]),
     ]);
 
-    // 이번 달 PurchaseRecord 합산
+    // ── 데이터 가공 ────────────────────────────────────────────────────
+
+    // orders 통계
+    const totalPurchaseAmount = orders.reduce(
+      (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
+      0
+    );
+    const ordersByStatus = orders.reduce(
+      (acc: Record<string, number>, order: { status: string }) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    const thisMonthOrders = orders.filter(
+      (order: { createdAt: Date | string }) => new Date(order.createdAt) >= monthStart
+    );
+
+    // quotes 통계
+    const quotesByStatus = quotes.reduce(
+      (acc: Record<string, number>, quote: { status: string }) => {
+        acc[quote.status] = (acc[quote.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    const pendingQuotes = quotesByStatus["PENDING"] || 0;
+    const completedQuotes = quotesByStatus["COMPLETED"] || 0;
+    const purchasedQuotes = quotesByStatus["PURCHASED"] || 0;
+    const respondedQuotes = quotesByStatus["RESPONDED"] || 0;
+    const pendingQuotesAmount = quotes
+      .filter((q: any) => q.status === "RESPONDED" || q.status === "COMPLETED")
+      .reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0);
+
+    // 이번 달 구매 금액
     const thisMonthPurchaseAmount = recentPurchaseRecords
       .filter((p: any) => new Date(p.purchasedAt) >= monthStart)
       .reduce((s: number, p: any) => s + (p.amount || 0), 0);
 
     console.log("[DASHBOARD_STATS] recentPurchaseRecords count:", recentPurchaseRecords.length);
-    console.log("[DASHBOARD_STATS] monthStart:", monthStart.toISOString(), "thisMonthEnd:", thisMonthEnd.toISOString());
     console.log("[DASHBOARD_STATS] thisMonthPurchaseAmount:", thisMonthPurchaseAmount);
 
     // 전월 대비 증감률
-    const lastMonthPurchaseAmount = lastMonthRecords.reduce((s: number, p: any) => s + (p.amount || 0), 0);
-    const monthOverMonthChange = lastMonthPurchaseAmount > 0
-      ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
-      : 0;
+    const lastMonthPurchaseAmount = lastMonthRecords.reduce(
+      (s: number, p: any) => s + (p.amount || 0),
+      0
+    );
+    const monthOverMonthChange =
+      lastMonthPurchaseAmount > 0
+        ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
+        : 0;
 
     // 최근 6개월 월별 지출 (차트용)
     const monthlySpending: Array<{ month: string; amount: number }> = [];
@@ -265,106 +282,77 @@ export async function GET(request: NextRequest) {
       monthlySpending.push({ month: monthStr, amount: monthAmount });
     }
 
-    // 6. 카테고리별 지출 비중 (최근 200건 제한)
-    // OrderItem 모델에는 Product relation이 없으므로 productId로 별도 조회
-    const ordersWithItems = await db.order.findMany({
-      where: { userId },
-      include: { items: true },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    });
+    // 예산 사용률
+    let budgetUsageRate =
+      activeBudget && activeBudget.totalAmount > 0
+        ? (activeBudget.usedAmount / activeBudget.totalAmount) * 100
+        : 0;
 
-    // productId 기반 카테고리 일괄 조회
-    const allProductIds = ordersWithItems
-      .flatMap((o: any) => o.items.map((i: any) => i.productId))
-      .filter(Boolean) as string[];
-    const productCategoryMap = new Map<string, string>();
-    if (allProductIds.length > 0) {
-      const products = await db.product.findMany({
-        where: { id: { in: allProductIds } },
-        select: { id: true, category: true },
-      });
-      products.forEach((p: { id: string; category: string | null }) =>
-        productCategoryMap.set(p.id, p.category || "기타")
-      );
+    // fallback 예산 처리 (UserBudget 없을 때 Budget 모델 폴백)
+    let fallbackBudgetInfo: {
+      id: string;
+      name: string;
+      totalAmount: number;
+      usedAmount: number;
+      remainingAmount: number;
+      usageRate: string;
+    } | null = null;
+    if (!activeBudget && fallbackBudget) {
+      // thisMonthPurchaseAmount는 이미 Phase 3에서 계산됨 → 별도 쿼리 불필요
+      budgetUsageRate =
+        fallbackBudget.amount > 0
+          ? (thisMonthPurchaseAmount / fallbackBudget.amount) * 100
+          : 0;
+      let budgetName = `${currentYearMonth} Budget`;
+      if (fallbackBudget.description) {
+        const nm = fallbackBudget.description.match(/^\[([^\]]+)\]/);
+        if (nm) budgetName = nm[1];
+      }
+      fallbackBudgetInfo = {
+        id: fallbackBudget.id,
+        name: budgetName,
+        totalAmount: fallbackBudget.amount,
+        usedAmount: thisMonthPurchaseAmount,
+        remainingAmount: fallbackBudget.amount - thisMonthPurchaseAmount,
+        usageRate: budgetUsageRate.toFixed(1),
+      };
     }
 
+    // 카테고리별 지출 (Phase 4 products 결과 활용)
+    const productCategoryMap = new Map<string, string>();
+    products.forEach((p: { id: string; category: string | null }) =>
+      productCategoryMap.set(p.id, p.category || "기타")
+    );
     const categorySpending: Record<string, number> = {};
     ordersWithItems.forEach((order: any) => {
       order.items.forEach((item: any) => {
-        const category = (item.productId && productCategoryMap.get(item.productId)) || "기타";
+        const category =
+          (item.productId && productCategoryMap.get(item.productId)) || "기타";
         const amount = (item.unitPrice || 0) * (item.quantity || 0);
         categorySpending[category] = (categorySpending[category] || 0) + amount;
       });
     });
+    const categorySpendingArray = Object.entries(categorySpending).map(
+      ([category, amount]) => ({ category, amount: amount as number })
+    );
 
-    const categorySpendingArray = Object.entries(categorySpending).map(([category, amount]) => ({
-      category,
-      amount: amount as number,
-    }));
-
-    // 7. 보유 자산 총액 (UserInventory 기반)
-    const userInventories = await db.userInventory.findMany({
-      where: { userId },
-      include: {
-        user: true,
-      },
-    });
-
-    // 주문 아이템과 연결하여 가격 정보 가져오기
+    // 보유 자산 총액 (N+1 제거: orderItemMap 배치 조회 결과 활용)
+    const orderItemMap = new Map(
+      orderItems.map((item: { id: string; unitPrice: number | null }) => [
+        item.id,
+        item.unitPrice || 0,
+      ])
+    );
     let totalAssetValue = 0;
-    for (const inventory of userInventories) {
+    for (const inventory of userInventories as any[]) {
       if (inventory.orderItemId) {
-        const orderItem = await db.orderItem.findUnique({
-          where: { id: inventory.orderItemId },
-          select: { unitPrice: true },
-        });
-        if (orderItem) {
-          totalAssetValue += (orderItem.unitPrice || 0) * inventory.quantity;
-        }
+        const unitPrice = orderItemMap.get(inventory.orderItemId) || 0;
+        totalAssetValue += unitPrice * inventory.quantity;
       }
     }
 
-    // 8. 재고 현황 (재주문 필요 + 유통기한 임박 30일)
-    // 유저의 조직 목록도 포함
-    const userOrgMemberships = await db.organizationMember.findMany({
-      where: { userId },
-      select: { organizationId: true },
-    });
-    const userOrgIds = userOrgMemberships.map((m: { organizationId: string }) => m.organizationId);
-
-    const inventoryOwnerWhere: any = {
-      OR: [
-        { userId },
-        ...(userOrgIds.length > 0 ? [{ organizationId: { in: userOrgIds } }] : []),
-      ],
-    };
-
-    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-    const [allInventories, expiringInventories] = await Promise.all([
-      db.productInventory.findMany({
-        where: inventoryOwnerWhere,
-        include: {
-          product: { select: { name: true, catalogNumber: true, brand: true } },
-        },
-        take: 500,  // 전체 재고 최대 500건 제한
-      }),
-      db.productInventory.findMany({
-        where: {
-          ...inventoryOwnerWhere,
-          expiryDate: { gte: now, lte: thirtyDaysLater },
-          NOT: { expiryDate: null },
-        },
-        include: {
-          product: { select: { name: true, catalogNumber: true } },
-        },
-        orderBy: { expiryDate: "asc" },
-        take: 10,
-      }),
-    ]);
-
-    const reorderNeededCount = allInventories.filter((inv: any) => {
+    // 재고 현황
+    const reorderNeededCount = (allInventories as any[]).filter((inv) => {
       const dailyUsage = inv.averageDailyUsage ?? 0;
       const leadTime = inv.leadTimeDays ?? 0;
       if (dailyUsage > 0 && leadTime > 0) {
@@ -376,11 +364,10 @@ export async function GET(request: NextRequest) {
       return inv.currentQuantity <= 0;
     }).length;
 
-    // 부족 재고 상위 5건
-    const lowStockItems = allInventories
-      .filter((inv: any) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock)
+    const lowStockItems = (allInventories as any[])
+      .filter((inv) => inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock)
       .slice(0, 5)
-      .map((inv: any) => ({
+      .map((inv) => ({
         id: inv.id,
         productName: inv.product?.name || "Unknown",
         catalogNumber: inv.product?.catalogNumber,
@@ -390,7 +377,7 @@ export async function GET(request: NextRequest) {
       }));
 
     return NextResponse.json({
-      // 예산 정보 (UserBudget 우선, 없으면 Budget 모델 폴백)
+      // 예산 정보
       budget: activeBudget
         ? {
             id: activeBudget.id,
@@ -403,31 +390,15 @@ export async function GET(request: NextRequest) {
             recentTransactions: activeBudget.transactions,
           }
         : fallbackBudgetInfo,
-
-      // 예산 사용률 (%)
       budgetUsageRate: budgetUsageRate.toFixed(1),
-
-      // 총 구매 금액
       totalPurchaseAmount,
-
-      // 이번 달 구매 금액
       thisMonthPurchaseAmount,
-
-      // 전월 대비 증감률
       monthOverMonthChange: monthOverMonthChange.toFixed(1),
-
-      // 보유 자산 총액
       totalAssetValue,
-
-      // 재주문 필요 품목 수
       reorderNeededCount,
-
-      // 대시보드 KPI 카드용
       lowStockAlerts: reorderNeededCount,
-      totalInventory: allInventories.length,
-
-      // 유통기한 임박 (30일 이내)
-      expiringItems: expiringInventories.map((inv: any) => ({
+      totalInventory: (allInventories as any[]).length,
+      expiringItems: (expiringInventories as any[]).map((inv) => ({
         id: inv.id,
         productName: inv.product?.name || "Unknown",
         catalogNumber: inv.product?.catalogNumber,
@@ -438,22 +409,14 @@ export async function GET(request: NextRequest) {
           (new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
         ),
       })),
-      expiringCount: expiringInventories.length,
-
-      // 부족 재고 상위 5건
+      expiringCount: (expiringInventories as any[]).length,
       lowStockItems,
-
-      // 카테고리별 지출 비중
       categorySpending: categorySpendingArray,
-
-      // 주문 통계
       orderStats: {
         total: orders.length,
         byStatus: ordersByStatus,
         thisMonth: thisMonthOrders.length,
       },
-
-      // 견적 통계
       quoteStats: {
         total: quotes.length,
         byStatus: quotesByStatus,
@@ -461,40 +424,11 @@ export async function GET(request: NextRequest) {
         completed: completedQuotes,
         purchased: purchasedQuotes,
         responded: respondedQuotes,
-        pendingAmount: pendingQuotesAmount, // 진행 중인 견적 금액
+        pendingAmount: pendingQuotesAmount,
       },
-
-      // 월별 지출 추이
       monthlySpending,
-
-      // 최근 주문 (최근 5건)
-      recentOrders: await db.order.findMany({
-        where: { userId },
-        include: {
-          quote: {
-            select: { title: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      }),
-
-      // 최근 구매 기록 (PurchaseRecord, 최근 5건)
-      recentPurchases: await db.purchaseRecord.findMany({
-        where: purchaseOwnerWhere,
-        orderBy: { purchasedAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          itemName: true,
-          vendorName: true,
-          amount: true,
-          purchasedAt: true,
-          category: true,
-          qty: true,
-          unit: true,
-        },
-      }),
+      recentOrders,
+      recentPurchases,
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
