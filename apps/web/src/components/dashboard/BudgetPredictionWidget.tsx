@@ -326,7 +326,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
         {/* AI 인사이트 영역 */}
         {selectedBudget.hasWarning && selectedBudget.warningMessage && (
-          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-3 py-2.5 sm:px-4 sm:py-3 flex items-start gap-2">
+          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-700 dark:text-amber-200 leading-relaxed">
               {selectedBudget.warningMessage}
@@ -334,7 +334,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
         )}
         {!selectedBudget.hasWarning && (
-          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-3 py-2 sm:px-4 sm:py-3 flex items-start gap-2">
+          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.

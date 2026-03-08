@@ -104,7 +104,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       return isLastSegment ? "상세 정보" : "상세 관리";
     }
     const pathLabelMap: Record<string, string> = {
-      dashboard: "대시보드",
+      dashboard: "워크스페이스",
       analytics: "지출 분석",
       inventory: "재고 관리",
       purchases: "구매 내역",

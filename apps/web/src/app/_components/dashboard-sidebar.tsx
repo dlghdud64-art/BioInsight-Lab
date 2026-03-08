@@ -104,7 +104,7 @@ const adminMenuItems: NavItem[] = [
 // 대시보드 링크 (상단에 별도 배치)
 const dashboardLinks = [
   {
-    title: "대시보드",
+    title: "워크스페이스",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
