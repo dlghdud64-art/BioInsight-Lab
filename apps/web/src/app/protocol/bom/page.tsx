@@ -200,20 +200,31 @@ export default function ProtocolBOMPage() {
   // PDF 파일에서 시약 추출
   const extractFromFileMutation = useMutation({
     mutationFn: async (file: File) => {
+      // Step 1: PDF → 텍스트 추출
       const formData = new FormData();
       formData.append("file", file);
-
-      const response = await fetch("/api/protocol/extract", {
+      const pdfRes = await fetch("/api/protocol/extract-pdf-text", {
         method: "POST",
         body: formData,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "PDF 분석에 실패했습니다.");
+      if (!pdfRes.ok) {
+        const err = await pdfRes.json();
+        throw new Error(err.error || "PDF 텍스트 추출에 실패했습니다.");
       }
+      const { text } = await pdfRes.json();
+      if (!text) throw new Error("PDF에서 텍스트를 추출할 수 없습니다.");
 
-      return response.json() as Promise<ProtocolExtractionResult>;
+      // Step 2: 추출된 텍스트 → AI 시약 분석
+      const extractRes = await fetch("/api/protocol/extract-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!extractRes.ok) {
+        const err = await extractRes.json();
+        throw new Error(err.error || "PDF 분석에 실패했습니다.");
+      }
+      return extractRes.json() as Promise<ProtocolExtractionResult>;
     },
     onSuccess: (data) => {
       setExtractionResult(data);
