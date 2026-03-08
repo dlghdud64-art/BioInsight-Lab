@@ -149,12 +149,12 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 QR + 햄버거 ── */}
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            {/* QR 스캔 - 로그인 유저 */}
+            {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
             {session?.user && (
               <button
                 type="button"
                 onClick={handleScanClick}
-                className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+                className="md:hidden inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
                 aria-label="재고 QR 스캔"
               >
                 <ScanLine className="h-4 w-4" />

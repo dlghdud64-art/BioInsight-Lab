@@ -266,23 +266,25 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             />
           </div>
 
-          {/* QR 스캔 버튼 */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-transparent dark:hover:bg-transparent transition-colors"
-                aria-label="QR 스캔"
-                title="QR 스캔 (단축키: Ctrl+Q)"
-                onClick={openQRScanner}
-              >
-                <ScanLine className="h-5 w-5" aria-hidden />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>QR 스캔 (단축키: Ctrl+Q)</TooltipContent>
-          </Tooltip>
+          {/* QR 스캔 버튼 - 모바일 전용 */}
+          <div className="md:hidden">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 flex-shrink-0 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-transparent dark:hover:bg-transparent transition-colors"
+                  aria-label="QR 스캔"
+                  title="QR 스캔 (단축키: Ctrl+Q)"
+                  onClick={openQRScanner}
+                >
+                  <ScanLine className="h-5 w-5" aria-hidden />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>QR 스캔 (단축키: Ctrl+Q)</TooltipContent>
+            </Tooltip>
+          </div>
 
           {/* 알림 드롭다운 */}
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
