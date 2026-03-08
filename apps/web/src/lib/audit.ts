@@ -11,7 +11,7 @@
 import { AuditAction, AuditEntityType, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
-export type { AuditAction, AuditEntityType };
+export { AuditAction, AuditEntityType };
 
 export interface AuditLogParams {
   /** 행위 수행자 (null = 시스템 자동) */
