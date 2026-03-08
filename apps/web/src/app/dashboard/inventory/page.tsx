@@ -710,8 +710,8 @@ function InventoryPageContent() {
               inventory={editingInventory}
               isLoading={createOrUpdateMutation.isPending}
             />
-            {/* 메인 액션: 재고 등록 + QR 스캔 (모바일에서는 2열 그리드) */}
-            <div className="w-full md:w-auto grid grid-cols-2 gap-2">
+            {/* 메인 액션: 재고 등록 + QR 스캔 (모바일만 2열, 데스크탑은 1열) */}
+            <div className="w-full md:w-auto grid grid-cols-2 md:grid-cols-1 gap-2">
               <Button
                 onClick={() => setIsDialogOpen(true)}
                 className="w-full justify-center"
@@ -722,7 +722,7 @@ function InventoryPageContent() {
               <Button
                 variant="outline"
                 onClick={() => router.push("/dashboard/inventory/scan")}
-                className="w-full justify-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
+                className="md:hidden w-full justify-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
               >
                 <QrCode className="h-4 w-4" />
                 QR 스캔

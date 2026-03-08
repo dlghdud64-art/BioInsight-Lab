@@ -22,7 +22,7 @@ export function BioInsightLogo({
         alt="BioInsight Lab"
         width={60}
         height={60}
-        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain"
+        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 rounded-lg object-contain -translate-y-[1px]"
       />
 
       {/* 텍스트: BioInsight Lab - 모바일에서 겹침 방지 유동 크기 */}

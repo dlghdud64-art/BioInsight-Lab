@@ -61,7 +61,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* Sheet 드로어 내용 */}
           <SheetContent side="left" className="md:hidden w-full sm:max-w-xs p-0 flex flex-col">
-            <SheetHeader className="px-6 pt-10 pb-5 border-b-2 border-slate-100 bg-slate-50">
+            <SheetHeader className="px-6 pt-12 pb-5 border-b-2 border-slate-100 bg-slate-50">
               <SheetTitle className="flex items-center gap-4 text-xl font-bold text-slate-900">
                 <BioInsightLogo showText={true} />
               </SheetTitle>
@@ -164,7 +164,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </div>
           </SheetContent>
 
-          {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 햄버거 ── */}
+          {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 QR + 햄버거 ── */}
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
             {/* 데스크탑 내비게이션 */}
             <nav className="hidden md:flex items-center gap-6">
@@ -200,11 +200,11 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </Link>
             )}
 
-            {/* QR 스캔 - 데스크탑 */}
+            {/* QR 스캔 - 모바일만 노출 */}
             <button
               type="button"
               onClick={handleScanClick}
-              className="hidden md:inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+              className="inline-flex md:hidden items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
               aria-label="재고 QR 스캔"
             >
               <ScanLine className="h-4 w-4" />

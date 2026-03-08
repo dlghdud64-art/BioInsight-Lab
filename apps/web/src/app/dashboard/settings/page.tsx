@@ -801,7 +801,7 @@ function SettingsPageContent() {
                   <CardDescription>앱의 색상 테마를 선택하세요.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4 max-w-xs">
                     <button
                       type="button"
                       onClick={() => setTheme("light")}
@@ -830,21 +830,6 @@ function SettingsPageContent() {
                       <Moon className={cn("h-6 w-6", theme === "dark" ? "text-blue-600" : "text-slate-400")} />
                       <span className={cn("text-sm font-medium", theme === "dark" ? "text-blue-600" : "text-slate-700 dark:text-slate-300")}>
                         다크
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTheme("system")}
-                      className={cn(
-                        "flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all",
-                        theme === "system"
-                          ? "border-blue-600 bg-blue-50 dark:bg-blue-950/30"
-                          : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
-                      )}
-                    >
-                      <Monitor className={cn("h-6 w-6", theme === "system" ? "text-blue-600" : "text-slate-400")} />
-                      <span className={cn("text-sm font-medium", theme === "system" ? "text-blue-600" : "text-slate-700 dark:text-slate-300")}>
-                        시스템
                       </span>
                     </button>
                   </div>
