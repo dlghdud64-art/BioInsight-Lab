@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight, ChevronLeft, ChevronRight, Tag, Bell } from "lucide-react";
+import { Search, ShoppingCart, BarChart3, Zap, FileText, TrendingUp, CheckCircle2, AlertTriangle, Package, ArrowRight, Tag, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -388,34 +388,20 @@ export function FeaturesShowcaseSection() {
             })}
           </div>
 
-          {/* 모바일: 가로 스크롤 Carousel with Navigation */}
-          <div className="md:hidden relative group">
-            {/* Left Navigation Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white/90 ${
-                !canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-              onClick={() => scroll('left')}
-              disabled={!canScrollLeft}
-              aria-label="이전 카드"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
+          {/* 모바일: 가로 스크롤 Carousel (스와이프 전용, 화살표 없음) */}
+          <div className="md:hidden">
             {/* Scroll Container */}
             <div
               ref={scrollRef}
               onScroll={checkScroll}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 py-4 scrollbar-hide -mx-4"
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 px-4 scrollbar-hide -mx-4"
             >
               {tabs.map((tab) => {
                 const TabIcon = tab.icon;
                 return (
                   <div
                     key={tab.id}
-                    className="flex-shrink-0 min-w-[80vw] max-w-[300px] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    className="flex-shrink-0 min-w-[85%] sm:min-w-[70%] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
                   >
                     <div className="p-4 space-y-3">
                       {/* 헤더 영역 (아이콘 + 제목) */}
@@ -454,20 +440,6 @@ export function FeaturesShowcaseSection() {
                 );
               })}
             </div>
-
-            {/* Right Navigation Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-opacity hover:bg-white/90 ${
-                !canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-              onClick={() => scroll('right')}
-              disabled={!canScrollRight}
-              aria-label="다음 카드"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}
