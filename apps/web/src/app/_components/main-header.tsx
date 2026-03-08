@@ -12,9 +12,6 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
@@ -61,21 +58,11 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* Sheet 드로어 내용 */}
           <SheetContent side="left" className="md:hidden w-full sm:max-w-xs p-0 flex flex-col">
-            <SheetHeader className="px-6 pt-12 pb-5 border-b-2 border-slate-100 bg-slate-50">
-              <SheetTitle className="flex items-center gap-4 text-xl font-bold text-slate-900">
-                <BioInsightLogo showText={true} />
-              </SheetTitle>
-              <SheetDescription className="mt-2 text-xs text-slate-500">
-                {session?.user
-                  ? "자주 사용하는 메뉴로 바로 이동하세요."
-                  : "BioInsight Lab에 오신 것을 환영합니다."}
-              </SheetDescription>
-            </SheetHeader>
 
             {session?.user ? (
               /* ── 로그인: Private 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-6 pb-2 space-y-2">
+                <div className="px-2 pt-12 pb-2 space-y-2">
                   <SheetClose asChild>
                     <Link href="/dashboard" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">
                       대시보드
@@ -129,7 +116,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             ) : (
               /* ── 비로그인: Public 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-6 pb-2 space-y-2">
+                <div className="px-2 pt-12 pb-2 space-y-2">
                   <SheetClose asChild>
                     <Link href="/" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
                   </SheetClose>

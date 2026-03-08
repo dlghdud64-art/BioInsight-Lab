@@ -192,6 +192,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
+  const handleMarkAllAsRead = () => {
+    // TODO: PATCH /api/notifications/read-all
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
   const handleNotificationClick = (notification: HeaderNotification) => {
     // 읽음 처리
     setNotifications((prev) =>
@@ -303,9 +308,18 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     알림
                   </h3>
                   {unreadCount > 0 && (
-                    <span className="text-[11px] text-slate-500">
-                      읽지 않은 알림 {unreadCount}개
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-500">
+                        읽지 않은 알림 {unreadCount}개
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleMarkAllAsRead}
+                        className="text-[11px] font-medium text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                      >
+                        모두 읽음
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
