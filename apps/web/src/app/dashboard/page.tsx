@@ -216,7 +216,7 @@ export default function DashboardPage() {
     <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 overflow-x-hidden">
       {/* 페이지 헤더 영역 */}
       <div className="flex flex-col space-y-2 min-w-0">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 truncate min-w-0">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight flex items-center gap-2 truncate min-w-0">
           <LayoutDashboard className="h-5 w-5 text-blue-600 flex-shrink-0" />
           <span className="truncate">워크스페이스</span>
         </h2>
@@ -398,7 +398,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-200 truncate">{stats.totalInventory.toLocaleString("ko-KR")}</div>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1">↑ 12% (전월 대비)</p>
                 </CardContent>
               </Card>
@@ -412,7 +412,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
-                  <div className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
+                  <div className="text-xl md:text-2xl lg:text-3xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
                   <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-1 flex items-center gap-1">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="flex flex-col gap-2">
-                    <div className="text-3xl font-bold leading-none text-slate-900 dark:text-slate-200">
+                    <div className="text-lg md:text-xl lg:text-2xl font-bold leading-none text-slate-900 dark:text-slate-200 truncate">
                       ₩{stats.monthlySpending.toLocaleString("ko-KR")}
                     </div>
                     <div className={`flex items-center text-xs font-medium w-fit px-2 py-0.5 rounded ${
@@ -457,7 +457,7 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
-                  <div className="text-3xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
+                  <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
                   <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">
                     {rawStats?.quoteStats?.responded > 0
                       ? `응답 수신 ${rawStats.quoteStats.responded}건`
