@@ -530,12 +530,12 @@ function StickySearchBar() {
             value={localQuery}
             onChange={handleChange}
             placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요 (예: FBS, Anti-IL6)"
-            className="flex-1 h-14 px-6 text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="flex-1 h-10 md:h-14 px-4 md:px-6 text-base md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
             type="submit"
             size="lg"
-            className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold"
+            className="h-8 md:h-12 px-4 md:px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold text-sm md:text-base"
             disabled={!localQuery.trim()}
           >
             <Search className="h-5 w-5 mr-2" />

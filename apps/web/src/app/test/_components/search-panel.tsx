@@ -85,7 +85,7 @@ export function SearchPanel() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="category" className="text-xs font-medium">
                 카테고리
