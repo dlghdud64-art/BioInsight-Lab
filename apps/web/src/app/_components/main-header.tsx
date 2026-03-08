@@ -122,7 +122,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             ) : (
               /* ── 비로그인: Public 메뉴 ── */
               <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-16 pb-2 space-y-2">
+                <div className="px-2 pt-20 pb-2 space-y-2">
                   <SheetClose asChild>
                     <Link href="/intro" className="block px-3 py-3 text-base font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
                   </SheetClose>
