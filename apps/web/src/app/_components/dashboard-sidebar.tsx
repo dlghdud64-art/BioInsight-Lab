@@ -308,23 +308,18 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   return (
     <>
-      {/* 모바일/태블릿 오버레이 */}
+      {/* 오버레이 (모든 해상도 공통) */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* 데스크톱 사이드바 (lg 이상에서만 표시) */}
-      <aside className="hidden lg:block w-64 min-w-[16rem] min-h-screen bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 shrink-0 z-30">
-        <SidebarContent />
-      </aside>
-
-      {/* 모바일/태블릿 사이드바 (Sheet 형태) */}
+      {/* 슬라이드 사이드바 (모든 해상도에서 오버레이 형태) */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-50 mobile-sidebar transition-transform duration-300 lg:hidden shrink-0",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-50 mobile-sidebar transition-transform duration-300 shrink-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

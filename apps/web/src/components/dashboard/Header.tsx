@@ -222,8 +222,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
-          {/* 모바일: BioInsight 로고 (md 미만에서만 표시) */}
-          <Link href="/" className="md:hidden flex-shrink-0">
+          {/* 로고 (모든 해상도) */}
+          <Link href="/" className="flex-shrink-0">
             <BioInsightLogo showText={true} />
           </Link>
 
@@ -472,12 +472,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 모바일/태블릿 햄버거 버튼 (우측 최끝, lg 미만) */}
+          {/* 햄버거 버튼 (모든 해상도에서 항상 노출) */}
           {onMenuClick && (
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button"
+              className="h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >

@@ -266,9 +266,9 @@ export default function AnalyticsPage() {
                       </Pie>
                       <Tooltip
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)", backgroundColor: "white" }}
-                        formatter={(_: number, name: string, props: { payload: CategoryPoint }) => [
-                          `₩ ${props.payload.amount.toLocaleString("ko-KR")}`,
-                          `${name} (${props.payload.value}%)`,
+                        formatter={(value: number, name: string, item: { payload?: CategoryPoint }) => [
+                          `₩ ${(item.payload?.amount ?? value).toLocaleString("ko-KR")}`,
+                          `${name} (${item.payload?.value ?? value}%)`,
                         ]}
                       />
                     </PieChart>

@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, LayoutDashboard, ScanLine } from "lucide-react";
+import { Menu, ScanLine } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
@@ -24,7 +23,6 @@ interface MainHeaderProps {
 }
 
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
-  const pathname = usePathname();
   const { data: session } = useSession();
   const { toast } = useToast();
   const { open: openQRScanner } = useQRScanner();
@@ -41,23 +39,21 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
     openQRScanner();
   };
 
-  const isDashboard = pathname?.startsWith("/dashboard");
-
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <Sheet>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
-          {/* ── LEFT: 로고 (모바일 최좌측) ──────────────────────────────── */}
+          {/* ── LEFT: 로고 (모든 해상도) ──────────────────────────────── */}
           <Link
             href="/"
-            className={`flex items-center gap-2 flex-shrink-0 ${isDashboard ? "md:hidden" : ""}`}
+            className="flex items-center gap-2 flex-shrink-0"
           >
             <BioInsightLogo showText={true} />
           </Link>
 
           {/* Sheet 드로어 내용 */}
-          <SheetContent side="left" className="md:hidden w-full sm:max-w-xs p-0 flex flex-col">
+          <SheetContent side="left" className="w-full sm:max-w-xs p-0 flex flex-col">
 
             {session?.user ? (
               /* ── 로그인: Private 메뉴 ── */
@@ -153,46 +149,12 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 QR + 햄버거 ── */}
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
-            {/* 데스크탑 내비게이션 */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/intro" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors whitespace-nowrap rounded px-2 py-1">
-                서비스 소개
-              </Link>
-              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors whitespace-nowrap rounded px-2 py-1">
-                요금 &amp; 도입
-              </Link>
-            </nav>
-
-            {/* Get Started - 비로그인 · 데스크탑 */}
-            {!session?.user && (
-              <Link href="/auth/signin?callbackUrl=/test/search" className="hidden md:inline-flex">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 h-9 rounded-lg shadow-md whitespace-nowrap">
-                  Get Started
-                </Button>
-              </Link>
-            )}
-
-            {/* 대시보드 버튼 - 로그인 · 데스크탑 */}
-            {session?.user && (
-              <Link href="/dashboard" className="hidden md:inline-flex">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1.5 border-slate-200 rounded-full px-4 h-9 text-xs font-bold text-slate-900 hover:bg-slate-50"
-                  aria-label="대시보드로 이동"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-blue-600" strokeWidth={2.5} />
-                  대시보드
-                </Button>
-              </Link>
-            )}
-
-            {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
+            {/* QR 스캔 - 로그인 유저 */}
             {session?.user && (
               <button
                 type="button"
                 onClick={handleScanClick}
-                className="inline-flex md:hidden items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
                 aria-label="재고 QR 스캔"
               >
                 <ScanLine className="h-4 w-4" />
@@ -202,10 +164,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 프로필 메뉴 */}
             <UserMenu />
 
-            {/* 모바일 햄버거 (최우측 끝) */}
+            {/* 햄버거 버튼 (모든 해상도) */}
             <SheetTrigger asChild>
               <button
-                className="md:hidden p-2 -mr-1 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
+                className="p-2 -mr-1 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
                 aria-label="전체 메뉴 열기"
                 type="button"
               >
