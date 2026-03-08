@@ -173,7 +173,27 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
     );
   }
 
-  if (!selectedBudget || !selectedBudget.hasBudget) return null;
+  if (!selectedBudget || !selectedBudget.hasBudget) {
+    return (
+      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-slate-900 dark:border-slate-800">
+        <CardContent className="py-6 px-5 flex items-center gap-4">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/40">
+            <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-blue-300 opacity-50" />
+            <Loader2 className="relative h-4 w-4 text-blue-500 animate-spin" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI가 데이터 학습 중입니다</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              예산을 등록하면 AI 소진 예측 분석이 시작됩니다.
+            </p>
+          </div>
+          <a href="/dashboard/settings/budget" className="ml-auto shrink-0 text-xs text-blue-600 hover:underline dark:text-blue-400">
+            예산 등록 →
+          </a>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const dDay = selectedBudget.runwayDays;
   const exhaustLabel = selectedBudget.exhaustDate
@@ -261,13 +281,13 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                     {formatKRW(selectedBudget.totalSpent)}
                   </span>
                 </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                <span className={`font-semibold ${usageRate >= 80 ? "text-red-600 dark:text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
                   {usageRate}%
                 </span>
               </div>
               <Progress
                 value={usageRate}
-                className="h-2.5 bg-slate-100 dark:bg-slate-800/60"
+                className={`h-2.5 ${usageRate >= 80 ? "[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/40" : "bg-slate-100 dark:bg-slate-800/60"}`}
               />
               <p className="text-[10px] text-slate-400 dark:text-slate-500">
                 총 예산 {formatKRW(selectedBudget.totalBudget)} 기준
