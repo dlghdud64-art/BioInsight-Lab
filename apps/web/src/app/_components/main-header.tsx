@@ -49,7 +49,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   return (
     <header className="fixed top-0 left-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
       <Sheet>
-        <div className="w-full flex h-14 items-center justify-between px-6 md:max-w-6xl md:mx-auto">
+        <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
           {/* ── LEFT: 로고 (모바일 최좌측) ──────────────────────────────── */}
           <Link

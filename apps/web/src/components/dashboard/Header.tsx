@@ -18,6 +18,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { Menu, Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, Truck, BookOpen, Headphones, Settings, CreditCard, LogOut, ScanLine } from "lucide-react";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -214,22 +215,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
-        {/* 좌측 영역: 브레드크럼 + 햄버거 메뉴 */}
+        {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
-          {/* 모바일/태블릿 햄버거 메뉴 (lg 미만에서 사이드바 대신 표시) */}
-          {onMenuClick && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              onClick={onMenuClick}
-              aria-label="메뉴 열기"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
+          {/* 모바일: BioInsight 로고 (md 미만에서만 표시) */}
+          <Link href="/" className="md:hidden flex-shrink-0">
+            <BioInsightLogo showText={true} />
+          </Link>
 
-          {/* 브레드크럼 */}
+          {/* 브레드크럼 (데스크탑 전용) */}
           <nav className="hidden md:flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 min-w-0">
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
@@ -251,11 +244,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </div>
             ))}
           </nav>
-
-          {/* 모바일에서 현재 페이지만 표시 */}
-          <div className="md:hidden text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-            {breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard"}
-          </div>
         </div>
 
         {/* 중앙/우측 영역: 검색창 + 유틸리티 + 프로필 */}
@@ -469,6 +457,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* 모바일/태블릿 햄버거 버튼 (우측 최끝, lg 미만) */}
+          {onMenuClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button"
+              onClick={onMenuClick}
+              aria-label="메뉴 열기"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
     </header>
