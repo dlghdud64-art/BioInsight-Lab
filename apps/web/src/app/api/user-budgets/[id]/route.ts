@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 // ─── PATCH 요청 Zod 검증 스키마 ───────────────────────────────────────────────
@@ -207,29 +208,37 @@ export async function PATCH(
     const { name, totalAmount, currency, fiscalYear, startDate, endDate, isActive } =
       parsed.data;
 
-    // ── 5. remainingAmount 재계산 (totalAmount 변경 시) ───────────────────────
-    let remainingAmount = budget.remainingAmount;
-    if (totalAmount !== undefined) {
-      // 잔액 = 새 총예산 - 기존 사용액 (음수 방지)
-      remainingAmount = Math.max(0, totalAmount - budget.usedAmount);
-    }
+    // ── 5 & 6. 트랜잭션 내 usedAmount 재조회 + DB 업데이트 ──────────────────
+    // totalAmount 변경 시 동시 차감과의 Race Condition 방지:
+    // SELECT FOR UPDATE로 행 잠금 → usedAmount 최신값 재조회 → remainingAmount 재계산
+    const updated = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      let remainingAmount: number | undefined;
+      if (totalAmount !== undefined) {
+        await tx.$executeRaw`SELECT id FROM "UserBudget" WHERE id = ${id} FOR UPDATE`;
+        const fresh = await tx.userBudget.findUnique({
+          where: { id },
+          select: { usedAmount: true },
+        });
+        if (!fresh) throw new Error("예산을 찾을 수 없습니다.");
+        remainingAmount = Math.max(0, totalAmount - fresh.usedAmount);
+      }
 
-    // ── 6. DB 업데이트 ────────────────────────────────────────────────────────
-    const updated = await db.userBudget.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(totalAmount !== undefined && { totalAmount, remainingAmount }),
-        ...(currency !== undefined && { currency }),
-        ...(fiscalYear !== undefined && { fiscalYear }),
-        ...(startDate !== undefined && {
-          startDate: startDate ? new Date(startDate) : null,
-        }),
-        ...(endDate !== undefined && {
-          endDate: endDate ? new Date(endDate) : null,
-        }),
-        ...(isActive !== undefined && { isActive }),
-      },
+      return tx.userBudget.update({
+        where: { id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(totalAmount !== undefined && { totalAmount, remainingAmount }),
+          ...(currency !== undefined && { currency }),
+          ...(fiscalYear !== undefined && { fiscalYear }),
+          ...(startDate !== undefined && {
+            startDate: startDate ? new Date(startDate) : null,
+          }),
+          ...(endDate !== undefined && {
+            endDate: endDate ? new Date(endDate) : null,
+          }),
+          ...(isActive !== undefined && { isActive }),
+        },
+      });
     });
 
     // 잔여일 계산

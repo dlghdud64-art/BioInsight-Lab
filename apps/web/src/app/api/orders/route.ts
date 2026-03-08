@@ -151,17 +151,24 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 4. 예산 차감
-      const balanceBefore = budget.remainingAmount;
-      const balanceAfter = balanceBefore - totalAmount;
+      // 4. 예산 차감 (SELECT FOR UPDATE + 원자적 연산)
+      await tx.$executeRaw`SELECT id FROM "UserBudget" WHERE id = ${budget.id} FOR UPDATE`;
 
-      await tx.userBudget.update({
+      const updatedBudget = await tx.userBudget.update({
         where: { id: budget.id },
         data: {
-          usedAmount: budget.usedAmount + totalAmount,
-          remainingAmount: balanceAfter,
+          usedAmount:      { increment: totalAmount },
+          remainingAmount: { decrement: totalAmount },
         },
       });
+
+      // 동시 요청으로 음수가 됐을 경우 즉시 롤백
+      if (updatedBudget.remainingAmount < 0) {
+        throw new Error("INSUFFICIENT_BUDGET");
+      }
+
+      const balanceBefore = budget.remainingAmount;
+      const balanceAfter  = updatedBudget.remainingAmount;
 
       // 예산 거래 내역 기록
       await tx.userBudgetTransaction.create({
@@ -187,11 +194,11 @@ export async function POST(request: NextRequest) {
       return {
         order,
         budget: {
-          id: budget.id,
-          name: budget.name,
-          totalAmount: budget.totalAmount,
-          usedAmount: budget.usedAmount + totalAmount,
-          remainingAmount: balanceAfter,
+          id: updatedBudget.id,
+          name: updatedBudget.name,
+          totalAmount: updatedBudget.totalAmount,
+          usedAmount: updatedBudget.usedAmount,
+          remainingAmount: updatedBudget.remainingAmount,
         },
       };
     });
