@@ -321,7 +321,7 @@ export function BulkImportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>재고 일괄 등록</DialogTitle>
           <DialogDescription>
@@ -329,7 +329,7 @@ export function BulkImportModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto pr-1 flex-1">
           <Button
             type="button"
             variant="outline"

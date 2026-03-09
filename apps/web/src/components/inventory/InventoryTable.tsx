@@ -301,11 +301,11 @@ export function InventoryTable({
 
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-950 shadow-sm">
-      <div className="overflow-x-auto">
+      <div className="w-full overflow-x-auto">
       <Table className="min-w-[700px]">
         <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">상태</TableHead>
+            <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400 sticky left-0 bg-slate-50 dark:bg-slate-900/50 z-10">상태</TableHead>
             <TableHead className="min-w-[200px] text-xs font-semibold text-slate-500 dark:text-slate-400">품목 정보</TableHead>
             <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400">Lot 및 유효기한</TableHead>
             <TableHead className="min-w-[145px] w-[145px] text-xs font-semibold text-slate-500 dark:text-slate-400">보존조건</TableHead>

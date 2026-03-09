@@ -1294,14 +1294,14 @@ ${itemLines}
                         주문 요청하기
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
                       <DialogHeader>
                         <DialogTitle>이 견적서대로 주문을 접수하시겠습니까?</DialogTitle>
                         <DialogDescription>
                           주문 정보를 입력하고 접수해주세요
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
+                      <div className="space-y-4 py-4 overflow-y-auto pr-1 flex-1">
                         <div className="space-y-2">
                           <Label htmlFor="expectedDelivery">희망 배송일</Label>
                           <Input
@@ -1568,7 +1568,7 @@ ${itemLines}
 
     {/* ── 구매 확정 다이얼로그: 예산 선택 필수 ── */}
     <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
@@ -1578,7 +1578,7 @@ ${itemLines}
             차감할 예산을 선택하세요. 구매 내역과 예산 사용액이 자동으로 기록됩니다.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 overflow-y-auto pr-1 flex-1">
           {/* 복수 벤더 회신 시 벤더 선택 */}
           {respondedVendors.length > 1 && (
             <div className="space-y-2">

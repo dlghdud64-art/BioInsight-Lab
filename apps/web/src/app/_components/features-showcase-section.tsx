@@ -359,7 +359,7 @@ export function FeaturesShowcaseSection() {
                         {tab.title}
                       </h3>
                       <p
-                        className={`text-sm md:text-base mb-3 transition-colors ${
+                        className={`text-sm md:text-base mb-3 transition-colors break-keep ${
                           isActive ? "text-blue-700" : "text-gray-600"
                         }`}
                       >
@@ -444,30 +444,13 @@ export function FeaturesShowcaseSection() {
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}
           <div className="hidden md:block lg:sticky lg:top-24">
-            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-2xl max-w-full">
+            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner p-6 max-w-full">
               {/* Fade-in 애니메이션을 위한 컨테이너 */}
               <div
                 key={activeTab}
-                className="absolute inset-0 animate-fadeIn max-w-full overflow-hidden"
+                className="absolute inset-6 animate-fadeIn max-w-full overflow-hidden"
               >
                 {renderMockup(activeTab)}
-              </div>
-            </div>
-
-            {/* 하단 설명 */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-start gap-3">
-                <div className={`flex-shrink-0 w-10 h-10 ${activeTabData.gradient} rounded-lg flex items-center justify-center`}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">
-                    {activeTabData.title}
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    {activeTabData.description}
-                  </p>
-                </div>
               </div>
             </div>
           </div>

@@ -269,8 +269,8 @@ export default function PricingPage() {
                         plan.badge && "overflow-visible",
                         isSelected && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-700",
                         !isSelected && "hover:border-slate-300 hover:bg-slate-50/50",
-                        isRecommended && !isSelected && "border-2 border-blue-200 shadow-lg scale-[1.01]",
-                        isRecommended && isSelected && "border-2 border-blue-500 shadow-xl ring-2 ring-blue-500 ring-offset-2 scale-[1.02] z-10"
+                        isRecommended && !isSelected && "border-2 border-blue-200 shadow-2xl md:scale-105 z-10",
+                        isRecommended && isSelected && "border-2 border-blue-500 shadow-2xl ring-2 ring-blue-500 ring-offset-2 md:scale-105 z-10"
                       )}
                     >
                       {plan.badge && (
@@ -376,7 +376,7 @@ export default function PricingPage() {
                                 <span className="text-sm text-slate-700">{value}</span>
                               );
                             return (
-                              <TableRow key={index}>
+                              <TableRow key={index} className="even:bg-gray-50/80">
                                 <TableCell className="text-slate-500 text-sm py-2 align-top">
                                   {item.category}
                                 </TableCell>
@@ -437,8 +437,11 @@ export default function PricingPage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center">
-            <Button className="px-4 md:px-6 py-2 md:py-2.5 text-base font-semibold">
+          <div className="flex items-center shrink-0">
+            <Button
+              className="px-6 md:px-8 h-11 text-sm md:text-base font-semibold bg-blue-600 hover:bg-blue-700 whitespace-nowrap shadow-sm"
+              onClick={() => window.location.href = "/intro"}
+            >
               요금 & 도입 문의
             </Button>
           </div>
