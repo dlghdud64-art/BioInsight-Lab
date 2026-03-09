@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 interface AIInsightCardProps {
   query: string;
   productCount: number;
+  isLoading?: boolean;
   queryAnalysis?: {
     target?: string;
     category?: string;
@@ -17,7 +18,35 @@ interface AIInsightCardProps {
   } | null;
 }
 
-export function AIInsightCard({ query, productCount, queryAnalysis }: AIInsightCardProps) {
+export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }: AIInsightCardProps) {
+  if (isLoading) {
+    return (
+      <Card className="bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm">
+        <CardContent className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center animate-pulse">
+                <Sparkles className="h-5 w-5 text-indigo-300" />
+              </div>
+            </div>
+            <div className="flex-1 space-y-2 min-w-0">
+              <div className="h-4 bg-indigo-100 rounded animate-pulse w-32" />
+              <div className="space-y-1.5">
+                <div className="h-3 bg-indigo-100 rounded animate-pulse w-full" />
+                <div className="h-3 bg-indigo-100 rounded animate-pulse w-4/5" />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <div className="h-5 w-20 bg-indigo-100 rounded-full animate-pulse" />
+                <div className="h-5 w-16 bg-indigo-100 rounded-full animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!queryAnalysis) return null;
   const getInsightText = () => {
     if (queryAnalysis?.target && queryAnalysis?.targetExperiment) {
       return `'${query}' 검색에 대한 AI 분석 결과입니다. ${queryAnalysis.target} 타깃에 적합하며 ${queryAnalysis.targetExperiment} 실험에 최적화된 ${productCount}개 제품을 찾았습니다.`;

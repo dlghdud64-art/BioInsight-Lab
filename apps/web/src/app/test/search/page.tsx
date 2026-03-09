@@ -44,7 +44,7 @@ export default function SearchPage() {
     removeQuoteItem,
     updateQuoteItem,
     hasSearched,
-    gptEnabled,
+    analysisLoading,
     searchQuery,
   } = useTestFlow();
   const { data: session } = useSession();
@@ -182,17 +182,16 @@ export default function SearchPage() {
             {isSearchLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-slate-400 mb-3" />
-                <p className="text-sm text-slate-600">
-                  {gptEnabled ? "AI가 실험 데이터를 분석하고 있습니다..." : "검색 중..."}
-                </p>
+                <p className="text-sm text-slate-600">검색 중...</p>
               </div>
             ) : products.length > 0 ? (
               <div className="space-y-3">
                   {/* AI 인사이트 카드 */}
-                  {gptEnabled && searchQuery && (
-                    <AIInsightCard 
+                  {hasSearched && searchQuery && (
+                    <AIInsightCard
                       query={searchQuery}
                       productCount={products.length}
+                      isLoading={analysisLoading}
                       queryAnalysis={queryAnalysis}
                     />
                   )}

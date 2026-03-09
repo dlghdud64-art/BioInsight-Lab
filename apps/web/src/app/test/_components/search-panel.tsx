@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
@@ -29,8 +28,6 @@ export function SearchPanel() {
     setMaxPrice,
     grade,
     setGrade,
-    gptEnabled,
-    setGptEnabled,
   } = useTestFlow();
 
   return (
@@ -223,31 +220,6 @@ export function SearchPanel() {
                 </div>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-semibold text-slate-800">검색 옵션</CardTitle>
-          <CardDescription className="text-[10px] text-slate-500">
-            결과 표시 방식을 설정합니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-xs">
-          {/* AI 결과 해석 옵션 */}
-          <div className="space-y-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                id="gpt-analysis"
-                checked={gptEnabled}
-                onCheckedChange={(checked) => setGptEnabled(checked === true)}
-              />
-              <span className="font-medium text-slate-700">AI 결과 해석 포함</span>
-            </label>
-            <p className="text-[11px] text-slate-500 pl-6">
-              검색 결과 상단에 AI 해석 리포트를 표시합니다. 타깃·카테고리·실험 유형이 자동으로 분석됩니다.
-            </p>
           </div>
         </CardContent>
       </Card>

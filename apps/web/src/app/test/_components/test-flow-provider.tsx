@@ -209,7 +209,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
       }
       return response.json();
     },
-    enabled: !!searchQuery && gptEnabled && searchTrigger > 0,
+    enabled: !!searchQuery && searchTrigger > 0,
     retry: false,
   });
 
