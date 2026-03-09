@@ -529,7 +529,7 @@ export function InventoryTable({
                             />
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
+                        <TooltipContent className="text-xs">
                           QR 라벨 인쇄
                         </TooltipContent>
                       </Tooltip>

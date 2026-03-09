@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -96,7 +95,7 @@ export function BioInsightHeroSection() {
         {/* 2. 중앙 대형 검색창 (구글 스타일) - 모바일: w-full, mt-4로 공간 효율 */}
         <div className="mt-4 md:mt-12 w-full max-w-full md:max-w-[800px] lg:max-w-[1000px] mx-auto px-4 relative z-10">
           <form onSubmit={handleSearch} className="relative w-full">
-            <div className="flex items-center w-full h-14 md:h-20 bg-white rounded-full border-2 border-slate-300 md:border-slate-200 shadow-sm md:shadow-2xl px-2 md:px-4 focus-within:ring-4 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
+            <div className="flex items-center w-full h-14 md:h-20 bg-white rounded-full border border-gray-200/80 md:border-gray-200/60 shadow-md md:shadow-2xl hover:shadow-2xl px-2 md:px-4 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-300 focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.12)] transition-all duration-200">
               {/* 돋보기 아이콘 */}
               <Search className="ml-2 md:ml-4 h-5 w-5 md:h-8 md:w-8 text-slate-400 shrink-0" />
               
@@ -125,24 +124,24 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
-          {/* 인기 검색어 칩 - 모바일 터치 실수 방지용 간격 확대 */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-6 md:mt-8">
-            <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
-              <Flame className="h-4 w-4 text-slate-500" />
-              인기:
+          {/* 인기 검색어 알약 뱃지 */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-5 md:mt-7">
+            <span className="text-sm text-slate-400 font-medium flex items-center gap-1 mr-1">
+              <Flame className="h-3.5 w-3.5 text-slate-400" />
+              인기
             </span>
             {popularSearches.map((term) => (
-              <Badge
+              <button
                 key={term}
-                variant="secondary"
-                className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-4 py-2 text-sm font-medium touch-manipulation"
+                type="button"
                 onClick={() => {
                   setSearchQuery(term);
                   router.push(`/test/search?q=${encodeURIComponent(term)}`);
                 }}
+                className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium hover:bg-blue-100 hover:text-blue-700 active:scale-95 transition-all duration-150 cursor-pointer touch-manipulation whitespace-nowrap"
               >
                 #{term}
-              </Badge>
+              </button>
             ))}
           </div>
 

@@ -34,7 +34,7 @@ export function BioInsightLogo({
       ? "text-sm font-bold tracking-tight"
       : resolvedSize === "md"
       ? "text-2xl font-bold tracking-tight"
-      : "text-lg md:text-xl lg:text-2xl font-bold tracking-tight";
+      : "text-xl md:text-2xl lg:text-2xl font-extrabold tracking-tight";
 
   const showSubtitle = resolvedSize === "lg" && !compact;
 
