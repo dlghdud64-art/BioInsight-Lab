@@ -81,10 +81,13 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-slate-900 py-2 break-keep">
-            전 세계 500만 개 시약/장비,{" "}
-            <br className="hidden md:block" />
-            <span className="text-blue-600">최저가 검색부터 견적까지</span>
+          <h1 className="text-[2rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-none">
+            <span className="block pb-2 md:pb-3">
+              전 세계 500만 개 시약/장비,
+            </span>
+            <span className="block text-blue-600 pt-1 md:pt-2">
+              최저가 검색부터 견적까지
+            </span>
           </h1>
 
           <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-2 break-keep">
