@@ -52,7 +52,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
           <SheetContent side="right" className="w-full sm:max-w-xs p-0 flex flex-col">
 
             {session?.user ? (
-              /* ── 로그인: 프로필 + 제품 기능 + 서비스 ── */
+              /* ── 로그인: 프로필 + 제품 + 도입 + 지원 ── */
               <div className="flex flex-col flex-1 overflow-y-auto">
                 {/* 프로필 카드 */}
                 <div className="px-5 pt-16 pb-5 border-b border-slate-100">
@@ -71,9 +71,9 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </div>
                 </div>
 
-                {/* ── 제품 기능 ── */}
+                {/* ── 제품 ── */}
                 <nav className="px-4 pt-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품 기능</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
                     <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <Search className="h-4 w-4 text-slate-400" />
@@ -88,21 +88,20 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </SheetClose>
                 </nav>
 
-                {/* ── 서비스 ── */}
+                {/* ── 도입 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
-                  <SheetClose asChild>
-                    <Link href="/intro" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Info className="h-4 w-4 text-slate-400" />
-                      서비스 소개
-                    </Link>
-                  </SheetClose>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">도입</div>
                   <SheetClose asChild>
                     <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <Phone className="h-4 w-4 text-slate-400" />
                       요금 &amp; 도입
                     </Link>
                   </SheetClose>
+                </nav>
+
+                {/* ── 지원 ── */}
+                <nav className="px-4 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">지원</div>
                   <SheetClose asChild>
                     <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
                       <Headset className="h-4 w-4 text-slate-400" />
@@ -112,11 +111,17 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 </nav>
               </div>
             ) : (
-              /* ── 비로그인: 제품 기능 + 서비스 ── */
+              /* ── 비로그인: 제품 + 도입 + 지원 ── */
               <div className="flex flex-col flex-1 overflow-y-auto">
-                {/* ── 제품 기능 ── */}
+                {/* ── 제품 ── */}
                 <nav className="px-4 pt-16 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품 기능</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
+                  <SheetClose asChild>
+                    <Link href="/intro" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                      <Info className="h-4 w-4 text-slate-400" />
+                      제품 소개
+                    </Link>
+                  </SheetClose>
                   <SheetClose asChild>
                     <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <Search className="h-4 w-4 text-slate-400" />
@@ -124,28 +129,27 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <FileText className="h-4 w-4 text-slate-400" />
                       프로토콜 맞춤 견적
                     </Link>
                   </SheetClose>
                 </nav>
 
-                {/* ── 서비스 ── */}
+                {/* ── 도입 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
-                  <SheetClose asChild>
-                    <Link href="/intro" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Info className="h-4 w-4 text-slate-400" />
-                      서비스 소개
-                    </Link>
-                  </SheetClose>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">도입</div>
                   <SheetClose asChild>
                     <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <Phone className="h-4 w-4 text-slate-400" />
                       요금 &amp; 도입
                     </Link>
                   </SheetClose>
+                </nav>
+
+                {/* ── 지원 ── */}
+                <nav className="px-4 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">지원</div>
                   <SheetClose asChild>
                     <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
                       <Headset className="h-4 w-4 text-slate-400" />

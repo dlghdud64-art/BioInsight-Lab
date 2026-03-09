@@ -34,14 +34,11 @@ function SignInContent() {
         {/* 2. 슬로건: 수직 중앙 배치 */}
         <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-8">
           <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tighter antialiased">
-            연구와 분석에만 집중하세요.
-            <br />
-            <span className="text-blue-500">시약 관리는 저희가 합니다.</span>
+            연구와 실험에<br />더 집중하세요.
           </h1>
-          <p className="text-slate-400 text-xl max-w-lg leading-relaxed antialiased">
-            수천 개의 시약과 예산을 데이터로 증명하세요.
-            <br />
-            실사(Audit) 준비가 더 이상 두렵지 않습니다.
+          <p className="text-slate-400 text-lg max-w-md leading-relaxed antialiased">
+            시약 검색, 비교, 견적 요청, 구매 이력과 재고 현황까지<br />
+            BioInsight Lab에서 한곳에 정리할 수 있습니다.
           </p>
         </div>
 
