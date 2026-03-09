@@ -446,37 +446,6 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* 3순위: 빠른 실행 (데스크탑 — 인라인 가로형) */}
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">핵심 업무 바로가기</h3>
-            <div className="grid grid-cols-4 gap-3">
-              <Link href="/test/search" className="block">
-                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium transition-all">
-                  <Search className="h-4 w-4 flex-shrink-0" />
-                  시약·장비 검색
-                </Button>
-              </Link>
-              <Link href="/test/quote" className="block">
-                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium transition-all">
-                  <FileText className="h-4 w-4 flex-shrink-0" />
-                  견적 요청하기
-                </Button>
-              </Link>
-              <Link href="/test/compare" className="block">
-                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-medium transition-all">
-                  <GitCompare className="h-4 w-4 flex-shrink-0 text-slate-500" />
-                  비교 목록 보기
-                </Button>
-              </Link>
-              <Link href="/dashboard/inventory" className="block">
-                <Button className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-medium transition-all">
-                  <Plus className="h-4 w-4 flex-shrink-0" />
-                  새 재고 등록
-                </Button>
-              </Link>
-            </div>
-          </div>
-
           {/* 5순위: 최근 구매 내역 (축소 — 최대 5건, 컴팩트) */}
           <Card className="overflow-hidden bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
@@ -518,7 +487,74 @@ export default function DashboardPage() {
         {/* ── 우측 패널 (2col) ── */}
         <div className="md:col-span-2 space-y-5">
 
-          {/* 4순위: 최근 알림 (액션 연결) */}
+          {/* 🎯 업무 바로가기 — 대시보드 공식 실행 영역 (최상단 고정) */}
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+            <CardHeader className="pb-2 p-4">
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">업무 바로가기</CardTitle>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">검색 → 비교 → 견적 → 재고 등록</p>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {/* 메인 액션 흐름 */}
+              <div className="space-y-0.5">
+                <Link href="/test/search" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-blue-50/60 dark:hover:bg-blue-950/30 transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-950/50 flex-shrink-0">
+                    <Search className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-700 dark:group-hover:text-blue-400">시약·장비 검색</span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500">500만+ 품목 검색</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-blue-400 transition-colors" />
+                </Link>
+                <Link href="/test/compare" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 flex-shrink-0">
+                    <GitCompare className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">제품 비교</span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500">스펙·가격 비교 목록</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
+                </Link>
+                <Link href="/test/quote" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-violet-50/60 dark:hover:bg-violet-950/30 transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-50 dark:bg-violet-950/50 flex-shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-violet-700 dark:group-hover:text-violet-400">견적 요청하기</span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500">공급사에 견적 발송</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-violet-400 transition-colors" />
+                </Link>
+                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30 transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 dark:bg-emerald-950/50 flex-shrink-0">
+                    <Plus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">재고 등록</span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500">입고 품목 등록 및 관리</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
+                </Link>
+              </div>
+              {/* 보조 액션 */}
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/50 space-y-0.5">
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 pb-1">보조 기능</p>
+                <Link href="/protocol/bom" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                  <FileText className="h-3.5 w-3.5 text-teal-500 flex-shrink-0" />
+                  <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100">프로토콜 BOM 생성</span>
+                  <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
+                </Link>
+                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
+                  <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                  <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100">재고 관리</span>
+                  <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 최근 알림 (액션 연결) */}
           <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
@@ -543,7 +579,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* 5순위: 지출 추이 (보조 — 운영 추세 확인 역할) */}
+          {/* 지출 추이 (보조 — 운영 추세 확인 역할) */}
           {stats.monthlySpendingChart.length > 0 && !stats.monthlySpendingChart.every((d) => d.amount === 0) && (
             <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
               <CardHeader className="pb-1 p-4">
@@ -562,35 +598,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* 핵심 업무 바로가기 (우측 패널 보조) */}
-          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-            <CardHeader className="pb-1 p-4">
-              <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">업무 바로가기</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-0.5">
-              <Link href="/test/search" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                <Search className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">시약·장비 검색</span>
-                <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
-              </Link>
-              <Link href="/protocol/bom" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                <FileText className="h-3.5 w-3.5 text-teal-500 flex-shrink-0" />
-                <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">프로토콜 BOM 생성</span>
-                <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
-              </Link>
-              <Link href="/test/quote" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                <TrendingUp className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
-                <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">견적 요청하기</span>
-                <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
-              </Link>
-              <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">재고 관리</span>
-                <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
-              </Link>
-            </CardContent>
-          </Card>
 
           {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (

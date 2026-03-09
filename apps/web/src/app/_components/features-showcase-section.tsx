@@ -66,7 +66,7 @@ export function FeaturesShowcaseSection() {
     {
       id: "management",
       title: "도입 이후 품목 관리까지 연결",
-      description: "도입한 품목을 워크스페이스에서 정리하고, 재고·예산·이력 관리까지 이어서 운영할 수 있습니다.",
+      description: "도입한 품목을 대시보드에서 정리하고, 재고·예산·이력 관리까지 이어서 운영할 수 있습니다.",
       features: ["대시보드", "재고 관리", "이력 관리"],
       icon: BarChart3,
       gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",

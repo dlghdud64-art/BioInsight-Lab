@@ -167,7 +167,7 @@ export function BioInsightHeroSection() {
                 className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-sm font-semibold rounded-xl shadow-sm transition-all duration-150"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                워크스페이스에서 이어서 작업하기
+                대시보드에서 이어서 작업하기
                 <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </a>
             </div>
