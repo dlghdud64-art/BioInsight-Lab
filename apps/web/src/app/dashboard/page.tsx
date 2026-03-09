@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import {
   Package, AlertTriangle, DollarSign, FileText, Search, Plus,
   TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare,
+  CheckCircle2, Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
 
 export default function DashboardPage() {
@@ -579,25 +579,55 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* 지출 추이 (보조 — 운영 추세 확인 역할) */}
-          {stats.monthlySpendingChart.length > 0 && !stats.monthlySpendingChart.every((d) => d.amount === 0) && (
-            <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-              <CardHeader className="pb-1 p-4">
-                <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">월별 지출 추이</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(5)} tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                    <YAxis tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)} tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                    <Tooltip formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]} labelFormatter={(label: string) => `${label}`} />
-                    <Bar dataKey="amount" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
+          {/* 견적 처리 현황 */}
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+            <CardHeader className="pb-2 p-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-100">견적 처리 현황</CardTitle>
+                <Link href="/dashboard/quotes"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+              {/* 응답 수신 — 즉시 검토 필요 */}
+              <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 p-2.5 rounded-lg border border-green-200/60 dark:border-green-900/40 bg-green-50/40 dark:bg-green-950/20 hover:bg-green-50 dark:hover:bg-green-950/40 transition-colors group">
+                <div className="rounded-md bg-green-100 dark:bg-green-950/60 p-1.5 flex-shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">응답 수신</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 — 검토 후 벤더 확정하세요` : "대기 중인 응답 없음"}
+                  </p>
+                </div>
+                <span className={`text-sm font-bold flex-shrink-0 ${stats.respondedQuotes > 0 ? "text-green-600 dark:text-green-400" : "text-slate-400"}`}>
+                  {stats.respondedQuotes}
+                </span>
+              </Link>
+
+              {/* 응답 대기 */}
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200/60 dark:border-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className="rounded-md bg-amber-100 dark:bg-amber-950/40 p-1.5 flex-shrink-0">
+                  <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">응답 대기</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {stats.activeQuotes > 0 ? `${stats.activeQuotes}건 공급사 응답 대기 중` : "대기 중인 견적 없음"}
+                  </p>
+                </div>
+                <span className={`text-sm font-bold flex-shrink-0 ${stats.activeQuotes > 0 ? "text-amber-500 dark:text-amber-400" : "text-slate-400"}`}>
+                  {stats.activeQuotes}
+                </span>
+              </Link>
+
+              {/* 지출 분석 바로가기 */}
+              <Link href="/dashboard/analytics" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors group">
+                <TrendingUp className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                <span className="text-xs text-slate-600 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-400">지출 분석 상세 보기</span>
+                <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-blue-400 transition-colors" />
+              </Link>
+            </CardContent>
+          </Card>
 
           {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (
