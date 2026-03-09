@@ -90,10 +90,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <nav className="px-2 pt-2 pb-2 space-y-1">
                   <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">AI 데이터 분석</Link>
+                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">AI 검색 및 견적</Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">프로토콜 분석</Link>
+                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">프로토콜 맞춤 견적</Link>
                   </SheetClose>
                   <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
                   <SheetClose asChild>
@@ -110,10 +110,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <div className="px-2 pt-20 pb-2 space-y-1">
                   <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">AI 데이터 분석</Link>
+                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">AI 검색 및 견적</Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">프로토콜 분석</Link>
+                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">프로토콜 맞춤 견적</Link>
                   </SheetClose>
                   <div className="mt-2 px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
                   <SheetClose asChild>
