@@ -35,9 +35,9 @@ function SignInContent() {
         <div className="flex-1 flex flex-col justify-center pl-16 pr-14 space-y-6">
           <h1 className="text-6xl font-extrabold leading-tight text-white tracking-tight antialiased">
             연구와 실험에<br />
-            <span className="text-blue-400">더 집중하세요.</span>
+            <span className="text-blue-500">더 집중하세요.</span>
           </h1>
-          <p className="text-slate-300 text-[17px] max-w-sm leading-relaxed antialiased">
+          <p className="text-slate-300/90 text-[17px] max-w-sm leading-relaxed antialiased">
             시약 검색, 비교, 견적 요청, 구매 이력과 재고 현황까지<br />
             BioInsight Lab에서 한곳에 정리할 수 있습니다.
           </p>
