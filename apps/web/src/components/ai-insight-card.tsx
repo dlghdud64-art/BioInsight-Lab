@@ -236,13 +236,13 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
               </div>
               <div className="flex flex-wrap gap-2">
                 {getSuggestedQueries().map((sq, idx) => (
-                  <Link
+                  <a
                     key={idx}
                     href={`/test/search?q=${encodeURIComponent(sq)}`}
                     className="text-xs px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
                   >
                     {sq}
-                  </Link>
+                  </a>
                 ))}
               </div>
             </div>
