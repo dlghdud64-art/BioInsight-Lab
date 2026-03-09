@@ -18,7 +18,7 @@ export function MobileFloatingCTA() {
         <Link href="/auth/signin?callbackUrl=/test/search" className="flex-1 max-w-[200px]">
           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm h-10 rounded-xl shadow-md">
             <Rocket className="h-4 w-4 mr-2" />
-            Get Started
+            시작하기
           </Button>
         </Link>
         <a

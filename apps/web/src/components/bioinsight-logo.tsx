@@ -27,14 +27,14 @@ export function BioInsightLogo({
       ? "h-7 w-7 rounded-lg object-contain -translate-y-[1px]"
       : resolvedSize === "md"
       ? "h-12 w-12 rounded-lg object-contain -translate-y-[1px]"
-      : "h-9 w-9 md:h-10 md:w-10 lg:h-11 lg:w-11 rounded-lg object-contain -translate-y-[1px]";
+      : "h-10 w-10 md:h-11 md:w-11 lg:h-12 lg:w-12 rounded-lg object-contain -translate-y-[1px]";
 
   const textClass =
     resolvedSize === "sm"
       ? "text-sm font-bold tracking-tight"
       : resolvedSize === "md"
       ? "text-2xl font-bold tracking-tight"
-      : "text-base md:text-lg lg:text-xl font-bold tracking-tight";
+      : "text-lg md:text-xl lg:text-2xl font-bold tracking-tight";
 
   const showSubtitle = resolvedSize === "lg" && !compact;
 

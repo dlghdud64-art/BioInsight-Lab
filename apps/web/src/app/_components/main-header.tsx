@@ -188,7 +188,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 href="/auth/signin?callbackUrl=/dashboard"
                 className="hidden md:inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
               >
-                Get Started
+                시작하기
               </Link>
             )}
 

@@ -44,7 +44,7 @@ export function FinalCTASection() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
             <Link href="/test/search" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto h-11 bg-blue-600 text-white hover:bg-blue-700 shadow-sm flex items-center justify-center gap-2 font-semibold">
-                Get Started
+                시작하기
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
