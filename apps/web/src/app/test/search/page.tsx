@@ -529,7 +529,7 @@ function StickySearchBar() {
             type="text"
             value={localQuery}
             onChange={handleChange}
-            placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요 (예: FBS, Anti-IL6)"
+            placeholder="시약명, CAS No., 제조사, 카탈로그 번호를 입력하세요"
             className="flex-1 h-10 md:h-14 px-4 md:px-6 text-base md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
@@ -542,6 +542,10 @@ function StickySearchBar() {
             검색
           </Button>
         </div>
+        {/* 헬퍼 텍스트 */}
+        <p className="mt-2 text-center text-xs text-slate-400 max-w-2xl mx-auto">
+          검색 결과를 비교 후보에 담고, 견적 요청 리스트까지 이어갈 수 있습니다.
+        </p>
       </form>
 
       {/* 추천 키워드 칩 */}
