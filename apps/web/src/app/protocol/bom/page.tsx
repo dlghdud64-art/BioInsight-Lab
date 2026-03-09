@@ -83,22 +83,22 @@ const STEPS = ["프로토콜 업로드", "AI 분석", "BOM 검토", "검색·비
 
 function StepIndicator({ current }: { current: 0 | 1 | 2 | 3 }) {
   return (
-    <div className="flex items-center gap-0 overflow-x-auto">
+    <div className="flex items-center gap-1 flex-wrap">
       {STEPS.map((label, i) => (
-        <div key={i} className="flex items-center gap-0 flex-shrink-0">
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+        <div key={i} className="flex items-center gap-1 flex-shrink-0">
+          <div className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
             i < current
-              ? "bg-blue-100 text-blue-700"
+              ? "bg-blue-50 text-blue-700 border border-blue-200"
               : i === current
               ? "bg-blue-600 text-white shadow-sm"
-              : "text-slate-400"
+              : "bg-slate-100 text-slate-400 border border-slate-200"
           }`}>
-            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-              i < current ? "bg-blue-600 text-white" : i === current ? "bg-white/20" : "bg-slate-200 text-slate-400"
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+              i < current ? "bg-blue-600 text-white" : i === current ? "bg-white/25 text-white" : "bg-slate-200 text-slate-400"
             }`}>{i < current ? "✓" : i + 1}</span>
             {label}
           </div>
-          {i < STEPS.length - 1 && <ChevronRight className="h-3.5 w-3.5 text-slate-300 mx-0.5 flex-shrink-0" />}
+          {i < STEPS.length - 1 && <ChevronRight className="h-4 w-4 text-slate-300 mx-0.5 flex-shrink-0" />}
         </div>
       ))}
     </div>
@@ -356,17 +356,21 @@ export default function ProtocolBOMPage() {
       <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
 
         {/* ── 페이지 헤더 ── */}
-        <div className="mb-6">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <FlaskConical className="h-4 w-4 text-blue-600" />
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <FlaskConical className="h-5 w-5 text-blue-600" />
                 </div>
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900">프로토콜 기반 BOM 생성</h1>
+                <h1 className="text-2xl md:text-[1.75rem] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  프로토콜 기반 BOM 생성
+                </h1>
               </div>
-              <p className="text-sm text-slate-500 ml-9">
-                실험 프로토콜에서 시약·장비 목록을 자동 추출하고 검색·비교·견적으로 바로 연결합니다.
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
+                실험 프로토콜(PDF·텍스트)을 업로드하면 AI가 시약·장비 항목을 자동 추출합니다.
+                <br className="hidden sm:block" />
+                추출된 목록으로 BOM을 생성하고, 제품 검색·비교·견적 요청까지 바로 연결할 수 있습니다.
               </p>
             </div>
             {extractionResult && !bomSaved && (
@@ -420,10 +424,12 @@ export default function ProtocolBOMPage() {
             <Card className="shadow-sm border-slate-200 bg-white">
               <CardHeader className="pb-3 p-4 md:p-5">
                 <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-slate-500" />
-                  프로토콜 입력
+                  <Upload className="h-4 w-4 text-blue-500" />
+                  프로토콜 업로드
                 </CardTitle>
-                <p className="text-xs text-slate-500 mt-0.5">PDF 업로드 또는 텍스트 붙여넣기로 분석을 시작합니다.</p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  PDF 또는 텍스트를 입력하면 AI가 시약·장비 항목을 추출합니다.
+                </p>
               </CardHeader>
               <CardContent className="px-4 md:px-5 pb-4 md:pb-5 space-y-4">
                 <Tabs defaultValue={pdfUploadEnabled ? "upload" : "paste"} className="w-full">
@@ -859,28 +865,34 @@ export default function ProtocolBOMPage() {
                 </div>
               </div>
             ) : (
-              /* ── Empty state ── */
+              /* ── Empty state: 결과 안내 영역 ── */
               <Card className="shadow-sm border-slate-200 bg-white h-full min-h-[400px] flex flex-col items-center justify-center">
-                <CardContent className="py-10 px-6 text-center max-w-sm mx-auto">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-5">
-                    <FlaskConical className="h-7 w-7 text-slate-300" />
+                <CardContent className="py-10 px-6 text-center max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-5">
+                    <FileCheck className="h-7 w-7 text-blue-400" />
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">프로토콜을 분석하면 BOM이 자동 생성됩니다</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-6">
-                    PDF 또는 텍스트로 실험 프로토콜을 입력하면 필요한 시약·기구·장비가 자동 추출됩니다.
+                  <h3 className="text-base font-bold text-slate-800 mb-1.5">
+                    BOM 생성 결과가 여기에 표시됩니다
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                    좌측에서 프로토콜을 업로드하면 AI가 시약·장비 항목을 추출하고,
+                    BOM 초안을 자동 생성합니다.
                   </p>
-                  <div className="space-y-2 text-left">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-left space-y-3">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">생성되는 결과물</p>
                     {[
-                      { icon: Upload, label: "프로토콜 PDF 또는 텍스트 입력" },
-                      { icon: Sparkles, label: "AI가 시약·기구 목록 자동 추출" },
-                      { icon: Edit2, label: "BOM 초안 검토 및 인라인 편집" },
-                      { icon: FileText, label: "검색·비교·견적 요청으로 연결" },
-                    ].map((step, i) => (
-                      <div key={i} className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                          <step.icon className="h-2.5 w-2.5 text-blue-500" />
+                      { icon: Package, label: "시약·장비 항목 목록", desc: "프로토콜에서 자동 추출" },
+                      { icon: Search, label: "제품 매칭 결과", desc: "등록된 제품 DB와 자동 대조" },
+                      { icon: FileText, label: "BOM 초안 테이블", desc: "수량·금액·분류 포함 편집 가능" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <item.icon className="h-3.5 w-3.5 text-blue-500" />
                         </div>
-                        <span className="text-xs text-slate-500">{step.label}</span>
+                        <div>
+                          <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                          <p className="text-[11px] text-slate-400">{item.desc}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
