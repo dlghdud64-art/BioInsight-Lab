@@ -515,6 +515,25 @@ export function InventoryTable({
                           입고
                         </Button>
                       )}
+                      {/* QR 라벨 인쇄 */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span onClick={(e) => e.stopPropagation()}>
+                            <InventoryQRCode
+                              inventoryId={inventory.id}
+                              productName={inventory.product.name}
+                              catalogNumber={inventory.product.catalogNumber}
+                              location={inventory.location}
+                              unit={inventory.unit}
+                              currentQuantity={inventory.currentQuantity}
+                            />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          QR 라벨 인쇄
+                        </TooltipContent>
+                      </Tooltip>
+
                       {/* ⋮ 더보기 드롭다운: 상세 보기 / 정보 수정 / 삭제 */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
