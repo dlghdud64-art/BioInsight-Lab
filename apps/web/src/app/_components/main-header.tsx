@@ -164,33 +164,42 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </button>
             )}
 
-            {/* 데스크탑 텍스트 네비게이션 - 비로그인 · md 이상만 표시 */}
-            {!session?.user && (
-              <nav className="hidden md:flex items-center gap-6 mr-2">
-                <Link
-                  href="/pricing"
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
-                >
-                  요금 &amp; 도입
-                </Link>
-                <Link
-                  href="/auth/signin?callbackUrl=/dashboard"
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
-                >
-                  로그인
-                </Link>
-              </nav>
-            )}
-
-            {/* Get Started CTA - 비로그인 · PC 전용 */}
-            {!session?.user && (
+            {/* 데스크탑 네비게이션 - md 이상 항상 표시 */}
+            <nav className="hidden md:flex items-center gap-6 mr-2">
+              {/* 요금 & 도입 - 로그인 여부와 무관하게 항상 표시 */}
               <Link
-                href="/auth/signin?callbackUrl=/dashboard"
-                className="hidden md:inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
+                href="/pricing"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
               >
-                시작하기
+                요금 &amp; 도입
               </Link>
-            )}
+
+              {session?.user ? (
+                /* 로그인 상태: 워크스페이스 버튼 */
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap"
+                >
+                  워크스페이스로 이동
+                </Link>
+              ) : (
+                /* 비로그인: 로그인 링크 + 시작하기 버튼 */
+                <>
+                  <Link
+                    href="/auth/signin?callbackUrl=/dashboard"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                  >
+                    로그인
+                  </Link>
+                  <Link
+                    href="/auth/signin?callbackUrl=/dashboard"
+                    className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
+                  >
+                    시작하기
+                  </Link>
+                </>
+              )}
+            </nav>
 
             {/* 프로필 메뉴 */}
             <UserMenu />
