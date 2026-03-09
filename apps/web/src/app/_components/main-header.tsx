@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, ScanLine, Search, LayoutDashboard, FileText, Phone, Info, Headset } from "lucide-react";
+import { Menu, ScanLine, Search, FileText, Phone, Info, Headset } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
@@ -194,21 +194,14 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* ── 로그인: [워크스페이스(강조)] [견적함] [도입 문의] ── */
+                /* ── 로그인: [검색 시작하기(강조)] [도입 문의] ── */
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/test/search"
                     className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
                   >
-                    <LayoutDashboard className="h-3.5 w-3.5" />
-                    워크스페이스
-                  </Link>
-                  <Link
-                    href="/quotes"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    견적함
+                    <Search className="h-3.5 w-3.5" />
+                    검색 시작하기
                   </Link>
                   <Link
                     href="/pricing"

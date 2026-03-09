@@ -16,7 +16,7 @@ interface Tab {
 
 export function FeaturesShowcaseSection() {
   const [activeTab, setActiveTab] = useState("sourcing");
-  
+
   // --- Mobile Carousel Logic ---
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -26,29 +26,21 @@ export function FeaturesShowcaseSection() {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
-      // 약간의 오차 범위(5px)를 두어 끝 감지
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
     }
   };
 
   useEffect(() => {
     checkScroll();
-    // 리사이즈 이벤트 리스너 추가
-    const handleResize = () => {
-      setTimeout(checkScroll, 100);
-    };
+    const handleResize = () => { setTimeout(checkScroll, 100); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = scrollRef.current.clientWidth * 0.8; // 화면 너비의 80%만큼 이동
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-      // 스크롤 완료 후 상태 업데이트
+      const scrollAmount = scrollRef.current.clientWidth * 0.8;
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
       setTimeout(checkScroll, 300);
     }
   };
@@ -105,7 +97,7 @@ export function FeaturesShowcaseSection() {
                 검색
               </Button>
             </div>
-            
+
             {/* 검색 결과 리스트 */}
             <div className="space-y-3">
               {/* 리스트 아이템 1: 추천 */}
@@ -120,9 +112,9 @@ export function FeaturesShowcaseSection() {
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-base font-bold text-gray-900">₩45,000</span>
                       <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
-                      <Tag className="h-2.5 w-2.5" />
-                      최저가
-                    </Badge>
+                        <Tag className="h-2.5 w-2.5" />
+                        최저가
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
                       <Zap className="h-3 w-3" />
@@ -207,9 +199,9 @@ export function FeaturesShowcaseSection() {
             {/* 알림 센터 제목 */}
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
-              <Bell className="h-4 w-4 text-slate-500" />
-              실시간 알림 센터
-            </h3>
+                <Bell className="h-4 w-4 text-slate-500" />
+                실시간 알림 센터
+              </h3>
             </div>
 
             {/* 알림 센터 카드 */}
@@ -308,144 +300,102 @@ export function FeaturesShowcaseSection() {
   };
 
   return (
-    <section id="features-showcase" className="py-24 pb-32 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50/50">
+    <section id="features-showcase" className="py-20 pb-28 border-b border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center space-y-2 mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">주요 기능</h2>
+        <div className="text-center space-y-2 mb-10">
+          <span className="inline-block text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">주요 기능</span>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">플랫폼이 어떻게 동작하는지 확인하세요</h2>
           <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">
             검색, 비교, 견적 요청, 품목 관리까지 실무에 필요한 흐름을 한 곳에서 처리하세요.
           </p>
         </div>
 
-        {/* 모바일: 세로 스택, 데스크탑: 좌우 2분할 레이아웃 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-          {/* 좌측: 탭 메뉴 (모바일에서는 숨김) */}
-          <div className="hidden md:block space-y-4">
-            {tabs.map((tab) => {
-              const TabIcon = tab.icon;
-              const isActive = activeTab === tab.id;
+        {/* 데스크탑: 통합 제품 쇼케이스 */}
+        <div className="hidden md:grid md:grid-cols-[5fr_7fr] rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full text-left p-6 rounded-xl transition-all duration-300 ${
-                    isActive
-                      ? "bg-blue-50 border-l-4 border-blue-600 shadow-md"
-                      : "bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* 아이콘 */}
-                    <div
-                      className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                        isActive ? tab.gradient : "bg-gray-100"
-                      }`}
-                    >
-                      <TabIcon
-                        className={`h-6 w-6 transition-colors ${
-                          isActive ? "text-white" : "text-gray-600"
-                        }`}
-                      />
-                    </div>
-
-                    {/* 텍스트 */}
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`text-lg md:text-xl font-bold mb-2 transition-colors ${
-                          isActive ? "text-blue-900" : "text-gray-900"
-                        }`}
-                      >
-                        {tab.title}
-                      </h3>
-                      <p
-                        className={`text-sm md:text-base mb-3 transition-colors break-keep ${
-                          isActive ? "text-blue-700" : "text-gray-600"
-                        }`}
-                      >
-                        {tab.description}
-                      </p>
-
-                      {/* 포함 기능 태그들 */}
-                      <div className="flex flex-wrap gap-2">
-                        {tab.features.map((feature) => (
-                          <span
-                            key={feature}
-                            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                              isActive
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {feature}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 모바일: 가로 스크롤 Carousel (스와이프 전용, 화살표 없음) */}
-          <div className="md:hidden">
-            {/* Scroll Container */}
-            <div
-              ref={scrollRef}
-              onScroll={checkScroll}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 px-4 scrollbar-hide -mx-4"
-            >
+          {/* 좌측: 기능 선택 패널 */}
+          <div className="bg-slate-50/80 border-r border-slate-200 p-6 flex flex-col">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-200 mb-4">기능 선택</p>
+            <div className="space-y-2 flex-1">
               {tabs.map((tab) => {
                 const TabIcon = tab.icon;
+                const isActive = activeTab === tab.id;
                 return (
-                  <div
+                  <button
                     key={tab.id}
-                    className="flex-shrink-0 min-w-[85%] sm:min-w-[70%] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? "bg-white border border-slate-200 shadow-sm"
+                        : "hover:bg-white/70 border border-transparent"
+                    }`}
                   >
-                    <div className="p-4 space-y-3">
-                      {/* 헤더 영역 (아이콘 + 제목) */}
-                      <div className="flex items-center gap-2">
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${tab.gradient}`}>
-                          <TabIcon className="h-5 w-5 text-white" />
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                          isActive ? tab.gradient : "bg-slate-100"
+                        }`}
+                      >
+                        <TabIcon
+                          className={`h-5 w-5 ${isActive ? "text-white" : "text-slate-500"}`}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`text-sm font-semibold mb-1 transition-colors ${
+                            isActive ? "text-slate-900" : "text-slate-600"
+                          }`}
+                        >
+                          {tab.title}
+                        </h3>
+                        {isActive && (
+                          <p className="text-xs text-slate-500 leading-relaxed break-keep mb-2">
+                            {tab.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-1.5">
+                          {tab.features.map((feature) => (
+                            <span
+                              key={feature}
+                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors ${
+                                isActive
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {feature}
+                            </span>
+                          ))}
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 leading-tight">{tab.title}</h3>
                       </div>
-                      
-                      {/* 설명 글 */}
-                      <p className="text-sm text-slate-600 break-keep leading-snug">
-                        {tab.description}
-                      </p>
-                      
-                      {/* 기능 태그 */}
-                      <div className="flex flex-wrap gap-2">
-                        {tab.features.map((feature) => (
-                          <span
-                            key={feature}
-                            className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700"
-                          >
-                            {feature}
-                          </span>
-                        ))}
-                      </div>
+                      {isActive && (
+                        <ArrowRight className="h-4 w-4 text-blue-400 flex-shrink-0 mt-1.5 ml-1" />
+                      )}
                     </div>
-                    
-                    {/* 이미지 영역 (높이 제한) */}
-                    <div className="relative w-full h-32 bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
-                      <div className="w-full h-full p-2 overflow-auto">
-                        {renderMockup(tab.id)}
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 데스크탑: 우측 이미지/목업 영역 */}
-          <div className="hidden md:flex md:flex-col lg:sticky lg:top-24 self-start">
-            <div className="relative w-full min-h-[460px] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner p-6 max-w-full">
-              {/* Fade-in 애니메이션을 위한 컨테이너 */}
+          {/* 우측: 미리보기 패널 */}
+          <div className="bg-white flex flex-col">
+            {/* 미리보기 헤더 */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-md ${activeTabData.gradient} flex items-center justify-center`}>
+                  <Icon className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700">{activeTabData.title}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-300"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-300"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              </div>
+            </div>
+            {/* 미리보기 콘텐츠 */}
+            <div className="flex-1 p-6 min-h-[420px] relative bg-slate-50/20">
               <div
                 key={activeTab}
                 className="absolute inset-6 animate-fadeIn max-w-full overflow-hidden"
@@ -453,6 +403,59 @@ export function FeaturesShowcaseSection() {
                 {renderMockup(activeTab)}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* 모바일: 가로 스크롤 Carousel (스와이프 전용) */}
+        <div className="md:hidden">
+          <div
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 px-4 scrollbar-hide -mx-4"
+          >
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <div
+                  key={tab.id}
+                  className="flex-shrink-0 min-w-[85%] sm:min-w-[70%] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                >
+                  <div className="p-4 space-y-3">
+                    {/* 헤더 영역 (아이콘 + 제목) */}
+                    <div className="flex items-center gap-2">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${tab.gradient}`}>
+                        <TabIcon className="h-5 w-5 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight">{tab.title}</h3>
+                    </div>
+
+                    {/* 설명 글 */}
+                    <p className="text-sm text-slate-600 break-keep leading-snug">
+                      {tab.description}
+                    </p>
+
+                    {/* 기능 태그 */}
+                    <div className="flex flex-wrap gap-2">
+                      {tab.features.map((feature) => (
+                        <span
+                          key={feature}
+                          className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 이미지 영역 (높이 제한) */}
+                  <div className="relative w-full h-32 bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
+                    <div className="w-full h-full p-2 overflow-auto">
+                      {renderMockup(tab.id)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

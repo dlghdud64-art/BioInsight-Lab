@@ -9,7 +9,7 @@ export function FlowSection() {
     {
       number: 1,
       title: "검색",
-      description: "제품명, 제조사, 프로토콜 기준으로 필요한 후보를 빠르게 찾습니다.",
+      description: "제품명, CAS No., 제조사 또는 실험 목적으로 검색하고 대체 후보까지 함께 확인하세요.",
       href: "/test/search",
       icon: Search,
       color: "indigo",
@@ -17,7 +17,7 @@ export function FlowSection() {
     {
       number: 2,
       title: "비교",
-      description: "가격·스펙·공급 조건을 기준으로 후보를 비교하고 정리합니다.",
+      description: "여러 벤더의 가격, 납기, 스펙을 한 화면에서 나란히 보고 최적 후보를 선택하세요.",
       href: "/test/compare",
       icon: GitCompare,
       color: "emerald",
@@ -25,7 +25,7 @@ export function FlowSection() {
     {
       number: 3,
       title: "견적 요청",
-      description: "선택한 품목으로 요청 리스트를 만들고 벤더에 바로 전달합니다.",
+      description: "선택 품목을 담아 견적 요청 리스트를 만들고 공유 링크로 바로 전달하세요.",
       href: "/test/quote",
       icon: FileText,
       color: "blue",
@@ -33,14 +33,14 @@ export function FlowSection() {
   ];
 
   return (
-    <section id="flow-section" className="py-12 border-b border-slate-200 bg-white scroll-mt-14">
+    <section id="flow-section" className="py-16 md:py-20 border-b border-slate-200 bg-white scroll-mt-14">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="text-center mb-8 md:mb-12">
+        <div className="text-center mb-10 md:mb-14">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-2">
-            간단한 3단계로 견적까지 빠르게
+            검색에서 견적까지, 3단계로
           </h2>
-          <p className="text-xs md:text-sm text-slate-600 max-w-2xl mx-auto">
-            찾는 품목을 검색하고 비교한 뒤, 필요한 후보만 모아 견적 요청까지 이어가세요.
+          <p className="text-xs md:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
+            실제 소싱 흐름 그대로입니다. 검색하고, 비교하고, 견적을 요청하면 끝입니다.
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export function FlowSection() {
               emerald: "bg-emerald-50 text-emerald-600",
               blue: "bg-blue-50 text-blue-600",
             };
-            
+
             return (
               <div key={step.href} className="flex flex-col md:flex-row items-center w-full md:w-auto">
                 {/* 모바일: 슬림 리스트 형태 */}
@@ -75,10 +75,10 @@ export function FlowSection() {
                   </div>
                 </Link>
 
-                {/* 데스크탑: 기존 카드 형태 */}
+                {/* 데스크탑: 카드 형태 */}
                 <Link
                   href={step.href}
-                  className="hidden md:flex group flex-col items-center gap-3 px-6 py-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-auto"
+                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-auto"
                 >
                   <div className={`relative w-16 h-16 rounded-xl ${
                     step.color === 'indigo' ? 'bg-indigo-500' :
@@ -95,8 +95,8 @@ export function FlowSection() {
                     </div>
                   </div>
                   <div className="text-center break-keep">
-                    <h3 className="text-base font-semibold text-slate-900 mb-1 whitespace-nowrap">{step.title}</h3>
-                    <p className="text-sm text-slate-600 max-w-[140px] mx-auto">
+                    <h3 className="text-base font-semibold text-slate-900 mb-1.5 whitespace-nowrap">{step.title}</h3>
+                    <p className="text-xs text-slate-500 max-w-[200px] mx-auto leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -107,7 +107,7 @@ export function FlowSection() {
                     {/* 모바일: 아래쪽 화살표 */}
                     <ArrowRight className="md:hidden h-5 w-5 text-slate-400 my-2 flex-shrink-0 rotate-90" />
                     {/* 데스크탑: 오른쪽 화살표 */}
-                    <ArrowRight className="hidden md:block h-6 w-6 text-slate-400 mx-4 flex-shrink-0" />
+                    <ArrowRight className="hidden md:block h-5 w-5 text-slate-300 mx-3 flex-shrink-0" />
                   </>
                 )}
               </div>
