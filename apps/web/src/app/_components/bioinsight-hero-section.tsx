@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,12 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Search, MessageSquareText, UploadCloud, Loader2, Flame } from "lucide-react";
+import { Search, MessageSquareText, UploadCloud, Loader2, Flame, LayoutDashboard, ArrowRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [inquiryText, setInquiryText] = useState("");
@@ -95,6 +97,14 @@ export function BioInsightHeroSection() {
             <br className="hidden sm:block" />
             BioInsight Lab이 스펙 비교부터 최적 견적까지 한 번에 찾아드립니다.
           </p>
+
+          {/* 플랫폼 서사 서브카피 */}
+          <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed px-2 break-keep">
+            검색 결과를{" "}
+            <span className="font-semibold text-blue-600">소싱 워크스페이스</span>에 담아 팀원과 공유하고,{" "}
+            <br className="hidden md:block" />
+            클릭 한 번으로 견적부터 발주까지 이어서 관리하세요.
+          </p>
         </div>
 
         {/* 2. 중앙 대형 검색창 (구글 스타일) - 모바일: w-full, mt-4로 공간 효율 */}
@@ -149,6 +159,20 @@ export function BioInsightHeroSection() {
               </button>
             ))}
           </div>
+
+          {/* 로그인 유저: 워크스페이스 컨텍스트 버튼 */}
+          {session?.user && (
+            <div className="mt-6 flex justify-center">
+              <a
+                href="/dashboard"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-sm font-semibold rounded-xl shadow-sm transition-all duration-150"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                최근 작업하던 소싱 워크스페이스로 이동하기
+                <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            </div>
+          )}
 
           {/* 맞춤 소싱 및 도입 문의 CTA */}
           <div className="mt-10 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, ScanLine } from "lucide-react";
+import { Menu, ScanLine, Search, LayoutDashboard, FileText, Phone, Zap, ArrowRight, Clock } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
@@ -43,19 +43,16 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
       <Sheet>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
-          {/* ── LEFT: 로고 (모든 해상도) ──────────────────────────────── */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 flex-shrink-0"
-          >
+          {/* ── LEFT: 로고 ──────────────────────────────── */}
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <BioInsightLogo showText={true} />
           </Link>
 
-          {/* Sheet 드로어 내용 */}
+          {/* ── Sheet 드로어 내용 ────────────────────────── */}
           <SheetContent side="right" className="w-full sm:max-w-xs p-0 flex flex-col">
 
             {session?.user ? (
-              /* ── 로그인: 프로필 카드 + CTA + 기본 링크 ── */
+              /* ── 로그인: 프로필 + 빠른 시작 + 제품 기능 ── */
               <div className="flex flex-col flex-1 overflow-y-auto">
                 {/* 프로필 카드 */}
                 <div className="px-5 pt-16 pb-5 border-b border-slate-100">
@@ -74,59 +71,134 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </div>
                 </div>
 
-                {/* 대시보드 CTA */}
+                {/* ── 빠른 시작 섹션 ── */}
                 <div className="px-4 pt-4 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Zap className="h-3 w-3" />
+                    빠른 시작
+                  </div>
+
+                  {/* 소싱 워크스페이스 (강조 CTA) */}
                   <SheetClose asChild>
                     <Link
                       href="/dashboard"
-                      className="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl py-3 transition-colors shadow-sm"
+                      className="flex items-center justify-between w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl px-4 py-3 transition-colors shadow-sm mb-2"
                     >
-                      내 워크스페이스 열기
+                      <div className="flex items-center gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        소싱 워크스페이스
+                      </div>
+                      <ArrowRight className="h-4 w-4 opacity-70" />
+                    </Link>
+                  </SheetClose>
+
+                  {/* 새 견적 요청 */}
+                  <SheetClose asChild>
+                    <Link
+                      href="/quotes/new"
+                      className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-1 transition-colors"
+                    >
+                      <FileText className="h-4 w-4 text-slate-400" />
+                      새 견적 요청
+                    </Link>
+                  </SheetClose>
+
+                  {/* 최근 검색 이어가기 */}
+                  <SheetClose asChild>
+                    <Link
+                      href="/test/search"
+                      className="flex items-center gap-2 w-full px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                    >
+                      <Clock className="h-4 w-4 text-slate-400" />
+                      최근 검색 이어가기
                     </Link>
                   </SheetClose>
                 </div>
 
-                {/* 랜딩 기본 링크 */}
-                <nav className="px-2 pt-2 pb-2 space-y-1">
-                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
+                {/* ── 제품 기능 섹션 ── */}
+                <nav className="px-4 pt-2 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품 기능</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">AI 검색 및 견적</Link>
+                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-1 transition-colors">
+                      <Search className="h-4 w-4 text-slate-400" />
+                      AI 제품 검색
+                    </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">프로토콜 맞춤 견적</Link>
+                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                      <FileText className="h-4 w-4 text-slate-400" />
+                      프로토콜 맞춤 소싱
+                    </Link>
                   </SheetClose>
-                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
-                  <SheetClose asChild>
-                    <Link href="/intro" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">서비스 소개</Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link href="/pricing" className="block px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">요금 &amp; 도입</Link>
-                  </SheetClose>
+                  <div className="border-t border-slate-100 mt-2 pt-2">
+                    <SheetClose asChild>
+                      <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                        <Phone className="h-4 w-4 text-slate-400" />
+                        요금 &amp; 도입 문의
+                      </Link>
+                    </SheetClose>
+                  </div>
                 </nav>
               </div>
             ) : (
-              /* ── 비로그인: Public 메뉴 ── */
-              <nav className="flex-1 overflow-y-auto">
-                <div className="px-2 pt-20 pb-2 space-y-1">
-                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">핵심 기능</div>
-                  <SheetClose asChild>
-                    <Link href="/test/search" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">AI 검색 및 견적</Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link href="/protocol/bom" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">프로토콜 맞춤 견적</Link>
-                  </SheetClose>
-                  <div className="mt-2 px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">서비스</div>
-                  <SheetClose asChild>
-                    <Link href="/intro" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">서비스 소개</Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link href="/pricing" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">요금 &amp; 도입</Link>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Link href="/support" className="block px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-md">고객 지원 및 문의</Link>
-                  </SheetClose>
+              /* ── 비로그인: 워크스페이스 유도 + 제품 기능 ── */
+              <div className="flex flex-col flex-1 overflow-y-auto">
+                <div className="px-4 pt-16 pb-2">
+                  {/* 워크스페이스 진입 유도 카드 */}
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-4 mb-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">소싱 워크스페이스</span>
+                    </div>
+                    <p className="text-xs text-blue-700 leading-relaxed mb-3">
+                      로그인 후 나만의 작업 공간에서<br />검색·견적·관리를 한 번에 하세요.
+                    </p>
+                    <SheetClose asChild>
+                      <Link
+                        href="/auth/signin?callbackUrl=/dashboard"
+                        className="flex items-center justify-center gap-1.5 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg py-2.5 transition-colors"
+                      >
+                        로그인하고 시작하기
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </SheetClose>
+                  </div>
                 </div>
-              </nav>
+
+                <nav className="px-4 pb-2 space-y-0.5">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품 기능</div>
+                  <SheetClose asChild>
+                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+                      <Search className="h-4 w-4 text-slate-400" />
+                      AI 제품 검색
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+                      <FileText className="h-4 w-4 text-slate-400" />
+                      프로토콜 맞춤 소싱
+                    </Link>
+                  </SheetClose>
+                  <div className="border-t border-slate-100 mt-2 pt-2">
+                    <SheetClose asChild>
+                      <Link href="/intro" className="px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors block">
+                        서비스 소개
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+                        <Phone className="h-4 w-4 text-slate-400" />
+                        요금 &amp; 도입
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href="/support" className="px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors block">
+                        고객 지원 및 문의
+                      </Link>
+                    </SheetClose>
+                  </div>
+                </nav>
+              </div>
             )}
 
             {/* 하단 CTA */}
@@ -150,8 +222,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </div>
           </SheetContent>
 
-          {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 QR + 햄버거 ── */}
-          <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
+          {/* ── RIGHT: 데스크탑 nav + UserMenu + 모바일 QR + 햄버거 ── */}
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
             {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
             {session?.user && (
               <button
@@ -164,30 +236,58 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               </button>
             )}
 
-            {/* 데스크탑 네비게이션 - md 이상 항상 표시 */}
-            <nav className="hidden md:flex items-center gap-6 mr-2">
-              {/* 요금 & 도입 - 로그인 여부와 무관하게 항상 표시 */}
-              <Link
-                href="/pricing"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
-              >
-                요금 &amp; 도입
-              </Link>
-
+            {/* 데스크탑 네비게이션 */}
+            <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* 로그인 상태: 워크스페이스 버튼 */
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap"
-                >
-                  워크스페이스로 이동
-                </Link>
+                /* ── 로그인: [검색] [소싱 워크스페이스(강조)] [견적함] [도입 문의] ── */
+                <>
+                  <Link
+                    href="/test/search"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    검색
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm mx-1"
+                  >
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    소싱 워크스페이스
+                  </Link>
+                  <Link
+                    href="/quotes"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    견적함
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    도입 문의
+                  </Link>
+                </>
               ) : (
-                /* 비로그인: 로그인 링크 + 시작하기 버튼 */
+                /* ── 비로그인: [워크스페이스(비활성)] [요금&도입] [로그인] [시작하기] ── */
                 <>
                   <Link
                     href="/auth/signin?callbackUrl=/dashboard"
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    워크스페이스
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                  >
+                    요금 &amp; 도입
+                  </Link>
+                  <Link
+                    href="/auth/signin?callbackUrl=/dashboard"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
                   >
                     로그인
                   </Link>
@@ -204,7 +304,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 프로필 메뉴 */}
             <UserMenu />
 
-            {/* 햄버거 버튼 (모든 해상도) */}
+            {/* 햄버거 버튼 */}
             <SheetTrigger asChild>
               <button
                 className="p-2 -mr-1 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
