@@ -1,0 +1,207 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { MainLayout } from "../_components/main-layout";
+import { MainHeader } from "../_components/main-header";
+import { MainFooter } from "../_components/main-footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Search,
+  Building2,
+  FileText,
+  LogIn,
+  Mail,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
+
+const INQUIRY_TYPES = [
+  {
+    icon: Search,
+    title: "서비스 이용 문의",
+    description: "검색·비교·견적 요청 등 플랫폼 기능 사용 중 궁금한 점",
+  },
+  {
+    icon: Building2,
+    title: "도입 및 요금 문의",
+    description: "기관·기업 단위 도입, 플랜 선택, 계약 조건 관련 문의",
+  },
+  {
+    icon: FileText,
+    title: "견적·소싱 관련 문의",
+    description: "특정 시약·장비 소싱 지원이나 맞춤 견적 요청",
+  },
+  {
+    icon: LogIn,
+    title: "계정 및 로그인 문제",
+    description: "로그인 오류, 계정 연동, 비밀번호 재설정 등",
+  },
+];
+
+export default function SupportPage() {
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // 실제 백엔드 연동 전 임시 처리
+    setSubmitted(true);
+  };
+
+  return (
+    <MainLayout>
+      <MainHeader />
+      <div className="w-full pt-14">
+
+        {/* ── 페이지 헤더 ── */}
+        <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100 py-12 md:py-16">
+          <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+              고객 지원 및 문의
+            </h1>
+            <p className="text-slate-600 text-base md:text-lg leading-relaxed">
+              서비스 이용 중 궁금한 점이나 도입 관련 문의가 있으신가요?<br className="hidden sm:block" />
+              BioInsight Lab 팀이 빠르게 확인하고 안내해드립니다.
+            </p>
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-4xl px-4 md:px-6 py-12 md:py-16 space-y-14">
+
+          {/* ── 문의 유형 ── */}
+          <section>
+            <h2 className="text-lg font-bold text-slate-900 mb-6">어떤 문의가 필요하신가요?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {INQUIRY_TYPES.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Card key={item.title} className="border border-slate-200 shadow-none hover:border-slate-300 hover:bg-slate-50/50 transition-colors">
+                    <CardContent className="p-5 flex items-start gap-4">
+                      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <Icon className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 mb-0.5">{item.title}</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* ── 문의 폼 ── */}
+          <section>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">문의 남기기</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              문의 내용을 남겨주시면 확인 후 순차적으로 답변드립니다.
+              도입 상담이나 기관·기업 문의는 우선 검토 후 별도로 안내드립니다.
+            </p>
+
+            {submitted ? (
+              <div className="rounded-xl border border-green-200 bg-green-50 px-6 py-8 text-center">
+                <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                <p className="text-base font-semibold text-slate-900 mb-1">문의가 접수되었습니다.</p>
+                <p className="text-sm text-slate-600">확인 후 순차적으로 답변 드리겠습니다. 평일 기준으로 처리됩니다.</p>
+                <Button
+                  variant="outline"
+                  className="mt-5 border-slate-300 text-slate-700"
+                  onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); }}
+                >
+                  다른 문의 남기기
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">이름 또는 기관명</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="홍길동 / BioLab Institute"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">이메일</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="your@email.com"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">문의 내용</label>
+                  <textarea
+                    required
+                    rows={5}
+                    placeholder="문의 내용을 자세히 적어주세요. 도입 문의라면 기관/기업 정보를 함께 남겨주시면 더 빠르게 안내해드립니다."
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <Button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 px-7 flex items-center gap-2"
+                  >
+                    문의 남기기
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <p className="text-xs text-slate-400">평일 기준 순차적으로 답변드립니다.</p>
+                </div>
+              </form>
+            )}
+          </section>
+
+          {/* ── 이메일 직접 문의 ── */}
+          <section className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 mb-0.5">이메일로 직접 문의하기</p>
+              <p className="text-xs text-slate-500">위 양식 대신 이메일로 바로 문의하실 수도 있습니다.</p>
+            </div>
+            <a
+              href="mailto:support@bioinsightlab.com"
+              className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
+            >
+              <Mail className="h-4 w-4" />
+              support@bioinsightlab.com
+            </a>
+          </section>
+
+          {/* ── 빠른 이동 ── */}
+          <section className="flex flex-col sm:flex-row gap-3">
+            <Link href="/intro">
+              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
+                서비스 소개 보기
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
+                요금 & 도입 안내
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
+                홈으로 돌아가기
+              </Button>
+            </Link>
+          </section>
+
+        </div>
+      </div>
+      <MainFooter />
+    </MainLayout>
+  );
+}
