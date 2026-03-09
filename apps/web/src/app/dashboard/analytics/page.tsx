@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,7 @@ import {
 import {
   DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
   ChevronRight, BarChart2, AlertTriangle, CheckCircle2, Info,
-  Lightbulb, CreditCard,
+  Lightbulb, CreditCard, RefreshCw, Store,
 } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -54,11 +55,27 @@ const CATEGORY_COLORS = [
   "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#f97316",
 ];
 
+// ── 카테고리 라벨 매핑 (raw EN → 사용자 언어) ────────────
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  REAGENT: "시약", REAGENTS: "시약",
+  TOOL: "장비", TOOLS: "장비", EQUIPMENT: "장비",
+  CONSUMABLE: "소모품", CONSUMABLES: "소모품",
+  GLASSWARE: "유리기구",
+  CHEMICAL: "화학물질", CHEMICALS: "화학물질",
+  MEDIA: "배지", BUFFER: "완충용액",
+  OTHER: "기타", ETC: "기타",
+};
+function getCategoryLabel(raw: string | null | undefined): string {
+  if (!raw) return "기타";
+  return CATEGORY_LABEL_MAP[raw.toUpperCase()] ?? raw;
+}
+
 // ── 카테고리 아이콘 ───────────────────────────────────────
 function CategoryIcon({ category }: { category: string }) {
-  if (category === "시약") return <FlaskConical className="h-3.5 w-3.5 text-blue-500" />;
-  if (category === "장비") return <Package className="h-3.5 w-3.5 text-emerald-500" />;
-  if (category === "소모품") return <ShoppingCart className="h-3.5 w-3.5 text-amber-500" />;
+  const label = getCategoryLabel(category);
+  if (label === "시약") return <FlaskConical className="h-3.5 w-3.5 text-blue-500" />;
+  if (label === "장비") return <Package className="h-3.5 w-3.5 text-emerald-500" />;
+  if (label === "소모품") return <ShoppingCart className="h-3.5 w-3.5 text-amber-500" />;
   return <Package className="h-3.5 w-3.5 text-slate-400" />;
 }
 
@@ -126,7 +143,7 @@ function aggregateTopItems(items: TopSpendingItem[]): AggregatedItem[] {
   for (const it of items) {
     const key = it.item || "미등록";
     if (!map[key]) {
-      map[key] = { item: key, vendor: it.vendor, category: it.category || "기타", totalAmount: 0, count: 0, latestDate: it.date };
+      map[key] = { item: key, vendor: it.vendor, category: getCategoryLabel(it.category), totalAmount: 0, count: 0, latestDate: it.date };
     }
     map[key].totalAmount += it.amount || 0;
     map[key].count += 1;
@@ -134,6 +151,18 @@ function aggregateTopItems(items: TopSpendingItem[]): AggregatedItem[] {
       map[key].latestDate = it.date;
       map[key].vendor = it.vendor;
     }
+  }
+  return Object.values(map).sort((a, b) => b.totalAmount - a.totalAmount);
+}
+
+// ── 벤더별 집계 ────────────────────────────────────────────
+function aggregateByVendor(items: TopSpendingItem[]): { vendor: string; totalAmount: number; count: number }[] {
+  const map: Record<string, { vendor: string; totalAmount: number; count: number }> = {};
+  for (const it of items) {
+    const key = it.vendor || "미등록";
+    if (!map[key]) map[key] = { vendor: key, totalAmount: 0, count: 0 };
+    map[key].totalAmount += it.amount || 0;
+    map[key].count += 1;
   }
   return Object.values(map).sort((a, b) => b.totalAmount - a.totalAmount);
 }
@@ -188,6 +217,8 @@ function EmptyChart({ message }: { message: string }) {
 
 // ── 메인 페이지 ──────────────────────────────────────────
 export default function AnalyticsPage() {
+  const [tableTab, setTableTab] = useState<"top" | "repeat" | "vendor">("top");
+
   const { data, isLoading, isError } = useQuery<AnalyticsDashboardData>({
     queryKey: ["analytics-dashboard"],
     queryFn: fetchAnalyticsDashboard,
@@ -208,6 +239,16 @@ export default function AnalyticsPage() {
   const peakMonth = getPeakMonth(monthlySpending);
   const topCat = categorySpending[0] ?? null;
   const aggregatedItems = aggregateTopItems(topSpending);
+  const vendorItems = aggregateByVendor(topSpending);
+  const repeatItems = aggregatedItems.filter((i) => i.count > 1);
+
+  // 이번 달 / 전월 지출
+  const validMonths = monthlySpending.filter((m) => m.amount > 0);
+  const currentMonth = validMonths[validMonths.length - 1] ?? null;
+  const prevMonth = validMonths[validMonths.length - 2] ?? null;
+  const monthChange = currentMonth && prevMonth && prevMonth.amount > 0
+    ? Math.round(((currentMonth.amount - prevMonth.amount) / prevMonth.amount) * 100)
+    : null;
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -245,7 +286,111 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* ══ 2. KPI 카드 — 숫자 + 해석 ══ */}
+      {/* ══ 2. 지출 요약 인사이트 (3-card strip) ══ */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] p-4 shadow-sm space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* 이번 달 지출 상태 */}
+          <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 지출</span>
+            </div>
+            {currentMonth ? (
+              <>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  ₩{currentMonth.amount.toLocaleString("ko-KR")}
+                </div>
+                <p className="text-xs mt-1">
+                  {monthChange !== null ? (
+                    <span className={monthChange > 0 ? "text-amber-600" : "text-emerald-600"}>
+                      전월 대비 {Math.abs(monthChange)}% {monthChange > 0 ? "증가" : "감소"}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">전월 비교 데이터 없음</span>
+                  )}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 mt-1">이번 달 지출 없음</p>
+            )}
+          </div>
+
+          {/* 주요 지출 카테고리 */}
+          <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <FlaskConical className="h-4 w-4 text-purple-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">주요 지출 카테고리</span>
+            </div>
+            {topCat ? (
+              <>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {getCategoryLabel(topCat.name)}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">전체 지출의 {topCat.value}% 차지</p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 mt-1">데이터 없음</p>
+            )}
+          </div>
+
+          {/* 반복 구매 패턴 */}
+          <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">반복 구매 패턴</span>
+            </div>
+            {repeatItems.length > 0 ? (
+              <>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {repeatItems.length}개 품목
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+                  최다: {repeatItems[0].item} ({repeatItems[0].count}회)
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 mt-1">반복 구매 없음</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ══ 3. 인사이트 텍스트 카드 ══ */}
+      {!isLoading && insights.length > 0 && (
+        <Card className="rounded-xl border-blue-100 dark:border-blue-900/30 bg-blue-50/40 dark:bg-blue-950/10 shadow-sm">
+          <CardHeader className="pb-2 p-4">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0" />
+              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 분석 요약</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <ul className="space-y-2">
+              {insights.map((insight, i) => {
+                const Icon = insight.icon;
+                return (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <Icon className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${insight.color}`} />
+                    <span className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{insight.text}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ══ 4. KPI 카드 — 숫자 + 해석 ══ */}
       {isLoading ? <KPISkeleton /> : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
@@ -344,32 +489,7 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* ══ 3. 지출 분석 요약 인사이트 ══ */}
-      {!isLoading && insights.length > 0 && (
-        <Card className="rounded-xl border-blue-100 dark:border-blue-900/30 bg-blue-50/40 dark:bg-blue-950/10 shadow-sm">
-          <CardHeader className="pb-2 p-4">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 분석 요약</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <ul className="space-y-2">
-              {insights.map((insight, i) => {
-                const Icon = insight.icon;
-                return (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <Icon className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${insight.color}`} />
-                    <span className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{insight.text}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ══ 4. 차트 분석 ══ */}
+      {/* ══ 5. 차트 분석 ══ */}
       {isLoading ? <ChartSkeleton /> : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
@@ -496,24 +616,40 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* ══ 5. 고지출 품목 인사이트 테이블 ══ */}
+      {/* ══ 6. 지출 인사이트 테이블 (탭: 고지출 / 반복구매 / 벤더별) ══ */}
       <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-        <CardHeader className="p-4 pb-2">
-          <div className="flex items-center justify-between">
+        <CardHeader className="p-4 pb-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">고지출 품목</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 인사이트 테이블</CardTitle>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                구매 금액 기준 상위 품목 · 반복 구매 포함
+                고지출 품목 · 반복 구매 상위 · 벤더별 지출 분석
               </p>
             </div>
-            <Link href="/dashboard/purchases">
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-400 hover:text-blue-600 gap-0.5 flex-shrink-0">
-                전체 구매 내역 <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1 flex-shrink-0">
+              {(["top", "repeat", "vendor"] as const).map((tab) => {
+                const labels = { top: "고지출", repeat: "반복구매", vendor: "벤더별" };
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setTableTab(tab)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                      tableTab === tab
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                  >
+                    {labels[tab]}
+                    {tab === "repeat" && repeatItems.length > 0 && (
+                      <span className="ml-1 text-[10px] text-blue-600 font-bold">{repeatItems.length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-4 pt-3">
           {isLoading ? (
             <div className="space-y-2">
               {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
@@ -528,7 +664,49 @@ export default function AnalyticsPage() {
                 </Button>
               </Link>
             </div>
+          ) : tableTab === "vendor" ? (
+            /* ── 벤더별 탭 ── */
+            <div className="overflow-x-auto">
+              <Table className="min-w-[400px]">
+                <TableHeader>
+                  <TableRow className="border-slate-100 dark:border-slate-800/50">
+                    <TableHead className="w-8 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">#</TableHead>
+                    <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">벤더명</TableHead>
+                    <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-center">주문 건수</TableHead>
+                    <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">지출 합계</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vendorItems.map((v, index) => (
+                    <TableRow key={v.vendor} className="border-slate-100 dark:border-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                      <TableCell className="py-2.5">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                          {index + 1}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-2">
+                          <Store className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                          <span className="font-medium text-slate-800 dark:text-slate-200 text-sm">{v.vendor}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-center">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-0">
+                          {v.count}건
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-right">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          ₩{v.totalAmount.toLocaleString("ko-KR")}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
+            /* ── 고지출 / 반복구매 탭 ── */
             <div className="overflow-x-auto">
               <Table className="min-w-[540px]">
                 <TableHeader>
@@ -542,7 +720,7 @@ export default function AnalyticsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {aggregatedItems.map((item, index) => (
+                  {(tableTab === "repeat" ? repeatItems : aggregatedItems).map((item, index) => (
                     <TableRow key={item.item} className="border-slate-100 dark:border-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       <TableCell className="py-2.5">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -577,6 +755,13 @@ export default function AnalyticsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {tableTab === "repeat" && repeatItems.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-400">
+                        반복 구매 품목이 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -584,12 +769,12 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* ══ 6. 분석 후 다음 액션 ══ */}
+      {/* ══ 7. 분석 후 다음 액션 ══ */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-900/30 p-4">
         <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
           분석 후 이어서 확인하기
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           <Link href="/dashboard/purchases">
             <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
@@ -614,6 +799,13 @@ export default function AnalyticsPage() {
               월별 추이
             </Button>
           </Link>
+          <button
+            onClick={() => setTableTab("vendor")}
+            className="flex h-10 items-center justify-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors"
+          >
+            <Store className="h-3.5 w-3.5 text-slate-500" />
+            벤더별 지출
+          </button>
         </div>
       </div>
 
