@@ -151,7 +151,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
           </SheetContent>
 
           {/* ── RIGHT: 데스크탑 nav + 공통 버튼 + UserMenu + 모바일 QR + 햄버거 ── */}
-          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
+          <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
             {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
             {session?.user && (
               <button
@@ -162,6 +162,24 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               >
                 <ScanLine className="h-4 w-4" />
               </button>
+            )}
+
+            {/* 데스크탑 텍스트 네비게이션 - 비로그인 · md 이상만 표시 */}
+            {!session?.user && (
+              <nav className="hidden md:flex items-center gap-6 mr-2">
+                <Link
+                  href="/pricing"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                >
+                  요금 &amp; 도입
+                </Link>
+                <Link
+                  href="/auth/signin?callbackUrl=/dashboard"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                >
+                  로그인
+                </Link>
+              </nav>
             )}
 
             {/* Get Started CTA - 비로그인 · PC 전용 */}
