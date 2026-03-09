@@ -6,7 +6,6 @@ import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Search,
   Building2,
@@ -19,35 +18,54 @@ import {
 
 const INQUIRY_TYPES = [
   {
+    key: "service",
     icon: Search,
     title: "서비스 이용 문의",
     description: "검색·비교·견적 요청 등 플랫폼 기능 사용 중 궁금한 점",
+    placeholder: "사용 중 궁금한 점이나 불편한 점을 구체적으로 남겨주세요.",
   },
   {
+    key: "pricing",
     icon: Building2,
     title: "도입 및 요금 문의",
     description: "기관·기업 단위 도입, 플랜 선택, 계약 조건 관련 문의",
+    placeholder: "기관/기업명, 예상 사용자 수, 필요한 기능, 도입 시기 등을 남겨주세요.",
   },
   {
+    key: "sourcing",
     icon: FileText,
     title: "견적·소싱 관련 문의",
     description: "특정 시약·장비 소싱 지원이나 맞춤 견적 요청",
+    placeholder: "필요한 품목, 용도, 수량, 희망 제조사 또는 조건 등을 남겨주세요.",
   },
   {
+    key: "account",
     icon: LogIn,
     title: "계정 및 로그인 문제",
     description: "로그인 오류, 계정 연동, 비밀번호 재설정 등",
+    placeholder: "문제가 발생한 계정, 로그인 오류 내용, 발생 시점 등을 적어주세요.",
   },
 ];
 
+const DEFAULT_PLACEHOLDER = "문의 내용을 자세히 적어주세요. 도입 문의라면 기관/기업 정보를 함께 남겨주시면 더 빠르게 안내해드립니다.";
+
 export default function SupportPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+
+  const selectedInquiry = INQUIRY_TYPES.find((t) => t.key === selectedType);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // 실제 백엔드 연동 전 임시 처리
     setSubmitted(true);
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setSelectedType(null);
+    setForm({ name: "", email: "", message: "" });
   };
 
   return (
@@ -70,24 +88,39 @@ export default function SupportPage() {
 
         <div className="mx-auto max-w-4xl px-4 md:px-6 py-12 md:py-16 space-y-14">
 
-          {/* ── 문의 유형 ── */}
+          {/* ── 문의 유형 선택 ── */}
           <section>
             <h2 className="text-lg font-bold text-slate-900 mb-6">어떤 문의가 필요하신가요?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {INQUIRY_TYPES.map((item) => {
                 const Icon = item.icon;
+                const isSelected = selectedType === item.key;
                 return (
-                  <Card key={item.title} className="border border-slate-200 shadow-none hover:border-slate-300 hover:bg-slate-50/50 transition-colors">
-                    <CardContent className="p-5 flex items-start gap-4">
-                      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <Icon className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 mb-0.5">{item.title}</p>
-                        <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setSelectedType(item.key)}
+                    className={`w-full text-left rounded-xl border p-5 flex items-start gap-4 transition-all duration-150 ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+                      isSelected ? "bg-blue-600" : "bg-blue-50"
+                    }`}>
+                      <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-blue-600"}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold mb-0.5 ${isSelected ? "text-blue-900" : "text-slate-900"}`}>
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5 ml-auto" />
+                    )}
+                  </button>
                 );
               })}
             </div>
@@ -109,13 +142,19 @@ export default function SupportPage() {
                 <Button
                   variant="outline"
                   className="mt-5 border-slate-300 text-slate-700"
-                  onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); }}
+                  onClick={handleReset}
                 >
                   다른 문의 남기기
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                {selectedInquiry && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+                    <span className="text-xs font-semibold text-blue-700">선택된 문의 유형:</span>
+                    <span className="text-xs text-blue-600">{selectedInquiry.title}</span>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">이름 또는 기관명</label>
@@ -145,7 +184,7 @@ export default function SupportPage() {
                   <textarea
                     required
                     rows={5}
-                    placeholder="문의 내용을 자세히 적어주세요. 도입 문의라면 기관/기업 정보를 함께 남겨주시면 더 빠르게 안내해드립니다."
+                    placeholder={selectedInquiry?.placeholder ?? DEFAULT_PLACEHOLDER}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
