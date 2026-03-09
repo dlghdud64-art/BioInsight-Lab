@@ -57,25 +57,25 @@ export function FeaturesShowcaseSection() {
   const tabs: Tab[] = [
     {
       id: "sourcing",
-      title: "AI 기반 초고속 소싱",
-      description: "복잡한 시약 명칭, 프로토콜 분석부터 최저가 비교까지 AI가 대신 찾아줍니다.",
-      features: ["검색", "비교", "번역", "프로토콜"],
+      title: "AI 기반 시약·장비 검색",
+      description: "복잡한 시약명, CAS Number, 제조사 기준 검색은 물론 프로토콜과 사용 목적까지 반영해 더 적합한 후보를 빠르게 찾습니다.",
+      features: ["검색", "비교", "대체품", "프로토콜"],
       icon: Search,
       gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
     },
     {
       id: "purchasing",
-      title: "간편한 견적 및 주문",
-      description: "여러 벤더의 견적서를 한 번에 요청하고, 구매 품의용 엑셀 파일을 즉시 생성하세요.",
-      features: ["견적 리스트", "공유"],
+      title: "비교부터 견적 요청까지 한 번에",
+      description: "여러 벤더의 후보 품목을 한곳에 모아 비교하고, 선택한 품목으로 바로 견적 요청 리스트를 만들어 전달할 수 있습니다.",
+      features: ["견적 리스트", "벤더 비교", "요청 공유"],
       icon: ShoppingCart,
       gradient: "bg-gradient-to-br from-violet-500 to-fuchsia-600",
     },
     {
       id: "management",
-      title: "자동화된 연구실 관리",
-      description: "물건이 도착하면 자동으로 인벤토리에 등록됩니다. 예산 현황도 실시간으로 확인하세요.",
-      features: ["대시보드", "재고 관리"],
+      title: "도입 이후 품목 관리까지 연결",
+      description: "도입한 품목을 워크스페이스에서 정리하고, 재고·예산·이력 관리까지 이어서 운영할 수 있습니다.",
+      features: ["대시보드", "재고 관리", "이력 관리"],
       icon: BarChart3,
       gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
     },
@@ -313,12 +313,12 @@ export function FeaturesShowcaseSection() {
         <div className="text-center space-y-2 mb-12">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">주요 기능</h2>
           <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">
-            연구실 업무 흐름에 맞춘 3가지 핵심 가치
+            검색, 비교, 견적 요청, 품목 관리까지 실무에 필요한 흐름을 한 곳에서 처리하세요.
           </p>
         </div>
 
         {/* 모바일: 세로 스택, 데스크탑: 좌우 2분할 레이아웃 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
           {/* 좌측: 탭 메뉴 (모바일에서는 숨김) */}
           <div className="hidden md:block space-y-4">
             {tabs.map((tab) => {
@@ -443,8 +443,8 @@ export function FeaturesShowcaseSection() {
           </div>
 
           {/* 데스크탑: 우측 이미지/목업 영역 */}
-          <div className="hidden md:block lg:sticky lg:top-24">
-            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner p-6 max-w-full">
+          <div className="hidden md:flex md:flex-col lg:sticky lg:top-24 self-start">
+            <div className="relative w-full min-h-[460px] rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-inner p-6 max-w-full">
               {/* Fade-in 애니메이션을 위한 컨테이너 */}
               <div
                 key={activeTab}

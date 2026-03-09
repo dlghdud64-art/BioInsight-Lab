@@ -100,10 +100,9 @@ export function BioInsightHeroSection() {
 
           {/* 플랫폼 서사 서브카피 */}
           <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed px-2 break-keep">
-            검색 결과를{" "}
-            <span className="font-semibold text-blue-600">소싱 워크스페이스</span>에 담아 팀원과 공유하고,{" "}
+            찾는 품목을 검색하고 비교한 뒤,{" "}
             <br className="hidden md:block" />
-            클릭 한 번으로 견적부터 발주까지 이어서 관리하세요.
+            견적 요청까지 한 곳에서 이어서 처리하세요.
           </p>
         </div>
 
@@ -168,7 +167,7 @@ export function BioInsightHeroSection() {
                 className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 text-sm font-semibold rounded-xl shadow-sm transition-all duration-150"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                최근 작업하던 소싱 워크스페이스로 이동하기
+                워크스페이스에서 이어서 작업하기
                 <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </a>
             </div>

@@ -98,9 +98,15 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                    <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <Phone className="h-4 w-4 text-slate-400" />
                       요금 &amp; 도입
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                      <Headset className="h-4 w-4 text-slate-400" />
+                      고객 지원 및 문의
                     </Link>
                   </SheetClose>
                 </nav>
@@ -163,7 +169,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <SheetClose asChild>
                   <Link href="/auth/signin?callbackUrl=/dashboard">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-lg text-sm">
-                      로그인 / 시작하기
+                      무료로 시작하기
                     </Button>
                   </Link>
                 </SheetClose>
@@ -230,7 +236,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     href="/auth/signin?callbackUrl=/dashboard"
                     className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
                   >
-                    시작하기
+                    무료로 시작하기
                   </Link>
                 </>
               )}

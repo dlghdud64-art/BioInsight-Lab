@@ -9,7 +9,7 @@ export function FlowSection() {
     {
       number: 1,
       title: "검색",
-      description: "제품명, 카테고리로 후보 제품을 한 번에 검색합니다.",
+      description: "제품명, 제조사, 프로토콜 기준으로 필요한 후보를 빠르게 찾습니다.",
       href: "/test/search",
       icon: Search,
       color: "indigo",
@@ -17,7 +17,7 @@ export function FlowSection() {
     {
       number: 2,
       title: "비교",
-      description: "가격·스펙 기준으로 후보를 비교해 최종 품목을 고릅니다.",
+      description: "가격·스펙·공급 조건을 기준으로 후보를 비교하고 정리합니다.",
       href: "/test/compare",
       icon: GitCompare,
       color: "emerald",
@@ -25,7 +25,7 @@ export function FlowSection() {
     {
       number: 3,
       title: "견적 요청",
-      description: "선정 품목으로 견적 요청 리스트를 만들고 내보내기합니다.",
+      description: "선택한 품목으로 요청 리스트를 만들고 벤더에 바로 전달합니다.",
       href: "/test/quote",
       icon: FileText,
       color: "blue",
@@ -37,10 +37,10 @@ export function FlowSection() {
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-8 md:mb-12">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-2">
-            간단한 3단계 프로세스
+            간단한 3단계로 견적까지 빠르게
           </h2>
           <p className="text-xs md:text-sm text-slate-600 max-w-2xl mx-auto">
-            검색부터 견적 요청까지, 모든 과정을 한 곳에서 처리하세요
+            찾는 품목을 검색하고 비교한 뒤, 필요한 후보만 모아 견적 요청까지 이어가세요.
           </p>
         </div>
 
