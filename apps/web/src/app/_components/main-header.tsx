@@ -209,23 +209,14 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* ── 로그인: [대시보드] [검색 시작하기(강조)] ── */
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <LayoutDashboard className="h-3.5 w-3.5" />
-                    대시보드
-                  </Link>
-                  <Link
-                    href="/test/search"
-                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                    검색 시작하기
-                  </Link>
-                </>
+                /* ── 로그인: [검색 시작하기(강조)] ── */
+                <Link
+                  href="/test/search"
+                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  검색 시작하기
+                </Link>
               ) : (
                 /* ── 비로그인: [요금&도입] [로그인] [시작하기] ── */
                 <>
