@@ -16,11 +16,12 @@ import {
 import {
   DollarSign, TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
   ChevronRight, BarChart2, AlertTriangle, CheckCircle2, Info,
-  Lightbulb, CreditCard, RefreshCw, Store,
+  Lightbulb, CreditCard, RefreshCw, Store, Users, PieChart as PieChartIcon,
 } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import TeamAnalyticsView from "./_components/team-analytics-view";
 
 // ── 타입 ────────────────────────────────────────────────────
 interface BudgetSummary { total: number; used: number; remaining: number; usageRate: number; }
@@ -216,7 +217,18 @@ function EmptyChart({ message }: { message: string }) {
 }
 
 // ── 메인 페이지 ──────────────────────────────────────────
+// ── 보기 전환 타입 ──────────────────────────────────────────
+type AnalyticsView = "overview" | "team" | "category" | "vendor";
+
+const VIEW_OPTIONS: { key: AnalyticsView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "overview", label: "전체", icon: BarChart2 },
+  { key: "team", label: "팀별", icon: Users },
+  { key: "category", label: "카테고리별", icon: PieChartIcon },
+  { key: "vendor", label: "벤더별", icon: Store },
+];
+
 export default function AnalyticsPage() {
+  const [currentView, setCurrentView] = useState<AnalyticsView>("overview");
   const [tableTab, setTableTab] = useState<"top" | "repeat" | "vendor">("top");
 
   const { data, isLoading, isError } = useQuery<AnalyticsDashboardData>({
@@ -260,7 +272,9 @@ export default function AnalyticsPage() {
             지출 분석
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            예산 소진 현황과 지출 패턴을 확인하고 다음 행동으로 이어가세요.
+            {currentView === "team"
+              ? "팀별 예산 집행 상태와 위험 신호를 확인하세요."
+              : "예산 소진 현황과 지출 패턴을 확인하고 다음 행동으로 이어가세요."}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -279,12 +293,40 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* ══ 보기 전환 ══ */}
+      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1 w-fit">
+        {VIEW_OPTIONS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => {
+              setCurrentView(key);
+              if (key === "vendor") setTableTab("vendor");
+              else if (key === "category") setTableTab("top");
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              currentView === key
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* 오류 상태 */}
       {isError && (
         <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">
           데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
         </div>
       )}
+
+      {/* ══ 팀별 보기 ══ */}
+      {currentView === "team" && <TeamAnalyticsView />}
+
+      {/* ══ 전체 / 카테고리 / 벤더 보기 ══ */}
+      {currentView !== "team" && (<>
 
       {/* ══ 2. 지출 요약 인사이트 (3-card strip) ══ */}
       {isLoading ? (
@@ -800,7 +842,7 @@ export default function AnalyticsPage() {
             </Button>
           </Link>
           <button
-            onClick={() => setTableTab("vendor")}
+            onClick={() => { setCurrentView("vendor"); setTableTab("vendor"); }}
             className="flex h-10 items-center justify-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors"
           >
             <Store className="h-3.5 w-3.5 text-slate-500" />
@@ -809,6 +851,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      </>)}
     </div>
   );
 }
