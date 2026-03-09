@@ -148,14 +148,14 @@ export default function AdminDashboardPage() {
   };
 
   // ─── 선택된 견적 ────────────────────────────────────────────────────────
-  const { data: quoteDetail } = useQuery({
+  const { data: quoteDetail } = useQuery<Quote | null>({
     queryKey: ["admin-quote-detail", selectedQuoteId],
     queryFn: async () => {
       if (!selectedQuoteId) return null;
       const res = await fetch(`/api/admin/quotes/${selectedQuoteId}`);
       if (!res.ok) throw new Error("Failed");
       const d = await res.json();
-      return d.quote || d;
+      return (d.quote || d) as Quote;
     },
     enabled: !!selectedQuoteId,
   });
