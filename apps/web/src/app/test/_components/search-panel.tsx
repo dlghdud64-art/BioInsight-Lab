@@ -7,12 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { Search, ChevronDown, ChevronUp, Brain, Loader2, AlertCircle, FileText, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
 
 export function SearchPanel() {
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
@@ -31,7 +29,6 @@ export function SearchPanel() {
     setMaxPrice,
     grade,
     setGrade,
-    runSearch,
     gptEnabled,
     setGptEnabled,
   } = useTestFlow();
@@ -41,10 +38,10 @@ export function SearchPanel() {
       <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader>
           <CardTitle className="text-sm font-semibold text-slate-900">
-            <span>통합 검색 & AI 분석</span>
+            <span>검색 필터</span>
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">
-            제품을 검색하고 후보를 선택합니다.
+            카테고리·브랜드·가격 등 검색 조건을 설정합니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -232,13 +229,13 @@ export function SearchPanel() {
 
       <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-semibold text-slate-800">옵션</CardTitle>
+          <CardTitle className="text-xs font-semibold text-slate-800">검색 옵션</CardTitle>
           <CardDescription className="text-[10px] text-slate-500">
-            검색 시 추가로 실행할 옵션을 설정합니다.
+            결과 표시 방식을 설정합니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-xs">
-          {/* GPT 분석 옵션 */}
+          {/* AI 결과 해석 옵션 */}
           <div className="space-y-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
@@ -246,178 +243,15 @@ export function SearchPanel() {
                 checked={gptEnabled}
                 onCheckedChange={(checked) => setGptEnabled(checked === true)}
               />
-              <span className="font-medium text-slate-700">검색 시 GPT 분석 함께 실행</span>
+              <span className="font-medium text-slate-700">AI 결과 해석 포함</span>
             </label>
             <p className="text-[11px] text-slate-500 pl-6">
-              검색 실행 시, 검색어를 GPT로 분석하여 타깃/카테고리/실험 유형을 함께 표시합니다.
+              검색 결과 상단에 AI 해석 리포트를 표시합니다. 타깃·카테고리·실험 유형이 자동으로 분석됩니다.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* 검색어 분석 결과 */}
-      <SearchAnalysisResultCard />
     </div>
-  );
-}
-
-function SearchAnalysisResultCard() {
-  const {
-    queryAnalysis,
-    gptEnabled,
-    hasSearched,
-    analysisLoading,
-    analysisError,
-    searchQuery
-  } = useTestFlow();
-
-  // GPT 토글 OFF이거나 검색 전이면 표시 안함
-  if (!gptEnabled || !hasSearched) {
-    return null;
-  }
-
-  // 분석 중
-  if (analysisLoading) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            검색어 분석 결과 (GPT)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              GPT가 검색어를 분석하는 중입니다...
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // 에러
-  if (analysisError) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            검색어 분석 결과 (GPT)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-start gap-2 text-xs text-slate-600">
-              <AlertCircle className="h-3 w-3 mt-0.5 text-amber-500" />
-              <div>
-                <p className="font-medium">GPT 분석 중 오류가 발생했습니다.</p>
-                <p className="text-[10px] text-slate-500 mt-1">
-                  검색은 정상적으로 수행되었으니, 필요하다면 다시 시도해 주세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // 결과 없음
-  if (!queryAnalysis) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            검색어 분석 결과 (GPT)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-slate-500">
-            분석 결과를 가져오지 못했습니다.
-            <br />
-            검색어를 조금 더 구체적으로 입력해 보세요.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // 결과 있음
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2">
-            <Brain className="h-4 w-4 text-purple-600" />
-            검색어 분석 결과 (GPT)
-          </CardTitle>
-          <Link href={`/test/search/analysis?q=${encodeURIComponent(searchQuery || "")}`}>
-            <Button
-              size="sm"
-              className="h-6 text-[10px] px-2 bg-slate-900 text-white hover:bg-slate-800"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              결과 보기
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2.5">
-        {queryAnalysis.target && (
-          <div className="text-xs">
-            <span className="text-slate-500">타깃:</span>{" "}
-            <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200 ml-1">
-              {queryAnalysis.target}
-            </Badge>
-          </div>
-        )}
-        {queryAnalysis.targetExperiment && (
-          <div className="text-xs">
-            <span className="text-slate-500">실험 유형:</span>{" "}
-            <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200 ml-1">
-              {queryAnalysis.targetExperiment}
-            </Badge>
-          </div>
-        )}
-        {queryAnalysis.category && (
-          <div className="text-xs">
-            <span className="text-slate-500">카테고리:</span>{" "}
-            <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 border-green-200 ml-1">
-              {queryAnalysis.category === "REAGENT" ? "시약" :
-               queryAnalysis.category === "TOOL" ? "기구" :
-               queryAnalysis.category === "EQUIPMENT" ? "장비" :
-               queryAnalysis.category}
-            </Badge>
-          </div>
-        )}
-        {queryAnalysis.properties && queryAnalysis.properties.length > 0 && (
-          <div className="pt-2 border-t border-slate-200">
-            <div className="text-[10px] text-slate-500 mb-1.5">속성:</div>
-            <div className="flex flex-wrap gap-1">
-              {queryAnalysis.properties.map((prop: string, idx: number) => (
-                <Badge key={idx} variant="outline" className="text-[10px]">
-                  {prop}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-        {queryAnalysis.purpose && (
-          <div className="pt-2 border-t border-slate-200">
-            <div className="text-[10px] text-slate-500 mb-1">목적</div>
-            <p className="text-xs text-slate-700 leading-relaxed">{queryAnalysis.purpose}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }

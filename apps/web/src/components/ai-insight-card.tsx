@@ -1,6 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, FileText, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -12,22 +13,23 @@ interface AIInsightCardProps {
     category?: string;
     targetExperiment?: string;
     purpose?: string;
+    properties?: string[];
   } | null;
 }
 
 export function AIInsightCard({ query, productCount, queryAnalysis }: AIInsightCardProps) {
-  // Mock 데이터 기반 인사이트 생성
   const getInsightText = () => {
     if (queryAnalysis?.target && queryAnalysis?.targetExperiment) {
-      return `검색하신 키워드 '${query}'에 대한 AI 분석 결과입니다. ${queryAnalysis.target} 타깃에 적합한 ${productCount}개의 제품을 찾았습니다. 특히 ${queryAnalysis.targetExperiment} 실험에 최적화된 제품 위주로 선별되었습니다.`;
+      return `'${query}' 검색에 대한 AI 분석 결과입니다. ${queryAnalysis.target} 타깃에 적합하며 ${queryAnalysis.targetExperiment} 실험에 최적화된 ${productCount}개 제품을 찾았습니다.`;
     } else if (queryAnalysis?.category) {
-      const categoryName = queryAnalysis.category === "REAGENT" ? "시약" : 
-                          queryAnalysis.category === "TOOL" ? "기구" : 
-                          queryAnalysis.category === "EQUIPMENT" ? "장비" : 
-                          queryAnalysis.category;
-      return `검색하신 키워드 '${query}'에 대한 AI 분석 결과입니다. ${categoryName} 카테고리에 해당하는 ${productCount}개의 제품을 찾았습니다. 실험 목적에 맞는 제품 위주로 선별되었습니다.`;
+      const categoryName =
+        queryAnalysis.category === "REAGENT" ? "시약" :
+        queryAnalysis.category === "TOOL" ? "기구" :
+        queryAnalysis.category === "EQUIPMENT" ? "장비" :
+        queryAnalysis.category;
+      return `'${query}' 검색에 대한 AI 분석 결과입니다. ${categoryName} 카테고리에서 실험 목적에 맞는 ${productCount}개 제품을 찾았습니다.`;
     } else {
-      return `검색하신 키워드 '${query}'에 대한 AI 분석 결과입니다. 실험 목적에 맞는 ${productCount}개의 제품을 찾았습니다. 특히 'Research Grade' 제품 위주로 선별되었습니다.`;
+      return `'${query}' 검색에 대한 AI 분석 결과입니다. 실험 목적에 맞는 ${productCount}개 제품을 찾았습니다.`;
     }
   };
 
@@ -41,21 +43,17 @@ export function AIInsightCard({ query, productCount, queryAnalysis }: AIInsightC
               <Sparkles className="h-5 w-5 text-indigo-600" />
             </div>
           </div>
-          
+
           {/* 내용 */}
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3 min-w-0">
             <div>
-              <h3 className="font-bold text-indigo-900 text-base mb-1">
-                AI 분석 리포트
-              </h3>
-              <p className="text-sm text-indigo-800 leading-relaxed">
-                {getInsightText()}
-              </p>
+              <h3 className="font-bold text-indigo-900 text-base mb-1">AI 분석 리포트</h3>
+              <p className="text-sm text-indigo-800 leading-relaxed">{getInsightText()}</p>
             </div>
-            
+
             {/* 분석 결과 태그 */}
             {queryAnalysis && (
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-2">
                 {queryAnalysis.target && (
                   <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
                     타깃: {queryAnalysis.target}
@@ -68,18 +66,36 @@ export function AIInsightCard({ query, productCount, queryAnalysis }: AIInsightC
                 )}
                 {queryAnalysis.category && (
                   <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
-                    카테고리: {queryAnalysis.category === "REAGENT" ? "시약" : 
-                              queryAnalysis.category === "TOOL" ? "기구" : 
-                              queryAnalysis.category === "EQUIPMENT" ? "장비" : 
-                              queryAnalysis.category}
+                    카테고리: {queryAnalysis.category === "REAGENT" ? "시약" :
+                               queryAnalysis.category === "TOOL" ? "기구" :
+                               queryAnalysis.category === "EQUIPMENT" ? "장비" :
+                               queryAnalysis.category}
                   </Badge>
                 )}
               </div>
             )}
+
+            {/* 목적 텍스트 */}
+            {queryAnalysis?.purpose && (
+              <p className="text-xs text-indigo-700 leading-relaxed border-t border-indigo-200 pt-2">
+                {queryAnalysis.purpose}
+              </p>
+            )}
+
+            {/* 상세 분석 CTA */}
+            <div className="border-t border-indigo-200 pt-2">
+              <Link
+                href={`/test/search/analysis?q=${encodeURIComponent(query)}`}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 transition-colors"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                AI 분석 상세 보기
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
-
