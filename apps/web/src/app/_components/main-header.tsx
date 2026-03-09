@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, ScanLine, Search, FileText, Phone, Info, Headset } from "lucide-react";
+import { Menu, ScanLine, Search, FileText, Phone, Info, Headset, LayoutDashboard } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
@@ -43,8 +43,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
       <Sheet>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
-          {/* ── LEFT: 로고 ──────────────────────────────── */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+          {/* ── LEFT: 로고 (로그인 → 대시보드, 비로그인 → 홈) ── */}
+          <Link href={session?.user ? "/dashboard" : "/"} className="flex items-center gap-2 flex-shrink-0">
             <BioInsightLogo showText={true} />
           </Link>
 
@@ -71,8 +71,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </div>
                 </div>
 
-                {/* ── 제품 ── */}
+                {/* ── 운영 허브 ── */}
                 <nav className="px-4 pt-4 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">운영 허브</div>
+                  <SheetClose asChild>
+                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 rounded-lg mb-0.5 transition-colors">
+                      <LayoutDashboard className="h-4 w-4 text-blue-500" />
+                      대시보드
+                    </Link>
+                  </SheetClose>
+                </nav>
+
+                {/* ── 제품 ── */}
+                <nav className="px-4 pb-2">
                   <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
                     <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
@@ -198,20 +209,21 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* ── 로그인: [검색 시작하기(강조)] [도입 문의] ── */
+                /* ── 로그인: [대시보드] [검색 시작하기(강조)] ── */
                 <>
+                  <Link
+                    href="/dashboard"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    대시보드
+                  </Link>
                   <Link
                     href="/test/search"
                     className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
                   >
                     <Search className="h-3.5 w-3.5" />
                     검색 시작하기
-                  </Link>
-                  <Link
-                    href="/pricing"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    도입 문의
                   </Link>
                 </>
               ) : (

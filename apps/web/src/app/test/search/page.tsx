@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { LayoutDashboard, ClipboardList, TrendingDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,7 +127,8 @@ export default function SearchPage() {
                             };
                           }
                         }
-                        const displayName = product?.name || product?.brand || `제품 ${id}`;
+                        // 내부 slug/key가 UI에 노출되지 않도록 안전한 fallback 사용
+                        const displayName = product?.name || product?.brand || "선택 품목";
                         return (
                           <Badge
                             key={id}
@@ -195,7 +197,38 @@ export default function SearchPage() {
                       queryAnalysis={queryAnalysis}
                     />
                   )}
-                  
+
+                  {/* 재고 운영 인사이트 — 로그인 사용자 + 검색 결과 존재 시 보조 레이어 */}
+                  {session?.user && hasSearched && searchQuery && (
+                    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <ClipboardList className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+                        <span className="text-xs font-semibold text-slate-600">재고 운영 연결</span>
+                        <span className="text-[10px] text-slate-400">— 검색 품목을 운영 흐름과 연결하세요</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors">
+                            <TrendingDown className="h-3 w-3 text-slate-500" />
+                            재고 현황 확인
+                          </button>
+                        </Link>
+                        <Link href="/test/quote">
+                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+                            <FileText className="h-3 w-3" />
+                            견적 요청하기
+                          </button>
+                        </Link>
+                        <Link href="/dashboard">
+                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
+                            <LayoutDashboard className="h-3 w-3 text-slate-500" />
+                            운영 허브
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
                   {products.map((product) => {
                     const isInCompare = compareIds.includes(product.id);
 
@@ -217,25 +250,50 @@ export default function SearchPage() {
             ) : (
               <div className="flex h-full flex-col items-center justify-center py-16 md:py-20 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
-                    <>
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-6 shadow-sm hidden md:flex">
-                        <Search className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
+                    <div className="hidden md:flex flex-col items-center text-center">
+                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-5">
+                        <Search className="h-8 w-8 text-slate-400" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-3 hidden md:block">찾으시는 시약/장비를 입력하면 AI가 비교 분석합니다.</h3>
-                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center max-w-md hidden md:block">
-                        검색창에 제품명, CAS Number, 제조사를 입력하시면 전 세계 500만 개 제품 중 최적의 후보를 찾아드립니다.
+                      <h3 className="text-lg font-semibold text-slate-800 mb-2">시약·장비를 검색해 비교 견적을 시작하세요</h3>
+                      <p className="text-sm text-slate-500 leading-relaxed max-w-sm mb-6">
+                        제품명, CAS No., 제조사, 카탈로그 번호로 검색하면 후보 제품을 찾고 비교·견적 요청까지 이어갈 수 있습니다.
                       </p>
-                    </>
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <span className="px-2 py-1 rounded bg-slate-100">검색 → 비교</span>
+                        <span>→</span>
+                        <span className="px-2 py-1 rounded bg-slate-100">견적 요청</span>
+                        <span>→</span>
+                        <span className="px-2 py-1 rounded bg-slate-100">재고 등록</span>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                        <FileText className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                        <Package className="h-7 w-7 text-slate-400" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
-                      <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed text-center">
-                        검색어를 조금 더 넓게 입력하거나, 제품명 대신 키워드(타겟, 플랫폼 등)로 시도해 보세요.
+                      <h3 className="text-base font-semibold text-slate-800 mb-1">검색 결과를 찾지 못했습니다</h3>
+                      <p className="text-sm text-slate-500 mb-5 max-w-xs leading-relaxed">
+                        검색어를 더 구체적으로 입력하거나, 제조사·카탈로그 번호 기준으로 다시 시도해 보세요.
                       </p>
-                    </>
+                      <div className="flex flex-col gap-2 w-full max-w-xs text-left">
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">다음 방법을 시도해 보세요</p>
+                        <div className="space-y-1.5 text-xs text-slate-600">
+                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> 유사 품목명 또는 카테고리 키워드로 재검색</div>
+                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> 제조사명 단독으로 검색 (예: Thermo Fisher)</div>
+                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> CAS No. 또는 카탈로그 번호 직접 입력</div>
+                        </div>
+                      </div>
+                      {session?.user && (
+                        <div className="mt-5 flex items-center gap-2">
+                          <Link href="/dashboard/inventory">
+                            <button className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
+                              <LayoutDashboard className="h-3 w-3" />
+                              재고 관리 이동
+                            </button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   )}
               </div>
             )}

@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Sparkles, FileText, ChevronDown, ChevronUp,
-  Search, GitCompare, Lightbulb, ArrowRight,
+  Search, Lightbulb,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 interface AIInsightCardProps {
   query: string;
@@ -170,15 +168,6 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
                 {isExpanded ? "상세 분석 접기" : "상세 분석 보기"}
                 {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
-              <span className="text-indigo-300 text-xs">·</span>
-              <Link
-                href={`/test/search?q=${encodeURIComponent(query)}&step=compare`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 transition-colors"
-              >
-                <GitCompare className="h-3.5 w-3.5" />
-                이 조건으로 비교하기
-                <ArrowRight className="h-3 w-3" />
-              </Link>
             </div>
           </div>
         </div>
@@ -226,7 +215,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
             {/* 3. 비교 기준 추천 */}
             <div className="rounded-lg bg-white border border-indigo-100 p-4">
               <div className="flex items-center gap-2 mb-2">
-                <GitCompare className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
                 <h4 className="text-sm font-semibold text-slate-900">추천 비교 기준</h4>
               </div>
               <p className="text-xs text-slate-500 mb-2">이 검색 결과를 비교할 때 확인하면 좋은 항목입니다.</p>
@@ -258,14 +247,6 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
               </div>
             </div>
 
-            {/* 5. 비교 CTA */}
-            <Link href={`/test/search?q=${encodeURIComponent(query)}&step=compare`} className="block pt-1">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-10 text-sm font-semibold shadow-sm transition-all">
-                <GitCompare className="h-4 w-4 mr-2" />
-                이 조건으로 제품 비교하기
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-            </Link>
           </div>
         )}
       </CardContent>

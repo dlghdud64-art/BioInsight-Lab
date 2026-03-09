@@ -34,8 +34,8 @@ export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("business");
 
-  const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.8);
-  const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.8);
+  const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.9);
+  const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.9);
 
   // ── 플랜 정의 ─────────────────────────────────────────────────────
   const plans = [
@@ -221,8 +221,8 @@ export default function PricingPage() {
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
             <span className="text-sm font-normal text-slate-600">/월</span>
           </span>
-          <span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800 ring-1 ring-green-600/20">
-            연간 결제 시 20% 할인 (2개월 무료)
+          <span className="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/10">
+            연간 결제 시 10% 할인
           </span>
         </span>
       );
@@ -279,8 +279,8 @@ export default function PricingPage() {
                     )}
                   >
                     연간 결제
-                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">
-                      20% 할인
+                    <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium">
+                      10% 할인
                     </span>
                   </button>
                 </div>
@@ -559,7 +559,7 @@ export default function PricingPage() {
             <div className="flex flex-col">
               <span className="text-xs text-slate-500 font-medium">결제 주기</span>
               <span className="text-sm md:text-base font-semibold text-slate-900">
-                {isAnnual ? "연간 결제 (20% 할인)" : "월간 결제"}
+                {isAnnual ? "연간 결제 (10% 할인)" : "월간 결제"}
               </span>
             </div>
           </div>
