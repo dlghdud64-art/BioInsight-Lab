@@ -4,14 +4,11 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Package, AlertTriangle, DollarSign, FileText, Search, Plus,
   TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare,
 } from "lucide-react";
-import { BudgetPredictionWidget } from "@/components/dashboard/BudgetPredictionWidget";
 import Link from "next/link";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
@@ -19,18 +16,13 @@ import { getGuestKey } from "@/lib/guest-key";
 export default function DashboardPage() {
   const { data: session, status } = useSession();
 
-  // 대시보드 통계 조회
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const guestKey = getGuestKey();
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
-
-      const response = await fetch("/api/dashboard/stats", {
-        headers,
-        cache: "no-store",
-      });
+      const response = await fetch("/api/dashboard/stats", { headers, cache: "no-store" });
       if (!response.ok) throw new Error("Failed to fetch dashboard stats");
       return response.json();
     },
@@ -42,13 +34,11 @@ export default function DashboardPage() {
   if (status === "loading" || statsLoading) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
-        <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="h-6 w-48 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        <div className="h-[72px] rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="h-[110px] md:h-[148px] animate-pulse border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
-              <CardContent className="p-4 md:p-6">
-                <div className="h-12 md:h-20 rounded bg-slate-100 dark:bg-slate-800" />
-              </CardContent>
-            </Card>
+            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
           ))}
         </div>
       </div>
@@ -62,8 +52,8 @@ export default function DashboardPage() {
     lowStockAlerts: rawStats.lowStockAlerts ?? 0,
     monthlySpending: rawStats.thisMonthPurchaseAmount ?? 0,
     activeQuotes: rawStats.quoteStats?.pending ?? 0,
+    respondedQuotes: rawStats.quoteStats?.responded ?? 0,
     monthOverMonthChange: parseFloat(rawStats.monthOverMonthChange ?? "0"),
-    budgetUsageRate: parseFloat(rawStats.budgetUsageRate ?? "0"),
     monthlySpendingChart: (rawStats.monthlySpending ?? []) as Array<{ month: string; amount: number }>,
     expiringItems: (rawStats.expiringItems ?? []) as Array<{
       id: string; productName: string; catalogNumber?: string;
@@ -81,666 +71,518 @@ export default function DashboardPage() {
     }>,
   };
 
-  const processPurchaseData = (p: typeof stats.recentPurchases[0], index: number) => {
-    const productName = p.itemName || "품목명 없음";
-    const vendor = p.vendorName || "공급사 정보 없음";
-    const amount = p.amount ?? 0;
-    const dateObj = new Date(p.purchasedAt);
-    const date = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, "0")}.${String(dateObj.getDate()).padStart(2, "0")}`;
-    return { id: p.id || `p-${index}`, productName, vendor, amount, date };
-  };
+  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0;
+  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0);
 
-  const purchaseBadgeClass = "h-6 px-2.5 py-0.5 rounded-full font-semibold text-[11px] tracking-wide flex items-center gap-1.5 w-fit border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300";
-
-  const renderPurchaseRow = (p: { id: string; productName: string; vendor: string; amount: number; date: string }) => (
-    <TableRow key={p.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-      <TableCell className="py-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
-            <Beaker className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col min-w-0 overflow-hidden">
-            <span className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{p.productName}</span>
-            <span className="text-xs text-muted-foreground mt-0.5 truncate">{p.vendor}</span>
-          </div>
-        </div>
-      </TableCell>
-      <TableCell className="py-4">
-        <Badge variant="outline" className={purchaseBadgeClass}>
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          구매 완료
-        </Badge>
-      </TableCell>
-      <TableCell className="py-4 text-sm text-slate-500">{p.date}</TableCell>
-      <TableCell className="py-4 text-right font-bold text-slate-900 dark:text-slate-100">
-        ₩{p.amount.toLocaleString("ko-KR")}
-      </TableCell>
-    </TableRow>
-  );
-
-  const renderPurchaseCard = (p: { id: string; productName: string; vendor: string; amount: number; date: string }) => (
-    <div key={p.id} className="flex flex-col gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm w-full min-w-0">
-      <div className="flex items-start gap-2.5 min-w-0">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-          <Beaker className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <p className="text-xs font-medium leading-tight text-slate-900 dark:text-slate-100 truncate">{p.productName}</p>
-          <p className="text-[10px] text-muted-foreground truncate">{p.vendor}</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5">
-          <Badge variant="outline" className={purchaseBadgeClass}>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            구매 완료
-          </Badge>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">{p.date}</span>
-        </div>
-        <p className="text-xs font-bold text-slate-900 dark:text-slate-100">₩{p.amount.toLocaleString("ko-KR")}</p>
-      </div>
-    </div>
-  );
-
+  // ── 알림 (심각도순 정렬) ──
   const notifications = [
-    {
-      id: 1,
-      type: "alert",
-      title: "재고 부족: FBS (남은 수량 1개)",
-      content: "FBS (Fetal Bovine Serum) 수량이 1개 남았습니다.",
-      time: "10분 전",
-      unread: true,
-    },
-    {
-      id: 2,
-      type: "quote",
-      title: "견적 도착: Thermo Fisher 외 2건",
-      content: "요청하신 견적서가 도착했습니다.",
-      time: "1시간 전",
-      unread: true,
-    },
-    {
-      id: 3,
-      type: "delivery",
-      title: "입고 완료: 50ml Conical Tube",
-      content: "50ml Conical Tube (500/case) 입고 처리가 완료되었습니다.",
-      time: "어제",
-      unread: false,
-    },
-    {
-      id: 4,
-      type: "alert",
-      title: "재고 부족: Trypsin-EDTA",
-      content: "Trypsin-EDTA Solution 수량이 부족합니다.",
-      time: "2일 전",
-      unread: false,
-    },
-  ];
+    ...(stats.lowStockAlerts > 0
+      ? [{ id: "n-low", type: "alert" as const, title: `재고 부족 ${stats.lowStockAlerts}건 — 발주 검토 필요`, content: "안전재고 이하 품목이 감지되었습니다.", time: "지금", unread: true, href: "/dashboard/inventory?filter=low" }]
+      : []),
+    ...(stats.activeQuotes > 0
+      ? [{ id: "n-quote", type: "quote" as const, title: `견적 ${stats.activeQuotes}건 검토 대기`, content: stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신, 검토가 필요합니다.` : "공급사 응답을 기다리고 있습니다.", time: "최근", unread: true, href: "/dashboard/quotes?status=PENDING" }]
+      : []),
+    ...(stats.expiringCount > 0
+      ? [{ id: "n-exp", type: "alert" as const, title: `유통기한 임박 ${stats.expiringCount}건`, content: "30일 이내 만료 예정 품목이 있습니다.", time: "최근", unread: true, href: "/dashboard/inventory" }]
+      : []),
+    { id: "n-delivery", type: "delivery" as const, title: "최근 입고 처리 완료", content: "등록된 입고 내역을 확인할 수 있습니다.", time: "최근", unread: false, href: "/dashboard/purchases" },
+  ].slice(0, 4);
 
   const renderNotificationIcon = (type: string) => {
     switch (type) {
       case "alert":
-        return (
-          <div className="flex-shrink-0 rounded-md bg-red-100 p-2">
-            <AlertTriangle className="h-4 w-4 text-red-600 animate-pulse" />
-          </div>
-        );
+        return <div className="flex-shrink-0 rounded-md bg-red-100 dark:bg-red-950/40 p-2"><AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" /></div>;
       case "quote":
-        return (
-          <div className="flex-shrink-0 rounded-md bg-blue-100 p-2">
-            <FileText className="h-4 w-4 text-blue-600" />
-          </div>
-        );
+        return <div className="flex-shrink-0 rounded-md bg-blue-100 dark:bg-blue-950/40 p-2"><FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>;
       case "delivery":
-        return (
-          <div className="flex-shrink-0 rounded-md bg-green-100 p-2">
-            <Truck className="h-4 w-4 text-green-600" />
-          </div>
-        );
+        return <div className="flex-shrink-0 rounded-md bg-green-100 dark:bg-green-950/40 p-2"><Truck className="h-4 w-4 text-green-600 dark:text-green-400" /></div>;
       default:
         return null;
     }
   };
 
-  // 조치 필요 항목 유무
-  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0;
+  const formatPurchaseDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  };
 
-  // 운영 현황 요약 블록 (모바일·데스크탑 공용)
-  const OperationalSummary = () => (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
-        {hasActionItems ? (
-          <>
-            <span className="relative flex h-2 w-2 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
-            </span>
-            <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">지금 확인이 필요한 항목</h3>
-          </>
-        ) : (
-          <>
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-            <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400">운영 현황</h3>
-          </>
-        )}
-      </div>
-      {hasActionItems ? (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800/50 sm:divide-y-0 sm:grid sm:grid-cols-3 sm:divide-x">
-          {stats.lowStockAlerts > 0 && (
-            <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-              <div className="rounded-md bg-red-100 dark:bg-red-950/40 p-2 flex-shrink-0">
-                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.lowStockAlerts}건 재고 부족</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">즉시 발주 검토 필요</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
-            </Link>
-          )}
-          {stats.activeQuotes > 0 && (
-            <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-              <div className="rounded-md bg-blue-100 dark:bg-blue-950/40 p-2 flex-shrink-0">
-                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.activeQuotes}건 견적 대기</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">검토 및 승인 필요</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
-            </Link>
-          )}
-          {stats.expiringCount > 0 && (
-            <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-              <div className="rounded-md bg-amber-100 dark:bg-amber-950/40 p-2 flex-shrink-0">
-                <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.expiringCount}건 유통기한 임박</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">30일 이내 만료 예정</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="px-4 py-3">
-          <p className="text-sm text-slate-500 dark:text-slate-400">현재 조치가 필요한 운영 이슈가 없습니다.</p>
-        </div>
-      )}
-    </div>
-  );
+  // ── KPI 해석 문구 ──
+  const getInventoryInsight = () => {
+    if (stats.totalInventory === 0) return "품목을 등록하면 현황이 표시됩니다";
+    if (stats.lowStockAlerts > 0) return `${stats.lowStockAlerts}개 품목 부족 — 점검 필요`;
+    return "전체 품목 정상 운영 중";
+  };
+
+  const getStockInsight = () => {
+    if (stats.lowStockAlerts === 0) return "현재 모든 품목 정상 수준";
+    if (stats.lowStockAlerts >= 3) return "즉시 발주 검토가 필요합니다";
+    return "해당 품목의 발주를 검토하세요";
+  };
+
+  const getSpendingInsight = () => {
+    const change = stats.monthOverMonthChange;
+    if (stats.monthlySpending === 0) return "이번 달 지출 내역 없음";
+    if (change > 10) return `전월 대비 ${change.toFixed(0)}% 증가 — 확인 필요`;
+    if (change < -10) return `전월 대비 ${Math.abs(change).toFixed(0)}% 절감`;
+    return "전월과 유사한 지출 수준";
+  };
+
+  const getQuoteInsight = () => {
+    if (stats.activeQuotes === 0) return "현재 진행 중인 견적 없음";
+    if (stats.respondedQuotes > 0) return `${stats.respondedQuotes}건 응답 수신 — 검토 필요`;
+    return "공급사 응답 대기 중";
+  };
 
   return (
-    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 overflow-x-hidden">
-      {/* 페이지 헤더 */}
-      <div className="flex flex-col space-y-1 min-w-0">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate">
+    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 md:space-y-5 overflow-x-hidden">
+
+      {/* ═══ 페이지 헤더 (breadcrumb 제거) ═══ */}
+      <div className="flex flex-col space-y-0.5 min-w-0">
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           대시보드
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {session?.user?.name ? `${session.user.name}님, ` : ""}팀 운영 현황을 한눈에 확인하세요.
+          {session?.user?.name ? `${session.user.name}님, ` : ""}
+          {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
         </p>
       </div>
 
-      {/* 모바일 전용 레이아웃 */}
-      <div className="md:hidden space-y-3 pb-20">
-        {/* 운영 현황 요약 */}
-        <OperationalSummary />
+      {/* ═══ 1순위: 오늘의 우선 작업 ═══ */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {hasActionItems ? (
+              <>
+                <span className="relative flex h-2 w-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                </span>
+                <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">오늘의 우선 작업</h3>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400">운영 상태 정상</h3>
+              </>
+            )}
+          </div>
+          {hasActionItems && (
+            <div className="flex items-center gap-2">
+              {stats.activeQuotes > 0 && (
+                <Link href="/dashboard/quotes?status=PENDING">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-200 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                    견적 검토하기
+                  </Button>
+                </Link>
+              )}
+              {stats.lowStockAlerts > 0 && (
+                <Link href="/dashboard/inventory?filter=low">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-red-200 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30">
+                    재고 확인하기
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+        {hasActionItems ? (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/50 sm:divide-y-0 sm:grid sm:divide-x" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
+            {stats.lowStockAlerts > 0 && (
+              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className="rounded-md bg-red-100 dark:bg-red-950/40 p-2 flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.lowStockAlerts}건 재고 부족</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">즉시 발주 검토 필요</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              </Link>
+            )}
+            {stats.activeQuotes > 0 && (
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className="rounded-md bg-blue-100 dark:bg-blue-950/40 p-2 flex-shrink-0">
+                  <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.activeQuotes}건 견적 대기</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신 — 검토 필요` : "공급사 응답 대기 중"}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              </Link>
+            )}
+            {stats.expiringCount > 0 && (
+              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className="rounded-md bg-amber-100 dark:bg-amber-950/40 p-2 flex-shrink-0">
+                  <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.expiringCount}건 유통기한 임박</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">30일 이내 만료 예정</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="px-4 py-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">현재 즉시 처리가 필요한 항목이 없습니다. 아래 빠른 실행에서 업무를 시작하세요.</p>
+          </div>
+        )}
+      </div>
 
-        {/* KPI 카드 2×2 */}
+      {/* ═══ 모바일 전용 레이아웃 ═══ */}
+      <div className="md:hidden space-y-3 pb-20">
+
+        {/* 2순위: KPI 카드 2×2 */}
         <div className="grid grid-cols-2 gap-3">
           <Link href="/dashboard/inventory">
-            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
-                <CardTitle className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
-                <div className="rounded-full p-1.5 bg-blue-50 dark:bg-blue-950/50 flex-shrink-0">
-                  <Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">등록 품목</span>
+                  <div className="rounded-full p-1 bg-blue-50 dark:bg-blue-950/50"><Package className="h-3 w-3 text-blue-600 dark:text-blue-400" /></div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
                 <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">전체 등록 품목</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getInventoryInsight()}</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/dashboard/inventory?filter=low">
-            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
-                <CardTitle className="text-xs font-semibold text-red-600 dark:text-red-400 truncate min-w-0">재고 부족</CardTitle>
-                <div className="rounded-full p-1.5 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
-                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+            <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm ${stats.lowStockAlerts > 0 ? "border-red-200 dark:border-red-900/50 bg-red-50/30 dark:bg-red-950/20" : "border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]"}`}>
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">재고 부족</span>
+                  <div className="rounded-full p-1 bg-red-100 dark:bg-red-950/50"><AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" /></div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
                 <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
-                <p className="text-[10px] text-red-500 font-medium mt-0.5">
-                  {stats.lowStockAlerts > 0 ? "발주 필요" : "모두 정상"}
-                </p>
+                <p className="text-[10px] text-red-500 dark:text-red-400 mt-0.5 leading-tight">{getStockInsight()}</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/dashboard/purchases">
-            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
-                <CardTitle className="text-xs font-medium text-muted-foreground truncate min-w-0">이번 달 지출</CardTitle>
-                <div className="rounded-full p-1.5 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
-                  <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 지출</span>
+                  <div className="rounded-full p-1 bg-emerald-50 dark:bg-emerald-900/20"><DollarSign className="h-3 w-3 text-emerald-600 dark:text-emerald-400" /></div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <div className="flex flex-col gap-1">
-                  <div className="text-lg font-bold leading-tight text-slate-900 dark:text-slate-200">
-                    ₩{stats.monthlySpending.toLocaleString("ko-KR")}
-                  </div>
-                  <div className={`flex items-center text-[10px] font-medium w-fit px-1.5 py-0.5 rounded ${
-                    stats.monthOverMonthChange >= 0
-                      ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
-                      : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
-                  }`}>
-                    {stats.monthOverMonthChange >= 0 ? "▲" : "▼"} {Math.abs(stats.monthOverMonthChange).toFixed(1)}%
-                  </div>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-200 leading-tight">
+                  {stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—"}
                 </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getSpendingInsight()}</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/dashboard/quotes?status=PENDING">
-            <Card className="flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
-                <CardTitle className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate min-w-0">진행 중 견적</CardTitle>
-                <div className="rounded-full p-1.5 bg-violet-50 dark:bg-violet-950/50 flex-shrink-0">
-                  <FileText className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">진행 중 견적</span>
+                  <div className="rounded-full p-1 bg-violet-50 dark:bg-violet-950/50"><FileText className="h-3 w-3 text-violet-600 dark:text-violet-400" /></div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
                 <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
-                <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium mt-0.5">
-                  {rawStats?.quoteStats?.responded > 0
-                    ? `응답 ${rawStats.quoteStats.responded}건 수신`
-                    : "응답 대기 중"}
-                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getQuoteInsight()}</p>
               </CardContent>
             </Card>
           </Link>
         </div>
 
-        {/* 최근 구매 & 알림 탭 */}
-        <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50">
-          <CardContent className="p-0">
-            <Tabs defaultValue="purchases" className="w-full">
-              <div className="border-b border-slate-200 dark:border-slate-800/50 px-3 pt-3">
-                <TabsList className="grid w-full grid-cols-2 h-8">
-                  <TabsTrigger value="purchases" className="text-xs">최근 구매</TabsTrigger>
-                  <TabsTrigger value="notifications" className="text-xs">알림</TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="purchases" className="m-0">
-                <div className="grid gap-2 p-3 w-full min-w-0">
-                  {stats.recentPurchases.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
-                      구매 내역이 없습니다.
-                    </div>
-                  ) : (
-                    stats.recentPurchases.map((p, index) => {
-                      const pData = processPurchaseData(p, index);
-                      return renderPurchaseCard(pData);
-                    })
-                  )}
-                  <Link href="/dashboard/purchases" className="block mt-0.5">
-                    <Button variant="outline" className="w-full text-xs h-8">모두 보기</Button>
-                  </Link>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="notifications" className="m-0">
-                <div className="p-3 space-y-1.5">
-                  {notifications.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm">
-                      알림이 없습니다.
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100">최근 알림</h3>
-                        <Link href="/dashboard/notifications">
-                          <Button variant="ghost" size="sm" className="text-xs h-6 px-2">모두 보기</Button>
-                        </Link>
-                      </div>
-                      {notifications.map((notification) => (
-                        <Link
-                          key={notification.id}
-                          href="/dashboard/notifications"
-                          className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors ${
-                            notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          {renderNotificationIcon(notification.type)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <p className="font-medium text-xs text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
-                              {notification.unread && (
-                                <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-slate-600 dark:text-slate-400 line-clamp-1">{notification.content}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{notification.time}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+        {/* 3순위: 빠른 실행 */}
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]">
+          <CardHeader className="pb-2 p-3">
+            <CardTitle className="text-sm font-semibold">빠른 실행</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2">
+            <Link href="/test/search" className="block">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-blue-50/50 border-blue-200 text-blue-700 dark:text-blue-400 dark:bg-blue-950/20 dark:border-blue-900/50 hover:bg-blue-50">
+                <Search className="h-3.5 w-3.5 flex-shrink-0" />
+                시약·장비 검색
+              </Button>
+            </Link>
+            <Link href="/test/quote" className="block">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-blue-50/50 border-blue-200 text-blue-700 dark:text-blue-400 dark:bg-blue-950/20 dark:border-blue-900/50 hover:bg-blue-50">
+                <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                견적 요청하기
+              </Button>
+            </Link>
+            <Link href="/test/compare" className="block">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 hover:bg-slate-50">
+                <GitCompare className="h-3.5 w-3.5 flex-shrink-0" />
+                비교 목록
+              </Button>
+            </Link>
+            <Link href="/dashboard/inventory" className="block">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 hover:bg-slate-50">
+                <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                재고 등록
+              </Button>
+            </Link>
           </CardContent>
         </Card>
+
+        {/* 4순위: 최근 알림 */}
+        <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50 shadow-sm">
+          <CardHeader className="pb-2 p-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
+              <Link href="/dashboard/notifications"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">모두 보기</Button></Link>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 space-y-1">
+            {notifications.map((n) => (
+              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-50/50 dark:bg-blue-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+                {renderNotificationIcon(n.type)}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="font-medium text-xs text-slate-900 dark:text-slate-100 truncate">{n.title}</p>
+                    {n.unread && <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>}
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">{n.content}</p>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 mt-1" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* 5순위: 최근 구매 (축소) */}
+        {stats.recentPurchases.length > 0 && (
+          <Card className="bg-white dark:bg-[#161d2f] border-slate-200 dark:border-slate-800/50 shadow-sm">
+            <CardHeader className="pb-2 p-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">최근 구매</CardTitle>
+                <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-2">
+              {stats.recentPurchases.slice(0, 3).map((p, i) => (
+                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800/30 last:border-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                    <Beaker className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">{p.itemName || "품목명 미등록"}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{formatPurchaseDate(p.purchasedAt)}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex-shrink-0">
+                    {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* 데스크탑 레이아웃 */}
-      <div className="hidden md:grid md:grid-cols-7 md:gap-6">
-        {/* --- Left Main Content (Span 5) --- */}
-        <div className="md:col-span-5 space-y-5">
-          {/* 1. 운영 현황 요약 */}
-          <OperationalSummary />
+      {/* ═══ 데스크탑 레이아웃 ═══ */}
+      <div className="hidden md:grid md:grid-cols-7 md:gap-5">
 
-          {/* 2. KPI 카드 */}
+        {/* ── 좌측 메인 (5col) ── */}
+        <div className="md:col-span-5 space-y-5">
+
+          {/* 2순위: KPI 카드 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/dashboard/inventory">
-              <Card className="h-[148px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-md rounded-xl bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
-                  <CardTitle className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate min-w-0">총 재고 수</CardTitle>
-                  <div className="rounded-full p-2 bg-blue-50 flex-shrink-0">
-                    <Package className="h-4 w-4 text-blue-600" />
-                  </div>
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+                  <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">등록 품목</CardTitle>
+                  <div className="rounded-full p-1.5 bg-blue-50 dark:bg-blue-950/50 flex-shrink-0"><Package className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /></div>
                 </CardHeader>
-                <CardContent className="p-5 pt-0">
-                  <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-200 truncate">{stats.totalInventory.toLocaleString("ko-KR")}</div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">전체 등록 품목</p>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.totalInventory.toLocaleString("ko-KR")}</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getInventoryInsight()}</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className="h-[148px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-red-100/60 dark:border-slate-800/50 bg-red-50/10 dark:bg-[#161d2f] shadow-sm hover:shadow-md rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 truncate min-w-0">재고 부족</CardTitle>
-                  <div className="rounded-full p-2 bg-red-100 dark:bg-red-950/50 flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </div>
+              <Card className={`h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm rounded-xl ${stats.lowStockAlerts > 0 ? "border-red-200/60 dark:border-red-900/40 bg-red-50/20 dark:bg-red-950/20" : "border-slate-200/60 dark:border-slate-800/50 bg-white dark:bg-[#161d2f]"}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+                  <CardTitle className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">재고 부족</CardTitle>
+                  <div className="rounded-full p-1.5 bg-red-100 dark:bg-red-950/50 flex-shrink-0"><AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" /></div>
                 </CardHeader>
-                <CardContent className="p-5 pt-0">
-                  <div className="text-2xl lg:text-3xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
-                  <p className="text-xs text-red-500 dark:text-red-400 font-medium mt-1 flex items-center gap-1.5">
-                    {stats.lowStockAlerts > 0 ? (
-                      <>
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600" />
-                        </span>
-                        즉시 발주 검토 필요
-                      </>
-                    ) : (
-                      <span className="text-slate-400">현재 재고 정상</span>
-                    )}
-                  </p>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.lowStockAlerts}</div>
+                  <p className="text-[11px] text-red-500 dark:text-red-400 mt-0.5 leading-tight">{getStockInsight()}</p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="h-[148px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-md rounded-xl bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
-                  <CardTitle className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate min-w-0">이번 달 지출</CardTitle>
-                  <div className="rounded-full p-2 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+                  <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 지출</CardTitle>
+                  <div className="rounded-full p-1.5 bg-emerald-50 dark:bg-emerald-900/20 flex-shrink-0"><DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /></div>
                 </CardHeader>
-                <CardContent className="p-5 pt-0">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="text-xl lg:text-2xl font-bold leading-none text-slate-900 dark:text-slate-200 truncate">
-                      ₩{stats.monthlySpending.toLocaleString("ko-KR")}
-                    </div>
-                    <div className={`flex items-center text-xs font-medium w-fit px-2 py-0.5 rounded ${
+                <CardContent className="p-4 pt-0">
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-200 leading-tight">
+                    {stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—"}
+                  </div>
+                  {stats.monthlySpending > 0 && (
+                    <div className={`flex items-center text-[11px] font-medium w-fit px-1.5 py-0.5 rounded mt-1 ${
                       stats.monthOverMonthChange >= 0
                         ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
                         : "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
                     }`}>
-                      {stats.monthOverMonthChange >= 0 ? "▲" : "▼"}{" "}
-                      {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
+                      {stats.monthOverMonthChange >= 0 ? "▲" : "▼"} {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
                     </div>
-                  </div>
+                  )}
+                  {stats.monthlySpending === 0 && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{getSpendingInsight()}</p>}
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/quotes?status=PENDING">
-              <Card className="h-[148px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all border-slate-200/60 dark:border-slate-800/50 shadow-sm hover:shadow-md rounded-xl bg-white dark:bg-[#161d2f]">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
-                  <CardTitle className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate min-w-0">진행 중 견적</CardTitle>
-                  <div className="rounded-full p-2 bg-violet-50 flex-shrink-0">
-                    <FileText className="h-4 w-4 text-violet-600" />
-                  </div>
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl bg-white dark:bg-[#161d2f]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+                  <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">진행 중 견적</CardTitle>
+                  <div className="rounded-full p-1.5 bg-violet-50 dark:bg-violet-950/50 flex-shrink-0"><FileText className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" /></div>
                 </CardHeader>
-                <CardContent className="p-5 pt-0">
-                  <div className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                    {rawStats?.quoteStats?.responded > 0
-                      ? `응답 ${rawStats.quoteStats.responded}건 수신`
-                      : "응답 대기 중"}
-                  </p>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getQuoteInsight()}</p>
                 </CardContent>
               </Card>
             </Link>
           </div>
 
-          {/* 3. 최근 구매 내역 (보조) */}
+          {/* 3순위: 빠른 실행 (데스크탑 — 인라인 가로형) */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm p-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">핵심 업무 바로가기</h3>
+            <div className="grid grid-cols-4 gap-3">
+              <Link href="/test/search" className="block">
+                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium transition-all">
+                  <Search className="h-4 w-4 flex-shrink-0" />
+                  시약·장비 검색
+                </Button>
+              </Link>
+              <Link href="/test/quote" className="block">
+                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium transition-all">
+                  <FileText className="h-4 w-4 flex-shrink-0" />
+                  견적 요청하기
+                </Button>
+              </Link>
+              <Link href="/test/compare" className="block">
+                <Button variant="outline" className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-medium transition-all">
+                  <GitCompare className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                  비교 목록 보기
+                </Button>
+              </Link>
+              <Link href="/dashboard/inventory" className="block">
+                <Button className="w-full h-11 justify-start rounded-lg text-sm gap-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-medium transition-all">
+                  <Plus className="h-4 w-4 flex-shrink-0" />
+                  새 재고 등록
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* 5순위: 최근 구매 내역 (축소 — 최대 5건, 컴팩트) */}
           <Card className="overflow-hidden bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-            <CardHeader className="p-4 pb-3">
+            <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">최근 구매 내역</CardTitle>
-                <Link
-                  href="/dashboard/purchases"
-                  className="flex items-center text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
-                >
-                  모두 보기
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300">최근 구매 내역</CardTitle>
+                <Link href="/dashboard/purchases" className="flex items-center text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors">
+                  전체 보기 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-4 pt-0">
               {stats.recentPurchases.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 px-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
-                    <Package className="h-6 w-6 text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">최근 구매 내역이 없습니다.</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">구매 내역을 등록하면 여기에 표시됩니다.</p>
-                  <Link href="/dashboard/purchases" className="mt-3">
-                    <Button variant="outline" size="sm">구매 내역 등록하기</Button>
-                  </Link>
+                <div className="flex items-center gap-3 py-4 text-center justify-center">
+                  <Package className="h-5 w-5 text-slate-300 dark:text-slate-600" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400">구매 내역을 등록하면 여기에 표시됩니다.</p>
                 </div>
               ) : (
-                <>
-                  <div className="lg:hidden grid gap-3 p-4 w-full min-w-0">
-                    {stats.recentPurchases.map((p, index) => {
-                      const pData = processPurchaseData(p, index);
-                      return renderPurchaseCard(pData);
-                    })}
-                  </div>
-                  <div className="hidden lg:block overflow-x-auto">
-                    <Table className="min-w-[600px]">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>품목 정보</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>날짜</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {stats.recentPurchases.map((p, index) => {
-                          const pData = processPurchaseData(p, index);
-                          return renderPurchaseRow(pData);
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
+                <div className="space-y-0 divide-y divide-slate-100 dark:divide-slate-800/50">
+                  {stats.recentPurchases.slice(0, 5).map((p, i) => (
+                    <div key={p.id || `p-${i}`} className="flex items-center gap-3 py-2.5 first:pt-1">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                        <Beaker className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{p.itemName || "품목명 미등록"}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.vendorName || "공급사 미지정"} · {formatPurchaseDate(p.purchasedAt)}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex-shrink-0">
+                        {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* --- Right Side Panel (Span 2) --- */}
+        {/* ── 우측 패널 (2col) ── */}
         <div className="md:col-span-2 space-y-5">
 
-          {/* 1. 빠른 실행 (최우선 배치) */}
-          <Card className="shadow-sm border-slate-200/60 dark:border-slate-800/50 rounded-xl bg-white dark:bg-[#161d2f]">
-            <CardHeader className="pb-3 min-w-0">
-              <CardTitle className="text-base font-semibold truncate min-w-0">빠른 실행</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2.5">
-              <Link href="/test/search" className="block">
-                <Button variant="outline" className="w-full h-11 justify-between rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all">
-                  <div className="flex items-center">
-                    <Search className="mr-3 h-4 w-4 text-slate-500" />
-                    시약·장비 검색
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400" />
-                </Button>
-              </Link>
-              <Link href="/test/compare" className="block">
-                <Button variant="outline" className="w-full h-11 justify-between rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all">
-                  <div className="flex items-center">
-                    <GitCompare className="mr-3 h-4 w-4 text-slate-500" />
-                    비교 목록 보기
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400" />
-                </Button>
-              </Link>
-              <Link href="/test/quote" className="block">
-                <Button variant="outline" className="w-full h-11 justify-between rounded-lg border-blue-200 text-blue-700 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all">
-                  <div className="flex items-center">
-                    <FileText className="mr-3 h-4 w-4" />
-                    견적 요청하기
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-300" />
-                </Button>
-              </Link>
-              <Link href="/dashboard/inventory" className="block">
-                <Button className="w-full h-11 justify-between rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all">
-                  <div className="flex items-center">
-                    <Plus className="mr-3 h-4 w-4" />
-                    새 재고 등록
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-300" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* 2. 최근 알림 */}
+          {/* 4순위: 최근 알림 (액션 연결) */}
           <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-            <CardHeader className="pb-3 min-w-0">
-              <div className="flex items-center justify-between gap-2 min-w-0">
-                <CardTitle className="text-base font-semibold truncate min-w-0">최근 알림</CardTitle>
-                <Link href="/dashboard/notifications">
-                  <Button variant="ghost" size="sm" className="text-xs h-7 px-2">모두 보기</Button>
-                </Link>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
+                <Link href="/dashboard/notifications"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">모두 보기</Button></Link>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2.5 pt-0">
-              {notifications.map((notification) => (
-                <Link
-                  key={notification.id}
-                  href="/dashboard/notifications"
-                  className={`flex items-start gap-3 p-2.5 rounded-lg transition-colors ${
-                    notification.unread ? "bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  {renderNotificationIcon(notification.type)}
+            <CardContent className="space-y-1.5 pt-0">
+              {notifications.map((n) => (
+                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-950/50" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}>
+                  {renderNotificationIcon(n.type)}
                   <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                      <p className="font-medium text-xs text-slate-900 dark:text-slate-100 truncate">{notification.title}</p>
-                      {notification.unread && (
-                        <Badge variant="default" className="h-4 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>
-                      )}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <p className="font-medium text-xs text-slate-900 dark:text-slate-100 truncate">{n.title}</p>
+                      {n.unread && <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{notification.content}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{notification.time}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{n.content}</p>
                   </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 mt-1 group-hover:text-slate-500 transition-colors" />
                 </Link>
               ))}
             </CardContent>
           </Card>
 
-          {/* 3. 지출 추이 차트 */}
-          <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold truncate">지출 추이 (최근 6개월)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              {stats.monthlySpendingChart.every((d) => d.amount === 0) ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 mb-3">
-                    <TrendingUp className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">데이터를 쌓는 중입니다</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={140}>
-                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          {/* 5순위: 지출 추이 (보조 — 운영 추세 확인 역할) */}
+          {stats.monthlySpendingChart.length > 0 && !stats.monthlySpendingChart.every((d) => d.amount === 0) && (
+            <Card className="bg-white dark:bg-[#161d2f] border-slate-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+              <CardHeader className="pb-1 p-4">
+                <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">월별 지출 추이</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <ResponsiveContainer width="100%" height={120}>
+                  <BarChart data={stats.monthlySpendingChart} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis
-                      dataKey="month"
-                      tickFormatter={(v: string) => v.slice(5)}
-                      tick={{ fontSize: 10, fill: "#94a3b8" }}
-                    />
-                    <YAxis
-                      tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
-                      tick={{ fontSize: 10, fill: "#94a3b8" }}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
-                      labelFormatter={(label: string) => `${label}`}
-                    />
+                    <XAxis dataKey="month" tickFormatter={(v: string) => v.slice(5)} tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                    <YAxis tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)} tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                    <Tooltip formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]} labelFormatter={(label: string) => `${label}`} />
                     <Bar dataKey="amount" fill="#3b82f6" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* 4. 예산 소진 예측 (보조) */}
-          <BudgetPredictionWidget />
-
-          {/* 5. 유통기한 임박 위젯 (조건부) */}
+          {/* 유통기한 임박 (조건부) */}
           {stats.expiringCount > 0 && (
-            <Card className="bg-amber-50/30 dark:bg-[#161d2f] border-amber-100 dark:border-slate-800/50">
-              <CardHeader className="pb-2">
+            <Card className="bg-amber-50/20 dark:bg-[#161d2f] border-amber-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+              <CardHeader className="pb-1 p-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    유통기한 임박 ({stats.expiringCount}건)
+                  <CardTitle className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Calendar className="h-3.5 w-3.5" />
+                    유통기한 임박 ({stats.expiringCount})
                   </CardTitle>
-                  <Link href="/dashboard/inventory">
-                    <Button variant="ghost" size="sm" className="text-xs h-6 text-amber-600">확인</Button>
-                  </Link>
+                  <Link href="/dashboard/inventory"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2 text-amber-600 dark:text-amber-400">확인</Button></Link>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                {stats.expiringItems.map((item) => (
+              <CardContent className="p-4 pt-0 space-y-1.5">
+                {stats.expiringItems.slice(0, 3).map((item) => (
                   <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-amber-100 dark:border-slate-800/30 last:border-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.currentQuantity} {item.unit}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{item.currentQuantity} {item.unit}</p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`ml-2 text-xs flex-shrink-0 ${
-                        item.daysLeft <= 7
-                          ? "border-red-200 bg-red-50 text-red-700 dark:text-red-400"
-                          : "border-amber-200 bg-amber-50 text-amber-700 dark:text-amber-400"
-                      }`}
-                    >
+                    <Badge variant="outline" className={`ml-2 text-[10px] flex-shrink-0 ${item.daysLeft <= 7 ? "border-red-200 bg-red-50 text-red-700 dark:text-red-400" : "border-amber-200 bg-amber-50 text-amber-700 dark:text-amber-400"}`}>
                       {item.daysLeft}일 남음
                     </Badge>
                   </div>
@@ -749,26 +591,24 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* 6. 부족 재고 목록 (조건부) */}
+          {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (
-            <Card className="bg-red-50/20 dark:bg-[#161d2f] border-red-100 dark:border-slate-800/50">
-              <CardHeader className="pb-2">
+            <Card className="bg-red-50/10 dark:bg-[#161d2f] border-red-200/60 dark:border-slate-800/50 shadow-sm rounded-xl">
+              <CardHeader className="pb-1 p-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    부족 재고 목록
+                  <CardTitle className="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    부족 재고 ({stats.lowStockItems.length})
                   </CardTitle>
-                  <Link href="/dashboard/inventory">
-                    <Button variant="ghost" size="sm" className="text-xs h-6 text-red-600">발주</Button>
-                  </Link>
+                  <Link href="/dashboard/inventory?filter=low"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2 text-red-600 dark:text-red-400">발주 검토</Button></Link>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-2">
-                {stats.lowStockItems.map((item) => (
+              <CardContent className="p-4 pt-0 space-y-1.5">
+                {stats.lowStockItems.slice(0, 3).map((item) => (
                   <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 dark:border-slate-800/30 last:border-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.productName}</p>
-                      <p className="text-xs text-red-500">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
+                      <p className="text-[10px] text-red-500 dark:text-red-400">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
                     </div>
                     <span className="relative flex h-2 w-2 ml-2 flex-shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -786,19 +626,19 @@ export default function DashboardPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#0f1623]/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800/50 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Link href="/test/search" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1 bg-slate-50 text-slate-600 hover:bg-slate-100 border-dashed">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200">
               <Search className="h-3.5 w-3.5" />
               시약 검색
             </Button>
           </Link>
           <Link href="/dashboard/inventory" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50">
               <Plus className="h-3.5 w-3.5" />
               재고 등록
             </Button>
           </Link>
           <Link href="/test/quote" className="flex-1">
-            <Button size="sm" className="w-full h-11 text-xs gap-1 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+            <Button size="sm" className="w-full h-11 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
               <FileText className="h-3.5 w-3.5" />
               견적 요청
             </Button>
