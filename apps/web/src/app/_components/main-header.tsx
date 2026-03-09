@@ -212,15 +212,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </Link>
                 </>
               ) : (
-                /* ── 비로그인: [워크스페이스(비활성)] [요금&도입] [로그인] [시작하기] ── */
+                /* ── 비로그인: [요금&도입] [로그인] [시작하기] ── */
                 <>
-                  <Link
-                    href="/auth/signin?callbackUrl=/dashboard"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    <LayoutDashboard className="h-3.5 w-3.5" />
-                    워크스페이스
-                  </Link>
                   <Link
                     href="/pricing"
                     className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
