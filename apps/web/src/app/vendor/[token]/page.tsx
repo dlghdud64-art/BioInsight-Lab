@@ -381,12 +381,17 @@ export default function VendorResponsePage() {
                     </TableCell>
                     <TableCell>
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="단가"
-                        value={responses[item.id]?.unitPrice || ""}
-                        onChange={(e) => updateResponse(item.id, "unitPrice", e.target.value)}
+                        value={responses[item.id]?.unitPrice
+                          ? Number(responses[item.id].unitPrice).toLocaleString("ko-KR")
+                          : ""}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          updateResponse(item.id, "unitPrice", raw);
+                        }}
                         disabled={isExpired}
-                        min="0"
                       />
                     </TableCell>
                     <TableCell>

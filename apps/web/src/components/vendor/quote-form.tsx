@@ -189,10 +189,16 @@ export function QuoteForm({
                   {/* Unit Price */}
                   <TableCell className="p-3">
                     <Input
-                      type="number"
-                      placeholder="10000"
-                      value={response.unitPrice || ""}
-                      onChange={(e) => updateResponse(item.id, "unitPrice", e.target.value)}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="10,000"
+                      value={response.unitPrice
+                        ? Number(response.unitPrice).toLocaleString("ko-KR")
+                        : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        updateResponse(item.id, "unitPrice", raw);
+                      }}
                       disabled={readOnly}
                       className="text-sm"
                     />

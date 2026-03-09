@@ -80,6 +80,17 @@ function ChartSkeleton() {
   );
 }
 
+// ── 파이 차트 색상 팔레트 ─────────────────────────────────
+const CATEGORY_COLORS = [
+  "#3b82f6", // blue-500
+  "#10b981", // emerald-500
+  "#f59e0b", // amber-500
+  "#8b5cf6", // violet-500
+  "#ef4444", // red-500
+  "#06b6d4", // cyan-500
+  "#f97316", // orange-500
+];
+
 // ── 빈 상태 ──────────────────────────────────────────────
 function EmptyChart({ message }: { message: string }) {
   return (
@@ -260,8 +271,8 @@ export default function AnalyticsPage() {
                         outerRadius={100}
                         dataKey="value"
                       >
-                        {categorySpending.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {categorySpending.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -274,10 +285,13 @@ export default function AnalyticsPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="mt-4 space-y-2">
-                    {categorySpending.map((cat) => (
+                    {categorySpending.map((cat, index) => (
                       <div key={cat.name} className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
+                          />
                           <span className="text-slate-600">{cat.name}</span>
                         </div>
                         <span className="font-medium">₩ {cat.amount.toLocaleString("ko-KR")}</span>

@@ -138,20 +138,6 @@ export default function QuoteDetailPage() {
   }, 0);
   const quoteTotal = computedTotal || quoteData?.quote?.totalAmount || 0;
 
-  // 벤더 회신 기준 실제 결제 금액 계산 (quoteItemId → quantity 맵)
-  const qtyMap = new Map((quoteItems as any[]).map((item: any) => [item.id, item.quantity || 1]));
-  const computeVendorReplyTotal = (vrId: string): number => {
-    const vr = respondedVendors.find((v: any) => v.id === vrId);
-    if (!vr || !(vr as any).responseItems?.length) return quoteTotal;
-    return ((vr as any).responseItems as any[]).reduce((sum: number, ri: any) => {
-      const qty = qtyMap.get(ri.quoteItemId) || 1;
-      return sum + Math.round(ri.unitPrice || 0) * qty;
-    }, 0);
-  };
-  // 단일 벤더라면 자동 선택, 복수라면 purchaseVendorRequestId 사용
-  const effectiveVrId = purchaseVendorRequestId || (respondedVendors.length === 1 ? (respondedVendors[0] as any)?.id : "");
-  const purchaseTotal = effectiveVrId ? computeVendorReplyTotal(effectiveVrId) : quoteTotal;
-
   const expectedRemaining = selectedBudget
     ? selectedBudget.remainingAmount - quoteTotal
     : null;
@@ -170,6 +156,21 @@ export default function QuoteDetailPage() {
   const vendorRequests = vendorRequestsData?.vendorRequests || [];
   // RESPONDED 상태만 비교 테이블에 표시
   const respondedVendors = vendorRequests.filter((vr: any) => vr.status === "RESPONDED");
+
+  // 벤더 회신 기준 실제 결제 금액 계산 (비교 테이블과 동일한 로직)
+  const computeVendorReplyTotal = (vrId: string): number => {
+    const vr = respondedVendors.find((v: any) => v.id === vrId);
+    if (!vr) return quoteTotal;
+    // quote.items 순회 → 각 항목의 벤더 회신 단가 * 수량 합산 (비교 테이블과 동일)
+    const total = (quoteItems as any[]).reduce((sum: number, item: any) => {
+      const ri = (vr as any).responseItems?.find((r: any) => r.quoteItemId === item.id);
+      return sum + Math.round(Number(ri?.unitPrice ?? 0)) * (item.quantity ?? 1);
+    }, 0);
+    return total > 0 ? total : quoteTotal;
+  };
+  // 단일 벤더라면 자동 선택, 복수라면 purchaseVendorRequestId 사용
+  const effectiveVrId = purchaseVendorRequestId || (respondedVendors.length === 1 ? (respondedVendors[0] as any)?.id : "");
+  const purchaseTotal = effectiveVrId ? computeVendorReplyTotal(effectiveVrId) : quoteTotal;
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -1016,10 +1017,14 @@ ${itemLines}
                               </td>
                               <td className="p-2 md:p-3">
                                 <Input
-                                  type="number"
+                                  type="text"
+                                  inputMode="numeric"
                                   placeholder="단가"
-                                  value={ri.unitPrice || ""}
-                                  onChange={(e) => updateReplyItem(item.id, "unitPrice", e.target.value)}
+                                  value={ri.unitPrice ? Number(ri.unitPrice).toLocaleString("ko-KR") : ""}
+                                  onChange={(e) => {
+                                    const raw = e.target.value.replace(/\D/g, "");
+                                    updateReplyItem(item.id, "unitPrice", raw);
+                                  }}
                                   className="text-xs md:text-sm h-8 w-28 rounded-md focus:ring-2 focus:ring-blue-500"
                                 />
                               </td>
