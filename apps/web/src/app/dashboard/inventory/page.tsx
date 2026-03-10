@@ -99,6 +99,51 @@ function InventoryPageContent() {
     const f = searchParams.get("filter");
     if (f) setStatusFilter(f);
   }, [searchParams]);
+
+  // purchase-receiving 모드 진입 (구매 → 재고 반영 플로우)
+  useEffect(() => {
+    const prId = searchParams.get("purchase-receiving");
+    if (prId && status === "authenticated") {
+      // 구매 데이터 가져오기
+      fetch(`/api/purchases/${prId}`)
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error("구매 데이터를 찾을 수 없습니다.");
+        })
+        .then((data) => {
+          const purchase = data.purchase || data;
+          setPurchaseContext(purchase);
+          setReceivingForm((prev) => ({
+            ...prev,
+            actualQty: String(purchase.qty || ""),
+            lotNumber: "",
+            expiryDate: "",
+            location: "",
+            notes: "",
+            restockMethod: "merge",
+          }));
+          setDrawerMode("purchase-receiving");
+
+          // 해당 품목의 기존 재고 검색 (품목명 기반)
+          const matchingItem = displayInventories.find(
+            (inv) =>
+              inv.product.name.toLowerCase().includes((purchase.itemName || "").toLowerCase()) ||
+              (purchase.catalogNumber && inv.product.catalogNumber === purchase.catalogNumber)
+          );
+          if (matchingItem) {
+            setSelectedItem(matchingItem);
+            setSheetSafetyStock(String(matchingItem.safetyStock ?? matchingItem.minOrderQty ?? 1));
+          }
+          setIsSheetOpen(true);
+        })
+        .catch(() => {
+          // 구매 데이터를 못 찾으면 mock context 생성
+          setPurchaseContext({ id: prId, itemName: "구매 품목", qty: 1, vendorName: "-" });
+          setDrawerMode("purchase-receiving");
+          setIsSheetOpen(true);
+        });
+    }
+  }, [searchParams, status]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductInventory | null>(null);
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
@@ -107,6 +152,19 @@ function InventoryPageContent() {
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
   const [showRestockHistory, setShowRestockHistory] = useState(false);
+
+  // ── purchase-receiving mode ──
+  type DrawerMode = "view" | "edit" | "purchase-receiving";
+  const [drawerMode, setDrawerMode] = useState<DrawerMode>("view");
+  const [purchaseContext, setPurchaseContext] = useState<any>(null);
+  const [receivingForm, setReceivingForm] = useState({
+    actualQty: "",
+    lotNumber: "",
+    expiryDate: "",
+    location: "",
+    notes: "",
+    restockMethod: "merge" as "merge" | "newLot",
+  });
 
   // 사용자 팀 목록 조회
   const { data: teamsData } = useQuery({
@@ -1175,9 +1233,230 @@ function InventoryPageContent() {
         </div>
 
         {/* 우측 상세 Sheet (Drawer) */}
-        <Sheet open={isSheetOpen} onOpenChange={(open) => { setIsSheetOpen(open); if (!open) setShowRestockHistory(false); }}>
+        <Sheet open={isSheetOpen} onOpenChange={(open) => {
+          setIsSheetOpen(open);
+          if (!open) {
+            setShowRestockHistory(false);
+            setDrawerMode("view");
+            setPurchaseContext(null);
+          }
+        }}>
           <SheetContent className="w-[90vw] overflow-y-auto sm:max-w-[480px]">
-            {selectedItem && (
+            {/* ════ purchase-receiving mode ════ */}
+            {drawerMode === "purchase-receiving" && purchaseContext && (
+              <>
+                <SheetHeader className="mb-3 mt-3 border-b border-emerald-100 pb-3 dark:border-emerald-800">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <Badge className="border-none bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs">
+                      구매 → 입고 반영
+                    </Badge>
+                  </div>
+                  <SheetTitle className="text-lg font-bold leading-tight">
+                    {purchaseContext.itemName || "입고 반영"}
+                  </SheetTitle>
+                  <SheetDescription className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                    구매 데이터를 기반으로 재고에 입고를 반영합니다
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-4">
+                  {/* 구매 연동 정보 카드 */}
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20 p-3.5">
+                    <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                      <Package className="h-3.5 w-3.5" />
+                      구매 연동 정보
+                    </h4>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">구매일</span>
+                        <span className="font-medium">{purchaseContext.purchasedAt ? format(new Date(purchaseContext.purchasedAt), "yyyy.MM.dd", { locale: ko }) : "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">공급사</span>
+                        <span className="font-medium truncate ml-2">{purchaseContext.vendorName || "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">구매 수량</span>
+                        <span className="font-medium">{purchaseContext.qty || 0} {purchaseContext.unit || "ea"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">구매 ID</span>
+                        <span className="font-mono text-[10px] text-slate-400 truncate ml-2">{purchaseContext.id?.slice(0, 8) || "-"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 기존 재고 매칭 정보 */}
+                  {selectedItem && (
+                    <div className="rounded-lg border border-blue-100 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-950/20 p-3">
+                      <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1.5">매칭된 기존 재고</h4>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{selectedItem.product.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        현재 {selectedItem.currentQuantity} {selectedItem.unit} · {selectedItem.product.brand} · {selectedItem.product.catalogNumber}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 사용자 입력 필드 */}
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="receiving-qty" className="text-xs">실제 입고 수량 <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="receiving-qty"
+                        type="number"
+                        min="1"
+                        placeholder="입고할 수량"
+                        value={receivingForm.actualQty}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceivingForm((f) => ({ ...f, actualQty: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="receiving-lot" className="text-xs">Lot Number <span className="text-slate-400 font-normal">(선택)</span></Label>
+                      <Input
+                        id="receiving-lot"
+                        placeholder="예: LOT-2026-001"
+                        value={receivingForm.lotNumber}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceivingForm((f) => ({ ...f, lotNumber: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">유효기간 <span className="text-slate-400 font-normal">(선택)</span></Label>
+                      <DatePicker
+                        date={receivingForm.expiryDate ? new Date(receivingForm.expiryDate) : null}
+                        onDateChange={(date: Date | null) =>
+                          setReceivingForm((f) => ({
+                            ...f,
+                            expiryDate: date ? date.toISOString().split("T")[0] : "",
+                          }))
+                        }
+                        placeholder="유효기한 선택"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="receiving-location" className="text-xs">보관 위치 <span className="text-slate-400 font-normal">(선택)</span></Label>
+                      <Input
+                        id="receiving-location"
+                        placeholder="예: 냉동고 1칸"
+                        value={receivingForm.location}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceivingForm((f) => ({ ...f, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="receiving-notes" className="text-xs">특이사항 <span className="text-slate-400 font-normal">(선택)</span></Label>
+                      <Input
+                        id="receiving-notes"
+                        placeholder="입고 관련 메모"
+                        value={receivingForm.notes}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceivingForm((f) => ({ ...f, notes: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 재고 반영 방식 선택 */}
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">재고 반영 방식</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="restockMethod"
+                          checked={receivingForm.restockMethod === "merge"}
+                          onChange={() => setReceivingForm((f) => ({ ...f, restockMethod: "merge" }))}
+                          className="w-4 h-4 text-emerald-600"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200">기존 재고에 합산</span>
+                          <p className="text-[10px] text-slate-400">같은 Product에 수량 추가</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="restockMethod"
+                          checked={receivingForm.restockMethod === "newLot"}
+                          onChange={() => setReceivingForm((f) => ({ ...f, restockMethod: "newLot" }))}
+                          className="w-4 h-4 text-emerald-600"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200">새 Lot로 추가</span>
+                          <p className="text-[10px] text-slate-400">InventoryRestock 이력 생성</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 입고 후 예상 재고 */}
+                  {receivingForm.actualQty && Number(receivingForm.actualQty) > 0 && selectedItem && (
+                    <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm flex justify-between">
+                      <span className="text-emerald-700 dark:text-emerald-400">입고 후 재고</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                        {(selectedItem.currentQuantity + Number(receivingForm.actualQty)).toLocaleString()} {selectedItem.unit}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Footer CTA */}
+                  <div className="flex w-full gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsSheetOpen(false);
+                        setDrawerMode("view");
+                        setPurchaseContext(null);
+                      }}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={!receivingForm.actualQty || Number(receivingForm.actualQty) <= 0 || restockMutation.isPending}
+                      onClick={() => {
+                        const addQty = Number(receivingForm.actualQty);
+                        if (!addQty || addQty <= 0) return;
+
+                        if (selectedItem) {
+                          // 기존 재고에 입고 반영
+                          restockMutation.mutate(
+                            {
+                              id: selectedItem.id,
+                              addQty,
+                              lotNumber: receivingForm.lotNumber || undefined,
+                              expiryDate: receivingForm.expiryDate || undefined,
+                            },
+                            {
+                              onSuccess: () => {
+                                toast({
+                                  title: "입고 반영 완료",
+                                  description: `${purchaseContext.itemName || "품목"}의 입고가 반영되었습니다.`,
+                                });
+                                setIsSheetOpen(false);
+                                setDrawerMode("view");
+                                setPurchaseContext(null);
+                                // URL에서 purchase-receiving 파라미터 제거
+                                router.replace("/dashboard/inventory");
+                              },
+                            }
+                          );
+                        } else {
+                          toast({
+                            title: "매칭된 재고 없음",
+                            description: "재고 목록에서 해당 품목을 먼저 등록해주세요.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      {restockMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                      입고 반영 완료
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ════ 기존 view mode ════ */}
+            {drawerMode !== "purchase-receiving" && selectedItem && (
               <>
                 {/* ── 헤더: 여백 압축 ── */}
                 <SheetHeader className="mb-3 mt-3 border-b border-slate-100 pb-3 dark:border-slate-800">

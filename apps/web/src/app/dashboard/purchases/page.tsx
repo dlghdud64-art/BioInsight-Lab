@@ -16,7 +16,7 @@ import {
   Receipt, Plus, Search, Package, Hash, DollarSign, CircleDollarSign,
   ShoppingCart, TrendingUp, TrendingDown, AlertTriangle, BarChart2,
   RefreshCw, Store, ArrowUpRight, CreditCard, Building2,
-  Repeat, AlertCircle, CheckCircle2,
+  Repeat, AlertCircle, CheckCircle2, PackageCheck, ClipboardList,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
@@ -58,11 +58,13 @@ import { DataTable } from "@/components/ui/data-table";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function PurchasesPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [csvText, setCsvText] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState<string>("");
   const [dateRange, setDateRange] = useState<string>("month");
@@ -424,25 +426,57 @@ export default function PurchasesPage() {
     return CATEGORY_LABEL_MAP[raw.toUpperCase()] ?? raw;
   };
 
-  // ── 운영 상태 할당 로직 ──
-  const getOperationalStatus = (purchase: any) => {
+  // ── 증빙 체크리스트 항목 ──
+  const EVIDENCE_ITEMS = [
+    { key: "quotation", label: "견적서 존재 여부" },
+    { key: "transaction", label: "거래명세서 존재 여부" },
+    { key: "taxInvoice", label: "세금계산서 존재 여부" },
+    { key: "amountMatch", label: "발주 금액 일치 여부" },
+    { key: "receivingConfirm", label: "입고 확인 여부" },
+  ];
+
+  const getEvidenceCompletionCount = (purchaseId: string) => {
+    const checks = evidenceChecklist[purchaseId] || {};
+    return Object.values(checks).filter(Boolean).length;
+  };
+
+  // ── 이중 상태 체계: 구매 상태 + 후속 처리 상태 ──
+  const getDualStatus = (purchase: any) => {
     const days = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / 86400000);
     const amount = purchase.amount || 0;
+    const purchaseId = purchase.id;
+    const completedCount = getEvidenceCompletionCount(purchaseId);
+    const totalItems = EVIDENCE_ITEMS.length;
 
-    // 고액 + 최근 → 증빙 확인 필요
+    // 구매 상태
+    const purchaseStatus = days <= 7
+      ? { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800" }
+      : { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+
+    // 후속 처리 상태
+    let followUpStatus: { label: string; className: string; action?: string } | null = null;
+
     if (amount >= 2000000 && days <= 14) {
-      return { label: "증빙 확인 필요", className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800" };
+      if (completedCount === 0) {
+        followUpStatus = { label: "증빙 업로드 필요", className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800", action: "증빙 파일 등록" };
+      } else if (completedCount < totalItems) {
+        followUpStatus = { label: "증빙 검토 필요", className: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-800", action: "회계팀 전달" };
+      } else {
+        followUpStatus = { label: "정산 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+      }
     }
-    // 7일 이내 → 입고 대기
-    if (days <= 7) {
-      return { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800" };
+
+    if (!followUpStatus && days > 7 && days <= 14) {
+      followUpStatus = { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-800", action: "재고로 반영" };
     }
-    // 14일 이내 → 재고 반영 필요
-    if (days <= 14) {
-      return { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-800" };
-    }
-    // 그 외 → 구매 완료
-    return { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+
+    return { purchaseStatus, followUpStatus };
+  };
+
+  // 하위 호환: getOperationalStatus를 getDualStatus 기반으로 유지
+  const getOperationalStatus = (purchase: any) => {
+    const { purchaseStatus, followUpStatus } = getDualStatus(purchase);
+    return followUpStatus || purchaseStatus;
   };
 
   // ── 반복 구매 품목 감지 ──
@@ -489,11 +523,18 @@ export default function PurchasesPage() {
       (p: any) => new Date(p.purchasedAt).getTime() >= thirtyDaysAgo && (p.amount || 0) >= 2000000
     ).length;
 
-    // 입고/재고 반영 대기 건
-    const pendingActions = items.filter((p: any) => {
+    // 후속 처리 필요 건: 증빙 + 재고 반영 구분
+    let evidenceNeededCount = 0;
+    let inventoryNeededCount = 0;
+    for (const p of items) {
       const days = Math.floor((now - new Date(p.purchasedAt).getTime()) / 86400000);
-      return days <= 14;
-    }).length;
+      const amt = p.amount || 0;
+      if (amt >= 2000000 && days <= 14) {
+        const completed = getEvidenceCompletionCount(p.id);
+        if (completed < EVIDENCE_ITEMS.length) evidenceNeededCount++;
+      }
+      if (days > 7 && days <= 14) inventoryNeededCount++;
+    }
 
     return {
       thisMonthOrders,
@@ -502,9 +543,11 @@ export default function PurchasesPage() {
       vendorConcentration,
       topVendorName: topVendorEntry?.[0] || "-",
       highValueRecent,
-      pendingActions,
+      pendingActions: evidenceNeededCount + inventoryNeededCount,
+      evidenceNeededCount,
+      inventoryNeededCount,
     };
-  }, [purchasesData?.items, repeatPurchaseMap]);
+  }, [purchasesData?.items, repeatPurchaseMap, evidenceChecklist]);
 
   // ── 고유 카테고리 목록 ──
   const uniqueCategories = useMemo(() => {
@@ -516,6 +559,8 @@ export default function PurchasesPage() {
   // ── 상태 필터 ──
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
 
   // 필터 재정의 (기존 filteredPurchases 대체)
   const enhancedFilteredPurchases = useMemo(() => {
@@ -527,13 +572,13 @@ export default function PurchasesPage() {
 
     if (selectedStatus !== "all") {
       filtered = filtered.filter((p: any) => {
-        const status = getOperationalStatus(p);
-        return status.label === selectedStatus;
+        const { purchaseStatus, followUpStatus } = getDualStatus(p);
+        return purchaseStatus.label === selectedStatus || followUpStatus?.label === selectedStatus;
       });
     }
 
     return filtered;
-  }, [filteredPurchases, selectedCategory, selectedStatus]);
+  }, [filteredPurchases, selectedCategory, selectedStatus, evidenceChecklist]);
 
   // DataTable 컬럼 정의
   const columns: ColumnDef<any>[] = useMemo(() => [
@@ -614,15 +659,63 @@ export default function PurchasesPage() {
       accessorKey: "status",
       header: "상태",
       cell: ({ row }) => {
-        const status = getOperationalStatus(row.original);
+        const { purchaseStatus, followUpStatus } = getDualStatus(row.original);
         return (
-          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold whitespace-nowrap ${status.className}`}>
-            {status.label}
-          </Badge>
+          <div className="flex items-center gap-1 flex-wrap">
+            <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold whitespace-nowrap ${purchaseStatus.className}`}>
+              {purchaseStatus.label}
+            </Badge>
+            {followUpStatus && (
+              <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold whitespace-nowrap ${followUpStatus.className}`}>
+                {followUpStatus.label}
+              </Badge>
+            )}
+          </div>
         );
       },
     },
-  ], [repeatPurchaseMap]);
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const purchase = row.original;
+        const { followUpStatus } = getDualStatus(purchase);
+        if (!followUpStatus?.action) return null;
+        return (
+          <div className="flex items-center gap-1">
+            {followUpStatus.action === "재고로 반영" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30 gap-1 whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`);
+                }}
+              >
+                <PackageCheck className="h-3 w-3" />
+                재고 반영
+              </Button>
+            )}
+            {(followUpStatus.action === "증빙 파일 등록" || followUpStatus.action === "회계팀 전달") && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 gap-1 whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id);
+                }}
+              >
+                <ClipboardList className="h-3 w-3" />
+                증빙 확인
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ], [repeatPurchaseMap, evidenceChecklist, expandedRowId]);
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -649,7 +742,7 @@ export default function PurchasesPage() {
           <Link href="/dashboard/analytics">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-medium">
               <BarChart2 className="h-3.5 w-3.5" />
-              지출 분석
+              구매 리포트
             </Button>
           </Link>
         </div>
@@ -724,20 +817,25 @@ export default function PurchasesPage() {
               <p className="text-xs text-slate-400 mt-1">최근 30일 · 200만원 이상</p>
             </div>
 
-            {/* 후속 처리 대기 */}
+            {/* 후속 처리 필요 */}
             <div className={`rounded-xl border p-4 shadow-sm ${
               operationalKPIs.pendingActions > 0
                 ? "border-blue-200/60 bg-blue-50/30 dark:bg-blue-950/10 dark:border-blue-900/30"
                 : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">처리 대기</span>
+                <ClipboardList className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">후속 처리 필요</span>
               </div>
               <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
                 {summaryLoading ? "..." : `${operationalKPIs.pendingActions}건`}
               </div>
-              <p className="text-xs text-slate-400 mt-1">입고·재고 반영 대기</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {operationalKPIs.evidenceNeededCount > 0 && `증빙 ${operationalKPIs.evidenceNeededCount}건`}
+                {operationalKPIs.evidenceNeededCount > 0 && operationalKPIs.inventoryNeededCount > 0 && " · "}
+                {operationalKPIs.inventoryNeededCount > 0 && `재고 ${operationalKPIs.inventoryNeededCount}건`}
+                {operationalKPIs.pendingActions === 0 && "처리 완료"}
+              </p>
             </div>
           </div>
 
@@ -791,9 +889,11 @@ export default function PurchasesPage() {
                     <SelectContent>
                       <SelectItem value="all">전체 상태</SelectItem>
                       <SelectItem value="입고 대기">입고 대기</SelectItem>
-                      <SelectItem value="재고 반영 필요">재고 반영 필요</SelectItem>
-                      <SelectItem value="증빙 확인 필요">증빙 확인 필요</SelectItem>
                       <SelectItem value="구매 완료">구매 완료</SelectItem>
+                      <SelectItem value="증빙 업로드 필요">증빙 업로드 필요</SelectItem>
+                      <SelectItem value="증빙 검토 필요">증빙 검토 필요</SelectItem>
+                      <SelectItem value="재고 반영 필요">재고 반영 필요</SelectItem>
+                      <SelectItem value="정산 완료">정산 완료</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -851,6 +951,67 @@ export default function PurchasesPage() {
             </Card>
           )}
 
+          {/* ══ 4-1. 증빙 체크리스트 패널 ══ */}
+          {expandedRowId && (() => {
+            const selectedPurchase = enhancedFilteredPurchases.find((p: any) => p.id === expandedRowId);
+            if (!selectedPurchase) return null;
+            const checks = evidenceChecklist[expandedRowId] || {};
+            const completedCount = Object.values(checks).filter(Boolean).length;
+            return (
+              <Card className="rounded-xl border-amber-200/60 dark:border-amber-800/50 shadow-sm bg-amber-50/30 dark:bg-amber-950/10">
+                <CardHeader className="p-4 pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4" />
+                        증빙 체크리스트
+                      </CardTitle>
+                      <CardDescription className="text-[11px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+                        {selectedPurchase.itemName} · {formatCurrency(selectedPurchase.amount)} · {completedCount}/{EVIDENCE_ITEMS.length} 완료
+                      </CardDescription>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-400" onClick={() => setExpandedRowId(null)}>
+                      닫기
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-2">
+                  <div className="space-y-2">
+                    {EVIDENCE_ITEMS.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-white dark:bg-slate-900 cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors text-left"
+                        onClick={() => {
+                          setEvidenceChecklist((prev) => ({
+                            ...prev,
+                            [expandedRowId]: {
+                              ...(prev[expandedRowId] || {}),
+                              [item.key]: !(prev[expandedRowId]?.[item.key]),
+                            },
+                          }));
+                        }}
+                      >
+                        <span
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            checks[item.key]
+                              ? "bg-emerald-500 border-emerald-500 text-white"
+                              : "border-slate-300 dark:border-slate-600"
+                          }`}
+                        >
+                          {checks[item.key] && <CheckCircle2 className="h-3 w-3" />}
+                        </span>
+                        <span className={`text-sm ${checks[item.key] ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-300"}`}>
+                          {item.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* ══ 5. 구매 운영 후속 조치 ══ */}
           <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-900/30 p-4">
             <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
@@ -860,7 +1021,7 @@ export default function PurchasesPage() {
               <Link href="/dashboard/analytics">
                 <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
                   <BarChart2 className="h-3.5 w-3.5 text-slate-500" />
-                  지출 분석 리포트
+                  구매 리포트
                 </Button>
               </Link>
               <Link href="/dashboard/budget">
@@ -875,10 +1036,10 @@ export default function PurchasesPage() {
                   재고 현황
                 </Button>
               </Link>
-              <Link href="/dashboard/analytics/category">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+              <Link href="/dashboard/analytics">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors" onClick={() => {}}>
                   <Store className="h-3.5 w-3.5 text-slate-500" />
-                  공급사별 지출 분석
+                  벤더 비교 분석
                 </Button>
               </Link>
             </div>

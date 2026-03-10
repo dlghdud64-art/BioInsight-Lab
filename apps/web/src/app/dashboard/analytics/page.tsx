@@ -269,25 +269,25 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            지출 분석
+            구매 리포트
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {currentView === "team"
               ? "팀별 예산 집행 상태와 위험 신호를 확인하세요."
-              : "예산 소진 현황과 지출 패턴을 확인하고 다음 행동으로 이어가세요."}
+              : "지출 패턴과 예산 운영 상태를 분석하고 의사결정에 활용하세요."}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Link href="/dashboard/purchases">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-medium">
               <ShoppingCart className="h-3.5 w-3.5" />
-              구매 내역
+              구매 내역 보기
             </Button>
           </Link>
           <Link href="/dashboard/budget">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-medium">
               <CreditCard className="h-3.5 w-3.5" />
-              예산 관리
+              예산 관리 보기
             </Button>
           </Link>
         </div>
@@ -328,10 +328,10 @@ export default function AnalyticsPage() {
       {/* ══ 전체 / 카테고리 / 벤더 보기 ══ */}
       {currentView !== "team" && (<>
 
-      {/* ══ 2. 지출 요약 인사이트 (3-card strip) ══ */}
+      {/* ══ 2. 분석 KPI (4-card strip) ══ */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[0, 1, 2].map((i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
             <div key={i} className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] p-4 shadow-sm space-y-2">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-6 w-32" />
@@ -340,69 +340,86 @@ export default function AnalyticsPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* 이번 달 지출 상태 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* 총 구매액 */}
           <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 지출</span>
+              <DollarSign className="h-4 w-4 text-blue-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">총 구매액</span>
             </div>
-            {currentMonth ? (
-              <>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  ₩{currentMonth.amount.toLocaleString("ko-KR")}
-                </div>
-                <p className="text-xs mt-1">
-                  {monthChange !== null ? (
-                    <span className={monthChange > 0 ? "text-amber-600" : "text-emerald-600"}>
-                      전월 대비 {Math.abs(monthChange)}% {monthChange > 0 ? "증가" : "감소"}
-                    </span>
-                  ) : (
-                    <span className="text-slate-400">전월 비교 데이터 없음</span>
-                  )}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-400 mt-1">이번 달 지출 없음</p>
-            )}
+            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              ₩{budget.used.toLocaleString("ko-KR")}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">올해 누적 지출</p>
           </div>
 
-          {/* 주요 지출 카테고리 */}
-          <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+          {/* 예산 사용률 */}
+          <div className={`rounded-xl border p-4 shadow-sm ${
+            budget.usageRate >= 90
+              ? "border-red-200/60 bg-red-50/30 dark:bg-red-950/10 dark:border-red-900/30"
+              : budget.usageRate >= 75
+                ? "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-900/30"
+                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50"
+          }`}>
             <div className="flex items-center gap-2 mb-2">
-              <FlaskConical className="h-4 w-4 text-purple-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">주요 지출 카테고리</span>
+              <TrendingUp className="h-4 w-4 text-purple-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">예산 사용률</span>
             </div>
-            {topCat ? (
-              <>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {getCategoryLabel(topCat.name)}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">전체 지출의 {topCat.value}% 차지</p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-400 mt-1">데이터 없음</p>
-            )}
+            <div className={`text-lg font-bold ${budget.usageRate >= 90 ? "text-red-600 dark:text-red-400" : budget.usageRate >= 75 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"}`}>
+              {budget.total > 0 ? `${budget.usageRate}%` : "미등록"}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              {budget.total > 0 ? `잔여 ₩${budget.remaining.toLocaleString("ko-KR")}` : "예산 등록 필요"}
+            </p>
           </div>
 
-          {/* 반복 구매 패턴 */}
+          {/* 전월 대비 증감률 */}
           <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <RefreshCw className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">반복 구매 패턴</span>
+              {monthChange !== null && monthChange > 0
+                ? <TrendingUp className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                : <TrendingDown className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              }
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">전월 대비</span>
             </div>
-            {repeatItems.length > 0 ? (
-              <>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {repeatItems.length}개 품목
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                  최다: {repeatItems[0].item} ({repeatItems[0].count}회)
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-400 mt-1">반복 구매 없음</p>
-            )}
+            <div className={`text-lg font-bold ${monthChange !== null ? (monthChange > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400") : "text-slate-900 dark:text-slate-100"}`}>
+              {monthChange !== null ? `${monthChange > 0 ? "+" : ""}${monthChange}%` : "—"}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              {currentMonth ? `${currentMonth.month} 기준` : "비교 데이터 없음"}
+            </p>
+          </div>
+
+          {/* 상위 벤더 집중도 */}
+          <div className={`rounded-xl border p-4 shadow-sm ${
+            (() => {
+              const topV = vendorItems[0];
+              const total = vendorItems.reduce((s, v) => s + v.totalAmount, 0);
+              const conc = topV && total > 0 ? Math.round((topV.totalAmount / total) * 100) : 0;
+              return conc >= 70
+                ? "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-900/30"
+                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50";
+            })()
+          }`}>
+            <div className="flex items-center gap-2 mb-2">
+              <Store className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">벤더 집중도</span>
+            </div>
+            {(() => {
+              const topV = vendorItems[0];
+              const total = vendorItems.reduce((s, v) => s + v.totalAmount, 0);
+              const conc = topV && total > 0 ? Math.round((topV.totalAmount / total) * 100) : 0;
+              return (
+                <>
+                  <div className={`text-lg font-bold ${conc >= 70 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"}`}>
+                    {conc > 0 ? `${conc}%` : "—"}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1 truncate">
+                    {topV ? topV.vendor : "데이터 없음"}
+                  </p>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -413,7 +430,7 @@ export default function AnalyticsPage() {
           <CardHeader className="pb-2 p-4">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 분석 요약</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">패턴 분석 요약</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -539,11 +556,11 @@ export default function AnalyticsPage() {
           <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
             <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
               <div className="min-w-0">
-                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">월별 지출 추이</CardTitle>
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">월별 지출 변화</CardTitle>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                   {peakMonth
-                    ? `최고 지출: ${peakMonth.month} (₩${peakMonth.amount.toLocaleString("ko-KR")})`
-                    : "최근 6개월 지출 변화"}
+                    ? `최고 지출월: ${peakMonth.month} (₩${peakMonth.amount.toLocaleString("ko-KR")})`
+                    : "최근 6개월 지출 추이 분석"}
                 </p>
               </div>
               <Link href="/dashboard/analytics/monthly" className="flex-shrink-0">
@@ -588,9 +605,9 @@ export default function AnalyticsPage() {
           <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
             <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
               <div className="min-w-0">
-                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">카테고리별 지출 비중</CardTitle>
+                <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">카테고리별 예산 사용</CardTitle>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                  {topCat ? `${topCat.name} 지출이 ${topCat.value}%로 가장 높음` : "시약 · 장비 · 소모품 비율"}
+                  {topCat ? `${topCat.name}이(가) 전체의 ${topCat.value}%를 차지` : "시약 · 장비 · 소모품 예산 배분"}
                 </p>
               </div>
               <Link href="/dashboard/analytics/category" className="flex-shrink-0">
@@ -658,19 +675,19 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* ══ 6. 지출 인사이트 테이블 (탭: 고지출 / 반복구매 / 벤더별) ══ */}
+      {/* ══ 6. 분석 테이블 (탭: 고액 TOP 10 / 반복 TOP 10 / 벤더 요약) ══ */}
       <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
         <CardHeader className="p-4 pb-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 인사이트 테이블</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">지출 패턴 분석</CardTitle>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                고지출 품목 · 반복 구매 상위 · 벤더별 지출 분석
+                고액 구매 · 반복 구매 · 벤더별 지출 패턴
               </p>
             </div>
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1 flex-shrink-0">
               {(["top", "repeat", "vendor"] as const).map((tab) => {
-                const labels = { top: "고지출", repeat: "반복구매", vendor: "벤더별" };
+                const labels = { top: "고액 TOP 10", repeat: "반복 TOP 10", vendor: "벤더 요약" };
                 return (
                   <button
                     key={tab}
@@ -719,7 +736,7 @@ export default function AnalyticsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vendorItems.map((v, index) => (
+                  {vendorItems.slice(0, 10).map((v, index) => (
                     <TableRow key={v.vendor} className="border-slate-100 dark:border-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       <TableCell className="py-2.5">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -762,7 +779,7 @@ export default function AnalyticsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(tableTab === "repeat" ? repeatItems : aggregatedItems).map((item, index) => (
+                  {(tableTab === "repeat" ? repeatItems : aggregatedItems).slice(0, 10).map((item, index) => (
                     <TableRow key={item.item} className="border-slate-100 dark:border-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       <TableCell className="py-2.5">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -811,12 +828,12 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* ══ 7. 분석 후 다음 액션 ══ */}
+      {/* ══ 7. 관련 페이지 이동 ══ */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-900/30 p-4">
         <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-          분석 후 이어서 확인하기
+          관련 페이지 바로가기
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Link href="/dashboard/purchases">
             <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
@@ -826,28 +843,22 @@ export default function AnalyticsPage() {
           <Link href="/dashboard/budget">
             <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
               <CreditCard className="h-3.5 w-3.5 text-slate-500" />
-              예산 관리
-            </Button>
-          </Link>
-          <Link href="/dashboard/analytics/category">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
-              <BarChart2 className="h-3.5 w-3.5 text-slate-500" />
-              카테고리 분석
-            </Button>
-          </Link>
-          <Link href="/dashboard/analytics/monthly">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
-              <TrendingUp className="h-3.5 w-3.5 text-slate-500" />
-              월별 추이
+              예산 관리 보기
             </Button>
           </Link>
           <button
             onClick={() => { setCurrentView("vendor"); setTableTab("vendor"); }}
-            className="flex h-10 items-center justify-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors"
+            className="flex h-10 items-center justify-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors w-full"
           >
             <Store className="h-3.5 w-3.5 text-slate-500" />
-            벤더별 지출
+            벤더 비교 보기
           </button>
+          <Link href="/dashboard/inventory">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+              <Package className="h-3.5 w-3.5 text-slate-500" />
+              재고 현황 보기
+            </Button>
+          </Link>
         </div>
       </div>
 
