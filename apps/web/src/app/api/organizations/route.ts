@@ -26,10 +26,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 가장 단순한 쿼리: organizationMember + organization include만 사용
+    // 조직 + 멤버 요약 정보 포함 쿼리
     const memberships = await db.organizationMember.findMany({
       where: { userId: session.user.id },
-      include: { organization: true },
+      include: {
+        organization: {
+          include: {
+            members: {
+              select: { id: true, role: true, status: true },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
 
@@ -38,14 +46,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ organizations: [] });
     }
 
-    // organization이 null인 경우 필터링 후 role 병합
+    // organization이 null인 경우 필터링 후 role 병합 + 멤버 요약
     const organizations = memberships
       .filter((m: any) => m.organization != null)
-      .map((m: any) => ({
-        ...m.organization,
-        members: [],  // 멤버 수는 조직 상세에서 조회
-        role: m.role ?? "VIEWER",
-      }));
+      .map((m: any) => {
+        const org = m.organization;
+        const allMembers = org.members || [];
+        const adminCount = allMembers.filter(
+          (mem: any) => mem.role === "ADMIN" || mem.role === "OWNER"
+        ).length;
+        const pendingCount = allMembers.filter(
+          (mem: any) => mem.status === "PENDING" || mem.status === "INVITED"
+        ).length;
+        return {
+          ...org,
+          members: allMembers,
+          memberCount: allMembers.length,
+          adminCount,
+          pendingCount,
+          role: m.role ?? "VIEWER",
+        };
+      });
 
     return NextResponse.json({ organizations });
   } catch (error: any) {
