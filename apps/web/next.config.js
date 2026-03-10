@@ -4,9 +4,10 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
 
-  // pdf-parse는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
+  // pdf-parse / pdfjs-dist는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
+  // pdfjs-dist: pdf-parse v2의 종속 라이브러리 (번들링 시 DOM API 참조 오류 방지)
   experimental: {
-    serverComponentsExternalPackages: ['pdf-parse'],
+    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   },
 
   // 이미지 최적화 설정

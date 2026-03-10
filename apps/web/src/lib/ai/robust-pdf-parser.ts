@@ -48,12 +48,30 @@ async function tryPdfParse(
       buffer.byteLength
     );
 
-    const parser = new PDFParseClass(uint8Data);
+    // standardFontDataUrl 설정
+    let standardFontDataUrl: string | undefined;
+    try {
+      const path = require("path");
+      standardFontDataUrl = path.join(
+        path.dirname(require.resolve("pdfjs-dist/package.json")),
+        "standard_fonts/"
+      );
+    } catch {
+      // 경로 탐색 실패 시 무시
+    }
+
+    const parserOptions: Record<string, unknown> = {};
+    if (standardFontDataUrl) {
+      parserOptions.standardFontDataUrl = standardFontDataUrl;
+    }
+    const parser = new PDFParseClass(uint8Data, parserOptions);
     await parser.load();
 
     let text = "";
     try {
-      text = parser.getText();
+      const result = parser.getText();
+      // pdf-parse v2가 객체를 반환하는 경우 대응
+      text = typeof result === "string" ? result : String(result ?? "");
     } catch {
       // getText 실패 시 개별 페이지 추출
       const doc = parser.doc ?? (parser as any).document;
