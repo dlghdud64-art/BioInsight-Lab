@@ -8,16 +8,20 @@ export function FinalCTASection() {
   return (
     <section className="py-20 md:py-24 bg-white border-t border-slate-100">
       <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
-        <div className="space-y-4 mb-10">
+        <div className="space-y-4 mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-            검색부터 견적 요청까지,<br className="hidden sm:block" />
-            지금 바로 시작하세요.
+            시약 검색부터 구매 운영까지<br className="hidden sm:block" />
+            한 곳에서 시작하세요.
           </h2>
-          <p className="text-base text-slate-500 max-w-md mx-auto leading-relaxed">
-            찾는 시약과 장비를 검색하고, 후보를 비교한 뒤<br className="hidden sm:block" />
-            견적 요청까지 한 곳에서 이어가세요.
+          <p className="text-base text-slate-500 max-w-lg mx-auto leading-relaxed">
+            시약·장비 검색, 벤더 비교, 견적 요청, 구매 이력과 재고 관리까지<br className="hidden sm:block" />
+            BioInsight Lab에서 한 흐름으로 이어집니다.
           </p>
         </div>
+
+        <p className="text-sm text-slate-400 mb-8">
+          반복 구매와 견적 요청을 한곳에서 관리해야 하는 연구실·바이오팀에 적합합니다.
+        </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
           <Link href="/test/search" className="w-full sm:w-auto">
