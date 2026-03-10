@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,12 +36,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Info, FileText, BellRing, Save } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface ProductInventory {
   id: string;
@@ -119,7 +113,6 @@ function InventoryPageContent() {
             lotNumber: "",
             expiryDate: "",
             location: "",
-            receivedDate: new Date().toISOString().split("T")[0],
             notes: "",
             restockMethod: "merge",
           }));
@@ -163,7 +156,6 @@ function InventoryPageContent() {
     lotNumber: "",
     expiryDate: "",
     location: "",
-    receivedDate: new Date().toISOString().split("T")[0],
     notes: "",
     restockMethod: "merge" as "merge" | "newLot",
   });
@@ -650,39 +642,6 @@ function InventoryPageContent() {
     },
   });
 
-  // 입고 반영 완료 mutation (purchase-receiving mode)
-  const receivingCompleteMutation = useMutation({
-    mutationFn: async (data: {
-      inventoryId: string;
-      purchaseId: string;
-      quantity: number;
-      lotNumber?: string;
-      expiryDate?: string;
-      location?: string;
-      receivedDate?: string;
-      notes?: string;
-      restockMethod: "merge" | "newLot";
-    }) => {
-      const response = await fetch(`/api/inventory/${data.inventoryId}/receive`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error((errData as { error?: string }).error || "입고 반영에 실패했습니다.");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventories"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-restock-history"] });
-    },
-    onError: (error: Error) => {
-      toast({ title: "입고 반영 실패", description: error.message, variant: "destructive" });
-    },
-  });
-
   // 필터링된 인벤토리 (디바운스된 검색어 + 기타 필터)
   const filteredInventories = displayInventories.filter((inv) => {
     // 검색 필터: 품목명, 제조사, 카탈로그 번호, Lot, 공급사
@@ -745,33 +704,20 @@ function InventoryPageContent() {
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
 
-  // ── 운영 큐 분류 ──
-  // 유효기간 임박 (30일 이내)
-  const expiringItems = displayInventories.filter((inv) => {
-    if (!inv.expiryDate) return false;
-    const d = new Date(inv.expiryDate);
-    const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return days > 0 && days <= 30;
-  });
-  // 유효기간 만료 (폐기 검토 필요)
-  const expiredItems = displayInventories.filter((inv) => {
-    if (!inv.expiryDate) return false;
-    return new Date(inv.expiryDate) < now;
-  });
-  // 부족 재고 (안전재고 이하 또는 품절)
-  const lowStockQueueItems = displayInventories.filter((inv) => {
+  // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장)
+  const issuesCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
     const isLow = inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
-    return isOut || isLow;
-  });
-  // 재발주 필요 (리드타임 기반)
-  const reorderItems = displayInventories.filter((inv) => {
-    return isReorderNeededByLeadTime(inv) && !(inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) && inv.currentQuantity > 0;
-  });
-  // 재고 반영 필요 (placeholder: 구매 완료 건 중 미반영)
-  const pendingReceivingCount = 0; // 구매 API 연동 시 실제 값으로 교체
-
-  const issuesCount = expiringItems.length + expiredItems.length + lowStockQueueItems.length + reorderItems.length + pendingReceivingCount;
+    const byLeadTime = isReorderNeededByLeadTime(inv);
+    const isExpiring =
+      inv.expiryDate &&
+      (() => {
+        const d = new Date(inv.expiryDate);
+        const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return days > 0 && days <= 30;
+      })();
+    return isOut || isLow || byLeadTime || isExpiring;
+  }).length;
 
   if (status === "loading") {
     return (
@@ -795,9 +741,9 @@ function InventoryPageContent() {
         {/* 상단 타이틀 및 액션 버튼 */}
         <div className="flex flex-col gap-4 md:gap-5 mb-4">
           <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 운영</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
             <p className="text-muted-foreground">
-              입고, 유효기간, 부족 알림, 폐기, 재발주까지 재고 전체 운영을 관리합니다.
+              연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
           <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3 w-full">
@@ -816,25 +762,23 @@ function InventoryPageContent() {
               inventory={editingInventory}
               isLoading={createOrUpdateMutation.isPending}
             />
-            {/* 메인 액션: 재고 등록 */}
-            <div className="w-full md:w-auto flex gap-2">
+            {/* 메인 액션: 재고 등록 + QR 스캔 (모바일만 2열, 데스크탑은 1열) */}
+            <div className="w-full md:w-auto grid grid-cols-2 md:grid-cols-1 gap-2">
               <Button
                 onClick={() => setIsDialogOpen(true)}
-                className="flex-1 md:flex-none justify-center"
+                className="w-full justify-center"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                새 재고 등록
+                재고 등록
               </Button>
-              <Link href="/dashboard/purchases" className="flex-1 md:flex-none">
-                <Button
-                  variant="outline"
-                  className="w-full justify-center gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                >
-                  <PackagePlus className="h-4 w-4" />
-                  <span className="hidden sm:inline">구매 반영</span>
-                  <span className="sm:hidden">입고</span>
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/inventory/scan")}
+                className="md:hidden w-full justify-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
+              >
+                <QrCode className="h-4 w-4" />
+                QR 스캔
+              </Button>
             </div>
 
             {/* 서브 액션: 라벨 내보내기 / 엑셀 업로드 / 내보내기 */}
@@ -902,13 +846,6 @@ function InventoryPageContent() {
                 <DropdownMenuItem className="flex items-center gap-2 text-xs">
                   <Download className="h-3.5 w-3.5" />
                   내보내기
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/inventory/scan")}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  QR 스캔
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -991,7 +928,7 @@ function InventoryPageContent() {
                   className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  운영 큐
+                  점검 사항
                   {issuesCount > 0 ? (
                     <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 font-medium px-1.5 text-[11px] shadow-sm ring-2 ring-white/50 dark:bg-rose-950/50 dark:text-rose-400 animate-in zoom-in-95 duration-300 ml-2">
                       {issuesCount}
@@ -1099,230 +1036,244 @@ function InventoryPageContent() {
             )}
           </TabsContent>
 
-            {/* 2. 운영 큐 */}
+            {/* 2. 점검 사항 (대시보드 전용 뷰) */}
             <TabsContent value="overview" className="m-0 p-6 space-y-6">
-            {/* 운영 KPI 요약 (조치형) */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <button
-                type="button"
-                onClick={() => { setStatusFilter("low"); }}
-                className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-left hover:bg-red-50 transition-colors"
-              >
-                <p className="text-[11px] text-red-600 font-medium">부족 재고</p>
-                <p className="text-xl font-bold text-red-700 mt-0.5">{lowStockQueueItems.length}건</p>
-                <p className="text-[10px] text-red-500 mt-0.5">{lowStockQueueItems.filter((i) => i.currentQuantity === 0).length}건 품절</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="rounded-xl border border-orange-200 bg-orange-50/50 px-4 py-3 text-left hover:bg-orange-50 transition-colors"
-              >
-                <p className="text-[11px] text-orange-600 font-medium">유효기간 임박</p>
-                <p className="text-xl font-bold text-orange-700 mt-0.5">{expiringItems.length}건</p>
-                <p className="text-[10px] text-orange-500 mt-0.5">30일 이내</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left hover:bg-slate-100 transition-colors"
-              >
-                <p className="text-[11px] text-slate-600 font-medium">폐기 검토</p>
-                <p className="text-xl font-bold text-slate-800 mt-0.5">{expiredItems.length}건</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">유효기간 경과</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="rounded-xl border border-blue-200 bg-blue-50/50 px-4 py-3 text-left hover:bg-blue-50 transition-colors"
-              >
-                <p className="text-[11px] text-blue-600 font-medium">재발주 필요</p>
-                <p className="text-xl font-bold text-blue-700 mt-0.5">{reorderItems.length}건</p>
-                <p className="text-[10px] text-blue-500 mt-0.5">리드타임 기준</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 text-left hover:bg-emerald-50 transition-colors"
-              >
-                <p className="text-[11px] text-emerald-600 font-medium">재고 반영 대기</p>
-                <p className="text-xl font-bold text-emerald-700 mt-0.5">{pendingReceivingCount}건</p>
-                <p className="text-[10px] text-emerald-500 mt-0.5">구매 → 입고</p>
-              </button>
+            <div className="flex flex-col md:flex-row gap-4">
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                    전체 재고
+                  </CardTitle>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40">
+                    <Package className="h-4 w-4 -translate-y-[1px] text-blue-600 dark:text-blue-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {totalInventoryCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
+                    부족/품절
+                  </CardTitle>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
+                    <AlertTriangle className="h-4 w-4 -translate-y-[1px] text-red-600 dark:text-red-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
+                    {lowOrOutOfStockCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 border-orange-100 bg-orange-50/10 dark:border-orange-900/50 dark:bg-orange-950/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                    폐기 임박
+                  </CardTitle>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40">
+                    <Calendar className="h-4 w-4 -translate-y-[1px] text-orange-600 dark:text-orange-400" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {expiringSoonCount}
+                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* 운영 큐 목록 (카테고리별) */}
-            {(() => {
-              const openItemDetail = (inv: ProductInventory) => {
-                setSelectedItem(inv);
-                setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
-                setIsSheetOpen(true);
-              };
-
-              type QueueSection = { key: string; title: string; icon: typeof AlertTriangle; color: string; items: ProductInventory[]; reason: (inv: ProductInventory) => string };
-              const sections: QueueSection[] = [
-                {
-                  key: "low",
-                  title: "부족 재고",
-                  icon: TrendingDown,
-                  color: "text-red-600",
-                  items: lowStockQueueItems.filter((inv) => !dismissedAlertIds.has(inv.id)).slice(0, 6),
-                  reason: (inv) => inv.currentQuantity === 0 ? `품절 (최소 ${inv.safetyStock ?? "-"} ${inv.unit})` : `현재 ${inv.currentQuantity} / 안전재고 ${inv.safetyStock} ${inv.unit}`,
-                },
-                {
-                  key: "expiring",
-                  title: "유효기간 임박",
-                  icon: Calendar,
-                  color: "text-orange-600",
-                  items: expiringItems.filter((inv) => !dismissedAlertIds.has(inv.id)).slice(0, 6),
-                  reason: (inv) => {
-                    const days = Math.ceil((new Date(inv.expiryDate!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                    return `${days}일 남음 (${format(new Date(inv.expiryDate!), "yyyy.MM.dd")})`;
-                  },
-                },
-                {
-                  key: "expired",
-                  title: "폐기 검토 필요",
-                  icon: AlertTriangle,
-                  color: "text-slate-600",
-                  items: expiredItems.filter((inv) => !dismissedAlertIds.has(inv.id)).slice(0, 6),
-                  reason: (inv) => `만료: ${format(new Date(inv.expiryDate!), "yyyy.MM.dd")} · ${inv.currentQuantity} ${inv.unit} 잔여`,
-                },
-                {
-                  key: "reorder",
-                  title: "재발주 필요",
-                  icon: ShoppingCart,
-                  color: "text-blue-600",
-                  items: reorderItems.filter((inv) => !dismissedAlertIds.has(inv.id)).slice(0, 6),
-                  reason: (inv) => `현재 ${inv.currentQuantity} ${inv.unit} · 리드타임 ${inv.leadTimeDays ?? 0}일`,
-                },
-              ];
-
-              const activeSections = sections.filter((s) => s.items.length > 0);
-
-              if (activeSections.length === 0 && pendingReceivingCount === 0) {
-                return (
-                  <Card className="border-slate-200">
-                    <CardContent className="py-12 text-center">
-                      <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-3" />
-                      <p className="text-sm font-medium text-slate-600 mb-1">조치가 필요한 항목이 없습니다</p>
-                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                        모든 재고가 정상 범위 내에 있습니다. 새로운 이슈가 발생하면 여기에 자동으로 표시됩니다.
+            <Card className="shadow-sm border-slate-100 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  주요 점검 이슈
+                </CardTitle>
+                <CardDescription>
+                  재고 부족 또는 유통기한 임박 항목입니다. 각 항목의 조치 버튼을 통해 즉시 대응하세요.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const urgent = displayInventories
+                    .filter((inv) => {
+                      if (dismissedAlertIds.has(inv.id)) return false;
+                      const isOut = inv.currentQuantity === 0;
+                      const isLow =
+                        inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
+                      const byLeadTime = isReorderNeededByLeadTime(inv);
+                      const isExpiring =
+                        inv.expiryDate &&
+                        (() => {
+                          const d = new Date(inv.expiryDate);
+                          const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          return days > 0 && days <= 30;
+                        })();
+                      return isOut || isLow || byLeadTime || isExpiring;
+                    })
+                    .slice(0, 8);
+                  if (urgent.length === 0) {
+                    return (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        긴급 조치가 필요한 품목이 없습니다.
                       </p>
-                    </CardContent>
-                  </Card>
-                );
-              }
-
-              return (
-                <div className="space-y-4">
-                  {/* 구매 반영 대기 (별도 안내) */}
-                  {pendingReceivingCount > 0 && (
-                    <Card className="border-emerald-200 bg-emerald-50/30">
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                            <PackagePlus className="h-4 w-4 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-emerald-800">{pendingReceivingCount}건의 구매 완료 건 입고 대기</p>
-                            <p className="text-xs text-emerald-600">구매 내역에서 입고 반영을 진행하세요.</p>
+                    );
+                  }
+                  const getReasonBadge = (inv: ProductInventory) => {
+                    if (inv.currentQuantity === 0) return { label: "품절", cls: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400" };
+                    if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) return { label: "재고 부족", cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400" };
+                    if (isReorderNeededByLeadTime(inv)) return { label: "재주문 권장", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400" };
+                    return { label: "점검 필요", cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" };
+                  };
+                  const getDaysLeft = (inv: ProductInventory) => {
+                    if (!inv.expiryDate) return null;
+                    const d = new Date(inv.expiryDate);
+                    const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    if (days <= 0) return "만료됨";
+                    return `${days}일 남음`;
+                  };
+                  return (
+                    <div className="space-y-2">
+                      {urgent.map((inv) => {
+                        const reason = getReasonBadge(inv);
+                        const daysLeft = getDaysLeft(inv);
+                        const isExpiryUrgent = inv.expiryDate && (() => {
+                          const d = new Date(inv.expiryDate!);
+                          const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          return days > 0 && days <= 30;
+                        })();
+                        return (
+                        <div
+                          key={inv.id}
+                          className="flex items-start justify-between p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedItem(inv);
+                              setSheetSafetyStock(
+                                String(inv.safetyStock ?? inv.minOrderQty ?? 1)
+                              );
+                              setIsSheetOpen(true);
+                            }}
+                            className="flex-1 min-w-0 text-left"
+                          >
+                            {/* Row 1: 이름 + 상태 배지 */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h5 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                                {inv.product.name}
+                              </h5>
+                              <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${reason.cls}`}>{reason.label}</Badge>
+                              {isExpiryUrgent && daysLeft && (
+                                <Badge className="text-[10px] px-1.5 py-0 border-none bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 whitespace-nowrap shrink-0">{daysLeft}</Badge>
+                              )}
+                            </div>
+                            {/* Row 2: 보조 정보 (Lot · 위치 · 남은 수량) */}
+                            <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-600 dark:text-slate-300">{inv.lotNumber}</span></span>}
+                              {inv.location && (
+                                <>
+                                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                                  <span className="whitespace-nowrap">{inv.location}</span>
+                                </>
+                              )}
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span className="whitespace-nowrap">
+                                남은 수량: <span className="font-semibold text-slate-700 dark:text-slate-300">{inv.currentQuantity}</span> {inv.unit}
+                                {inv.safetyStock != null && <span className="text-slate-400"> (안전재고 {inv.safetyStock})</span>}
+                              </span>
+                              {inv.expiryDate && (
+                                <>
+                                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                                  <span className="whitespace-nowrap">유효기한: {format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
+                                </>
+                              )}
+                            </div>
+                          </button>
+                          {/* 액션 버튼: 아이콘+텍스트 */}
+                          <div className="flex gap-1.5 flex-shrink-0 items-start pt-0.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedItem(inv);
+                                setSheetSafetyStock(
+                                  String(inv.safetyStock ?? inv.minOrderQty ?? 1)
+                                );
+                                setIsSheetOpen(true);
+                              }}
+                            >
+                              <Eye className="h-3 w-3 shrink-0" />
+                              상세 보기
+                            </Button>
+                            {inv.currentQuantity === 0 || (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) || isReorderNeededByLeadTime(inv) ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "재발주",
+                                    description: `${inv.product.name} 재발주 기능은 곧 제공될 예정입니다.`,
+                                  });
+                                }}
+                              >
+                                <ShoppingCart className="h-3 w-3 shrink-0" />
+                                재발주
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "폐기 검토",
+                                    description: `${inv.product.name} 폐기 절차를 확인하세요.`,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3 shrink-0" />
+                                폐기 검토
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 shrink-0"
+                              title="처리 완료"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
+                                toast({
+                                  title: "알림 처리 완료",
+                                  description: "해당 품목의 알림이 처리되었습니다.",
+                                });
+                              }}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </div>
-                        <Link href="/dashboard/purchases">
-                          <Button size="sm" variant="outline" className="gap-1.5 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50">
-                            구매 내역 보기
-                            <ArrowRight className="h-3 w-3" />
-                          </Button>
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {activeSections.map((section) => {
-                    const SectionIcon = section.icon;
-                    return (
-                      <Card key={section.key} className="shadow-sm border-slate-200">
-                        <CardHeader className="py-3 px-4">
-                          <CardTitle className={`flex items-center gap-2 text-sm font-bold ${section.color}`}>
-                            <SectionIcon className="h-4 w-4" />
-                            {section.title}
-                            <Badge variant="outline" className="text-[10px] ml-1">{section.items.length}</Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0 px-4 pb-4">
-                          <div className="space-y-2">
-                            {section.items.map((inv) => (
-                              <div
-                                key={inv.id}
-                                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors gap-3"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => openItemDetail(inv)}
-                                  className="flex-1 min-w-0 text-left"
-                                >
-                                  <p className="text-sm font-medium text-slate-900 truncate">{inv.product.name}</p>
-                                  <p className="text-xs text-slate-500 truncate mt-0.5">{section.reason(inv)}</p>
-                                </button>
-                                <div className="flex gap-1 flex-shrink-0">
-                                  {(section.key === "low" || section.key === "reorder") && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-600 hover:bg-blue-50"
-                                            onClick={(e) => { e.stopPropagation(); openItemDetail(inv); }}>
-                                            <ShoppingCart className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>재발주</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                  {section.key === "expiring" && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button size="icon" variant="ghost" className="h-7 w-7 text-orange-600 hover:bg-orange-50"
-                                            onClick={(e) => { e.stopPropagation(); openItemDetail(inv); }}>
-                                            <Calendar className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>유효기간 확인</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                  {section.key === "expired" && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-500 hover:bg-slate-100"
-                                            onClick={(e) => { e.stopPropagation(); openItemDetail(inv); }}>
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>폐기 검토</TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:bg-slate-100"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
-                                      toast({ title: "처리 완료", description: "운영 큐에서 제외되었습니다." });
-                                    }}>
-                                    <Check className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
             </TabsContent>
           </Tabs>
         </div>
@@ -1437,19 +1388,6 @@ function InventoryPageContent() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">입고일</Label>
-                      <DatePicker
-                        date={receivingForm.receivedDate ? new Date(receivingForm.receivedDate) : undefined}
-                        onDateChange={(date: Date | undefined) =>
-                          setReceivingForm((f) => ({
-                            ...f,
-                            receivedDate: date ? date.toISOString().split("T")[0] : "",
-                          }))
-                        }
-                        placeholder="입고일 선택"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
                       <Label htmlFor="receiving-notes" className="text-xs">특이사항 <span className="text-slate-400 font-normal">(선택)</span></Label>
                       <Input
                         id="receiving-notes"
@@ -1507,6 +1445,7 @@ function InventoryPageContent() {
                   <div className="flex w-full gap-2 pt-2">
                     <Button
                       variant="outline"
+                      className="flex-1"
                       onClick={() => {
                         setIsSheetOpen(false);
                         setDrawerMode("view");
@@ -1516,37 +1455,20 @@ function InventoryPageContent() {
                       취소
                     </Button>
                     <Button
-                      variant="outline"
-                      className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400"
-                      onClick={() => {
-                        toast({
-                          title: "임시 저장 완료",
-                          description: "입고 정보가 임시 저장되었습니다. 나중에 이어서 작업할 수 있습니다.",
-                        });
-                      }}
-                    >
-                      <Save className="h-3.5 w-3.5 mr-1" />
-                      임시 저장
-                    </Button>
-                    <Button
                       className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      disabled={!receivingForm.actualQty || Number(receivingForm.actualQty) <= 0 || receivingCompleteMutation.isPending}
+                      disabled={!receivingForm.actualQty || Number(receivingForm.actualQty) <= 0 || restockMutation.isPending}
                       onClick={() => {
                         const addQty = Number(receivingForm.actualQty);
                         if (!addQty || addQty <= 0) return;
 
                         if (selectedItem) {
-                          receivingCompleteMutation.mutate(
+                          // 기존 재고에 입고 반영
+                          restockMutation.mutate(
                             {
-                              inventoryId: selectedItem.id,
-                              purchaseId: purchaseContext.id,
-                              quantity: addQty,
+                              id: selectedItem.id,
+                              addQty,
                               lotNumber: receivingForm.lotNumber || undefined,
                               expiryDate: receivingForm.expiryDate || undefined,
-                              location: receivingForm.location || undefined,
-                              receivedDate: receivingForm.receivedDate || undefined,
-                              notes: receivingForm.notes || undefined,
-                              restockMethod: receivingForm.restockMethod,
                             },
                             {
                               onSuccess: () => {
@@ -1557,6 +1479,7 @@ function InventoryPageContent() {
                                 setIsSheetOpen(false);
                                 setDrawerMode("view");
                                 setPurchaseContext(null);
+                                // URL에서 purchase-receiving 파라미터 제거
                                 router.replace("/dashboard/inventory");
                               },
                             }
@@ -1570,7 +1493,7 @@ function InventoryPageContent() {
                         }
                       }}
                     >
-                      {receivingCompleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                      {restockMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                       입고 반영 완료
                     </Button>
                   </div>
@@ -1865,7 +1788,7 @@ function InventoryPageContent() {
                 <div className="space-y-1.5">
                   <Label>유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
                   <DatePicker
-                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : undefined}
+                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : null}
                     onDateChange={(date) =>
                       setRestockForm((f) => ({
                         ...f,
