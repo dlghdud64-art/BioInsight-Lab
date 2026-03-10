@@ -67,14 +67,32 @@ export async function extractTextFromPDF(
       pdfBuffer.byteLength
     );
 
+    // standardFontDataUrl 설정 (pdfjs-dist가 표준 폰트 데이터 위치를 찾도록)
+    let standardFontDataUrl: string | undefined;
+    try {
+      const path = require("path");
+      standardFontDataUrl = path.join(
+        path.dirname(require.resolve("pdfjs-dist/package.json")),
+        "standard_fonts/"
+      );
+    } catch {
+      // pdfjs-dist 경로 탐색 실패 시 무시
+    }
+
     // 파서 인스턴스 생성 및 PDF 로드
-    const parser = new PDFParseClass(uint8Data);
+    const parserOptions: Record<string, unknown> = {};
+    if (standardFontDataUrl) {
+      parserOptions.standardFontDataUrl = standardFontDataUrl;
+    }
+    const parser = new PDFParseClass(uint8Data, parserOptions);
     await parser.load();
 
     // 페이지별 텍스트 추출
     let rawText = "";
     try {
-      rawText = parser.getText();
+      const result = parser.getText();
+      // pdf-parse v2가 객체를 반환하는 경우 대응
+      rawText = typeof result === "string" ? result : String(result ?? "");
     } catch {
       // getText 실패 시 getPageText로 개별 페이지 추출 시도
       const doc = parser.doc ?? (parser as any).document;
