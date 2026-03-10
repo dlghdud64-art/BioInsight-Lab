@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, Thermometer, Snowflake, Ban, Leaf, Infinity, PackagePlus, MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown, QrCode, Clock, Package, RotateCcw } from "lucide-react";
+import { AlertTriangle, Thermometer, Snowflake, Ban, Leaf, Infinity, PackagePlus, MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown, QrCode, Clock, Package, RotateCcw, Printer } from "lucide-react";
 import { InventoryQRCode } from "./InventoryQRCode";
 import { format, addDays } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
@@ -113,6 +113,8 @@ interface InventoryTableProps {
   onReorder: (inventory: InventoryItem) => void;
   onDetailClick?: (inventory: InventoryItem) => void;
   onRestock?: (inventory: InventoryItem) => void;
+  /** 품목 단위 라벨 인쇄 모달 — lots 배열 전달 */
+  onPrintLabel?: (productName: string, lots: InventoryItem[]) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
   emptyActionLabel?: string;
@@ -125,6 +127,7 @@ export function InventoryTable({
   onReorder,
   onDetailClick,
   onRestock,
+  onPrintLabel,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction,
   emptyActionLabel = "첫 재고 등록하기"
@@ -310,6 +313,12 @@ export function InventoryTable({
                               <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                               상세 보기
                             </DropdownMenuItem>
+                            {onPrintLabel && (
+                              <DropdownMenuItem onClick={() => onPrintLabel(group.productName, group.lots)} className="gap-2 text-xs">
+                                <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                라벨 인쇄
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
                               <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                               정보 수정
@@ -404,6 +413,12 @@ export function InventoryTable({
                                     <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                                     상세 보기
                                   </DropdownMenuItem>
+                                  {onPrintLabel && (
+                                    <DropdownMenuItem onClick={() => onPrintLabel(lot.product.name, [lot])} className="gap-2 text-xs">
+                                      <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                      라벨 인쇄
+                                    </DropdownMenuItem>
+                                  )}
                                   {onRestock && (
                                     <DropdownMenuItem onClick={() => onRestock(lot)} className="gap-2 text-xs">
                                       <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
