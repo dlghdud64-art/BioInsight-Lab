@@ -426,6 +426,9 @@ export default function PurchasesPage() {
     return CATEGORY_LABEL_MAP[raw.toUpperCase()] ?? raw;
   };
 
+  // ── 증빙 체크리스트 상태 (useMemo 의존성보다 앞에 선언) ──
+  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
+
   // ── 증빙 체크리스트 항목 ──
   const EVIDENCE_ITEMS = [
     { key: "quotation", label: "견적서 존재 여부" },
@@ -560,7 +563,6 @@ export default function PurchasesPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
 
   // 필터 재정의 (기존 filteredPurchases 대체)
   const enhancedFilteredPurchases = useMemo(() => {
