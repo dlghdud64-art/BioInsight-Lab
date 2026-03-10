@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Calendar, Wallet, TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -337,15 +337,27 @@ export default function BudgetPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex justify-between items-center">
                         {budget.name}
-                        <Badge
-                          variant="outline"
-                          className="bg-emerald-50 text-emerald-700 border-emerald-200"
-                        >
-                          운영 중
-                        </Badge>
+                        {(() => {
+                          const now = new Date();
+                          const start = new Date(budget.periodStart);
+                          const end = new Date(budget.periodEnd);
+                          if (rate > 100) return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">초과</Badge>;
+                          if (rate >= 80) return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">경고</Badge>;
+                          if (now < start) return <Badge variant="outline" className="bg-slate-100 text-slate-600 border-slate-200">예정</Badge>;
+                          if (now > end) return <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200">종료</Badge>;
+                          return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">운영 중</Badge>;
+                        })()}
                       </CardTitle>
-                      <CardDescription>
-                        {startStr} ~ {endStr}
+                      <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                        <span>{startStr} ~ {endStr}</span>
+                        <span className="text-slate-300">·</span>
+                        <span>{budget.targetDepartment || "부서 미지정"}</span>
+                        {budget.projectName && (
+                          <>
+                            <span className="text-slate-300">·</span>
+                            <span>{budget.projectName}</span>
+                          </>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
@@ -397,112 +409,6 @@ export default function BudgetPage() {
         )}
       </div>
     </div>
-  );
-}
-
-function BudgetCard({
-  budget,
-  onEdit,
-  onDelete,
-}: {
-  budget: Budget;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const usage = budget.usage;
-  const usageRate = usage?.usageRate || 0;
-  const isOverBudget = usageRate > 100;
-  const isWarning = usageRate > 80 && usageRate <= 100;
-
-  return (
-    <Card className={`p-3 md:p-6 ${isOverBudget ? "border-red-300 bg-red-50" : isWarning ? "border-orange-300 bg-orange-50" : ""}`}>
-      <CardHeader className="px-0 pt-0 pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-sm md:text-lg truncate">{budget.name}</CardTitle>
-            <CardDescription className="mt-1 text-xs md:text-sm">
-              {budget.projectName && <span className="mr-2">프로젝트: {budget.projectName}</span>}
-              <span className="whitespace-nowrap">
-                {new Date(budget.periodStart).toLocaleDateString("ko-KR")} ~{" "}
-                {new Date(budget.periodEnd).toLocaleDateString("ko-KR")}
-              </span>
-            </CardDescription>
-          </div>
-          <div className="flex gap-1 md:gap-2 flex-shrink-0">
-            <Button size="sm" variant="outline" onClick={onEdit} className="text-xs md:text-sm h-7 md:h-9 px-2 md:px-3">
-              <Edit className="h-3 w-3 md:h-4 md:w-4 mr-0 md:mr-1" />
-              <span className="hidden sm:inline">수정</span>
-            </Button>
-            <Button size="sm" variant="outline" onClick={onDelete} className="text-xs md:text-sm h-7 md:h-9 px-2 md:px-3">
-              <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-0 md:mr-1" />
-              <span className="hidden sm:inline">삭제</span>
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="px-0 pb-0 space-y-3 md:space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <div>
-            <div className="text-xs md:text-sm text-muted-foreground">예산 금액</div>
-            <div className="text-base md:text-lg font-semibold break-words">
-              {budget.amount.toLocaleString()} {budget.currency}
-            </div>
-          </div>
-          {usage && (
-            <>
-              <div>
-                <div className="text-xs md:text-sm text-muted-foreground">사용 금액</div>
-                <div className="text-base md:text-lg font-semibold break-words">
-                  {usage.totalSpent.toLocaleString()} {budget.currency}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs md:text-sm text-muted-foreground">잔여 금액</div>
-                <div className={`text-base md:text-lg font-semibold break-words ${usage.remaining < 0 ? "text-red-600" : ""}`}>
-                  {usage.remaining.toLocaleString()} {budget.currency}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs md:text-sm text-muted-foreground">사용률</div>
-                <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-                  <div className="text-base md:text-lg font-semibold">{usageRate.toFixed(1)}%</div>
-                  {isOverBudget && (
-                    <Badge variant="destructive" className="text-[10px] md:text-xs">
-                      <AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 mr-0.5 md:mr-1" />
-                      초과
-                    </Badge>
-                  )}
-                  {isWarning && !isOverBudget && (
-                    <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px] md:text-xs">
-                      경고
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {usage && (
-          <div className="space-y-1.5 md:space-y-2">
-            <div className="flex items-center justify-between text-xs md:text-sm">
-              <span className="text-muted-foreground">예산 사용률</span>
-              <span className="font-medium">{usageRate.toFixed(1)}%</span>
-            </div>
-            <Progress
-              value={Math.min(usageRate, 100)}
-              className={`h-1.5 md:h-2 ${isOverBudget ? "bg-red-200" : isWarning ? "bg-orange-200" : ""}`}
-            />
-          </div>
-        )}
-
-        {budget.description && (
-          <div className="text-xs md:text-sm text-muted-foreground pt-2 border-t">
-            {budget.description}
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 

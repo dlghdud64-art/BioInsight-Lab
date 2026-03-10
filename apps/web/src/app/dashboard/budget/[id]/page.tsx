@@ -203,6 +203,18 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const startStr = new Date(budget.periodStart).toLocaleDateString("ko-KR");
   const endStr = new Date(budget.periodEnd).toLocaleDateString("ko-KR");
 
+  // 예산 상태 판정
+  const now = new Date();
+  const periodStart = new Date(budget.periodStart);
+  const periodEnd = new Date(budget.periodEnd);
+  const budgetStatus = (() => {
+    if (usageRate > 100) return { label: "초과", color: "bg-red-100 text-red-700 border-red-200" };
+    if (usageRate >= 80) return { label: "경고", color: "bg-orange-100 text-orange-700 border-orange-200" };
+    if (now < periodStart) return { label: "예정", color: "bg-slate-100 text-slate-600 border-slate-200" };
+    if (now > periodEnd) return { label: "종료", color: "bg-slate-100 text-slate-500 border-slate-200" };
+    return { label: "운영 중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  })();
+
   const handleExcelDownload = () => {
     toast({ title: "엑셀 다운로드", description: "집행 내역이 다운로드됩니다. (준비 중)" });
   };
@@ -227,18 +239,15 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
                 {budget.name}
               </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400">{startStr} ~ {endStr}</span>
-                {budget.targetDepartment && (
-                  <Badge variant="outline" className="text-xs bg-slate-50 dark:bg-slate-800/60">
-                    {budget.targetDepartment}
-                  </Badge>
-                )}
-                {budget.projectName && (
-                  <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/40">
-                    {budget.projectName}
-                  </Badge>
-                )}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <span>{startStr} ~ {endStr}</span>
+                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span>{budget.targetDepartment || "부서 미지정"}</span>
+                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span>{budget.projectName || "프로젝트 미지정"}</span>
+                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${budgetStatus.color}`}>
+                  {budgetStatus.label}
+                </Badge>
               </div>
             </div>
           </div>
