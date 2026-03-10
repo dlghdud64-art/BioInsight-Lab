@@ -33,7 +33,15 @@ export async function GET(request: NextRequest) {
         organization: {
           include: {
             members: {
-              select: { id: true, role: true, status: true },
+              select: { id: true, role: true },
+            },
+            invites: {
+              where: {
+                acceptedAt: null,
+                revokedAt: null,
+                expiresAt: { gt: new Date() },
+              },
+              select: { id: true },
             },
           },
         },
@@ -52,14 +60,15 @@ export async function GET(request: NextRequest) {
       .map((m: any) => {
         const org = m.organization;
         const allMembers = org.members || [];
+        const pendingInvites = org.invites || [];
         const adminCount = allMembers.filter(
           (mem: any) => mem.role === "ADMIN" || mem.role === "OWNER"
         ).length;
-        const pendingCount = allMembers.filter(
-          (mem: any) => mem.status === "PENDING" || mem.status === "INVITED"
-        ).length;
+        const pendingCount = pendingInvites.length;
+        // invites는 프론트엔드에 노출하지 않음
+        const { invites, ...orgRest } = org;
         return {
-          ...org,
+          ...orgRest,
           members: allMembers,
           memberCount: allMembers.length,
           adminCount,

@@ -124,6 +124,8 @@ export default function ProtocolBOMPage() {
   const [pdfUploadEnabled, setPdfUploadEnabled] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [bomSaved, setBomSaved] = useState(false);
+  const [pdfParseError, setPdfParseError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
 
   // 단계 계산
   const currentStep: 0 | 1 | 2 | 3 = bomSaved ? 3 : extractionResult ? 2 : 0;
@@ -210,20 +212,34 @@ export default function ProtocolBOMPage() {
   /* ──── PDF 추출 mutation ──── */
   const extractFromFileMutation = useMutation({
     mutationFn: async (file: File) => {
+      setPdfParseError(null);
       const formData = new FormData();
       formData.append("file", file);
+
+      // 1단계: PDF → 텍스트 추출
       const pdfRes = await fetch("/api/protocol/extract-pdf-text", { method: "POST", body: formData });
-      if (!pdfRes.ok) { const e = await pdfRes.json(); throw new Error(e.error || "PDF 텍스트 추출에 실패했습니다."); }
+      if (!pdfRes.ok) {
+        const e = await pdfRes.json().catch(() => ({}));
+        throw new Error(e.error || "PDF 텍스트 추출에 실패했습니다.");
+      }
       const { text } = await pdfRes.json();
-      if (!text) throw new Error("PDF에서 텍스트를 추출할 수 없습니다.");
+      if (!text || text.trim().length < 10) {
+        throw new Error("PDF_NO_TEXT");
+      }
+
+      // 2단계: 텍스트 → AI 시약 추출
       const extractRes = await fetch("/api/protocol/extract-text", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!extractRes.ok) { const e = await extractRes.json(); throw new Error(e.error || "PDF 분석에 실패했습니다."); }
+      if (!extractRes.ok) {
+        const e = await extractRes.json().catch(() => ({}));
+        throw new Error(e.error || "시약 추출에 실패했습니다.");
+      }
       return extractRes.json() as Promise<ProtocolExtractionResult>;
     },
     onSuccess: (data) => {
+      setPdfParseError(null);
       setExtractionResult(data);
       const reagentsWithId = data.reagents.map((r, idx) => ({ ...r, id: `reagent-${idx}-${Date.now()}`, showEvidence: false }));
       setReagents(reagentsWithId);
@@ -231,7 +247,20 @@ export default function ProtocolBOMPage() {
       toast({ title: `${data.reagents.length}개 항목이 추출되었습니다.` });
       matchProductsForReagents(reagentsWithId);
     },
-    onError: (error: Error) => toast({ title: "PDF 분석 실패", description: error.message, variant: "destructive" }),
+    onError: (error: Error) => {
+      const isNoText = error.message === "PDF_NO_TEXT";
+      const userMessage = isNoText
+        ? "PDF에서 텍스트를 읽지 못했습니다. 스캔본이거나 형식이 맞지 않을 수 있습니다."
+        : "PDF 분석에 실패했습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다.";
+      setPdfParseError(userMessage);
+      toast({
+        title: "PDF 분석 실패",
+        description: "텍스트 붙여넣기로 계속 진행할 수 있습니다.",
+        variant: "destructive",
+      });
+      // 개발 콘솔에만 원본 에러 출력
+      console.error("[PDF Parse Error]", error.message);
+    },
   });
 
   /* ──── 텍스트 추출 mutation ──── */
@@ -432,7 +461,11 @@ export default function ProtocolBOMPage() {
                 </p>
               </CardHeader>
               <CardContent className="px-4 md:px-5 pb-4 md:pb-5 space-y-4">
-                <Tabs defaultValue={pdfUploadEnabled ? "upload" : "paste"} className="w-full">
+                <Tabs
+                  value={activeTab ?? (pdfUploadEnabled ? "upload" : "paste")}
+                  onValueChange={(v) => { setActiveTab(v); setPdfParseError(null); }}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full" style={{ gridTemplateColumns: pdfUploadEnabled ? "1fr 1fr" : "1fr" }}>
                     {pdfUploadEnabled && (
                       <TabsTrigger value="upload" className="flex items-center gap-1.5 text-xs">
@@ -485,7 +518,7 @@ export default function ProtocolBOMPage() {
                         )}
                       </div>
                       <Button
-                        onClick={() => pdfFile && extractFromFileMutation.mutate(pdfFile)}
+                        onClick={() => { setPdfParseError(null); pdfFile && extractFromFileMutation.mutate(pdfFile); }}
                         disabled={!pdfFile || extractFromFileMutation.isPending}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       >
@@ -495,6 +528,37 @@ export default function ProtocolBOMPage() {
                           <><Sparkles className="h-4 w-4 mr-2" />AI 시약 추출 시작</>
                         )}
                       </Button>
+
+                      {/* PDF 분석 실패 안내 */}
+                      {pdfParseError && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2.5">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-amber-800 leading-relaxed">{pdfParseError}</p>
+                          </div>
+                          <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                            텍스트 붙여넣기로 계속 진행해 주세요.
+                          </p>
+                          <div className="flex gap-2 pl-6">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                              onClick={() => { setPdfParseError(null); pdfFile && extractFromFileMutation.mutate(pdfFile); }}
+                            >
+                              다시 시도
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                              onClick={() => setActiveTab("paste")}
+                            >
+                              <Clipboard className="h-3 w-3 mr-1" />
+                              텍스트 붙여넣기로 진행
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </TabsContent>
                   )}
 
@@ -593,6 +657,34 @@ export default function ProtocolBOMPage() {
                         <div className="h-5 w-12 rounded-full bg-slate-200 flex-shrink-0" />
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : pdfParseError && !extractionResult ? (
+              /* ── 분석 실패 ── */
+              <Card className="shadow-sm border-amber-200 bg-white h-full">
+                <CardContent className="p-5 flex flex-col items-center justify-center min-h-[280px] text-center space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold text-slate-800">PDF 분석에 실패했습니다</p>
+                    <p className="text-xs text-slate-500 max-w-xs leading-relaxed">{pdfParseError}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline" size="sm" className="text-xs"
+                      onClick={() => { setPdfParseError(null); pdfFile && extractFromFileMutation.mutate(pdfFile); }}
+                      disabled={!pdfFile}
+                    >
+                      다시 시도
+                    </Button>
+                    <Button
+                      size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setActiveTab("paste")}
+                    >
+                      <Clipboard className="h-3 w-3 mr-1" />텍스트 입력으로 전환
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
