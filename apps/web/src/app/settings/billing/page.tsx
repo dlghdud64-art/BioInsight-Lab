@@ -15,7 +15,7 @@ import { PageHeader } from "@/app/_components/page-header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";
-import { SubscriptionPlan, PLAN_LIMITS } from "@/lib/plans";
+import { SubscriptionPlan, PLAN_LIMITS, PLAN_DISPLAY } from "@/lib/plans";
 
 function BillingPageContent() {
   const { data: session, status } = useSession();
@@ -140,9 +140,9 @@ function BillingPageContent() {
 
   const getPlanBadge = (planType: SubscriptionPlan) => {
     const config = {
-      [SubscriptionPlan.FREE]: { label: "Free", color: "bg-gray-100 text-gray-800" },
-      [SubscriptionPlan.TEAM]: { label: "Team", color: "bg-blue-100 text-blue-800" },
-      [SubscriptionPlan.ORGANIZATION]: { label: "Organization", color: "bg-purple-100 text-purple-800" },
+      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-gray-100 text-gray-800" },
+      [SubscriptionPlan.TEAM]: { label: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName, color: "bg-blue-100 text-blue-800" },
+      [SubscriptionPlan.ORGANIZATION]: { label: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName, color: "bg-indigo-100 text-indigo-800" },
     };
     const { label, color } = config[planType];
     return <Badge className={color}>{label}</Badge>;
@@ -271,9 +271,9 @@ function BillingPageContent() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-1/2 p-3">기능</TableHead>
-                      <TableHead className="text-center p-3">Free</TableHead>
+                      <TableHead className="text-center p-3">Starter</TableHead>
                       <TableHead className="text-center p-3">Team</TableHead>
-                      <TableHead className="text-center p-3">Organization</TableHead>
+                      <TableHead className="text-center p-3">Business</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -480,12 +480,12 @@ function BillingPageContent() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-base mb-1">
-                      {plan === SubscriptionPlan.FREE ? "Team 플랜으로 업그레이드" : "Organization 플랜으로 업그레이드"}
+                      {plan === SubscriptionPlan.FREE ? "Team 플랜으로 업그레이드" : "Business 플랜으로 업그레이드"}
                     </h3>
                     <p className="text-sm text-slate-600">
-                      {plan === SubscriptionPlan.FREE 
-                        ? "더 많은 멤버와 견적 요청, 고급 기능을 사용하세요."
-                        : "무제한 멤버, 벤더 포털, SSO 등 엔터프라이즈 기능을 사용하세요."}
+                      {plan === SubscriptionPlan.FREE
+                        ? "팀원 공유 재고, 구매 요청 워크플로우 등 협업 기능을 사용하세요."
+                        : "무제한 멤버, 전자결재 승인 라인, 예산 통합 관리 등 조직 운영 기능을 사용하세요."}
                     </p>
                   </div>
                   <Button
