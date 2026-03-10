@@ -77,11 +77,11 @@ export default function SupportPage() {
         <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100 py-12 md:py-16">
           <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
-              고객 지원 및 문의
+              도입 문의 및 서비스 안내
             </h1>
             <p className="text-slate-600 text-base md:text-lg leading-relaxed">
-              서비스 이용 중 궁금한 점이나 도입 관련 문의가 있으신가요?<br className="hidden sm:block" />
-              BioInsight Lab 팀이 빠르게 확인하고 안내해드립니다.
+              BioInsight Lab 도입을 검토 중이거나, 요금·기능에 대해 궁금한 점이 있으신가요?<br className="hidden sm:block" />
+              담당팀이 확인 후 빠르게 안내해드립니다.
             </p>
           </div>
         </section>
