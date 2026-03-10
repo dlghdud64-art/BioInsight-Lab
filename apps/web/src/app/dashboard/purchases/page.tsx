@@ -11,7 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, Calendar as CalendarIcon, Filter, FileText, ChevronRight, Receipt, Plus, Search, Package, Hash, DollarSign, CircleDollarSign } from "lucide-react";
+import {
+  Upload, Download, Calendar as CalendarIcon, Filter, FileText, ChevronRight,
+  Receipt, Plus, Search, Package, Hash, DollarSign, CircleDollarSign,
+  ShoppingCart, TrendingUp, TrendingDown, AlertTriangle, BarChart2,
+  RefreshCw, Store, ArrowUpRight, CreditCard, Building2,
+  Repeat, AlertCircle, CheckCircle2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
@@ -51,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 
 export default function PurchasesPage() {
   const { data: session } = useSession();
@@ -405,6 +412,129 @@ export default function PurchasesPage() {
     return Array.from(vendors).sort() as string[];
   }, [purchasesData?.items]);
 
+  // ── 카테고리 라벨 매핑 ──
+  const CATEGORY_LABEL_MAP: Record<string, string> = {
+    REAGENT: "시약", REAGENTS: "시약", TOOL: "장비", TOOLS: "장비",
+    EQUIPMENT: "장비", CONSUMABLE: "소모품", CONSUMABLES: "소모품",
+    RAW_MATERIAL: "원자재", GLASSWARE: "유리기구", CHEMICAL: "화학물질",
+    CHEMICALS: "화학물질", MEDIA: "배지", BUFFER: "완충용액", OTHER: "기타", ETC: "기타",
+  };
+  const getCategoryLabel = (raw: string | null | undefined): string => {
+    if (!raw) return "미분류";
+    return CATEGORY_LABEL_MAP[raw.toUpperCase()] ?? raw;
+  };
+
+  // ── 운영 상태 할당 로직 ──
+  const getOperationalStatus = (purchase: any) => {
+    const days = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / 86400000);
+    const amount = purchase.amount || 0;
+
+    // 고액 + 최근 → 증빙 확인 필요
+    if (amount >= 2000000 && days <= 14) {
+      return { label: "증빙 확인 필요", className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800" };
+    }
+    // 7일 이내 → 입고 대기
+    if (days <= 7) {
+      return { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800" };
+    }
+    // 14일 이내 → 재고 반영 필요
+    if (days <= 14) {
+      return { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-800" };
+    }
+    // 그 외 → 구매 완료
+    return { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+  };
+
+  // ── 반복 구매 품목 감지 ──
+  const repeatPurchaseMap = useMemo(() => {
+    if (!purchasesData?.items) return new Map<string, number>();
+    const countMap = new Map<string, number>();
+    for (const p of purchasesData.items) {
+      const key = (p.itemName || "").toLowerCase();
+      countMap.set(key, (countMap.get(key) || 0) + 1);
+    }
+    return countMap;
+  }, [purchasesData?.items]);
+
+  // ── 운영 KPI 계산 ──
+  const operationalKPIs = useMemo(() => {
+    const items = purchasesData?.items || [];
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 86400000;
+
+    // 이번 달 발주 건수
+    const thisMonth = new Date();
+    const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1).getTime();
+    const thisMonthOrders = items.filter((p: any) => new Date(p.purchasedAt).getTime() >= monthStart).length;
+
+    // 반복 구매 품목 수
+    const repeatItems = Array.from(repeatPurchaseMap.entries()).filter(([, count]) => count >= 2);
+    const topRepeatItem = repeatItems.sort((a, b) => b[1] - a[1])[0];
+
+    // 공급사 집중도 (상위 1개 공급사 비중)
+    const vendorAmounts: Record<string, number> = {};
+    let totalAmount = 0;
+    for (const p of items) {
+      const v = p.vendorName || "미등록";
+      vendorAmounts[v] = (vendorAmounts[v] || 0) + (p.amount || 0);
+      totalAmount += p.amount || 0;
+    }
+    const topVendorEntry = Object.entries(vendorAmounts).sort((a, b) => b[1] - a[1])[0];
+    const vendorConcentration = topVendorEntry && totalAmount > 0
+      ? Math.round((topVendorEntry[1] / totalAmount) * 100)
+      : 0;
+
+    // 최근 30일 고액 구매 (200만원 이상)
+    const highValueRecent = items.filter(
+      (p: any) => new Date(p.purchasedAt).getTime() >= thirtyDaysAgo && (p.amount || 0) >= 2000000
+    ).length;
+
+    // 입고/재고 반영 대기 건
+    const pendingActions = items.filter((p: any) => {
+      const days = Math.floor((now - new Date(p.purchasedAt).getTime()) / 86400000);
+      return days <= 14;
+    }).length;
+
+    return {
+      thisMonthOrders,
+      repeatItemCount: repeatItems.length,
+      topRepeatItem: topRepeatItem ? { name: topRepeatItem[0], count: topRepeatItem[1] } : null,
+      vendorConcentration,
+      topVendorName: topVendorEntry?.[0] || "-",
+      highValueRecent,
+      pendingActions,
+    };
+  }, [purchasesData?.items, repeatPurchaseMap]);
+
+  // ── 고유 카테고리 목록 ──
+  const uniqueCategories = useMemo(() => {
+    if (!purchasesData?.items) return [];
+    const cats = new Set(purchasesData.items.map((p: any) => p.category).filter(Boolean));
+    return Array.from(cats).sort() as string[];
+  }, [purchasesData?.items]);
+
+  // ── 상태 필터 ──
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // 필터 재정의 (기존 filteredPurchases 대체)
+  const enhancedFilteredPurchases = useMemo(() => {
+    let filtered = filteredPurchases;
+
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((p: any) => p.category === selectedCategory);
+    }
+
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter((p: any) => {
+        const status = getOperationalStatus(p);
+        return status.label === selectedStatus;
+      });
+    }
+
+    return filtered;
+  }, [filteredPurchases, selectedCategory, selectedStatus]);
+
   // DataTable 컬럼 정의
   const columns: ColumnDef<any>[] = useMemo(() => [
     {
@@ -412,7 +542,11 @@ export default function PurchasesPage() {
       header: "거래일자",
       cell: ({ row }) => {
         const date = row.original.purchasedAt;
-        return date ? format(new Date(date), "yyyy.MM.dd") : "-";
+        return (
+          <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+            {date ? format(new Date(date), "yyyy.MM.dd") : "-"}
+          </span>
+        );
       },
     },
     {
@@ -420,12 +554,21 @@ export default function PurchasesPage() {
       header: "품목명",
       cell: ({ row }) => {
         const item = row.original;
+        const key = (item.itemName || "").toLowerCase();
+        const count = repeatPurchaseMap.get(key) || 0;
         return (
-          <div className="flex flex-col">
-            <span className="font-medium">{item.itemName || "-"}</span>
-            {item.catalogNumber && (
-              <span className="text-xs text-gray-400 font-mono">{item.catalogNumber}</span>
-            )}
+          <div className="flex flex-col gap-0.5 max-w-[180px]">
+            <span className="font-medium text-slate-800 dark:text-slate-200 text-sm truncate">{item.itemName || "-"}</span>
+            <div className="flex items-center gap-1.5">
+              {item.catalogNumber && (
+                <span className="text-[11px] text-slate-400 font-mono">{item.catalogNumber}</span>
+              )}
+              {count >= 2 && (
+                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 dark:text-blue-400">
+                  <Repeat className="h-2.5 w-2.5 mr-0.5" />{count}회
+                </Badge>
+              )}
+            </div>
           </div>
         );
       },
@@ -433,22 +576,30 @@ export default function PurchasesPage() {
     {
       accessorKey: "vendorName",
       header: "공급사",
-      cell: ({ row }) => row.original.vendorName || "-",
+      cell: ({ row }) => (
+        <span className="text-sm text-slate-600 dark:text-slate-400">{row.original.vendorName || "-"}</span>
+      ),
+    },
+    {
+      accessorKey: "category",
+      header: "분류",
+      cell: ({ row }) => {
+        const cat = row.original.category;
+        return (
+          <span className="text-xs text-slate-500 dark:text-slate-400">{getCategoryLabel(cat)}</span>
+        );
+      },
     },
     {
       accessorKey: "qty",
       header: "수량",
       cell: ({ row }) => {
         const item = row.original;
-        return `${item.qty || 0} ${item.unit || ""}`;
-      },
-    },
-    {
-      accessorKey: "unitPrice",
-      header: "단가",
-      cell: ({ row }) => {
-        const unitPrice = row.original.unitPrice;
-        return unitPrice ? formatCurrency(unitPrice, row.original.currency) : "-";
+        return (
+          <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+            {item.qty || 0} {item.unit || ""}
+          </span>
+        );
       },
     },
     {
@@ -456,401 +607,470 @@ export default function PurchasesPage() {
       header: "총액",
       cell: ({ row }) => {
         const amount = row.original.amount;
-        return <span className="font-bold">{formatCurrency(amount, row.original.currency)}</span>;
+        return <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{formatCurrency(amount)}</span>;
       },
     },
     {
       accessorKey: "status",
       header: "상태",
       cell: ({ row }) => {
-        const statusBadge = getStatusBadge(row.original);
+        const status = getOperationalStatus(row.original);
         return (
-          <Badge
-            variant="outline"
-            dot={statusBadge.dot}
-            dotPulse={statusBadge.dotPulse}
-            className={statusBadge.className}
-          >
-            {statusBadge.label}
+          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold whitespace-nowrap ${status.className}`}>
+            {status.label}
           </Badge>
         );
       },
     },
-  ], []);
-
-  // 상태에 따른 뱃지 (PurchaseRecord는 이미 완료된 구매 내역이므로 항상 "구매 완료")
-  const getStatusBadge = (purchase: any) => {
-    const daysAgo = Math.floor((Date.now() - new Date(purchase.purchasedAt).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysAgo > 14) {
-      return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-    }
-    if (daysAgo > 7) {
-      return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-    }
-    // 최근 구매도 완료 처리 (PurchaseRecord = 완료된 구매)
-    return { label: "구매 완료", dot: "emerald" as const, dotPulse: false, className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-  };
+  ], [repeatPurchaseMap]);
 
   return (
-    <div className="w-full px-4 md:px-6 py-4 md:py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <PageHeader
-          title="구매 내역"
-          description="구매 영수증과 내역을 이곳에서 관리하세요."
-          icon={Download}
-        />
-            {/* Purchase Summary - 로그인 유저 또는 guestKey 보유 시 표시 */}
-            {(!!session || !!guestKey) && (
-              <>
-                {/* Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">이번 달 총 지출</CardTitle>
-                      <CalendarIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0">
-                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
-                        {summaryLoading ? "..." : formatCurrency(summary?.summary?.currentMonthSpending || 0)}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {summary?.summary?.currentMonthCount || 0}건의 구매
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">연간 누적</CardTitle>
-                      <CalendarIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0">
-                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
-                        {summaryLoading ? "..." : formatCurrency(summary?.summary?.yearToDate || 0)}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        올해 총 구매 금액
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card className="stat-card-fixed bg-white dark:bg-[#161d2f] rounded-xl shadow-sm border border-gray-100 dark:border-slate-800/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-                      <CardTitle className="text-sm font-medium text-gray-500 dark:text-slate-400">주요 벤더</CardTitle>
-                      <Filter className="h-4 w-4 text-gray-400 dark:text-slate-500" />
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0">
-                      <div className="text-auto-scale text-gray-900 dark:text-slate-200">
-                        {summaryLoading ? "..." : summary?.topVendors?.[0]?.vendorName || "-"}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {summary?.topVendors?.[0]
-                          ? formatCurrency(summary.topVendors[0].totalAmount)
-                          : "-"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
-                {/* Action Bar: [+ 내역 등록] 버튼 및 필터 */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  {/* 필터 바 */}
-                  <div className="flex flex-col gap-2 flex-1">
-                    {/* 검색창 */}
-                    <div className="relative w-full">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* ══ 1. 페이지 헤더 ══ */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            구매 운영
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            구매 이력을 확인하고, 재구매·재고·공급사·리포트로 이어지는 후속 조치를 바로 처리하세요.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            onClick={() => setIsImportDialogOpen(true)}
+            size="sm"
+            className="h-8 text-xs gap-1.5 font-medium bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            내역 등록
+          </Button>
+          <Link href="/dashboard/analytics">
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-medium">
+              <BarChart2 className="h-3.5 w-3.5" />
+              지출 분석
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Purchase Summary - 로그인 유저 또는 guestKey 보유 시 표시 */}
+      {(!!session || !!guestKey) && (
+        <>
+          {/* ══ 2. 운영 KPI 카드 ══ */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* 이번 달 발주 */}
+            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingCart className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 발주</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {summaryLoading ? "..." : `${operationalKPIs.thisMonthOrders}건`}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {summaryLoading ? "-" : formatCurrency(summary?.summary?.currentMonthSpending || 0)}
+              </p>
+            </div>
+
+            {/* 반복 구매 품목 */}
+            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <RefreshCw className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">반복 구매</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {summaryLoading ? "..." : `${operationalKPIs.repeatItemCount}개`}
+              </div>
+              <p className="text-xs text-slate-400 mt-1 truncate">
+                {operationalKPIs.topRepeatItem
+                  ? `최다: ${operationalKPIs.topRepeatItem.name}`
+                  : "반복 구매 없음"}
+              </p>
+            </div>
+
+            {/* 공급사 집중도 */}
+            <div className={`rounded-xl border p-4 shadow-sm ${
+              operationalKPIs.vendorConcentration >= 70
+                ? "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-900/30"
+                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50"
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Store className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">공급사 집중도</span>
+              </div>
+              <div className={`text-xl font-bold ${
+                operationalKPIs.vendorConcentration >= 70
+                  ? "text-amber-700 dark:text-amber-400"
+                  : "text-slate-900 dark:text-slate-100"
+              }`}>
+                {summaryLoading ? "..." : `${operationalKPIs.vendorConcentration}%`}
+              </div>
+              <p className="text-xs text-slate-400 mt-1 truncate">
+                {operationalKPIs.topVendorName}
+              </p>
+            </div>
+
+            {/* 고액 구매 */}
+            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-rose-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">고액 구매</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {summaryLoading ? "..." : `${operationalKPIs.highValueRecent}건`}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">최근 30일 · 200만원 이상</p>
+            </div>
+
+            {/* 후속 처리 대기 */}
+            <div className={`rounded-xl border p-4 shadow-sm ${
+              operationalKPIs.pendingActions > 0
+                ? "border-blue-200/60 bg-blue-50/30 dark:bg-blue-950/10 dark:border-blue-900/30"
+                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50"
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">처리 대기</span>
+              </div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {summaryLoading ? "..." : `${operationalKPIs.pendingActions}건`}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">입고·재고 반영 대기</p>
+            </div>
+          </div>
+
+          {/* ══ 3. 통합 필터 바 ══ */}
+          <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+            <CardContent className="p-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                {/* 검색 */}
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <Input
+                    placeholder="품목명, 카탈로그 번호 검색"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-sm border-slate-200 dark:border-slate-700"
+                  />
+                </div>
+                {/* 필터 그룹 */}
+                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                  <DateRangePicker
+                    startDate={customDateRange?.from}
+                    endDate={customDateRange?.to}
+                    onDateChange={(from: string, to: string) => setCustomDateRange({ from, to })}
+                  />
+                  <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                    <SelectTrigger className="w-[140px] h-9 text-xs">
+                      <SelectValue placeholder="공급사" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 공급사</SelectItem>
+                      {uniqueVendors.map((vendor) => (
+                        <SelectItem key={vendor} value={vendor}>{vendor}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-[110px] h-9 text-xs">
+                      <SelectValue placeholder="분류" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 분류</SelectItem>
+                      {uniqueCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{getCategoryLabel(cat)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-[130px] h-9 text-xs">
+                      <SelectValue placeholder="상태" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 상태</SelectItem>
+                      <SelectItem value="입고 대기">입고 대기</SelectItem>
+                      <SelectItem value="재고 반영 필요">재고 반영 필요</SelectItem>
+                      <SelectItem value="증빙 확인 필요">증빙 확인 필요</SelectItem>
+                      <SelectItem value="구매 완료">구매 완료</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ══ 4. 구매 내역 테이블 ══ */}
+          {purchasesLoading ? (
+            <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardContent className="flex items-center justify-center py-16">
+                <p className="text-sm text-slate-400">구매 내역을 불러오는 중...</p>
+              </CardContent>
+            </Card>
+          ) : enhancedFilteredPurchases.length > 0 ? (
+            <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f] overflow-hidden">
+              <CardHeader className="p-4 pb-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">구매 내역</CardTitle>
+                    <CardDescription className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      총 {enhancedFilteredPurchases.length}건
+                      {selectedVendor !== "all" && ` · ${selectedVendor}`}
+                      {selectedStatus !== "all" && ` · ${selectedStatus}`}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-3">
+                <DataTable
+                  columns={columns}
+                  data={enhancedFilteredPurchases}
+                  searchKey="itemName"
+                  searchPlaceholder="품명 검색"
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+              <CardContent className="flex flex-col items-center justify-center py-14">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <Package className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">구매 내역이 없습니다</h3>
+                <p className="text-xs text-slate-400 mb-5">내역을 등록하면 운영 인사이트를 확인할 수 있습니다.</p>
+                <Button
+                  onClick={() => setIsImportDialogOpen(true)}
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  내역 등록하기
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ══ 5. 구매 운영 후속 조치 ══ */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-900/30 p-4">
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+              후속 조치 바로가기
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <Link href="/dashboard/analytics">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+                  <BarChart2 className="h-3.5 w-3.5 text-slate-500" />
+                  지출 분석 리포트
+                </Button>
+              </Link>
+              <Link href="/dashboard/budget">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+                  <CreditCard className="h-3.5 w-3.5 text-slate-500" />
+                  예산 관리
+                </Button>
+              </Link>
+              <Link href="/dashboard/inventory">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+                  <Package className="h-3.5 w-3.5 text-slate-500" />
+                  재고 현황
+                </Button>
+              </Link>
+              <Link href="/dashboard/analytics/category">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
+                  <Store className="h-3.5 w-3.5 text-slate-500" />
+                  공급사별 지출 분석
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Import Dialog (모달) */}
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>구매 내역 등록</DialogTitle>
+                <DialogDescription>
+                  간편 입력, TSV 붙여넣기, CSV 업로드 중 선택하세요
+                </DialogDescription>
+              </DialogHeader>
+              <Tabs defaultValue="csv-upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="simple-form">간편 입력</TabsTrigger>
+                  <TabsTrigger value="tsv-paste">TSV 붙여넣기</TabsTrigger>
+                  <TabsTrigger value="csv-upload">CSV 업로드</TabsTrigger>
+                </TabsList>
+
+                {/* Tab 1: Simple Form */}
+                <TabsContent value="simple-form" className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="purchasedAt">구매일 *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !purchaseDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {purchaseDate ? (
+                              format(purchaseDate, "yyyy년 M월 d일", { locale: ko })
+                            ) : (
+                              <span>날짜를 선택하세요</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={purchaseDate}
+                            onSelect={setPurchaseDate}
+                            initialFocus
+                            locale={ko}
+                            captionLayout="dropdown"
+                            fromYear={2015}
+                            toYear={2030}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vendorName">벤더 *</Label>
                       <Input
-                        placeholder="품명 검색"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
+                        id="vendorName"
+                        placeholder="Sigma-Aldrich"
+                        value={vendorName}
+                        onChange={(e) => setVendorName(e.target.value)}
                       />
                     </div>
-                    {/* 기간 설정 + 공급사 필터: 모바일 가로 스크롤 */}
-                    <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 sm:pb-0 scrollbar-hide">
-                      <DateRangePicker
-                        startDate={customDateRange?.from}
-                        endDate={customDateRange?.to}
-                        onDateChange={(from, to) => setCustomDateRange({ from, to })}
-                      />
-                      <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                        <SelectTrigger className="w-[150px] sm:w-[180px]">
-                          <SelectValue placeholder="공급사 필터" />
+                    <div className="space-y-2">
+                      <Label htmlFor="category">카테고리</Label>
+                      <Select value={category} onValueChange={setCategory}>
+                        <SelectTrigger id="category">
+                          <SelectValue placeholder="선택..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">전체 공급사</SelectItem>
-                          {uniqueVendors.map((vendor) => (
-                            <SelectItem key={vendor} value={vendor}>
-                              {vendor}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="">선택 안함</SelectItem>
+                          <SelectItem value="REAGENT">시약</SelectItem>
+                          <SelectItem value="EQUIPMENT">장비</SelectItem>
+                          <SelectItem value="TOOL">도구</SelectItem>
+                          <SelectItem value="RAW_MATERIAL">원자재</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                  {/* [+ 내역 등록] 버튼 */}
-                  <Button
-                    onClick={() => setIsImportDialogOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    내역 등록
-                  </Button>
-                </div>
-
-                {/* Purchase History DataTable */}
-                {purchasesLoading ? (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardContent className="flex items-center justify-center py-16">
-                      <p className="text-gray-500">로딩 중...</p>
-                    </CardContent>
-                  </Card>
-                ) : filteredPurchases.length > 0 ? (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <CardHeader className="bg-gray-50/50 pb-3">
-                      <CardTitle className="text-lg font-semibold">구매 내역</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        총 {filteredPurchases.length}건의 구매 내역
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <DataTable
-                        columns={columns}
-                        data={filteredPurchases}
-                        searchKey="itemName"
-                        searchPlaceholder="품명 검색"
+                    <div className="space-y-2">
+                      <Label htmlFor="itemName">품목명 *</Label>
+                      <Input
+                        id="itemName"
+                        placeholder="Acetone, ACS grade"
+                        value={itemName}
+                        onChange={(e) => setItemName(e.target.value)}
                       />
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                      <Package className="h-16 w-16 text-gray-300 mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">아직 구매 내역이 없습니다.</h3>
-                      <p className="text-sm text-gray-500 mb-6">첫 구매 내역을 등록해보세요.</p>
-                      <Button
-                        onClick={() => setIsImportDialogOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        내역 추가하기
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="qty">수량 *</Label>
+                      <Input
+                        type="number"
+                        id="qty"
+                        placeholder="10"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="unitPrice">단가</Label>
+                      <Input
+                        type="number"
+                        id="unitPrice"
+                        placeholder="50000"
+                        value={unitPrice}
+                        onChange={(e) => setUnitPrice(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">금액 *</Label>
+                      <Input
+                        type="number"
+                        id="amount"
+                        placeholder="500000"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">통화</Label>
+                      <div id="currency" className="flex h-10 w-full rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-600 items-center">
+                        ₩ 원화 (KRW)
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handlePurchaseSubmit}
+                    disabled={createPurchaseMutation.isPending}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {createPurchaseMutation.isPending ? "저장 중..." : "추가"}
+                  </Button>
+                </TabsContent>
 
-                {/* Import Dialog (모달) */}
-                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>구매 내역 등록</DialogTitle>
-                      <DialogDescription>
-                        간편 입력, TSV 붙여넣기, CSV 업로드 중 선택하세요
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Tabs defaultValue="csv-upload" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="simple-form">간편 입력</TabsTrigger>
-                        <TabsTrigger value="tsv-paste">TSV 붙여넣기</TabsTrigger>
-                        <TabsTrigger value="csv-upload">CSV 업로드</TabsTrigger>
-                      </TabsList>
-
-                      {/* Tab 1: Simple Form */}
-                      <TabsContent value="simple-form" className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label htmlFor="purchasedAt">구매일 *</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !purchaseDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {purchaseDate ? (
-                                    format(purchaseDate, "yyyy년 M월 d일", { locale: ko })
-                                  ) : (
-                                    <span>날짜를 선택하세요</span>
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={purchaseDate}
-                                  onSelect={setPurchaseDate}
-                                  initialFocus
-                                  locale={ko}
-                                  captionLayout="dropdown"
-                                  fromYear={2015}
-                                  toYear={2030}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="vendorName">벤더 *</Label>
-                            <Input 
-                              id="vendorName" 
-                              placeholder="Sigma-Aldrich" 
-                              value={vendorName}
-                              onChange={(e) => setVendorName(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="category">카테고리</Label>
-                            <Select value={category} onValueChange={setCategory}>
-                              <SelectTrigger id="category">
-                                <SelectValue placeholder="선택..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="">선택 안함</SelectItem>
-                                <SelectItem value="REAGENT">REAGENT</SelectItem>
-                                <SelectItem value="EQUIPMENT">EQUIPMENT</SelectItem>
-                                <SelectItem value="TOOL">TOOL</SelectItem>
-                                <SelectItem value="RAW_MATERIAL">RAW_MATERIAL</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="itemName">품목명 *</Label>
-                            <Input 
-                              id="itemName" 
-                              placeholder="Reagent A" 
-                              value={itemName}
-                              onChange={(e) => setItemName(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="qty">수량 *</Label>
-                            <Input 
-                              type="number" 
-                              id="qty" 
-                              placeholder="10" 
-                              value={quantity}
-                              onChange={(e) => setQuantity(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="unitPrice">단가</Label>
-                            <Input 
-                              type="number" 
-                              id="unitPrice" 
-                              placeholder="50000" 
-                              value={unitPrice}
-                              onChange={(e) => setUnitPrice(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="amount">금액 *</Label>
-                            <Input 
-                              type="number" 
-                              id="amount" 
-                              placeholder="500000" 
-                              value={amount}
-                              onChange={(e) => setAmount(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="currency">통화</Label>
-                            <div id="currency" className="flex h-10 w-full rounded-md border border-input bg-slate-50 px-3 py-2 text-sm text-slate-600 items-center">
-                              ₩ 원화 (KRW)
-                            </div>
-                          </div>
-                        </div>
-                        <Button 
-                          className="w-full"
-                          onClick={handlePurchaseSubmit}
-                          disabled={createPurchaseMutation.isPending}
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          {createPurchaseMutation.isPending ? "저장 중..." : "추가"}
-                        </Button>
-                      </TabsContent>
-
-                      {/* Tab 2: TSV Paste */}
-                      <TabsContent value="tsv-paste" className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="text-sm text-muted-foreground">
-                            아래 순서대로 엑셀 데이터를 복사해서 붙여넣어 주세요.
-                          </div>
-                          
-                          {/* Column Guide Bar */}
-                          <div className="flex items-center gap-2 bg-slate-100 p-3 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <CalendarIcon className="h-3 w-3" />
-                              구매일
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <Package className="h-3 w-3" />
-                              벤더
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <FileText className="h-3 w-3" />
-                              카테고리
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <Package className="h-3 w-3" />
-                              품목명
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <Hash className="h-3 w-3 text-slate-500" />
-                              수량
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3 text-slate-500" />
-                              단가
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className="flex items-center gap-1">
-                              <CircleDollarSign className="h-3 w-3 text-slate-500" />
-                              통화
-                            </span>
-                          </div>
-
-                          <Textarea
-                            placeholder="2026-01-15	Sigma-Aldrich	REAGENT	Acetone	2	15000	KRW
+                {/* Tab 2: TSV Paste */}
+                <TabsContent value="tsv-paste" className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">
+                      아래 순서대로 엑셀 데이터를 복사해서 붙여넣어 주세요.
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-100 p-3 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 flex-wrap">
+                      <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />구매일</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><Package className="h-3 w-3" />벤더</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><FileText className="h-3 w-3" />카테고리</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><Package className="h-3 w-3" />품목명</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><Hash className="h-3 w-3 text-slate-500" />수량</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><DollarSign className="h-3 w-3 text-slate-500" />단가</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="flex items-center gap-1"><CircleDollarSign className="h-3 w-3 text-slate-500" />통화</span>
+                    </div>
+                    <Textarea
+                      placeholder="2026-01-15	Sigma-Aldrich	REAGENT	Acetone	2	15000	KRW
 2026-01-20	Thermo Fisher	EQUIPMENT	Centrifuge	1	2000000	KRW"
-                            value={csvText}
-                            onChange={(e) => setCsvText(e.target.value)}
-                            rows={8}
-                            className="font-mono text-sm whitespace-pre min-h-[200px]"
-                          />
-                        </div>
-                        <Button
-                          onClick={handleImport}
-                          disabled={!csvText.trim() || importMutation.isPending}
-                          className="w-full"
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          {importMutation.isPending ? "처리 중..." : "가져오기"}
-                        </Button>
-                      </TabsContent>
+                      value={csvText}
+                      onChange={(e) => setCsvText(e.target.value)}
+                      rows={8}
+                      className="font-mono text-sm whitespace-pre min-h-[200px]"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleImport}
+                    disabled={!csvText.trim() || importMutation.isPending}
+                    className="w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    {importMutation.isPending ? "처리 중..." : "가져오기"}
+                  </Button>
+                </TabsContent>
 
-                      {/* Tab 3: CSV Upload */}
-                      <TabsContent value="csv-upload">
-                        <CsvUploadTab
-                          onSuccess={() => {
-                            queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
-                            queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
-                            setIsImportDialogOpen(false);
-                          }}
-                        />
-                      </TabsContent>
-                    </Tabs>
-                  </DialogContent>
-                </Dialog>
-
-
-              </>
-            )}
-      </div>
+                {/* Tab 3: CSV Upload */}
+                <TabsContent value="csv-upload">
+                  <CsvUploadTab
+                    onSuccess={() => {
+                      queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
+                      queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
+                      setIsImportDialogOpen(false);
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </div>
   );
 }
