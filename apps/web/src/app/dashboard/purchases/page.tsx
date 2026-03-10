@@ -493,9 +493,6 @@ export default function PurchasesPage() {
     return countMap;
   }, [purchasesData?.items]);
 
-  // ── 증빙 체크리스트 상태 (KPI에서 참조하므로 선행 선언) ──
-  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
-
   // ── 운영 KPI 계산 ──
   const operationalKPIs = useMemo(() => {
     const items = purchasesData?.items || [];
