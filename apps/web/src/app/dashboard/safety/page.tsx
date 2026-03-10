@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Shield,
   ShieldAlert,
+  ShieldCheck,
   Biohazard,
   AlertTriangle,
   Download,
@@ -18,6 +19,9 @@ import {
   Skull,
   Droplets,
   Search,
+  Hand,
+  Glasses,
+  Shirt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -94,6 +98,47 @@ function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
   );
 }
 
+// PPE(보호구) 아이콘 렌더링
+function PPEIcon({ type, required }: { type: string; required?: boolean }) {
+  const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
+  const active = required
+    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50"
+    : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
+  const label =
+    type === "gloves"
+      ? "보호장갑"
+      : type === "goggles"
+        ? "보안경"
+        : type === "coat"
+          ? "실험복"
+          : type === "mask"
+            ? "마스크"
+            : "PPE";
+
+  const iconClass = "w-5 h-5";
+  const iconEl = (() => {
+    if (type === "gloves") return <Hand className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "goggles") return <Glasses className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "coat") return <Shirt className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "mask") return <ShieldCheck className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    return null;
+  })();
+
+  if (!iconEl) return null;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={`${base} ${active} cursor-help inline-flex`}>{iconEl}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs font-bold">{label}{required ? " (필수)" : ""}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 type SafetyItem = {
   id: number;
@@ -450,7 +495,15 @@ export default function SafetyManagerPage() {
                         <span className="text-slate-300 dark:text-slate-600">·</span>
                         <span>등록: {item.registeredAt}</span>
                         <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>보호구: {requiredPpe.length > 0 ? requiredPpe.join(", ") : "없음"}</span>
+                        <span className="flex items-center gap-1">보호구:
+                          {item.ppe.some((p) => p.required) ? (
+                            <span className="inline-flex gap-0.5 ml-0.5">
+                              {item.ppe.map((p) => (
+                                <PPEIcon key={p.type} type={p.type} required={p.required} />
+                              ))}
+                            </span>
+                          ) : "없음"}
+                        </span>
                       </div>
                     </div>
                   );
