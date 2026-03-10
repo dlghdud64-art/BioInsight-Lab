@@ -13,17 +13,10 @@ import {
   AlertTriangle,
   Download,
   FileWarning,
-  AlertOctagon,
-  FileSearch,
   Flame,
   FlameKindling,
   Skull,
   Droplets,
-  Glasses,
-  Shirt,
-  Hand,
-  ShieldCheck,
-  Calendar,
   Search,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -101,46 +94,39 @@ function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
   );
 }
 
-// PPE 아이콘 렌더링 (짝수 픽셀, 선명한 벡터)
-function PPEIcon({
-  type,
-  required,
-}: {
-  type: string;
-  required?: boolean;
-}) {
-  const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
-  const active = required ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50" : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
-  const label =
-    type === "gloves"
-      ? "보호장갑"
-      : type === "goggles"
-        ? "보안경"
-        : type === "coat"
-          ? "실험복"
-          : type === "mask"
-            ? "마스크"
-            : "PPE";
 
-  const iconClass = "w-5 h-5";
-  if (type === "gloves") return <div className={`${base} ${active}`}><Hand className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
-  if (type === "goggles") return <div className={`${base} ${active}`}><Glasses className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
-  if (type === "coat") return <div className={`${base} ${active}`}><Shirt className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
-  if (type === "mask") return <div className={`${base} ${active}`}><ShieldCheck className={iconClass} strokeWidth={2.5} aria-label={label} /></div>;
-  return null;
-}
+type SafetyItem = {
+  id: number;
+  name: string;
+  cas: string;
+  isHighRisk: boolean;
+  level: "HIGH" | "MEDIUM" | "LOW";
+  actionStatus: "normal" | "caution" | "action_required";
+  hasMsds: boolean;
+  msdsUpdatedAt: string | null;
+  registeredAt: string;
+  lastInspection: string | null;
+  storageCondition: string;
+  loc: string;
+  icons: readonly string[];
+  ppe: { type: string; required: boolean }[];
+};
 
-const safetyItems = [
+const safetyItems: SafetyItem[] = [
   {
     id: 1,
     name: "Sulfuric Acid (황산)",
     cas: "7664-93-9",
     isHighRisk: true,
-    level: "HIGH" as const,
+    level: "HIGH",
+    actionStatus: "caution",
     hasMsds: true,
     msdsUpdatedAt: "2025-01-15",
+    registeredAt: "2024-03-10",
+    lastInspection: "2025-02-20",
+    storageCondition: "산성 전용, 밀폐 보관",
     loc: "시약장 A (산성)",
-    icons: ["corrosive", "toxic"] as const,
+    icons: ["corrosive", "toxic"],
     ppe: [
       { type: "gloves", required: true },
       { type: "goggles", required: true },
@@ -153,11 +139,15 @@ const safetyItems = [
     name: "Acetone (아세톤)",
     cas: "67-64-1",
     isHighRisk: false,
-    level: "MEDIUM" as const,
+    level: "MEDIUM",
+    actionStatus: "action_required",
     hasMsds: false,
     msdsUpdatedAt: null,
+    registeredAt: "2024-06-15",
+    lastInspection: null,
+    storageCondition: "방폭, 직사광선 차단",
     loc: "방폭 캐비닛 1",
-    icons: ["flammable"] as const,
+    icons: ["flammable"],
     ppe: [
       { type: "gloves", required: true },
       { type: "goggles", required: true },
@@ -170,11 +160,15 @@ const safetyItems = [
     name: "Sodium Hydroxide (수산화나트륨)",
     cas: "1310-73-2",
     isHighRisk: true,
-    level: "HIGH" as const,
+    level: "HIGH",
+    actionStatus: "action_required",
     hasMsds: false,
     msdsUpdatedAt: null,
+    registeredAt: "2024-05-22",
+    lastInspection: "2025-01-10",
+    storageCondition: "염기성 전용, 밀폐 보관",
     loc: "시약장 B (염기성)",
-    icons: ["corrosive"] as const,
+    icons: ["corrosive"],
     ppe: [
       { type: "gloves", required: true },
       { type: "goggles", required: true },
@@ -187,11 +181,15 @@ const safetyItems = [
     name: "Ethanol 70%",
     cas: "64-17-5",
     isHighRisk: false,
-    level: "LOW" as const,
+    level: "LOW",
+    actionStatus: "normal",
     hasMsds: true,
     msdsUpdatedAt: "2025-02-01",
+    registeredAt: "2024-08-01",
+    lastInspection: "2025-03-01",
+    storageCondition: "실온 보관",
     loc: "일반 캐비닛",
-    icons: ["flammable"] as const,
+    icons: ["flammable"],
     ppe: [
       { type: "gloves", required: true },
       { type: "goggles", required: false },
@@ -396,69 +394,67 @@ export default function SafetyManagerPage() {
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
-              <div className="space-y-3 antialiased">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
-                  >
-                    {/* 좌측: 위험 아이콘 + GHS 픽토그램 + 제품 정보 */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md ${item.level === "HIGH" ? "bg-red-50 dark:bg-red-900/20" : item.level === "MEDIUM" ? "bg-orange-50 dark:bg-orange-900/20" : "bg-yellow-50 dark:bg-yellow-900/20"}`}>
-                        {item.level === "HIGH" ? (
-                          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" strokeWidth={2.5} aria-label="고위험" />
-                        ) : item.level === "MEDIUM" ? (
-                          <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400" strokeWidth={2.5} aria-label="중위험" />
-                        ) : (
-                          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" strokeWidth={2.5} aria-label="일반" />
-                        )}
-                      </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        {item.icons.map((icon) => (
-                          <GHSPictogram key={icon} type={icon} />
-                        ))}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                          CAS: {item.cas} | {item.loc}
-                        </p>
-                      </div>
-                    </div>
+              <div className="space-y-2 antialiased">
+                {filteredItems.map((item) => {
+                  const riskBadge = item.level === "HIGH"
+                    ? { label: "고위험", cls: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800" }
+                    : item.level === "MEDIUM"
+                      ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800" }
+                      : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" };
+                  const actionBadge = item.actionStatus === "action_required"
+                    ? { label: "조치 필요", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800" }
+                    : item.actionStatus === "caution"
+                      ? { label: "주의", cls: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800" }
+                      : { label: "정상", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800" };
+                  const requiredPpe = item.ppe.filter((p) => p.required).map((p) =>
+                    p.type === "gloves" ? "보호장갑" : p.type === "goggles" ? "보안경" : p.type === "coat" ? "실험복" : p.type === "mask" ? "마스크" : ""
+                  ).filter(Boolean);
 
-                    {/* 우측: PPE 가이드 + MSDS 아이콘 버튼 */}
-                    <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                      <div className="flex gap-1.5">
-                        {item.ppe.map((p) => (
-                          <PPEIcon key={p.type} type={p.type} required={p.required} />
-                        ))}
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
+                    >
+                      {/* 1행: 핵심 식별 정보 */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {item.icons.map((icon) => (
+                            <GHSPictogram key={icon} type={icon} />
+                          ))}
+                        </div>
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono">
+                          {item.cas}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
+                          {riskBadge.label}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${actionBadge.cls}`}>
+                          {actionBadge.label}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.hasMsds && item.msdsUpdatedAt ? (
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Calendar className="w-4 h-4" strokeWidth={2.5} />
-                            {item.msdsUpdatedAt}
-                          </span>
+
+                      {/* 2행: 운영 메타 정보 (모든 항목 동일 순서) */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>보관: {item.loc}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>조건: {item.storageCondition}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>MSDS: {item.hasMsds ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">등록 ({item.msdsUpdatedAt})</span>
                         ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
-                          >
-                            MSDS 미등록
-                          </Badge>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 shrink-0 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/50"
-                          title="MSDS 보기"
-                        >
-                          <FileSearch className="w-5 h-5" strokeWidth={2.5} />
-                        </Button>
+                          <span className="text-amber-600 dark:text-amber-400">미등록</span>
+                        )}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>점검: {item.lastInspection || "미점검"}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>등록: {item.registeredAt}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>보호구: {requiredPpe.length > 0 ? requiredPpe.join(", ") : "없음"}</span>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
