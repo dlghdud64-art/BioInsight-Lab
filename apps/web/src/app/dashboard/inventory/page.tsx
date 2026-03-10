@@ -1368,8 +1368,8 @@ function InventoryPageContent() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">유효기간 <span className="text-slate-400 font-normal">(선택)</span></Label>
                       <DatePicker
-                        date={receivingForm.expiryDate ? new Date(receivingForm.expiryDate) : null}
-                        onDateChange={(date: Date | null) =>
+                        date={receivingForm.expiryDate ? new Date(receivingForm.expiryDate) : undefined}
+                        onDateChange={(date: Date | undefined) =>
                           setReceivingForm((f) => ({
                             ...f,
                             expiryDate: date ? date.toISOString().split("T")[0] : "",
