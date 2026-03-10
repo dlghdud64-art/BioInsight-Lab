@@ -3,56 +3,82 @@
  *
  * GET: 현재 구독 정보, 결제 수단, 청구 내역 조회
  * POST: 구독 업그레이드/다운그레이드
+ *
+ * 가격 기준: lib/plans.ts (Single Source of Truth)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import {
+  SubscriptionPlan,
+  PLAN_DISPLAY,
+  PLAN_LIMITS,
+  PLAN_PRICES,
+  PLAN_ORDER,
+  ENTERPRISE_INFO,
+} from "@/lib/plans";
 
-// 플랜 정보 (가격, 기능) - Starter / Basic ₩29,000 / Pro ₩69,000 정책 반영
-const PLAN_INFO: Record<string, { name: string; nameKo: string; price: number | null; priceDisplay: string; maxSeats: number | null; maxQuotesPerMonth: number | null; features: string[] }> = {
+// planInfo 응답 형태 (기존 API 호환 유지 + 통일된 가격)
+const PLAN_INFO: Record<
+  string,
+  {
+    name: string;
+    nameKo: string;
+    price: number | null;
+    priceDisplay: string;
+    maxSeats: number | null;
+    maxQuotesPerMonth: number | null;
+    features: string[];
+  }
+> = {
   FREE: {
-    name: "Starter",
-    nameKo: "무료",
-    price: 0,
+    name: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName,
+    nameKo: "Starter",
+    price: PLAN_PRICES[SubscriptionPlan.FREE],
     priceDisplay: "무료",
-    maxSeats: 1,
-    maxQuotesPerMonth: 10,
+    maxSeats: PLAN_LIMITS[SubscriptionPlan.FREE].maxMembers,
+    maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.FREE].maxQuotesPerMonth,
     features: [
-      "기본 검색 기능",
-      "월 10개 견적 리스트",
-      "기본 비교 기능",
+      "개인 전용 (팀원 초대 불가)",
+      "기본 검색 및 비교",
+      "품목 등록 (최대 10개)",
+      "기본 견적 요청",
     ],
   },
   TEAM: {
-    name: "Basic",
-    nameKo: "Basic",
-    price: 29000,
-    priceDisplay: "₩29,000/월",
-    maxSeats: 3,
-    maxQuotesPerMonth: 100,
+    name: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName,
+    nameKo: "Team",
+    price: PLAN_PRICES[SubscriptionPlan.TEAM],
+    priceDisplay: "₩49,000/월",
+    maxSeats: PLAN_LIMITS[SubscriptionPlan.TEAM].maxMembers,
+    maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.TEAM].maxQuotesPerMonth,
     features: [
-      "재고 최대 500개",
-      "재고 예측 알림",
-      "팀원 3명",
-      "엑셀 업로드",
-      "기본 검색",
+      "팀원 5명까지",
+      "팀원 공유 재고",
+      "후보 품목 공유",
+      "구매 요청 워크플로우",
+      "품목 등록 (최대 50개)",
+      "엑셀 업로드 · CSV 내보내기",
+      "대체품 추천",
     ],
   },
   ORGANIZATION: {
-    name: "Pro",
-    nameKo: "Pro",
-    price: 69000,
-    priceDisplay: "₩69,000/월",
-    maxSeats: null, // 무제한
-    maxQuotesPerMonth: null, // 무제한
+    name: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName,
+    nameKo: "Business",
+    price: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
+    priceDisplay: "₩149,000/월",
+    maxSeats: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxMembers,
+    maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxQuotesPerMonth,
     features: [
-      "재고 무제한",
-      "Lot 관리",
-      "예산 분석",
-      "감사 증적 (Audit Trail)",
-      "팀원 초대",
-      "재고 소진 알림",
+      "팀원 무제한",
+      "전자결재 승인 라인",
+      "예산 통합 관리",
+      "Audit Trail",
+      "MSDS 자동 연동",
+      "Lot 관리 · 재고 소진 알림",
+      "관리자 운영 대시보드",
+      "품목 등록 무제한",
     ],
   },
 };
@@ -177,7 +203,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: 구독 업그레이드
+// POST: 구독 업그레이드/다운그레이드
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -201,15 +227,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Enterprise는 영업팀 문의
-      if (plan === "ORGANIZATION") {
-        return NextResponse.json({
-          success: true,
-          action: "contact_sales",
-          message: "Enterprise 플랜은 영업팀에 문의해주세요.",
-          contactEmail: "sales@bioinsight.co.kr",
-        });
-      }
+      // Enterprise (ORGANIZATION) 중 Enterprise급 문의가 필요한 경우
+      // 현재 구조에서는 ORGANIZATION = Business, Enterprise는 별도 문의
+      // Enterprise 문의는 프론트에서 /support로 리다이렉트
 
       // 사용자의 조직 찾기
       const membership = await db.organizationMember.findFirst({
@@ -224,7 +244,23 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // 다운그레이드 시 현재 멤버 수 체크
       const planInfo = PLAN_INFO[plan as keyof typeof PLAN_INFO];
+      if (planInfo.maxSeats !== null) {
+        const currentMembers = await db.organizationMember.count({
+          where: { organizationId: membership.organization.id },
+        });
+        if (currentMembers > planInfo.maxSeats) {
+          return NextResponse.json(
+            {
+              error: `현재 멤버 수(${currentMembers}명)가 ${planInfo.name} 플랜의 최대 인원(${planInfo.maxSeats}명)을 초과합니다. 먼저 멤버를 정리해주세요.`,
+              code: "SEATS_EXCEEDED",
+            },
+            { status: 400 }
+          );
+        }
+      }
+
       const now = new Date();
       const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -262,10 +298,10 @@ export async function POST(request: NextRequest) {
             periodStart: now,
             periodEnd: periodEnd,
             paidAt: now,
-            description: `${planInfo.nameKo} 플랜 구독`,
+            description: `${planInfo.name} 플랜 구독`,
             lineItems: [
               {
-                description: `${planInfo.nameKo} 플랜 (월간)`,
+                description: `${planInfo.name} 플랜 (월간)`,
                 quantity: 1,
                 unitPrice: planInfo.price,
                 amount: planInfo.price,
@@ -288,7 +324,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         subscription,
-        message: `${planInfo.nameKo} 플랜으로 업그레이드되었습니다.`,
+        message: `${planInfo.name} 플랜으로 변경되었습니다.`,
       });
     }
 

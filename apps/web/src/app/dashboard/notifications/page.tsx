@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ function formatTime(timeString: string): string {
 
 /* ── 컴포넌트 ── */
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "pending" ? "pending" : "all";
 
@@ -556,5 +556,13 @@ export default function NotificationsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function NotificationsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" /></div>}>
+      <NotificationsContent />
+    </Suspense>
   );
 }
