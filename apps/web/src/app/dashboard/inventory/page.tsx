@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -145,7 +145,15 @@ function InventoryPageContent() {
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
+  const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
   const [showRestockHistory, setShowRestockHistory] = useState(false);
+
+  // ── 라벨 인쇄 모달 상태 ──
+  const [labelPrintOpen, setLabelPrintOpen] = useState(false);
+  const [labelPrintTitle, setLabelPrintTitle] = useState("");
+  const [labelPrintLots, setLabelPrintLots] = useState<ProductInventory[]>([]);
+  const [labelPrintSelected, setLabelPrintSelected] = useState<Set<string>>(new Set());
+  const [labelPrintQty, setLabelPrintQty] = useState<Record<string, number>>({});
 
   // ── purchase-receiving mode ──
   type DrawerMode = "view" | "edit" | "purchase-receiving";
@@ -631,8 +639,12 @@ function InventoryPageContent() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      // 입고 완료된 아이템 정보 보존 → "라벨 바로 인쇄" CTA용
+      if (restockItem) {
+        setRestockDoneItem(restockItem);
+      }
       setRestockItem(null);
       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
       toast({ title: "입고 완료", description: "재고 수량이 업데이트되었습니다." });
@@ -735,6 +747,108 @@ function InventoryPageContent() {
     return null;
   }
 
+  // ── 라벨 인쇄 공통 유틸 ──
+  const labelStyles = `
+    @page { size: 60mm 40mm; margin: 0mm; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .label-container {
+      width: 60mm; height: 40mm; overflow: hidden;
+      display: flex; flex-direction: row; align-items: center;
+      padding: 3mm 3.5mm; gap: 3mm; page-break-after: always;
+    }
+    .qr-col { flex-shrink: 0; }
+    .qr-col img { width: 29mm; height: 29mm; display: block; }
+    .info-col { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .prod-name {
+      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 7.5pt; font-weight: 700; color: #0f172a; line-height: 1.3;
+      word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.2mm;
+    }
+    .meta-row {
+      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 6pt; color: #475569; margin-top: 0.6mm;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .inv-id {
+      font-family: 'Courier New', monospace; font-size: 5pt; color: #94a3b8;
+      margin-top: 1.5mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    @media screen {
+      html, body { background: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; padding: 24px; font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; }
+      .screen-hint { font-size: 13px; color: #64748b; text-align: center; line-height: 1.6; }
+      .label-container { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 8px; }
+      .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+      .btn-print { padding: 10px 28px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+      .btn-print:hover { background: #1d4ed8; }
+      .btn-close { padding: 10px 20px; background: transparent; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    }
+    @media print {
+      .screen-hint, .btn-row { display: none !important; }
+      html, body { margin: 0 !important; padding: 0 !important; background: transparent !important; }
+      .label-container { background: #fff !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+    }`;
+
+  const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const buildLabelHtml = (opts: { qrDataUrl: string; name: string; cat?: string | null; lot?: string | null; loc?: string | null; qty?: number; unitStr?: string | null; invId: string }) => `
+    <div class="label-container">
+      <div class="qr-col"><img src="${opts.qrDataUrl}" alt="QR" /></div>
+      <div class="info-col">
+        <div class="prod-name">${escHtml(opts.name)}</div>
+        ${opts.cat ? `<div class="meta-row">Cat#: ${escHtml(opts.cat)}</div>` : ""}
+        ${opts.lot ? `<div class="meta-row">Lot: ${escHtml(opts.lot)}</div>` : ""}
+        ${opts.loc ? `<div class="meta-row">📍 ${escHtml(opts.loc)}</div>` : ""}
+        ${opts.qty !== undefined ? `<div class="meta-row">재고: ${opts.qty}${opts.unitStr ? ` ${escHtml(opts.unitStr)}` : ""}</div>` : ""}
+        <div class="inv-id">${escHtml(opts.invId.slice(0, 20))}…</div>
+      </div>
+    </div>`;
+
+  /** 전체 재고 라벨 일괄 인쇄 */
+  const handleBulkLabelPrint = async () => {
+    const items = displayInventories;
+    if (items.length === 0) {
+      toast({ title: "인쇄할 재고가 없습니다.", variant: "destructive" });
+      return;
+    }
+    const printWindow = window.open("", "_blank", "width=600,height=600");
+    if (!printWindow) { toast({ title: "팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.", variant: "destructive" }); return; }
+
+    const { default: QRCode } = await import("qrcode");
+    const labels = await Promise.all(
+      items.map(async (inv) => {
+        const url = `${window.location.origin}/dashboard/inventory/scan?id=${inv.id}`;
+        const canvas = document.createElement("canvas");
+        await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: { dark: "#1e293b", light: "#ffffff" } });
+        return buildLabelHtml({ qrDataUrl: canvas.toDataURL("image/png"), name: inv.product.name, cat: inv.product.catalogNumber, lot: inv.lotNumber, loc: inv.location, qty: inv.currentQuantity, unitStr: inv.unit, invId: inv.id });
+      })
+    );
+    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 일괄 인쇄</title><style>${labelStyles}</style></head><body>
+      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${items.length}개 품목</strong> (60×40mm)</p>
+      ${labels.join("\n")}
+      <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 전체 인쇄</button><button class="btn-close" onclick="window.close()">닫기</button></div>
+    </body></html>`);
+    printWindow.document.close();
+  };
+
+  /** 단일 품목 라벨 인쇄 */
+  const handleSingleLabelPrint = async (inv: ProductInventory) => {
+    const printWindow = window.open("", "_blank", "width=600,height=400");
+    if (!printWindow) { toast({ title: "팝업이 차단되었습니다.", variant: "destructive" }); return; }
+
+    const { default: QRCode } = await import("qrcode");
+    const url = `${window.location.origin}/dashboard/inventory/scan?id=${inv.id}`;
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: { dark: "#1e293b", light: "#ffffff" } });
+    const label = buildLabelHtml({ qrDataUrl: canvas.toDataURL("image/png"), name: inv.product.name, cat: inv.product.catalogNumber, lot: inv.lotNumber, loc: inv.location, qty: inv.currentQuantity, unitStr: inv.unit, invId: inv.id });
+    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 — ${escHtml(inv.product.name)}</title><style>${labelStyles}</style></head><body>
+      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${escHtml(inv.product.name)}</strong></p>
+      ${label}
+      <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button><button class="btn-close" onclick="window.close()">닫기</button></div>
+    </body></html>`);
+    printWindow.document.close();
+  };
+
   return (
     <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -762,26 +876,6 @@ function InventoryPageContent() {
               inventory={editingInventory}
               isLoading={createOrUpdateMutation.isPending}
             />
-            {/* 메인 액션: 재고 등록 + QR 스캔 (모바일만 2열, 데스크탑은 1열) */}
-            <div className="w-full md:w-auto grid grid-cols-2 md:grid-cols-1 gap-2">
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                className="w-full justify-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                재고 등록
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push("/dashboard/inventory/scan")}
-                className="md:hidden w-full justify-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950/30"
-              >
-                <QrCode className="h-4 w-4" />
-                QR 스캔
-              </Button>
-            </div>
-
-            {/* 서브 액션: 라벨 내보내기 / 엑셀 업로드 / 내보내기 */}
             <BulkImportModal
               open={isImportDialogOpen}
               onOpenChange={setIsImportDialogOpen}
@@ -790,18 +884,74 @@ function InventoryPageContent() {
                 queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
               }}
             />
-            {/* 모바일: 서브 액션 더보기 메뉴 */}
+
+            {/* ── 1차 액션: 재고 등록 · 구매 반영 ── */}
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              재고 등록
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard/purchases")}
+            >
+              <PackagePlus className="h-4 w-4 mr-2" />
+              구매 반영
+            </Button>
+
+            {/* ── 2차 액션: 라벨 인쇄 · 엑셀 업로드 · 내보내기 ── */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                // 전체 재고 라벨 인쇄 (PC 프린터 print dialog)
+                handleBulkLabelPrint();
+              }}
+              className="hidden md:inline-flex"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              라벨 인쇄
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsImportDialogOpen(true)}
+              className="hidden md:inline-flex"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              엑셀 업로드
+            </Button>
+            <Button variant="outline" className="hidden md:inline-flex">
+              <Download className="h-4 w-4 mr-2" />
+              내보내기
+            </Button>
+
+            {/* ── 더보기 (모바일 + 라벨 데이터 내보내기 등 보조 기능) ── */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="md:hidden h-10 w-10 shrink-0"
-                >
+                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onClick={() => handleBulkLabelPrint()}
+                  className="flex items-center gap-2 text-xs md:hidden"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  라벨 인쇄
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsImportDialogOpen(true)}
+                  className="flex items-center gap-2 text-xs md:hidden"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  엑셀 업로드
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/dashboard/inventory/scan")}
+                  className="flex items-center gap-2 text-xs md:hidden"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  QR 스캔
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
                     if (isExportingLabels) return;
@@ -834,79 +984,10 @@ function InventoryPageContent() {
                   className="flex items-center gap-2 text-xs"
                 >
                   <FileDown className="h-3.5 w-3.5" />
-                  라벨 데이터 내보내기
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsImportDialogOpen(true)}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  엑셀 업로드
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 text-xs">
-                  <Download className="h-3.5 w-3.5" />
-                  내보내기
+                  라벨 데이터 내보내기 (엑셀)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* 데스크톱: 서브 액션 버튼 그대로 노출 */}
-            <Button
-              variant="outline"
-              disabled={isExportingLabels}
-              onClick={async () => {
-                setIsExportingLabels(true);
-                try {
-                  const res = await fetch("/api/inventory/export-labels");
-                  if (!res.ok) {
-                    const json = await res.json().catch(() => ({}));
-                    throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
-                  }
-                  const blob = await res.blob();
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-                  a.href = url;
-                  a.download = `Label_Data_${yyyymmdd}.xlsx`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast({ title: "라벨 데이터가 다운로드되었습니다." });
-                } catch (e: unknown) {
-                  toast({
-                    title: "라벨 데이터 내보내기 실패",
-                    description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
-                    variant: "destructive",
-                  });
-                } finally {
-                  setIsExportingLabels(false);
-                }
-              }}
-              className="hidden md:inline-flex"
-            >
-              {isExportingLabels ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  추출 중...
-                </>
-              ) : (
-                <>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  라벨 데이터 내보내기
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsImportDialogOpen(true)}
-              className="hidden md:inline-flex"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              엑셀 업로드
-            </Button>
-            <Button variant="outline" className="hidden md:inline-flex">
-              <Download className="h-4 w-4 mr-2" />
-              내보내기
-            </Button>
           </div>
         </div>
 
@@ -1022,6 +1103,16 @@ function InventoryPageContent() {
                     onRestock={(inventory) => {
                       setRestockItem(inventory);
                       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+                    }}
+                    onPrintLabel={(productName, lots) => {
+                      setLabelPrintTitle(productName);
+                      setLabelPrintLots(lots as ProductInventory[]);
+                      const allIds = new Set(lots.map((l) => l.id));
+                      setLabelPrintSelected(allIds);
+                      const defaultQty: Record<string, number> = {};
+                      lots.forEach((l) => { defaultQty[l.id] = 1; });
+                      setLabelPrintQty(defaultQty);
+                      setLabelPrintOpen(true);
                     }}
                     emptyMessage={
                       debouncedSearchQuery.trim()
@@ -1476,6 +1567,10 @@ function InventoryPageContent() {
                                   title: "입고 반영 완료",
                                   description: `${purchaseContext.itemName || "품목"}의 입고가 반영되었습니다.`,
                                 });
+                                // 입고 완료된 아이템 → "라벨 바로 인쇄" CTA 표시
+                                if (selectedItem) {
+                                  setRestockDoneItem(selectedItem);
+                                }
                                 setIsSheetOpen(false);
                                 setDrawerMode("view");
                                 setPurchaseContext(null);
@@ -1788,7 +1883,7 @@ function InventoryPageContent() {
                 <div className="space-y-1.5">
                   <Label>유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
                   <DatePicker
-                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : null}
+                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : undefined}
                     onDateChange={(date) =>
                       setRestockForm((f) => ({
                         ...f,
@@ -1830,6 +1925,164 @@ function InventoryPageContent() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ── 입고 완료 → 라벨 바로 인쇄 CTA ── */}
+        <Dialog open={!!restockDoneItem} onOpenChange={(open) => { if (!open) setRestockDoneItem(null); }}>
+          <DialogContent className="max-w-xs text-center">
+            <div className="flex flex-col items-center gap-3 py-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              </div>
+              <DialogHeader className="space-y-1">
+                <DialogTitle className="text-lg">입고 완료</DialogTitle>
+                <DialogDescription className="text-sm text-slate-500">
+                  {restockDoneItem?.product.name} 입고가 반영되었습니다.
+                  <br />라벨을 바로 인쇄하시겠습니까?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex w-full gap-2 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setRestockDoneItem(null)}>
+                  닫기
+                </Button>
+                <Button
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => {
+                    if (restockDoneItem) {
+                      handleSingleLabelPrint(restockDoneItem);
+                    }
+                    setRestockDoneItem(null);
+                  }}
+                >
+                  <Printer className="h-4 w-4 mr-1.5" />
+                  라벨 인쇄
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── 라벨 인쇄 모달 (lot 선택형) ── */}
+        <Dialog open={labelPrintOpen} onOpenChange={setLabelPrintOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Printer className="h-4 w-4 text-indigo-600" />
+                라벨 인쇄 — {labelPrintTitle}
+              </DialogTitle>
+              <DialogDescription>
+                인쇄할 Lot를 선택하고 라벨 수량을 지정하세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 pt-1 max-h-[50vh] overflow-y-auto">
+              {labelPrintLots.map((lot) => {
+                const isChecked = labelPrintSelected.has(lot.id);
+                const qty = labelPrintQty[lot.id] ?? 1;
+                return (
+                  <div
+                    key={lot.id}
+                    className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${isChecked ? "border-indigo-200 bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-950/20" : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        setLabelPrintSelected((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(lot.id)) next.delete(lot.id);
+                          else next.add(lot.id);
+                          return next;
+                        });
+                      }}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                          {lot.lotNumber || "Lot 미지정"}
+                        </span>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500">{lot.currentQuantity} {lot.unit}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                        {lot.location && <span>{lot.location}</span>}
+                        {lot.expiryDate && (
+                          <>
+                            <span>·</span>
+                            <span>유효: {format(new Date(lot.expiryDate), "yyyy.MM.dd")}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Label className="text-[10px] text-slate-400">라벨</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={qty}
+                        onChange={(e) => {
+                          const v = Math.max(1, Math.min(50, Number(e.target.value) || 1));
+                          setLabelPrintQty((prev) => ({ ...prev, [lot.id]: v }));
+                        }}
+                        className="h-7 w-14 text-xs text-center"
+                        disabled={!isChecked}
+                      />
+                      <span className="text-[10px] text-slate-400">장</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 mt-1">
+              <div className="text-xs text-slate-500">
+                선택 {labelPrintSelected.size}개 Lot · 총 {Array.from(labelPrintSelected).reduce((sum, id) => sum + (labelPrintQty[id] ?? 1), 0)}장
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLabelPrintOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5"
+                  disabled={labelPrintSelected.size === 0}
+                  onClick={async () => {
+                    const selectedLots = labelPrintLots.filter((l) => labelPrintSelected.has(l.id));
+                    if (selectedLots.length === 0) return;
+                    const printWindow = window.open("", "_blank", "width=600,height=600");
+                    if (!printWindow) { toast({ title: "팝업이 차단되었습니다.", variant: "destructive" }); return; }
+                    const { default: QRCode } = await import("qrcode");
+                    const labels = await Promise.all(
+                      selectedLots.flatMap((lot) => {
+                        const copies = labelPrintQty[lot.id] ?? 1;
+                        return Array.from({ length: copies }, async () => {
+                          const url = `${window.location.origin}/dashboard/inventory/scan?id=${lot.id}`;
+                          const canvas = document.createElement("canvas");
+                          await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: { dark: "#1e293b", light: "#ffffff" } });
+                          return buildLabelHtml({ qrDataUrl: canvas.toDataURL("image/png"), name: lot.product.name, cat: lot.product.catalogNumber, lot: lot.lotNumber, loc: lot.location, qty: lot.currentQuantity, unitStr: lot.unit, invId: lot.id });
+                        });
+                      })
+                    );
+                    const totalLabels = labels.length;
+                    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 인쇄 — ${escHtml(labelPrintTitle)}</title><style>${labelStyles}</style></head><body>
+                      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${selectedLots.length}개 Lot · ${totalLabels}장</strong> (60×40mm)</p>
+                      ${labels.join("\n")}
+                      <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button><button class="btn-close" onclick="window.close()">닫기</button></div>
+                    </body></html>`);
+                    printWindow.document.close();
+                    setLabelPrintOpen(false);
+                  }}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  라벨 인쇄
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
