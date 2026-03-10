@@ -490,6 +490,9 @@ export default function PurchasesPage() {
     return countMap;
   }, [purchasesData?.items]);
 
+  // ── 증빙 체크리스트 상태 (KPI에서 참조하므로 선행 선언) ──
+  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
+
   // ── 운영 KPI 계산 ──
   const operationalKPIs = useMemo(() => {
     const items = purchasesData?.items || [];
@@ -560,7 +563,6 @@ export default function PurchasesPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const [evidenceChecklist, setEvidenceChecklist] = useState<Record<string, Record<string, boolean>>>({});
 
   // 필터 재정의 (기존 filteredPurchases 대체)
   const enhancedFilteredPurchases = useMemo(() => {
