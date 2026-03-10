@@ -340,7 +340,7 @@ export default function ProtocolBOMPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <MainHeader />
-        <div className="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-12 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         </div>
       </div>
@@ -353,24 +353,19 @@ export default function ProtocolBOMPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <MainHeader />
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-8">
 
         {/* ── 페이지 헤더 ── */}
-        <div className="mb-6 space-y-4">
+        <div className="mb-8 space-y-5">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <FlaskConical className="h-5 w-5 text-blue-600" />
-                </div>
-                <h1 className="text-2xl md:text-[1.75rem] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                  프로토콜 기반 BOM 생성
-                </h1>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-2">
+                프로토콜 기반 BOM 추출
+              </h1>
+              <p className="text-sm md:text-base text-slate-500 leading-relaxed max-w-2xl">
                 실험 프로토콜(PDF·텍스트)을 업로드하면 AI가 시약·장비 항목을 자동 추출합니다.
                 <br className="hidden sm:block" />
-                추출된 목록으로 BOM을 생성하고, 제품 검색·비교·견적 요청까지 바로 연결할 수 있습니다.
+                추출된 BOM으로 제품 검색, 벤더 비교, 견적 요청까지 한 흐름으로 이어집니다.
               </p>
             </div>
             {extractionResult && !bomSaved && (
