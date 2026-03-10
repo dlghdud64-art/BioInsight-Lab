@@ -45,18 +45,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// 활동 피드 카테고리별 스타일 (재고/파일=teal, 구매/예산=blue, 팀/멤버=purple)
-type ActivityCategory = "inventory" | "purchase" | "team";
+// 활동 피드 카테고리별 스타일
+type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval";
 const ACTIVITY_CATEGORY_STYLES: Record<ActivityCategory, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string }> = {
   inventory: { icon: Package, bg: "bg-teal-50 dark:bg-teal-950/40", text: "text-teal-600 dark:text-teal-400" },
   purchase: { icon: ShoppingCart, bg: "bg-blue-50 dark:bg-blue-950/40", text: "text-blue-600 dark:text-blue-400" },
+  budget: { icon: FileText, bg: "bg-amber-50 dark:bg-amber-950/40", text: "text-amber-600 dark:text-amber-400" },
+  approval: { icon: ShieldCheck, bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-600 dark:text-emerald-400" },
   team: { icon: UserPlus, bg: "bg-purple-50 dark:bg-purple-950/40", text: "text-purple-600 dark:text-purple-400" },
 };
 function getActivityCategory(action: string): ActivityCategory {
   const lower = action.toLowerCase();
-  if (/입고|등록|재고|파일|upload|file/.test(lower)) return "inventory";
-  if (/견적|예산|주문|order|budget/.test(lower)) return "purchase";
-  if (/초대|멤버|team|member/.test(lower)) return "team";
+  if (/입고|등록|재고|파일|upload|file|lot/.test(lower)) return "inventory";
+  if (/승인|approval|approve/.test(lower)) return "approval";
+  if (/견적|주문|order|구매/.test(lower)) return "purchase";
+  if (/예산|budget/.test(lower)) return "budget";
+  if (/초대|멤버|team|member|권한/.test(lower)) return "team";
   return "inventory";
 }
 
@@ -257,12 +261,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
     return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
   });
 
-  // Mock 활동 피드 (target: 하이라이트할 대상)
+  // 활동 피드 (target: 하이라이트할 대상)
   const organizationLogs: Array<{ id: string; actor: string; action: string; time: string; target?: string }> = [
-    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고했습니다.", time: "10분 전", target: "DMEM 시약" },
+    { id: "1", actor: "이매니저", action: "DMEM 시약을 5병 입고 반영했습니다.", time: "10분 전", target: "DMEM 시약" },
     { id: "2", actor: "김연구", action: "FBS 견적 요청을 제출했습니다.", time: "25분 전", target: "FBS" },
-    { id: "3", actor: "최연구원", action: "Pipette Tips 재고를 2개 등록했습니다.", time: "1시간 전", target: "Pipette Tips" },
-    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 승인했습니다.", time: "2시간 전", target: "예산 2026 상반기 시약비" },
+    { id: "3", actor: "박승인", action: "Pipette Tips 구매를 승인했습니다.", time: "40분 전", target: "Pipette Tips" },
+    { id: "4", actor: "이매니저", action: "예산 2026 상반기 시약비를 변경했습니다.", time: "1시간 전", target: "예산 2026 상반기 시약비" },
+    { id: "5", actor: "최연구원", action: "Trypsin-EDTA 재고를 등록했습니다.", time: "2시간 전", target: "Trypsin-EDTA" },
+    { id: "6", actor: "이매니저", action: "김연구님의 권한을 승인자로 변경했습니다.", time: "3시간 전", target: "김연구" },
+    { id: "7", actor: "시스템", action: "박신입님이 조직 초대를 수락했습니다.", time: "어제", target: "박신입" },
   ];
 
   // 초대 재발송
@@ -432,11 +439,19 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div>
               <span className="text-slate-500 dark:text-slate-400">조직명</span>
               <p className="font-medium text-slate-900 dark:text-white mt-0.5">{organization.name}</p>
             </div>
+            {(organization as any).slug && (
+              <div>
+                <span className="text-slate-500 dark:text-slate-400">조직 주소</span>
+                <p className="font-medium text-slate-900 dark:text-white mt-0.5 text-xs">
+                  bio-insight.lab/<span className="text-blue-600 dark:text-blue-400">{(organization as any).slug}</span>
+                </p>
+              </div>
+            )}
             {(organization as any).createdAt && (
               <div>
                 <span className="text-slate-500 dark:text-slate-400">생성일</span>
@@ -609,8 +624,10 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <TableHeader>
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800">
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">팀원</TableHead>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">권한 (역할)</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">역할</TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">상태</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300 hidden md:table-cell">참여일</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300 hidden lg:table-cell">마지막 활동</TableHead>
                         {isAdmin && <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">액션</TableHead>}
                       </TableRow>
                     </TableHeader>
@@ -663,10 +680,22 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             </TableCell>
                             <TableCell className="py-4">
                               {isPending ? (
-                                <Badge variant="secondary" className="text-xs">초대 대기</Badge>
+                                <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">초대 대기</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs border-slate-200 dark:border-slate-700">활동 중</Badge>
+                                <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">활동 중</Badge>
                               )}
+                            </TableCell>
+                            <TableCell className="py-4 hidden md:table-cell">
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {rawMember?.createdAt
+                                  ? new Date(rawMember.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })
+                                  : "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-4 hidden lg:table-cell">
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {isPending ? "-" : member.lastActive || "-"}
+                              </span>
                             </TableCell>
                             {isAdmin && (
                               <TableCell className="py-4 text-right">
@@ -765,7 +794,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-slug" className="dark:text-slate-300">고유 접속 주소 (Slug)</Label>
+                    <Label htmlFor="edit-slug" className="dark:text-slate-300">조직 주소</Label>
                     <div className="flex rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
                       <span className="inline-flex items-center px-3 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shrink-0">
                         bio-insight.lab/

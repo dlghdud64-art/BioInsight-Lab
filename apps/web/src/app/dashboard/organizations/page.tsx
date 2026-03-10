@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Plus, Users, Loader2, ArrowRight } from "lucide-react";
+import { Building2, Plus, Users, Loader2, ArrowRight, ShieldCheck, Mail, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -61,7 +61,10 @@ export default function OrganizationsPage() {
             id: org.id,
             name: org.name ?? "",
             description: org.description ?? "",
-            memberCount: Array.isArray(org.members) ? org.members.length : 0,
+            memberCount: org.memberCount ?? (Array.isArray(org.members) ? org.members.length : 0),
+            adminCount: org.adminCount ?? 0,
+            pendingCount: org.pendingCount ?? 0,
+            plan: org.plan ?? "FREE",
             role: org.role ?? "멤버",
           }));
           setOrganizations(mapped);
@@ -100,7 +103,10 @@ export default function OrganizationsPage() {
         id: org.id,
         name: org.name ?? "",
         description: org.description ?? "",
-        memberCount: Array.isArray(org.members) ? org.members.length : 0,
+        memberCount: org.memberCount ?? (Array.isArray(org.members) ? org.members.length : 0),
+        adminCount: org.adminCount ?? 0,
+        pendingCount: org.pendingCount ?? 0,
+        plan: org.plan ?? "FREE",
         role: org.role ?? "멤버",
       }));
       setOrganizations(mapped);
@@ -344,55 +350,84 @@ export default function OrganizationsPage() {
         </Card>
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((org) => (
-            <Card
-              key={org.id}
-              className="cursor-pointer border-slate-200 shadow-sm transition-shadow hover:border-blue-200 hover:shadow-md dark:border-slate-800 dark:hover:border-blue-800"
-            >
-              <CardHeader className="pb-3">
-                <div className="mb-2 flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
-                    {org.name.substring(0, 1)}
+          {organizations.map((org) => {
+            const planLabel = org.plan === "ORGANIZATION" ? "Pro" : org.plan === "TEAM" ? "Basic" : "Starter";
+            const planColor = org.plan === "ORGANIZATION"
+              ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+              : org.plan === "TEAM"
+                ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
+            const roleLabel = org.role === "OWNER" ? "소유자" : org.role === "ADMIN" ? "관리자" : org.role === "APPROVER" ? "승인자" : org.role === "REQUESTER" ? "요청자" : "조회자";
+            return (
+              <Card
+                key={org.id}
+                className="flex flex-col border-slate-200 shadow-sm transition-shadow hover:border-blue-200 hover:shadow-md dark:border-slate-800 dark:hover:border-blue-800"
+              >
+                <CardHeader className="pb-2">
+                  <div className="mb-2 flex items-start justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                      {org.name.substring(0, 1)}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline" className={planColor}>
+                        {planLabel}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                      >
+                        {roleLabel}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className="border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
-                  >
-                    {org.role}
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl">{org.name}</CardTitle>
-                <CardDescription className="line-clamp-1">
-                  {org.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center rounded-md bg-slate-50 p-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  <Users className="mr-2 h-4 w-4 text-slate-400" />
-                  팀원 {org.memberCount}명
-                </div>
-              </CardContent>
-              <CardFooter className="mt-4 border-t border-slate-100 pt-0 dark:border-slate-800">
-                <Button
-                  variant="ghost"
-                  className="mt-2 w-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
-                  onClick={() => handleGoToOrgDashboard(org.id)}
-                  disabled={navigatingToOrgId === org.id}
-                >
-                  {navigatingToOrgId === org.id ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      이동 중...
-                    </>
-                  ) : (
-                    <>
-                      관리 페이지로 이동 <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
+                  <CardTitle className="text-lg leading-tight">{org.name}</CardTitle>
+                  {org.description && (
+                    <CardDescription className="line-clamp-1 text-xs">
+                      {org.description}
+                    </CardDescription>
                   )}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="flex-1 pb-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                      <Users className="mb-1 h-3.5 w-3.5 text-blue-500" />
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.memberCount}</span>
+                      <span className="text-[10px] text-slate-400">멤버</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                      <ShieldCheck className="mb-1 h-3.5 w-3.5 text-purple-500" />
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.adminCount}</span>
+                      <span className="text-[10px] text-slate-400">관리자</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                      <Mail className="mb-1 h-3.5 w-3.5 text-orange-500" />
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.pendingCount}</span>
+                      <span className="text-[10px] text-slate-400">대기</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="border-t border-slate-100 pt-0 dark:border-slate-800">
+                  <Button
+                    variant="ghost"
+                    className="mt-2 w-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                    onClick={() => handleGoToOrgDashboard(org.id)}
+                    disabled={navigatingToOrgId === org.id}
+                  >
+                    {navigatingToOrgId === org.id ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        이동 중...
+                      </>
+                    ) : (
+                      <>
+                        관리 페이지로 이동 <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
