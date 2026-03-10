@@ -119,6 +119,7 @@ function InventoryPageContent() {
             lotNumber: "",
             expiryDate: "",
             location: "",
+            receivedDate: new Date().toISOString().split("T")[0],
             notes: "",
             restockMethod: "merge",
           }));
@@ -162,6 +163,7 @@ function InventoryPageContent() {
     lotNumber: "",
     expiryDate: "",
     location: "",
+    receivedDate: new Date().toISOString().split("T")[0],
     notes: "",
     restockMethod: "merge" as "merge" | "newLot",
   });
@@ -645,6 +647,39 @@ function InventoryPageContent() {
     },
     onError: (error: Error) => {
       toast({ title: "입고 실패", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // 입고 반영 완료 mutation (purchase-receiving mode)
+  const receivingCompleteMutation = useMutation({
+    mutationFn: async (data: {
+      inventoryId: string;
+      purchaseId: string;
+      quantity: number;
+      lotNumber?: string;
+      expiryDate?: string;
+      location?: string;
+      receivedDate?: string;
+      notes?: string;
+      restockMethod: "merge" | "newLot";
+    }) => {
+      const response = await fetch(`/api/inventory/${data.inventoryId}/receive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error || "입고 반영에 실패했습니다.");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-restock-history"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "입고 반영 실패", description: error.message, variant: "destructive" });
     },
   });
 
@@ -1322,8 +1357,8 @@ function InventoryPageContent() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">유효기간 <span className="text-slate-400 font-normal">(선택)</span></Label>
                       <DatePicker
-                        date={receivingForm.expiryDate ? new Date(receivingForm.expiryDate) : null}
-                        onDateChange={(date: Date | null) =>
+                        date={receivingForm.expiryDate ? new Date(receivingForm.expiryDate) : undefined}
+                        onDateChange={(date: Date | undefined) =>
                           setReceivingForm((f) => ({
                             ...f,
                             expiryDate: date ? date.toISOString().split("T")[0] : "",
@@ -1339,6 +1374,19 @@ function InventoryPageContent() {
                         placeholder="예: 냉동고 1칸"
                         value={receivingForm.location}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceivingForm((f) => ({ ...f, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">입고일</Label>
+                      <DatePicker
+                        date={receivingForm.receivedDate ? new Date(receivingForm.receivedDate) : undefined}
+                        onDateChange={(date: Date | undefined) =>
+                          setReceivingForm((f) => ({
+                            ...f,
+                            receivedDate: date ? date.toISOString().split("T")[0] : "",
+                          }))
+                        }
+                        placeholder="입고일 선택"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1399,7 +1447,6 @@ function InventoryPageContent() {
                   <div className="flex w-full gap-2 pt-2">
                     <Button
                       variant="outline"
-                      className="flex-1"
                       onClick={() => {
                         setIsSheetOpen(false);
                         setDrawerMode("view");
@@ -1409,20 +1456,37 @@ function InventoryPageContent() {
                       취소
                     </Button>
                     <Button
+                      variant="outline"
+                      className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400"
+                      onClick={() => {
+                        toast({
+                          title: "임시 저장 완료",
+                          description: "입고 정보가 임시 저장되었습니다. 나중에 이어서 작업할 수 있습니다.",
+                        });
+                      }}
+                    >
+                      <Save className="h-3.5 w-3.5 mr-1" />
+                      임시 저장
+                    </Button>
+                    <Button
                       className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      disabled={!receivingForm.actualQty || Number(receivingForm.actualQty) <= 0 || restockMutation.isPending}
+                      disabled={!receivingForm.actualQty || Number(receivingForm.actualQty) <= 0 || receivingCompleteMutation.isPending}
                       onClick={() => {
                         const addQty = Number(receivingForm.actualQty);
                         if (!addQty || addQty <= 0) return;
 
                         if (selectedItem) {
-                          // 기존 재고에 입고 반영
-                          restockMutation.mutate(
+                          receivingCompleteMutation.mutate(
                             {
-                              id: selectedItem.id,
-                              addQty,
+                              inventoryId: selectedItem.id,
+                              purchaseId: purchaseContext.id,
+                              quantity: addQty,
                               lotNumber: receivingForm.lotNumber || undefined,
                               expiryDate: receivingForm.expiryDate || undefined,
+                              location: receivingForm.location || undefined,
+                              receivedDate: receivingForm.receivedDate || undefined,
+                              notes: receivingForm.notes || undefined,
+                              restockMethod: receivingForm.restockMethod,
                             },
                             {
                               onSuccess: () => {
@@ -1433,7 +1497,6 @@ function InventoryPageContent() {
                                 setIsSheetOpen(false);
                                 setDrawerMode("view");
                                 setPurchaseContext(null);
-                                // URL에서 purchase-receiving 파라미터 제거
                                 router.replace("/dashboard/inventory");
                               },
                             }
@@ -1447,7 +1510,7 @@ function InventoryPageContent() {
                         }
                       }}
                     >
-                      {restockMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                      {receivingCompleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                       입고 반영 완료
                     </Button>
                   </div>
@@ -1742,7 +1805,7 @@ function InventoryPageContent() {
                 <div className="space-y-1.5">
                   <Label>유효기간 <span className="text-slate-400 font-normal text-xs">(선택)</span></Label>
                   <DatePicker
-                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : null}
+                    date={restockForm.expiryDate ? new Date(restockForm.expiryDate) : undefined}
                     onDateChange={(date) =>
                       setRestockForm((f) => ({
                         ...f,

@@ -724,23 +724,25 @@ model SharedList {
 
 // Purchase record (MVP: guestKey-based scope)
 model PurchaseRecord {
-  id            String   @id @default(cuid())
-  scopeKey      String // guestKey for MVP, workspaceId for future
-  workspaceId   String? // Optional workspace association
-  quoteId       String? // Linked quote if source=quote
-  purchasedAt   DateTime // Purchase date
-  vendorName    String // Vendor name
-  category      String? // Product category
-  itemName      String // Item/product name
-  catalogNumber String? // Catalog number
-  unit          String? // Unit (ea, mL, g, etc.)
-  qty           Int // Quantity
-  unitPrice     Int? // Unit price (optional for import)
-  amount        Int // Total amount (required)
-  currency      String   @default("KRW")
-  source        String   @default("import") // "import" or "quote"
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  scopeKey        String // guestKey for MVP, workspaceId for future
+  workspaceId     String? // Optional workspace association
+  quoteId         String? // Linked quote if source=quote
+  purchasedAt     DateTime // Purchase date
+  vendorName      String // Vendor name
+  category        String? // Product category
+  itemName        String // Item/product name
+  catalogNumber   String? // Catalog number
+  unit            String? // Unit (ea, mL, g, etc.)
+  qty             Int // Quantity
+  unitPrice       Int? // Unit price (optional for import)
+  amount          Int // Total amount (required)
+  currency        String   @default("KRW")
+  source          String   @default("import") // "import" or "quote"
+  followUpStatus  String?  // null=pending, "inventory_reflected"=입고 반영 완료
+  receivedAt      DateTime? // 입고 반영 완료 시각
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations (optional)
   quote     Quote?     @relation(fields: [quoteId], references: [id], onDelete: SetNull)
