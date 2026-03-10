@@ -175,11 +175,11 @@ export function InventoryTable({
 
   const renderStatusBadge = (status: string) => {
     const CircularBadge = ({ children, className, label }: { children: React.ReactNode; className: string; label: string }) => (
-      <span className="inline-flex items-center gap-1.5 antialiased">
-        <span className={`h-6 w-6 ${BADGE_BASE} ${className}`}>
+      <span className="inline-flex items-center gap-1.5 antialiased whitespace-nowrap">
+        <span className={`h-6 w-6 ${BADGE_BASE} ${className} shrink-0`}>
           <span className="flex items-center justify-center">{children}</span>
         </span>
-        <span className="text-[11px] font-semibold">{label}</span>
+        <span className="text-[11px] font-semibold whitespace-nowrap">{label}</span>
       </span>
     );
 
@@ -210,9 +210,9 @@ export function InventoryTable({
         ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400"
         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400";
     return (
-      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${cls}`}>
+      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shrink-0 ${cls}`}>
         <Icon className="w-3 h-3 shrink-0" />
-        {label}
+        <span className="whitespace-nowrap">{label}</span>
       </span>
     );
   };
@@ -223,13 +223,13 @@ export function InventoryTable({
         <Table className="min-w-[700px]">
           <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[40px] text-xs font-semibold text-slate-500 dark:text-slate-400"></TableHead>
-              <TableHead className="w-[80px] text-xs font-semibold text-slate-500 dark:text-slate-400">상태</TableHead>
-              <TableHead className="min-w-[200px] text-xs font-semibold text-slate-500 dark:text-slate-400">품목 정보</TableHead>
-              <TableHead className="w-[100px] text-right text-xs font-semibold text-slate-500 dark:text-slate-400">총 수량</TableHead>
-              <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400">Lot 수</TableHead>
-              <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400">최단 유효기간</TableHead>
-              <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400">관리</TableHead>
+              <TableHead className="w-[40px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"></TableHead>
+              <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">상태</TableHead>
+              <TableHead className="min-w-[200px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">품목 정보</TableHead>
+              <TableHead className="w-[110px] text-right text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">총 수량</TableHead>
+              <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Lot 수</TableHead>
+              <TableHead className="w-[120px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">최단 유효기간</TableHead>
+              <TableHead className="w-[100px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">관리</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -264,23 +264,23 @@ export function InventoryTable({
                           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </TableCell>
-                      <TableCell>
-                        <span className="text-xs whitespace-nowrap">{renderStatusBadge(displayStatus)}</span>
+                      <TableCell className="whitespace-nowrap">
+                        {renderStatusBadge(displayStatus)}
                       </TableCell>
                       <TableCell>
-                        <div className="min-w-0 overflow-hidden">
+                        <div className="min-w-0">
                           <div className="font-bold text-slate-900 dark:text-slate-100 truncate text-sm">{group.productName}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate whitespace-nowrap">
                             {group.brand ?? "-"}
                             {group.catalogNumber && ` · Cat: ${group.catalogNumber}`}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right whitespace-nowrap">
                         <span className="font-bold text-slate-900 dark:text-slate-100 text-base">{group.totalQuantity}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">{group.unit}</span>
                         {group.safetyStock !== null && group.safetyStock > 0 && (
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">안전재고 {group.safetyStock}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 whitespace-nowrap">안전재고 {group.safetyStock}</div>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -300,22 +300,23 @@ export function InventoryTable({
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
-                              <MoreVertical className="h-4 w-4" />
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap gap-1 shrink-0">
+                              <MoreVertical className="h-3.5 w-3.5 shrink-0" />
+                              <span className="hidden sm:inline">관리</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => onDetailClick?.(group.lots[0])} className="gap-2 text-sm">
-                              <Eye className="h-3.5 w-3.5 text-blue-500" />
+                            <DropdownMenuItem onClick={() => onDetailClick?.(group.lots[0])} className="gap-2 text-xs">
+                              <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                               상세 보기
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-sm">
-                              <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                            <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
+                              <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                               정보 수정
                             </DropdownMenuItem>
                             {onDelete && (
-                              <DropdownMenuItem onClick={() => onDelete(group.lots[0])} className="gap-2 text-sm text-red-600 focus:text-red-600 dark:text-red-400">
-                                <Trash2 className="h-3.5 w-3.5" />
+                              <DropdownMenuItem onClick={() => onDelete(group.lots[0])} className="gap-2 text-xs text-red-600 focus:text-red-600 dark:text-red-400">
+                                <Trash2 className="h-3.5 w-3.5 shrink-0" />
                                 삭제
                               </DropdownMenuItem>
                             )}
@@ -339,27 +340,27 @@ export function InventoryTable({
                           <TableCell className="px-2">
                             <div className="h-4 w-4 ml-1 rounded-bl-md border-b-2 border-l-2 border-slate-300 dark:border-slate-600" />
                           </TableCell>
-                          <TableCell>
-                            <span className="text-xs whitespace-nowrap">{renderStatusBadge(lotDisplayStatus)}</span>
+                          <TableCell className="whitespace-nowrap">
+                            {renderStatusBadge(lotDisplayStatus)}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-400">
-                              <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                              <span className="font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap shrink-0">
                                 Lot: {lot.lotNumber || "미지정"}
                               </span>
-                              <span className="text-slate-300 dark:text-slate-600">·</span>
-                              <span>{lot.location || "위치 미지정"}</span>
-                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span className="text-slate-300 dark:text-slate-600 shrink-0">·</span>
+                              <span className="whitespace-nowrap shrink-0">{lot.location || "위치 미지정"}</span>
+                              <span className="text-slate-300 dark:text-slate-600 shrink-0">·</span>
                               {renderStorageCondition(lot.storageCondition)}
                               {lot.inUseOrUnopened && (
                                 <>
-                                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                                  <Badge variant="outline" className="text-[9px] px-1 py-0 border-slate-200 dark:border-slate-700">{lot.inUseOrUnopened}</Badge>
+                                  <span className="text-slate-300 dark:text-slate-600 shrink-0">·</span>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0">{lot.inUseOrUnopened}</Badge>
                                 </>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right whitespace-nowrap">
                             <span className="font-semibold text-slate-800 dark:text-slate-200">{lot.currentQuantity}</span>
                             <span className="text-xs text-slate-500 ml-1">{lot.unit}</span>
                           </TableCell>
@@ -374,8 +375,7 @@ export function InventoryTable({
                             )}
                           </TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-0.5">
-                              {/* QR (lot 단위) */}
+                            <div className="flex items-center justify-center gap-1">
                               <InventoryQRCode
                                 inventoryId={lot.id}
                                 productName={lot.product.name}
@@ -392,32 +392,36 @@ export function InventoryTable({
                                   unit: l.unit,
                                 }))}
                               />
-                              {/* 입고/폐기/조정 드롭다운 */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
-                                    <MoreVertical className="h-4 w-4" />
+                                  <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap gap-1 shrink-0">
+                                    <MoreVertical className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="hidden sm:inline">작업</span>
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem onClick={() => onDetailClick?.(lot)} className="gap-2 text-xs">
+                                    <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                    상세 보기
+                                  </DropdownMenuItem>
                                   {onRestock && (
                                     <DropdownMenuItem onClick={() => onRestock(lot)} className="gap-2 text-xs">
-                                      <PackagePlus className="h-3.5 w-3.5 text-emerald-600" />
+                                      <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                                       입고
                                     </DropdownMenuItem>
                                   )}
                                   <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
-                                    <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                                    <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                                     수량 조정
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => onDetailClick?.(lot)} className="gap-2 text-xs">
-                                    <Eye className="h-3.5 w-3.5 text-blue-500" />
-                                    상세
+                                  <DropdownMenuItem onClick={() => onReorder(lot)} className="gap-2 text-xs">
+                                    <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                    재발주
                                   </DropdownMenuItem>
                                   {onDelete && (
                                     <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                      폐기
+                                      <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                                      폐기 검토
                                     </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
