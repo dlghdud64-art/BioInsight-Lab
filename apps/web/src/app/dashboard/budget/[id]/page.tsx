@@ -247,7 +247,16 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* 헤더 + 액션 버튼 */}
+        {/* 좌측: 복귀 내비게이션 */}
+        <Link
+          href="/dashboard/budget"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors -mb-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          예산 관리
+        </Link>
+
+        {/* 헤더: 좌측 = 제목/상태, 우측 = 실행 액션만 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white">
@@ -265,10 +274,10 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               </div>
             </div>
           </div>
-          {/* 액션: 수정 > 다운로드 > 리포트(조건부) > 목록 */}
+          {/* 우측: 실행 액션만 (수정 > 다운로드 > 리포트) */}
           <div className="flex items-center gap-2">
             {canEdit ? (
-              <Link href={`/dashboard/budget`}>
+              <Link href="/dashboard/budget">
                 <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
                   <Edit className="w-4 h-4 mr-1.5" />
                   수정
@@ -311,13 +320,6 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 <span className="hidden sm:inline">리포트</span>
               </Button>
             )}
-            <Link
-              href="/dashboard/budget"
-              className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              목록
-            </Link>
           </div>
         </div>
 
