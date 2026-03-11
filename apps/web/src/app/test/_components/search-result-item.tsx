@@ -139,12 +139,12 @@ export function SearchResultItem({
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto text-slate-600 hover:text-slate-800 hover:bg-slate-100 ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100" : ""}`}
+              className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"}`}
               onClick={onToggleCompare}
             >
               <GitCompare className="h-4 w-4 md:mr-1.5" />
-              <span className="hidden md:inline">비교함 담기</span>
-              <span className="md:hidden">비교</span>
+              <span className="hidden md:inline">{isInCompare ? "비교 담김" : "비교 담기"}</span>
+              <span className="md:hidden">{isInCompare ? "담김" : "비교"}</span>
             </Button>
             <Button
               size="sm"

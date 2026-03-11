@@ -128,7 +128,7 @@ export default function SearchPage() {
                           }
                         }
                         // 내부 slug/key가 UI에 노출되지 않도록 안전한 fallback 사용
-                        const displayName = product?.name || product?.brand || "선택 품목";
+                        const displayName = product?.name || product?.brand || "비교 대상";
                         return (
                           <Badge
                             key={id}
@@ -157,11 +157,22 @@ export default function SearchPage() {
                       })}
                     </div>
                   </div>
-                  <Link href="/test/compare" className="w-full sm:w-auto">
-                    <Button size="sm" variant="default" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
-                      비교 보기 →
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs text-slate-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => clearCompare()}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      전체 비우기
                     </Button>
-                  </Link>
+                    <Link href="/test/compare" className="flex-1 sm:flex-none">
+                      <Button size="sm" variant="default" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
+                        비교 보기 →
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
