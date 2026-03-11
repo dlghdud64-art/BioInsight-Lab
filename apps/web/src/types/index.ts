@@ -3,7 +3,7 @@ export type ProductCategory = "REAGENT" | "TOOL" | "EQUIPMENT" | "RAW_MATERIAL";
 
 export type UserRole = "RESEARCHER" | "BUYER" | "SUPPLIER" | "ADMIN";
 
-export type OrganizationRole = "VIEWER" | "REQUESTER" | "APPROVER" | "ADMIN";
+export type OrganizationRole = "VIEWER" | "REQUESTER" | "APPROVER" | "ADMIN" | "OWNER";
 
 export type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 

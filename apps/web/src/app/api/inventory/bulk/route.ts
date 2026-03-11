@@ -179,9 +179,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (membership.role !== "ADMIN") {
+    if (membership.role !== "ADMIN" && membership.role !== "OWNER") {
       return NextResponse.json(
-        { error: "대량 재고 등록은 조직 관리자(ADMIN)만 수행할 수 있습니다." },
+        { error: "대량 재고 등록은 조직 관리자만 수행할 수 있습니다." },
         { status: 403 }
       );
     }

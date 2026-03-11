@@ -33,6 +33,8 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import { usePermission } from "@/hooks/use-permission";
+import { PermissionGate } from "@/components/permission-gate";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -196,6 +198,14 @@ function QuoteCard({ quote }: { quote: Quote }) {
               </Button>
             </Link>
           )}
+          {quote.status === "COMPLETED" && (
+            <Link href={`/dashboard/purchases?quoteId=${quote.id}`}>
+              <Button size="sm" className="h-7 text-xs w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                구매 요청
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>
@@ -287,13 +297,15 @@ function QuotesPageContent() {
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
           <p className="text-sm text-slate-500 mt-0.5">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
-        <Link href="/compare/quote" className="flex-shrink-0">
-          <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">새 견적 요청</span>
-            <span className="sm:hidden">새 요청</span>
-          </Button>
-        </Link>
+        <PermissionGate permission="quotes.create">
+          <Link href="/compare/quote" className="flex-shrink-0">
+            <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">새 견적 요청</span>
+              <span className="sm:hidden">새 요청</span>
+            </Button>
+          </Link>
+        </PermissionGate>
       </div>
 
       {/* ── 운영 요약 스트립 ── */}

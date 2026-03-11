@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/app/_components/page-header";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePermission } from "@/hooks/use-permission";
+import { PermissionGate } from "@/components/permission-gate";
 
 interface Budget {
   id: string;
@@ -58,27 +60,8 @@ export default function BudgetPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(true);
-  // 현재 활성 조직 ID (예산 저장 시 주입)
-  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
-  // 현재 사용자의 조직 내 역할 (OWNER/ADMIN만 수정 가능)
-  const [userOrgRole, setUserOrgRole] = useState<string | null>(null);
-  const canEditBudget = userOrgRole === "OWNER" || userOrgRole === "ADMIN";
-
-  /** 사용자 소속 조직 ID + 역할 조회 */
-  const fetchActiveOrg = useCallback(async () => {
-    try {
-      const res = await fetch("/api/organizations");
-      if (!res.ok) return;
-      const json = await res.json();
-      const orgs = Array.isArray(json.organizations) ? json.organizations : [];
-      if (orgs.length > 0) {
-        setActiveOrgId(orgs[0].id);
-        setUserOrgRole(orgs[0].role ?? null);
-      }
-    } catch (e) {
-      console.error("[BudgetPage] Failed to fetch active org:", e);
-    }
-  }, []);
+  // 권한 훅으로 조직 역할 + 권한 체크 통합
+  const { can, organizationId: activeOrgId, isAdminOrOwner: canEditBudget } = usePermission();
 
   /** 예산 목록 서버에서 불러오기 (silent: true 시 로딩 UI 없이 백그라운드 갱신) */
   const fetchBudgets = useCallback(async (silent = false) => {
@@ -98,8 +81,7 @@ export default function BudgetPage() {
 
   useEffect(() => {
     fetchBudgets();
-    fetchActiveOrg();
-  }, [fetchBudgets, fetchActiveOrg]);
+  }, [fetchBudgets]);
 
   /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
   const handleAddBudget = async (formData: {
@@ -257,7 +239,25 @@ export default function BudgetPage() {
           icon={Wallet}
           actions={
             <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
-              {canEditBudget ? (
+              <PermissionGate
+                permission="budgets.create"
+                disabledFallback={
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="sm" className="text-xs md:text-sm h-8 md:h-10 opacity-50" disabled>
+                          <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                          <span className="hidden sm:inline">예산 추가</span>
+                          <span className="sm:hidden">추가</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">관리자만 예산을 추가할 수 있습니다</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                }
+              >
                 <DialogTrigger asChild>
                   <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
                     <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
@@ -265,22 +265,7 @@ export default function BudgetPage() {
                     <span className="sm:hidden">추가</span>
                   </Button>
                 </DialogTrigger>
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" className="text-xs md:text-sm h-8 md:h-10 opacity-50" disabled>
-                        <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                        <span className="hidden sm:inline">예산 추가</span>
-                        <span className="sm:hidden">추가</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Owner/Admin만 예산을 추가할 수 있습니다</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              </PermissionGate>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -397,7 +382,15 @@ export default function BudgetPage() {
                         <Progress value={rate} className="h-2" />
                       </div>
                       <div className="flex justify-end gap-2">
-                        {canEditBudget ? (
+                        <PermissionGate
+                          permission="budgets.update"
+                          disabledFallback={
+                            <Button variant="outline" size="sm" disabled className="opacity-50">
+                              <Lock className="h-3.5 w-3.5 mr-1" />
+                              수정
+                            </Button>
+                          }
+                        >
                           <Button
                             variant="outline"
                             size="sm"
@@ -410,25 +403,11 @@ export default function BudgetPage() {
                             <Edit className="h-3.5 w-3.5 mr-1" />
                             수정
                           </Button>
-                        ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="sm" disabled className="opacity-50">
-                                  <Lock className="h-3.5 w-3.5 mr-1" />
-                                  수정
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">Owner/Admin만 수정 가능</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
+                        </PermissionGate>
                         <Button variant="outline" size="sm" asChild>
                           <a href={`/dashboard/budget/${budget.id}`}>상세 보기</a>
                         </Button>
-                        {canEditBudget && (
+                        <PermissionGate permission="budgets.delete">
                           <Button
                             variant="outline"
                             size="sm"
@@ -440,7 +419,7 @@ export default function BudgetPage() {
                           >
                             삭제
                           </Button>
-                        )}
+                        </PermissionGate>
                       </div>
                     </CardContent>
                   </Card>

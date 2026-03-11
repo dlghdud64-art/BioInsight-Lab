@@ -30,6 +30,9 @@ import { InventorySearch } from "@/components/inventory/InventorySearch";
 import { useDebounce } from "@/hooks/use-debounce";
 import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { usePermission } from "@/hooks/use-permission";
+import { PermissionGate } from "@/components/permission-gate";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -74,6 +77,7 @@ function InventoryPageContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { can } = usePermission();
   const searchParams = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -655,7 +659,11 @@ function InventoryPageContent() {
       }
       setRestockItem(null);
       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
-      toast({ title: "입고 완료", description: "재고 수량이 업데이트되었습니다." });
+      toast({
+        title: "입고 완료",
+        description: "재고 수량이 업데이트되었습니다.",
+        action: <ToastAction altText="예산 확인" onClick={() => router.push("/dashboard/budget")}>예산 확인</ToastAction>,
+      });
     },
     onError: (error: Error) => {
       toast({ title: "입고 실패", description: error.message, variant: "destructive" });
@@ -957,10 +965,12 @@ function InventoryPageContent() {
             />
 
             {/* ── 1차 액션: 재고 등록 · 구매 반영 ── */}
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              재고 등록
-            </Button>
+            <PermissionGate permission="inventory.create">
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                재고 등록
+              </Button>
+            </PermissionGate>
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard/purchases")}
@@ -981,14 +991,16 @@ function InventoryPageContent() {
               <Printer className="h-4 w-4 mr-2" />
               라벨 인쇄
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsImportDialogOpen(true)}
-              className="hidden md:inline-flex"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              엑셀 업로드
-            </Button>
+            <PermissionGate permission="inventory.create">
+              <Button
+                variant="outline"
+                onClick={() => setIsImportDialogOpen(true)}
+                className="hidden md:inline-flex"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                엑셀 업로드
+              </Button>
+            </PermissionGate>
             <Button variant="outline" className="hidden md:inline-flex">
               <Download className="h-4 w-4 mr-2" />
               내보내기

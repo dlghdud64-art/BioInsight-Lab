@@ -22,7 +22,12 @@ import {
   ShieldCheck,
   TrendingUp,
   Receipt,
+  ShoppingCart,
+  Package,
+  FileCheck,
 } from "lucide-react";
+import { usePermission } from "@/hooks/use-permission";
+import { PermissionGate } from "@/components/permission-gate";
 import {
   AreaChart,
   Area,
@@ -134,19 +139,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const [budget, setBudget] = useState<Budget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [userOrgRole, setUserOrgRole] = useState<string | null>(null);
-  const canEdit = userOrgRole === "OWNER" || userOrgRole === "ADMIN";
-
-  // 조직 역할 조회
-  const fetchOrgRole = useCallback(async () => {
-    try {
-      const res = await fetch("/api/organizations");
-      if (!res.ok) return;
-      const json = await res.json();
-      const orgs = Array.isArray(json.organizations) ? json.organizations : [];
-      if (orgs.length > 0) setUserOrgRole(orgs[0].role ?? null);
-    } catch { /* silent */ }
-  }, []);
+  const { can } = usePermission();
 
   const fetchBudget = useCallback(async () => {
     if (!id) return;
@@ -171,8 +164,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     fetchBudget();
-    fetchOrgRole();
-  }, [fetchBudget, fetchOrgRole]);
+  }, [fetchBudget]);
 
   if (!id) {
     return (
@@ -314,28 +306,31 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </div>
           {/* 우측: 실행 액션만 (수정 > 다운로드 > 리포트) */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {canEdit ? (
+            <PermissionGate
+              permission="budgets.update"
+              disabledFallback={
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="outline" disabled className="opacity-50">
+                        <Lock className="w-4 h-4 mr-1.5" />
+                        수정
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Owner/Admin만 수정 가능</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+              }
+            >
               <Link href="/dashboard/budget">
                 <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
                   <Edit className="w-4 h-4 mr-1.5" />
                   수정
                 </Button>
               </Link>
-            ) : (
-              <TooltipProvider>
-                <UITooltip>
-                  <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" disabled className="opacity-50">
-                      <Lock className="w-4 h-4 mr-1.5" />
-                      수정
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Owner/Admin만 수정 가능</p>
-                  </TooltipContent>
-                </UITooltip>
-              </TooltipProvider>
-            )}
+            </PermissionGate>
             {hasSpending && (
               <Button
                 variant="outline"
@@ -581,6 +576,33 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 관련 페이지 */}
+        <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">관련 페이지</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Link href="/dashboard/purchases">
+              <Button variant="outline" size="sm" className="text-xs border-slate-200 dark:border-slate-700">
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                구매 내역
+              </Button>
+            </Link>
+            <Link href="/dashboard/inventory?filter=low">
+              <Button variant="outline" size="sm" className="text-xs border-slate-200 dark:border-slate-700">
+                <Package className="w-3.5 h-3.5 mr-1.5" />
+                부족 재고
+              </Button>
+            </Link>
+            <Link href="/dashboard/quotes?status=COMPLETED">
+              <Button variant="outline" size="sm" className="text-xs border-slate-200 dark:border-slate-700">
+                <FileCheck className="w-3.5 h-3.5 mr-1.5" />
+                확정 견적
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
