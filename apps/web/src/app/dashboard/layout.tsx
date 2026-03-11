@@ -23,7 +23,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 overflow-hidden lg:pl-64">
         {/* 상단 고정: Header (검색창, 프로필 포함) */}
         <DashboardHeader
-          onMenuClick={() => setIsMobileMenuOpen(true)}
+          onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
         />
 
         {/* 메인 콘텐츠 영역 */}
