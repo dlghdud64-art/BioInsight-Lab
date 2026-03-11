@@ -220,11 +220,11 @@ function EmptyChart({ message }: { message: string }) {
 // ── 보기 전환 타입 ──────────────────────────────────────────
 type AnalyticsView = "overview" | "team" | "category" | "vendor";
 
-const VIEW_OPTIONS: { key: AnalyticsView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: "overview", label: "전체", icon: BarChart2 },
-  { key: "team", label: "팀별", icon: Users },
-  { key: "category", label: "카테고리별", icon: PieChartIcon },
-  { key: "vendor", label: "벤더별", icon: Store },
+const VIEW_OPTIONS: { key: AnalyticsView; label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "overview", label: "전체", shortLabel: "전체", icon: BarChart2 },
+  { key: "team", label: "팀별", shortLabel: "팀별", icon: Users },
+  { key: "category", label: "카테고리별", shortLabel: "카테고리", icon: PieChartIcon },
+  { key: "vendor", label: "벤더별", shortLabel: "벤더", icon: Store },
 ];
 
 export default function AnalyticsPage() {
@@ -294,8 +294,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ══ 보기 전환 ══ */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1 w-fit">
-        {VIEW_OPTIONS.map(({ key, label, icon: Icon }) => (
+      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1 w-fit overflow-x-auto">
+        {VIEW_OPTIONS.map(({ key, label, shortLabel, icon: Icon }) => (
           <button
             key={key}
             onClick={() => {
@@ -303,14 +303,15 @@ export default function AnalyticsPage() {
               if (key === "vendor") setTableTab("vendor");
               else if (key === "category") setTableTab("top");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
               currentView === key
                 ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
+            <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">{shortLabel}</span>
           </button>
         ))}
       </div>

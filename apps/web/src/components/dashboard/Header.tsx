@@ -313,68 +313,83 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     const isUrgent = notification.priority === "urgent";
     const config = CATEGORY_CONFIG[notification.category];
 
+    // 완료/참고 카드: 버튼 없이 카드 전체 클릭
+    if (isCompleted) {
+      return (
+        <button
+          key={notification.id}
+          type="button"
+          onClick={() => handleNotificationClick(notification)}
+          className="w-full text-left px-3 py-2.5 opacity-50 hover:opacity-70 transition-colors"
+        >
+          <div className="flex items-start gap-2.5">
+            {renderCategoryIcon(notification.category, "sm")}
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
+                  {notification.typeLabel}
+                </span>
+                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-200 dark:bg-slate-700">
+                  완료
+                </Badge>
+                <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0">{notification.time}</span>
+              </div>
+              <p className="text-xs text-slate-400 dark:text-slate-500 line-through truncate">
+                {notification.targetName}
+              </p>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    // 미처리 카드: 상태 → 이슈 → 조치 이유 → 하단 action
     return (
       <div
         key={notification.id}
-        className={`relative px-3 py-3 transition-colors ${
-          isCompleted
-            ? "opacity-50"
-            : isUrgent
-            ? "bg-red-50/30 dark:bg-red-950/10"
-            : ""
-        }`}
+        className={`px-3 py-3 ${isUrgent ? "bg-red-50/30 dark:bg-red-950/10" : ""}`}
       >
+        {/* 본문: 아이콘 + 텍스트 */}
         <div className="flex items-start gap-2.5">
           {renderCategoryIcon(notification.category, "sm")}
           <div className="flex-1 min-w-0 overflow-hidden">
-            {/* 1행: 상태 배지 + 긴급도 */}
+            {/* 1행: 상태 배지 + 우측 시간 */}
             <div className="flex items-center gap-1.5 mb-1">
               <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
                 {notification.typeLabel}
               </span>
-              {isUrgent && !isCompleted && (
+              {isUrgent && (
                 <Badge variant="destructive" className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm">
                   긴급
                 </Badge>
               )}
-              {isCompleted && (
-                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-200 dark:bg-slate-700">
-                  완료
-                </Badge>
-              )}
               <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0">{notification.time}</span>
             </div>
-            {/* 2행: 품목명 / 이슈명 */}
-            <p className={`text-xs font-semibold truncate ${
-              isCompleted
-                ? "text-slate-400 dark:text-slate-500 line-through"
-                : "text-slate-900 dark:text-slate-100"
-            }`}>
+            {/* 2행: 품목명 */}
+            <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
               {notification.targetName}
             </p>
-            {/* 3행: 조치 문장 (왜 이 작업이 필요한지) */}
+            {/* 3행: 조치 이유 */}
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
               {notification.statusText}
             </p>
           </div>
         </div>
-        {/* primary action — 강한 버튼형 */}
-        {!isCompleted && (
-          <div className="mt-2 pl-8">
-            <button
-              type="button"
-              onClick={(e) => handleNotificationCTA(e, notification)}
-              className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
-                isUrgent
-                  ? "text-white bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500"
-                  : "text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-950/40 dark:hover:bg-blue-950/60"
-              }`}
-            >
-              {notification.ctaLabel}
-              <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-        )}
+        {/* 하단 액션 존: primary action 1개 */}
+        <div className="mt-2.5 pl-8">
+          <button
+            type="button"
+            onClick={(e) => handleNotificationCTA(e, notification)}
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
+              isUrgent
+                ? "text-white bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500"
+                : "text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            }`}
+          >
+            {notification.ctaLabel}
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     );
   };
