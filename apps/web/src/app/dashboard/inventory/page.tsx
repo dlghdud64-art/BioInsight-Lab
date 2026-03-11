@@ -15,8 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -716,7 +716,7 @@ function InventoryPageContent() {
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
 
-  // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장)
+  // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
   const issuesCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
     const isLow = inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock;
@@ -728,8 +728,34 @@ function InventoryPageContent() {
         const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         return days > 0 && days <= 30;
       })();
-    return isOut || isLow || byLeadTime || isExpiring;
+    const noLocation = !inv.location;
+    return isOut || isLow || byLeadTime || isExpiring || noLocation;
   }).length;
+
+  /** 이슈 유형 분류 */
+  type IssueType = "out_of_stock" | "low_stock" | "reorder_lead" | "expiring" | "expired" | "no_location";
+  const classifyIssue = (inv: ProductInventory): IssueType => {
+    if (inv.currentQuantity === 0) return "out_of_stock";
+    // 유효기간 만료/임박 체크 (부족보다 시급도 높을 수 있음)
+    if (inv.expiryDate) {
+      const d = new Date(inv.expiryDate);
+      const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (days <= 0) return "expired";
+      if (days <= 30) return "expiring";
+    }
+    if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) return "low_stock";
+    if (isReorderNeededByLeadTime(inv)) return "reorder_lead";
+    if (!inv.location) return "no_location";
+    return "low_stock"; // fallback
+  };
+  const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
+    expired:       { label: "만료됨",     cls: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400",       priority: 0 },
+    out_of_stock:  { label: "품절",       cls: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400",       priority: 1 },
+    expiring:      { label: "임박",       cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400", priority: 2 },
+    low_stock:     { label: "재고 부족",  cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400", priority: 3 },
+    reorder_lead:  { label: "재주문 권장", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400", priority: 4 },
+    no_location:   { label: "위치 미지정", cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",  priority: 5 },
+  };
 
   if (status === "loading") {
     return (
@@ -1197,11 +1223,11 @@ function InventoryPageContent() {
             <Card className="shadow-sm border-slate-100 dark:border-slate-800">
               <CardHeader>
                 <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
-                  <AlertTriangle className="mr-2 h-5 w-5" />
-                  주요 점검 이슈
+                  <Zap className="mr-2 h-5 w-5" />
+                  조치 필요 항목
                 </CardTitle>
                 <CardDescription>
-                  재고 부족 또는 유통기한 임박 항목입니다. 각 항목의 조치 버튼을 통해 즉시 대응하세요.
+                  재고 부족, 유효기간 임박, 위치 미지정 항목입니다. 아래 조치 버튼으로 바로 처리하세요.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1220,43 +1246,64 @@ function InventoryPageContent() {
                           const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                           return days > 0 && days <= 30;
                         })();
-                      return isOut || isLow || byLeadTime || isExpiring;
+                      const isExpired =
+                        inv.expiryDate &&
+                        (() => {
+                          const d = new Date(inv.expiryDate);
+                          return d.getTime() < now.getTime();
+                        })();
+                      const noLocation = !inv.location;
+                      return isOut || isLow || byLeadTime || isExpiring || isExpired || noLocation;
                     })
-                    .slice(0, 8);
+                    // 이슈 우선순위로 정렬: 만료 > 품절 > 임박 > 부족 > 재주문 > 위치 미지정
+                    .sort((a, b) => ISSUE_CONFIG[classifyIssue(a)].priority - ISSUE_CONFIG[classifyIssue(b)].priority)
+                    .slice(0, 10);
                   if (urgent.length === 0) {
                     return (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        긴급 조치가 필요한 품목이 없습니다.
-                      </p>
+                      <div className="flex flex-col items-center py-6 text-center">
+                        <CheckCircle2 className="h-10 w-10 text-emerald-300 dark:text-emerald-700 mb-3" />
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          모든 재고가 정상 범위입니다.
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          긴급 조치가 필요한 항목이 없습니다.
+                        </p>
+                      </div>
                     );
                   }
-                  const getReasonBadge = (inv: ProductInventory) => {
-                    if (inv.currentQuantity === 0) return { label: "품절", cls: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400" };
-                    if (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) return { label: "재고 부족", cls: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400" };
-                    if (isReorderNeededByLeadTime(inv)) return { label: "재주문 권장", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400" };
-                    return { label: "점검 필요", cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" };
-                  };
                   const getDaysLeft = (inv: ProductInventory) => {
                     if (!inv.expiryDate) return null;
                     const d = new Date(inv.expiryDate);
                     const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                     if (days <= 0) return "만료됨";
-                    return `${days}일 남음`;
+                    return `D-${days}`;
+                  };
+                  /** 이슈 유형별 카드 배경 */
+                  const getCardBg = (issueType: IssueType) => {
+                    switch (issueType) {
+                      case "expired":
+                      case "out_of_stock":
+                        return "bg-red-50/50 dark:bg-red-950/10 border-red-100 dark:border-red-900/30";
+                      case "expiring":
+                        return "bg-amber-50/50 dark:bg-amber-950/10 border-amber-100 dark:border-amber-900/30";
+                      case "low_stock":
+                      case "reorder_lead":
+                        return "bg-orange-50/50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/30";
+                      case "no_location":
+                        return "bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700";
+                    }
                   };
                   return (
                     <div className="space-y-2">
                       {urgent.map((inv) => {
-                        const reason = getReasonBadge(inv);
+                        const issueType = classifyIssue(inv);
+                        const issueInfo = ISSUE_CONFIG[issueType];
                         const daysLeft = getDaysLeft(inv);
-                        const isExpiryUrgent = inv.expiryDate && (() => {
-                          const d = new Date(inv.expiryDate!);
-                          const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                          return days > 0 && days <= 30;
-                        })();
+                        const cardBg = getCardBg(issueType);
                         return (
                         <div
                           key={inv.id}
-                          className="flex items-start justify-between p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                          className={`flex items-start justify-between p-3 border rounded-lg gap-3 hover:shadow-sm transition-all ${cardBg}`}
                         >
                           <button
                             type="button"
@@ -1269,61 +1316,64 @@ function InventoryPageContent() {
                             }}
                             className="flex-1 min-w-0 text-left"
                           >
-                            {/* Row 1: 이름 + 상태 배지 */}
+                            {/* Row 1: 이슈 유형 배지 + 품목명 + 보조 배지 */}
                             <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
                               <h5 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                                 {inv.product.name}
                               </h5>
-                              <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${reason.cls}`}>{reason.label}</Badge>
-                              {isExpiryUrgent && daysLeft && (
-                                <Badge className="text-[10px] px-1.5 py-0 border-none bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 whitespace-nowrap shrink-0">{daysLeft}</Badge>
+                              {daysLeft && (issueType === "expiring" || issueType === "expired") && (
+                                <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
+                                  issueType === "expired"
+                                    ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400"
+                                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400"
+                                }`}>{daysLeft}</Badge>
                               )}
                             </div>
-                            {/* Row 2: 보조 정보 (Lot · 위치 · 남은 수량) */}
+                            {/* Row 2: 보조 정보 */}
                             <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1 text-xs text-slate-500 dark:text-slate-400">
                               {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-600 dark:text-slate-300">{inv.lotNumber}</span></span>}
-                              {inv.location && (
+                              {inv.location ? (
                                 <>
                                   <span className="text-slate-300 dark:text-slate-600">·</span>
                                   <span className="whitespace-nowrap">{inv.location}</span>
                                 </>
-                              )}
-                              <span className="text-slate-300 dark:text-slate-600">·</span>
-                              <span className="whitespace-nowrap">
-                                남은 수량: <span className="font-semibold text-slate-700 dark:text-slate-300">{inv.currentQuantity}</span> {inv.unit}
-                                {inv.safetyStock != null && <span className="text-slate-400"> (안전재고 {inv.safetyStock})</span>}
-                              </span>
-                              {inv.expiryDate && (
+                              ) : issueType !== "no_location" ? (
                                 <>
                                   <span className="text-slate-300 dark:text-slate-600">·</span>
-                                  <span className="whitespace-nowrap">유효기한: {format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
+                                  <span className="whitespace-nowrap text-amber-500">위치 미지정</span>
+                                </>
+                              ) : null}
+                              <span className="text-slate-300 dark:text-slate-600">·</span>
+                              <span className="whitespace-nowrap">
+                                <span className={`font-semibold ${
+                                  inv.currentQuantity === 0 ? "text-red-600 dark:text-red-400" :
+                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-600 dark:text-orange-400" :
+                                  "text-slate-700 dark:text-slate-300"
+                                }`}>{inv.currentQuantity}</span> {inv.unit}
+                                {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
+                              </span>
+                              {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && (
+                                <>
+                                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                                  <span className="whitespace-nowrap">{format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
                                 </>
                               )}
                             </div>
                           </button>
-                          {/* 액션 버튼: 아이콘+텍스트 */}
+                          {/* ── 이슈 유형별 조치 액션 ── */}
                           <div className="flex gap-1.5 flex-shrink-0 items-start pt-0.5">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedItem(inv);
-                                setSheetSafetyStock(
-                                  String(inv.safetyStock ?? inv.minOrderQty ?? 1)
-                                );
-                                setIsSheetOpen(true);
-                              }}
-                            >
-                              <Eye className="h-3 w-3 shrink-0" />
-                              상세 보기
-                            </Button>
-                            {inv.currentQuantity === 0 || (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) || isReorderNeededByLeadTime(inv) ? (
+                            {/* 1차 대표 조치 (이슈 유형별 분기) */}
+                            {(issueType === "out_of_stock" || issueType === "low_stock" || issueType === "reorder_lead") && (
+                              /* 품절/부족/재주문 → 재발주 */
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800"
+                                className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
+                                  issueType === "out_of_stock"
+                                    ? "text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30"
+                                    : "text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950/30"
+                                }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -1332,14 +1382,34 @@ function InventoryPageContent() {
                                   });
                                 }}
                               >
-                                <ShoppingCart className="h-3 w-3 shrink-0" />
+                                <RotateCcw className="h-3 w-3 shrink-0" />
                                 재발주
                               </Button>
-                            ) : (
+                            )}
+                            {(issueType === "expiring") && (
+                              /* 유효기간 임박 → 우선 사용 */
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "우선 사용 표시",
+                                    description: `${inv.product.name}을(를) 우선 사용 항목으로 표시합니다.`,
+                                  });
+                                }}
+                              >
+                                <Truck className="h-3 w-3 shrink-0" />
+                                우선 사용
+                              </Button>
+                            )}
+                            {(issueType === "expired") && (
+                              /* 만료됨 → 폐기 검토 */
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -1352,22 +1422,133 @@ function InventoryPageContent() {
                                 폐기 검토
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 shrink-0"
-                              title="처리 완료"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
-                                toast({
-                                  title: "알림 처리 완료",
-                                  description: "해당 품목의 알림이 처리되었습니다.",
-                                });
-                              }}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
+                            {(issueType === "no_location") && (
+                              /* 위치 미지정 → 위치 지정 */
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-violet-600 border-violet-200 hover:bg-violet-50 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-950/30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingInventory(inv);
+                                  setIsDialogOpen(true);
+                                }}
+                              >
+                                <MapPin className="h-3 w-3 shrink-0" />
+                                위치 지정
+                              </Button>
+                            )}
+                            {/* 더보기 — 보조 조치 */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 shrink-0"
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem
+                                  className="gap-2 text-xs"
+                                  onClick={() => {
+                                    setSelectedItem(inv);
+                                    setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
+                                    setIsSheetOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                  상세 보기
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="gap-2 text-xs"
+                                  onClick={() => {
+                                    setEditingInventory(inv);
+                                    setIsDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                                  정보 수정
+                                </DropdownMenuItem>
+                                {/* 이슈별 보조 조치 */}
+                                {issueType === "expiring" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs text-red-600 dark:text-red-400"
+                                      onClick={() => {
+                                        toast({
+                                          title: "폐기 검토",
+                                          description: `${inv.product.name} 폐기 절차를 확인하세요.`,
+                                        });
+                                      }}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                                      폐기 검토
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs"
+                                      onClick={() => {
+                                        toast({
+                                          title: "재발주 검토",
+                                          description: `${inv.product.name} 소진 후 대체품 재발주를 검토하세요.`,
+                                        });
+                                      }}
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                      재발주 검토
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {issueType === "expired" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs"
+                                      onClick={() => {
+                                        toast({
+                                          title: "대체품 재발주",
+                                          description: `${inv.product.name} 대체품 재발주 기능은 곧 제공될 예정입니다.`,
+                                        });
+                                      }}
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                      대체품 재발주
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {(issueType === "out_of_stock" || issueType === "low_stock") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="gap-2 text-xs"
+                                      onClick={() => {
+                                        setRestockItem(inv);
+                                        setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+                                      }}
+                                    >
+                                      <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                      입고 등록
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="gap-2 text-xs text-slate-500"
+                                  onClick={() => {
+                                    setDismissedAlertIds((prev) => new Set(prev).add(inv.id));
+                                    toast({
+                                      title: "이슈 처리 완료",
+                                      description: `${inv.product.name} 이슈를 목록에서 제외했습니다.`,
+                                    });
+                                  }}
+                                >
+                                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                                  목록에서 제외
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                         );
