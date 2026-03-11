@@ -641,13 +641,22 @@ function StickySearchBar() {
             type="text"
             value={localQuery}
             onChange={handleChange}
-            placeholder="시약명, CAS No., 제조사 검색"
-            className="flex-1 h-10 md:h-14 px-4 md:px-6 text-base md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+            placeholder="시약명 / CAS No. / 제조사"
+            className="flex-1 h-10 md:h-14 px-4 md:px-6 text-sm md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
           />
+          {/* 모바일: 아이콘만 / 데스크탑: 아이콘+텍스트 */}
+          <Button
+            type="submit"
+            size="icon"
+            className="h-8 w-8 md:hidden bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 shrink-0"
+            disabled={!localQuery.trim()}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
           <Button
             type="submit"
             size="lg"
-            className="h-8 md:h-12 px-4 md:px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold text-sm md:text-base"
+            className="hidden md:flex h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold text-base"
             disabled={!localQuery.trim()}
           >
             <Search className="h-5 w-5 mr-2" />
