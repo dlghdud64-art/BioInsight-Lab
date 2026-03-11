@@ -881,22 +881,21 @@ function PlansPageContent() {
                       "border-slate-200 dark:border-slate-800"
                   )}
                 >
-                  {isCurrentPlan && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                      <Badge className="bg-emerald-600 text-white px-3 py-1 shadow-lg text-xs">
-                        현재 플랜
-                      </Badge>
-                    </div>
-                  )}
-                  {!isCurrentPlan && display.isRecommended && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                      <Badge className="bg-blue-600 text-white px-3 py-1 shadow-lg text-xs whitespace-nowrap">
-                        연구팀·구매팀 표준 플랜
-                      </Badge>
-                    </div>
-                  )}
-
-                  <CardHeader className="pb-3 pt-6">
+                  <CardHeader className="pb-3 pt-5">
+                    {/* 상태 배지 — 카드 내부 상단에 안정적 배치 (overflow-hidden 잘림 방지) */}
+                    {(isCurrentPlan || (!isCurrentPlan && display.isRecommended)) && (
+                      <div className="mb-2">
+                        {isCurrentPlan ? (
+                          <Badge className="bg-emerald-600 text-white px-3 py-1 text-xs whitespace-nowrap w-fit">
+                            현재 플랜
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-600 text-white px-3 py-1 text-xs whitespace-nowrap w-fit">
+                            연구팀·구매팀 표준 플랜
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mb-2">
                       <div
                         className={cn(
