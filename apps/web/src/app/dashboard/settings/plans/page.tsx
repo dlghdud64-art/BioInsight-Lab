@@ -54,6 +54,7 @@ import {
   getAnnualTotalPrice,
   getPlanLimits,
 } from "@/lib/plans";
+import CheckoutDialog from "@/components/checkout/CheckoutDialog";
 
 // ═══════════════════════════════════════════════════════════════════
 // 로컬 ErrorBoundary — 글로벌 에러 화면으로 보내지 않고 페이지 내에서 처리
@@ -283,6 +284,7 @@ function PlansPageContent() {
   const queryClient = useQueryClient();
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [isAnnual, setIsAnnual] = useState(false);
+  const [checkoutTarget, setCheckoutTarget] = useState<SubscriptionPlan | null>(null);
 
   // ┌─────────────────────────────────────────────┐
   // │ HOOKS — 모두 최상단, 조건부 return 전에 배치 │
@@ -572,19 +574,8 @@ function PlansPageContent() {
   };
 
   const handlePlanChange = (planId: SubscriptionPlan) => {
-    const info = getButtonInfo(planId);
-    const planName = safePlanDisplay(planId).displayName;
-
-    const msg = info.isDowngrade
-      ? `${planName} 플랜으로 다운그레이드하시겠습니까?\n일부 기능이 제한될 수 있으며, 현재 데이터는 유지됩니다.`
-      : `${planName} 플랜으로 업그레이드하시겠습니까?`;
-
-    if (confirm(msg)) {
-      upgradeMutation.mutate({
-        organizationId: selectedOrg.id,
-        plan: planId,
-      });
-    }
+    // CheckoutDialog로 진입
+    setCheckoutTarget(planId);
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -1224,6 +1215,24 @@ function PlansPageContent() {
           </Card>
         </div>
       </div>
+
+      {/* ── 결제 세션 다이얼로그 ── */}
+      {checkoutTarget && selectedOrg && (
+        <CheckoutDialog
+          open={!!checkoutTarget}
+          onOpenChange={(open) => { if (!open) setCheckoutTarget(null); }}
+          currentPlan={currentPlan}
+          targetPlan={checkoutTarget}
+          isAnnual={isAnnual}
+          currentSeats={currentSeats}
+          organizationId={selectedOrg.id}
+          onComplete={() => {
+            setCheckoutTarget(null);
+            queryClient.invalidateQueries({ queryKey: ["user-organizations"] });
+            queryClient.invalidateQueries({ queryKey: ["subscription", selectedOrgId] });
+          }}
+        />
+      )}
     </div>
   );
 }

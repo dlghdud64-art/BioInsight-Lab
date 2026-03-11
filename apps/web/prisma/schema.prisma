@@ -80,6 +80,7 @@ model Organization {
   invites       OrganizationInvite[]
   budgets       Budget[]
   teams         Team[]
+  billingInfo   BillingInfo?
 
   @@index([name])
   @@index([plan])
@@ -1608,4 +1609,27 @@ model DataAuditLog {
   @@index([entityId])
   @@index([entityType, entityId]) // 특정 엔티티 이력 조회 최적화
   @@index([createdAt])
+}
+
+// ─── 청구 정보 (BillingInfo) ──────────────────────────
+// 조직별 세금계산서·결제 청구 담당자 정보
+model BillingInfo {
+  id                 String   @id @default(cuid())
+  organizationId     String   @unique
+  companyName        String                  // 회사명 (세금계산서용)
+  businessNumber     String?                 // 사업자등록번호
+  representativeName String?                 // 대표자명
+  contactName        String                  // 담당자명
+  contactEmail       String                  // 청구 이메일
+  contactPhone       String?                 // 연락처
+  address            String?                 // 주소
+  taxInvoiceEmail    String?                 // 세금계산서 수신 이메일 (별도)
+  notes              String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
