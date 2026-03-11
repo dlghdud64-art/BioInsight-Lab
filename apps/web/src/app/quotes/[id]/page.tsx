@@ -67,13 +67,23 @@ import {
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
+type QuoteErrorType = "notFound" | "forbidden" | "temporaryError";
+
+class QuoteDetailError extends Error {
+  type: QuoteErrorType;
+  constructor(type: QuoteErrorType, message: string) {
+    super(message);
+    this.type = type;
+  }
+}
+
 export default function QuoteDetailPage() {
   const { data: session, status } = useSession();
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const quoteId = params.id as string;
+  const quoteId = typeof params.id === "string" ? params.id : "";
 
   const [activeTab, setActiveTab] = useState("received");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -112,14 +122,22 @@ export default function QuoteDetailPage() {
   }>>({});
 
   // ── 쿼리 ──────────────────────────────────────────────────────────
-  const { data: quoteData, isLoading } = useQuery({
+  const { data: quoteData, isLoading, isError, error: quoteError, refetch } = useQuery({
     queryKey: ["quote", quoteId],
     queryFn: async () => {
       const res = await fetch(`/api/quotes/${quoteId}`);
-      if (!res.ok) throw new Error("Failed to fetch quote");
+      if (!res.ok) {
+        if (res.status === 404) throw new QuoteDetailError("notFound", "삭제되었거나 찾을 수 없는 견적입니다.");
+        if (res.status === 403) throw new QuoteDetailError("forbidden", "이 견적을 볼 권한이 없습니다.");
+        throw new QuoteDetailError("temporaryError", "일시적으로 상세 정보를 불러오지 못했습니다.");
+      }
       return res.json();
     },
     enabled: !!quoteId && status === "authenticated",
+    retry: (failureCount, error) => {
+      if (error instanceof QuoteDetailError && (error.type === "notFound" || error.type === "forbidden")) return false;
+      return failureCount < 2;
+    },
   });
 
   const { data: budgetsData } = useQuery<{ budgets: any[] }>({
@@ -409,24 +427,94 @@ export default function QuoteDetailPage() {
   };
 
   // ── 로딩/에러 ────────────────────────────────────────────────────
-  if (status === "loading" || isLoading) {
+
+  // quoteId 누락 방어
+  if (!quoteId) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <div className="container mx-auto px-4 py-8 text-center py-12">
-          <p className="text-muted-foreground">로딩 중...</p>
+        <div className="container mx-auto px-4 py-8">
+          <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
+            <Link href="/dashboard" className="hover:text-slate-900"><Home className="h-4 w-4" /></Link>
+            <span>/</span>
+            <Link href="/dashboard/quotes" className="hover:text-slate-900">견적 관리</Link>
+          </nav>
+          <Card>
+            <CardContent className="pt-6 text-center py-12">
+              <AlertTriangle className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-slate-600 mb-1">잘못된 접근입니다</p>
+              <p className="text-xs text-slate-400 mb-4">견적 ID가 올바르지 않습니다.</p>
+              <Link href="/dashboard/quotes"><Button variant="outline" size="sm">견적 목록으로 돌아가기</Button></Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  if (!quoteData?.quote) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="container mx-auto px-4 py-8">
+          <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
+            <Link href="/dashboard" className="hover:text-slate-900"><Home className="h-4 w-4" /></Link>
+            <span>/</span>
+            <Link href="/dashboard/quotes" className="hover:text-slate-900">견적 관리</Link>
+            <span>/</span>
+            <span className="text-slate-400">상세</span>
+          </nav>
+          <div className="space-y-4">
+            <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
+            <div className="h-4 w-96 bg-slate-100 rounded animate-pulse" />
+            <Card><CardContent className="py-12"><div className="h-40 bg-slate-100 rounded animate-pulse" /></CardContent></Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태별 분리 렌더링
+  if (isError || !quoteData?.quote) {
+    const errorType = quoteError instanceof QuoteDetailError ? quoteError.type : (!quoteData?.quote ? "notFound" : "temporaryError");
+    const errorMessages: Record<QuoteErrorType, { title: string; desc: string; icon: React.ReactNode }> = {
+      notFound: {
+        title: "견적을 찾을 수 없습니다",
+        desc: "삭제되었거나 존재하지 않는 견적입니다.",
+        icon: <FileText className="h-10 w-10 text-slate-300" />,
+      },
+      forbidden: {
+        title: "접근 권한이 없습니다",
+        desc: "이 견적을 볼 수 있는 권한이 없습니다. 조직 관리자에게 문의하세요.",
+        icon: <AlertTriangle className="h-10 w-10 text-amber-400" />,
+      },
+      temporaryError: {
+        title: "일시적인 오류가 발생했습니다",
+        desc: "네트워크 문제이거나 서버 응답이 지연되고 있습니다.",
+        icon: <AlertTriangle className="h-10 w-10 text-red-400" />,
+      },
+    };
+    const errInfo = errorMessages[errorType];
+
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="container mx-auto px-4 py-8">
+          <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
+            <Link href="/dashboard" className="hover:text-slate-900"><Home className="h-4 w-4" /></Link>
+            <span>/</span>
+            <Link href="/dashboard/quotes" className="hover:text-slate-900">견적 관리</Link>
+            <span>/</span>
+            <span className="text-slate-400">상세</span>
+          </nav>
           <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground py-8">견적을 찾을 수 없습니다</p>
-              <Link href="/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
+            <CardContent className="pt-6 text-center py-12">
+              <div className="mx-auto mb-3">{errInfo.icon}</div>
+              <p className="text-sm font-medium text-slate-700 mb-1">{errInfo.title}</p>
+              <p className="text-xs text-slate-400 mb-5 max-w-sm mx-auto">{errInfo.desc}</p>
+              <div className="flex items-center justify-center gap-2">
+                {errorType === "temporaryError" && (
+                  <Button size="sm" onClick={() => refetch()}>다시 시도</Button>
+                )}
+                <Link href="/dashboard/quotes"><Button variant="outline" size="sm">견적 목록으로 돌아가기</Button></Link>
+              </div>
             </CardContent>
           </Card>
         </div>
