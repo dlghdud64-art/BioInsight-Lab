@@ -8,6 +8,7 @@ import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
 import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
+import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 
 export const metadata: Metadata = {
   title: {
@@ -89,6 +90,7 @@ export default function RootLayout({
                   {children}
                 </QRScannerProviderWrapper>
                 <Toaster />
+                <CompareFlowGuard />
                 <FloatingThemeToggle />
                 <Analytics />
               </QueryProvider>

@@ -4,11 +4,8 @@
  * 모든 비교 관련 UI(검색 결과 배지, 상단 비교 바, 비교 페이지)가
  * 이 스토어의 productIds를 참조한다.
  *
- * 상태 변경 허용 경우:
- *   1. 개별 제거  — removeProduct
- *   2. 전체 비우기 — clearProducts
- *   3. 비교 종료 후 초기화 — clearProducts
- * 자동 초기화 금지: route 이동, 검색 조건 변경 시 절대 해제하지 않는다.
+ * Flow scope: /test/search, /test/compare, /test/quote 에서만 활성.
+ * 다른 메뉴(/dashboard 등)로 이동 시 stash로 대피 → 플로우 재진입 시 복원 제안.
  *
  * localStorage key: "compare-storage"
  */
@@ -25,6 +22,9 @@ interface CompareState {
   productIds: string[];
   /** 제품 ID → 이름/브랜드 매핑 (표시용) */
   productMeta: Record<string, ProductMeta>;
+  /** stash: 플로우 이탈 시 대피한 데이터 */
+  _stashedIds: string[];
+  _stashedMeta: Record<string, ProductMeta>;
   /** 비교 대상에 추가 (meta 전달 시 이름 저장) */
   addProduct: (productId: string, meta?: ProductMeta) => void;
   /** 비교 대상에서 개별 제거 */
@@ -35,6 +35,19 @@ interface CompareState {
   hasProduct: (productId: string) => boolean;
   /** 제품 표시명 조회 */
   getDisplayName: (productId: string) => string;
+  /** 현재 상태를 stash로 대피 후 비우기 */
+  stashAndClear: () => void;
+  /** stash에서 복원 */
+  restoreFromStash: () => void;
+  /** stash 비우기 (복원하지 않고 폐기) */
+  clearStash: () => void;
+  /** stash에 데이터가 있는지 */
+  hasStash: () => boolean;
+}
+
+/** 플로우 경로 판별 (search / compare / quote) */
+export function isFlowPath(pathname: string): boolean {
+  return /^\/test\/(search|compare|quote)(\/.*)?$/.test(pathname);
 }
 
 export const useCompareStore = create<CompareState>()(
@@ -42,6 +55,8 @@ export const useCompareStore = create<CompareState>()(
     (set, get) => ({
       productIds: [],
       productMeta: {},
+      _stashedIds: [],
+      _stashedMeta: {},
       addProduct: (productId: string, meta?: ProductMeta) => {
         const { productIds, productMeta } = get();
         if (productIds.length >= 5) {
@@ -59,7 +74,7 @@ export const useCompareStore = create<CompareState>()(
         }
       },
       removeProduct: (productId: string) => {
-        const { productMeta, ...rest } = get();
+        const { productMeta } = get();
         const { [productId]: _, ...remainingMeta } = productMeta;
         set({
           productIds: get().productIds.filter((id) => id !== productId),
@@ -75,6 +90,31 @@ export const useCompareStore = create<CompareState>()(
       getDisplayName: (productId: string) => {
         const meta = get().productMeta[productId];
         return meta?.name || meta?.brand || "";
+      },
+      stashAndClear: () => {
+        const { productIds, productMeta } = get();
+        if (productIds.length === 0) return; // 빈 상태면 stash 불필요
+        set({
+          _stashedIds: productIds,
+          _stashedMeta: productMeta,
+          productIds: [],
+          productMeta: {},
+        });
+      },
+      restoreFromStash: () => {
+        const { _stashedIds, _stashedMeta } = get();
+        set({
+          productIds: _stashedIds,
+          productMeta: _stashedMeta,
+          _stashedIds: [],
+          _stashedMeta: {},
+        });
+      },
+      clearStash: () => {
+        set({ _stashedIds: [], _stashedMeta: {} });
+      },
+      hasStash: () => {
+        return get()._stashedIds.length > 0;
       },
     }),
     {

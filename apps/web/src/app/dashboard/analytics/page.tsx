@@ -571,30 +571,44 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0">
               {hasMonthlyData ? (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={monthlySpending} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fill: "#94a3b8", fontSize: 11 }}
-                      axisLine={false} tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fill: "#94a3b8", fontSize: 11 }}
-                      axisLine={false} tickLine={false}
-                      tickFormatter={(v: number) =>
-                        v >= 1000000 ? `${(v / 1000000).toFixed(0)}M`
-                          : v >= 1000 ? `${(v / 1000).toFixed(0)}K`
-                          : String(v)
-                      }
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)", backgroundColor: "white" }}
-                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
-                    />
-                    <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={34} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={monthlySpending} margin={{ top: 4, right: 4, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fill: "#94a3b8", fontSize: 11 }}
+                        axisLine={false} tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fill: "#94a3b8", fontSize: 11 }}
+                        axisLine={false} tickLine={false}
+                        width={52}
+                        tickFormatter={(v: number) =>
+                          v >= 10000000 ? `${(v / 10000000).toFixed(0)}천만`
+                            : v >= 10000 ? `${(v / 10000).toFixed(0)}만`
+                            : v >= 1000 ? `${(v / 1000).toFixed(0)}천`
+                            : String(v)
+                        }
+                      />
+                      <Tooltip
+                        contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)", backgroundColor: "white" }}
+                        formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
+                      />
+                      <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={34} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  {monthChange !== null && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                      {monthChange > 0
+                        ? `이번 달 지출이 전월 대비 ${monthChange}% 증가했습니다.`
+                        : monthChange < 0
+                          ? `이번 달 지출이 전월 대비 ${Math.abs(monthChange)}% 감소했습니다.`
+                          : "이번 달 지출이 전월과 동일한 수준입니다."}
+                      {peakMonth ? ` 올해 최고 지출월은 ${peakMonth.month}입니다.` : ""}
+                    </p>
+                  )}
+                </>
               ) : (
                 <EmptyChart message="아직 지출 내역이 없습니다." />
               )}
@@ -646,6 +660,15 @@ export default function AnalyticsPage() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
+                  {/* 차트 해석 요약 */}
+                  {topCat && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                      {topCat.name}이(가) 전체 지출의 {topCat.value}%를 차지하며
+                      {categorySpending.length > 1
+                        ? ` 상위 ${Math.min(3, categorySpending.length)}개 카테고리가 전체의 ${categorySpending.slice(0, 3).reduce((s, c) => s + c.value, 0)}%입니다.`
+                        : " 유일한 지출 카테고리입니다."}
+                    </p>
+                  )}
                   {/* 범례 */}
                   <div className="mt-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800/40 pt-3">
                     {categorySpending.map((cat, index) => (
