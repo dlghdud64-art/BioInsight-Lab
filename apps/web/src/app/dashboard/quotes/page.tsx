@@ -225,7 +225,7 @@ function QuotesPageContent() {
     queryKey: ["quotes", statusFilter, sortBy],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
+      if (statusFilter !== "all" && statusFilter !== "DEADLINE_TODAY") params.append("status", statusFilter);
       if (sortBy) params.append("sortBy", sortBy);
       const response = await fetch(`/api/quotes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch quotes");
@@ -261,7 +261,13 @@ function QuotesPageContent() {
         quote.items.some((item) => item.product.name.toLowerCase().includes(q))
       );
     })
-    .filter((quote) => statusFilter === "all" || quote.status === statusFilter)
+    .filter((quote) => {
+      if (statusFilter === "all") return true;
+      if (statusFilter === "DEADLINE_TODAY") {
+        return quote.deliveryDate && new Date(quote.deliveryDate).toDateString() === new Date().toDateString() && quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
+      }
+      return quote.status === statusFilter;
+    })
     .sort((a, b) => getPriority(a) - getPriority(b));
 
   // 운영 요약 카운트
@@ -299,15 +305,17 @@ function QuotesPageContent() {
       {/* ── 운영 요약 스트립 ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-500" />,    filter: "SENT",      cls: "hover:border-amber-300" },
-          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-500" />, filter: "RESPONDED", cls: "hover:border-purple-300" },
-          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-500" />,  filter: "all",       cls: summaryStats.todayDeadline > 0 ? "border-red-200 bg-red-50/30" : "hover:border-slate-300" },
-          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-500" />, filter: "RESPONDED", cls: "hover:border-emerald-300" },
-        ].map(({ label, count, icon, filter, cls }) => (
+          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-500" />,      filter: "SENT",           hover: "hover:border-amber-300",   active: "border-amber-300 bg-amber-50/30 ring-2 ring-amber-400/50" },
+          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-500" />,  filter: "RESPONDED",      hover: "hover:border-purple-300",  active: "border-purple-300 bg-purple-50/30 ring-2 ring-purple-400/50" },
+          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-500" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-300",     active: "border-red-300 bg-red-50/30 ring-2 ring-red-400/50" },
+          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-500" />, filter: "RESPONDED",      hover: "hover:border-emerald-300", active: "border-emerald-300 bg-emerald-50/30 ring-2 ring-emerald-400/50" },
+        ].map(({ label, count, icon, filter, hover, active }) => {
+          const isActive = statusFilter === filter;
+          return (
           <button
             key={label}
-            onClick={() => setStatusFilter(filter)}
-            className={`text-left rounded-xl border bg-white p-4 shadow-sm transition-all cursor-pointer ${cls} ${statusFilter === filter && filter !== "all" ? "ring-2 ring-blue-400" : ""}`}
+            onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
+            className={`text-left rounded-xl border bg-white p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
           >
             <div className="flex items-center gap-2 mb-1">
               {icon}
@@ -315,7 +323,8 @@ function QuotesPageContent() {
             </div>
             <div className="text-2xl font-bold text-slate-900">{isLoading ? "—" : count}</div>
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── 검색 + 필터 ── */}
@@ -336,6 +345,7 @@ function QuotesPageContent() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 상태</SelectItem>
+            <SelectItem value="DEADLINE_TODAY">오늘 마감</SelectItem>
             <SelectItem value="PENDING">요청 접수</SelectItem>
             <SelectItem value="SENT">회신 대기 중</SelectItem>
             <SelectItem value="RESPONDED">비교 검토 필요</SelectItem>
