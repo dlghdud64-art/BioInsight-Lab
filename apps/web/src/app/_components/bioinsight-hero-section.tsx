@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Search, MessageSquareText, UploadCloud, Loader2, Flame } from "lucide-react";
+import { Search, MessageSquareText, UploadCloud, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function BioInsightHeroSection() {
@@ -32,8 +32,6 @@ export function BioInsightHeroSection() {
       router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
-
-  const popularSearches = ["FBS", "Pipette", "Conical Tube", "Centrifuge", "DMEM", "Trypsin"];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -134,25 +132,27 @@ export function BioInsightHeroSection() {
             </div>
           </form>
 
-          {/* 인기 검색어 알약 뱃지 */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-5 md:mt-7">
-            <span className="text-sm text-slate-400 font-medium flex items-center gap-1 mr-1">
-              <Flame className="h-3.5 w-3.5 text-slate-400" />
-              인기
-            </span>
-            {popularSearches.map((term) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => {
-                  setSearchQuery(term);
-                  router.push(`/test/search?q=${encodeURIComponent(term)}`);
-                }}
-                className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium hover:bg-blue-100 hover:text-blue-700 active:scale-95 transition-all duration-150 cursor-pointer touch-manipulation whitespace-nowrap"
-              >
-                #{term}
-              </button>
-            ))}
+          {/* 빠른 검색 — 2열 quick entry */}
+          <div className="mt-5 md:mt-7 max-w-xs sm:max-w-sm md:max-w-lg mx-auto">
+            <p className="text-xs text-slate-400 font-medium text-center mb-2.5">빠른 검색</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "시약·소모품", sub: "시약명으로 검색" },
+                { label: "제조사", sub: "Thermo, Sigma…" },
+                { label: "Cat. No", sub: "카탈로그 번호" },
+                { label: "품목군", sub: "Antibody, Buffer…" },
+              ].map((entry) => (
+                <button
+                  key={entry.label}
+                  type="button"
+                  onClick={() => router.push("/test/search")}
+                  className="flex flex-col items-start px-3 py-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl text-left transition-all touch-manipulation"
+                >
+                  <span className="text-sm font-semibold text-slate-700">{entry.label}</span>
+                  <span className="text-[11px] text-slate-400">{entry.sub}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 맞춤 소싱 및 도입 문의 CTA */}
