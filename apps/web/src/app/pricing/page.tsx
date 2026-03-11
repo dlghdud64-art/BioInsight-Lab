@@ -414,15 +414,119 @@ export default function PricingPage() {
                 })}
               </div>
 
-              {/* ── 플랜별 기능 비교 테이블 ── */}
+              {/* ── 플랜별 기능 비교 ── */}
               <div className="mb-8">
-                <div className="text-center mb-6">
+                <div className="text-center mb-8">
                   <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
-                    플랜별 기능 비교
+                    우리 조직에 맞는 플랜은?
                   </h2>
-                  <p className="text-sm text-slate-500">
-                    Team은 협업 중심 · Business부터 조직 운영 통제가 시작됩니다.
+                  <p className="text-sm text-slate-500 max-w-lg mx-auto">
+                    도입 규모와 통제 수준에 따라 선택하세요. 아래 요약으로 빠르게 판단하고, 상세표에서 확인하세요.
                   </p>
+                </div>
+
+                {/* ── 플랜 요약 블록 (설득 영역) ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                  {/* Starter */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm font-bold text-slate-900">Starter</span>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">개인 시작</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-3">혼자서 시약 검색·비교를 시작하는 연구자</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                        기본 검색 및 비교
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                        품목 10개 등록, 견적 요청
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Team */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-4 w-4 text-slate-500" />
+                      <span className="text-sm font-bold text-slate-900">Team</span>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">협업 시작</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-3">소규모 팀이 재고·견적을 함께 관리하기 시작할 때</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        팀원 5명, 후보 품목 공유
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        구매 요청 워크플로우
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        엑셀 업로드 · CSV 내보내기
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Business — 강조 */}
+                  <div className="rounded-xl border-2 border-blue-300 bg-blue-50/60 p-5 relative">
+                    <div className="absolute -top-3 right-4">
+                      <Badge className="bg-blue-600 text-white text-[10px] px-2.5 py-0.5 shadow-sm">추천</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-bold text-slate-900">Business</span>
+                      <span className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider">운영 통제</span>
+                    </div>
+                    <p className="text-xs text-blue-700 font-medium mb-1">조직 운영 통제가 시작되는 플랜</p>
+                    <p className="text-xs text-slate-500 mb-3">승인·예산·감사 이력이 필요한 연구팀·구매팀</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-start gap-2 text-xs text-slate-700">
+                        <Check className="h-3.5 w-3.5 text-blue-600 mt-0.5 shrink-0" />
+                        전자결재 승인 라인 · 예산 관리
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-700">
+                        <Check className="h-3.5 w-3.5 text-blue-600 mt-0.5 shrink-0" />
+                        Audit Trail · MSDS 자동 연동
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-700">
+                        <Check className="h-3.5 w-3.5 text-blue-600 mt-0.5 shrink-0" />
+                        팀원 무제한 · 품목 무제한
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Enterprise */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="h-4 w-4 text-slate-500" />
+                      <span className="text-sm font-bold text-slate-900">Enterprise</span>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">기관 도입</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-3">보안·연동·대규모 운영이 필수인 기관</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        ERP API 연동 · SSO 지원
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        전담 매니저 · SLA 보장
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                        조직 맞춤 구축 지원
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* ── 상세 비교표 (검증 영역) ── */}
+                <div className="text-center mb-4">
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">상세 기능 비교</p>
                 </div>
 
                 <Card className="overflow-hidden">
