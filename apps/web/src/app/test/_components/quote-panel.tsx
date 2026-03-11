@@ -298,7 +298,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
   return (
     <>
-    <div className="space-y-6 pb-20 md:pb-0">
+    <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
       {/* 견적 요청 섹션 */}
       <Card className="rounded-lg border border-slate-200 bg-white">
         <CardHeader className="pb-4">
