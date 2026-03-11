@@ -18,6 +18,17 @@ import { downloadComparisonAsExcel, exportComparisonToTSV } from "@/lib/utils/ex
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function ComparePage() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
@@ -628,9 +639,27 @@ export default function ComparePage() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" onClick={clearProducts}>
-              전체 삭제
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200">
+                  전체 비우기
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>비교 대상 전체 비우기</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    비교 중인 제품 {productIds.length}개를 모두 제거합니다. 이 작업은 되돌릴 수 없습니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction onClick={clearProducts} className="bg-red-600 hover:bg-red-700">
+                    전체 비우기
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Link href="/compare/quote">
               <Button>
                 <ShoppingCart className="h-4 w-4 mr-2" />

@@ -19,6 +19,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { trackEvent } from "@/lib/analytics";
 import { Disclaimer } from "@/components/legal/disclaimer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import Image from "next/image";
 
 export default function TestComparePage() {
@@ -340,7 +351,7 @@ export default function TestComparePage() {
             
             <h3 className="text-xl font-semibold text-slate-900 mb-3">비교할 제품이 없습니다</h3>
             <p className="text-base text-slate-600 mb-2 max-w-md text-center leading-relaxed">
-              Step 1에서 제품을 선택하고 '비교함 담기'를 눌러주세요.
+              Step 1에서 제품을 선택하고 '비교 담기'를 눌러주세요.
             </p>
             <p className="text-sm text-slate-500 mb-6 max-w-md text-center">
               최대 5개까지 제품을 비교할 수 있습니다.
@@ -523,9 +534,27 @@ export default function TestComparePage() {
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={clearCompare} size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8">
-            전체 삭제
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200">
+                전체 비우기
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>비교 대상 전체 비우기</AlertDialogTitle>
+                <AlertDialogDescription>
+                  비교 중인 제품 {compareIds.length}개를 모두 제거합니다. 이 작업은 되돌릴 수 없습니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={clearCompare} className="bg-red-600 hover:bg-red-700">
+                  전체 비우기
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button
             variant="outline"
             onClick={() => {
