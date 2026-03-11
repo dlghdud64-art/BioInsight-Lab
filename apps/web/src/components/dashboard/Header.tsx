@@ -393,12 +393,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
           {/* 로고 (모바일 전용 - 데스크탑은 고정 사이드바에서 표시) */}
-          <Link href="/" className="flex-shrink-0 lg:hidden">
+          <Link href="/dashboard" className="flex-shrink-0 lg:hidden">
             <BioInsightLogo showText={true} />
           </Link>
 
@@ -410,7 +410,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 {index === breadcrumbs.length - 1 ? (
-                  <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                  <span className="font-normal text-sm text-slate-700 dark:text-slate-200 truncate">
                     {crumb.label}
                   </span>
                 ) : (
@@ -426,8 +426,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </nav>
         </div>
 
-        {/* 중앙/우측 영역: 검색창 + 유틸리티 + 프로필 */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 sm:flex-initial sm:justify-end">
+        {/* 우측 영역: 검색창 + 유틸리티 + 프로필 + 햄버거 */}
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           {/* 전역 검색창: 데스크톱 전용 (모바일은 하단 플로팅 검색 사용) */}
           <div className="hidden md:flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
             <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none flex-shrink-0" />
@@ -670,7 +670,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button lg:hidden"
+              className="h-11 w-11 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
