@@ -19,7 +19,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
-  Menu, Search, Bell, HelpCircle, ChevronRight,
+  Search, Bell, HelpCircle, ChevronRight,
   AlertTriangle, FileText, Truck, BookOpen, Headphones,
   Settings, CreditCard, LogOut, ScanLine,
   Package, ShieldAlert, Clock, CheckCircle2, ArrowRight,
@@ -441,6 +441,17 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             />
           </div>
 
+          {/* 검색 아이콘 (모바일 전용) — 클릭 시 검색 페이지 이동 */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-transparent dark:hover:bg-transparent transition-colors"
+            onClick={() => router.push("/test/search")}
+            aria-label="검색"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+
           {/* QR 스캔 버튼 - 모바일 전용 */}
           <div className="md:hidden">
             <Tooltip>
@@ -682,18 +693,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 햄버거 버튼 (모바일/태블릿 전용 - 데스크탑은 고정 사이드바) */}
-          {onMenuClick && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 flex-shrink-0 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 mobile-menu-button lg:hidden"
-              onClick={onMenuClick}
-              aria-label="메뉴 열기"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
         </div>
       </div>
     </header>

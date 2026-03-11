@@ -175,6 +175,9 @@ div.quote-table td.no-column-cell {
   .text-auto-scale {
     @apply truncate text-[clamp(0.875rem,3vw,1.5rem)] font-bold tracking-tighter;
   }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 /* Scrollbar Hide Utility */
