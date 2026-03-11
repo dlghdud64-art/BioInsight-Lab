@@ -662,19 +662,23 @@ model InventoryUsage {
   id          String   @id @default(cuid())
   inventoryId String
   userId      String
-  quantity    Float // ?용??
-  unit        String? // ?위
-  usageDate   DateTime @default(now()) // ?용 ?자
+  quantity    Float
+  unit        String?
+  type        String   @default("USAGE") // "DISPATCH" | "USAGE"
+  lotNumber   String?
+  destination String? // 사용처 (실험실/팀/프로젝트)
+  operator    String? // 실행 담당자 표시명
+  usageDate   DateTime @default(now())
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
 
-  // 관?
   inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([inventoryId])
   @@index([userId])
   @@index([usageDate])
+  @@index([type])
 }
 
 // 재고 입고 이력

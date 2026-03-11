@@ -3,18 +3,24 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
 
 const UseInventorySchema = z.object({
-  quantity: z.number().positive("사용 수량은 0보다 커야 합니다."),
+  quantity: z.number().positive("수량은 0보다 커야 합니다."),
   unit: z.string().optional(),
+  type: z.enum(["DISPATCH", "USAGE"]).default("USAGE"),
+  lotNumber: z.string().optional(),
+  destination: z.string().optional(),
+  operator: z.string().optional(),
   notes: z.string().optional(),
 });
 
 /**
  * POST /api/inventory/[id]/use
- * 재고 사용(차감) 처리
+ * 재고 출고/사용 처리
+ * - type: "DISPATCH" (출고) | "USAGE" (사용)
  * - currentQuantity 감소 (트랜잭션)
- * - InventoryUsage 이력 기록
+ * - InventoryUsage 이력 기록 + 감사 로그
  */
 export async function POST(
   request: NextRequest,
@@ -60,10 +66,13 @@ export async function POST(
       );
     }
 
-    const { quantity, unit, notes } = validation.data;
+    const { quantity, unit, type, lotNumber, destination, operator, notes } = validation.data;
 
-    // 재고 부족 경고 (차단하지는 않음 — 음수 재고 허용, 경고만)
-    const willBeNegative = inventory.currentQuantity - quantity < 0;
+    const quantityBefore = inventory.currentQuantity;
+    const willBeNegative = quantityBefore - quantity < 0;
+
+    const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null;
+    const userAgent = request.headers.get("user-agent") || null;
 
     const [updatedInventory, usageRecord] = await db.$transaction(
       async (tx: Prisma.TransactionClient) => {
@@ -85,9 +94,38 @@ export async function POST(
             userId: session.user.id,
             quantity,
             unit: unit ?? inventory.unit ?? undefined,
+            type,
+            lotNumber: lotNumber ?? null,
+            destination: destination ?? null,
+            operator: operator ?? null,
             notes: notes ?? null,
           },
         });
+
+        await createAuditLog(
+          {
+            userId: session.user.id,
+            organizationId: inventory.organizationId,
+            action: AuditAction.CREATE,
+            entityType: AuditEntityType.INVENTORY_USE,
+            entityId: usage.id,
+            previousData: { currentQuantity: quantityBefore },
+            newData: {
+              usageId: usage.id,
+              inventoryId: id,
+              type,
+              quantity,
+              lotNumber: lotNumber || null,
+              destination: destination || null,
+              operator: operator || null,
+              notes: notes || null,
+              currentQuantityAfter: updated.currentQuantity,
+            },
+            ipAddress,
+            userAgent,
+          },
+          tx
+        );
 
         return [updated, usage];
       }
@@ -95,19 +133,21 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      type,
       updatedQuantity: updatedInventory.currentQuantity,
       usageRecordId: usageRecord.id,
       warning: willBeNegative ? "재고가 0 이하가 되었습니다. 재고를 보충해주세요." : null,
     });
   } catch (error) {
     console.error("[inventory/use POST]", error);
-    return NextResponse.json({ error: "차감 처리에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ error: "처리에 실패했습니다." }, { status: 500 });
   }
 }
 
 /**
  * GET /api/inventory/[id]/use
- * 사용 이력 조회 (최근 20건)
+ * 출고/사용 이력 조회 (최근 20건)
+ * ?type=DISPATCH|USAGE 로 필터 가능
  */
 export async function GET(
   request: NextRequest,
@@ -121,8 +161,16 @@ export async function GET(
 
     const { id } = await params;
 
+    const { searchParams } = new URL(request.url);
+    const typeFilter = searchParams.get("type");
+
+    const where: Prisma.InventoryUsageWhereInput = { inventoryId: id };
+    if (typeFilter === "DISPATCH" || typeFilter === "USAGE") {
+      where.type = typeFilter;
+    }
+
     const usageRecords = await db.inventoryUsage.findMany({
-      where: { inventoryId: id },
+      where,
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { usageDate: "desc" },
       take: 20,
@@ -131,6 +179,6 @@ export async function GET(
     return NextResponse.json({ usageRecords });
   } catch (error) {
     console.error("[inventory/use GET]", error);
-    return NextResponse.json({ error: "사용 이력 조회에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ error: "이력 조회에 실패했습니다." }, { status: 500 });
   }
 }

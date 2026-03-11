@@ -8,7 +8,7 @@ import {
   AlertTriangle, Thermometer, Snowflake, Ban, PackagePlus,
   MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown,
   Clock, RotateCcw, Printer, MapPin, Package, ArrowDownUp,
-  PackageX, Truck, ArrowLeftRight,
+  PackageX, Truck, ArrowLeftRight, FlaskConical,
 } from "lucide-react";
 import { InventoryQRCode } from "./InventoryQRCode";
 import { format } from "date-fns";
@@ -244,7 +244,8 @@ interface InventoryTableProps {
   onReorder: (inventory: InventoryItem) => void;
   onDetailClick?: (inventory: InventoryItem) => void;
   onRestock?: (inventory: InventoryItem) => void;
-  onConsume?: (inventory: InventoryItem) => void;
+  onDispatch?: (inventory: InventoryItem) => void;
+  onUsage?: (inventory: InventoryItem) => void;
   onMoveLocation?: (inventory: InventoryItem) => void;
   onPrintLabel?: (productName: string, lots: InventoryItem[]) => void;
   emptyMessage?: string;
@@ -261,7 +262,8 @@ export function InventoryTable({
   onReorder,
   onDetailClick,
   onRestock,
-  onConsume,
+  onDispatch,
+  onUsage,
   onMoveLocation,
   onPrintLabel,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
@@ -442,7 +444,7 @@ export function InventoryTable({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className={`h-7 px-2 text-[11px] gap-1 ${
+                                      className={`h-7 px-2 text-[11px] gap-1 whitespace-nowrap ${
                                         groupStatus === "부족" || displayStatus === "폐기"
                                           ? "text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
                                           : "text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30"
@@ -463,7 +465,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                        className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />
@@ -476,7 +478,7 @@ export function InventoryTable({
                               )}
                             </>
                           ) : (
-                            /* ── 정상 → 입고 + 출고/사용 ── */
+                            /* ── 정상 → 입고 + 출고 + 사용 ── */
                             <>
                               {onRestock && (
                                 <TooltipProvider>
@@ -485,7 +487,7 @@ export function InventoryTable({
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                        className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                                         onClick={() => onRestock(group.lots[0])}
                                       >
                                         <PackagePlus className="h-3 w-3 shrink-0" />
@@ -496,21 +498,39 @@ export function InventoryTable({
                                   </Tooltip>
                                 </TooltipProvider>
                               )}
-                              {onConsume && (
+                              {onDispatch && (
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                        onClick={() => onConsume(group.lots[0])}
+                                        className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        onClick={() => onDispatch(group.lots[0])}
                                       >
                                         <Truck className="h-3 w-3 shrink-0" />
                                         출고
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>출고 / 사용 처리</TooltipContent>
+                                    <TooltipContent>출고 처리</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              {onUsage && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                        onClick={() => onUsage(group.lots[0])}
+                                      >
+                                        <FlaskConical className="h-3 w-3 shrink-0" />
+                                        사용
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>사용 처리</TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
                               )}
@@ -690,7 +710,7 @@ export function InventoryTable({
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              className={`h-7 px-2 text-[11px] gap-1 ${
+                                              className={`h-7 px-2 text-[11px] gap-1 whitespace-nowrap ${
                                                 lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
                                                   ? "text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
                                                   : "text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30"
@@ -711,7 +731,7 @@ export function InventoryTable({
                                               <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                                className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                                                 onClick={() => onRestock(lot)}
                                               >
                                                 <PackagePlus className="h-3 w-3 shrink-0" />
@@ -724,23 +744,41 @@ export function InventoryTable({
                                       )}
                                     </>
                                   ) : (
-                                    /* ── 정상 → 출고/사용 + 위치 이동 ── */
+                                    /* ── 정상 → 출고 + 사용 + 위치 이동 ── */
                                     <>
-                                      {onConsume && (
+                                      {onDispatch && (
                                         <TooltipProvider>
                                           <Tooltip>
                                             <TooltipTrigger asChild>
                                               <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                                onClick={() => onConsume(lot)}
+                                                className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                onClick={() => onDispatch(lot)}
                                               >
                                                 <Truck className="h-3 w-3 shrink-0" />
                                                 출고
                                               </Button>
                                             </TooltipTrigger>
-                                            <TooltipContent>출고 / 사용 처리</TooltipContent>
+                                            <TooltipContent>출고 처리</TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                      {onUsage && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                                onClick={() => onUsage(lot)}
+                                              >
+                                                <FlaskConical className="h-3 w-3 shrink-0" />
+                                                사용
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>사용 처리</TooltipContent>
                                           </Tooltip>
                                         </TooltipProvider>
                                       )}
@@ -751,7 +789,7 @@ export function InventoryTable({
                                               <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                                                className="h-7 px-2 text-[11px] gap-1 whitespace-nowrap text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30"
                                                 onClick={() => onMoveLocation(lot)}
                                               >
                                                 <ArrowLeftRight className="h-3 w-3 shrink-0" />

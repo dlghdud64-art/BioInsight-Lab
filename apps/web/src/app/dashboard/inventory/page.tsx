@@ -36,6 +36,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Info, FileText, BellRing, Save } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
+import { DispatchDialog } from "@/components/inventory/DispatchDialog";
+import { UsageDialog } from "@/components/inventory/UsageDialog";
 
 interface ProductInventory {
   id: string;
@@ -147,6 +149,8 @@ function InventoryPageContent() {
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
   const [showRestockHistory, setShowRestockHistory] = useState(false);
+  const [dispatchTarget, setDispatchTarget] = useState<ProductInventory | null>(null);
+  const [usageTarget, setUsageTarget] = useState<ProductInventory | null>(null);
 
   // ── 라벨 인쇄 모달 상태 ──
   const [labelPrintOpen, setLabelPrintOpen] = useState(false);
@@ -440,6 +444,10 @@ function InventoryPageContent() {
       id: string;
       quantity: number;
       unit: string | null;
+      type: string;
+      lotNumber: string | null;
+      destination: string | null;
+      operator: string | null;
       usageDate: string;
       notes: string | null;
       inventory: {
@@ -651,6 +659,43 @@ function InventoryPageContent() {
     },
     onError: (error: Error) => {
       toast({ title: "입고 실패", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // 출고/사용 mutation
+  const consumeMutation = useMutation({
+    mutationFn: async (data: {
+      inventoryId: string;
+      type: "DISPATCH" | "USAGE";
+      quantity: number;
+      lotNumber?: string;
+      destination?: string;
+      operator?: string;
+      notes?: string;
+    }) => {
+      const response = await fetch(`/api/inventory/${data.inventoryId}/use`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error || "처리에 실패했습니다.");
+      }
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-usage"] });
+      toast({
+        title: variables.type === "DISPATCH" ? "출고 완료" : "사용 처리 완료",
+        description: `잔여 수량: ${data.updatedQuantity}${data.warning ? ` ⚠️ ${data.warning}` : ""}`,
+      });
+      setDispatchTarget(null);
+      setUsageTarget(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "처리 실패", description: error.message, variant: "destructive" });
     },
   });
 
@@ -1130,12 +1175,8 @@ function InventoryPageContent() {
                       setRestockItem(inventory);
                       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
                     }}
-                    onConsume={(inventory) => {
-                      toast({
-                        title: "출고 / 사용 처리",
-                        description: `${inventory.product.name} 출고/사용 기능은 곧 제공될 예정입니다.`,
-                      });
-                    }}
+                    onDispatch={(inventory) => setDispatchTarget(inventory)}
+                    onUsage={(inventory) => setUsageTarget(inventory)}
                     onMoveLocation={(inventory) => {
                       toast({
                         title: "위치 이동",
@@ -2156,6 +2197,28 @@ function InventoryPageContent() {
           </DialogContent>
         </Dialog>
 
+        {/* ── 출고 처리 다이얼로그 ── */}
+        <DispatchDialog
+          open={!!dispatchTarget}
+          onOpenChange={(open) => { if (!open) setDispatchTarget(null); }}
+          inventory={dispatchTarget}
+          allLots={dispatchTarget ? displayInventories.filter((inv) => inv.productId === dispatchTarget.productId) : []}
+          onSubmit={(data) => consumeMutation.mutate(data)}
+          isLoading={consumeMutation.isPending}
+          defaultOperator={session?.user?.name || ""}
+        />
+
+        {/* ── 사용 처리 다이얼로그 ── */}
+        <UsageDialog
+          open={!!usageTarget}
+          onOpenChange={(open) => { if (!open) setUsageTarget(null); }}
+          inventory={usageTarget}
+          allLots={usageTarget ? displayInventories.filter((inv) => inv.productId === usageTarget.productId) : []}
+          onSubmit={(data) => consumeMutation.mutate(data)}
+          isLoading={consumeMutation.isPending}
+          defaultOperator={session?.user?.name || ""}
+        />
+
         {/* ── 라벨 인쇄 모달 (lot 선택형) ── */}
         <Dialog open={labelPrintOpen} onOpenChange={setLabelPrintOpen}>
           <DialogContent className="max-w-md">
@@ -2554,9 +2617,10 @@ function InventoryPageContent() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="text-xs md:text-sm">날짜</TableHead>
+                          <TableHead className="text-xs md:text-sm">구분</TableHead>
                           <TableHead className="text-xs md:text-sm">제품명</TableHead>
-                          <TableHead className="text-xs md:text-sm">사용량</TableHead>
-                          <TableHead className="text-xs md:text-sm">사용자</TableHead>
+                          <TableHead className="text-xs md:text-sm">수량</TableHead>
+                          <TableHead className="text-xs md:text-sm">사용처/담당</TableHead>
                           <TableHead className="text-xs md:text-sm">비고</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -2565,6 +2629,17 @@ function InventoryPageContent() {
                           <TableRow key={record.id}>
                             <TableCell className="text-xs md:text-sm">
                               {format(new Date(record.usageDate), "yyyy.MM.dd HH:mm", { locale: ko })}
+                            </TableCell>
+                            <TableCell className="text-xs md:text-sm">
+                              {record.type === "DISPATCH" ? (
+                                <Badge variant="outline" className="text-[10px] gap-1 bg-slate-50 border-slate-200">
+                                  <Truck className="h-3 w-3" /> 출고
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] gap-1 bg-blue-50 border-blue-200 text-blue-700">
+                                  <FlaskConical className="h-3 w-3" /> 사용
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-xs md:text-sm">
                               <div>
@@ -2580,7 +2655,15 @@ function InventoryPageContent() {
                               {record.quantity} {record.unit || "개"}
                             </TableCell>
                             <TableCell className="text-xs md:text-sm">
-                              {record.user.name || record.user.email}
+                              <div>
+                                {record.operator && <div>{record.operator}</div>}
+                                {record.destination && (
+                                  <div className="text-[10px] md:text-xs text-muted-foreground">{record.destination}</div>
+                                )}
+                                {!record.operator && !record.destination && (
+                                  <span className="text-muted-foreground">{record.user.name || record.user.email}</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-xs md:text-sm text-muted-foreground max-w-[200px] truncate">
                               {record.notes || "-"}
