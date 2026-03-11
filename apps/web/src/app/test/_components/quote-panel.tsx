@@ -370,27 +370,49 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
             {/* 테이블 - 항상 헤더 표시 */}
             {quoteItems.length === 0 ? (
-              <div className="text-center py-16 md:py-20">
-                <div className="border-2 border-dashed border-slate-300 rounded-xl p-12 max-w-md mx-auto">
-                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
-                    <ShoppingCart className="w-16 h-16 text-slate-300" strokeWidth={1.5} />
+              <div className="text-center py-10 md:py-20">
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 md:p-12 max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                    <ShoppingCart className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">견적 바구니가 비어있습니다</h3>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-                    비교할 제품을 선택하고 견적 요청 목록에 추가해주세요.
+                  <Badge variant="secondary" className="text-xs mb-3">선택 품목 0개</Badge>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">견적 바구니가 비어있습니다</h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-5">
+                    제품을 검색하거나 비교 목록에서 불러와 견적에 추가하세요.
                   </p>
-                  <Link href="/test/search">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
-                      <Search className="h-5 w-5 mr-2" />
-                      제품 검색하러 가기
-                    </Button>
-                  </Link>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <Link href="/test/search">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
+                        <Search className="h-4 w-4 mr-1.5" />
+                        제품 검색하러 가기
+                      </Button>
+                    </Link>
+                    <Link href="/test/compare">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                        <GitCompare className="h-4 w-4 mr-1.5" />
+                        비교 목록 불러오기
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">요청 제품 ({quoteItems.length}개)</h2>
+                <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
+                  <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-1.5">요청 제품 ({quoteItems.length}개)</h2>
+                  <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Package className="h-3 w-3" />
+                      품목 {quoteItems.length}개
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Target className="h-3 w-3" />
+                      공급사 {new Set(quoteItems.map(item => item.vendorName).filter(Boolean)).size || 1}개
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                      발송 준비 완료
+                    </Badge>
+                  </div>
                 </div>
                 
                 {/* 데스크톱: 테이블 뷰 */}
@@ -2348,33 +2370,35 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
           </CardContent>
         </Card>
 
-        {/* 저장 버튼 (모바일에서만 표시) */}
-        <div className="lg:hidden space-y-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSave}
-            disabled={saveMutation.isPending || !guestKey}
-            className="w-full"
-          >
-            {saveMutation.isPending ? (
-              <>
-                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                저장 중...
-              </>
-            ) : session?.user ? (
-              "저장"
-            ) : (
-              "임시 저장"
-            )}
-          </Button>
-          <Button
-            type="submit"
-            className="w-full bg-slate-900 text-white hover:bg-slate-800"
-            disabled={isSubmitting || quoteItems.length === 0}
-          >
-            {isSubmitting ? "전송 중..." : "견적 요청하기"}
-          </Button>
+        {/* 모바일 sticky CTA */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-2.5 safe-area-bottom">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSave}
+              disabled={saveMutation.isPending || !guestKey}
+              className="h-11 text-xs shrink-0 px-4"
+            >
+              {saveMutation.isPending ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                  저장 중
+                </>
+              ) : session?.user ? (
+                "저장"
+              ) : (
+                "임시 저장"
+              )}
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 h-11 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={isSubmitting || quoteItems.length === 0}
+            >
+              {isSubmitting ? "전송 중..." : "견적 요청 보내기"}
+            </Button>
+          </div>
         </div>
       </form>
 

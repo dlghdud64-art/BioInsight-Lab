@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import {
-  Sparkles, FileText, ChevronDown, ChevronUp,
-  Search, Lightbulb,
+  Sparkles, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface AIInsightCardProps {
@@ -26,28 +24,15 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
 
   if (isLoading) {
     return (
-      <Card className="bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm">
-        <CardContent className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 mt-0.5">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center animate-pulse">
-                <Sparkles className="h-5 w-5 text-indigo-300" />
-              </div>
-            </div>
-            <div className="flex-1 space-y-2 min-w-0">
-              <div className="h-4 bg-indigo-100 rounded animate-pulse w-32" />
-              <div className="space-y-1.5">
-                <div className="h-3 bg-indigo-100 rounded animate-pulse w-full" />
-                <div className="h-3 bg-indigo-100 rounded animate-pulse w-4/5" />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <div className="h-5 w-20 bg-indigo-100 rounded-full animate-pulse" />
-                <div className="h-5 w-16 bg-indigo-100 rounded-full animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2.5 px-3 py-2.5 md:px-5 md:py-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+        <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center animate-pulse shrink-0">
+          <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5 text-indigo-300" />
+        </div>
+        <div className="flex-1 space-y-1.5 min-w-0">
+          <div className="h-3 bg-indigo-100 rounded animate-pulse w-32" />
+          <div className="h-3 bg-indigo-100 rounded animate-pulse w-4/5 hidden md:block" />
+        </div>
+      </div>
     );
   }
 
@@ -114,142 +99,65 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
   };
 
   return (
-    <Card className="bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm">
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          {/* 아이콘 */}
-          <div className="flex-shrink-0 mt-0.5">
-            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
-            </div>
-          </div>
-
-          {/* 내용 */}
-          <div className="flex-1 space-y-3 min-w-0">
-            <div>
-              <h3 className="font-bold text-indigo-900 text-base mb-1">AI 분석 리포트</h3>
-              <p className="text-sm text-indigo-800 leading-relaxed">{getInsightText()}</p>
-            </div>
-
-            {/* 분석 결과 태그 — 항상 하나 이상 표시 */}
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
-                {getCategoryLabel(queryAnalysis.category)}
-              </Badge>
-              {queryAnalysis.target && (
-                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
-                  타깃: {queryAnalysis.target}
-                </Badge>
-              )}
-              {queryAnalysis.targetExperiment && (
-                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
-                  실험: {queryAnalysis.targetExperiment}
-                </Badge>
-              )}
-            </div>
-
-            {/* 비교 기준 (요약 영역에 항상 표시) */}
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-[10px] font-semibold text-indigo-500 self-center mr-0.5">비교 기준</span>
-              {getComparisonCriteria().slice(0, 3).map((c, i) => (
-                <Badge key={i} variant="outline" className="text-[10px] bg-white/60 text-indigo-700 border-indigo-200 px-2 py-0.5">
-                  {c}
-                </Badge>
-              ))}
-            </div>
-
-            {/* CTA 버튼 영역 */}
-            <div className="border-t border-indigo-200 pt-2 flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 transition-colors"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                {isExpanded ? "상세 분석 접기" : "상세 분석 보기"}
-                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </button>
-            </div>
+    <div className="bg-indigo-50 border border-indigo-100 rounded-lg overflow-hidden">
+      {/* Compact strip (기본 — 모바일 최적화) */}
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 md:px-5 md:py-4 text-left hover:bg-indigo-100/50 transition-colors"
+      >
+        <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+          <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5 text-indigo-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs md:text-sm font-medium text-indigo-800 leading-snug line-clamp-1 md:line-clamp-none">
+            {getInsightText()}
+          </p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-[10px] px-1.5 py-0">
+              {getCategoryLabel(queryAnalysis.category)}
+            </Badge>
+            {queryAnalysis.target && (
+              <span className="text-[10px] text-indigo-500 hidden sm:inline">타깃: {queryAnalysis.target}</span>
+            )}
           </div>
         </div>
+        <div className="shrink-0 text-indigo-500">
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </div>
+      </button>
 
-        {/* ── 인라인 확장 상세 패널 ── */}
-        {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-indigo-200 space-y-3">
+      {/* ── 확장 상세 패널 ── */}
+      {isExpanded && (
+        <div className="px-3 pb-3 md:px-5 md:pb-4 pt-1 space-y-2.5 border-t border-indigo-200">
 
-            {/* 1. 검색어 해석 */}
-            <div className="rounded-lg bg-white border border-indigo-100 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-indigo-600 flex-shrink-0" />
-                <h4 className="text-sm font-semibold text-slate-900">검색어 해석</h4>
-              </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{getInterpretation()}</p>
-            </div>
-
-            {/* 2. 분류 정보 그리드 */}
-            <div className="rounded-lg bg-white border border-indigo-100 p-4">
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">분류 정보</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-2.5">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase mb-0.5">카테고리</p>
-                  <p className="text-sm font-medium text-slate-900">{getCategoryLabel(queryAnalysis.category)}</p>
-                </div>
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-2.5">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase mb-0.5">실험 유형</p>
-                  <p className="text-sm font-medium text-slate-900">{queryAnalysis.targetExperiment || "범용"}</p>
-                </div>
-                {queryAnalysis.target && (
-                  <div className="rounded-md bg-slate-50 border border-slate-100 p-2.5">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase mb-0.5">타깃</p>
-                    <p className="text-sm font-medium text-slate-900">{queryAnalysis.target}</p>
-                  </div>
-                )}
-                {queryAnalysis.properties && queryAnalysis.properties.length > 0 && (
-                  <div className="rounded-md bg-slate-50 border border-slate-100 p-2.5">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase mb-0.5">속성</p>
-                    <p className="text-sm font-medium text-slate-900">{queryAnalysis.properties.join(", ")}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 3. 비교 기준 추천 */}
-            <div className="rounded-lg bg-white border border-indigo-100 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-4 w-4 text-indigo-600 flex-shrink-0" />
-                <h4 className="text-sm font-semibold text-slate-900">추천 비교 기준</h4>
-              </div>
-              <p className="text-xs text-slate-500 mb-2">이 검색 결과를 비교할 때 확인하면 좋은 항목입니다.</p>
-              <div className="flex flex-wrap gap-1.5">
-                {getComparisonCriteria().map((criterion, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200">
-                    {criterion}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* 4. 관련 검색 추천 */}
-            <div className="rounded-lg bg-white border border-indigo-100 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Search className="h-4 w-4 text-indigo-600 flex-shrink-0" />
-                <h4 className="text-sm font-semibold text-slate-900">관련 검색 추천</h4>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {getSuggestedQueries().map((sq, idx) => (
-                  <a
-                    key={idx}
-                    href={`/test/search?q=${encodeURIComponent(sq)}`}
-                    className="text-xs px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
-                  >
-                    {sq}
-                  </a>
-                ))}
-              </div>
-            </div>
-
+          {/* 비교 기준 */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-2">
+            <span className="text-[10px] font-semibold text-indigo-500 mr-0.5">비교 기준</span>
+            {getComparisonCriteria().slice(0, 4).map((c, i) => (
+              <Badge key={i} variant="outline" className="text-[10px] bg-white/60 text-indigo-700 border-indigo-200 px-2 py-0.5">
+                {c}
+              </Badge>
+            ))}
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* 검색어 해석 */}
+          <p className="text-xs text-indigo-700 leading-relaxed">{getInterpretation()}</p>
+
+          {/* 관련 검색 추천 */}
+          <div className="flex flex-wrap gap-1.5">
+            {getSuggestedQueries().map((sq, idx) => (
+              <a
+                key={idx}
+                href={`/test/search?q=${encodeURIComponent(sq)}`}
+                className="text-[10px] px-2.5 py-1 rounded-full bg-white/80 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
+              >
+                {sq}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

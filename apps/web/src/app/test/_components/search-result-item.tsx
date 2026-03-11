@@ -134,8 +134,8 @@ export function SearchResultItem({
             )}
           </div>
 
-          {/* 버튼 그룹: 견적 담기(Primary) / 비교함 담기(보조) */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
+          {/* 버튼 그룹: 견적 담기(Primary) / 비교(Secondary) */}
+          <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="ghost"
               size="sm"

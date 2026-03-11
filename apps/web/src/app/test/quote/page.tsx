@@ -9,14 +9,12 @@ export default function QuotePage() {
 
   return (
     <div className="space-y-4 mt-8">
-      {/* 헤더 - 진행바와 충분한 여백 확보 */}
-      <div className="py-16 border-b border-slate-200 pb-6">
+      {/* 헤더 */}
+      <div className="pt-8 md:pt-16 border-b border-slate-200 pb-4 md:pb-6 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Step 3. 견적 요청서 작성</h1>
-          <p className="text-base text-slate-600 leading-relaxed">
-            선택한 품목으로 견적 요청 리스트를 만들고 내보내기합니다.
-            <br />
-            엑셀/TSV 파일로 다운로드하여 이메일 공유나 사내 전자결재에 활용할 수 있습니다.
+          <h1 className="text-xl md:text-3xl font-bold text-slate-900 mb-1 md:mb-2">견적 요청서</h1>
+          <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+            선택한 품목을 정리하고 견적 요청을 보내세요.
           </p>
         </div>
       </div>
