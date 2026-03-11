@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Clock,
   Building2,
-  FolderKanban,
   ShieldCheck,
   TrendingUp,
   Receipt,
@@ -244,6 +243,43 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   const formatAmount = (n: number) => `₩ ${n.toLocaleString("ko-KR")}`;
 
+  // description에서 내부 메타 텍스트 제거 (사용자에게 보이면 안 되는 raw 문자열)
+  const cleanDescription = (() => {
+    if (!budget.description) return null;
+    return budget.description
+      .replace(/^\[([^\]]*)\]\s*\|?\s*/, "")       // [이름] 제거
+      .replace(/프로젝트:\s*[^|]+\|?\s*/g, "")      // 프로젝트: xxx 제거
+      .replace(/period:\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2}\s*\|?\s*/g, "") // period:... 제거
+      .replace(/^\s*\|\s*/, "")                      // 남은 선행 구분자 제거
+      .replace(/\s*\|\s*$/, "")                      // 후행 구분자 제거
+      .trim() || null;
+  })();
+
+  // 상태 해석 문구
+  const statusInterpretation = (() => {
+    if (usageRate > 100) return "예산이 초과되었습니다. 추가 집행 전 검토가 필요합니다.";
+    if (usageRate >= 80) return "예산 소진이 임박합니다. 잔여 집행 계획을 확인하세요.";
+    if (now > periodEnd) return "예산 기간이 종료되었습니다. 정산 또는 이월 여부를 확인하세요.";
+    if (now < periodStart) return "예산 기간이 아직 시작되지 않았습니다.";
+    if (!hasSpending) return "예산이 운영 중이며, 아직 집행 내역이 없습니다.";
+    return "예산이 정상 범위 내에서 운영 중입니다.";
+  })();
+
+  // 사용률 해석
+  const usageInterpretation = (() => {
+    if (!hasSpending) return "현재 사용 없음";
+    if (usageRate > 100) return `예산 대비 ${(usageRate - 100).toFixed(1)}% 초과`;
+    if (usageRate >= 80) return `잔여 ${(100 - usageRate).toFixed(1)}% — 소진 임박`;
+    return `${formatAmount(totalSpent)} 집행`;
+  })();
+
+  // 잔여 기간 해석
+  const periodInterpretation = (() => {
+    if (now > periodEnd) return "기간 종료 — 정산 필요";
+    if (now < periodStart) return `시작 전 — ${startStr} 개시`;
+    return `${remainingDays}일 남음 / 전체 ${totalDays}일 중 ${timeProgress}% 경과`;
+  })();
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -257,25 +293,27 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
         </Link>
 
         {/* 헤더: 좌측 = 제목/상태, 우측 = 실행 액션만 */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white mt-0.5">
               <Wallet className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
-                {budget.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
+                  {budget.name}
+                </h1>
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${budgetStatus.color}`}>
                   {budgetStatus.label}
                 </Badge>
-                <span>{startStr} ~ {endStr}</span>
               </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                이 예산은 견적 승인과 구매 집행에 연결되며, 사용률과 잔여 금액을 기준으로 통제합니다.
+              </p>
             </div>
           </div>
           {/* 우측: 실행 액션만 (수정 > 다운로드 > 리포트) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {canEdit ? (
               <Link href="/dashboard/budget">
                 <Button size="sm" variant="outline" className="border-slate-200 dark:border-slate-700">
@@ -336,6 +374,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 {usageRate.toFixed(1)}%
               </p>
               <Progress value={Math.min(usageRate, 100)} className="h-1.5 mt-1.5" />
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">{usageInterpretation}</p>
             </CardContent>
           </Card>
 
@@ -350,7 +389,13 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 {burnRisk > 1.3 ? "높음" : burnRisk > 1.0 ? "주의" : hasSpending ? "안전" : "-"}
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                {hasSpending ? `소비 속도 ${burnRisk.toFixed(1)}배` : "집행 데이터 없음"}
+                {hasSpending
+                  ? burnRisk > 1.3
+                    ? `소비 속도 ${burnRisk.toFixed(1)}배 — 기간 내 초과 예상`
+                    : burnRisk > 1.0
+                      ? `소비 속도 ${burnRisk.toFixed(1)}배 — 추이 주시 필요`
+                      : `소비 속도 ${burnRisk.toFixed(1)}배 — 정상 범위`
+                  : "아직 초과 위험 신호 없음"}
               </p>
             </CardContent>
           </Card>
@@ -363,10 +408,10 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">잔여 기간</p>
               </div>
               <p className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
-                {now > periodEnd ? "종료" : now < periodStart ? `${totalDays}일 후 시작` : `${remainingDays}일`}
+                {now > periodEnd ? "종료" : now < periodStart ? "시작 전" : `${remainingDays}일`}
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                경과 {timeProgress}% · 총 {totalDays}일
+                {periodInterpretation}
               </p>
             </CardContent>
           </Card>
@@ -382,37 +427,50 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                 {formatAmount(remaining)}
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                예산 {formatAmount(budget.amount)}
+                총 예산 {formatAmount(budget.amount)} 중 {remaining < 0 ? "초과" : "잔여"}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* 연결 정보 */}
+        {/* 운영 정보 */}
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-slate-400" />
-                <span className="text-slate-500 dark:text-slate-400">부서/팀</span>
-                <span className="font-medium text-slate-900 dark:text-white">{budget.targetDepartment || "미지정"}</span>
+          <CardContent className="p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">적용 대상</span>
+                </div>
+                <p className="font-medium text-slate-900 dark:text-white text-sm">
+                  {budget.targetDepartment || "부서 미지정"}
+                  {budget.projectName ? ` · ${budget.projectName}` : ""}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <FolderKanban className="h-4 w-4 text-slate-400" />
-                <span className="text-slate-500 dark:text-slate-400">프로젝트</span>
-                <span className="font-medium text-slate-900 dark:text-white">{budget.projectName || "미지정"}</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">승인 규칙</span>
+                </div>
+                <p className="font-medium text-slate-900 dark:text-white text-sm">
+                  견적 승인 후 집행
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-slate-400" />
-                <span className="text-slate-500 dark:text-slate-400">승인 관리</span>
-                <span className="font-medium text-slate-900 dark:text-white">견적 승인 후 집행</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">상태 해석</span>
+                </div>
+                <p className="font-medium text-slate-900 dark:text-white text-sm">
+                  {statusInterpretation}
+                </p>
               </div>
             </div>
-            {budget.description && (
-              <p className="mt-3 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">
-                {budget.description}
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">
+              <span>{startStr} ~ {endStr}</span>
+              <span>{budget.currency}</span>
+              {cleanDescription && <span>{cleanDescription}</span>}
+            </div>
           </CardContent>
         </Card>
 
@@ -502,17 +560,25 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Receipt className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">
-                  아직 집행 내역이 없습니다
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  아직 이 예산에 연결된 집행 내역이 없습니다
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm">
+                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mb-5">
                   견적 승인 후 구매가 발생하면 이 예산에 집행 내역이 자동으로 반영됩니다.
+                  예산과 연결된 견적을 확인하거나, 새 견적 요청을 시작할 수 있습니다.
                 </p>
-                <Link href="/test/search" className="mt-4">
-                  <Button variant="outline" size="sm" className="text-xs">
-                    견적 요청 시작하기
-                  </Button>
-                </Link>
+                <div className="flex gap-2">
+                  <Link href="/dashboard/quotes">
+                    <Button variant="outline" size="sm" className="text-xs">
+                      연결된 견적 보기
+                    </Button>
+                  </Link>
+                  <Link href="/test/search">
+                    <Button size="sm" className="text-xs">
+                      견적 요청 시작하기
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
