@@ -33,19 +33,19 @@ export function FlowSection() {
   ];
 
   return (
-    <section id="flow-section" className="py-16 md:py-20 border-b border-slate-200 bg-white scroll-mt-14">
+    <section id="flow-section" className="py-10 md:py-20 border-b border-slate-200 bg-white scroll-mt-14">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="text-center mb-10 md:mb-14">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-2">
+        <div className="text-center mb-6 md:mb-14">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-1 md:mb-2">
             검색에서 견적까지, 3단계로
           </h2>
           <p className="text-xs md:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-            실제 소싱 흐름 그대로입니다. 검색하고, 비교하고, 견적을 요청하면 끝입니다.
+            검색하고, 비교하고, 견적을 요청하면 끝입니다.
           </p>
         </div>
 
         {/* Steps - 모바일: 슬림 리스트, 데스크탑: 가로 정렬 */}
-        <div className="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:gap-4 lg:gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-center space-y-1.5 md:space-y-0 md:gap-4 lg:gap-6">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isLast = idx === steps.length - 1;
@@ -57,22 +57,21 @@ export function FlowSection() {
 
             return (
               <div key={step.href} className="flex flex-col md:flex-row items-center w-full md:w-auto">
-                {/* 모바일: 슬림 리스트 형태 */}
+                {/* 모바일: 압축형 리스트 */}
                 <Link
                   href={step.href}
-                  className="group md:hidden flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 w-full"
+                  className="group md:hidden flex items-center gap-3 px-3.5 py-2.5 bg-white rounded-lg border border-gray-100 hover:bg-slate-50 transition-colors w-full"
                 >
-                  {/* 좌측: 아이콘 (작게) */}
-                  <div className={`flex-shrink-0 p-3 ${colorClasses[step.color as keyof typeof colorClasses]} rounded-lg`}>
-                    <Icon className="h-6 w-6" strokeWidth={2} />
+                  <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${colorClasses[step.color as keyof typeof colorClasses]}`}>
+                    <Icon className="h-4 w-4" strokeWidth={2} />
                   </div>
-                  {/* 우측: 텍스트 */}
-                  <div className="text-left flex-1 min-w-0">
-                    <h3 className="font-bold text-lg mb-1 text-slate-900">{step.number}. {step.title}</h3>
-                    <p className="text-sm text-slate-600 leading-snug break-keep">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900">{step.number}. {step.title}</h3>
+                    <p className="text-xs text-slate-500 leading-tight line-clamp-1">
                       {step.description}
                     </p>
                   </div>
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />
                 </Link>
 
                 {/* 데스크탑: 카드 형태 */}
@@ -103,12 +102,7 @@ export function FlowSection() {
                 </Link>
 
                 {!isLast && (
-                  <>
-                    {/* 모바일: 아래쪽 화살표 */}
-                    <ArrowRight className="md:hidden h-5 w-5 text-slate-400 my-2 flex-shrink-0 rotate-90" />
-                    {/* 데스크탑: 오른쪽 화살표 */}
-                    <ArrowRight className="hidden md:block h-5 w-5 text-slate-300 mx-3 flex-shrink-0" />
-                  </>
+                  <ArrowRight className="hidden md:block h-5 w-5 text-slate-300 mx-3 flex-shrink-0" />
                 )}
               </div>
             );

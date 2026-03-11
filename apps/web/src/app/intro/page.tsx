@@ -130,6 +130,25 @@ export default function IntroPage() {
           </div>
         </section>
 
+        {/* ══ 제품 한눈 요약 (모바일 전용) ═════════════════════════════════ */}
+        <div className="md:hidden py-6 bg-white border-b border-slate-100 px-4">
+          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">한눈에 보기</p>
+          <ul className="space-y-2.5">
+            <li className="flex items-center gap-2.5 text-sm text-slate-700">
+              <Search className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              500만 시약·장비 DB에서 AI 검색 및 대체품 추천
+            </li>
+            <li className="flex items-center gap-2.5 text-sm text-slate-700">
+              <GitCompare className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+              벤더별 가격·납기·스펙 비교, 최적 후보 선택
+            </li>
+            <li className="flex items-center gap-2.5 text-sm text-slate-700">
+              <FileText className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+              견적 요청부터 구매·재고 운영까지 한 번에 연결
+            </li>
+          </ul>
+        </div>
+
         {/* ══ 2. 핵심 제품 흐름 (4단계) ═══════════════════════════════════ */}
         <section className="py-10 md:py-16 bg-white border-b border-slate-100">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
@@ -143,7 +162,27 @@ export default function IntroPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+            {/* 모바일: 압축형 프로세스 리스트 */}
+            <div className="md:hidden space-y-1.5">
+              {[
+                { num: 1, title: "시약·장비 검색", desc: "통합 검색 + 카테고리·브랜드 필터", icon: Search, bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-600" },
+                { num: 2, title: "제품 비교", desc: "가격·납기·순도 나란히 비교, AI 분석", icon: GitCompare, bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-600" },
+                { num: 3, title: "견적 요청", desc: "클릭 한 번 견적서 생성, 공급사 응답 통합 관리", icon: FileText, bg: "bg-teal-50", text: "text-teal-600", dot: "bg-teal-600" },
+                { num: 4, title: "재고·이력 운영", desc: "구매 시 자동 재고 반영, Lot No.·유효기간 추적", icon: Package, bg: "bg-slate-50", text: "text-slate-700", dot: "bg-slate-700" },
+              ].map((step) => (
+                <div key={step.num} className={`flex items-center gap-3 px-3.5 py-2.5 ${step.bg} rounded-lg border border-slate-100`}>
+                  <div className={`shrink-0 w-7 h-7 rounded-full ${step.dot} text-white text-xs font-bold flex items-center justify-center`}>{step.num}</div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900">{step.title}</h3>
+                    <p className="text-xs text-slate-500 leading-tight line-clamp-1">{step.desc}</p>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />
+                </div>
+              ))}
+            </div>
+
+            {/* 데스크탑: 카드 그리드 */}
+            <div className="hidden md:grid md:grid-cols-4 gap-4 md:gap-6">
               {/* Step 1: 검색 */}
               <div className="relative">
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 md:p-5 h-full">
@@ -286,10 +325,36 @@ export default function IntroPage() {
               </p>
             </div>
 
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-5 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0">
+            {/* 모바일: 압축형 페르소나 리스트 */}
+            <div className="md:hidden space-y-2">
+              {[
+                { role: "R&D 연구자", icon: Zap, color: "text-amber-500", bg: "bg-amber-50", benefits: ["통합 검색으로 후보 즉시 확인", "프로토콜 → 시약 자동 추출"], tags: ["검색", "비교"] },
+                { role: "QC/QA 매니저", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50", benefits: ["구매→재고→사용 이력 한 곳 추적", "유효기간 자동 알림"], tags: ["이력", "유통기한"] },
+                { role: "구매 담당자", icon: Layers, color: "text-indigo-500", bg: "bg-indigo-50", benefits: ["통합 견적 요청, 5분 완료", "구매 이력·응답 통합 관리"], tags: ["견적", "비교"] },
+              ].map((p) => (
+                <div key={p.role} className="bg-white border border-gray-100 rounded-lg p-3.5 flex items-start gap-3">
+                  <div className={`shrink-0 w-8 h-8 rounded-lg ${p.bg} flex items-center justify-center`}>
+                    <p.icon className={`h-4 w-4 ${p.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 mb-1">{p.role}</h3>
+                    <ul className="space-y-0.5">
+                      {p.benefits.map((b, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                          <CheckCircle2 className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />{b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 데스크탑: 캐러셀 카드 */}
+            <div className="hidden md:grid md:grid-cols-3 md:gap-6">
 
               {/* R&D 연구자 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 min-w-[80vw] snap-center shrink-0 md:min-w-0 md:shrink flex flex-col gap-4">
+              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">R&D 연구자</p>
@@ -326,7 +391,7 @@ export default function IntroPage() {
               </div>
 
               {/* QC/QA 매니저 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 min-w-[80vw] snap-center shrink-0 md:min-w-0 md:shrink flex flex-col gap-4">
+              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">QC/QA 매니저</p>
@@ -363,7 +428,7 @@ export default function IntroPage() {
               </div>
 
               {/* 구매 담당자 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 min-w-[80vw] snap-center shrink-0 md:min-w-0 md:shrink flex flex-col gap-4">
+              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">구매 담당자</p>
@@ -399,7 +464,6 @@ export default function IntroPage() {
                 </div>
               </div>
             </div>
-            <p className="md:hidden text-center text-xs text-slate-400 mt-3">← 좌우로 밀어보세요 →</p>
           </div>
         </section>
 
@@ -416,7 +480,7 @@ export default function IntroPage() {
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900 break-keep">
                 조직에서 안심하고 운영할 수 있습니다
               </h2>
-              <p className="text-sm md:text-base text-slate-500 mt-2 max-w-2xl break-keep">
+              <p className="hidden md:block text-sm md:text-base text-slate-500 mt-2 max-w-2xl break-keep">
                 연구 데이터와 구매 정보를 안전하게 보호합니다. 기업·기관 도입을 위한 권한 제어와 배포 옵션을 제공합니다.
               </p>
             </div>
@@ -445,21 +509,21 @@ export default function IntroPage() {
                   badge: "Enterprise 플랜",
                 },
               ].map((item, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 md:p-6">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-4 ${item.color}`}>
+                <div key={i} className="bg-white rounded-xl border border-slate-200 p-3.5 md:p-6">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 md:mb-4 ${item.color}`}>
                     <item.icon className="h-4.5 w-4.5" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-2">{item.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1 md:mb-2">{item.title}</h3>
+                  <p className="hidden md:block text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
                   <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 rounded-md px-2 py-1">{item.badge}</span>
                 </div>
               ))}
             </div>
 
             {/* 도입 근거 요약 */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 md:p-6">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">도입 적합성 체크</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 md:mb-4">도입 적합성 체크</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 {[
                   "연구팀과 구매팀이 분리된 조직 구조",
                   "GMP/GLP 환경에서 Lot 추적 및 이력 관리 필요",
@@ -468,9 +532,9 @@ export default function IntroPage() {
                   "재고 실사·유효기간 관리를 체계화하려는 팀",
                   "수기 엑셀 중심 구매 관리를 디지털화하려는 조직",
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-2">
+                  <div key={i} className={`flex items-start gap-2 ${i >= 4 ? "hidden md:flex" : ""}`}>
                     <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-slate-700 break-keep">{item}</span>
+                    <span className="text-xs md:text-sm text-slate-700 break-keep">{item}</span>
                   </div>
                 ))}
               </div>
