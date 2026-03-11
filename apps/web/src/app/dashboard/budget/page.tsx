@@ -244,8 +244,8 @@ export default function BudgetPage() {
   // }
 
   return (
-    <div className="w-full px-4 md:px-6 py-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full py-4 md:py-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         <PageHeader
           title="예산 관리"
           description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
@@ -288,7 +288,7 @@ export default function BudgetPage() {
         />
 
         {isFetching ? (
-          <div className="grid gap-6 md:grid-cols-2 mt-6">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
             {Array.from({ length: 3 }).map((_, idx) => (
               <Card key={idx} className="shadow-sm border-slate-200 animate-pulse">
                 <CardHeader className="pb-2">
@@ -317,7 +317,7 @@ export default function BudgetPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 mt-6">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
             {Array.isArray(budgets) &&
               budgets.map((budget) => {
                 const used = budget.usage?.totalSpent ?? 0;
@@ -335,7 +335,7 @@ export default function BudgetPage() {
                     className="shadow-sm border-slate-200"
                   >
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex justify-between items-center">
+                      <CardTitle className="text-base sm:text-lg flex justify-between items-center">
                         {budget.name}
                         {(() => {
                           const now = new Date();
@@ -367,9 +367,8 @@ export default function BudgetPage() {
                             <TrendingUp className="h-3.5 w-3.5" />
                             사용 금액 ({rate}%)
                           </span>
-                          <span className="font-bold">
-                            ₩{used.toLocaleString("ko-KR")} / ₩
-                            {total.toLocaleString("ko-KR")}
+                          <span className="font-bold text-xs sm:text-sm">
+                            ₩{used.toLocaleString("ko-KR")} <span className="hidden sm:inline">/ ₩{total.toLocaleString("ko-KR")}</span>
                           </span>
                         </div>
                         <Progress value={rate} className="h-2" />

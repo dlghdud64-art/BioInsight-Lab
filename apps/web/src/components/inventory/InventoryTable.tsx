@@ -431,7 +431,7 @@ export function InventoryTable({
                       </TableCell>
 
                       {/* 빠른 작업 — 상태 기반 우선순위 */}
-                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
                           {(isRisky || groupStatus === "주의") ? (
                             /* ── 부족/주의/만료/임박 → 재발주(긴급) + 입고 ── */
@@ -663,7 +663,7 @@ export function InventoryTable({
                               </TableCell>
 
                               {/* Lot 작업 — 상태 기반 우선순위 */}
-                              <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                 <div className="flex items-center justify-center gap-1">
                                   <InventoryQRCode
                                     inventoryId={lot.id}

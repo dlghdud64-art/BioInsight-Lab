@@ -201,16 +201,16 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-6xl mx-auto w-full">
+    <div className="flex-1 space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-8 pt-4 md:pt-6 max-w-6xl mx-auto w-full">
       {/* 상단 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
-        <div className="flex flex-col space-y-2">
-          <div className="flex items-center gap-2 text-blue-600 mb-1">
-            <Building2 className="h-5 w-5" />
-            <span className="font-semibold tracking-tight">조직 관리</span>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="flex flex-col space-y-1 sm:space-y-2">
+          <div className="flex items-center gap-2 text-blue-600 mb-0.5 sm:mb-1">
+            <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-sm sm:text-base font-semibold tracking-tight">조직 관리</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight">조직 관리</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">조직 관리</h2>
+          <p className="text-muted-foreground text-sm hidden sm:block">
             조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다.
           </p>
         </div>
@@ -218,9 +218,9 @@ export default function OrganizationsPage() {
         {organizations.length > 0 && (
           <Button
             onClick={() => setIsOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 shrink-0"
+            className="bg-blue-600 hover:bg-blue-700 shrink-0 text-sm h-9"
           >
-            <Plus className="mr-2 h-4 w-4" /> 새 조직 만들기
+            <Plus className="mr-1.5 h-4 w-4" /> 새 조직 만들기
           </Button>
         )}
       </div>
@@ -307,7 +307,7 @@ export default function OrganizationsPage() {
 
       {/* 메인 화면 (로딩 / Empty State / Card Grid) */}
       {isFetching ? (
-        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, idx) => (
             <Card
               key={idx}
@@ -349,7 +349,7 @@ export default function OrganizationsPage() {
           </Button>
         </Card>
       ) : (
-        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {organizations.map((org) => {
             const planLabel = org.plan === "ORGANIZATION" ? "Pro" : org.plan === "TEAM" ? "Basic" : "Starter";
             const planColor = org.plan === "ORGANIZATION"
@@ -380,7 +380,7 @@ export default function OrganizationsPage() {
                       </Badge>
                     </div>
                   </div>
-                  <CardTitle className="text-lg leading-tight">{org.name}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg leading-tight">{org.name}</CardTitle>
                   {org.description && (
                     <CardDescription className="line-clamp-1 text-xs">
                       {org.description}

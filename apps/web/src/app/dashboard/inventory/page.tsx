@@ -876,13 +876,13 @@ function InventoryPageContent() {
   };
 
   return (
-    <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* 상단 타이틀 및 액션 버튼 */}
-        <div className="flex flex-col gap-4 md:gap-5 mb-4">
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
+          <div className="flex flex-col space-y-1 sm:space-y-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
+            <p className="text-muted-foreground text-sm hidden sm:block">
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
@@ -1025,14 +1025,14 @@ function InventoryPageContent() {
               <TabsList className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
                 <TabsTrigger
                   value="manage"
-                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
-                  시약 관리하기
+                  <span className="hidden sm:inline">시약 </span>관리
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
-                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항

@@ -186,19 +186,19 @@ export default function ReportsPage() {
   const hasData = reportData != null;
 
   return (
-    <div className="flex-1 space-y-6 bg-slate-50 min-h-screen p-6 max-w-7xl mx-auto w-full">
+    <div className="flex-1 space-y-4 sm:space-y-6 bg-slate-50 min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
       {/* 1. 헤더 영역 */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div className="space-y-2">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-normal text-slate-900 dark:text-slate-100 leading-tight">구매 리포트</h2>
-          <p className="text-muted-foreground text-sm leading-relaxed tracking-normal">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
+        <div className="space-y-1 sm:space-y-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-normal text-slate-900 dark:text-slate-100 leading-tight">구매 리포트</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed tracking-normal hidden sm:block">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">
-                <CloudUpload className="h-4 w-4 mr-2" />
-                데이터 가져오기
+                <CloudUpload className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">데이터 </span>가져오기
               </Button>
             </DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -281,29 +281,29 @@ export default function ReportsPage() {
               </DialogContent>
             </Dialog>
           <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50" onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}>
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            데이터 갱신
+            <RefreshCcw className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">데이터 갱신</span>
           </Button>
           <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
-            <FileDown className="h-4 w-4 mr-2" />
-            리포트 내보내기
+            <FileDown className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">리포트 </span>내보내기
           </Button>
         </div>
       </div>
 
       {/* 2. 상단 KPI 통계 (Key Metrics) */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse border border-gray-100 dark:border-slate-800 shadow-sm">
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="p-3 sm:p-4 md:p-6">
                 <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
@@ -376,8 +376,8 @@ export default function ReportsPage() {
       )}
 
       {/* 3. 압축된 한 줄 필터 바 */}
-      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <CardContent className="p-4">
+      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-3 sm:p-6">
+        <CardContent className="p-2 sm:p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">기간 선택</label>
@@ -519,7 +519,7 @@ export default function ReportsPage() {
           )}
 
           {/* 차트 영역: 3단 Grid (기간별 / 벤더별 / 카테고리별 균등 배치) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* 월별 구매 추이 차트 */}
           <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
