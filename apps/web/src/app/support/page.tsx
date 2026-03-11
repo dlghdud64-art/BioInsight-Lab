@@ -219,23 +219,39 @@ export default function SupportPage() {
             </a>
           </section>
 
-          {/* ── 빠른 이동 ── */}
-          <section className="flex flex-col sm:flex-row gap-3">
-            <Link href="/intro">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
-                서비스 소개 보기
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
-                요금 & 도입 안내
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100 gap-2">
-                홈으로 돌아가기
-              </Button>
-            </Link>
+          {/* ── 지원 보조 네비게이션 ── */}
+          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
+            <h3 className="text-sm font-bold text-slate-900">문의 후 다음 단계</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <Link href="/support" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <Mail className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">고객 지원 및 문의</span>
+              </Link>
+              <Link href="/support#faq" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <Search className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">FAQ</span>
+              </Link>
+              <Link href="/intro" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <FileText className="h-4 w-4 text-slate-500" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">서비스 소개</span>
+              </Link>
+              <Link href="/pricing" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <Building2 className="h-4 w-4 text-slate-500" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">요금 &amp; 도입</span>
+              </Link>
+              <Link href="/login" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <LogIn className="h-4 w-4 text-slate-500" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">로그인</span>
+              </Link>
+              <Link href="/privacy" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <FileText className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">개인정보처리방침</span>
+              </Link>
+              <Link href="/terms" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <FileText className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">이용약관</span>
+              </Link>
+            </div>
           </section>
 
         </div>
