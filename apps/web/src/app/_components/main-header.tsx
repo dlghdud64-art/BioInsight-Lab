@@ -4,10 +4,8 @@ import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, ScanLine, Search, FileText, Phone, Info, Headset, LayoutDashboard } from "lucide-react";
+import { Menu, Search, FileText, Phone, Info, Headset } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { useToast } from "@/hooks/use-toast";
-import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
   Sheet,
   SheetContent,
@@ -23,20 +21,6 @@ interface MainHeaderProps {
 
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const { data: session } = useSession();
-  const { toast } = useToast();
-  const { open: openQRScanner } = useQRScanner();
-
-  const handleScanClick = () => {
-    if (!session?.user) {
-      toast({
-        title: "로그인 후 이용 가능한 기능입니다.",
-        description: "재고 QR 스캔은 로그인 후 사용할 수 있습니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-    openQRScanner();
-  };
 
   return (
     <header className="fixed top-0 left-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
@@ -71,19 +55,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </div>
                 </div>
 
-                {/* ── 운영 허브 ── */}
-                <nav className="px-4 pt-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">운영 허브</div>
-                  <SheetClose asChild>
-                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 rounded-lg mb-0.5 transition-colors">
-                      <LayoutDashboard className="h-4 w-4 text-blue-500" />
-                      대시보드
-                    </Link>
-                  </SheetClose>
-                </nav>
-
                 {/* ── 제품 ── */}
-                <nav className="px-4 pb-2">
+                <nav className="px-4 pt-4 pb-2">
                   <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
                     <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
@@ -194,18 +167,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* ── RIGHT: 데스크탑 nav + UserMenu + 모바일 QR + 햄버거 ── */}
           <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-            {/* QR 스캔 - 로그인 유저 · 모바일 전용 */}
-            {session?.user && (
-              <button
-                type="button"
-                onClick={handleScanClick}
-                className="md:hidden inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-colors"
-                aria-label="재고 QR 스캔"
-              >
-                <ScanLine className="h-4 w-4" />
-              </button>
-            )}
-
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
@@ -242,8 +203,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               )}
             </nav>
 
-            {/* 프로필 메뉴 */}
-            <UserMenu />
+            {/* 프로필 메뉴 (데스크탑 전용) */}
+            <div className="hidden md:block">
+              <UserMenu />
+            </div>
 
             {/* 햄버거 버튼 */}
             <SheetTrigger asChild>

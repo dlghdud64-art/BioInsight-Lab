@@ -25,12 +25,12 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className={cn("flex flex-col gap-2 sm:gap-4 mb-4 sm:mb-8", className)}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
-          {badge && <div className="mb-2">{badge}</div>}
-          <div className="flex items-center gap-3 mb-2 min-w-0">
+          {badge && <div className="mb-1.5 sm:mb-2">{badge}</div>}
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-1.5 sm:mb-2 min-w-0">
             {Icon && (
-              <div className={cn("p-2 bg-blue-50 rounded-lg flex-shrink-0", iconColor.includes("blue") && "bg-blue-50", iconColor.includes("green") && "bg-green-50", iconColor.includes("purple") && "bg-purple-50", iconColor.includes("orange") && "bg-orange-50")}>
+              <div className={cn("p-1.5 sm:p-2 bg-blue-50 rounded-lg flex-shrink-0", iconColor.includes("blue") && "bg-blue-50", iconColor.includes("green") && "bg-green-50", iconColor.includes("purple") && "bg-purple-50", iconColor.includes("orange") && "bg-orange-50")}>
                 <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", iconColor)} />
               </div>
             )}

@@ -50,7 +50,7 @@ export function FeaturesShowcaseSection() {
     {
       id: "sourcing",
       title: "AI 기반 시약·장비 검색",
-      description: "복잡한 시약명, CAS Number, 제조사 기준 검색은 물론 프로토콜과 사용 목적까지 반영해 더 적합한 후보를 빠르게 찾습니다.",
+      description: "500만 DB에서 시약명·CAS No.로 검색, AI가 대체품까지 추천합니다.",
       features: ["검색", "비교", "대체품", "프로토콜"],
       icon: Search,
       gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
@@ -58,7 +58,7 @@ export function FeaturesShowcaseSection() {
     {
       id: "purchasing",
       title: "비교부터 견적 요청까지 한 번에",
-      description: "여러 벤더의 후보 품목을 한곳에 모아 비교하고, 선택한 품목으로 바로 견적 요청 리스트를 만들어 전달할 수 있습니다.",
+      description: "벤더별 가격·납기를 비교하고, 선택한 품목으로 바로 견적 요청하세요.",
       features: ["견적 리스트", "벤더 비교", "요청 공유"],
       icon: ShoppingCart,
       gradient: "bg-gradient-to-br from-violet-500 to-fuchsia-600",
@@ -66,7 +66,7 @@ export function FeaturesShowcaseSection() {
     {
       id: "management",
       title: "도입 이후 품목 관리까지 연결",
-      description: "도입한 품목을 대시보드에서 정리하고, 재고·예산·이력 관리까지 이어서 운영할 수 있습니다.",
+      description: "재고·예산·이력 관리를 대시보드에서 이어서 운영하세요.",
       features: ["대시보드", "재고 관리", "이력 관리"],
       icon: BarChart3,
       gradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
@@ -366,13 +366,13 @@ export function FeaturesShowcaseSection() {
   };
 
   return (
-    <section id="features-showcase" className="py-20 pb-28 border-b border-slate-200 bg-white">
+    <section id="features-showcase" className="py-10 md:py-20 pb-12 md:pb-28 border-b border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center space-y-2 mb-10">
+        <div className="text-center space-y-2 mb-6 md:mb-10">
           <span className="inline-block text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">주요 기능</span>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">플랫폼이 어떻게 동작하는지 확인하세요</h2>
-          <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">
-            검색, 비교, 견적 요청, 품목 관리까지 실무에 필요한 흐름을 한 곳에서 처리하세요.
+          <h2 className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">플랫폼이 어떻게 동작하는지 확인하세요</h2>
+          <p className="text-xs md:text-sm text-gray-500 max-w-2xl mx-auto">
+            검색, 비교, 견적 요청, 품목 관리까지 한 곳에서 처리하세요.
           </p>
         </div>
 
@@ -472,57 +472,35 @@ export function FeaturesShowcaseSection() {
           </div>
         </div>
 
-        {/* 모바일: 가로 스크롤 Carousel (스와이프 전용) */}
-        <div className="md:hidden">
-          <div
-            ref={scrollRef}
-            onScroll={checkScroll}
-            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 px-4 scrollbar-hide -mx-4"
-          >
-            {tabs.map((tab) => {
-              const TabIcon = tab.icon;
-              return (
-                <div
-                  key={tab.id}
-                  className="flex-shrink-0 min-w-[85%] sm:min-w-[70%] snap-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
-                >
-                  <div className="p-4 space-y-3">
-                    {/* 헤더 영역 (아이콘 + 제목) */}
-                    <div className="flex items-center gap-2">
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${tab.gradient}`}>
-                        <TabIcon className="h-5 w-5 text-white" />
-                      </div>
-                      <h3 className="text-lg font-bold text-gray-900 leading-tight">{tab.title}</h3>
-                    </div>
-
-                    {/* 설명 글 */}
-                    <p className="text-sm text-slate-600 break-keep leading-snug">
-                      {tab.description}
-                    </p>
-
-                    {/* 기능 태그 */}
-                    <div className="flex flex-wrap gap-2">
-                      {tab.features.map((feature) => (
-                        <span
-                          key={feature}
-                          className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 이미지 영역 (높이 제한) */}
-                  <div className="relative w-full h-32 bg-gray-100 border-t border-gray-200 max-w-full overflow-hidden">
-                    <div className="w-full h-full p-2 overflow-auto">
-                      {renderMockup(tab.id)}
-                    </div>
+        {/* 모바일: 컴팩트 기능 리스트 */}
+        <div className="md:hidden space-y-2.5">
+          {tabs.map((tab) => {
+            const TabIcon = tab.icon;
+            return (
+              <div
+                key={tab.id}
+                className="flex items-start gap-3 p-3.5 bg-white rounded-xl border border-gray-100"
+              >
+                <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${tab.gradient}`}>
+                  <TabIcon className="h-[18px] w-[18px] text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-gray-900 mb-0.5">{tab.title}</h3>
+                  <p className="text-xs text-slate-500 leading-snug line-clamp-2 break-keep">{tab.description}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {tab.features.map((feature) => (
+                      <span
+                        key={feature}
+                        className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-600"
+                      >
+                        {feature}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

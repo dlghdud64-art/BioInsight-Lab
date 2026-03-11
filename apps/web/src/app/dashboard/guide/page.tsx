@@ -73,13 +73,13 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; stepBg: string; step
 
 export default function GuidePage() {
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6 max-w-4xl mx-auto w-full">
+    <div className="flex-1 space-y-4 sm:space-y-6 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
       {/* 페이지 헤더 */}
-      <div className="space-y-1.5 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+      <div className="space-y-1 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
           이용 가이드
         </h1>
-        <p className="text-sm text-slate-500 leading-relaxed">
+        <p className="text-sm text-slate-500 leading-relaxed hidden sm:block">
           검색부터 재고 반영까지, 전체 운영 흐름을 단계별로 안내합니다.
         </p>
       </div>

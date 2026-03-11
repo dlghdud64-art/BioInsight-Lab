@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
+import { useQRScanner } from "@/contexts/QRScannerContext";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -78,6 +79,7 @@ function InventoryPageContent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { can } = usePermission();
+  const { open: openQRScanner } = useQRScanner();
   const searchParams = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -929,13 +931,13 @@ function InventoryPageContent() {
   };
 
   return (
-    <div className="w-full max-w-full px-4 md:px-6 py-6 md:py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* 상단 타이틀 및 액션 버튼 */}
-        <div className="flex flex-col gap-4 md:gap-5 mb-4">
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
+          <div className="flex flex-col space-y-1 sm:space-y-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">재고 관리</h1>
+            <p className="text-muted-foreground text-sm hidden sm:block">
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
@@ -1082,14 +1084,14 @@ function InventoryPageContent() {
               <TabsList className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
                 <TabsTrigger
                   value="manage"
-                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
-                  시약 관리하기
+                  <span className="hidden sm:inline">시약 </span>관리
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
-                  className="flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항
@@ -2782,6 +2784,20 @@ function InventoryPageContent() {
           </TabsContent>
         </Tabs>
         )}
+      </div>
+
+      {/* 모바일 하단 고정 액션 — 재고 등록 & 차감 */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 dark:bg-[#0f1623]/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800/50 px-4 py-2.5 safe-area-bottom">
+        <div className="flex items-center gap-2 max-w-7xl mx-auto">
+          <Button variant="outline" size="sm" className="flex-1 h-11 text-xs gap-1.5 border-blue-200 text-blue-700 dark:text-blue-400 hover:bg-blue-50" onClick={() => setIsDialogOpen(true)}>
+            <PackagePlus className="h-3.5 w-3.5" />
+            재고 등록
+          </Button>
+          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 text-white shadow-sm" onClick={openQRScanner}>
+            <TrendingDown className="h-3.5 w-3.5" />
+            재고 차감
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Package, AlertTriangle, DollarSign, FileText, Search, Plus,
-  TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare,
+  TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, Calendar, GitCompare,
   CheckCircle2, Clock,
 } from "lucide-react";
 import Link from "next/link";
@@ -308,10 +308,10 @@ export default function DashboardPage() {
                 견적 요청하기
               </Button>
             </Link>
-            <Link href="/test/compare" className="block">
-              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 hover:bg-slate-50">
-                <GitCompare className="h-3.5 w-3.5 flex-shrink-0" />
-                비교 목록
+            <Link href="/dashboard/inventory" className="block">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100">
+                <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" />
+                재고 차감
               </Button>
             </Link>
             <Link href="/dashboard/inventory" className="block">
@@ -535,6 +535,16 @@ export default function DashboardPage() {
                     <span className="block text-[11px] text-slate-400 dark:text-slate-500">입고 품목 등록 및 관리</span>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
+                </Link>
+                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800/50 flex-shrink-0">
+                    <TrendingDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100">재고 차감</span>
+                    <span className="block text-[11px] text-slate-400 dark:text-slate-500">출고·사용 기록</span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
                 </Link>
               </div>
               {/* 보조 액션 */}

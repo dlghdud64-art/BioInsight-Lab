@@ -322,69 +322,69 @@ export default function SafetyManagerPage() {
   };
 
   return (
-    <div className="w-full px-4 md:px-6 py-6 pt-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full py-4 md:py-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 헤더 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
-                <Shield className="h-5 w-5 md:h-6 md:w-6 text-amber-600 dark:text-amber-400" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="p-1.5 sm:p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex-shrink-0">
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <h1 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white">안전 관리</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white truncate">안전 관리</h1>
             </div>
-            <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
               GMP/KOSHA 규격 대응. 고위험 물질, MSDS, 필수 보호구를 한눈에 관리합니다.
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs md:text-sm shrink-0 border-slate-200 dark:border-slate-700">
-            <Download className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-            CSV 내보내기
+          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs shrink-0 border-slate-200 dark:border-slate-700">
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            <span className="hidden sm:inline">CSV </span>내보내기
           </Button>
         </div>
 
         {/* 1. 상단 안전 요약 KPI */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-3">
           <Card className="border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-slate-900">
-            <CardContent className="pt-6 flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">전체 관리 물질</p>
-                <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                  {totalCount} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">종</span>
+            <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
+              <div className="space-y-0.5">
+                <p className="text-[11px] sm:text-sm font-medium text-slate-600 dark:text-slate-400">전체 관리</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                  {totalCount}<span className="text-[10px] sm:text-sm font-normal text-slate-500 dark:text-slate-400 ml-0.5">종</span>
                 </p>
               </div>
-              <ShieldAlert className="text-slate-400 dark:text-slate-500 w-10 h-10 flex-shrink-0" />
+              <ShieldAlert className="text-slate-400 dark:text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
           <Card className="border-red-100 dark:border-red-900/50 bg-red-50/20 dark:bg-red-950/30 shadow-sm">
-            <CardContent className="pt-6 flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">고위험 물질</p>
-                <p className="text-3xl font-bold text-red-700 dark:text-red-300">
-                  {highRiskCount} <span className="text-sm font-normal text-red-500 dark:text-red-400">종</span>
+            <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
+              <div className="space-y-0.5">
+                <p className="text-[11px] sm:text-sm font-medium text-red-600 dark:text-red-400">고위험</p>
+                <p className="text-xl sm:text-3xl font-bold text-red-700 dark:text-red-300">
+                  {highRiskCount}<span className="text-[10px] sm:text-sm font-normal text-red-500 dark:text-red-400 ml-0.5">종</span>
                 </p>
               </div>
-              <Biohazard className="text-red-400 dark:text-red-500 w-10 h-10 flex-shrink-0" />
+              <Biohazard className="text-red-400 dark:text-red-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
           <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/30 shadow-sm">
-            <CardContent className="pt-6 flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-amber-600 dark:text-amber-400">MSDS 누락 항목</p>
-                <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
-                  {msdsMissingCount} <span className="text-sm font-normal text-amber-500 dark:text-amber-400">종</span>
+            <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
+              <div className="space-y-0.5">
+                <p className="text-[11px] sm:text-sm font-medium text-amber-600 dark:text-amber-400">MSDS 누락</p>
+                <p className="text-xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300">
+                  {msdsMissingCount}<span className="text-[10px] sm:text-sm font-normal text-amber-500 dark:text-amber-400 ml-0.5">종</span>
                 </p>
               </div>
-              <FileWarning className="text-amber-400 dark:text-amber-500 w-10 h-10 flex-shrink-0" />
+              <FileWarning className="text-amber-400 dark:text-amber-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
         </div>
 
         {/* 슬림 필터 바 */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-4 px-4 border rounded-lg border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 py-3 px-3 sm:px-4 border rounded-lg border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select value={riskFilter} onValueChange={setRiskFilter}>
-              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="위험 등급" />
               </SelectTrigger>
               <SelectContent>
@@ -395,7 +395,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={msdsFilter} onValueChange={setMsdsFilter}>
-              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="MSDS 상태" />
               </SelectTrigger>
               <SelectContent>
@@ -405,7 +405,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[140px] h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="보관 장소" />
               </SelectTrigger>
               <SelectContent>
@@ -508,6 +508,35 @@ export default function SafetyManagerPage() {
                             : <span className="text-amber-600 dark:text-amber-400">미등록</span>
                           }</span>
                           <span><span className="text-slate-400 dark:text-slate-500">점검</span> <span className="text-slate-700 dark:text-slate-300">{item.lastInspection || <span className="text-amber-500">미점검</span>}</span></span>
+                        </div>
+                        {/* 후속 조치 CTA */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                          {!item.hasMsds && (
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                              onClick={() => toast({ title: "MSDS 등록", description: `${item.name}의 MSDS 문서를 등록하세요.` })}
+                            >
+                              <FileWarning className="h-3 w-3 mr-1" />MSDS 등록
+                            </Button>
+                          )}
+                          {!item.lastInspection && (
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                              onClick={() => toast({ title: "점검 기록", description: `${item.name}의 안전 점검을 기록하세요.` })}
+                            >
+                              <ShieldCheck className="h-3 w-3 mr-1" />점검 기록
+                            </Button>
+                          )}
+                          {item.level === "HIGH" && (
+                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
+                              onClick={() => toast({ title: "폐기 처리", description: `${item.name}의 폐기 절차를 확인하세요.` })}
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />폐기 처리
+                            </Button>
+                          )}
+                          {item.actionStatus === "normal" && item.hasMsds && item.lastInspection && (
+                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <ShieldCheck className="h-3 w-3" />관리 정상
+                            </span>
+                          )}
                         </div>
                       </div>
 

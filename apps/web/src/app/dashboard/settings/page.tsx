@@ -248,13 +248,13 @@ function SettingsPageContent() {
   ];
 
   return (
-    <div className="w-full px-4 md:px-6 py-6 pt-6">
+    <div className="w-full py-4 md:py-6">
       <div className="max-w-6xl mx-auto">
-        <div className="space-y-0.5 mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <div className="space-y-0.5 mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             설정
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             계정 정보와 연구실 워크스페이스 환경을 관리합니다.
           </p>
         </div>
@@ -839,7 +839,7 @@ function SettingsPageContent() {
 
             {/* 하단 고정 저장 버튼 (청구·구독 탭 미표시) */}
             {activeSection !== "billing" && (
-              <div className="sticky bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
+              <div className="sticky bottom-16 lg:bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
                 <div className="flex justify-end">
                   <Button
                     variant="default"

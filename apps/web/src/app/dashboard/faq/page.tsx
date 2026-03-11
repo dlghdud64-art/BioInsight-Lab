@@ -150,13 +150,13 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6 max-w-4xl mx-auto w-full">
+    <div className="flex-1 space-y-4 sm:space-y-6 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
       {/* 페이지 헤더 */}
-      <div className="space-y-1.5 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+      <div className="space-y-1 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
           도움말 센터
         </h1>
-        <p className="text-sm text-slate-500 leading-relaxed">
+        <p className="text-sm text-slate-500 leading-relaxed hidden sm:block">
           사용 중 자주 묻는 질문과 기능별 안내를 확인하세요.
         </p>
       </div>

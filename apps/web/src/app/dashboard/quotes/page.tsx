@@ -295,7 +295,7 @@ function QuotesPageContent() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
-          <p className="text-sm text-slate-500 mt-0.5">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
+          <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <PermissionGate permission="quotes.create">
           <Link href="/compare/quote" className="flex-shrink-0">
