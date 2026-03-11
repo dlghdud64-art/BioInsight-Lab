@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, Flame } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
@@ -47,6 +47,12 @@ export default function SearchPage() {
     hasSearched,
     analysisLoading,
     searchQuery,
+    searchCategory,
+    searchBrand,
+    sortBy,
+    minPrice,
+    maxPrice,
+    grade,
   } = useTestFlow();
   const { data: session } = useSession();
   const router = useRouter();
@@ -56,6 +62,12 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [sheetSide, setSheetSide] = useState<"bottom" | "right">("bottom");
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const activeFilterCount = [searchCategory, searchBrand, grade].filter(Boolean).length
+    + (sortBy !== "relevance" ? 1 : 0)
+    + (minPrice !== undefined ? 1 : 0)
+    + (maxPrice !== undefined ? 1 : 0);
 
   const callbackUrl = searchQuery ? `/test/search?q=${encodeURIComponent(searchQuery)}` : "/test/search";
 
@@ -87,21 +99,58 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50/50 mt-8">
       
-      {/* 2컬럼 레이아웃 */}
       <div className="container mx-auto px-4 pb-4 md:pb-6">
+        {/* 검색창 — 화면 최상단 핵심 요소 */}
+        <StickySearchBar />
+
+        {/* 모바일 필터 바 */}
+        <div className="md:hidden flex items-center gap-2 px-1 py-2 overflow-x-auto">
+          <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-slate-200 shrink-0">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                필터
+                {activeFilterCount > 0 && (
+                  <span className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[75vh] overflow-y-auto">
+              <div className="pt-2">
+                <SearchPanel />
+              </div>
+            </SheetContent>
+          </Sheet>
+          {searchCategory && (
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0">
+              {PRODUCT_CATEGORIES[searchCategory as keyof typeof PRODUCT_CATEGORIES] || searchCategory}
+            </Badge>
+          )}
+          {searchBrand && (
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0 max-w-[100px] truncate">
+              {searchBrand}
+            </Badge>
+          )}
+          {sortBy !== "relevance" && (
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0">
+              {sortBy === "price_low" ? "가격↑" : sortBy === "price_high" ? "가격↓" : "납기순"}
+            </Badge>
+          )}
+        </div>
+
+        {/* 2컬럼 레이아웃 */}
         <div className="flex flex-col gap-4 md:grid md:gap-8 md:grid-cols-[260px_1fr]">
-        {/* 좌측: 검색 패널 + 옵션 */}
-        <aside className="order-1 md:order-none">
+        {/* 좌측: 검색 패널 (데스크탑만) */}
+        <aside className="hidden md:block">
           <div className="flex flex-col gap-4">
             <SearchPanel />
           </div>
         </aside>
 
-        {/* 가운데: 검색 결과 */}
-        <section className="order-3 md:order-none space-y-4 max-w-4xl mx-auto w-full pt-16">
-          {/* 상단 고정 검색창 */}
-          <StickySearchBar />
-          
+        {/* 검색 결과 */}
+        <section className="space-y-4 max-w-4xl mx-auto w-full">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
             <Card className="border border-slate-200 bg-white">
@@ -565,9 +614,7 @@ export default function SearchPage() {
 function StickySearchBar() {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
-  const router = useRouter();
 
-  // 좌측 사이드바의 searchQuery와 동기화
   useEffect(() => {
     setLocalQuery(searchQuery);
   }, [searchQuery]);
@@ -583,14 +630,11 @@ function StickySearchBar() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalQuery(value);
-    // 좌측 사이드바의 searchQuery도 즉시 업데이트
     setSearchQuery(value);
   };
 
-  const popularSearches = ["FBS", "Pipette", "Conical Tube", "Centrifuge", "DMEM", "Trypsin"];
-
   return (
-    <div className="w-full p-6 border-b bg-white/95 backdrop-blur sticky top-0 z-10 shadow-sm">
+    <div className="w-full px-1 py-3 md:p-6 border-b bg-white/95 backdrop-blur sticky top-0 z-10 shadow-sm">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
         <div className="flex items-center gap-2 bg-white rounded-full border-2 border-slate-300 shadow-lg hover:shadow-xl transition-all focus-within:border-blue-500 focus-within:shadow-blue-500/20">
           <Input
@@ -610,33 +654,43 @@ function StickySearchBar() {
             검색
           </Button>
         </div>
-        {/* 헬퍼 텍스트 */}
         <p className="mt-2 text-center text-xs text-slate-400 max-w-2xl mx-auto hidden sm:block">
           검색 결과를 비교 후보에 담고, 견적 요청까지 이어갈 수 있습니다.
         </p>
       </form>
 
-      {/* 추천 키워드 칩 */}
+      {/* 빠른 검색 — 검색 전 */}
       {!hasSearched && (
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-6 max-w-3xl mx-auto">
-          <span className="text-sm text-slate-500 font-medium flex items-center gap-1">
-            <Flame className="h-4 w-4 text-slate-500" />
-            추천:
-          </span>
-          {popularSearches.map((term) => (
-            <Badge
-              key={term}
-              variant="secondary"
-              className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 transition-colors px-3 py-1.5 text-sm font-medium"
-              onClick={() => {
-                setLocalQuery(term);
-                setSearchQuery(term);
-                runSearch();
-              }}
-            >
-              #{term}
-            </Badge>
-          ))}
+        <div className="mt-4 md:mt-6 max-w-xs sm:max-w-sm md:max-w-lg mx-auto">
+          <p className="text-xs text-slate-400 font-medium text-center mb-2.5">빠른 검색</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "시약·소모품", sub: "시약명으로 검색" },
+              { label: "제조사", sub: "Thermo, Sigma…" },
+              { label: "Cat. No", sub: "카탈로그 번호" },
+              { label: "품목군", sub: "Antibody, Buffer…" },
+            ].map((entry) => (
+              <button
+                key={entry.label}
+                type="button"
+                onClick={() => {
+                  const input = document.querySelector<HTMLInputElement>('input[placeholder*="시약명"]');
+                  input?.focus();
+                }}
+                className="flex flex-col items-start px-3 py-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl text-left transition-all touch-manipulation"
+              >
+                <span className="text-sm font-semibold text-slate-700">{entry.label}</span>
+                <span className="text-[11px] text-slate-400">{entry.sub}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-slate-400">
+            <span className="px-2 py-1 rounded bg-slate-100 font-medium">검색</span>
+            <span>→</span>
+            <span className="px-2 py-1 rounded bg-slate-100 font-medium">비교</span>
+            <span>→</span>
+            <span className="px-2 py-1 rounded bg-slate-100 font-medium">견적 요청</span>
+          </div>
         </div>
       )}
     </div>
