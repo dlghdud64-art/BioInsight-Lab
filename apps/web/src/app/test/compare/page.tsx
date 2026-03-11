@@ -828,22 +828,6 @@ export default function TestComparePage() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        addProductToQuote(product);
-                        toast({
-                          title: "추가 완료",
-                          description: `${product.name}이(가) 견적요청서에 추가되었습니다.`,
-                        });
-                      }}
-                      className="text-[10px] sm:text-xs flex-1 sm:flex-none h-7 sm:h-8 whitespace-nowrap"
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">견적요청서에 담기</span>
-                      <span className="sm:hidden">담기</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
                         // Analytics: compare_remove_item 이벤트 추적
                         trackEvent("compare_remove_item", {
                           product_id: product.id,
@@ -903,6 +887,21 @@ export default function TestComparePage() {
               <p className="text-[10px] text-slate-400 mt-2 text-center">
                 실제 구매가는 공급사·발주 시점에 따라 달라질 수 있습니다.
               </p>
+              {/* 판단 요약 */}
+              {cheapestProduct && hasPriceDiff && (
+                <div className="mt-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    <span className="font-semibold text-blue-700">최저가</span>는{" "}
+                    <span className="font-medium">{cheapestProduct.name.length > 20 ? cheapestProduct.name.substring(0, 20) + "..." : cheapestProduct.name}</span>
+                    {" "}(₩{cheapestPrice.toLocaleString()})
+                    {highestPrice > cheapestPrice && (
+                      <span className="text-slate-500">
+                        , 최고가 대비 {Math.round(((highestPrice - cheapestPrice) / highestPrice) * 100)}% 저렴
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -972,6 +971,22 @@ export default function TestComparePage() {
                     직접 입력
                   </span>
                 </div>
+                {/* 납기 판단 요약 */}
+                {fastestProduct && hasLeadTimeData && (
+                  <div className="mt-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      <span className="font-semibold text-blue-700">최단 납기</span>는{" "}
+                      <span className="font-medium">{fastestProduct.name.length > 20 ? fastestProduct.name.substring(0, 20) + "..." : fastestProduct.name}</span>
+                      {" "}({getAverageLeadTime(fastestProduct)}일)
+                      {productsWithLeadTime.length > 1 && (() => {
+                        const avgAll = Math.round(productsWithLeadTime.reduce((sum: number, p: any) => sum + getAverageLeadTime(p), 0) / productsWithLeadTime.length);
+                        return avgAll > getAverageLeadTime(fastestProduct) ? (
+                          <span className="text-slate-500">, 전체 평균({avgAll}일) 대비 빠름</span>
+                        ) : null;
+                      })()}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -1358,7 +1373,12 @@ function ProductAlternativesCard({
     );
   }
 
-  if (!alternatives?.alternatives || alternatives.alternatives.length === 0) {
+  // 유사도 60% 미만 대체품 필터링
+  const qualifiedAlts = (alternatives?.alternatives || []).filter(
+    (alt: any) => alt.similarity >= 0.6
+  );
+
+  if (qualifiedAlts.length === 0) {
     return null;
   }
 
@@ -1367,11 +1387,11 @@ function ProductAlternativesCard({
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold text-slate-900">{product.name}</span>
         <Badge variant="outline" className="text-xs">
-          대체품 {alternatives.alternatives.length}개
+          대체품 {qualifiedAlts.length}개
         </Badge>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {alternatives.alternatives.map((alt: any) => {
+        {qualifiedAlts.map((alt: any) => {
           const inCompare = compareIds.includes(alt.id);
           
           return (
@@ -1441,14 +1461,10 @@ function ProductAlternativesCard({
                     />
                   </div>
                   {alt.similarityReasons && alt.similarityReasons.length > 0 && (
-                    <div className="space-y-0.5 pt-0.5">
-                      {alt.similarityReasons.slice(0, 2).map((reason: string, idx: number) => (
-                        <div key={idx} className="text-xs text-slate-600 flex items-center gap-1">
-                          <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
-                          {reason}
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed pt-0.5">
+                      <span className="font-medium text-slate-700">대체 가능: </span>
+                      {alt.similarityReasons.slice(0, 3).join(", ")}
+                    </p>
                   )}
                 </div>
 
