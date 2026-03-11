@@ -2,10 +2,10 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Component, type ReactNode } from "react";
 import * as React from "react";
 import { useSession } from "next-auth/react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -33,12 +33,13 @@ import {
   CreditCard,
   BarChart3,
   Loader2,
-  X,
   ArrowUpRight,
   ArrowDownRight,
   Check,
   Crown,
   Mail,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -49,14 +50,118 @@ import {
   PLAN_PRICES,
   PLAN_ORDER,
   ENTERPRISE_INFO,
-  ANNUAL_DISCOUNT_RATE,
   getAnnualMonthlyPrice,
   getAnnualTotalPrice,
   getPlanLimits,
-  getPlanDisplayName,
 } from "@/lib/plans";
 
-// ── 운영 기능 비교 목록 ──
+// ═══════════════════════════════════════════════════════════════════
+// 로컬 ErrorBoundary — 글로벌 에러 화면으로 보내지 않고 페이지 내에서 처리
+// ═══════════════════════════════════════════════════════════════════
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class PlansErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error("[PlansPage] ErrorBoundary caught:", {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+    });
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-xl mx-auto">
+            <Card className="border-red-200 dark:border-red-800">
+              <CardContent className="py-12 text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-red-50 dark:bg-red-900/30 p-3">
+                    <AlertCircle className="h-8 w-8 text-red-500" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-base font-medium text-slate-900 dark:text-white">
+                    구독 정보를 불러오지 못했습니다.
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    잠시 후 다시 시도하거나 관리자에게 문의해 주세요.
+                  </p>
+                </div>
+                {process.env.NODE_ENV === "development" && this.state.error && (
+                  <div className="text-left bg-slate-50 dark:bg-slate-800 rounded-lg p-3 mt-4">
+                    <p className="text-xs font-mono text-red-600 dark:text-red-400 break-all">
+                      {this.state.error.message}
+                    </p>
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    this.setState({ hasError: false, error: null });
+                  }}
+                  className="mt-4"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  다시 시도
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Safe plan config access — 알 수 없는 plan slug 방어
+// ═══════════════════════════════════════════════════════════════════
+const VALID_PLANS = new Set(Object.values(SubscriptionPlan));
+
+function resolvePlan(rawPlan: unknown): SubscriptionPlan {
+  if (typeof rawPlan === "string" && VALID_PLANS.has(rawPlan as SubscriptionPlan)) {
+    return rawPlan as SubscriptionPlan;
+  }
+  return SubscriptionPlan.FREE;
+}
+
+function safePlanDisplay(plan: SubscriptionPlan) {
+  return PLAN_DISPLAY[plan] ?? PLAN_DISPLAY[SubscriptionPlan.FREE];
+}
+
+function safePlanLimits(plan: SubscriptionPlan) {
+  return PLAN_LIMITS[plan] ?? PLAN_LIMITS[SubscriptionPlan.FREE];
+}
+
+function safePlanPrice(plan: SubscriptionPlan): number {
+  return PLAN_PRICES[plan] ?? 0;
+}
+
+function safePlanOrder(plan: SubscriptionPlan): number {
+  return PLAN_ORDER[plan] ?? 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 플랜 카드 & 기능 비교 (정적 데이터 — plans.ts 기준)
+// ═══════════════════════════════════════════════════════════════════
 const FEATURE_COMPARISON = [
   { key: "exportPack", label: "데이터 내보내기", desc: "Excel/PDF 일괄 내보내기" },
   { key: "approvalWorkflow", label: "전자결재 승인 라인", desc: "구매 요청 워크플로우" },
@@ -71,7 +176,6 @@ const FEATURE_COMPARISON = [
   { key: "prioritySupport", label: "전담 매니저 및 SLA", desc: "우선 기술 지원 — Enterprise 전용" },
 ] as const;
 
-// ── 플랜 카드 정의 ──
 const PLAN_CARDS = [
   {
     id: SubscriptionPlan.FREE,
@@ -112,18 +216,85 @@ const PLAN_CARDS = [
   },
 ];
 
-export default function PlansPage() {
-  const { data: session, status } = useSession();
+// ═══════════════════════════════════════════════════════════════════
+// Skeleton 컴포넌트 — 데이터 준비 전 표시
+// ═══════════════════════════════════════════════════════════════════
+function PlansSkeleton() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div>
+            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+            <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mt-2" />
+          </div>
+          {/* 현재 구독 skeleton */}
+          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2" />
+                    <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          {/* 플랜 카드 skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <div className="h-6 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mt-4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 메인 페이지 컴포넌트
+// ═══════════════════════════════════════════════════════════════════
+function PlansPageContent() {
+  const { data: session, status: sessionStatus } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [isAnnual, setIsAnnual] = useState(false);
 
+  // ┌─────────────────────────────────────────────┐
+  // │ HOOKS — 모두 최상단, 조건부 return 전에 배치 │
+  // └─────────────────────────────────────────────┘
+
   // ── 조직 목록 ──
   const {
     data: organizationsData,
-    isLoading,
-    isError,
+    isLoading: orgsLoading,
+    isError: orgsError,
+    error: orgsErrorObj,
+    refetch: refetchOrgs,
   } = useQuery({
     queryKey: ["user-organizations"],
     queryFn: async () => {
@@ -136,22 +307,56 @@ export default function PlansPage() {
       }
       return response.json();
     },
-    enabled: status === "authenticated",
-    retry: 1,
+    enabled: sessionStatus === "authenticated",
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    staleTime: 30_000,
   });
 
-  // ── 구독 정보 (단일 source of truth) ──
-  const { data: subscriptionData, isLoading: subLoading } = useQuery({
+  const organizations = organizationsData?.organizations ?? [];
+
+  // ── selectedOrgId 초기화 — hook 위반 없이 최상단에서 ──
+  useEffect(() => {
+    if (organizations.length > 0 && !selectedOrgId) {
+      setSelectedOrgId(organizations[0].id);
+    }
+  }, [organizations, selectedOrgId]);
+
+  // ── selectedOrg 파생 ──
+  const selectedOrg = selectedOrgId
+    ? organizations.find((org: any) => org.id === selectedOrgId) ?? null
+    : organizations[0] ?? null;
+
+  // ── 구독 정보 (org 준비 후에만 fetch) ──
+  const {
+    data: subscriptionData,
+    isLoading: subLoading,
+    isError: subError,
+    error: subErrorObj,
+    isFetching: subFetching,
+    refetch: refetchSub,
+  } = useQuery({
     queryKey: ["subscription", selectedOrgId],
     queryFn: async () => {
+      if (!selectedOrgId) return null;
       const response = await fetch(
         `/api/organizations/${selectedOrgId}/subscription`
       );
-      if (!response.ok) return null;
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string })?.error ?? "구독 정보를 불러오지 못했습니다."
+        );
+      }
       return response.json();
     },
-    enabled: !!selectedOrgId,
-    retry: 1,
+    // ★ org가 확정된 후에만 fetch — 핵심 방어
+    enabled: !!selectedOrgId && sessionStatus === "authenticated",
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    staleTime: 30_000,
+    // ★ 조직 전환 시 이전 데이터를 잠깐 보여주고, fetching 상태로 구분
+    placeholderData: keepPreviousData,
   });
 
   // ── 플랜 변경 mutation ──
@@ -198,53 +403,83 @@ export default function PlansPage() {
     },
   });
 
-  // ── 로딩/에러 상태 ──
-  if (status === "loading" || isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">
-                구독 플랜 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const organizations = organizationsData?.organizations || [];
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // ── 진단 로깅 (개발 환경) ──
   useEffect(() => {
-    if (organizations.length > 0 && !selectedOrgId) {
-      setSelectedOrgId(organizations[0].id);
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[PlansPage] State:", {
+        sessionStatus,
+        userId: session?.user?.id ?? null,
+        orgsLoading,
+        orgsError,
+        organizationCount: organizations.length,
+        selectedOrgId: selectedOrgId || "(empty)",
+        selectedOrgName: selectedOrg?.name ?? "(null)",
+        subLoading,
+        subFetching,
+        subError,
+        subscriptionPlan: subscriptionData?.subscription?.plan ?? "(null)",
+        orgPlan: selectedOrg?.plan ?? "(null)",
+      });
     }
-  }, [organizations, selectedOrgId]);
+  });
 
-  const selectedOrg =
-    organizations.find((org: any) => org.id === selectedOrgId) ||
-    organizations[0];
+  // ── 조직 전환 핸들러 ──
+  const handleOrgChange = useCallback(
+    (newOrgId: string) => {
+      setSelectedOrgId(newOrgId);
+      // 이전 subscription 캐시를 즉시 무효화하여 stale 데이터 방지
+      queryClient.removeQueries({ queryKey: ["subscription", selectedOrgId] });
+    },
+    [queryClient, selectedOrgId]
+  );
 
-  if (!selectedOrg) {
+  // ┌─────────────────────────────────────────────┐
+  // │ 여기부터 조건부 렌더 — 모든 hooks 위에 완료  │
+  // └─────────────────────────────────────────────┘
+
+  // ── 상태 1: 세션 로딩 ──
+  if (sessionStatus === "loading") {
+    return <PlansSkeleton />;
+  }
+
+  // ── 상태 2: 인증 안 됨 ──
+  if (sessionStatus === "unauthenticated") {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">소속된 조직이 없습니다.</p>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">로그인이 필요합니다.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── 상태 3: 조직 데이터 로딩 ──
+  if (orgsLoading) {
+    return <PlansSkeleton />;
+  }
+
+  // ── 상태 4: 조직 목록 조회 실패 (inline retry) ──
+  if (orgsError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-xl mx-auto">
+          <Card className="border-amber-200 dark:border-amber-800">
+            <CardContent className="py-12 text-center space-y-4">
+              <AlertCircle className="h-8 w-8 text-amber-500 mx-auto" />
+              <div>
+                <p className="text-base font-medium text-slate-900 dark:text-white">
+                  조직 정보를 불러오지 못했습니다.
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {(orgsErrorObj as Error)?.message ?? "잠시 후 다시 시도하거나 관리자에게 문의해 주세요."}
+                </p>
+              </div>
+              <Button onClick={() => refetchOrgs()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                다시 시도
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -252,34 +487,60 @@ export default function PlansPage() {
     );
   }
 
-  // ── 현재 플랜 결정 ──
-  const subscription = subscriptionData?.subscription;
-  const validPlans = Object.values(SubscriptionPlan) as string[];
-  const currentPlan: SubscriptionPlan =
-    subscription?.plan && validPlans.includes(subscription.plan)
-      ? (subscription.plan as SubscriptionPlan)
-      : selectedOrg?.plan && validPlans.includes(selectedOrg.plan)
-        ? (selectedOrg.plan as SubscriptionPlan)
-        : SubscriptionPlan.FREE;
+  // ── 상태 5: 소속 조직 없음 ──
+  if (organizations.length === 0 || !selectedOrg) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-xl mx-auto">
+          <Card>
+            <CardContent className="py-12 text-center space-y-4">
+              <Building2 className="h-8 w-8 text-slate-400 mx-auto" />
+              <div>
+                <p className="text-base font-medium text-slate-900 dark:text-white">
+                  소속된 조직이 없습니다.
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  조직에 가입하거나 새 조직을 생성해주세요.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-  const limits = getPlanLimits(currentPlan);
-  const currentDisplay = PLAN_DISPLAY[currentPlan];
+  // ═══════════════════════════════════════════════════════════════
+  // 데이터 준비 완료 — 안전한 파생 값 계산
+  // ═══════════════════════════════════════════════════════════════
+  const subscription = subscriptionData?.subscription ?? null;
 
-  // ── 구독 상세 ──
+  // plan slug → enum (방어적 변환)
+  const currentPlan = resolvePlan(
+    subscription?.plan ?? selectedOrg?.plan ?? "FREE"
+  );
+  const limits = safePlanLimits(currentPlan);
+  const currentDisplay = safePlanDisplay(currentPlan);
+
+  // 구독 상세 (모든 필드 null-safe)
   const currentSeats =
-    subscription?.currentSeats ?? (selectedOrg?.memberCount ?? 1);
+    subscription?.currentSeats ?? selectedOrg?.memberCount ?? 1;
   const maxSeats = limits.maxMembers;
-  const nextPaymentDate = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
+  const nextPaymentDate = (() => {
+    try {
+      if (!subscription?.currentPeriodEnd) return null;
+      return new Date(subscription.currentPeriodEnd).toLocaleDateString(
+        "ko-KR",
+        { year: "numeric", month: "long", day: "numeric" }
+      );
+    } catch {
+      return null;
+    }
+  })();
 
-  // ── 가격 계산 ──
+  // 가격 계산 (safe)
   const getDisplayPrice = (plan: SubscriptionPlan): number => {
-    const base = PLAN_PRICES[plan];
+    const base = safePlanPrice(plan);
     if (base === 0) return 0;
     return isAnnual ? getAnnualMonthlyPrice(plan) : base;
   };
@@ -289,13 +550,18 @@ export default function PlansPage() {
     return `₩${amount.toLocaleString()}`;
   };
 
-  // ── 버튼 라벨/스타일 ──
+  // 버튼 상태 (safe)
   const getButtonInfo = (planId: SubscriptionPlan) => {
     if (planId === currentPlan) {
-      return { label: "현재 사용 중", disabled: true, isUpgrade: false, isDowngrade: false };
+      return {
+        label: "현재 사용 중",
+        disabled: true,
+        isUpgrade: false,
+        isDowngrade: false,
+      };
     }
-    const currentOrder = PLAN_ORDER[currentPlan];
-    const targetOrder = PLAN_ORDER[planId];
+    const currentOrder = safePlanOrder(currentPlan);
+    const targetOrder = safePlanOrder(planId);
     const isUpgrade = targetOrder > currentOrder;
     return {
       label: isUpgrade ? "업그레이드" : "다운그레이드",
@@ -307,7 +573,7 @@ export default function PlansPage() {
 
   const handlePlanChange = (planId: SubscriptionPlan) => {
     const info = getButtonInfo(planId);
-    const planName = PLAN_DISPLAY[planId].displayName;
+    const planName = safePlanDisplay(planId).displayName;
 
     const msg = info.isDowngrade
       ? `${planName} 플랜으로 다운그레이드하시겠습니까?\n일부 기능이 제한될 수 있으며, 현재 데이터는 유지됩니다.`
@@ -321,6 +587,9 @@ export default function PlansPage() {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // 메인 렌더
+  // ═══════════════════════════════════════════════════════════════
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="container mx-auto px-4 py-8">
@@ -346,7 +615,10 @@ export default function PlansPage() {
                   >
                     조직 선택
                   </Label>
-                  <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                  <Select
+                    value={selectedOrgId}
+                    onValueChange={handleOrgChange}
+                  >
                     <SelectTrigger
                       id="team-select"
                       className="w-[300px] dark:bg-slate-800 dark:border-slate-700"
@@ -369,7 +641,19 @@ export default function PlansPage() {
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
               ① 현재 구독 상태 (최상단)
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <Card
+            className={cn(
+              "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative",
+              subFetching && "opacity-60"
+            )}
+          >
+            {/* 조직 전환 중 로딩 오버레이 */}
+            {subFetching && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-900/50 z-10 rounded-lg">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              </div>
+            )}
+
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -420,7 +704,7 @@ export default function PlansPage() {
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">
                       {formatPrice(getDisplayPrice(currentPlan))}
                       <span className="text-sm font-normal text-slate-500 ml-1">
-                        /{isAnnual ? "월" : "월"}
+                        /월
                       </span>
                     </p>
                     {isAnnual && (
@@ -433,72 +717,96 @@ export default function PlansPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Package className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      현재 플랜
-                    </span>
+              {/* 구독 조회 실패 시 inline error */}
+              {subError && !subFetching ? (
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                      구독 상세 정보를 불러오지 못했습니다.
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                      {(subErrorObj as Error)?.message ?? "잠시 후 다시 시도해주세요."}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {currentDisplay.displayName}
-                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchSub()}
+                    className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300"
+                  >
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                    재시도
+                  </Button>
                 </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      결제 주기
-                    </span>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Package className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        현재 플랜
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {currentDisplay.displayName}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {currentPlan === SubscriptionPlan.FREE
-                      ? "-"
-                      : isAnnual
-                        ? "연간"
-                        : "월간"}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      다음 결제일
-                    </span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        결제 주기
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {currentPlan === SubscriptionPlan.FREE
+                        ? "-"
+                        : isAnnual
+                          ? "연간"
+                          : "월간"}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {currentPlan === SubscriptionPlan.FREE
-                      ? "-"
-                      : nextPaymentDate ?? "-"}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Users className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      좌석 사용량
-                    </span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        다음 결제일
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {currentPlan === SubscriptionPlan.FREE
+                        ? "-"
+                        : nextPaymentDate ?? "-"}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {currentSeats}명 /{" "}
-                    {maxSeats === null ? "무제한" : `${maxSeats}명`}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      월간 견적
-                    </span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        좌석 사용량
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {currentSeats}명 /{" "}
+                      {maxSeats === null ? "무제한" : `${maxSeats}명`}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {limits.maxQuotesPerMonth === null
-                      ? "무제한"
-                      : `${limits.maxQuotesPerMonth}건`}
-                  </p>
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        월간 견적
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {limits.maxQuotesPerMonth === null
+                        ? "무제한"
+                        : `${limits.maxQuotesPerMonth}건`}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -545,20 +853,18 @@ export default function PlansPage() {
           </div>
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-              ③ 플랜 카드 (Starter / Team / Business / Enterprise)
+              ③ 플랜 카드
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
-            {/* ── Starter / Team / Business 카드 ── */}
             {PLAN_CARDS.map((card) => {
-              const display = PLAN_DISPLAY[card.id];
-              const planLimits = PLAN_LIMITS[card.id];
+              const display = safePlanDisplay(card.id);
+              const planLimits = safePlanLimits(card.id);
               const isCurrentPlan = card.id === currentPlan;
               const isBusiness = card.id === SubscriptionPlan.ORGANIZATION;
-              const isTeam = card.id === SubscriptionPlan.TEAM;
               const Icon = card.icon;
               const btnInfo = getButtonInfo(card.id);
               const price = getDisplayPrice(card.id);
-              const originalPrice = PLAN_PRICES[card.id];
+              const originalPrice = safePlanPrice(card.id);
 
               return (
                 <Card
@@ -575,7 +881,6 @@ export default function PlansPage() {
                       "border-slate-200 dark:border-slate-800"
                   )}
                 >
-                  {/* 현재 플랜 배지 */}
                   {isCurrentPlan && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                       <Badge className="bg-emerald-600 text-white px-3 py-1 shadow-lg text-xs">
@@ -583,7 +888,6 @@ export default function PlansPage() {
                       </Badge>
                     </div>
                   )}
-                  {/* Recommended 배지 */}
                   {!isCurrentPlan && display.isRecommended && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                       <Badge className="bg-blue-600 text-white px-3 py-1 shadow-lg text-xs whitespace-nowrap">
@@ -628,7 +932,6 @@ export default function PlansPage() {
                       {display.description}
                     </CardDescription>
 
-                    {/* 가격 */}
                     <div className="mt-4">
                       <div className="flex items-baseline gap-1.5">
                         {isAnnual && originalPrice > 0 && (
@@ -652,7 +955,6 @@ export default function PlansPage() {
                       )}
                     </div>
 
-                    {/* 멤버 제한 */}
                     <div className="mt-2">
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         팀원{" "}
@@ -666,7 +968,6 @@ export default function PlansPage() {
                   </CardHeader>
 
                   <CardContent className="flex flex-col flex-1 space-y-4">
-                    {/* 기능 목록 */}
                     <div className="space-y-2.5 flex-1">
                       {card.features.map((feature) => (
                         <div
@@ -690,7 +991,6 @@ export default function PlansPage() {
                       ))}
                     </div>
 
-                    {/* 버튼 */}
                     <div className="pt-4 mt-auto">
                       {btnInfo.disabled ? (
                         <Button
@@ -736,7 +1036,7 @@ export default function PlansPage() {
               );
             })}
 
-            {/* ── Enterprise 카드 ── */}
+            {/* Enterprise 카드 */}
             <Card className="relative flex flex-col border-slate-200 dark:border-slate-800 dark:bg-slate-900 hover:shadow-lg transition-all duration-300">
               <CardHeader className="pb-3 pt-6">
                 <div className="flex items-center gap-3 mb-2">
@@ -755,21 +1055,17 @@ export default function PlansPage() {
                 <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
                   {ENTERPRISE_INFO.description}
                 </CardDescription>
-
-                {/* 가격 */}
                 <div className="mt-4">
                   <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
                     {ENTERPRISE_INFO.priceDisplay}
                   </span>
                 </div>
-
                 <div className="mt-2">
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     팀원 무제한 · 전담 매니저 배정
                   </span>
                 </div>
               </CardHeader>
-
               <CardContent className="flex flex-col flex-1 space-y-4">
                 <div className="space-y-2.5 flex-1">
                   {ENTERPRISE_INFO.features.map((feature) => (
@@ -781,7 +1077,6 @@ export default function PlansPage() {
                     </div>
                   ))}
                 </div>
-
                 <div className="pt-4 mt-auto">
                   <Button
                     variant="outline"
@@ -799,7 +1094,7 @@ export default function PlansPage() {
           </div>
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-              ④ 기능 비교 (운영 기능 기준)
+              ④ 기능 비교 테이블
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <CardHeader className="pb-2">
@@ -833,58 +1128,28 @@ export default function PlansPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* 기본 정보 행 */}
                     <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-                      <td className="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-400">
-                        팀원 수
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        1명
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        5명
-                      </td>
-                      <td className="text-center py-2.5 px-3 bg-blue-50/30 dark:bg-blue-900/5 text-blue-700 dark:text-blue-400 font-semibold">
-                        무제한
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        무제한
-                      </td>
+                      <td className="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-400">팀원 수</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">1명</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">5명</td>
+                      <td className="text-center py-2.5 px-3 bg-blue-50/30 dark:bg-blue-900/5 text-blue-700 dark:text-blue-400 font-semibold">무제한</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">무제한</td>
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-                      <td className="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-400">
-                        품목 등록 수
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        10개
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        50개
-                      </td>
-                      <td className="text-center py-2.5 px-3 bg-blue-50/30 dark:bg-blue-900/5 text-blue-700 dark:text-blue-400 font-semibold">
-                        무제한
-                      </td>
-                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">
-                        무제한
-                      </td>
+                      <td className="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-400">품목 등록 수</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">10개</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">50개</td>
+                      <td className="text-center py-2.5 px-3 bg-blue-50/30 dark:bg-blue-900/5 text-blue-700 dark:text-blue-400 font-semibold">무제한</td>
+                      <td className="text-center py-2.5 px-3 text-slate-600 dark:text-slate-400 font-medium">무제한</td>
                     </tr>
-
-                    {/* 기능 비교 행 */}
                     {FEATURE_COMPARISON.map((feat) => {
                       const starterHas =
-                        PLAN_LIMITS[SubscriptionPlan.FREE].features[
-                          feat.key as keyof typeof PLAN_LIMITS.FREE.features
-                        ] ?? false;
+                        (safePlanLimits(SubscriptionPlan.FREE).features as any)?.[feat.key] ?? false;
                       const teamHas =
-                        PLAN_LIMITS[SubscriptionPlan.TEAM].features[
-                          feat.key as keyof typeof PLAN_LIMITS.TEAM.features
-                        ] ?? false;
+                        (safePlanLimits(SubscriptionPlan.TEAM).features as any)?.[feat.key] ?? false;
                       const businessHas =
-                        PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].features[
-                          feat.key as keyof typeof PLAN_LIMITS.ORGANIZATION.features
-                        ] ?? false;
-                      // Enterprise = Business 전체 + SSO, onPremise, prioritySupport
-                      const enterpriseHas = true; // Enterprise는 모든 기능 포함
+                        (safePlanLimits(SubscriptionPlan.ORGANIZATION).features as any)?.[feat.key] ?? false;
+                      const enterpriseHas = true;
 
                       const renderCell = (has: boolean, isBiz: boolean = false) =>
                         has ? (
@@ -917,18 +1182,12 @@ export default function PlansPage() {
                               </p>
                             </div>
                           </td>
-                          <td className="text-center py-2.5 px-3">
-                            {renderCell(starterHas)}
-                          </td>
-                          <td className="text-center py-2.5 px-3">
-                            {renderCell(teamHas)}
-                          </td>
+                          <td className="text-center py-2.5 px-3">{renderCell(starterHas)}</td>
+                          <td className="text-center py-2.5 px-3">{renderCell(teamHas)}</td>
                           <td className="text-center py-2.5 px-3 bg-blue-50/30 dark:bg-blue-900/5">
                             {renderCell(businessHas, true)}
                           </td>
-                          <td className="text-center py-2.5 px-3">
-                            {renderCell(enterpriseHas)}
-                          </td>
+                          <td className="text-center py-2.5 px-3">{renderCell(enterpriseHas)}</td>
                         </tr>
                       );
                     })}
@@ -967,5 +1226,16 @@ export default function PlansPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Export — ErrorBoundary로 감싸서 내보냄
+// ═══════════════════════════════════════════════════════════════════
+export default function PlansPage() {
+  return (
+    <PlansErrorBoundary>
+      <PlansPageContent />
+    </PlansErrorBoundary>
   );
 }
