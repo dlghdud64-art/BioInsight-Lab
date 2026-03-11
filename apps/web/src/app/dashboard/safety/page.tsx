@@ -439,7 +439,15 @@ export default function SafetyManagerPage() {
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
-              <div className="space-y-2 antialiased">
+              <div className="antialiased">
+                {/* 컬럼 헤더 (데스크탑) */}
+                <div className="hidden md:flex items-center text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider py-2 px-4 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+                  <div className="flex-1 min-w-0">물질 정보</div>
+                  <div className="w-60 flex-shrink-0 px-3">운영 상세</div>
+                  <div className="w-24 flex-shrink-0 text-center">보호구</div>
+                </div>
+
+                <div className="space-y-2">
                 {filteredItems.map((item) => {
                   const riskBadge = item.level === "HIGH"
                     ? { label: "고위험", cls: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800" }
@@ -451,63 +459,72 @@ export default function SafetyManagerPage() {
                     : item.actionStatus === "caution"
                       ? { label: "주의", cls: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800" }
                       : { label: "정상", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800" };
-                  const requiredPpe = item.ppe.filter((p) => p.required).map((p) =>
-                    p.type === "gloves" ? "보호장갑" : p.type === "goggles" ? "보안경" : p.type === "coat" ? "실험복" : p.type === "mask" ? "마스크" : ""
-                  ).filter(Boolean);
 
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
+                      className={`flex flex-col md:flex-row border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
                     >
-                      {/* 1행: 핵심 식별 정보 */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex gap-1.5 flex-shrink-0">
-                          {item.icons.map((icon) => (
-                            <GHSPictogram key={icon} type={icon} />
-                          ))}
+                      {/* LEFT: 식별 정보 */}
+                      <div className="flex-1 min-w-0 p-3 md:p-4 md:pr-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex gap-1 flex-shrink-0">
+                            {item.icons.map((icon) => (
+                              <GHSPictogram key={icon} type={icon} />
+                            ))}
+                          </div>
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono">
-                          {item.cas}
-                        </Badge>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
-                          {riskBadge.label}
-                        </Badge>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${actionBadge.cls}`}>
-                          {actionBadge.label}
-                        </Badge>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-nowrap overflow-x-auto">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono flex-shrink-0">
+                            {item.cas}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${riskBadge.cls}`}>
+                            {riskBadge.label}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${actionBadge.cls}`}>
+                            {actionBadge.label}
+                          </Badge>
+                          {!item.hasMsds && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0 bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
+                              MSDS 미등록
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
-                      {/* 2행: 운영 메타 정보 (모든 항목 동일 순서) */}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span>보관: {item.loc}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>조건: {item.storageCondition}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>MSDS: {item.hasMsds ? (
-                          <span className="text-emerald-600 dark:text-emerald-400">등록 ({item.msdsUpdatedAt})</span>
-                        ) : (
-                          <span className="text-amber-600 dark:text-amber-400">미등록</span>
-                        )}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>점검: {item.lastInspection || "미점검"}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>등록: {item.registeredAt}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span className="flex items-center gap-1">보호구:
-                          {item.ppe.some((p) => p.required) ? (
-                            <span className="inline-flex gap-0.5 ml-0.5">
-                              {item.ppe.map((p) => (
-                                <PPEIcon key={p.type} type={p.type} required={p.required} />
-                              ))}
-                            </span>
-                          ) : "없음"}
-                        </span>
+                      {/* CENTER: 운영 메타 (key/value 구조) */}
+                      <div className="md:w-60 flex-shrink-0 px-3 pb-3 md:p-4 md:px-3 md:border-l border-t md:border-t-0 border-slate-100 dark:border-slate-800/50">
+                        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px]">
+                          <dt className="text-slate-400 dark:text-slate-500 whitespace-nowrap">보관</dt>
+                          <dd className="text-slate-700 dark:text-slate-300 truncate">{item.loc}</dd>
+                          <dt className="text-slate-400 dark:text-slate-500 whitespace-nowrap">조건</dt>
+                          <dd className="text-slate-700 dark:text-slate-300 truncate">{item.storageCondition}</dd>
+                          <dt className="text-slate-400 dark:text-slate-500 whitespace-nowrap">MSDS</dt>
+                          <dd className="truncate">{item.hasMsds ? (
+                            <span className="text-emerald-600 dark:text-emerald-400">등록 ({item.msdsUpdatedAt})</span>
+                          ) : (
+                            <span className="text-amber-600 dark:text-amber-400">미등록</span>
+                          )}</dd>
+                          <dt className="text-slate-400 dark:text-slate-500 whitespace-nowrap">점검</dt>
+                          <dd className="text-slate-700 dark:text-slate-300">{item.lastInspection || <span className="text-amber-500">미점검</span>}</dd>
+                          <dt className="text-slate-400 dark:text-slate-500 whitespace-nowrap">등록</dt>
+                          <dd className="text-slate-700 dark:text-slate-300">{item.registeredAt}</dd>
+                        </dl>
+                      </div>
+
+                      {/* RIGHT: 보호구(PPE) — 독립 컬럼, 고정 너비 */}
+                      <div className="md:w-24 flex-shrink-0 px-3 pb-3 md:p-4 md:pl-3 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800/50 flex items-center md:justify-center">
+                        <div className="flex md:grid md:grid-cols-2 gap-1.5">
+                          {item.ppe.map((p) => (
+                            <PPEIcon key={p.type} type={p.type} required={p.required} />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
+                </div>
               </div>
             )}
           </CardContent>
