@@ -281,7 +281,7 @@ export default function AnalyticsPage() {
           <Link href="/dashboard/purchases">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-medium">
               <ShoppingCart className="h-3.5 w-3.5" />
-              구매 내역 보기
+              구매 운영 보기
             </Button>
           </Link>
           <Link href="/dashboard/budget">
@@ -719,7 +719,7 @@ export default function AnalyticsPage() {
               <p className="text-sm">아직 구매 내역이 없습니다.</p>
               <Link href="/dashboard/purchases">
                 <Button variant="outline" size="sm" className="mt-2 h-8 text-xs font-medium">
-                  구매 내역 등록하기
+                  구매 운영으로 이동
                 </Button>
               </Link>
             </div>
@@ -837,7 +837,7 @@ export default function AnalyticsPage() {
           <Link href="/dashboard/purchases">
             <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
-              구매 내역 보기
+              구매 운영 보기
             </Button>
           </Link>
           <Link href="/dashboard/budget">

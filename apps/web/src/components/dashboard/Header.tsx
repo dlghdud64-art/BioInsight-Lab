@@ -210,7 +210,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       dashboard: "대시보드",
       analytics: "지출 분석",
       inventory: "재고 관리",
-      purchases: "구매 내역",
+      purchases: "구매 운영",
       quotes: "견적 관리",
       organizations: "조직 관리",
       safety: "안전 관리",

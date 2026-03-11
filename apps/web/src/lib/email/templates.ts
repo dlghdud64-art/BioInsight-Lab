@@ -257,11 +257,11 @@ export function generatePurchaseCompleteEmail(data: {
         <span class="info-value">${new Date(data.purchaseDate).toLocaleString("ko-KR")}</span>
       </div>
       
-      <a href="${data.quoteUrl}" class="button">구매 내역 보기</a>
-      
+      <a href="${data.quoteUrl}" class="button">구매 운영 보기</a>
+
       <div class="footer">
         <p>이 알림은 구매 관리 시스템에서 자동으로 발송되었습니다.</p>
-        <p>구매 내역은 대시보드에서 확인할 수 있습니다.</p>
+        <p>구매 운영 화면에서 상세 내역을 확인할 수 있습니다.</p>
       </div>
     </div>
   </div>
@@ -278,10 +278,10 @@ export function generatePurchaseCompleteEmail(data: {
 품목 수: ${data.itemCount}개
 구매 일시: ${new Date(data.purchaseDate).toLocaleString("ko-KR")}
 
-구매 내역 보기: ${data.quoteUrl}
+구매 운영 보기: ${data.quoteUrl}
 
 이 알림은 구매 관리 시스템에서 자동으로 발송되었습니다.
-구매 내역은 대시보드에서 확인할 수 있습니다.
+구매 운영 화면에서 상세 내역을 확인할 수 있습니다.
   `.trim();
 
   return { subject, html, text };

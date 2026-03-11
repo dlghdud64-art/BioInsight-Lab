@@ -47,7 +47,7 @@ const sidebarGroups: SidebarGroup[] = [
         icon: FileText,
       },
       {
-        title: "구매 내역",
+        title: "구매 운영",
         href: "/dashboard/purchases",
         icon: ShoppingCart,
       },

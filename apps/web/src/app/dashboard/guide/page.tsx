@@ -50,7 +50,7 @@ const GUIDE_STEPS = [
     title: "구매 관리",
     description:
       "벤더 회신을 확인하고 발주를 진행합니다. 구매 이력, 증빙 자료, 지출 분석까지 하나의 화면에서 관리할 수 있습니다.",
-    cta: { label: "구매 내역 보기", href: "/dashboard/purchases" },
+    cta: { label: "구매 운영 보기", href: "/dashboard/purchases" },
   },
   {
     step: 5,
