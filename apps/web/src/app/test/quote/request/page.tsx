@@ -4,11 +4,9 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense, useState, useRef } from "react";
 import { QuoteRequestPanel, QuoteItemsSummaryPanel, type QuoteRequestPanelRef } from "../../_components/quote-panel";
-import { QuoteRepliesPanel } from "../../_components/quote-replies-panel";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function QuoteRequestPageContent() {
   const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
@@ -24,7 +22,7 @@ function QuoteRequestPageContent() {
 
   return (
     <div className="space-y-4 md:space-y-6 px-3 sm:px-4">
-      {/* 뒤로가기 버튼 */}
+      {/* 뒤로가기 + 단계 표시 */}
       <div className="flex items-center gap-4">
         <Link href="/test/quote">
           <Button variant="outline" size="sm" className="text-xs h-8 sm:h-9">
@@ -35,36 +33,24 @@ function QuoteRequestPageContent() {
         </Link>
       </div>
 
-      {/* 탭 */}
-      <Tabs defaultValue="request" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 gap-1">
-          <TabsTrigger value="request" className="text-xs md:text-sm whitespace-nowrap">
-            <span className="hidden sm:inline">견적 요청</span>
-            <span className="sm:hidden">견적</span>
-          </TabsTrigger>
-          <TabsTrigger value="replies" className="text-xs md:text-sm whitespace-nowrap">회신</TabsTrigger>
-        </TabsList>
+      {/* 헤더 */}
+      <div>
+        <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-1">Step 3. 견적 요청서 작성</h1>
+        <p className="text-sm text-slate-500">요청 메시지와 배송 정보를 입력한 뒤 발송하세요.</p>
+      </div>
 
-        {/* 견적 요청 탭 */}
-        <TabsContent value="request" className="mt-4">
-          <div className="grid gap-4 md:gap-6 lg:grid-cols-12">
-            {/* 좌측: 견적 요청 폼 (8칸) */}
-            <div className="w-full order-2 lg:order-1 lg:col-span-8">
-              <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
-            </div>
+      {/* 견적 요청 폼 + 요약 패널 */}
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-12">
+        {/* 좌측: 견적 요청 폼 (8칸) */}
+        <div className="w-full order-2 lg:order-1 lg:col-span-8">
+          <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
+        </div>
 
-            {/* 우측: 견적 요청 품목 요약 패널 (4칸) */}
-            <div className="w-full order-1 lg:order-2 lg:col-span-4">
-              <QuoteItemsSummaryPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* 회신 탭 */}
-        <TabsContent value="replies" className="mt-4">
-          <QuoteRepliesPanel />
-        </TabsContent>
-      </Tabs>
+        {/* 우측: 견적 요청 품목 요약 패널 (4칸) */}
+        <div className="w-full order-1 lg:order-2 lg:col-span-4">
+          <QuoteItemsSummaryPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
+        </div>
+      </div>
     </div>
   );
 }

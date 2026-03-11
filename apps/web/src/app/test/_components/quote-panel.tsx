@@ -655,78 +655,75 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                     ₩{totalAmount.toLocaleString()}
                   </span>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const headers = ["No.", "제품명", "브랜드", "카탈로그 번호", "수량", "예상 단가", "예상 금액", "비고"];
-                    const rows = quoteItems.map((item, index) => {
-                      const product = products?.find((p: any) => p.id === item.productId);
-                      return [
-                        (index + 1).toString(),
-                        `"${(item.productName || "").replace(/"/g, '""')}"`,
-                        `"${(product?.brand || "").replace(/"/g, '""')}"`,
-                        `"${(product?.catalogNumber || "").replace(/"/g, '""')}"`,
-                        (item.quantity || 1).toString(),
-                        (item.unitPrice || 0).toString(),
-                        (item.lineTotal || 0).toString(),
-                        `"${(item.notes || "").replace(/"/g, '""')}"`,
-                      ];
-                    });
-                    const csvContent = [
-                      headers.join(","),
-                      ...rows.map((row) => row.join(",")),
-                    ].join("\n");
-                    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.download = `견적요청_${new Date().toISOString().split("T")[0]}.csv`;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                    toast({
-                      title: "내보내기 완료",
-                      description: "CSV 파일이 다운로드되었습니다.",
-                    });
-                  }}
-                  disabled={quoteItems.length === 0}
-                  className="w-full sm:w-auto"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  CSV 다운로드
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    if (quoteItems.length === 0) {
-                      toast({
-                        title: "품목이 없습니다",
-                        description: "공유할 품목을 먼저 추가해주세요.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    try {
-                      await generateShareLink("견적 요청 리스트", 30);
-                      toast({
-                        title: "공유 링크 생성 완료",
-                        description: "공유 링크가 생성되었습니다.",
-                      });
-                    } catch (error: any) {
-                      toast({
-                        title: "공유 링크 생성 실패",
-                        description: error.message || "공유 링크를 생성할 수 없습니다.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  disabled={quoteItems.length === 0 || isGeneratingShareLink}
-                  className="w-full sm:w-auto"
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  링크 공유
-                </Button>
+                {/* 보조 액션: 더보기 메뉴 */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-xs">
+                      <MoreVertical className="h-4 w-4 mr-1" />
+                      내보내기
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const headers = ["No.", "제품명", "브랜드", "카탈로그 번호", "수량", "예상 단가", "예상 금액", "비고"];
+                        const rows = quoteItems.map((item, index) => {
+                          const product = products?.find((p: any) => p.id === item.productId);
+                          return [
+                            (index + 1).toString(),
+                            `"${(item.productName || "").replace(/"/g, '""')}"`,
+                            `"${(product?.brand || "").replace(/"/g, '""')}"`,
+                            `"${(product?.catalogNumber || "").replace(/"/g, '""')}"`,
+                            (item.quantity || 1).toString(),
+                            (item.unitPrice || 0).toString(),
+                            (item.lineTotal || 0).toString(),
+                            `"${(item.notes || "").replace(/"/g, '""')}"`,
+                          ];
+                        });
+                        const csvContent = [
+                          headers.join(","),
+                          ...rows.map((row) => row.join(",")),
+                        ].join("\n");
+                        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `견적요청_${new Date().toISOString().split("T")[0]}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        toast({
+                          title: "내보내기 완료",
+                          description: "CSV 파일이 다운로드되었습니다.",
+                        });
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      CSV 다운로드
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        if (quoteItems.length === 0) return;
+                        try {
+                          await generateShareLink("견적 요청 리스트", 30);
+                          toast({
+                            title: "공유 링크 생성 완료",
+                            description: "공유 링크가 생성되었습니다.",
+                          });
+                        } catch (error: any) {
+                          toast({
+                            title: "공유 링크 생성 실패",
+                            description: error.message || "공유 링크를 생성할 수 없습니다.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      링크 공유
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Link href="/test/quote/request">
                   <Button
                     type="button"
@@ -734,8 +731,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                     className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8"
                     size="lg"
                   >
-                    <FileText className="h-5 w-5 mr-2" />
-                    최종 견적 요청하기
+                    <ArrowRight className="h-5 w-5 mr-2" />
+                    다음: 요청서 작성
                   </Button>
                 </Link>
               </div>
@@ -760,8 +757,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 font-semibold"
               size="lg"
             >
-              <FileText className="h-5 w-5 mr-2" />
-              최종 견적 요청하기
+              <ArrowRight className="h-5 w-5 mr-2" />
+              다음: 요청서 작성
             </Button>
           </Link>
         </div>
@@ -1959,7 +1956,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       }
       return "임시저장됨";
     }
-    return "저장 안됨";
+    return "미저장 변경사항 있음";
   };
 
   if (isLoadingQuoteList) {
