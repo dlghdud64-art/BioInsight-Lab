@@ -52,7 +52,7 @@ export default function IntroPage() {
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-wrap gap-3 mb-8">
+              <div className="flex flex-wrap gap-3 mb-4 md:mb-8">
                 <Link href="/test/search">
                   <button className="h-12 px-7 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors text-sm shadow-sm">
                     시약·장비 검색 시작하기
@@ -66,8 +66,8 @@ export default function IntroPage() {
                 </Link>
               </div>
 
-              {/* Flow chips */}
-              <div className="flex flex-wrap items-center gap-1.5">
+              {/* Flow chips — 데스크탑만 표시 */}
+              <div className="hidden md:flex flex-wrap items-center gap-1.5">
                 {[
                   { label: "시약·장비 검색", icon: Search, color: "text-blue-600" },
                   { label: "제품 비교", icon: GitCompare, color: "text-violet-600" },
@@ -83,6 +83,8 @@ export default function IntroPage() {
                   </div>
                 ))}
               </div>
+              {/* 모바일: 1줄 요약 */}
+              <p className="md:hidden text-xs text-slate-400">검색 → 비교 → 견적 → 재고까지 한 플랫폼에서</p>
             </div>
 
             {/* Right: mini UI mockup (desktop) */}
