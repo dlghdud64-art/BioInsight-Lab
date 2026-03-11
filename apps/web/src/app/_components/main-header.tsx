@@ -43,8 +43,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
       <Sheet>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
-          {/* ── LEFT: 로고 (로그인 → 대시보드, 비로그인 → 홈) ── */}
-          <Link href={session?.user ? "/dashboard" : "/"} className="flex items-center gap-2 flex-shrink-0">
+          {/* ── LEFT: 로고 → 항상 홈 ── */}
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <BioInsightLogo showText={true} />
           </Link>
 
