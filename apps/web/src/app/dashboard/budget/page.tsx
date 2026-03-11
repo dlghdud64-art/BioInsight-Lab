@@ -13,11 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2 } from "lucide-react";
+import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2, Lock } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/app/_components/page-header";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Budget {
   id: string;
@@ -59,8 +60,11 @@ export default function BudgetPage() {
   const [isFetching, setIsFetching] = useState(true);
   // 현재 활성 조직 ID (예산 저장 시 주입)
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+  // 현재 사용자의 조직 내 역할 (OWNER/ADMIN만 수정 가능)
+  const [userOrgRole, setUserOrgRole] = useState<string | null>(null);
+  const canEditBudget = userOrgRole === "OWNER" || userOrgRole === "ADMIN";
 
-  /** 사용자 소속 조직 ID 조회 */
+  /** 사용자 소속 조직 ID + 역할 조회 */
   const fetchActiveOrg = useCallback(async () => {
     try {
       const res = await fetch("/api/organizations");
@@ -69,6 +73,7 @@ export default function BudgetPage() {
       const orgs = Array.isArray(json.organizations) ? json.organizations : [];
       if (orgs.length > 0) {
         setActiveOrgId(orgs[0].id);
+        setUserOrgRole(orgs[0].role ?? null);
       }
     } catch (e) {
       console.error("[BudgetPage] Failed to fetch active org:", e);
@@ -251,14 +256,31 @@ export default function BudgetPage() {
           description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
           icon={Wallet}
           actions={
-            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingBudget(null); }}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
-                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">예산 추가</span>
-                  <span className="sm:hidden">추가</span>
-                </Button>
-              </DialogTrigger>
+            <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
+              {canEditBudget ? (
+                <DialogTrigger asChild>
+                  <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
+                    <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">예산 추가</span>
+                    <span className="sm:hidden">추가</span>
+                  </Button>
+                </DialogTrigger>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" className="text-xs md:text-sm h-8 md:h-10 opacity-50" disabled>
+                        <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                        <span className="hidden sm:inline">예산 추가</span>
+                        <span className="sm:hidden">추가</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Owner/Admin만 예산을 추가할 수 있습니다</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -375,31 +397,50 @@ export default function BudgetPage() {
                         <Progress value={rate} className="h-2" />
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingBudget(budget);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3.5 w-3.5 mr-1" />
-                          수정
-                        </Button>
+                        {canEditBudget ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingBudget(budget);
+                              setSubmitError(null);
+                              setIsDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1" />
+                            수정
+                          </Button>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" disabled className="opacity-50">
+                                  <Lock className="h-3.5 w-3.5 mr-1" />
+                                  수정
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Owner/Admin만 수정 가능</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         <Button variant="outline" size="sm" asChild>
                           <a href={`/dashboard/budget/${budget.id}`}>상세 보기</a>
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
-                              handleDeleteBudget(budget.id);
-                            }
-                          }}
-                        >
-                          삭제
-                        </Button>
+                        {canEditBudget && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
+                                handleDeleteBudget(budget.id);
+                              }
+                            }}
+                          >
+                            삭제
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -576,7 +617,7 @@ function BudgetForm({
         <Input
           id="name"
           value={name}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setName(e.target.value);
             if (errors.name) {
               setErrors((prev) => ({ ...prev, name: "" }));
@@ -672,7 +713,7 @@ function BudgetForm({
         </Label>
         <Select
           value={targetDepartment}
-          onValueChange={(v) => {
+          onValueChange={(v: string) => {
             setTargetDepartment(v);
             if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" }));
           }}
@@ -698,7 +739,7 @@ function BudgetForm({
         <Input
           id="projectName"
           value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)}
           placeholder="예: 신약 개발 프로젝트"
         />
       </div>
@@ -708,12 +749,20 @@ function BudgetForm({
         <Textarea
           id="description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
           placeholder="예산에 대한 추가 설명"
           rows={3}
           className="resize-none"
         />
       </div>
+
+      {submitError && (
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-slate-900 px-3 py-2">
+          <p className="text-xs text-red-600 dark:text-red-400">
+            {submitError}
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
@@ -726,17 +775,10 @@ function BudgetForm({
               {budget ? "수정 중..." : "저장 중..."}
             </>
           ) : (
-            submitError ? "다시 시도" : budget ? "수정" : "저장"
+            budget ? "예산 수정 저장" : "예산 추가"
           )}
         </Button>
       </div>
-      {submitError && (
-        <div className="mt-3 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-slate-900 px-3 py-2">
-          <p className="text-xs text-red-600 dark:text-red-400">
-            {submitError}
-          </p>
-        </div>
-      )}
     </form>
   );
 }
