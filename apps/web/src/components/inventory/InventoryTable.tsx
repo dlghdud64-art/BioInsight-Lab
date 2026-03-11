@@ -8,7 +8,7 @@ import {
   AlertTriangle, Thermometer, Snowflake, Ban, PackagePlus,
   MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown,
   Clock, RotateCcw, Printer, MapPin, Package, ArrowDownUp,
-  PackageX, Truck,
+  PackageX, Truck, ArrowLeftRight,
 } from "lucide-react";
 import { InventoryQRCode } from "./InventoryQRCode";
 import { format } from "date-fns";
@@ -244,6 +244,8 @@ interface InventoryTableProps {
   onReorder: (inventory: InventoryItem) => void;
   onDetailClick?: (inventory: InventoryItem) => void;
   onRestock?: (inventory: InventoryItem) => void;
+  onConsume?: (inventory: InventoryItem) => void;
+  onMoveLocation?: (inventory: InventoryItem) => void;
   onPrintLabel?: (productName: string, lots: InventoryItem[]) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
@@ -259,6 +261,8 @@ export function InventoryTable({
   onReorder,
   onDetailClick,
   onRestock,
+  onConsume,
+  onMoveLocation,
   onPrintLabel,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction,
@@ -426,48 +430,93 @@ export function InventoryTable({
                         )}
                       </TableCell>
 
-                      {/* 빠른 작업 */}
+                      {/* 빠른 작업 — 상태 기반 우선순위 */}
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
-                          {/* 긴급 액션 (부족 시 재발주 강조) */}
-                          {(groupStatus === "부족" || groupStatus === "주의") && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2 text-[11px] gap-1 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                    onClick={() => onReorder(group.lots[0])}
-                                  >
-                                    <RotateCcw className="h-3 w-3 shrink-0" />
-                                    재발주
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>재발주 요청</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                          {(isRisky || groupStatus === "주의") ? (
+                            /* ── 부족/주의/만료/임박 → 재발주(긴급) + 입고 ── */
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={`h-7 px-2 text-[11px] gap-1 ${
+                                        groupStatus === "부족" || displayStatus === "폐기"
+                                          ? "text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                          : "text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                      }`}
+                                      onClick={() => onReorder(group.lots[0])}
+                                    >
+                                      <RotateCcw className="h-3 w-3 shrink-0" />
+                                      재발주
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>재발주 요청</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              {onRestock && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                        onClick={() => onRestock(group.lots[0])}
+                                      >
+                                        <PackagePlus className="h-3 w-3 shrink-0" />
+                                        입고
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>입고 등록</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </>
+                          ) : (
+                            /* ── 정상 → 입고 + 출고/사용 ── */
+                            <>
+                              {onRestock && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                        onClick={() => onRestock(group.lots[0])}
+                                      >
+                                        <PackagePlus className="h-3 w-3 shrink-0" />
+                                        입고
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>입고 등록</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              {onConsume && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        onClick={() => onConsume(group.lots[0])}
+                                      >
+                                        <Truck className="h-3 w-3 shrink-0" />
+                                        출고
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>출고 / 사용 처리</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </>
                           )}
-                          {/* 입고 완료 시 재고 반영 강조 */}
-                          {onRestock && groupStatus === "정상" && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                    onClick={() => onRestock(group.lots[0])}
-                                  >
-                                    <PackagePlus className="h-3 w-3 shrink-0" />
-                                    입고
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>입고 등록</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {/* 더보기 메뉴 */}
+                          {/* 더보기 — 보조/관리 기능 */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400">
@@ -479,21 +528,16 @@ export function InventoryTable({
                                 <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                                 상세 보기
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
+                                <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                                정보 수정
+                              </DropdownMenuItem>
                               {onPrintLabel && (
                                 <DropdownMenuItem onClick={() => onPrintLabel(group.productName, group.lots)} className="gap-2 text-xs">
                                   <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                                   라벨 인쇄
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
-                                <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                정보 수정
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onReorder(group.lots[0])} className="gap-2 text-xs">
-                                <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                                재발주
-                              </DropdownMenuItem>
                               {onDelete && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -532,6 +576,7 @@ export function InventoryTable({
                           const lotDisplayStatus = lotExpired ? "폐기" : lotExpiringSoon ? "임박" : lotStatus;
                           const lotExpiryDays = getExpiryDays(lot.expiryDate);
                           const isLastLot = lotIdx === group.lots.length - 1;
+                          const lotNeedsUrgent = lotDisplayStatus === "부족" || lotDisplayStatus === "폐기" || lotDisplayStatus === "임박" || lotStatus.startsWith("소진 임박") || lotStatus === "재주문 권장";
 
                           return (
                             <TableRow
@@ -617,7 +662,7 @@ export function InventoryTable({
                                 )}
                               </TableCell>
 
-                              {/* Lot 작업 */}
+                              {/* Lot 작업 — 상태 기반 우선순위 */}
                               <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-center gap-1">
                                   <InventoryQRCode
@@ -636,6 +681,90 @@ export function InventoryTable({
                                       unit: l.unit,
                                     }))}
                                   />
+                                  {lotNeedsUrgent ? (
+                                    /* ── 부족/소진임박/만료 → 재발주(긴급) + 입고 ── */
+                                    <>
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className={`h-7 px-2 text-[11px] gap-1 ${
+                                                lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
+                                                  ? "text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                  : "text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                              }`}
+                                              onClick={() => onReorder(lot)}
+                                            >
+                                              <RotateCcw className="h-3 w-3 shrink-0" />
+                                              재발주
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>재발주 요청</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                      {onRestock && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                                onClick={() => onRestock(lot)}
+                                              >
+                                                <PackagePlus className="h-3 w-3 shrink-0" />
+                                                입고
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>입고 등록</TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                    </>
+                                  ) : (
+                                    /* ── 정상 → 출고/사용 + 위치 이동 ── */
+                                    <>
+                                      {onConsume && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                onClick={() => onConsume(lot)}
+                                              >
+                                                <Truck className="h-3 w-3 shrink-0" />
+                                                출고
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>출고 / 사용 처리</TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                      {onMoveLocation && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 px-2 text-[11px] gap-1 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                                                onClick={() => onMoveLocation(lot)}
+                                              >
+                                                <ArrowLeftRight className="h-3 w-3 shrink-0" />
+                                                이동
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>위치 이동</TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                    </>
+                                  )}
+                                  {/* 더보기 — 보조/관리 기능 */}
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400">
@@ -649,7 +778,7 @@ export function InventoryTable({
                                       </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
                                         <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                        수량·위치 수정
+                                        정보 수정
                                       </DropdownMenuItem>
                                       {onPrintLabel && (
                                         <DropdownMenuItem onClick={() => onPrintLabel(lot.product.name, [lot])} className="gap-2 text-xs">
@@ -657,17 +786,6 @@ export function InventoryTable({
                                           라벨 인쇄
                                         </DropdownMenuItem>
                                       )}
-                                      <DropdownMenuSeparator />
-                                      {onRestock && (
-                                        <DropdownMenuItem onClick={() => onRestock(lot)} className="gap-2 text-xs">
-                                          <PackagePlus className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                          입고 등록
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuItem onClick={() => onReorder(lot)} className="gap-2 text-xs">
-                                        <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                                        재발주
-                                      </DropdownMenuItem>
                                       {onDelete && (
                                         <>
                                           <DropdownMenuSeparator />

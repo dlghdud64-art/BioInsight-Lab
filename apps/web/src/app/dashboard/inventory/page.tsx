@@ -1104,6 +1104,18 @@ function InventoryPageContent() {
                       setRestockItem(inventory);
                       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
                     }}
+                    onConsume={(inventory) => {
+                      toast({
+                        title: "출고 / 사용 처리",
+                        description: `${inventory.product.name} 출고/사용 기능은 곧 제공될 예정입니다.`,
+                      });
+                    }}
+                    onMoveLocation={(inventory) => {
+                      toast({
+                        title: "위치 이동",
+                        description: `${inventory.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
+                      });
+                    }}
                     onPrintLabel={(productName, lots) => {
                       setLabelPrintTitle(productName);
                       setLabelPrintLots(lots as ProductInventory[]);
