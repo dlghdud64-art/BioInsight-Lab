@@ -31,8 +31,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
   Settings, Wallet, PauseCircle, X, Send, Building2,
-  FileText, Package, ShoppingCart,
+  FileText, Package, ShoppingCart, MoreVertical, Trash2, RotateCcw, UserX,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
@@ -628,7 +635,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">상태</TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300 hidden md:table-cell">참여일</TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300 hidden lg:table-cell">마지막 활동</TableHead>
-                        {isAdmin && <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">액션</TableHead>}
+                        {isAdmin && <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right w-[60px]">관리</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -699,24 +706,49 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             </TableCell>
                             {isAdmin && (
                               <TableCell className="py-4 text-right">
-                                {rawMember && !isSelfAdmin && (
-                                  <>
-                                    {isPending ? (
-                                      <>
-                                        <Button variant="ghost" size="sm" className="h-8" onClick={() => resendInviteMutation.mutate(rawMember.id)}>
-                                          <Send className="h-4 w-4 mr-1" />재발송
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="h-8 text-red-600 dark:text-red-400" onClick={() => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); }}>
-                                          <X className="h-4 w-4" />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button variant="ghost" size="sm" className="h-8 text-red-600 dark:text-red-400" onClick={() => { if (confirm(`${member.name}님을 제거하시겠습니까?`)) removeMemberMutation.mutate(rawMember.id); }}>
-                                        <X className="h-4 w-4 mr-1" />제거
+                                {member.rawRole === "OWNER" ? (
+                                  /* 소유자: 제거 금지, 소유자 표기 */
+                                  <Badge variant="outline" className="text-[10px] border-violet-200 text-violet-600 dark:border-violet-800 dark:text-violet-400">
+                                    소유자
+                                  </Badge>
+                                ) : rawMember && !isSelfAdmin ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreVertical className="h-4 w-4" />
                                       </Button>
-                                    )}
-                                  </>
-                                )}
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-40">
+                                      {isPending ? (
+                                        /* 초대 대기: 재발송 / 초대 취소 */
+                                        <>
+                                          <DropdownMenuItem onClick={() => resendInviteMutation.mutate(rawMember.id)}>
+                                            <Send className="h-4 w-4 mr-2" />초대 재발송
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            className="text-red-600 dark:text-red-400"
+                                            onClick={() => { if (confirm("초대를 취소하시겠습니까?")) removeMemberMutation.mutate(rawMember.id); }}
+                                          >
+                                            <X className="h-4 w-4 mr-2" />초대 취소
+                                          </DropdownMenuItem>
+                                        </>
+                                      ) : (
+                                        /* 활성 멤버: 비활성화 / 제거 */
+                                        <>
+                                          <DropdownMenuItem
+                                            className="text-red-600 dark:text-red-400"
+                                            onClick={() => { if (confirm(`${member.name}님을 제거하시겠습니까?`)) removeMemberMutation.mutate(rawMember.id); }}
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2" />멤버 제거
+                                          </DropdownMenuItem>
+                                        </>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : isSelfAdmin ? (
+                                  <span className="text-[10px] text-slate-400">-</span>
+                                ) : null}
                               </TableCell>
                             )}
                           </TableRow>

@@ -552,14 +552,14 @@ function WorkspaceSettingsPageContent() {
                                       {getRoleLabel(member.role)}
                                     </Badge>
                                   )}
-                                  {canEdit && (
+                                  {canEdit ? (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8">
                                           <MoreVertical className="h-4 w-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
+                                      <DropdownMenuContent align="end" className="w-40">
                                         <DropdownMenuItem
                                           className="text-red-600"
                                           onClick={() =>
@@ -574,7 +574,9 @@ function WorkspaceSettingsPageContent() {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                  )}
+                                  ) : isOwner ? (
+                                    <span className="text-[10px] text-slate-400">-</span>
+                                  ) : null}
                                 </div>
                               </div>
                             );
