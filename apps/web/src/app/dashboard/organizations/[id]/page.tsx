@@ -32,6 +32,7 @@ import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
   Settings, Wallet, PauseCircle, X, Send, Building2,
   FileText, Package, ShoppingCart, MoreVertical, Trash2, RotateCcw, UserX,
+  Lock, Clock, UserCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -605,8 +606,29 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 />
               </div>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              멤버별 역할을 선택하면 즉시 저장됩니다. 조직(랩실)의 시스템 접근 권한을 여기서 조정하세요.
+            {/* 상태별 요약 카운터 */}
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">활성</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{totalMembers - pendingCount}명</span>
+              </div>
+              {pendingCount > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs text-amber-600 dark:text-amber-400">초대 대기</span>
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{pendingCount}명</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <ShieldCheck className="h-3.5 w-3.5 text-violet-500" />
+                <span className="text-xs text-slate-500 dark:text-slate-400">관리자</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{adminCount}명</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              멤버별 역할을 선택하면 즉시 저장됩니다. 관리 컬럼의 ⋯ 메뉴에서 초대 재발송, 멤버 제거 등 운영 액션을 처리하세요.
             </p>
 
             {filteredTeamMembers.length === 0 ? (
@@ -707,10 +729,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             {isAdmin && (
                               <TableCell className="py-4 text-right">
                                 {member.rawRole === "OWNER" ? (
-                                  /* 소유자: 제거 금지, 소유자 표기 */
-                                  <Badge variant="outline" className="text-[10px] border-violet-200 text-violet-600 dark:border-violet-800 dark:text-violet-400">
-                                    소유자
-                                  </Badge>
+                                  /* 소유자: 액션 대상 아님, lock 아이콘으로 비활성 표기 */
+                                  <Lock className="h-4 w-4 text-slate-300 dark:text-slate-600 mx-auto" />
                                 ) : rawMember && !isSelfAdmin ? (
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
