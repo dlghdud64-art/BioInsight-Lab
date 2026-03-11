@@ -146,7 +146,8 @@ export function TestBoard() {
               if (productIds.includes(id)) {
                 removeProduct(id);
               } else {
-                addProduct(id);
+                const p = products.find((pr: any) => pr.id === id);
+                addProduct(id, p ? { name: p.name, brand: p.brand } : undefined);
               }
             }}
           />

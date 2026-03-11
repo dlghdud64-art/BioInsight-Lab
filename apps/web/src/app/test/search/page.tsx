@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft } from "lucide-react";
 import { AIInsightCard } from "@/components/ai-insight-card";
+import { useCompareStore } from "@/lib/store/compare-store";
 
 export default function SearchPage() {
   const {
@@ -48,6 +49,7 @@ export default function SearchPage() {
     analysisLoading,
     searchQuery,
   } = useTestFlow();
+  const { getDisplayName: getStoredName } = useCompareStore();
   const { data: session } = useSession();
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -127,8 +129,9 @@ export default function SearchPage() {
                             };
                           }
                         }
-                        // 내부 slug/key가 UI에 노출되지 않도록 안전한 fallback 사용
-                        const displayName = product?.name || product?.brand || "비교 대상";
+                        // store에 저장된 메타 정보를 fallback으로 사용
+                        const storedName = getStoredName(id);
+                        const displayName = product?.name || product?.brand || storedName || "비교 대상";
                         return (
                           <Badge
                             key={id}
@@ -248,7 +251,7 @@ export default function SearchPage() {
                         key={product.id}
                         product={product}
                         isInCompare={isInCompare}
-                        onToggleCompare={() => toggleCompare(product.id)}
+                        onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
                         onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
                         onClick={() => handleProtectedAction(() => {
                           setSelectedProduct(product);

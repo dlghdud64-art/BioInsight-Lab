@@ -57,7 +57,7 @@ interface TestFlowContextType {
   
   // 액션
   runSearch: () => void;
-  toggleCompare: (productId: string) => void;
+  toggleCompare: (productId: string, meta?: { name: string; brand?: string }) => void;
   clearCompare: () => void;
   addProductToQuote: (product: any) => void;
   updateQuoteItem: (itemId: string, updates: any) => void;
@@ -320,11 +320,11 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
     }
   };
 
-  const toggleCompare = (productId: string) => {
+  const toggleCompare = (productId: string, meta?: { name: string; brand?: string }) => {
     if (productIds.includes(productId)) {
       removeProduct(productId);
     } else {
-      addProduct(productId);
+      addProduct(productId, meta);
     }
   };
 

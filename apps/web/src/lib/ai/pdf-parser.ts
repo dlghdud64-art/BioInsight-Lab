@@ -71,21 +71,39 @@ export async function extractTextFromPDF(
     let standardFontDataUrl: string | undefined;
     try {
       const path = require("path");
-      standardFontDataUrl = path.join(
+      const fs = require("fs");
+      const fontsDir = path.join(
         path.dirname(require.resolve("pdfjs-dist/package.json")),
         "standard_fonts/"
       );
+      // Vercel 서버리스에서는 이 디렉토리가 없을 수 있으므로 존재 확인
+      if (fs.existsSync(fontsDir)) {
+        standardFontDataUrl = fontsDir;
+      }
     } catch {
       // pdfjs-dist 경로 탐색 실패 시 무시
     }
 
-    // 파서 인스턴스 생성 및 PDF 로드
+    // 파서 인스턴스 생성 및 PDF 로드 (폰트 경로 있으면 우선 시도, 실패 시 없이 재시도)
     const parserOptions: Record<string, unknown> = {};
     if (standardFontDataUrl) {
       parserOptions.standardFontDataUrl = standardFontDataUrl;
     }
-    const parser = new PDFParseClass(uint8Data, parserOptions);
-    await parser.load();
+
+    let parser: any;
+    try {
+      parser = new PDFParseClass(uint8Data, parserOptions);
+      await parser.load();
+    } catch (loadErr: any) {
+      // standardFontDataUrl이 있었다면, 없이 재시도
+      if (standardFontDataUrl) {
+        console.warn("[pdf-parser] 폰트 경로 포함 로드 실패, 폰트 없이 재시도:", loadErr?.message);
+        parser = new PDFParseClass(uint8Data, {});
+        await parser.load();
+      } else {
+        throw loadErr;
+      }
+    }
 
     // 페이지별 텍스트 추출
     let rawText = "";

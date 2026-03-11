@@ -15,43 +15,66 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+interface ProductMeta {
+  name: string;
+  brand?: string;
+}
+
 interface CompareState {
   /** 비교 대상 제품 ID 목록 (최대 5개) */
   productIds: string[];
-  /** 비교 대상에 추가 */
-  addProduct: (productId: string) => void;
+  /** 제품 ID → 이름/브랜드 매핑 (표시용) */
+  productMeta: Record<string, ProductMeta>;
+  /** 비교 대상에 추가 (meta 전달 시 이름 저장) */
+  addProduct: (productId: string, meta?: ProductMeta) => void;
   /** 비교 대상에서 개별 제거 */
   removeProduct: (productId: string) => void;
   /** 비교 대상 전체 비우기 */
   clearProducts: () => void;
   /** 비교 대상 포함 여부 확인 */
   hasProduct: (productId: string) => boolean;
+  /** 제품 표시명 조회 */
+  getDisplayName: (productId: string) => string;
 }
 
 export const useCompareStore = create<CompareState>()(
   persist(
     (set, get) => ({
       productIds: [],
-      addProduct: (productId: string) => {
-        const { productIds } = get();
+      productMeta: {},
+      addProduct: (productId: string, meta?: ProductMeta) => {
+        const { productIds, productMeta } = get();
         if (productIds.length >= 5) {
           alert("최대 5개까지 비교할 수 있습니다.");
           return;
         }
         if (!productIds.includes(productId)) {
-          set({ productIds: [...productIds, productId] });
+          set({
+            productIds: [...productIds, productId],
+            ...(meta ? { productMeta: { ...productMeta, [productId]: meta } } : {}),
+          });
+        } else if (meta && !productMeta[productId]) {
+          // 이미 추가되었지만 meta가 없으면 보충
+          set({ productMeta: { ...productMeta, [productId]: meta } });
         }
       },
       removeProduct: (productId: string) => {
+        const { productMeta, ...rest } = get();
+        const { [productId]: _, ...remainingMeta } = productMeta;
         set({
           productIds: get().productIds.filter((id) => id !== productId),
+          productMeta: remainingMeta,
         });
       },
       clearProducts: () => {
-        set({ productIds: [] });
+        set({ productIds: [], productMeta: {} });
       },
       hasProduct: (productId: string) => {
         return get().productIds.includes(productId);
+      },
+      getDisplayName: (productId: string) => {
+        const meta = get().productMeta[productId];
+        return meta?.name || meta?.brand || "";
       },
     }),
     {

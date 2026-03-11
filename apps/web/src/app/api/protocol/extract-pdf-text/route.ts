@@ -53,10 +53,11 @@ export async function POST(request: NextRequest) {
       length: text.length,
     });
   } catch (error: any) {
-    console.error("[extract-pdf-text] Error:", error?.message);
-
-    // 에러 분류
     const msg = error?.message ?? "";
+    const name = error?.name ?? error?.constructor?.name ?? "";
+    console.error("[extract-pdf-text] Error:", msg, "| name:", name);
+
+    // 에러 분류 (msg + error class name 모두 검사)
 
     // 1. 런타임/환경 에러 (DOMMatrix, window, document 등)
     if (/DOMMatrix|is not defined|window|document|navigator/i.test(msg)) {
@@ -68,32 +69,42 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. 암호화된 PDF
-    if (/password|encrypted|PasswordException/i.test(msg)) {
+    if (/password|encrypted/i.test(msg) || name === "PasswordException") {
       return NextResponse.json({
         error: "암호로 보호된 PDF입니다. 암호를 해제한 후 다시 시도해 주세요.",
         code: "PDF_ENCRYPTED",
       }, { status: 422 });
     }
 
-    // 3. 손상된 PDF
-    if (/invalid|corrupt|InvalidPDFException|damaged/i.test(msg)) {
+    // 3. 손상된 / 유효하지 않은 PDF
+    if (/invalid|corrupt|damaged|structure|parse|stream|xref|trailer|startxref/i.test(msg) || name === "InvalidPDFException" || name === "FormatError") {
       return NextResponse.json({
-        error: "PDF 파일이 손상되었거나 올바르지 않습니다. 다른 파일로 다시 시도해 주세요.",
+        error: "PDF 파일이 손상되었거나 지원하지 않는 형식입니다. 파일을 확인하거나 텍스트 붙여넣기로 진행해 주세요.",
         code: "PDF_INVALID",
       }, { status: 422 });
     }
 
-    // 4. 스캔본 / 텍스트 없음
-    if (/텍스트.*없|no text|empty|스캔/i.test(msg)) {
+    // 4. 모듈/클래스 문제
+    if (/PDFParse.*찾을 수 없|모듈/i.test(msg)) {
+      return NextResponse.json({
+        error: "PDF 분석 모듈에 문제가 발생했습니다. 텍스트 붙여넣기로 진행해 주세요.",
+        code: "MODULE_ERROR",
+        details: process.env.NODE_ENV === "development" ? msg : undefined,
+      }, { status: 500 });
+    }
+
+    // 5. 스캔본 / 텍스트 없음
+    if (/텍스트.*없|no text|empty|스캔|빈 문서/i.test(msg)) {
       return NextResponse.json({
         error: "이 PDF에는 텍스트 레이어가 없습니다. 스캔된 이미지 PDF일 수 있습니다. 텍스트 붙여넣기로 진행해 주세요.",
         code: "PDF_NO_TEXT",
       }, { status: 422 });
     }
 
-    // 5. 기타 에러
+    // 6. 기타 에러 — 상세 로그 남기고 사용자 안내
+    console.error("[extract-pdf-text] Unclassified error stack:", error?.stack);
     return NextResponse.json({
-      error: "PDF에서 텍스트를 추출하는 중 오류가 발생했습니다. 텍스트 붙여넣기로 진행하거나 다시 시도해 주세요.",
+      error: "PDF 분석에 실패했습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다. 텍스트 붙여넣기로 계속 진행할 수 있습니다.",
       code: "PDF_PARSE_ERROR",
       details: process.env.NODE_ENV === "development" ? error?.stack : undefined,
     }, { status: 500 });
