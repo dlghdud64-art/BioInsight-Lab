@@ -30,6 +30,7 @@ import { InventorySearch } from "@/components/inventory/InventorySearch";
 import { useDebounce } from "@/hooks/use-debounce";
 import { StockLifespanGauge } from "@/components/inventory/stock-lifespan-gauge";
 import { useToast } from "@/hooks/use-toast";
+import { useQRScanner } from "@/contexts/QRScannerContext";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -72,6 +73,7 @@ function InventoryPageContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { open: openQRScanner } = useQRScanner();
   const searchParams = useSearchParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -876,7 +878,7 @@ function InventoryPageContent() {
   };
 
   return (
-    <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8">
+    <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* 상단 타이틀 및 액션 버튼 */}
         <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
@@ -2687,6 +2689,20 @@ function InventoryPageContent() {
           </TabsContent>
         </Tabs>
         )}
+      </div>
+
+      {/* 모바일 하단 고정 액션 — 재고 등록 & 차감 */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 dark:bg-[#0f1623]/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800/50 px-4 py-2.5 safe-area-bottom">
+        <div className="flex items-center gap-2 max-w-7xl mx-auto">
+          <Button variant="outline" size="sm" className="flex-1 h-11 text-xs gap-1.5 border-blue-200 text-blue-700 dark:text-blue-400 hover:bg-blue-50" onClick={() => setIsDialogOpen(true)}>
+            <PackagePlus className="h-3.5 w-3.5" />
+            재고 등록
+          </Button>
+          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 text-white shadow-sm" onClick={openQRScanner}>
+            <TrendingDown className="h-3.5 w-3.5" />
+            재고 차감
+          </Button>
+        </div>
       </div>
     </div>
   );
