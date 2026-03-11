@@ -207,11 +207,18 @@ function ChartSkeleton() {
 }
 
 // ── 빈 상태 ──────────────────────────────────────────────
-function EmptyChart({ message }: { message: string }) {
+function EmptyChart({ message, ctaHref, ctaLabel }: { message: string; ctaHref?: string; ctaLabel?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-[220px] text-slate-400 gap-2">
+    <div className="flex flex-col items-center justify-center h-[220px] text-slate-400 gap-3">
       <BarChart2 className="h-8 w-8 opacity-25" />
       <p className="text-sm">{message}</p>
+      {ctaHref && ctaLabel && (
+        <Link href={ctaHref}>
+          <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+            {ctaLabel} <ChevronRight className="h-3 w-3" />
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }
@@ -474,9 +481,9 @@ export default function AnalyticsPage() {
               ) : (
                 <>
                   <div className="text-lg font-semibold text-slate-400 dark:text-slate-500 mt-1">미등록</div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-                    예산 관리에서 등록 후 확인 가능합니다
-                  </p>
+                  <Link href="/dashboard/budget" className="text-xs text-blue-500 hover:text-blue-600 mt-1.5 inline-block">
+                    예산 등록하기 →
+                  </Link>
                 </>
               )}
             </CardContent>
@@ -540,7 +547,9 @@ export default function AnalyticsPage() {
               ) : (
                 <>
                   <div className="text-lg font-semibold text-slate-400 dark:text-slate-500 mt-1">—</div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">예산 등록 후 확인 가능합니다</p>
+                  <Link href="/dashboard/budget" className="text-xs text-blue-500 hover:text-blue-600 mt-1.5 inline-block">
+                    예산 등록하기 →
+                  </Link>
                 </>
               )}
             </CardContent>
@@ -610,7 +619,7 @@ export default function AnalyticsPage() {
                   )}
                 </>
               ) : (
-                <EmptyChart message="아직 지출 내역이 없습니다." />
+                <EmptyChart message="아직 지출 내역이 없습니다." ctaHref="/dashboard/purchases" ctaLabel="구매 내역 등록하기" />
               )}
             </CardContent>
           </Card>
@@ -691,7 +700,7 @@ export default function AnalyticsPage() {
                   </div>
                 </>
               ) : (
-                <EmptyChart message="아직 지출 내역이 없습니다." />
+                <EmptyChart message="아직 지출 내역이 없습니다." ctaHref="/dashboard/purchases" ctaLabel="구매 내역 등록하기" />
               )}
             </CardContent>
           </Card>
