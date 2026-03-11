@@ -186,7 +186,7 @@ export default function SearchPage() {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">검색 결과</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {products.length}개의 제품을 찾았습니다. 스펙을 확인하고 견적 요청 리스트에 담을 수 있습니다.
+                    {products.length}개 제품 · 비교 후 견적 리스트에 담을 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -265,9 +265,9 @@ export default function SearchPage() {
                       <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-5">
                         <Search className="h-8 w-8 text-slate-400" strokeWidth={1.5} />
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-800 mb-2">시약·장비를 검색해 비교 견적을 시작하세요</h3>
+                      <h3 className="text-lg font-semibold text-slate-800 mb-2">시약·장비를 검색해 비교를 시작하세요</h3>
                       <p className="text-sm text-slate-500 leading-relaxed max-w-sm mb-6">
-                        제품명, CAS No., 제조사, 카탈로그 번호로 검색하면 후보 제품을 찾고 비교·견적 요청까지 이어갈 수 있습니다.
+                        제품명, CAS No., 제조사로 검색하면 비교·견적 요청까지 이어갈 수 있습니다.
                       </p>
                       <div className="flex items-center gap-2 text-xs text-slate-400">
                         <span className="px-2 py-1 rounded bg-slate-100">검색 → 비교</span>
@@ -283,8 +283,8 @@ export default function SearchPage() {
                         <Package className="h-7 w-7 text-slate-400" strokeWidth={1.5} />
                       </div>
                       <h3 className="text-base font-semibold text-slate-800 mb-1">검색 결과를 찾지 못했습니다</h3>
-                      <p className="text-sm text-slate-500 mb-5 max-w-xs leading-relaxed">
-                        검색어를 더 구체적으로 입력하거나, 제조사·카탈로그 번호 기준으로 다시 시도해 보세요.
+                      <p className="text-sm text-slate-500 mb-5 max-w-xs leading-relaxed break-keep">
+                        검색어를 더 구체적으로 입력하거나 제조사 기준으로 다시 시도해 보세요.
                       </p>
                       <div className="flex flex-col gap-2 w-full max-w-xs text-left">
                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">다음 방법을 시도해 보세요</p>
@@ -553,8 +553,8 @@ export default function SearchPage() {
       {/* 하단 설명 */}
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs text-slate-500 text-center px-2">
-            견적 리스트는 엑셀/TSV로 다운로드하여 이메일 공유나 사내 전자결재에 활용할 수 있습니다.
+          <p className="text-xs text-slate-500 text-center px-2 hidden sm:block">
+            견적 리스트는 엑셀/TSV로 다운로드하여 이메일 공유나 전자결재에 활용할 수 있습니다.
           </p>
         </div>
       </div>
@@ -597,7 +597,7 @@ function StickySearchBar() {
             type="text"
             value={localQuery}
             onChange={handleChange}
-            placeholder="시약명, CAS No., 제조사, 카탈로그 번호를 입력하세요"
+            placeholder="시약명, CAS No., 제조사 검색"
             className="flex-1 h-10 md:h-14 px-4 md:px-6 text-base md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
@@ -611,8 +611,8 @@ function StickySearchBar() {
           </Button>
         </div>
         {/* 헬퍼 텍스트 */}
-        <p className="mt-2 text-center text-xs text-slate-400 max-w-2xl mx-auto">
-          검색 결과를 비교 후보에 담고, 견적 요청 리스트까지 이어갈 수 있습니다.
+        <p className="mt-2 text-center text-xs text-slate-400 max-w-2xl mx-auto hidden sm:block">
+          검색 결과를 비교 후보에 담고, 견적 요청까지 이어갈 수 있습니다.
         </p>
       </form>
 

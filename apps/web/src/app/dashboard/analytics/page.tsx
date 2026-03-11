@@ -269,7 +269,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            구매 리포트
+            지출 분석
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {currentView === "team"

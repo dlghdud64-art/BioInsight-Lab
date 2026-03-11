@@ -19,7 +19,7 @@ export function BioInsightFeaturesSection() {
       title: "중복 구매 방지",
       titleSub: "Inventory Sharing",
       description: "옆 실험대에 있는데 또 주문하셨나요?",
-      details: "연구실 전체 재고를 통합 검색하세요. 불필요한 지출을 막고, 급할 땐 동료의 시약을 바로 찾을 수 있습니다.",
+      details: "연구실 전체 재고를 통합 검색하세요. 불필요한 지출을 막고, 동료의 시약을 바로 찾을 수 있습니다.",
       color: "from-indigo-500 to-indigo-600",
       bgColor: "bg-indigo-50",
       iconColor: "text-indigo-600",
@@ -36,14 +36,14 @@ export function BioInsightFeaturesSection() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-12 md:py-24 bg-white">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3 md:mb-4">
             연구에만 집중하세요
           </h2>
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-            복잡한 재고 관리는 우리가 알아서 처리합니다
+          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto break-keep">
+            재고 관리는 우리가 알아서 처리합니다
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export function BioInsightFeaturesSection() {
                       </span>
                     )}
                   </CardTitle>
-                  <CardDescription className="text-base md:text-lg font-semibold text-slate-700">
+                  <CardDescription className="text-sm md:text-lg font-semibold text-slate-700">
                     {feature.description}
                   </CardDescription>
                 </CardHeader>

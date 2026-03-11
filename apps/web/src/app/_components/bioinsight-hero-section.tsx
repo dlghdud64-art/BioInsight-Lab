@@ -81,26 +81,24 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-[2rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-none">
-            <span className="block pb-2 md:pb-3">
-              전 세계 500만 개 시약/장비,
+          <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none">
+            <span className="block pb-1.5 md:pb-3">
+              500만 개 시약·장비,
             </span>
-            <span className="block text-blue-600 pt-1 md:pt-2">
+            <span className="block text-blue-600 pt-0.5 md:pt-2">
               최저가 검색부터 견적까지
             </span>
           </h1>
 
-          <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-2 break-keep">
-            더 이상 구글링하지 마세요.{" "}
+          <p className="text-[15px] md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4 sm:px-2 break-keep">
+            구글링 대신 BioInsight Lab.{" "}
             <br className="hidden sm:block" />
-            BioInsight Lab이 스펙 비교부터 최적 견적까지 한 번에 찾아드립니다.
+            스펙 비교부터 최적 견적까지 한 번에.
           </p>
 
-          {/* 플랫폼 서사 서브카피 */}
-          <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed px-2 break-keep">
-            찾는 품목을 검색하고 비교한 뒤,{" "}
-            <br className="hidden md:block" />
-            견적 요청까지 한 곳에서 이어서 처리하세요.
+          {/* 플랫폼 서사 서브카피 — 모바일 숨김 */}
+          <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed px-2 break-keep hidden sm:block">
+            찾는 품목을 검색하고 비교한 뒤, 견적 요청까지 한 곳에서 처리하세요.
           </p>
         </div>
 
@@ -116,7 +114,7 @@ export function BioInsightHeroSection() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="찾으시는 시약명, CAS Number, 제조사를 입력해보세요"
+                placeholder="시약명, CAS No., 제조사 검색"
                 className="flex-1 bg-transparent px-3 md:px-6 text-slate-900 placeholder:text-slate-400 outline-none min-w-0 font-medium h-full border-0 text-[16px] md:text-2xl"
               />
 
@@ -159,8 +157,8 @@ export function BioInsightHeroSection() {
 
           {/* 맞춤 소싱 및 도입 문의 CTA */}
           <div className="mt-10 flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-            <p className="text-sm text-slate-500 mb-3">
-              원하는 제품이 없거나, 연구실 맞춤 도입 상담이 필요하신가요?
+            <p className="text-sm text-slate-500 mb-3 px-4 sm:px-0">
+              원하는 제품이 없거나 맞춤 도입이 필요하신가요?
             </p>
             <Dialog
               open={isOpen}
@@ -176,10 +174,11 @@ export function BioInsightHeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-8 h-12"
+                  className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all hover:-translate-y-0.5 shadow-sm px-6 sm:px-8 h-11 sm:h-12 text-sm sm:text-base"
                 >
-                  <MessageSquareText className="mr-2 h-5 w-5" />
-                  전문가에게 맞춤 소싱 및 도입 문의하기
+                  <MessageSquareText className="mr-1.5 h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="sm:hidden">맞춤 도입 문의</span>
+                  <span className="hidden sm:inline">전문가에게 맞춤 소싱 및 도입 문의하기</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px]">

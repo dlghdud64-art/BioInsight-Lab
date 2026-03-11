@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Building2, Plus, Users, Loader2, ArrowRight, ShieldCheck, Mail, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 export default function OrganizationsPage() {
+  const { status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -43,8 +45,13 @@ export default function OrganizationsPage() {
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [formData, setFormData] = useState({ name: "", description: "", organizationType: "" });
 
-  // 조직 목록 불러오기
+  // 조직 목록 불러오기 (인증된 경우에만)
   useEffect(() => {
+    if (status !== "authenticated") {
+      if (status === "unauthenticated") setIsFetching(false);
+      return;
+    }
+
     let cancelled = false;
 
     const fetchOrganizations = async () => {
@@ -91,7 +98,7 @@ export default function OrganizationsPage() {
     return () => {
       cancelled = true;
     };
-  }, [toast]);
+  }, [status, toast]);
 
   const refetchOrganizations = async () => {
     try {

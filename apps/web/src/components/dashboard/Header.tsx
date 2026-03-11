@@ -94,9 +94,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "pending",
       typeLabel: "재고 부족",
       targetName: "FBS (Fetal Bovine Serum)",
-      statusText: "남은 수량 1개 · 안전재고 5개",
-      nextAction: "재발주 필요",
-      ctaLabel: "재발주 보기",
+      statusText: "즉시 재발주가 필요합니다",
+      nextAction: "재발주 검토",
+      ctaLabel: "발주 검토",
       ctaHref: "/dashboard/inventory?filter=low",
       time: "10분 전",
     },
@@ -107,8 +107,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "pending",
       typeLabel: "유효기간 경고",
       targetName: "DMEM Medium (Lot #2024-A12)",
-      statusText: "D-3일 후 만료",
-      nextAction: "사용 또는 재주문",
+      statusText: "D-3 만료 임박 — 폐기 검토 필요",
+      nextAction: "재고 확인",
       ctaLabel: "재고 확인",
       ctaHref: "/dashboard/inventory",
       time: "30분 전",
@@ -120,8 +120,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "pending",
       typeLabel: "승인 대기",
       targetName: "Antibody Kit 구매 요청",
-      statusText: "₩1,250,000 · 김연구원 요청",
-      nextAction: "승인 필요",
+      statusText: "₩1,250,000 승인 대기 중",
+      nextAction: "승인 처리",
       ctaLabel: "승인하기",
       ctaHref: "/dashboard/purchases",
       time: "1시간 전",
@@ -133,9 +133,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "pending",
       typeLabel: "견적 도착",
       targetName: "Thermo Fisher 외 2건",
-      statusText: "3개 벤더 견적 비교 가능",
-      nextAction: "견적 확인 필요",
-      ctaLabel: "견적 확인",
+      statusText: "견적 비교 가능 — 벤더 확정 필요",
+      nextAction: "견적 비교",
+      ctaLabel: "비교하기",
       ctaHref: "/dashboard/quotes",
       time: "2시간 전",
     },
@@ -146,8 +146,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "pending",
       typeLabel: "입고 완료",
       targetName: "50ml Conical Tube (100개)",
-      statusText: "배송 완료 · 검수 대기",
-      nextAction: "재고 반영 필요",
+      statusText: "입고 확인 후 재고 반영 필요",
+      nextAction: "재고 반영",
       ctaLabel: "재고 반영",
       ctaHref: "/dashboard/inventory",
       time: "어제",
@@ -159,8 +159,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       status: "completed",
       typeLabel: "안전 관리",
       targetName: "에탄올 (Ethanol, 99.5%)",
-      statusText: "MSDS 미등록",
-      nextAction: "MSDS 등록 권장",
+      statusText: "MSDS 등록 완료",
+      nextAction: "MSDS 등록",
       ctaLabel: "MSDS 등록",
       ctaHref: "/dashboard/safety",
       time: "2일 전",
@@ -267,20 +267,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
   const user = session?.user;
 
-  // ── 알림 집계 ──
-  const pendingNotifications = notifications.filter((n) => n.status === "pending");
-  const urgentCount = pendingNotifications.filter((n) => n.priority === "urgent").length;
-  const todayActionCount = pendingNotifications.length;
-
-  // 긴급 → 일반 순, 각 그룹 내에서 미처리 우선
-  const sortedNotifications = [...notifications].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority === "urgent" ? -1 : 1;
-    if (a.status !== b.status) return a.status === "pending" ? -1 : 1;
-    return 0;
-  });
-
-  const urgentNotifications = sortedNotifications.filter((n) => n.priority === "urgent");
-  const normalNotifications = sortedNotifications.filter((n) => n.priority === "normal");
+  // ── 알림 분류: 즉시 조치 / 오늘 처리 / 참고·완료 ──
+  const [showCompleted, setShowCompleted] = useState(false);
+  const immediateActions = notifications.filter((n) => n.status === "pending" && n.priority === "urgent");
+  const todayActions = notifications.filter((n) => n.status === "pending" && n.priority === "normal");
+  const completedActions = notifications.filter((n) => n.status === "completed");
+  const pendingCount = immediateActions.length + todayActions.length;
 
   const handleMarkAllCompleted = () => {
     // TODO: PATCH /api/notifications/complete-all
@@ -315,80 +307,75 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     );
   };
 
-  /** 단일 알림 아이템 렌더링 */
+  /** 단일 알림 아이템 렌더링 — Operations Triage Card */
   const renderNotificationItem = (notification: TaskNotification) => {
     const isCompleted = notification.status === "completed";
     const isUrgent = notification.priority === "urgent";
+    const config = CATEGORY_CONFIG[notification.category];
 
     return (
-      <button
+      <div
         key={notification.id}
-        type="button"
-        onClick={() => handleNotificationClick(notification)}
-        className={`w-full text-left px-3 py-2.5 flex items-start gap-2.5 min-w-0 transition-colors touch-manipulation group ${
+        className={`relative px-3 py-3 transition-colors ${
           isCompleted
-            ? "opacity-50 hover:opacity-70 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            ? "opacity-50"
             : isUrgent
-            ? "bg-red-50/30 dark:bg-red-950/10 hover:bg-red-50/60 dark:hover:bg-red-950/20"
-            : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            ? "bg-red-50/30 dark:bg-red-950/10"
+            : ""
         }`}
       >
-        {renderCategoryIcon(notification.category, "sm")}
-        <div className="flex-1 min-w-0 overflow-hidden">
-          {/* 1행: 유형 라벨 + 상태 배지 */}
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className={`text-[10px] font-semibold uppercase tracking-wider ${
-              CATEGORY_CONFIG[notification.category].text
-            } ${CATEGORY_CONFIG[notification.category].darkText}`}>
-              {notification.typeLabel}
-            </span>
-            {isUrgent && !isCompleted && (
-              <Badge variant="destructive" className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm">
-                긴급
-              </Badge>
-            )}
-            {isCompleted && (
-              <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-200 dark:bg-slate-700">
-                완료
-              </Badge>
-            )}
-          </div>
-          {/* 2행: 대상 이름 */}
-          <p className={`text-xs font-medium truncate ${
-            isCompleted
-              ? "text-slate-400 dark:text-slate-500 line-through"
-              : "text-slate-900 dark:text-slate-100"
-          }`}>
-            {notification.targetName}
-          </p>
-          {/* 3행: 상태 텍스트 + 시간 */}
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-            {notification.statusText}
-            <span className="mx-1 text-slate-300 dark:text-slate-600">·</span>
-            {notification.time}
-          </p>
-          {/* 4행: 다음 액션 + CTA 버튼 */}
-          {!isCompleted && (
-            <div className="flex items-center justify-between mt-1.5">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                → {notification.nextAction}
+        <div className="flex items-start gap-2.5">
+          {renderCategoryIcon(notification.category, "sm")}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            {/* 1행: 상태 배지 + 긴급도 */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
+                {notification.typeLabel}
               </span>
-              <button
-                type="button"
-                onClick={(e) => handleNotificationCTA(e, notification)}
-                className={`flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${
-                  isUrgent
-                    ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50"
-                    : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50"
-                }`}
-              >
-                {notification.ctaLabel}
-                <ArrowRight className="h-2.5 w-2.5" />
-              </button>
+              {isUrgent && !isCompleted && (
+                <Badge variant="destructive" className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm">
+                  긴급
+                </Badge>
+              )}
+              {isCompleted && (
+                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-200 dark:bg-slate-700">
+                  완료
+                </Badge>
+              )}
+              <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0">{notification.time}</span>
             </div>
-          )}
+            {/* 2행: 품목명 / 이슈명 */}
+            <p className={`text-xs font-semibold truncate ${
+              isCompleted
+                ? "text-slate-400 dark:text-slate-500 line-through"
+                : "text-slate-900 dark:text-slate-100"
+            }`}>
+              {notification.targetName}
+            </p>
+            {/* 3행: 조치 문장 (왜 이 작업이 필요한지) */}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+              {notification.statusText}
+            </p>
+          </div>
         </div>
-      </button>
+        {/* primary action — 강한 버튼형 */}
+        {!isCompleted && (
+          <div className="mt-2 pl-8">
+            <button
+              type="button"
+              onClick={(e) => handleNotificationCTA(e, notification)}
+              className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
+                isUrgent
+                  ? "text-white bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500"
+                  : "text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-300 dark:bg-blue-950/40 dark:hover:bg-blue-950/60"
+              }`}
+            >
+              {notification.ctaLabel}
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -471,116 +458,133 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
-                {todayActionCount > 0 && (
+                {pendingCount > 0 && (
                   <span className={`absolute top-1 right-1 flex items-center justify-center h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white px-0.5 ${
-                    urgentCount > 0 ? "bg-red-500 animate-pulse" : "bg-blue-500"
+                    immediateActions.length > 0 ? "bg-red-500 animate-pulse" : "bg-blue-500"
                   }`}>
-                    {todayActionCount > 9 ? "9+" : todayActionCount}
+                    {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
-              {/* ── 상단 요약 바 ── */}
+              {/* ── 상단: 행동 기준 요약 ── */}
               <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                    작업 알림
-                  </h3>
-                  {pendingNotifications.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleMarkAllCompleted}
-                      className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer"
-                    >
-                      모두 완료 처리
-                    </button>
-                  )}
-                </div>
-                {/* 요약 카운터 */}
-                <div className="flex items-center gap-3">
-                  {urgentCount > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Flame className="h-3 w-3 text-red-500" />
-                      <span className="text-[11px] font-semibold text-red-600 dark:text-red-400">
-                        긴급 {urgentCount}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <ClipboardCheck className="h-3 w-3 text-slate-400" />
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      오늘 처리 필요 {todayActionCount}
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-2">
+                  작업 알림
+                </h3>
+                {/* 행동 기준 카운터 */}
+                <div className="flex items-center gap-2">
+                  {immediateActions.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                      <Flame className="h-2.5 w-2.5" />
+                      즉시 조치 {immediateActions.length}
                     </span>
-                  </div>
+                  )}
+                  {todayActions.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                      오늘 처리 {todayActions.length}
+                    </span>
+                  )}
+                  {completedActions.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      참고 {completedActions.length}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* ── 알림 목록 ── */}
+              {/* ── 작업 목록 ── */}
               <div className="max-h-[420px] overflow-y-auto">
-                {notifications.length === 0 ? (
+                {pendingCount === 0 && completedActions.length === 0 ? (
                   <div className="p-8 text-center">
                     <CheckCircle2 className="h-8 w-8 text-emerald-300 mx-auto mb-2" />
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400">모든 작업이 처리되었습니다</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">새 알림이 발생하면 여기에 표시됩니다</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">새 작업이 발생하면 여기에 표시됩니다</p>
                   </div>
                 ) : (
                   <>
-                    {/* 긴급 알림 그룹 */}
-                    {urgentNotifications.length > 0 && (
+                    {/* 즉시 조치 필요 */}
+                    {immediateActions.length > 0 && (
                       <div>
                         <div className="px-3 py-1.5 bg-red-50/50 dark:bg-red-950/10 border-b border-red-100 dark:border-red-900/30">
-                          <span className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1">
                             <Flame className="h-3 w-3" />
-                            긴급 처리
+                            즉시 조치 필요
                           </span>
                         </div>
                         <div className="divide-y divide-slate-100/80 dark:divide-slate-800/40">
-                          {urgentNotifications.map(renderNotificationItem)}
+                          {immediateActions.map(renderNotificationItem)}
                         </div>
                       </div>
                     )}
 
-                    {/* 일반 알림 그룹 */}
-                    {normalNotifications.length > 0 && (
+                    {/* 오늘 처리 필요 */}
+                    {todayActions.length > 0 && (
                       <div>
-                        {urgentNotifications.length > 0 && (
-                          <div className="px-3 py-1.5 bg-slate-50/50 dark:bg-slate-900/30 border-y border-slate-100 dark:border-slate-800">
-                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                              일반
-                            </span>
+                        <div className="px-3 py-1.5 bg-amber-50/50 dark:bg-amber-950/10 border-y border-amber-100/50 dark:border-amber-900/20">
+                          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <ClipboardCheck className="h-3 w-3" />
+                            오늘 처리 필요
+                          </span>
+                        </div>
+                        <div className="divide-y divide-slate-100/80 dark:divide-slate-800/40">
+                          {todayActions.map(renderNotificationItem)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 참고 / 완료 — 접힌 영역 */}
+                    {completedActions.length > 0 && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowCompleted(!showCompleted)}
+                          className="w-full px-3 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                        >
+                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            참고 / 완료 ({completedActions.length})
+                          </span>
+                          <ChevronRight className={`h-3 w-3 text-slate-400 transition-transform ${showCompleted ? "rotate-90" : ""}`} />
+                        </button>
+                        {showCompleted && (
+                          <div className="divide-y divide-slate-100/80 dark:divide-slate-800/40">
+                            {completedActions.map(renderNotificationItem)}
                           </div>
                         )}
-                        <div className="divide-y divide-slate-100/80 dark:divide-slate-800/40">
-                          {normalNotifications.map(renderNotificationItem)}
-                        </div>
                       </div>
                     )}
                   </>
                 )}
               </div>
 
-              {/* ── 하단 링크 바 ── */}
-              {notifications.length > 0 && (
-                <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-900/30">
-                  <div className="flex items-center divide-x divide-slate-200 dark:divide-slate-700">
-                    <Link
-                      href="/dashboard/notifications"
-                      onClick={() => setIsNotificationOpen(false)}
-                      className="flex-1 text-center text-[11px] font-medium py-2.5 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
-                    >
-                      전체 알림 보기
-                    </Link>
-                    <Link
-                      href="/dashboard/notifications?tab=pending"
-                      onClick={() => setIsNotificationOpen(false)}
-                      className="flex-1 text-center text-[11px] font-medium py-2.5 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
-                    >
-                      작업함 보기
-                    </Link>
-                  </div>
-                </div>
-              )}
+              {/* ── 하단 CTA ── */}
+              <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2.5 flex items-center gap-2">
+                <Link
+                  href="/dashboard/notifications?tab=pending"
+                  onClick={() => setIsNotificationOpen(false)}
+                  className="flex-1"
+                >
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs font-bold py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 transition-colors"
+                  >
+                    작업함 보기
+                  </button>
+                </Link>
+                <Link
+                  href="/dashboard/notifications"
+                  onClick={() => setIsNotificationOpen(false)}
+                  className="flex-shrink-0"
+                >
+                  <button
+                    type="button"
+                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+                  >
+                    전체 보기
+                  </button>
+                </Link>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
