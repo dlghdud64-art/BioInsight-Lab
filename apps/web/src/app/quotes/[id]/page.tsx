@@ -75,7 +75,7 @@ type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 const isValidUUID = (id: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-/** 블록별 에러 로깅 */
+/** 블록별 에러 로깅 (userId, orgId, status, navigation, refetch 포함) */
 function logBlockError(
   blockName: string,
   quoteId: string,
@@ -86,10 +86,19 @@ function logBlockError(
     quoteId,
     blockName,
     error: error instanceof Error ? error.message : String(error),
+    responseStatus: extra?.responseStatus ?? null,
+    userId: extra?.userId ?? null,
+    orgId: extra?.orgId ?? null,
+    isNavigation: typeof window !== "undefined" ? (document.visibilityState !== "visible" || (performance?.navigation?.type === 1)) : false,
+    refetchCount: extra?.refetchCount ?? 0,
     timestamp: new Date().toISOString(),
     ...extra,
   });
 }
+
+/** null-safe 금액 포맷 */
+const safeLocaleAmount = (val: number | null | undefined): string =>
+  (val ?? 0).toLocaleString("ko-KR");
 
 /* ── 에러 UI 컴포넌트 ── */
 
@@ -217,7 +226,7 @@ export default function QuoteDetailPage() {
       if (!res.ok) {
         const statusCode = res.status;
         const body = await res.json().catch(() => ({}));
-        logBlockError("quote", quoteId, body.error || statusCode, { userId: session?.user?.id });
+        logBlockError("quote", quoteId, body.error || statusCode, { userId: session?.user?.id, responseStatus: statusCode });
         if (statusCode === 404) throw new Error("NOT_FOUND");
         if (statusCode === 403) throw new Error("FORBIDDEN");
         if (statusCode === 401) throw new Error("UNAUTHORIZED");
@@ -239,7 +248,10 @@ export default function QuoteDetailPage() {
     queryKey: ["user-budgets"],
     queryFn: async ({ signal }) => {
       const res = await fetch("/api/user-budgets", { signal });
-      if (!res.ok) throw new Error(`BUDGET_FETCH_ERROR:${res.status}`);
+      if (!res.ok) {
+        logBlockError("budgets", quoteId, `BUDGET_FETCH_ERROR:${res.status}`, { userId: session?.user?.id, responseStatus: res.status });
+        throw new Error(`BUDGET_FETCH_ERROR:${res.status}`);
+      }
       return res.json();
     },
     enabled: status === "authenticated",
@@ -252,7 +264,10 @@ export default function QuoteDetailPage() {
     queryKey: ["vendor-requests", quoteId],
     queryFn: async ({ signal }) => {
       const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`, { signal });
-      if (!res.ok) throw new Error(`VENDOR_FETCH_ERROR:${res.status}`);
+      if (!res.ok) {
+        logBlockError("vendor-requests", quoteId, `VENDOR_FETCH_ERROR:${res.status}`, { userId: session?.user?.id, responseStatus: res.status });
+        throw new Error(`VENDOR_FETCH_ERROR:${res.status}`);
+      }
       return res.json();
     },
     enabled: isQuoteIdValid && !!quoteData?.quote && status === "authenticated",
@@ -266,7 +281,10 @@ export default function QuoteDetailPage() {
     queryKey: ["user-teams"],
     queryFn: async ({ signal }) => {
       const res = await fetch("/api/team", { signal });
-      if (!res.ok) throw new Error(`TEAM_FETCH_ERROR:${res.status}`);
+      if (!res.ok) {
+        logBlockError("teams", quoteId, `TEAM_FETCH_ERROR:${res.status}`, { userId: session?.user?.id, responseStatus: res.status });
+        throw new Error(`TEAM_FETCH_ERROR:${res.status}`);
+      }
       return res.json();
     },
     enabled: status === "authenticated",
@@ -1361,13 +1379,13 @@ export default function QuoteDetailPage() {
                             <SelectTrigger><SelectValue placeholder="과제를 선택하세요" /></SelectTrigger>
                             <SelectContent>
                               {budgets.map((budget: any) => (
-                                <SelectItem key={budget.id} value={budget.id}>{budget.name} (잔액: ₩ {budget.remainingAmount.toLocaleString()})</SelectItem>
+                                <SelectItem key={budget.id} value={budget.id}>{budget.name} (잔액: ₩ {safeLocaleAmount(budget.remainingAmount)})</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           {selectedBudget && (
                             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-sm">
-                              <div className="flex justify-between"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩ {selectedBudget.remainingAmount.toLocaleString()}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩ {safeLocaleAmount(selectedBudget.remainingAmount)}</span></div>
                               <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-600">- ₩ {quoteTotal.toLocaleString()}</span></div>
                               <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
                                 <span className={cn("font-bold", expectedRemaining !== null && expectedRemaining < 0 ? "text-red-600" : "text-green-600")}>₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}</span>
@@ -1521,7 +1539,7 @@ export default function QuoteDetailPage() {
                     <div className="px-3 py-4 text-center text-sm text-muted-foreground">등록된 활성 예산이 없습니다.</div>
                   ) : (
                     budgets.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>{b.name} — 잔액 ₩{b.remainingAmount.toLocaleString("ko-KR")}</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>{b.name} — 잔액 ₩{safeLocaleAmount(b.remainingAmount)}</SelectItem>
                     ))
                   )}
                 </SelectContent>
@@ -1531,10 +1549,10 @@ export default function QuoteDetailPage() {
             {(() => {
               const selBudget = budgets.find((b: any) => b.id === purchaseBudgetId);
               if (!selBudget) return null;
-              const afterAmount = selBudget.remainingAmount - purchaseTotal;
+              const afterAmount = (selBudget.remainingAmount ?? 0) - purchaseTotal;
               return (
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1.5">
-                  <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{selBudget.remainingAmount.toLocaleString("ko-KR")}</span></div>
+                  <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{safeLocaleAmount(selBudget.remainingAmount)}</span></div>
                   <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
                   <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200">
                     <span className="font-medium">차감 후 잔액</span>
@@ -1569,7 +1587,7 @@ export default function QuoteDetailPage() {
                 !purchaseBudgetId ||
                 (respondedVendors.length > 1 && !purchaseVendorRequestId) ||
                 updateStatusMutation.isPending ||
-                (() => { const b = budgets.find((b: any) => b.id === purchaseBudgetId); return b ? b.remainingAmount < purchaseTotal : false; })()
+                (() => { const b = budgets.find((b: any) => b.id === purchaseBudgetId); return b ? (b.remainingAmount ?? 0) < purchaseTotal : false; })()
               }
               onClick={() => {
                 setShowPurchaseDialog(false);
