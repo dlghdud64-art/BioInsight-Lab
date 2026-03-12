@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +60,9 @@ import {
   Phone,
   CreditCard,
   Receipt,
+  Check,
+  RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -178,6 +181,9 @@ function SettingsPageContent() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setSaveSuccess(true);
+      setSaveError(false);
+      setTimeout(() => setSaveSuccess(false), 2000);
     },
     onError: (error: Error) => {
       toast({
@@ -185,6 +191,8 @@ function SettingsPageContent() {
         description: error.message,
         variant: "destructive",
       });
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 3000);
     },
   });
 
@@ -214,15 +222,97 @@ function SettingsPageContent() {
   };
 
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
+  // ─── 초기값 스냅샷 (알림) ─────────────────────────────────────────────
+  const [initialNotifications, setInitialNotifications] = useState({
+    lowStockAlerts: true,
+    budgetOverrunAlerts: true,
+    weeklyReportEmails: false,
+    emailNotifications: true,
+    securityAlerts: true,
+    marketingEmails: false,
+  });
+
+  // ─── Dirty state 계산 ─────────────────────────────────────────────────
+  const isProfileDirty = useMemo(() => {
+    const nameChanged = profileName !== (session?.user?.name || "");
+    const phoneChanged = fullPhone !== (savedPhone || "");
+    const bioChanged = profileBio !== "";
+    const urlChanged = profileUrl !== "";
+    return nameChanged || phoneChanged || bioChanged || urlChanged;
+  }, [profileName, session?.user?.name, fullPhone, savedPhone, profileBio, profileUrl]);
+
+  const isNotificationsDirty = useMemo(() => {
+    return (
+      lowStockAlerts !== initialNotifications.lowStockAlerts ||
+      budgetOverrunAlerts !== initialNotifications.budgetOverrunAlerts ||
+      weeklyReportEmails !== initialNotifications.weeklyReportEmails ||
+      emailNotifications !== initialNotifications.emailNotifications ||
+      securityAlerts !== initialNotifications.securityAlerts ||
+      marketingEmails !== initialNotifications.marketingEmails
+    );
+  }, [lowStockAlerts, budgetOverrunAlerts, weeklyReportEmails, emailNotifications, securityAlerts, marketingEmails, initialNotifications]);
+
+  const isDirty = activeSection === "profile" ? isProfileDirty : isNotificationsDirty;
+
+  // ─── 되돌리기 ─────────────────────────────────────────────────────────
+  const handleRevert = useCallback(() => {
+    if (activeSection === "profile") {
+      setProfileName(session?.user?.name || "");
+      setProfileBio("");
+      setProfileUrl("");
+      if (userData?.phone && typeof userData.phone === "string") {
+        const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
+        if (match) {
+          setCountryCode(match[1]);
+          setProfilePhone(match[2].trim());
+        } else {
+          setProfilePhone(userData.phone);
+        }
+      } else {
+        setProfilePhone("");
+      }
+    } else {
+      setLowStockAlerts(initialNotifications.lowStockAlerts);
+      setBudgetOverrunAlerts(initialNotifications.budgetOverrunAlerts);
+      setWeeklyReportEmails(initialNotifications.weeklyReportEmails);
+      setEmailNotifications(initialNotifications.emailNotifications);
+      setSecurityAlerts(initialNotifications.securityAlerts);
+      setMarketingEmails(initialNotifications.marketingEmails);
+    }
+    setSaveSuccess(false);
+    setSaveError(false);
+  }, [activeSection, session?.user?.name, userData?.phone, initialNotifications]);
 
   const handleNotificationSave = async () => {
     setIsSavingNotifications(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    toast({
-      title: "설정 저장 완료",
-      description: "알림 설정이 반영되었습니다.",
-    });
-    setIsSavingNotifications(false);
+    setSaveSuccess(false);
+    setSaveError(false);
+    try {
+      await new Promise((r) => setTimeout(r, 1000));
+      toast({
+        title: "설정 저장 완료",
+        description: "알림 설정이 반영되었습니다.",
+      });
+      // 초기값 갱신 → dirty 해제
+      setInitialNotifications({
+        lowStockAlerts,
+        budgetOverrunAlerts,
+        weeklyReportEmails,
+        emailNotifications,
+        securityAlerts,
+        marketingEmails,
+      });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch {
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 3000);
+    } finally {
+      setIsSavingNotifications(false);
+    }
   };
 
   const getInitials = () => {
@@ -837,34 +927,69 @@ function SettingsPageContent() {
               </Card>
             )}
 
-            {/* 하단 고정 저장 버튼 (청구·구독 탭 미표시) */}
-            {activeSection !== "billing" && (
-              <div className="sticky bottom-16 lg:bottom-0 pt-6 pb-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/50 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:border-0 lg:pt-8">
-                <div className="flex justify-end">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full md:w-auto px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold antialiased"
-                    onClick={() => {
-                      if (activeSection === "profile") {
-                        handleProfileSubmit();
-                      } else {
-                        handleNotificationSave();
-                      }
-                    }}
-                    disabled={
-                      profileMutation.isPending ||
-                      isSavingNotifications
-                    }
-                  >
-                    {(profileMutation.isPending || isSavingNotifications) ? (
-                      "저장 중..."
-                    ) : (
-                      "변경사항 저장"
-                    )}
-                  </Button>
+            {/* 하단 액션 바 — form dirty 시에만 표시 */}
+            {activeSection !== "billing" && isDirty && (
+              <Card className="shadow-sm border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    변경된 {activeSection === "profile" ? "프로필 정보" : "알림 설정"}를 저장할 수 있습니다.
+                  </p>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-slate-600 dark:text-slate-400 gap-1.5"
+                      onClick={handleRevert}
+                      disabled={profileMutation.isPending || isSavingNotifications}
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      되돌리기
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className={cn(
+                        "text-xs font-semibold gap-1.5 min-w-[120px] transition-colors",
+                        saveSuccess
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                          : saveError
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                      )}
+                      onClick={() => {
+                        setSaveSuccess(false);
+                        setSaveError(false);
+                        if (activeSection === "profile") {
+                          handleProfileSubmit();
+                        } else {
+                          handleNotificationSave();
+                        }
+                      }}
+                      disabled={profileMutation.isPending || isSavingNotifications}
+                    >
+                      {(profileMutation.isPending || isSavingNotifications) ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          저장 중...
+                        </>
+                      ) : saveSuccess ? (
+                        <>
+                          <Check className="h-3 w-3" />
+                          저장 완료
+                        </>
+                      ) : saveError ? (
+                        <>
+                          <AlertCircle className="h-3 w-3" />
+                          저장 실패 — 다시 시도
+                        </>
+                      ) : (
+                        "변경사항 저장"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         </div>
