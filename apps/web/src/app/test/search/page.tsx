@@ -466,7 +466,7 @@ export default function SearchPage() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-9 w-9 rounded-lg transition-all hover:scale-110 active:scale-95 flex-shrink-0"
+                                className="h-9 w-9 rounded-lg transition-colors flex-shrink-0"
                                 onClick={() => {
                                   updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) });
                                 }}
@@ -488,7 +488,7 @@ export default function SearchPage() {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-9 w-9 rounded-lg transition-all hover:scale-110 active:scale-95 flex-shrink-0"
+                                className="h-9 w-9 rounded-lg transition-colors flex-shrink-0"
                                 onClick={() => {
                                   updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 });
                                 }}

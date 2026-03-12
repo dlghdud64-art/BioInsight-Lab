@@ -127,8 +127,13 @@ export default function QuoteDetailPage() {
     queryFn: async () => {
       const res = await fetch(`/api/quotes/${quoteId}`);
       if (!res.ok) {
-        if (res.status === 404) throw new QuoteDetailError("notFound", "삭제되었거나 찾을 수 없는 견적입니다.");
-        if (res.status === 403) throw new QuoteDetailError("forbidden", "이 견적을 볼 권한이 없습니다.");
+        const statusCode = res.status;
+        const body = await res.json().catch(() => ({}));
+        const msg = body.error || "알 수 없는 오류";
+        console.error(`[QuoteDetail] fetch failed: ${statusCode} ${msg}`, { quoteId });
+        if (statusCode === 404) throw new QuoteDetailError("notFound", "삭제되었거나 찾을 수 없는 견적입니다.");
+        if (statusCode === 403) throw new QuoteDetailError("forbidden", "이 견적을 볼 권한이 없습니다.");
+        if (statusCode === 401) throw new QuoteDetailError("forbidden", "인증이 만료되었습니다. 다시 로그인해주세요.");
         throw new QuoteDetailError("temporaryError", "일시적으로 상세 정보를 불러오지 못했습니다.");
       }
       return res.json();
@@ -449,6 +454,11 @@ export default function QuoteDetailPage() {
         </div>
       </div>
     );
+  }
+
+  if (!quoteId) {
+    router.replace("/dashboard/quotes");
+    return null;
   }
 
   if (status === "loading" || isLoading) {

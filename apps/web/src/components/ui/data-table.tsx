@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -81,13 +81,19 @@ export function DataTable<TData, TValue>({
             }
             className="max-w-sm"
           />
+        </div>
+      )}
+      <div className="rounded-md border">
+        {/* 테이블 헤더 영역: 보기 옵션 */}
+        <div className="flex items-center justify-end px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                컬럼 <ChevronDown className="ml-2 h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-slate-500 hover:text-slate-700">
+                <Settings2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">보기 옵션</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-44">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
@@ -95,7 +101,7 @@ export function DataTable<TData, TValue>({
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
-                      className="capitalize"
+                      className="capitalize text-xs"
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
@@ -108,8 +114,6 @@ export function DataTable<TData, TValue>({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      )}
-      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
