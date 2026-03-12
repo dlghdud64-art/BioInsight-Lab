@@ -9,12 +9,12 @@ export function FinalCTASection() {
     <section className="py-20 md:py-24 bg-white border-t border-slate-100">
       <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
         <div className="space-y-4 mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-            시약 검색부터 구매 운영까지<br className="hidden sm:block" />
-            한 곳에서 시작하세요.
+          <h2 className="text-xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+            검색부터 운영까지, 한 곳에서
           </h2>
-          <p className="text-base text-slate-500 max-w-lg mx-auto leading-relaxed">
-            시약·장비 검색, 벤더 비교, 견적 요청, 구매 이력과 재고 관리까지<br className="hidden sm:block" />
+          <p className="text-sm md:text-base text-slate-500 max-w-lg mx-auto leading-relaxed">
+            시약 검색, 벤더 비교, 견적 요청, 구매 이력과 재고 관리까지
+            <br />
             BioInsight Lab에서 한 흐름으로 이어집니다.
           </p>
         </div>

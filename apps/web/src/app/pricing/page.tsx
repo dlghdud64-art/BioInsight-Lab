@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Users, Building2, Building, ArrowRight } from "lucide-react";
+import { Check, Package, Users, Building2, Building, ArrowRight, ChevronDown } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
@@ -33,6 +33,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("business");
+  const [expandedCards, setExpandedCards] = useState<Set<PlanId>>(new Set());
 
   const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.9);
   const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.9);
@@ -48,10 +49,11 @@ export default function PricingPage() {
       priceAnnualPerMonth: null as number | null,
       pricePeriod: undefined as string | undefined,
       description: "개인 연구자와 초기 검토를 위한 시작 플랜",
+      mobileHook: "혼자 검색·비교",
       icon: Package,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "min-h-[420px]",
+      cardHeight: "md:min-h-[420px]",
       buttonText: "무료로 시작하기",
       features: [
         "개인 전용 (팀원 초대 불가)",
@@ -69,10 +71,11 @@ export default function PricingPage() {
       priceAnnualPerMonth: teamAnnualPerMonth,
       pricePeriod: "/월",
       description: "소규모 연구팀 협업을 위한 플랜",
+      mobileHook: "팀 공유 · 구매 요청",
       icon: Users,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "min-h-[500px]",
+      cardHeight: "md:min-h-[500px]",
       buttonText: "팀으로 시작하기",
       features: [
         "팀원 5명까지",
@@ -93,10 +96,11 @@ export default function PricingPage() {
       priceAnnualPerMonth: businessAnnualPerMonth,
       pricePeriod: "/월",
       description: "승인과 예산 관리가 필요한 조직용 표준 플랜",
+      mobileHook: "승인 · 예산 · 감사 추적",
       icon: Building,
       badge: "연구팀·구매팀 표준 플랜",
       isRecommended: true,
-      cardHeight: "min-h-[580px]",
+      cardHeight: "md:min-h-[580px]",
       buttonText: "Business 시작하기",
       features: [
         "팀원 무제한",
@@ -118,10 +122,11 @@ export default function PricingPage() {
       priceAnnualPerMonth: null as number | null,
       pricePeriod: undefined as string | undefined,
       description: "보안·연동·대규모 운영이 필요한 기관용 플랜",
+      mobileHook: "ERP · SSO · 전담 매니저",
       icon: Building2,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "min-h-[500px]",
+      cardHeight: "md:min-h-[500px]",
       buttonText: "도입 상담 문의",
       features: [
         "Business 전체 기능",
@@ -214,15 +219,15 @@ export default function PricingPage() {
       return (
         <span
           key="annual"
-          className="flex flex-col items-center gap-1 animate-in slide-in-from-bottom-2 fade-in duration-300"
+          className="flex flex-col items-center gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-300"
         >
-          <span className="text-slate-500 line-through text-lg font-normal">{plan.price}</span>
-          <span className="text-2xl md:text-3xl font-bold text-slate-900">
+          <span className="text-slate-400 line-through text-xs md:text-lg font-normal">{plan.price}</span>
+          <span className="text-lg md:text-3xl font-bold text-slate-900">
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
-            <span className="text-sm font-normal text-slate-600">/월</span>
+            <span className="text-[10px] md:text-sm font-normal text-slate-600">/월</span>
           </span>
-          <span className="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-600/10">
-            연간 결제 시 10% 할인
+          <span className="inline-flex items-center rounded-md bg-green-50 px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold text-green-700 ring-1 ring-green-600/10">
+            10% 할인
           </span>
         </span>
       );
@@ -239,59 +244,62 @@ export default function PricingPage() {
     <MainLayout>
       <MainHeader />
       <div className="w-full">
-        <div className="pt-20 min-h-screen">
-          <div className="container mx-auto px-4 py-12 md:py-16">
+        <div className="pt-14 md:pt-20 min-h-screen">
+          <div className="container mx-auto px-4 py-6 md:py-16">
             <div className="max-w-7xl mx-auto">
 
               {/* ── 페이지 헤드라인 ── */}
-              <div className="text-center mb-10 md:mb-12">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3">
-                  시작 방식에 맞는 플랜으로 시작하세요.
+              <div className="text-center mb-4 md:mb-12">
+                <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-slate-900 mb-1 md:mb-3">
+                  맞는 플랜으로 시작하세요
                 </h1>
-                <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-                  개인 탐색부터 조직 운영까지 — 단계마다 적합한 플랜이 있습니다.
+                <p className="text-slate-600 text-xs md:text-lg max-w-xl mx-auto leading-relaxed">
+                  개인 탐색부터 조직 운영까지, 단계별 플랜
                 </p>
               </div>
 
               {/* ── 결제 주기 토글 ── */}
-              <div className="flex items-center justify-center mb-10 md:mb-12">
-                <div className="bg-slate-100 rounded-full p-1 inline-flex">
+              <div className="flex items-center justify-center mb-4 md:mb-12">
+                <div className="bg-slate-100 rounded-full p-0.5 md:p-1 inline-flex">
                   <button
                     type="button"
                     onClick={() => setIsAnnual(false)}
                     className={cn(
-                      "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
                       !isAnnual
                         ? "bg-white shadow-sm text-slate-900"
                         : "text-slate-500 hover:text-slate-700"
                     )}
                   >
-                    월간 결제
+                    월간
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsAnnual(true)}
                     className={cn(
-                      "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 flex items-center gap-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 flex items-center gap-1 md:gap-2",
                       isAnnual
                         ? "bg-white shadow-sm text-slate-900"
                         : "text-slate-500 hover:text-slate-700"
                     )}
                   >
-                    연간 결제
-                    <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium">
-                      10% 할인
+                    연간
+                    <span className="bg-slate-200 text-slate-600 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium">
+                      -10%
                     </span>
                   </button>
                 </div>
               </div>
 
               {/* ── 가격 카드 ── */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 items-end">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 mb-10 md:mb-16 items-stretch lg:items-end">
                 {plans.map((plan) => {
                   const Icon = plan.icon;
                   const isRecommended = plan.isRecommended;
                   const isSelected = selectedPlan === plan.id;
+                  const isExpanded = expandedCards.has(plan.id);
+                  const MOBILE_FEATURE_LIMIT = 3;
+                  const hasMore = plan.features.length > MOBILE_FEATURE_LIMIT;
 
                   return (
                     <Card
@@ -319,16 +327,16 @@ export default function PricingPage() {
                     >
                       {/* 뱃지 */}
                       {plan.badge && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                          <Badge className="bg-blue-600 text-white px-4 py-1.5 text-xs font-bold shadow-lg whitespace-nowrap">
+                        <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 z-10">
+                          <Badge className="bg-blue-600 text-white px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold shadow-lg whitespace-nowrap">
                             {plan.badge}
                           </Badge>
                         </div>
                       )}
 
-                      <CardHeader className="text-center pb-4">
-                        {/* 아이콘 */}
-                        <div className="flex justify-center mb-3">
+                      <CardHeader className="text-center pb-1 md:pb-4 px-2.5 md:px-6 pt-3 md:pt-6">
+                        {/* 아이콘 — 모바일 숨김 */}
+                        <div className="hidden md:flex justify-center mb-3">
                           <div
                             className={cn(
                               "p-3 rounded-full transition-colors",
@@ -345,32 +353,49 @@ export default function PricingPage() {
                         </div>
 
                         {/* 플랜명 + 티어 레이블 */}
-                        <CardTitle className="text-xl md:text-2xl font-bold mb-0.5">{plan.name}</CardTitle>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                        <CardTitle className="text-lg md:text-2xl font-bold mb-0.5">{plan.name}</CardTitle>
+                        <p className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-2 md:mb-3">
                           {plan.tagline}
                         </p>
 
                         {/* 가격 */}
-                        <div className="flex flex-col items-center gap-0.5 mb-3 min-h-[4.5rem] overflow-hidden">
-                          <span className="text-2xl md:text-3xl font-bold text-slate-900 text-center">
+                        <div className="flex flex-col items-center gap-0.5 mb-1 md:mb-3 min-h-[4rem] md:min-h-[5rem] overflow-hidden justify-center">
+                          <span className="text-xl md:text-3xl font-bold text-slate-900 text-center">
                             {renderPrice(plan)}
                           </span>
                           {plan.pricePeriod && !isAnnual && (
-                            <span className="text-sm text-slate-500">{plan.pricePeriod}</span>
+                            <span className="text-xs md:text-sm text-slate-500">{plan.pricePeriod}</span>
                           )}
                         </div>
 
-                        {/* 플랜 설명 */}
-                        <CardDescription className="text-sm text-slate-600 leading-relaxed">
+                        {/* 모바일: 핵심 전환 이유 1줄 / 데스크톱: 풀 설명 */}
+                        <p className="md:hidden text-[10px] font-medium text-blue-600/80">{plan.mobileHook}</p>
+                        <CardDescription className="hidden md:block text-sm text-slate-600 leading-relaxed">
                           {plan.description}
                         </CardDescription>
                       </CardHeader>
 
-                      <CardContent className="flex-1 flex flex-col pt-0" onClick={(e) => e.stopPropagation()}>
-                        {/* 기능 목록 */}
-                        <ul className="space-y-3 mb-6 flex-1">
-                          {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-start gap-2.5 leading-relaxed">
+                      <CardContent className="flex-1 flex flex-col pt-0 px-2.5 md:px-6 pb-3 md:pb-6" onClick={(e) => e.stopPropagation()}>
+                        {/* 기능 목록 — 모바일: 4개까지 + 더보기 */}
+                        <ul className="space-y-2 md:space-y-3 mb-3 md:mb-6 flex-1">
+                          {plan.features.slice(0, isExpanded ? undefined : MOBILE_FEATURE_LIMIT).map((feature, index) => (
+                            <li key={index} className={cn(
+                              "flex items-start gap-2 md:gap-2.5 leading-relaxed",
+                              // 모바일에서 LIMIT 이후는 md에서만 보이게 하지 않고, isExpanded로 제어
+                              !isExpanded && index >= MOBILE_FEATURE_LIMIT && "hidden md:flex"
+                            )}>
+                              <Check
+                                className={cn(
+                                  "h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5",
+                                  isRecommended ? "text-blue-600" : "text-green-600"
+                                )}
+                              />
+                              <span className="text-xs md:text-sm text-slate-700">{feature}</span>
+                            </li>
+                          ))}
+                          {/* 데스크톱에서만 보이는 나머지 (expand 안 돼도) */}
+                          {!isExpanded && plan.features.slice(MOBILE_FEATURE_LIMIT).map((feature, index) => (
+                            <li key={`desktop-${index}`} className="hidden md:flex items-start gap-2.5 leading-relaxed">
                               <Check
                                 className={cn(
                                   "h-4 w-4 flex-shrink-0 mt-0.5",
@@ -382,11 +407,31 @@ export default function PricingPage() {
                           ))}
                         </ul>
 
+                        {/* 모바일 기능 더보기 토글 */}
+                        {hasMore && (
+                          <button
+                            type="button"
+                            className="md:hidden flex items-center justify-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 mb-3 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedCards((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(plan.id)) next.delete(plan.id);
+                                else next.add(plan.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            {isExpanded ? "접기" : `기능 ${plan.features.length - MOBILE_FEATURE_LIMIT}개 더보기`}
+                            <ChevronDown className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
+                          </button>
+                        )}
+
                         {/* CTA 버튼 */}
                         {isSelected ? (
                           <Button
                             className={cn(
-                              "w-full font-semibold",
+                              "w-full font-semibold h-9 md:h-10 text-sm",
                               plan.id === "business"
                                 ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                                 : "bg-slate-800 hover:bg-slate-700 text-white"
@@ -399,7 +444,7 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800"
+                            className="w-full border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 h-9 md:h-10 text-sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -414,18 +459,72 @@ export default function PricingPage() {
                 })}
               </div>
 
-              {/* ── 플랜별 기능 비교 테이블 ── */}
+              {/* ── 플랜별 기능 비교 ── */}
               <div className="mb-8">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+                <div className="text-center mb-4 md:mb-6">
+                  <h2 className="text-base md:text-3xl font-bold text-slate-900 mb-1 md:mb-2">
                     플랜별 기능 비교
                   </h2>
-                  <p className="text-sm text-slate-500">
-                    Team은 협업 중심 · Business부터 조직 운영 통제가 시작됩니다.
+                  <p className="text-[11px] md:text-sm text-slate-500">
+                    Team은 협업 · Business부터 운영 통제
                   </p>
                 </div>
 
-                <Card className="overflow-hidden">
+                {/* ── 모바일: 컴팩트 테이블 (축약 헤더 고정) ── */}
+                <div className="md:hidden overflow-x-auto -mx-4 px-4">
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="border-b border-slate-200 sticky top-0 bg-white">
+                        <th className="text-left py-2 pr-2 font-semibold text-slate-600 w-[40%]">기능</th>
+                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
+                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
+                        <th className="text-center py-2 px-1 font-semibold text-blue-700 bg-blue-50/50 w-[15%]">Biz</th>
+                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Ent.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonFeatures.map((item, index) => {
+                        if ("isCategoryHeader" in item && item.isCategoryHeader) {
+                          return (
+                            <tr key={`mcat-${index}`} className={cn(
+                              "border-t",
+                              item.tier === "business" ? "bg-blue-50/30" : item.tier === "enterprise" ? "bg-slate-50" : "bg-slate-50/50"
+                            )}>
+                              <td colSpan={5} className="py-1.5 px-1">
+                                <div className="flex items-center gap-1">
+                                  <span className={cn(
+                                    "text-[10px] font-bold uppercase tracking-wider",
+                                    item.tier === "business" ? "text-blue-600" : item.tier === "enterprise" ? "text-slate-500" : "text-slate-400"
+                                  )}>{item.label}</span>
+                                  {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-600 bg-blue-100 px-1 rounded">Biz+</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-slate-200 px-1 rounded">Ent.</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+                        const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
+                        const mCell = (val: boolean | string, highlight?: boolean) => (
+                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-50/20")}>
+                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-600" /> : <span className="text-slate-300">—</span>) : <span className="font-medium text-slate-700">{val}</span>}
+                          </td>
+                        );
+                        return (
+                          <tr key={`mrow-${index}`} className="border-b border-slate-100">
+                            <td className="py-1.5 pr-2 text-slate-700 font-medium">{d.feature}</td>
+                            {mCell(d.starter)}
+                            {mCell(d.team)}
+                            {mCell(d.business, true)}
+                            {mCell(d.enterprise)}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── 데스크톱: 기존 테이블 ── */}
+                <Card className="overflow-hidden hidden md:block">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
@@ -440,7 +539,6 @@ export default function PricingPage() {
                         </TableHeader>
                         <TableBody>
                           {comparisonFeatures.map((item, index) => {
-                            // ── 카테고리 헤더 행 ──
                             if ("isCategoryHeader" in item && item.isCategoryHeader) {
                               const isBusinessTier = item.tier === "business";
                               const isEnterpriseTier = item.tier === "enterprise";
@@ -449,73 +547,30 @@ export default function PricingPage() {
                                   key={`cat-${index}`}
                                   className={cn(
                                     "border-t border-slate-200",
-                                    isBusinessTier
-                                      ? "bg-blue-50/50"
-                                      : isEnterpriseTier
-                                      ? "bg-slate-100/70"
-                                      : "bg-slate-50/50"
+                                    isBusinessTier ? "bg-blue-50/50" : isEnterpriseTier ? "bg-slate-100/70" : "bg-slate-50/50"
                                   )}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
-                                      <span
-                                        className={cn(
-                                          "text-[11px] font-bold uppercase tracking-widest",
-                                          isBusinessTier
-                                            ? "text-blue-600"
-                                            : isEnterpriseTier
-                                            ? "text-slate-500"
-                                            : "text-slate-400"
-                                        )}
-                                      >
+                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-600" : isEnterpriseTier ? "text-slate-500" : "text-slate-400")}>
                                         {item.label}
                                       </span>
-                                      {isBusinessTier && (
-                                        <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded-full">
-                                          Business+
-                                        </span>
-                                      )}
-                                      {isEnterpriseTier && (
-                                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-1.5 py-0.5 rounded-full">
-                                          Enterprise
-                                        </span>
-                                      )}
+                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded-full">Business+</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
                               );
                             }
-
-                            // ── 기능 row ──
-                            const dataItem = item as {
-                              feature: string;
-                              starter: boolean | string;
-                              team: boolean | string;
-                              business: boolean | string;
-                              enterprise: boolean | string;
-                            };
-
+                            const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (
-                                value ? (
-                                  <Check className="h-4 w-4 text-green-600 mx-auto" />
-                                ) : (
-                                  <span className="text-slate-300 text-lg leading-none">—</span>
-                                )
-                              ) : (
-                                <span className="text-sm font-medium text-slate-700">{value}</span>
-                              );
-
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <span className="text-slate-300 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-700">{value}</span>;
                             return (
                               <TableRow key={index} className="hover:bg-slate-50/40 transition-colors">
-                                <TableCell className="py-2.5 pl-5 text-sm text-slate-700 font-medium">
-                                  {dataItem.feature}
-                                </TableCell>
+                                <TableCell className="py-2.5 pl-5 text-sm text-slate-700 font-medium">{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
-                                <TableCell className="text-center py-2.5 bg-blue-50/20">
-                                  {renderCell(dataItem.business)}
-                                </TableCell>
+                                <TableCell className="text-center py-2.5 bg-blue-50/20">{renderCell(dataItem.business)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.enterprise)}</TableCell>
                               </TableRow>
                             );
@@ -533,20 +588,54 @@ export default function PricingPage() {
       </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
+      {/* 모바일: 1줄 컴팩트 / 데스크톱: 풀 레이아웃 */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200 shadow-[0_-4px_12px_rgba(15,23,42,0.08)]">
-        <div className="mx-auto max-w-[90rem] px-4 md:px-8 py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-y-3 gap-x-12">
+        {/* ── 모바일 바 ── */}
+        <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs font-semibold text-slate-900 truncate">
+              {selectedPlan === "starter"
+                ? "Starter · 무료"
+                : selectedPlan === "team"
+                ? `Team · ₩${(isAnnual ? teamAnnualPerMonth : TEAM_MONTHLY).toLocaleString()}/월`
+                : selectedPlan === "business"
+                ? `Business · ₩${(isAnnual ? businessAnnualPerMonth : BUSINESS_MONTHLY).toLocaleString()}/월`
+                : "Enterprise · 별도 문의"}
+            </span>
+            {isAnnual && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 shrink-0">연간</Badge>}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              size="sm"
+              className="h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700"
+              onClick={() => selectedPlan && handlePrimaryAction({ stopPropagation: () => {} } as React.MouseEvent, selectedPlan)}
+            >
+              시작하기
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-xs border-slate-200"
+              onClick={() => (window.location.href = "/support")}
+            >
+              문의
+            </Button>
+          </div>
+        </div>
+        {/* ── 데스크톱 바 ── */}
+        <div className="hidden md:flex mx-auto max-w-[90rem] px-8 py-4 items-center justify-between gap-x-12">
           <div className="space-y-0.5">
-            <p className="text-sm md:text-base font-semibold text-slate-900">
+            <p className="text-base font-semibold text-slate-900">
               현재 선택된 플랜
             </p>
-            <p className="text-xs md:text-sm text-slate-500">
+            <p className="text-sm text-slate-500">
               플랜을 선택 후 바로 시작하거나 도입 문의를 남겨주세요.
             </p>
           </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs md:text-sm">
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
             <div className="flex flex-col">
               <span className="text-xs text-slate-500 font-medium">요금제</span>
-              <span className="text-sm md:text-base font-semibold text-slate-900">
+              <span className="text-base font-semibold text-slate-900">
                 {selectedPlan === "starter"
                   ? "Starter — 무료"
                   : selectedPlan === "team"
@@ -558,14 +647,14 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-slate-500 font-medium">결제 주기</span>
-              <span className="text-sm md:text-base font-semibold text-slate-900">
+              <span className="text-base font-semibold text-slate-900">
                 {isAnnual ? "연간 결제 (10% 할인)" : "월간 결제"}
               </span>
             </div>
           </div>
           <div className="flex items-center shrink-0">
             <Button
-              className="px-6 md:px-8 h-11 text-sm md:text-base font-semibold bg-blue-600 hover:bg-blue-700 whitespace-nowrap shadow-sm"
+              className="px-8 h-11 text-base font-semibold bg-blue-600 hover:bg-blue-700 whitespace-nowrap shadow-sm"
               onClick={() => (window.location.href = "/support")}
             >
               요금 & 도입 문의

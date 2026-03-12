@@ -608,7 +608,7 @@ function StickySearchBar() {
   };
 
   return (
-    <div className="w-full px-1 py-2 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
+    <div className="w-full px-2 pt-3 pb-2 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
         <div className="flex items-center border border-slate-300 rounded-lg bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
@@ -632,20 +632,20 @@ function StickySearchBar() {
         </div>
       </form>
 
-      {/* 검색 전: 검색 안내 + 예시 검색어 칩 */}
+      {/* 검색 전: 안내 1줄 + 예시 칩 1줄 */}
       {!hasSearched && (
-        <div className="max-w-3xl mx-auto mt-3 px-1 space-y-2.5">
-          <p className="text-[11px] text-slate-400">
-            시약명 · CAS No. · 제조사 · 카탈로그 번호로 검색할 수 있습니다.
+        <div className="max-w-3xl mx-auto mt-2 px-1 space-y-1.5">
+          <p className="text-[10px] text-slate-400">
+            시약명, CAS No., 제조사, 카탈로그 번호로 검색
           </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-medium text-slate-400 shrink-0">예시 검색어</span>
-            {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody", "67-66-3"].map((term) => (
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[10px] font-medium text-slate-400 shrink-0 mr-0.5">예시</span>
+            {["Tris-HCl", "Thermo Fisher", "A1234567", "67-66-3"].map((term) => (
               <button
                 key={term}
                 type="button"
                 onClick={() => handleChipClick(term)}
-                className="text-[11px] px-2.5 py-1 rounded-full border border-slate-200 bg-white text-slate-600 font-medium hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+                className="text-[10px] px-1.5 py-0.5 rounded-full border border-slate-200 bg-white text-slate-500 font-medium hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all cursor-pointer"
               >
                 {term}
               </button>
