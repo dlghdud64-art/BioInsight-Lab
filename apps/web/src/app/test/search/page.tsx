@@ -142,14 +142,16 @@ export default function SearchPage() {
           )}
         </div>
 
-        {/* 2컬럼 레이아웃 */}
-        <div className="flex flex-col gap-4 md:grid md:gap-8 md:grid-cols-[260px_1fr]">
-        {/* 좌측: 검색 패널 (데스크탑만) */}
+        {/* 2컬럼 레이아웃 — 좌측 필터는 검색 후에만 노출 */}
+        <div className={`flex flex-col gap-4 ${hasSearched ? "md:grid md:gap-8 md:grid-cols-[260px_1fr]" : ""}`}>
+        {/* 좌측: 검색 패널 (데스크탑 + 검색 후만) */}
+        {hasSearched && (
         <aside className="hidden md:block">
           <div className="flex flex-col gap-4">
             <SearchPanel />
           </div>
         </aside>
+        )}
 
         {/* 검색 결과 */}
         <section className="space-y-4 max-w-4xl mx-auto w-full">
@@ -311,51 +313,16 @@ export default function SearchPage() {
                   })}
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center py-16 md:py-20 w-full max-w-3xl mx-auto px-4">
+              <div className="flex h-full flex-col items-center justify-center py-12 md:py-16 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
-                    <div className="hidden md:flex flex-col items-center text-center">
-                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-5">
-                        <Search className="h-8 w-8 text-slate-400" strokeWidth={1.5} />
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-800 mb-2">시약·장비를 검색해 비교를 시작하세요</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed max-w-sm mb-6">
-                        제품명, CAS No., 제조사로 검색하면 비교·견적 요청까지 이어갈 수 있습니다.
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <span className="px-2 py-1 rounded bg-slate-100">검색 → 비교</span>
-                        <span>→</span>
-                        <span className="px-2 py-1 rounded bg-slate-100">견적 요청</span>
-                        <span>→</span>
-                        <span className="px-2 py-1 rounded bg-slate-100">재고 등록</span>
-                      </div>
-                    </div>
+                    <p className="hidden md:block text-sm text-slate-400">
+                      제품명, CAS No., 제조사명을 입력하세요.
+                    </p>
                   ) : (
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                        <Package className="h-7 w-7 text-slate-400" strokeWidth={1.5} />
-                      </div>
-                      <h3 className="text-base font-semibold text-slate-800 mb-1">검색 결과를 찾지 못했습니다</h3>
-                      <p className="text-sm text-slate-500 mb-5 max-w-xs leading-relaxed break-keep">
-                        검색어를 더 구체적으로 입력하거나 제조사 기준으로 다시 시도해 보세요.
-                      </p>
-                      <div className="flex flex-col gap-2 w-full max-w-xs text-left">
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">다음 방법을 시도해 보세요</p>
-                        <div className="space-y-1.5 text-xs text-slate-600">
-                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> 유사 품목명 또는 카테고리 키워드로 재검색</div>
-                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> 제조사명 단독으로 검색 (예: Thermo Fisher)</div>
-                          <div className="flex items-start gap-2"><span className="mt-0.5 text-slate-400">·</span> CAS No. 또는 카탈로그 번호 직접 입력</div>
-                        </div>
-                      </div>
-                      {session?.user && (
-                        <div className="mt-5 flex items-center gap-2">
-                          <Link href="/dashboard/inventory">
-                            <button className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
-                              <LayoutDashboard className="h-3 w-3" />
-                              재고 관리 이동
-                            </button>
-                          </Link>
-                        </div>
-                      )}
+                      <Package className="h-8 w-8 text-slate-300 mb-3" strokeWidth={1.5} />
+                      <p className="text-sm text-slate-600 mb-1">일치하는 제품이 없습니다.</p>
+                      <p className="text-xs text-slate-400">품목명·제조사·CAS No.를 다시 확인해 보세요.</p>
                     </div>
                   )}
               </div>
@@ -666,43 +633,22 @@ function StickySearchBar() {
             검색
           </Button>
         </div>
-        <p className="mt-2 text-center text-xs text-slate-400 max-w-2xl mx-auto hidden sm:block">
-          검색 결과를 비교 후보에 담고, 견적 요청까지 이어갈 수 있습니다.
-        </p>
       </form>
 
-      {/* 빠른 검색 — 검색 전 */}
+      {/* 빠른 검색 힌트 — 검색 전, 인라인 칩 */}
       {!hasSearched && (
-        <div className="mt-4 md:mt-6 max-w-xs sm:max-w-sm md:max-w-lg mx-auto">
-          <p className="text-xs text-slate-400 font-medium text-center mb-2.5">빠른 검색</p>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "시약·소모품", sub: "시약명으로 검색" },
-              { label: "제조사", sub: "Thermo, Sigma…" },
-              { label: "Cat. No", sub: "카탈로그 번호" },
-              { label: "품목군", sub: "Antibody, Buffer…" },
-            ].map((entry) => (
-              <button
-                key={entry.label}
-                type="button"
-                onClick={() => {
-                  const input = document.querySelector<HTMLInputElement>('input[placeholder*="시약명"]');
-                  input?.focus();
-                }}
-                className="flex flex-col items-start px-3 py-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl text-left transition-all touch-manipulation"
-              >
-                <span className="text-sm font-semibold text-slate-700">{entry.label}</span>
-                <span className="text-[11px] text-slate-400">{entry.sub}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-slate-400">
-            <span className="px-2 py-1 rounded bg-slate-100 font-medium">검색</span>
-            <span>→</span>
-            <span className="px-2 py-1 rounded bg-slate-100 font-medium">비교</span>
-            <span>→</span>
-            <span className="px-2 py-1 rounded bg-slate-100 font-medium">견적 요청</span>
-          </div>
+        <div className="mt-3 max-w-3xl mx-auto flex items-center justify-center gap-2 flex-wrap">
+          <span className="text-[11px] text-slate-400">예시:</span>
+          {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody"].map((term) => (
+            <button
+              key={term}
+              type="button"
+              onClick={() => { setSearchQuery(term); setLocalQuery(term); }}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-slate-200 text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
+            >
+              {term}
+            </button>
+          ))}
         </div>
       )}
     </div>
