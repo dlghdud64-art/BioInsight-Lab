@@ -472,7 +472,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
+            <DropdownMenuContent align="end" alignOffset={0} collisionPadding={{ right: 8 }} className="w-[calc(100vw-1rem)] sm:w-[360px] min-w-[320px] max-w-[400px] p-0 shadow-xl">
               {/* ── 상단: 행동 기준 요약 ── */}
               <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-2">
