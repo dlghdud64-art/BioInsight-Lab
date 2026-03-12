@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Github, Mail, ExternalLink } from "lucide-react";
 
@@ -11,37 +12,31 @@ function scrollToId(id: string) {
   }
 }
 
-// UTF-8 인코딩 문제로 인한 한글 깨짐 수정
-const footerColumns = [
-  {
-    title: "서비스",
-    links: [
-      { label: "홈", href: "/", onClick: null },
-      { label: "서비스 소개", href: "/intro", onClick: null },
-      { label: "요금 & 도입", href: "/pricing", onClick: null },
-      { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
-    ],
-  },
-  {
-    title: "지원",
-    links: [
-      { label: "고객 지원 및 문의", href: "/support", onClick: null },
-      { label: "FAQ", href: "/support#faq", onClick: null },
-      { label: "대시보드", href: "/dashboard", onClick: null },
-      { label: "로그인", href: "/login", onClick: null },
-    ],
-  },
-  {
-    title: "법적 고지",
-    links: [
-      { label: "개인정보처리방침", href: "/privacy", onClick: null },
-      { label: "이용약관", href: "/terms", onClick: null },
-    ],
-  },
-];
-
 export function MainFooter() {
+  const { data: session } = useSession();
   const year = new Date().getFullYear();
+
+  const footerColumns = [
+    {
+      title: "서비스",
+      links: [
+        { label: "홈", href: "/", onClick: null },
+        { label: "서비스 소개", href: "/intro", onClick: null },
+        { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
+      ],
+    },
+    {
+      title: "바로가기",
+      links: session
+        ? [
+            { label: "대시보드", href: "/dashboard", onClick: null },
+          ]
+        : [
+            { label: "로그인", href: "/login", onClick: null },
+            { label: "회원가입", href: "/register", onClick: null },
+          ],
+    },
+  ];
 
   return (
     <footer className="border-t border-slate-200 bg-white">
@@ -92,7 +87,7 @@ export function MainFooter() {
           </div>
 
           {/* 오른쪽: 링크 컬럼 그리드 */}
-          <div className="grid gap-8 sm:grid-cols-3 text-xs">
+          <div className="grid gap-8 sm:grid-cols-2 text-xs">
             {footerColumns.map((col) => (
               <div key={col.title} className="space-y-2">
                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
