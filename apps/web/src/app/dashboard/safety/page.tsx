@@ -654,6 +654,16 @@ export default function SafetyManagerPage() {
                         </div>
                       </div>
 
+                      {/* 보호구(PPE) 아이콘 */}
+                      {item.ppe.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 mr-0.5">보호구</span>
+                          {item.ppe.map((p) => (
+                            <PPEIcon key={p.type} type={p.type} required={p.required} />
+                          ))}
+                        </div>
+                      )}
+
                       {/* 3행: 후속 조치 CTA */}
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                         {!item.hasMsds && (
