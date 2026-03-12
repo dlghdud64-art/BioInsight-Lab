@@ -612,7 +612,7 @@ function StickySearchBar() {
   return (
     <div className="w-full px-1 py-3 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
-        <div className="flex items-center border-2 border-slate-300 rounded-lg bg-white focus-within:border-blue-600 transition-colors">
+        <div className="flex items-center border border-slate-300 rounded-lg bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
             <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
           </div>
@@ -625,11 +625,11 @@ function StickySearchBar() {
           />
           <Button
             type="submit"
-            className="h-10 md:h-12 px-4 md:px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-none rounded-r-md text-sm md:text-sm font-semibold shrink-0 transition-colors"
+            className="h-8 md:h-10 px-4 md:px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-semibold shrink-0 transition-colors mr-1"
             disabled={!localQuery.trim()}
           >
+            <Search className="h-4 w-4 md:mr-1.5" />
             <span className="hidden md:inline">검색</span>
-            <Search className="h-4 w-4 md:hidden" />
           </Button>
         </div>
       </form>
