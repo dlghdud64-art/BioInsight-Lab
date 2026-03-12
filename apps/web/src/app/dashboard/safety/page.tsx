@@ -111,50 +111,45 @@ function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
   );
 }
 
-// PPE 고정 순서 + 아이콘 맵
-const PPE_ORDER = ["gloves", "goggles", "coat", "mask"] as const;
-const PPE_META: Record<string, { label: string; icon: typeof Hand }> = {
-  gloves: { label: "보호장갑", icon: Hand },
-  goggles: { label: "보안경", icon: Glasses },
-  coat: { label: "실험복", icon: Shirt },
-  mask: { label: "마스크", icon: ShieldCheck },
-};
+// PPE(보호구) 아이콘 렌더링
+function PPEIcon({ type, required }: { type: string; required?: boolean }) {
+  const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
+  const active = required
+    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50"
+    : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
+  const label =
+    type === "gloves"
+      ? "보호장갑"
+      : type === "goggles"
+        ? "보안경"
+        : type === "coat"
+          ? "실험복"
+          : type === "mask"
+            ? "마스크"
+            : "PPE";
 
-// PPE 가로 한 줄 렌더링 — 고정 4슬롯, 비필수는 투명 처리(자리 유지)
-function PPERow({ ppe }: { ppe: { type: string; required: boolean }[] }) {
-  const ppeMap = new Map(ppe.map((p) => [p.type, p.required]));
+  const iconClass = "w-5 h-5";
+  const iconEl = (() => {
+    if (type === "gloves") return <Hand className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "goggles") return <Glasses className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "coat") return <Shirt className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    if (type === "mask") return <ShieldCheck className={iconClass} strokeWidth={2.5} aria-label={label} />;
+    return null;
+  })();
+
+  if (!iconEl) return null;
 
   return (
-    <div className="flex items-center gap-1">
-      {PPE_ORDER.map((type) => {
-        const meta = PPE_META[type];
-        if (!meta) return null;
-        const Icon = meta.icon;
-        const required = ppeMap.get(type);
-        const isActive = required === true;
-
-        return (
-          <TooltipProvider key={type}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 cursor-help ${
-                    isActive
-                      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50"
-                      : "text-slate-200 dark:text-slate-700"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" strokeWidth={isActive ? 2.5 : 1.5} />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs font-bold">{meta.label}{isActive ? " (필수)" : ""}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      })}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={`${base} ${active} cursor-help inline-flex`}>{iconEl}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs font-bold">{label}{required ? " (필수)" : ""}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -558,15 +553,7 @@ export default function SafetyManagerPage() {
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
-              <div className="antialiased">
-                {/* 컬럼 헤더 (데스크탑) */}
-                <div className="hidden md:flex items-center text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider py-2 px-4 border-b border-slate-100 dark:border-slate-800/50 mb-2">
-                  <div className="flex-1 min-w-0">물질 정보</div>
-                  <div className="w-72 flex-shrink-0 px-3">운영 상세</div>
-                  <div className="w-[120px] flex-shrink-0 text-center">보호구</div>
-                </div>
-
-                <div className="space-y-2">
+              <div className="space-y-2 antialiased">
                 {filteredItems.map((item) => {
                   const riskBadge = item.level === "HIGH"
                     ? { label: "고위험", cls: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800" }
@@ -578,80 +565,47 @@ export default function SafetyManagerPage() {
                     : item.actionStatus === "caution"
                       ? { label: "주의", cls: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800" }
                       : { label: "정상", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800" };
+                  const requiredPpe = item.ppe.filter((p) => p.required).map((p) =>
+                    p.type === "gloves" ? "보호장갑" : p.type === "goggles" ? "보안경" : p.type === "coat" ? "실험복" : p.type === "mask" ? "마스크" : ""
+                  ).filter(Boolean);
 
                   return (
                     <div
                       key={item.id}
-                      className={`flex flex-col md:flex-row md:items-center border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
+                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
                     >
-                      {/* LEFT: 식별 정보 */}
-                      <div className="flex-1 min-w-0 p-3 md:py-3 md:pl-4 md:pr-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="flex gap-1 flex-shrink-0">
-                            {item.icons.map((icon) => (
-                              <GHSPictogram key={icon} type={icon} />
-                            ))}
-                          </div>
-                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
+                      {/* 1행: 핵심 식별 정보 */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {item.icons.map((icon) => (
+                            <GHSPictogram key={icon} type={icon} />
+                          ))}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1.5 flex-nowrap overflow-x-auto">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono flex-shrink-0">
-                            {item.cas}
-                          </Badge>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${riskBadge.cls}`}>
-                            {riskBadge.label}
-                          </Badge>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${actionBadge.cls}`}>
-                            {actionBadge.label}
-                          </Badge>
-                          {!item.hasMsds && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0 bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
-                              MSDS 미등록
-                            </Badge>
-                          )}
-                        </div>
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono">
+                          {item.cas}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
+                          {riskBadge.label}
+                        </Badge>
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${actionBadge.cls}`}>
+                          {actionBadge.label}
+                        </Badge>
                       </div>
 
-                      {/* CENTER: 운영 메타 — 가로 우선 compact */}
-                      <div className="md:w-72 flex-shrink-0 px-3 pb-2 md:py-3 md:px-3 md:border-l border-t md:border-t-0 border-slate-100 dark:border-slate-800/50">
-                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px]">
-                          <span><span className="text-slate-400 dark:text-slate-500">보관</span> <span className="text-slate-700 dark:text-slate-300">{item.loc}</span></span>
-                          <span><span className="text-slate-400 dark:text-slate-500">조건</span> <span className="text-slate-700 dark:text-slate-300">{item.storageCondition}</span></span>
-                          <span><span className="text-slate-400 dark:text-slate-500">MSDS</span> {item.hasMsds
-                            ? <span className="text-emerald-600 dark:text-emerald-400">등록</span>
-                            : <span className="text-amber-600 dark:text-amber-400">미등록</span>
-                          }</span>
-                          <span><span className="text-slate-400 dark:text-slate-500">점검</span> <span className="text-slate-700 dark:text-slate-300">{item.lastInspection || <span className="text-amber-500">미점검</span>}</span></span>
-                        </div>
-                        {/* 후속 조치 CTA */}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                          {!item.hasMsds && (
-                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                              onClick={() => toast({ title: "MSDS 등록", description: `${item.name}의 MSDS 문서를 등록하세요.` })}
-                            >
-                              <FileWarning className="h-3 w-3 mr-1" />MSDS 등록
-                            </Button>
-                          )}
-                          {!item.lastInspection && (
-                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                              onClick={() => toast({ title: "점검 기록", description: `${item.name}의 안전 점검을 기록하세요.` })}
-                            >
-                              <ShieldCheck className="h-3 w-3 mr-1" />점검 기록
-                            </Button>
-                          )}
-                          {item.level === "HIGH" && (
-                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
-                              onClick={() => toast({ title: "폐기 처리", description: `${item.name}의 폐기 절차를 확인하세요.` })}
-                            >
-                              <AlertTriangle className="h-3 w-3 mr-1" />폐기 처리
-                            </Button>
-                          )}
-                          {item.actionStatus === "normal" && item.hasMsds && item.lastInspection && (
-                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                              <ShieldCheck className="h-3 w-3" />관리 정상
-                            </span>
-                          )}
-                        </div>
+                      {/* 2행: 운영 메타 정보 */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>보관: {item.loc}</span>
+                        <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
+                        <span className="hidden sm:inline">조건: {item.storageCondition}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>MSDS: {item.hasMsds ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">등록</span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400">미등록</span>
+                        )}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <span>점검: {item.lastInspection || <span className="text-amber-500">미점검</span>}</span>
                       </div>
 
                       {/* 보호구(PPE) 아이콘 */}
@@ -696,7 +650,6 @@ export default function SafetyManagerPage() {
                     </div>
                   );
                 })}
-                </div>
               </div>
             )}
           </CardContent>
