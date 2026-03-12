@@ -25,7 +25,7 @@ export default function IntroPage() {
       <div className="w-full">
 
         {/* ══ 1. Hero ══════════════════════════════════════════════════════ */}
-        <section className="relative pt-20 pb-12 md:pt-28 md:pb-16 bg-gradient-to-b from-slate-50 via-white to-white overflow-hidden">
+        <section className="relative pt-20 pb-4 md:pt-28 md:pb-16 bg-gradient-to-b from-slate-50 via-white to-white overflow-hidden">
           {/* Grid background */}
           <div className="absolute inset-0 pointer-events-none opacity-[0.035]" style={{
             backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)`,
@@ -42,29 +42,19 @@ export default function IntroPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
-                시약·장비 검색부터<br />
-                견적·재고 운영까지
+              <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
+                <span className="md:hidden">시약 검색부터 재고 운영까지</span>
+                <span className="hidden md:inline">시약·장비 검색부터<br />견적·재고 운영까지</span>
               </h1>
-              <p className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed max-w-xl break-keep">
-                필요한 시약을 검색하고, 후보를 비교하고, 견적을 요청하세요.
-                구매 이력과 재고 관리까지 한 플랫폼에서 이어서 처리합니다.
+              <p className="hidden md:block text-lg text-slate-600 mb-8 leading-relaxed max-w-xl break-keep">
+                <span className="font-semibold text-slate-800">필요한 시약을 검색</span>하고,
+                후보를 <span className="font-semibold text-slate-800">비교</span>하고,
+                <span className="font-semibold text-slate-800">견적을 요청</span>하세요.<br />
+                구매 이력과 재고 관리까지 — 한 플랫폼에서 이어집니다.
               </p>
-
-              {/* CTAs */}
-              <div className="flex flex-wrap gap-3 mb-4 md:mb-8">
-                <Link href="/test/search">
-                  <button className="h-12 px-7 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center gap-2 transition-colors text-sm shadow-sm">
-                    시약·장비 검색 시작하기
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </Link>
-                <Link href="/support">
-                  <button className="h-12 px-6 border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold rounded-lg transition-colors text-sm">
-                    도입 문의하기
-                  </button>
-                </Link>
-              </div>
+              <p className="md:hidden text-sm text-slate-600 mb-5 leading-relaxed break-keep">
+                <span className="font-semibold text-slate-800">검색 → 비교 → 견적 → 재고</span>까지 한 플랫폼
+              </p>
 
               {/* Flow chips — 데스크탑만 표시 */}
               <div className="hidden md:flex flex-wrap items-center gap-1.5">
@@ -83,8 +73,7 @@ export default function IntroPage() {
                   </div>
                 ))}
               </div>
-              {/* 모바일: 1줄 요약 */}
-              <p className="md:hidden text-xs text-slate-400">검색 → 비교 → 견적 → 재고까지 한 플랫폼에서</p>
+              {/* 모바일: flow chips 대체 — 별도 표시 없음 (Hero 문구에서 커버) */}
             </div>
 
             {/* Right: mini UI mockup (desktop) */}
@@ -133,20 +122,20 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 제품 한눈 요약 (모바일 전용) ═════════════════════════════════ */}
-        <div className="md:hidden py-6 bg-white border-b border-slate-100 px-4">
-          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">한눈에 보기</p>
-          <ul className="space-y-2.5">
-            <li className="flex items-center gap-2.5 text-sm text-slate-700">
-              <Search className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-              500만 시약·장비 DB에서 AI 검색 및 대체품 추천
+        <div className="md:hidden py-3 bg-white border-b border-slate-100 px-4">
+          <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-2">한눈에 보기</p>
+          <ul className="space-y-1.5">
+            <li className="flex items-center gap-2 text-xs text-slate-700">
+              <Search className="h-3 w-3 text-blue-500 shrink-0" />
+              500만 DB AI 검색 + 대체품 추천
             </li>
-            <li className="flex items-center gap-2.5 text-sm text-slate-700">
-              <GitCompare className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-              벤더별 가격·납기·스펙 비교, 최적 후보 선택
+            <li className="flex items-center gap-2 text-xs text-slate-700">
+              <GitCompare className="h-3 w-3 text-violet-500 shrink-0" />
+              가격·납기·스펙 비교
             </li>
-            <li className="flex items-center gap-2.5 text-sm text-slate-700">
-              <FileText className="h-3.5 w-3.5 text-teal-500 shrink-0" />
-              견적 요청부터 구매·재고 운영까지 한 번에 연결
+            <li className="flex items-center gap-2 text-xs text-slate-700">
+              <FileText className="h-3 w-3 text-teal-500 shrink-0" />
+              견적 → 구매 → 재고 한 번에
             </li>
           </ul>
         </div>
@@ -154,31 +143,30 @@ export default function IntroPage() {
         {/* ══ 2. 핵심 제품 흐름 (4단계) ═══════════════════════════════════ */}
         <section className="py-10 md:py-16 bg-white border-b border-slate-100">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
-            <div className="mb-8 md:mb-12">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">제품 흐름</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 break-keep">
-                검색부터 운영까지, 끊김 없이 이어집니다
+            <div className="mb-5 md:mb-12">
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1 md:mb-2">제품 흐름</p>
+              <h2 className="text-lg md:text-3xl font-bold text-slate-900 break-keep">
+                검색부터 운영까지 한 번에
               </h2>
-              <p className="text-sm md:text-base text-slate-500 mt-2 max-w-2xl break-keep">
+              <p className="hidden md:block text-base text-slate-500 mt-2 max-w-2xl break-keep">
                 BioInsight Lab은 시약·장비 구매의 전 과정을 하나의 플랫폼에서 처리합니다.
               </p>
             </div>
 
-            {/* 모바일: 압축형 프로세스 리스트 */}
+            {/* 모바일: 프로세스 리스트 */}
             <div className="md:hidden space-y-1.5">
               {[
-                { num: 1, title: "시약·장비 검색", desc: "통합 검색 + 카테고리·브랜드 필터", icon: Search, bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-600" },
-                { num: 2, title: "제품 비교", desc: "가격·납기·순도 나란히 비교, AI 분석", icon: GitCompare, bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-600" },
-                { num: 3, title: "견적 요청", desc: "클릭 한 번 견적서 생성, 공급사 응답 통합 관리", icon: FileText, bg: "bg-teal-50", text: "text-teal-600", dot: "bg-teal-600" },
-                { num: 4, title: "재고·이력 운영", desc: "구매 시 자동 재고 반영, Lot No.·유효기간 추적", icon: Package, bg: "bg-slate-50", text: "text-slate-700", dot: "bg-slate-700" },
+                { num: 1, title: "시약·장비 검색", desc: "여러 벤더를 통합 검색, 카테고리·브랜드 필터", dot: "bg-blue-600", bg: "bg-blue-50" },
+                { num: 2, title: "제품 비교", desc: "가격·납기·순도를 나란히 비교, AI 분석", dot: "bg-violet-600", bg: "bg-violet-50" },
+                { num: 3, title: "견적 요청", desc: "비교표에서 바로 견적 생성·전달", dot: "bg-teal-600", bg: "bg-teal-50" },
+                { num: 4, title: "재고·이력 운영", desc: "구매 시 자동 재고 반영, Lot·유효기간 추적", dot: "bg-slate-700", bg: "bg-slate-50" },
               ].map((step) => (
-                <div key={step.num} className={`flex items-center gap-3 px-3.5 py-2.5 ${step.bg} rounded-lg border border-slate-100`}>
-                  <div className={`shrink-0 w-7 h-7 rounded-full ${step.dot} text-white text-xs font-bold flex items-center justify-center`}>{step.num}</div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-900">{step.title}</h3>
-                    <p className="text-xs text-slate-500 leading-tight line-clamp-1">{step.desc}</p>
+                <div key={step.num} className={`flex items-start gap-2.5 px-3 py-2.5 ${step.bg} rounded-lg border border-slate-100`}>
+                  <div className={`shrink-0 w-5 h-5 rounded-full ${step.dot} text-white text-[10px] font-bold flex items-center justify-center mt-0.5`}>{step.num}</div>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-xs text-slate-900">{step.title}</span>
+                    <p className="text-[10px] text-slate-500 leading-tight">{step.desc}</p>
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />
                 </div>
               ))}
             </div>
@@ -487,37 +475,63 @@ export default function IntroPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 mb-8">
               {[
                 {
                   icon: Shield,
-                  color: "bg-emerald-50 text-emerald-600",
+                  iconBg: "bg-emerald-100",
+                  iconColor: "text-emerald-600",
+                  borderColor: "border-emerald-200",
                   title: "역할 기반 접근 제어",
+                  mobileDesc: "팀원별 권한 분리, 승인 워크플로우",
                   desc: "조직원별 권한을 세밀하게 설정합니다. 견적 요청·승인·관리자 역할을 분리하여 내부 구매 프로세스에 맞게 운영할 수 있습니다.",
-                  badge: "Team / Business 플랜",
+                  badge: "Team / Business",
+                  badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
                 },
                 {
                   icon: Lock,
-                  color: "bg-slate-100 text-slate-700",
+                  iconBg: "bg-blue-100",
+                  iconColor: "text-blue-600",
+                  borderColor: "border-blue-200",
                   title: "데이터 격리 & 공유 제어",
+                  mobileDesc: "조직 간 완전 분리, 암호화 공유 링크",
                   desc: "조직 내 데이터는 타 조직과 완전히 분리됩니다. 암호화 기반 공유 링크는 만료 설정·비활성화가 가능하며 검색엔진 노출을 차단합니다.",
                   badge: "전 플랜 기본 제공",
+                  badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
                 },
                 {
                   icon: Server,
-                  color: "bg-indigo-50 text-indigo-600",
+                  iconBg: "bg-indigo-100",
+                  iconColor: "text-indigo-600",
+                  borderColor: "border-indigo-200",
                   title: "프라이빗 배포",
+                  mobileDesc: "자체 서버 독립 배포 옵션",
                   desc: "민감한 연구 데이터가 외부 클라우드에 보관되는 것이 부담스럽다면, 자체 서버에 독립 배포하는 옵션을 제공합니다.",
-                  badge: "Enterprise 플랜",
+                  badge: "Enterprise",
+                  badgeColor: "text-indigo-700 bg-indigo-50 border-indigo-200",
                 },
               ].map((item, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-200 p-3.5 md:p-6">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 md:mb-4 ${item.color}`}>
-                    <item.icon className="h-4.5 w-4.5" strokeWidth={1.5} />
+                <div key={i} className={`bg-white rounded-xl border-2 ${item.borderColor} hover:shadow-md transition-shadow p-3 md:p-6`}>
+                  {/* 모바일: 가로 배치 (아이콘 + 제목/설명 + 배지) */}
+                  <div className="md:hidden flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${item.iconBg}`}>
+                      <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[13px] font-bold text-slate-900">{item.title}</h3>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{item.mobileDesc}</p>
+                    </div>
+                    <span className={`text-[9px] font-semibold border rounded-md px-1.5 py-0.5 flex-shrink-0 whitespace-nowrap ${item.badgeColor}`}>{item.badge}</span>
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1 md:mb-2">{item.title}</h3>
-                  <p className="hidden md:block text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 rounded-md px-2 py-1">{item.badge}</span>
+                  {/* 데스크탑: 세로 배치 */}
+                  <div className="hidden md:block">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-4 ${item.iconBg}`}>
+                      <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900 mb-2">{item.title}</h3>
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
+                    <span className={`text-[10px] font-semibold border rounded-md px-2 py-1 ${item.badgeColor}`}>{item.badge}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -540,7 +554,7 @@ export default function IntroPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3">
+              <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-3">
                 <Link href="/pricing">
                   <button className="h-9 px-5 text-sm font-semibold text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
                     요금 & 플랜 보기

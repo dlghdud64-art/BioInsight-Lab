@@ -22,7 +22,7 @@ export function MainFooter() {
       links: [
         { label: "홈", href: "/", onClick: null },
         { label: "서비스 소개", href: "/intro", onClick: null },
-        { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
+        { label: "요금제", href: "/pricing", onClick: null },
       ],
     },
     {
@@ -35,6 +35,20 @@ export function MainFooter() {
             { label: "로그인", href: "/login", onClick: null },
             { label: "회원가입", href: "/register", onClick: null },
           ],
+    },
+    {
+      title: "고객지원",
+      links: [
+        { label: "도입 문의", href: "/support", onClick: null },
+        { label: "이메일 문의", href: "mailto:contact@bioinsight.lab", onClick: null },
+      ],
+    },
+    {
+      title: "법적 고지",
+      links: [
+        { label: "이용약관", href: "/terms", onClick: null },
+        { label: "개인정보처리방침", href: "/privacy", onClick: null },
+      ],
     },
   ];
 
@@ -87,7 +101,7 @@ export function MainFooter() {
           </div>
 
           {/* 오른쪽: 링크 컬럼 그리드 */}
-          <div className="grid gap-8 sm:grid-cols-2 text-xs">
+          <div className="grid gap-6 grid-cols-2 sm:grid-cols-4 text-xs">
             {footerColumns.map((col) => (
               <div key={col.title} className="space-y-2">
                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -129,8 +143,13 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-4 text-center text-[11px] text-slate-500">
+        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-slate-200 pt-4 text-center md:text-left text-[11px] text-slate-500">
           <span>© {year} BioInsight Lab. All rights reserved.</span>
+          <div className="flex items-center justify-center md:justify-end gap-3">
+            <Link href="/terms" className="hover:text-slate-700 transition-colors">이용약관</Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/privacy" className="hover:text-slate-700 transition-colors">개인정보처리방침</Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -11,29 +11,29 @@ interface WorkflowStep {
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
   {
-    stage: "벤더·제품 탐색",
-    before: "벤더별 사이트를 개별 방문하여 제품을 검색하고 스펙을 수기로 기록",
-    after: "통합 검색으로 여러 벤더의 제품을 한 화면에서 조회하고 비교 대상 선정",
+    stage: "제품 탐색",
+    before: "벤더 사이트를 개별 방문, 스펙 수기 기록",
+    after: "통합 검색으로 한 화면에서 조회·비교",
   },
   {
-    stage: "품목 정리 및 비교",
-    before: "엑셀·노션에 제품 정보를 복사-붙여넣기로 정리하고 수동 비교",
-    after: "선택한 제품이 자동으로 비교표에 정렬되어 스펙·가격 차이를 즉시 확인",
+    stage: "품목 비교",
+    before: "엑셀에 복붙해서 수동 정리·비교",
+    after: "자동 비교표로 스펙·가격 즉시 확인",
   },
   {
     stage: "견적 요청",
-    before: "벤더마다 다른 양식에 맞춰 견적 요청서를 개별 작성·발송",
-    after: "비교표에서 바로 견적 요청 리스트를 생성하고 공유 링크로 전달",
+    before: "벤더별 양식에 맞춰 개별 작성·발송",
+    after: "비교표에서 바로 견적 생성·공유",
   },
   {
-    stage: "비교 검토 및 의사결정",
-    before: "이메일·파일이 분산되어 최신 버전 파악과 팀 내 공유가 어려움",
-    after: "하나의 공유 문서에서 팀원과 실시간 검토하고 승인 이력을 관리",
+    stage: "검토·의사결정",
+    before: "이메일·파일 분산, 버전 파악 어려움",
+    after: "공유 문서에서 팀원과 실시간 검토",
   },
   {
-    stage: "구매 이력·후속 운영",
-    before: "구매 기록이 개인 파일에 남아 반복 구매나 예산 확인에 시간 소요",
-    after: "구매 이력이 자동 축적되어 재구매·예산 현황·지출 추이를 즉시 조회",
+    stage: "구매 이력 관리",
+    before: "개인 파일에 기록, 재구매 시 재확인",
+    after: "이력 자동 축적, 예산·지출 즉시 조회",
   },
 ];
 
@@ -63,37 +63,37 @@ export function ComparisonSection() {
     <section className="py-6 md:py-10 border-b border-slate-200 bg-gradient-to-b from-white via-slate-50/30 to-white">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         {/* 헤더 */}
-        <div className="text-center mb-6 md:mb-8">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-2">
-            도입 전후 업무 흐름 비교
+        <div className="text-center mb-4 md:mb-8">
+          <h2 className="text-base md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-1 md:mb-2">
+            업무 흐름 비교
           </h2>
-          <p className="text-xs md:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            연구 구매의 주요 단계별로 기존 수작업 방식과 BioInsight 도입 후 달라지는 운영 흐름을 비교합니다
+          <p className="text-[11px] md:text-sm text-slate-500 max-w-2xl mx-auto">
+            단계별로 달라지는 운영 흐름을 비교합니다
           </p>
         </div>
 
         {/* 모바일 토글 */}
-        <div className="flex items-center justify-center mb-6 md:hidden">
-          <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm w-full max-w-sm">
+        <div className="flex items-center justify-center mb-4 md:hidden">
+          <div className="flex items-center bg-slate-100 rounded-full p-1 w-full max-w-sm">
             <button
               onClick={() => setActiveView("before")}
-              className={`flex-1 px-4 py-2.5 rounded-md font-medium text-sm transition-all ${
+              className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "before"
-                  ? "bg-slate-100 text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-400"
               }`}
             >
               기존 방식
             </button>
             <button
               onClick={() => setActiveView("after")}
-              className={`flex-1 px-4 py-2.5 rounded-md font-medium text-sm transition-all ${
+              className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "after"
-                  ? "bg-blue-50 text-blue-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-blue-600 bg-blue-50 border border-blue-200 animate-pulse"
               }`}
             >
-              BioInsight 도입 후
+              BioInsight
             </button>
           </div>
         </div>
