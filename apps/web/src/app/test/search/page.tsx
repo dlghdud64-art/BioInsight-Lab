@@ -315,12 +315,7 @@ export default function SearchPage() {
             ) : (
               <div className="flex h-full flex-col items-center justify-center py-6 md:py-16 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
-                    <div className="flex flex-col items-center text-center">
-                      <Search className="h-6 w-6 text-slate-300 mb-2 md:hidden" strokeWidth={1.5} />
-                      <p className="text-xs text-slate-400 md:text-sm">
-                        시약명, CAS No., 제조사, 카탈로그 번호로 검색하세요.
-                      </p>
-                    </div>
+                    <div className="hidden" />
                   ) : (
                     <div className="flex flex-col items-center text-center">
                       <Package className="h-8 w-8 text-slate-300 mb-3" strokeWidth={1.5} />
@@ -637,11 +632,27 @@ function StickySearchBar() {
         </div>
       </form>
 
-      {/* 검색 전: 예시 칩 + 안내 */}
+      {/* 검색 전: 검색 가능 항목 안내 + 추천 검색 칩 */}
       {!hasSearched && (
-        <div className="max-w-3xl mx-auto mt-2 space-y-1.5 px-1">
-          {/* 예시 칩 — 모바일: 라벨 없이 짧게 / 데스크탑: 기준 라벨 포함 */}
+        <div className="max-w-3xl mx-auto mt-2.5 space-y-2 px-1">
+          {/* 검색 가능 항목 + 예시 */}
+          <div className="text-[11px] md:text-xs text-slate-500 leading-relaxed">
+            <span className="text-slate-400">검색 가능: </span>
+            <span>시약명 · CAS No. · 제조사 · 카탈로그 번호</span>
+            <span className="hidden md:inline text-slate-300 mx-1.5">|</span>
+            <br className="md:hidden" />
+            <span className="text-slate-400">예: </span>
+            <span className="font-mono text-slate-600">Tris-HCl</span>
+            <span className="text-slate-300 mx-1">/</span>
+            <span className="font-mono text-slate-600">67-66-3</span>
+            <span className="text-slate-300 mx-1">/</span>
+            <span className="font-mono text-slate-600">Thermo Fisher</span>
+            <span className="text-slate-300 mx-1">/</span>
+            <span className="font-mono text-slate-600">A1234567</span>
+          </div>
+          {/* 추천 검색 칩 */}
           <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] text-slate-400 mr-0.5">추천 검색</span>
             {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody", "67-66-3"].map((term) => (
               <button
                 key={term}
@@ -653,11 +664,6 @@ function StickySearchBar() {
               </button>
             ))}
           </div>
-          {/* 안내 문구 — 모바일 1줄 / 데스크탑 2줄 */}
-          <p className="text-[11px] text-slate-400">
-            <span className="md:hidden">검색 → 비교 → 견적 요청으로 이어집니다.</span>
-            <span className="hidden md:inline">시약명 · CAS No. · 제조사 · 카탈로그 번호로 검색하면 비교와 견적 요청으로 이어집니다.</span>
-          </p>
         </div>
       )}
     </div>

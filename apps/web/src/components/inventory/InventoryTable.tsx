@@ -438,7 +438,7 @@ export function InventoryTable({
               <TableHead className="w-[110px] text-right text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">총 수량</TableHead>
               <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Lot</TableHead>
               <TableHead className="w-[130px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">최단 유효기간</TableHead>
-              <TableHead className="w-[160px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">빠른 작업</TableHead>
+              <TableHead className="w-[200px] text-center text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">빠른 작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -573,7 +573,7 @@ export function InventoryTable({
 
                       {/* 빠른 작업 — 상태 기반 우선순위 */}
                       <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                           {(isRisky || groupStatus === "주의") ? (
                             /* ── 부족/주의/만료/임박 → 재발주(긴급) + 입고 ── */
                             <>
@@ -805,7 +805,7 @@ export function InventoryTable({
 
                               {/* Lot 작업 — 상태 기반 우선순위 */}
                               <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                                <div className="flex items-center justify-center gap-1">
+                                <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                                   <InventoryQRCode
                                     inventoryId={lot.id}
                                     productName={lot.product.name}

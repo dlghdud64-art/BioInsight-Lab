@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Github, Mail, ExternalLink } from "lucide-react";
 
@@ -11,27 +12,31 @@ function scrollToId(id: string) {
   }
 }
 
-// UTF-8 인코딩 문제로 인한 한글 깨짐 수정
-const footerColumns = [
-  {
-    title: "서비스",
-    links: [
-      { label: "홈", href: "/", onClick: null },
-      { label: "서비스 소개", href: "/intro", onClick: null },
-      { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
-    ],
-  },
-  {
-    title: "바로가기",
-    links: [
-      { label: "대시보드", href: "/dashboard", onClick: null },
-      { label: "로그인", href: "/login", onClick: null },
-    ],
-  },
-];
-
 export function MainFooter() {
+  const { data: session } = useSession();
   const year = new Date().getFullYear();
+
+  const footerColumns = [
+    {
+      title: "서비스",
+      links: [
+        { label: "홈", href: "/", onClick: null },
+        { label: "서비스 소개", href: "/intro", onClick: null },
+        { label: "기능", href: "/intro#features", onClick: () => scrollToId("features") },
+      ],
+    },
+    {
+      title: "바로가기",
+      links: session
+        ? [
+            { label: "대시보드", href: "/dashboard", onClick: null },
+          ]
+        : [
+            { label: "로그인", href: "/login", onClick: null },
+            { label: "회원가입", href: "/register", onClick: null },
+          ],
+    },
+  ];
 
   return (
     <footer className="border-t border-slate-200 bg-white">

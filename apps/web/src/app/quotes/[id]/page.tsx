@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
@@ -38,6 +38,10 @@ import {
   User,
   CalendarClock,
   ArrowRight,
+  RefreshCw,
+  ShieldX,
+  FileQuestion,
+  WifiOff,
 } from "lucide-react";
 import {
   Dialog,
@@ -66,6 +70,97 @@ import {
 } from "@/components/ui/tooltip";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
+
+/* ── 유틸리티 ── */
+const isValidUUID = (id: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+/** 블록별 에러 로깅 */
+function logBlockError(
+  blockName: string,
+  quoteId: string,
+  error: unknown,
+  extra?: Record<string, unknown>,
+) {
+  console.error(`[QuoteDetail:${blockName}]`, {
+    quoteId,
+    blockName,
+    error: error instanceof Error ? error.message : String(error),
+    timestamp: new Date().toISOString(),
+    ...extra,
+  });
+}
+
+/* ── 에러 UI 컴포넌트 ── */
+
+function FullPageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto px-4 py-8">{children}</div>
+    </div>
+  );
+}
+
+function NotFoundUI({ message }: { message?: string }) {
+  return (
+    <FullPageShell>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <FileQuestion className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-muted-foreground py-4">{message || "삭제되었거나 찾을 수 없는 견적입니다."}</p>
+          <Link href="/dashboard/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
+        </CardContent>
+      </Card>
+    </FullPageShell>
+  );
+}
+
+function ForbiddenUI() {
+  return (
+    <FullPageShell>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <ShieldX className="h-10 w-10 text-red-300 mx-auto mb-3" />
+          <p className="text-muted-foreground py-4">이 견적을 볼 권한이 없습니다.</p>
+          <Link href="/dashboard/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
+        </CardContent>
+      </Card>
+    </FullPageShell>
+  );
+}
+
+function NetworkErrorUI({ onRetry }: { onRetry: () => void }) {
+  return (
+    <FullPageShell>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <WifiOff className="h-10 w-10 text-amber-400 mx-auto mb-3" />
+          <p className="text-muted-foreground py-4">일시적으로 견적 정보를 불러오지 못했습니다.</p>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/dashboard/quotes"><Button variant="outline">견적 목록</Button></Link>
+            <Button onClick={onRetry} variant="default" className="gap-1.5">
+              <RefreshCw className="h-4 w-4" />다시 시도
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </FullPageShell>
+  );
+}
+
+function SectionErrorFallback({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-6 text-center">
+      <AlertTriangle className="h-5 w-5 text-amber-500" />
+      <p className="text-sm text-slate-500">{message}</p>
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry} className="text-xs gap-1.5">
+          <RefreshCw className="h-3 w-3" />다시 시도
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function QuoteDetailPage() {
   const { data: session, status } = useSession();
@@ -111,16 +206,18 @@ export default function QuoteDetailPage() {
     unitPrice: string; currency: string; leadTimeDays: string; moq: string; notes: string;
   }>>({});
 
-  // ── 쿼리 ──────────────────────────────────────────────────────────
-  const { data: quoteData, isLoading, isError, error: quoteError } = useQuery({
+  // ── quoteId 검증 ────────────────────────────────────────────────
+  const isQuoteIdValid = !!quoteId && isValidUUID(quoteId);
+
+  // ── 쿼리: 메인 견적 (전체 페이지 에러 분기의 근거) ──────────────
+  const quoteQuery = useQuery({
     queryKey: ["quote", quoteId],
-    queryFn: async () => {
-      const res = await fetch(`/api/quotes/${quoteId}`);
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/quotes/${quoteId}`, { signal });
       if (!res.ok) {
         const statusCode = res.status;
         const body = await res.json().catch(() => ({}));
-        const msg = body.error || "알 수 없는 오류";
-        console.error(`[QuoteDetail] fetch failed: ${statusCode} ${msg}`, { quoteId });
+        logBlockError("quote", quoteId, body.error || statusCode, { userId: session?.user?.id });
         if (statusCode === 404) throw new Error("NOT_FOUND");
         if (statusCode === 403) throw new Error("FORBIDDEN");
         if (statusCode === 401) throw new Error("UNAUTHORIZED");
@@ -128,43 +225,54 @@ export default function QuoteDetailPage() {
       }
       return res.json();
     },
-    enabled: !!quoteId && status === "authenticated",
+    enabled: isQuoteIdValid && status === "authenticated",
     retry: (failureCount, error) => {
       const msg = (error as Error).message;
-      if (msg === "NOT_FOUND" || msg === "FORBIDDEN") return false;
+      if (["NOT_FOUND", "FORBIDDEN", "UNAUTHORIZED"].includes(msg)) return false;
       return failureCount < 2;
     },
   });
+  const { data: quoteData, isLoading, isError, error: quoteError } = quoteQuery;
 
-  const { data: budgetsData } = useQuery<{ budgets: any[] }>({
+  // ── 쿼리: 예산 (실패해도 구매 탭만 제한) ─────────────────────
+  const budgetsQuery = useQuery<{ budgets: any[] }>({
     queryKey: ["user-budgets"],
-    queryFn: async () => {
-      const res = await fetch("/api/user-budgets");
-      if (!res.ok) throw new Error("Failed to fetch budgets");
+    queryFn: async ({ signal }) => {
+      const res = await fetch("/api/user-budgets", { signal });
+      if (!res.ok) throw new Error(`BUDGET_FETCH_ERROR:${res.status}`);
       return res.json();
     },
     enabled: status === "authenticated",
+    retry: 1,
   });
+  const budgetsData = budgetsQuery.data;
 
-  const { data: vendorRequestsData, refetch: refetchVendorRequests } = useQuery<{ vendorRequests: any[] }>({
+  // ── 쿼리: 벤더 요청 (실패해도 해당 탭만 fallback) ────────────
+  const vendorQuery = useQuery<{ vendorRequests: any[] }>({
     queryKey: ["vendor-requests", quoteId],
-    queryFn: async () => {
-      const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`);
-      if (!res.ok) throw new Error("Failed to fetch vendor requests");
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`, { signal });
+      if (!res.ok) throw new Error(`VENDOR_FETCH_ERROR:${res.status}`);
       return res.json();
     },
-    enabled: !!quoteId && status === "authenticated",
+    enabled: isQuoteIdValid && !!quoteData?.quote && status === "authenticated",
+    retry: 1,
   });
+  const vendorRequestsData = vendorQuery.data;
+  const refetchVendorRequests = vendorQuery.refetch;
 
-  const { data: teamsData } = useQuery({
+  // ── 쿼리: 팀 (실패해도 승인 요청만 제한) ─────────────────────
+  const teamsQuery = useQuery({
     queryKey: ["user-teams"],
-    queryFn: async () => {
-      const res = await fetch("/api/team");
-      if (!res.ok) throw new Error("Failed to fetch teams");
+    queryFn: async ({ signal }) => {
+      const res = await fetch("/api/team", { signal });
+      if (!res.ok) throw new Error(`TEAM_FETCH_ERROR:${res.status}`);
       return res.json();
     },
     enabled: status === "authenticated",
+    retry: 1,
   });
+  const teamsData = teamsQuery.data;
 
   // ── 파생 값 ──────────────────────────────────────────────────────
   const budgets = budgetsData?.budgets || [];
@@ -179,7 +287,7 @@ export default function QuoteDetailPage() {
     return sum + line;
   }, 0);
   const quoteTotal = computedTotal || quoteData?.quote?.totalAmount || 0;
-  const expectedRemaining = selectedBudget ? selectedBudget.remainingAmount - quoteTotal : null;
+  const expectedRemaining = selectedBudget ? (selectedBudget.remainingAmount ?? 0) - quoteTotal : null;
 
   const vendorRequests = vendorRequestsData?.vendorRequests || [];
   const respondedVendors = vendorRequests.filter((vr: any) => vr.status === "RESPONDED");
@@ -423,44 +531,39 @@ export default function QuoteDetailPage() {
   };
 
   // ── 로딩/에러 ────────────────────────────────────────────────────
+
+  // 1. quoteId 형식 검증 (UUID가 아니면 즉시 not found)
+  if (!quoteId || !isQuoteIdValid) {
+    return <NotFoundUI message="유효하지 않은 견적 ID입니다." />;
+  }
+
+  // 2. 세션 로딩 / 메인 견적 로딩 중
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="container mx-auto px-4 py-8 text-center py-12">
+      <FullPageShell>
+        <div className="text-center py-12">
           <p className="text-muted-foreground">로딩 중...</p>
         </div>
-      </div>
+      </FullPageShell>
     );
   }
 
-  if (!quoteId) {
-    router.replace("/dashboard/quotes");
-    return null;
-  }
-
-  if (isError || !quoteData?.quote) {
+  // 3. 메인 견적 에러 → 에러 타입별 분리 UI
+  if (isError) {
     const errorMsg = (quoteError as Error)?.message || "";
-    const isForbidden = errorMsg === "FORBIDDEN";
-    const isNotFound = errorMsg === "NOT_FOUND" || (!isError && !quoteData?.quote);
+    if (errorMsg === "NOT_FOUND") return <NotFoundUI />;
+    if (errorMsg === "FORBIDDEN") return <ForbiddenUI />;
+    if (errorMsg === "UNAUTHORIZED") {
+      router.replace("/login");
+      return null;
+    }
+    // 네트워크/기타 에러 → 재시도 가능
+    return <NetworkErrorUI onRetry={() => quoteQuery.refetch()} />;
+  }
 
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground py-8">
-                {isForbidden
-                  ? "이 견적을 볼 권한이 없습니다."
-                  : isNotFound
-                  ? "삭제되었거나 찾을 수 없는 견적입니다."
-                  : "일시적으로 견적 정보를 불러오지 못했습니다."}
-              </p>
-              <Link href="/dashboard/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  // 4. 데이터는 왔는데 quote가 null (API가 200이지만 빈 응답)
+  if (!quoteData?.quote) {
+    return <NotFoundUI />;
   }
 
   const quote = quoteData.quote;
@@ -718,6 +821,12 @@ export default function QuoteDetailPage() {
                 {/* ── 탭1: 수신 견적 (관리자 전용) ── */}
                 {isAdmin && (
                   <TabsContent value="received" className="p-4 sm:p-6 space-y-6 m-0">
+                    {vendorQuery.isError ? (
+                      <SectionErrorFallback message="벤더 정보를 불러오지 못했습니다." onRetry={() => vendorQuery.refetch()} />
+                    ) : vendorQuery.isLoading ? (
+                      <div className="text-center py-8 text-sm text-muted-foreground">벤더 정보 로딩 중...</div>
+                    ) : (
+                    <>
                     {/* 벤더 가격 회신 입력 */}
                     <div>
                       <h3 className="text-sm font-bold text-slate-800 mb-1">벤더 견적 입력</h3>
@@ -826,12 +935,18 @@ export default function QuoteDetailPage() {
                         </table>
                       </div>
                     </div>
+                    </>
+                    )}
                   </TabsContent>
                 )}
 
                 {/* ── 탭2: 비교/추천 ── */}
                 <TabsContent value="compare" className="p-4 sm:p-6 space-y-6 m-0">
-                  {respondedVendors.length > 0 ? (
+                  {vendorQuery.isError ? (
+                    <SectionErrorFallback message="벤더 비교 정보를 불러오지 못했습니다." onRetry={() => vendorQuery.refetch()} />
+                  ) : vendorQuery.isLoading ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">비교 정보 로딩 중...</div>
+                  ) : respondedVendors.length > 0 ? (
                     <>
                       {/* 추천 벤더 요약 */}
                       {cheapestVendor && respondedCount > 1 && (
@@ -1005,41 +1120,47 @@ export default function QuoteDetailPage() {
                       )}
 
                       {/* 결제 예산 */}
-                      <div className="space-y-2">
-                        <Label>결제 예산 <span className="text-red-500">*</span></Label>
-                        <Select value={purchaseBudgetId} onValueChange={setPurchaseBudgetId}>
-                          <SelectTrigger><SelectValue placeholder="예산을 선택하세요" /></SelectTrigger>
-                          <SelectContent>
-                            {budgets.length === 0 ? (
-                              <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-                                등록된 활성 예산이 없습니다.<br /><span className="text-xs">예산 관리 페이지에서 먼저 등록해주세요.</span>
-                              </div>
-                            ) : (
-                              budgets.map((b: any) => (
-                                <SelectItem key={b.id} value={b.id}>{b.name} — 잔액 ₩{b.remainingAmount.toLocaleString("ko-KR")}</SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* 예산 미리보기 */}
-                      {(() => {
-                        const selBudget = budgets.find((b: any) => b.id === purchaseBudgetId);
-                        if (!selBudget) return null;
-                        const afterAmount = selBudget.remainingAmount - purchaseTotal;
-                        return (
-                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1.5">
-                            <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{selBudget.remainingAmount.toLocaleString("ko-KR")}</span></div>
-                            <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
-                            <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200">
-                              <span className="font-medium">차감 후 잔액</span>
-                              <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-600" : "text-emerald-600")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
-                            </div>
-                            {afterAmount < 0 && <p className="text-xs text-red-600 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
+                      {budgetsQuery.isError ? (
+                        <SectionErrorFallback message="예산 정보를 불러오지 못했습니다." onRetry={() => budgetsQuery.refetch()} />
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <Label>결제 예산 <span className="text-red-500">*</span></Label>
+                            <Select value={purchaseBudgetId} onValueChange={setPurchaseBudgetId}>
+                              <SelectTrigger><SelectValue placeholder="예산을 선택하세요" /></SelectTrigger>
+                              <SelectContent>
+                                {budgets.length === 0 ? (
+                                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                                    등록된 활성 예산이 없습니다.<br /><span className="text-xs">예산 관리 페이지에서 먼저 등록해주세요.</span>
+                                  </div>
+                                ) : (
+                                  budgets.map((b: any) => (
+                                    <SelectItem key={b.id} value={b.id}>{b.name} — 잔액 ₩{b?.remainingAmount?.toLocaleString("ko-KR") ?? "—"}</SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
                           </div>
-                        );
-                      })()}
+
+                          {/* 예산 미리보기 */}
+                          {(() => {
+                            const selBudget = budgets.find((b: any) => b.id === purchaseBudgetId);
+                            if (!selBudget) return null;
+                            const afterAmount = (selBudget.remainingAmount ?? 0) - purchaseTotal;
+                            return (
+                              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1.5">
+                                <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{(selBudget.remainingAmount ?? 0).toLocaleString("ko-KR")}</span></div>
+                                <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
+                                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200">
+                                  <span className="font-medium">차감 후 잔액</span>
+                                  <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-600" : "text-emerald-600")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
+                                </div>
+                                {afterAmount < 0 && <p className="text-xs text-red-600 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
+                              </div>
+                            );
+                          })()}
+                        </>
+                      )}
 
                       {/* 입고 예정일 */}
                       <div className="space-y-2">
