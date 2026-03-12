@@ -15,7 +15,10 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b1120]">
       {/* 왼쪽 고정: Sidebar */}
-      <DashboardSidebar />
+      <DashboardSidebar
+        isMobileOpen={isMobileMenuOpen}
+        onMobileOpenChange={setIsMobileMenuOpen}
+      />
 
       {/* 오른쪽 영역: Header + Main Content (데스크탑은 사이드바 너비만큼 왼쪽 여백) */}
       <div className="flex flex-col flex-1 overflow-hidden lg:pl-64">
