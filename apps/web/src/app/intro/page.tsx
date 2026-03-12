@@ -42,7 +42,7 @@ export default function IntroPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-[22px] md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
+              <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
                 <span className="md:hidden">시약 검색부터 재고 운영까지</span>
                 <span className="hidden md:inline">시약·장비 검색부터<br />견적·재고 운영까지</span>
               </h1>
