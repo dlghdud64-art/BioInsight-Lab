@@ -99,48 +99,51 @@ export default function SearchPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 mt-8">
+    <div className="min-h-screen bg-gray-50/50 mt-0 md:mt-8">
       
       <div className="container mx-auto px-4 pb-4 md:pb-6">
         {/* 검색창 — 화면 최상단 핵심 요소 */}
         <StickySearchBar />
 
-        {/* 모바일 필터 바 */}
-        <div className="md:hidden flex items-center gap-2 px-1 py-2 overflow-x-auto">
-          <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
+        {/* 모바일 필터 바 — 검색창 직하 요약형 */}
+        <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
+          <div className="md:hidden flex items-center gap-1.5 px-1 py-1.5 overflow-x-auto border-b border-slate-100">
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-slate-200 shrink-0">
-                <SlidersHorizontal className="h-3.5 w-3.5" />
+              <button className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shrink-0">
+                <SlidersHorizontal className="h-3 w-3" />
                 필터
                 {activeFilterCount > 0 && (
-                  <span className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] text-white">
+                  <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">
                     {activeFilterCount}
                   </span>
                 )}
-              </Button>
+              </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[75vh] overflow-y-auto">
-              <div className="pt-2">
-                <SearchPanel />
-              </div>
-            </SheetContent>
-          </Sheet>
-          {searchCategory && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0">
-              {PRODUCT_CATEGORIES[searchCategory as keyof typeof PRODUCT_CATEGORIES] || searchCategory}
-            </Badge>
-          )}
-          {searchBrand && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0 max-w-[100px] truncate">
-              {searchBrand}
-            </Badge>
-          )}
-          {sortBy !== "relevance" && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0">
-              {sortBy === "price_low" ? "가격↑" : sortBy === "price_high" ? "가격↓" : "납기순"}
-            </Badge>
-          )}
-        </div>
+            {searchCategory && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-slate-100">
+                {PRODUCT_CATEGORIES[searchCategory as keyof typeof PRODUCT_CATEGORIES] || searchCategory}
+              </Badge>
+            )}
+            {searchBrand && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 max-w-[100px] truncate bg-slate-100">
+                {searchBrand}
+              </Badge>
+            )}
+            {sortBy !== "relevance" && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-slate-100">
+                {sortBy === "price_low" ? "가격↑" : sortBy === "price_high" ? "가격↓" : "납기순"}
+              </Badge>
+            )}
+            {activeFilterCount === 0 && !hasSearched && (
+              <span className="text-[10px] text-slate-400">제조사 · 카테고리 · 등급</span>
+            )}
+          </div>
+          <SheetContent side="bottom" className="h-[75vh] overflow-y-auto">
+            <div className="pt-2">
+              <SearchPanel />
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* 2컬럼 레이아웃 — 좌측 필터는 검색 후에만 노출 */}
         <div className={`flex flex-col gap-4 ${hasSearched ? "md:grid md:gap-8 md:grid-cols-[260px_1fr]" : ""}`}>
@@ -313,11 +316,14 @@ export default function SearchPage() {
                   })}
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center py-12 md:py-16 w-full max-w-3xl mx-auto px-4">
+              <div className="flex h-full flex-col items-center justify-center py-6 md:py-16 w-full max-w-3xl mx-auto px-4">
                   {!hasSearched ? (
-                    <p className="hidden md:block text-sm text-slate-400">
-                      제품명, CAS No., 제조사명을 입력하세요.
-                    </p>
+                    <div className="flex flex-col items-center text-center">
+                      <Search className="h-6 w-6 text-slate-300 mb-2 md:hidden" strokeWidth={1.5} />
+                      <p className="text-xs text-slate-400 md:text-sm">
+                        시약명, CAS No., 제조사, 카탈로그 번호로 검색하세요.
+                      </p>
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center text-center">
                       <Package className="h-8 w-8 text-slate-300 mb-3" strokeWidth={1.5} />
@@ -569,10 +575,10 @@ export default function SearchPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 하단 설명 */}
-      <div className="container mx-auto px-4 py-4 md:py-6">
+      {/* 하단 설명 — 데스크탑만 */}
+      <div className="hidden md:block container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs text-slate-500 text-center px-2 hidden sm:block">
+          <p className="text-xs text-slate-500 text-center px-2">
             견적 리스트는 엑셀/TSV로 다운로드하여 이메일 공유나 전자결재에 활용할 수 있습니다.
           </p>
         </div>
@@ -610,7 +616,7 @@ function StickySearchBar() {
   };
 
   return (
-    <div className="w-full px-1 py-3 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
+    <div className="w-full px-1 py-2 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
         <div className="flex items-center border border-slate-300 rounded-lg bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
@@ -621,11 +627,11 @@ function StickySearchBar() {
             value={localQuery}
             onChange={handleChange}
             placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호"
-            className="flex-1 h-10 md:h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
+            className="flex-1 h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
           />
           <Button
             type="submit"
-            className="h-8 md:h-10 px-4 md:px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-semibold shrink-0 transition-colors mr-1"
+            className="h-10 px-4 md:px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-semibold shrink-0 transition-colors mr-1"
             disabled={!localQuery.trim()}
           >
             <Search className="h-4 w-4 md:mr-1.5" />
@@ -634,37 +640,26 @@ function StickySearchBar() {
         </div>
       </form>
 
-      {/* 검색 전: 기준 + 예시 칩 + 안내 */}
+      {/* 검색 전: 예시 칩 + 안내 */}
       {!hasSearched && (
-        <div className="max-w-3xl mx-auto mt-3 space-y-2 px-1">
-          {/* 1줄: 검색 기준 */}
-          <p className="text-[11px] text-slate-400 hidden md:block">
-            시약명 · CAS No. · 제조사 · 카탈로그 번호 · 품목군으로 검색할 수 있습니다.
-          </p>
-          {/* 2줄: 예시 칩 (클릭 → 즉시 검색) */}
+        <div className="max-w-3xl mx-auto mt-2 space-y-1.5 px-1">
+          {/* 예시 칩 — 모바일: 라벨 없이 짧게 / 데스크탑: 기준 라벨 포함 */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] text-slate-400 mr-0.5">바로 검색:</span>
-            {[
-              { label: "Tris-HCl", desc: "시약명" },
-              { label: "Thermo Fisher", desc: "제조사" },
-              { label: "A1234567", desc: "카탈로그" },
-              { label: "Antibody", desc: "품목군" },
-              { label: "67-66-3", desc: "CAS No." },
-            ].map(({ label, desc }) => (
+            {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody", "67-66-3"].map((term) => (
               <button
-                key={label}
+                key={term}
                 type="button"
-                onClick={() => handleChipClick(label)}
-                className="inline-flex items-center gap-1 text-[11px] pl-2.5 pr-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+                onClick={() => handleChipClick(term)}
+                className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600 font-medium hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
               >
-                <span className="font-medium">{label}</span>
-                <span className="text-slate-400 text-[10px]">{desc}</span>
+                {term}
               </button>
             ))}
           </div>
-          {/* 3줄: 비교·견적 연동 안내 */}
-          <p className="text-[11px] text-slate-400 hidden md:block">
-            검색 결과에서 스펙 비교 → 견적 리스트 담기 → 견적서 작성까지 이어집니다.
+          {/* 안내 문구 — 모바일 1줄 / 데스크탑 2줄 */}
+          <p className="text-[11px] text-slate-400">
+            <span className="md:hidden">검색 → 비교 → 견적 요청으로 이어집니다.</span>
+            <span className="hidden md:inline">시약명 · CAS No. · 제조사 · 카탈로그 번호로 검색하면 비교와 견적 요청으로 이어집니다.</span>
           </p>
         </div>
       )}
