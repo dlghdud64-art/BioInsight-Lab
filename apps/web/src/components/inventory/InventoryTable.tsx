@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /* ── 타입 정의 ── */
 
@@ -162,6 +163,11 @@ function getRiskScore(group: ProductGroup): number {
   return score;
 }
 
+/** 미인쇄 라벨 판별: 위치 미지정 = 신규 입고/미인쇄 상태로 간주 */
+function needsLabelPrint(inv: InventoryItem): boolean {
+  return !inv.location;
+}
+
 /* ── 상태 배지 렌더링 ── */
 
 const BADGE_BASE = "inline-flex items-center justify-center rounded-full shadow-sm ring-2 ring-white/50 dark:ring-slate-900/50 shrink-0";
@@ -247,6 +253,9 @@ interface InventoryTableProps {
   onConsume?: (inventory: InventoryItem) => void;
   onMoveLocation?: (inventory: InventoryItem) => void;
   onPrintLabel?: (productName: string, lots: InventoryItem[]) => void;
+  /** 체크박스 다중 선택 (bulk action 용) */
+  selectedIds?: Set<string>;
+  onSelectedIdsChange?: (ids: Set<string>) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
   emptyActionLabel?: string;
@@ -264,6 +273,8 @@ export function InventoryTable({
   onConsume,
   onMoveLocation,
   onPrintLabel,
+  selectedIds,
+  onSelectedIdsChange,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction,
   emptyActionLabel = "첫 재고 등록하기"
@@ -396,6 +407,21 @@ export function InventoryTable({
                         입고
                       </Button>
                     )}
+                    {onPrintLabel && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`h-7 px-2.5 text-[11px] gap-1 ${
+                          group.lots.some(needsLabelPrint)
+                            ? "text-indigo-700 border-indigo-300 bg-indigo-50 hover:bg-indigo-100 font-semibold"
+                            : "text-indigo-600 border-slate-200 hover:bg-indigo-50"
+                        }`}
+                        onClick={() => onPrintLabel(group.productName, group.lots)}
+                      >
+                        <Printer className="h-3 w-3 shrink-0" />
+                        라벨 인쇄
+                      </Button>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-400 ml-auto">
@@ -432,6 +458,25 @@ export function InventoryTable({
         <Table className="min-w-[800px]">
           <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
             <TableRow className="hover:bg-transparent">
+              {selectedIds !== undefined && (
+                <TableHead className="w-[36px] text-center">
+                  <Checkbox
+                    checked={sortedGroups.length > 0 && sortedGroups.every((g) => g.lots.every((l) => selectedIds.has(l.id)))}
+                    onCheckedChange={(checked) => {
+                      if (!onSelectedIdsChange) return;
+                      if (checked) {
+                        const all = new Set(selectedIds);
+                        sortedGroups.forEach((g) => g.lots.forEach((l) => all.add(l.id)));
+                        onSelectedIdsChange(all);
+                      } else {
+                        onSelectedIdsChange(new Set());
+                      }
+                    }}
+                    aria-label="전체 선택"
+                    className="h-4 w-4"
+                  />
+                </TableHead>
+              )}
               <TableHead className="w-[44px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap"></TableHead>
               <TableHead className="w-[100px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">상태</TableHead>
               <TableHead className="min-w-[220px] text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">품목 정보</TableHead>
@@ -444,7 +489,7 @@ export function InventoryTable({
           <TableBody>
             {sortedGroups.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-[400px]">
+                <TableCell colSpan={selectedIds !== undefined ? 8 : 7} className="h-[400px]">
                   <div className="flex flex-col items-center justify-center h-full">
                     <Package className="h-12 w-12 text-slate-200 dark:text-slate-700 mb-4" />
                     <p className="text-muted-foreground mb-4">{emptyMessage}</p>
@@ -478,6 +523,22 @@ export function InventoryTable({
                       `}
                       onClick={() => toggleExpand(group.productId)}
                     >
+                      {/* 체크박스 (bulk select) */}
+                      {selectedIds !== undefined && (
+                        <TableCell className="px-2 text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={group.lots.every((l) => selectedIds.has(l.id))}
+                            onCheckedChange={(checked) => {
+                              if (!onSelectedIdsChange) return;
+                              const next = new Set(selectedIds);
+                              group.lots.forEach((l) => { if (checked) next.add(l.id); else next.delete(l.id); });
+                              onSelectedIdsChange(next);
+                            }}
+                            aria-label={`${group.productName} 선택`}
+                            className="h-4 w-4"
+                          />
+                        </TableCell>
+                      )}
                       {/* 확장 아이콘 */}
                       <TableCell className="px-2">
                         <div className={`
@@ -657,6 +718,29 @@ export function InventoryTable({
                               )}
                             </>
                           )}
+                          {/* 라벨 인쇄 — 미인쇄 lot 존재 시 강조 */}
+                          {onPrintLabel && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-7 px-2 text-[11px] gap-1 ${
+                                      group.lots.some(needsLabelPrint)
+                                        ? "text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 font-semibold"
+                                        : "text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                                    }`}
+                                    onClick={() => onPrintLabel(group.productName, group.lots)}
+                                  >
+                                    <Printer className="h-3 w-3 shrink-0" />
+                                    라벨 인쇄
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{group.lots.some(needsLabelPrint) ? "미인쇄 라벨 있음" : "라벨 인쇄"}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {/* 더보기 — 보조/관리 기능 */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -673,12 +757,6 @@ export function InventoryTable({
                                 <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                                 정보 수정
                               </DropdownMenuItem>
-                              {onPrintLabel && (
-                                <DropdownMenuItem onClick={() => onPrintLabel(group.productName, group.lots)} className="gap-2 text-xs">
-                                  <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                                  라벨 인쇄
-                                </DropdownMenuItem>
-                              )}
                               {onDelete && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -699,6 +777,7 @@ export function InventoryTable({
                       <>
                         {/* Lot 헤더 (하위 컬럼 안내) */}
                         <TableRow className="bg-slate-100/80 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-700/50">
+                          {selectedIds !== undefined && <TableCell className="px-2" />}
                           <TableCell className="px-2">
                             <div className="w-7" />
                           </TableCell>
@@ -732,6 +811,22 @@ export function InventoryTable({
                                 }
                               `}
                             >
+                              {/* 체크박스 (lot 선택) */}
+                              {selectedIds !== undefined && (
+                                <TableCell className="px-2 text-center">
+                                  <Checkbox
+                                    checked={selectedIds.has(lot.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (!onSelectedIdsChange) return;
+                                      const next = new Set(selectedIds);
+                                      if (checked) next.add(lot.id); else next.delete(lot.id);
+                                      onSelectedIdsChange(next);
+                                    }}
+                                    aria-label={`${lot.product.name} Lot 선택`}
+                                    className="h-4 w-4"
+                                  />
+                                </TableCell>
+                              )}
                               {/* 들여쓰기 + 연결선 */}
                               <TableCell className="px-2">
                                 <div className="flex items-center justify-center">
@@ -905,6 +1000,29 @@ export function InventoryTable({
                                       )}
                                     </>
                                   )}
+                                  {/* 라벨 인쇄 — 미인쇄(위치 미지정) 시 강조 */}
+                                  {onPrintLabel && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className={`h-7 px-2 text-[11px] gap-1 ${
+                                              needsLabelPrint(lot)
+                                                ? "text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 font-semibold"
+                                                : "text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                                            }`}
+                                            onClick={() => onPrintLabel(lot.product.name, [lot])}
+                                          >
+                                            <Printer className="h-3 w-3 shrink-0" />
+                                            인쇄
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>{needsLabelPrint(lot) ? "미인쇄 — 라벨 인쇄 필요" : "라벨 인쇄"}</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
                                   {/* 더보기 — 보조/관리 기능 */}
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -921,12 +1039,6 @@ export function InventoryTable({
                                         <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                                         정보 수정
                                       </DropdownMenuItem>
-                                      {onPrintLabel && (
-                                        <DropdownMenuItem onClick={() => onPrintLabel(lot.product.name, [lot])} className="gap-2 text-xs">
-                                          <Printer className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                                          라벨 인쇄
-                                        </DropdownMenuItem>
-                                      )}
                                       {onDelete && (
                                         <>
                                           <DropdownMenuSeparator />

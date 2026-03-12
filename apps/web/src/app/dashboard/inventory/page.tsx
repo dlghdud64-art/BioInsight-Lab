@@ -95,6 +95,8 @@ function InventoryPageContent() {
     searchParams.get("filter") ?? "all"
   );
   const [categoryFilter, setCategoryFilter] = useState("all");
+  // 다중 선택 (bulk action 용)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set());
 
   // URL 파라미터 변경 시 필터 동기화
   useEffect(() => {
@@ -981,17 +983,30 @@ function InventoryPageContent() {
               구매 반영
             </Button>
 
-            {/* ── 2차 액션: 라벨 인쇄 · 엑셀 업로드 · 내보내기 ── */}
-            <Button
-              variant="outline"
-              onClick={() => {
-                // 전체 재고 라벨 인쇄 (PC 프린터 print dialog)
-                handleBulkLabelPrint();
-              }}
-            >
-              <Printer className="h-4 w-4 mr-0 sm:mr-2" />
-              <span className="hidden sm:inline">라벨 인쇄</span>
-            </Button>
+            {/* ── 2차 액션: 선택 항목 라벨 인쇄 (bulk) · 엑셀 업로드 · 내보내기 ── */}
+            {bulkSelectedIds.size > 0 && (
+              <Button
+                variant="outline"
+                className="border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+                onClick={() => {
+                  // 선택된 항목만 라벨 인쇄
+                  const selected = displayInventories.filter((inv) => bulkSelectedIds.has(inv.id));
+                  if (selected.length === 0) return;
+                  setLabelPrintTitle(`선택 ${selected.length}개 항목`);
+                  setLabelPrintLots(selected);
+                  const allIds = new Set(selected.map((l) => l.id));
+                  setLabelPrintSelected(allIds);
+                  const defaultQty: Record<string, number> = {};
+                  selected.forEach((l) => { defaultQty[l.id] = 1; });
+                  setLabelPrintQty(defaultQty);
+                  setLabelPrintOpen(true);
+                }}
+              >
+                <Printer className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">선택 {bulkSelectedIds.size}개 라벨 인쇄</span>
+                <span className="sm:hidden">{bulkSelectedIds.size}</span>
+              </Button>
+            )}
             <PermissionGate permission="inventory.create">
               <Button
                 variant="outline"
@@ -1155,6 +1170,8 @@ function InventoryPageContent() {
                 <CardContent className="p-0">
                   <InventoryTable
                     inventories={filteredInventories}
+                    selectedIds={bulkSelectedIds}
+                    onSelectedIdsChange={setBulkSelectedIds}
                     onEdit={(inventory) => {
                       setEditingInventory(inventory);
                       setIsDialogOpen(true);
@@ -1181,8 +1198,7 @@ function InventoryPageContent() {
                       setRestockItem(inventory);
                       setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
                     }}
-                    onDispatch={(inventory) => setDispatchTarget(inventory)}
-                    onUsage={(inventory) => setUsageTarget(inventory)}
+                    onConsume={(inventory) => setDispatchTarget(inventory)}
                     onMoveLocation={(inventory) => {
                       toast({
                         title: "위치 이동",
@@ -2168,26 +2184,24 @@ function InventoryPageContent() {
           </DialogContent>
         </Dialog>
 
-        {/* ── 입고 완료 → 라벨 바로 인쇄 CTA ── */}
+        {/* ── 입고 완료 → 후속 액션 (라벨 인쇄 + 위치 지정) ── */}
         <Dialog open={!!restockDoneItem} onOpenChange={(open) => { if (!open) setRestockDoneItem(null); }}>
-          <DialogContent className="max-w-xs text-center">
+          <DialogContent className="max-w-sm">
             <div className="flex flex-col items-center gap-3 py-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
                 <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
-              <DialogHeader className="space-y-1">
+              <DialogHeader className="space-y-1 text-center">
                 <DialogTitle className="text-lg">입고 완료</DialogTitle>
                 <DialogDescription className="text-sm text-slate-500">
                   {restockDoneItem?.product.name} 입고가 반영되었습니다.
-                  <br />라벨을 바로 인쇄하시겠습니까?
+                  <br />다음 작업을 진행하세요.
                 </DialogDescription>
               </DialogHeader>
-              <div className="flex w-full gap-2 pt-1">
-                <Button variant="outline" className="flex-1" onClick={() => setRestockDoneItem(null)}>
-                  닫기
-                </Button>
+              {/* 운영 흐름: 입고 → 라벨 인쇄 → 위치 부여 */}
+              <div className="w-full space-y-2 pt-1">
                 <Button
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                   onClick={() => {
                     if (restockDoneItem) {
                       handleSingleLabelPrint(restockDoneItem);
@@ -2197,6 +2211,24 @@ function InventoryPageContent() {
                 >
                   <Printer className="h-4 w-4 mr-1.5" />
                   라벨 인쇄
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full text-violet-700 border-violet-200 hover:bg-violet-50"
+                  onClick={() => {
+                    if (restockDoneItem) {
+                      setSelectedItem(restockDoneItem);
+                      setDrawerMode("edit");
+                      setIsSheetOpen(true);
+                    }
+                    setRestockDoneItem(null);
+                  }}
+                >
+                  <MapPin className="h-4 w-4 mr-1.5" />
+                  위치 지정
+                </Button>
+                <Button variant="ghost" className="w-full text-slate-500" onClick={() => setRestockDoneItem(null)}>
+                  나중에 하기
                 </Button>
               </div>
             </div>
