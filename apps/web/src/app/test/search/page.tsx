@@ -603,52 +603,69 @@ function StickySearchBar() {
     setSearchQuery(value);
   };
 
+  const handleChipClick = (term: string) => {
+    setSearchQuery(term);
+    setLocalQuery(term);
+    runSearch();
+  };
+
   return (
-    <div className="w-full px-1 py-3 md:p-6 border-b bg-white/95 backdrop-blur sticky top-0 z-10 shadow-sm">
+    <div className="w-full px-1 py-3 md:py-5 md:px-0 border-b border-slate-200 bg-white sticky top-0 z-10">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 bg-white rounded-full border-2 border-slate-300 shadow-lg hover:shadow-xl transition-all focus-within:border-blue-500 focus-within:shadow-blue-500/20">
+        <div className="flex items-center border-2 border-slate-300 rounded-lg bg-white focus-within:border-blue-600 transition-colors">
+          <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
+          </div>
           <Input
             type="text"
             value={localQuery}
             onChange={handleChange}
-            placeholder="시약명 / CAS No. / 제조사"
-            className="flex-1 h-10 md:h-14 px-4 md:px-6 text-sm md:text-lg border-0 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+            placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호"
+            className="flex-1 h-10 md:h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
           />
-          {/* 모바일: 아이콘만 / 데스크탑: 아이콘+텍스트 */}
           <Button
             type="submit"
-            size="icon"
-            className="h-8 w-8 md:hidden bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 shrink-0"
+            className="h-10 md:h-12 px-4 md:px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-none rounded-r-md text-sm md:text-sm font-semibold shrink-0 transition-colors"
             disabled={!localQuery.trim()}
           >
-            <Search className="h-4 w-4" />
-          </Button>
-          <Button
-            type="submit"
-            size="lg"
-            className="hidden md:flex h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full mr-1 my-1 font-semibold text-base"
-            disabled={!localQuery.trim()}
-          >
-            <Search className="h-5 w-5 mr-2" />
-            검색
+            <span className="hidden md:inline">검색</span>
+            <Search className="h-4 w-4 md:hidden" />
           </Button>
         </div>
       </form>
 
-      {/* 빠른 검색 힌트 — 검색 전, 인라인 칩 */}
+      {/* 검색 전: 기준 + 예시 칩 + 안내 */}
       {!hasSearched && (
-        <div className="mt-3 max-w-3xl mx-auto flex items-center justify-center gap-2 flex-wrap">
-          <span className="text-[11px] text-slate-400">예시:</span>
-          {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody"].map((term) => (
-            <button
-              key={term}
-              type="button"
-              onClick={() => { setSearchQuery(term); setLocalQuery(term); }}
-              className="text-[11px] px-2.5 py-1 rounded-full border border-slate-200 text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
-            >
-              {term}
-            </button>
-          ))}
+        <div className="max-w-3xl mx-auto mt-3 space-y-2 px-1">
+          {/* 1줄: 검색 기준 */}
+          <p className="text-[11px] text-slate-400 hidden md:block">
+            시약명 · CAS No. · 제조사 · 카탈로그 번호 · 품목군으로 검색할 수 있습니다.
+          </p>
+          {/* 2줄: 예시 칩 (클릭 → 즉시 검색) */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] text-slate-400 mr-0.5">바로 검색:</span>
+            {[
+              { label: "Tris-HCl", desc: "시약명" },
+              { label: "Thermo Fisher", desc: "제조사" },
+              { label: "A1234567", desc: "카탈로그" },
+              { label: "Antibody", desc: "품목군" },
+              { label: "67-66-3", desc: "CAS No." },
+            ].map(({ label, desc }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleChipClick(label)}
+                className="inline-flex items-center gap-1 text-[11px] pl-2.5 pr-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+              >
+                <span className="font-medium">{label}</span>
+                <span className="text-slate-400 text-[10px]">{desc}</span>
+              </button>
+            ))}
+          </div>
+          {/* 3줄: 비교·견적 연동 안내 */}
+          <p className="text-[11px] text-slate-400 hidden md:block">
+            검색 결과에서 스펙 비교 → 견적 리스트 담기 → 견적서 작성까지 이어집니다.
+          </p>
         </div>
       )}
     </div>
