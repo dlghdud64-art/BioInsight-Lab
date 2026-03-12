@@ -62,7 +62,7 @@ export function SearchInput() {
       </div>
       <Button 
         type="submit" 
-        className="flex-shrink-0 h-10 md:h-11 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105" 
+        className="flex-shrink-0 h-10 md:h-11 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-colors duration-300" 
         aria-label="검색 실행"
       >
         <Search className="h-4 w-4 md:mr-2" aria-hidden="true" />

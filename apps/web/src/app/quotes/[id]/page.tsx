@@ -112,14 +112,28 @@ export default function QuoteDetailPage() {
   }>>({});
 
   // ── 쿼리 ──────────────────────────────────────────────────────────
-  const { data: quoteData, isLoading } = useQuery({
+  const { data: quoteData, isLoading, isError, error: quoteError } = useQuery({
     queryKey: ["quote", quoteId],
     queryFn: async () => {
       const res = await fetch(`/api/quotes/${quoteId}`);
-      if (!res.ok) throw new Error("Failed to fetch quote");
+      if (!res.ok) {
+        const statusCode = res.status;
+        const body = await res.json().catch(() => ({}));
+        const msg = body.error || "알 수 없는 오류";
+        console.error(`[QuoteDetail] fetch failed: ${statusCode} ${msg}`, { quoteId });
+        if (statusCode === 404) throw new Error("NOT_FOUND");
+        if (statusCode === 403) throw new Error("FORBIDDEN");
+        if (statusCode === 401) throw new Error("UNAUTHORIZED");
+        throw new Error(`FETCH_ERROR:${statusCode}`);
+      }
       return res.json();
     },
     enabled: !!quoteId && status === "authenticated",
+    retry: (failureCount, error) => {
+      const msg = (error as Error).message;
+      if (msg === "NOT_FOUND" || msg === "FORBIDDEN") return false;
+      return failureCount < 2;
+    },
   });
 
   const { data: budgetsData } = useQuery<{ budgets: any[] }>({
@@ -419,14 +433,29 @@ export default function QuoteDetailPage() {
     );
   }
 
-  if (!quoteData?.quote) {
+  if (!quoteId) {
+    router.replace("/dashboard/quotes");
+    return null;
+  }
+
+  if (isError || !quoteData?.quote) {
+    const errorMsg = (quoteError as Error)?.message || "";
+    const isForbidden = errorMsg === "FORBIDDEN";
+    const isNotFound = errorMsg === "NOT_FOUND" || (!isError && !quoteData?.quote);
+
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground py-8">견적을 찾을 수 없습니다</p>
-              <Link href="/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
+              <p className="text-muted-foreground py-8">
+                {isForbidden
+                  ? "이 견적을 볼 권한이 없습니다."
+                  : isNotFound
+                  ? "삭제되었거나 찾을 수 없는 견적입니다."
+                  : "일시적으로 견적 정보를 불러오지 못했습니다."}
+              </p>
+              <Link href="/dashboard/quotes"><Button variant="outline">견적 목록으로 돌아가기</Button></Link>
             </CardContent>
           </Card>
         </div>
