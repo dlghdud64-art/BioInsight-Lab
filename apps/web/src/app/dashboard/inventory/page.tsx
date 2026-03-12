@@ -933,10 +933,9 @@ function InventoryPageContent() {
                 // 전체 재고 라벨 인쇄 (PC 프린터 print dialog)
                 handleBulkLabelPrint();
               }}
-              className="hidden md:inline-flex"
             >
-              <Printer className="h-4 w-4 mr-2" />
-              라벨 인쇄
+              <Printer className="h-4 w-4 mr-0 sm:mr-2" />
+              <span className="hidden sm:inline">라벨 인쇄</span>
             </Button>
             <Button
               variant="outline"
@@ -959,13 +958,6 @@ function InventoryPageContent() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem
-                  onClick={() => handleBulkLabelPrint()}
-                  className="flex items-center gap-2 text-xs md:hidden"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  라벨 인쇄
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setIsImportDialogOpen(true)}
                   className="flex items-center gap-2 text-xs md:hidden"
@@ -2408,6 +2400,7 @@ function InventoryPageContent() {
                             onRestockRequest={() => {
                               restockRequestMutation.mutate(inventory.id);
                             }}
+                            onPrintLabel={() => handleSingleLabelPrint(inventory)}
                             isRestockRequested={hasRequest}
                             isRequestingRestock={restockRequestMutation.isPending && restockRequestMutation.variables === inventory.id}
                             isRecommended={isRecommended}
@@ -2713,6 +2706,7 @@ function InventoryCard({
   onEdit,
   onRecordUsage,
   onRestockRequest,
+  onPrintLabel,
   isRestockRequested = false,
   isRequestingRestock = false,
   isRecommended = false,
@@ -2721,6 +2715,7 @@ function InventoryCard({
   onEdit: () => void;
   onRecordUsage: (quantity: number, notes?: string) => void;
   onRestockRequest?: () => void;
+  onPrintLabel?: () => void;
   isRestockRequested?: boolean;
   isRequestingRestock?: boolean;
   isRecommended?: boolean;
@@ -2857,14 +2852,16 @@ function InventoryCard({
         )}
 
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={onEdit} className="flex-1">
-            <Edit className="h-4 w-4 mr-1" />
-            수정
-          </Button>
+          {onPrintLabel && (
+            <Button size="sm" variant="outline" onClick={onPrintLabel} className="flex-1 gap-1">
+              <Printer className="h-3.5 w-3.5" />
+              라벨 인쇄
+            </Button>
+          )}
           <Dialog open={showUsageDialog} onOpenChange={setShowUsageDialog}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="flex-1">
-                <TrendingDown className="h-4 w-4 mr-1" />
+              <Button size="sm" variant="outline" className="flex-1 gap-1">
+                <TrendingDown className="h-3.5 w-3.5" />
                 사용 기록
               </Button>
             </DialogTrigger>
@@ -2915,6 +2912,25 @@ function InventoryCard({
               </div>
             </DialogContent>
           </Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem className="gap-2 text-xs" onClick={onEdit}>
+                <Edit className="h-3.5 w-3.5 text-slate-500" />
+                정보 수정
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2 text-xs" onClick={() => {
+                setShowUsageDialog(false);
+              }}>
+                <Eye className="h-3.5 w-3.5 text-blue-500" />
+                상세 보기
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>
