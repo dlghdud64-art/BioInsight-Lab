@@ -17,6 +17,7 @@ import {
   ShoppingCart, TrendingUp, TrendingDown, AlertTriangle, BarChart2,
   RefreshCw, Store, ArrowUpRight, CreditCard, Building2,
   Repeat, AlertCircle, CheckCircle2, PackageCheck, ClipboardList,
+  ListFilter, Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
@@ -48,6 +49,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -73,7 +81,8 @@ export default function PurchasesPage() {
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null);
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined);
-  
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
   // 구매 내역 등록 폼 상태
   const [vendorName, setVendorName] = useState("");
   const [category, setCategory] = useState("");
@@ -590,6 +599,17 @@ export default function PurchasesPage() {
     return filtered;
   }, [filteredPurchases, selectedCategory, selectedStatus, evidenceChecklist]);
 
+  // 활성 필터 개수 (모바일 필터 바 표시용)
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (customDateRange) count++;
+    if (selectedVendor !== "all") count++;
+    if (selectedCategory !== "all") count++;
+    if (selectedStatus !== "all") count++;
+    return count;
+  }, [searchQuery, customDateRange, selectedVendor, selectedCategory, selectedStatus]);
+
   // DataTable 컬럼 정의
   const columns: ColumnDef<any>[] = useMemo(() => [
     {
@@ -728,7 +748,7 @@ export default function PurchasesPage() {
   ], [repeatPurchaseMap, evidenceChecklist, expandedRowId]);
 
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-8 pt-6 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ══ 1. 페이지 헤더 ══ */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -849,8 +869,8 @@ export default function PurchasesPage() {
             </div>
           </div>
 
-          {/* ══ 3. 통합 필터 바 ══ */}
-          <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
+          {/* ══ 3. 통합 필터 바 (Desktop) ══ */}
+          <Card className="hidden md:block rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
             <CardContent className="p-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* 검색 */}
@@ -911,7 +931,133 @@ export default function PurchasesPage() {
             </CardContent>
           </Card>
 
-          {/* ══ 4. 구매 내역 테이블 ══ */}
+          {/* ══ 3-M. 모바일 필터 요약 바 + 바텀 시트 ══ */}
+          <div className="md:hidden">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input
+                  placeholder="품목명 검색"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 text-sm border-slate-200 dark:border-slate-700"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs flex-shrink-0 relative"
+                onClick={() => setMobileFilterOpen(true)}
+              >
+                <ListFilter className="h-3.5 w-3.5" />
+                필터
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </div>
+
+            <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+              <SheetContent side="bottom" className="h-auto max-h-[75vh] rounded-t-2xl px-4 pb-6">
+                <SheetHeader className="pb-3">
+                  <SheetTitle className="text-base">필터</SheetTitle>
+                  <SheetDescription className="text-xs text-slate-500">
+                    조건을 설정하여 구매 내역을 필터링합니다.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-4">
+                  {/* 기간 */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">기간</label>
+                    <DateRangePicker
+                      startDate={customDateRange?.from}
+                      endDate={customDateRange?.to}
+                      onDateChange={(from: string, to: string) => setCustomDateRange({ from, to })}
+                    />
+                  </div>
+
+                  {/* 공급사 */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">공급사</label>
+                    <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                      <SelectTrigger className="w-full h-9 text-xs">
+                        <SelectValue placeholder="공급사" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체 공급사</SelectItem>
+                        {uniqueVendors.map((vendor) => (
+                          <SelectItem key={vendor} value={vendor}>{vendor}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 분류 */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">분류</label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-full h-9 text-xs">
+                        <SelectValue placeholder="분류" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체 분류</SelectItem>
+                        {uniqueCategories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{getCategoryLabel(cat)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 상태 */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">상태</label>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-full h-9 text-xs">
+                        <SelectValue placeholder="상태" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체 상태</SelectItem>
+                        <SelectItem value="입고 대기">입고 대기</SelectItem>
+                        <SelectItem value="구매 완료">구매 완료</SelectItem>
+                        <SelectItem value="증빙 업로드 필요">증빙 업로드 필요</SelectItem>
+                        <SelectItem value="증빙 검토 필요">증빙 검토 필요</SelectItem>
+                        <SelectItem value="재고 반영 필요">재고 반영 필요</SelectItem>
+                        <SelectItem value="정산 완료">정산 완료</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 적용/초기화 */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-10 text-sm"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setCustomDateRange(null);
+                        setSelectedVendor("all");
+                        setSelectedCategory("all");
+                        setSelectedStatus("all");
+                      }}
+                    >
+                      초기화
+                    </Button>
+                    <Button
+                      className="flex-1 h-10 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setMobileFilterOpen(false)}
+                    >
+                      적용
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* ══ 4. 구매 내역 ══ */}
           {purchasesLoading ? (
             <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
               <CardContent className="flex items-center justify-center py-16">
@@ -919,28 +1065,128 @@ export default function PurchasesPage() {
               </CardContent>
             </Card>
           ) : enhancedFilteredPurchases.length > 0 ? (
-            <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f] overflow-hidden">
-              <CardHeader className="p-4 pb-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">구매 내역</CardTitle>
-                    <CardDescription className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      총 {enhancedFilteredPurchases.length}건
-                      {selectedVendor !== "all" && ` · ${selectedVendor}`}
-                      {selectedStatus !== "all" && ` · ${selectedStatus}`}
-                    </CardDescription>
+            <>
+              {/* Desktop: DataTable */}
+              <Card className="hidden md:block rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f] overflow-hidden">
+                <CardHeader className="p-4 pb-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">구매 내역</CardTitle>
+                      <CardDescription className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        총 {enhancedFilteredPurchases.length}건
+                        {selectedVendor !== "all" && ` · ${selectedVendor}`}
+                        {selectedStatus !== "all" && ` · ${selectedStatus}`}
+                      </CardDescription>
+                    </div>
                   </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-3">
+                  <DataTable
+                    columns={columns}
+                    data={enhancedFilteredPurchases}
+                    searchKey="itemName"
+                    searchPlaceholder="품명 검색"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Mobile: Card list */}
+              <div className="md:hidden space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    총 {enhancedFilteredPurchases.length}건
+                    {selectedVendor !== "all" && ` · ${selectedVendor}`}
+                    {selectedStatus !== "all" && ` · ${selectedStatus}`}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-3">
-                <DataTable
-                  columns={columns}
-                  data={enhancedFilteredPurchases}
-                  searchKey="itemName"
-                  searchPlaceholder="품명 검색"
-                />
-              </CardContent>
-            </Card>
+                {enhancedFilteredPurchases.map((purchase: any) => {
+                  const { purchaseStatus, followUpStatus } = getDualStatus(purchase);
+                  const repeatKey = (purchase.itemName || "").toLowerCase();
+                  const repeatCount = repeatPurchaseMap.get(repeatKey) || 0;
+                  return (
+                    <div
+                      key={purchase.id}
+                      className="rounded-xl border border-slate-200/60 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] p-3.5 shadow-sm"
+                    >
+                      {/* Row 1: 품목명 */}
+                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 break-words">
+                        {purchase.itemName || "-"}
+                      </p>
+
+                      {/* Row 2: 카탈로그번호 · 거래일 */}
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {purchase.catalogNumber && <span className="font-mono">{purchase.catalogNumber} · </span>}
+                        {purchase.purchasedAt ? format(new Date(purchase.purchasedAt), "yyyy.MM.dd") : "-"}
+                      </p>
+
+                      {/* Row 3: 공급사 */}
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 break-words">
+                        {purchase.vendorName || "-"}
+                      </p>
+
+                      {/* Row 4: 금액 · 반복 구매 */}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                          {formatCurrency(purchase.amount)}
+                        </span>
+                        {repeatCount >= 2 && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 dark:text-blue-400">
+                            <Repeat className="h-2.5 w-2.5 mr-0.5" />반복 {repeatCount}회
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Row 5: 상태 배지 */}
+                      <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                        <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold ${purchaseStatus.className}`}>
+                          {purchaseStatus.label}
+                        </Badge>
+                        {followUpStatus && (
+                          <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-semibold ${followUpStatus.className}`}>
+                            {followUpStatus.label}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Row 6: 상세 보기 / 액션 */}
+                      <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                        {followUpStatus?.action === "재고로 반영" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30 gap-1"
+                            onClick={() => router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`)}
+                          >
+                            <PackageCheck className="h-3 w-3" />
+                            재고 반영
+                          </Button>
+                        )}
+                        {(followUpStatus?.action === "증빙 파일 등록" || followUpStatus?.action === "회계팀 전달") && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 gap-1"
+                            onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                          >
+                            <ClipboardList className="h-3 w-3" />
+                            증빙 확인
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-[11px] text-slate-500 hover:text-slate-700 gap-1 ml-auto"
+                          onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                        >
+                          <Eye className="h-3 w-3" />
+                          상세 보기
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <Card className="rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f]">
               <CardContent className="flex flex-col items-center justify-center py-14">
@@ -1055,21 +1301,21 @@ export default function PurchasesPage() {
             </div>
           </div>
 
-          {/* Import Dialog (모달) */}
-          <Dialog open={isImportDialogOpen} onOpenChange={(open: boolean) => {
+          {/* Import Sheet (내역 등록 패널) */}
+          <Sheet open={isImportDialogOpen} onOpenChange={(open: boolean) => {
             setIsImportDialogOpen(open);
             if (!open) { setImportResult(null); setTsvParseErrors([]); }
           }}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+            <SheetContent className="w-full sm:max-w-2xl overflow-y-auto" side="right">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   구매 내역 등록
-                </DialogTitle>
-                <DialogDescription>
+                </SheetTitle>
+                <SheetDescription>
                   건별 직접 입력, 엑셀 복사 붙여넣기, CSV 파일 업로드 중 선택하세요.
-                </DialogDescription>
-              </DialogHeader>
+                </SheetDescription>
+              </SheetHeader>
               <Tabs defaultValue="simple-form" className="w-full" onValueChange={() => { setImportResult(null); setTsvParseErrors([]); }}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="simple-form" className="gap-1.5 text-xs">
@@ -1311,8 +1557,8 @@ export default function PurchasesPage() {
                   />
                 </TabsContent>
               </Tabs>
-            </DialogContent>
-          </Dialog>
+            </SheetContent>
+          </Sheet>
         </>
       )}
     </div>
