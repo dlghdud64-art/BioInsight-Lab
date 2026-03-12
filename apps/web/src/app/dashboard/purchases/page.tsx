@@ -82,6 +82,8 @@ export default function PurchasesPage() {
   const [unitPrice, setUnitPrice] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("KRW");
+  const [importResult, setImportResult] = useState<{ total: number; success: number; errors: { row: number; message: string }[] } | null>(null);
+  const [tsvParseErrors, setTsvParseErrors] = useState<{ row: number; message: string }[]>([]);
 
   const { data: organizations } = useQuery({
     queryKey: ["organizations"],
@@ -128,11 +130,11 @@ export default function PurchasesPage() {
     enabled: !!session,
   });
 
-  // TSV/CSV 파싱 함수
-  const parseTsvToRows = (text: string): any[] => {
+  // TSV/CSV 파싱 함수 (행별 에러 추적)
+  const parseTsvToRows = (text: string): { rows: any[]; errors: { row: number; message: string }[] } => {
     const lines = text.trim().split("\n");
     if (lines.length < 2) {
-      throw new Error("At least 2 lines required (header + data)");
+      throw new Error("최소 2줄 이상 필요합니다 (헤더 + 데이터)");
     }
 
     // 헤더 파싱
@@ -142,46 +144,35 @@ export default function PurchasesPage() {
 
     // 컬럼 매핑 (한글/영문 헤더 지원)
     const columnMap: Record<string, string> = {
-      "구매일": "purchasedAt",
-      "purchasedAt": "purchasedAt",
-      "date": "purchasedAt",
-      "벤더": "vendorName",
-      "vendorName": "vendorName",
-      "vendor": "vendorName",
-      "카테고리": "category",
-      "category": "category",
-      "품목명": "itemName",
-      "itemName": "itemName",
-      "item": "itemName",
-      "품목": "itemName",
-      "수량": "qty",
-      "qty": "qty",
-      "quantity": "qty",
-      "단가": "unitPrice",
-      "unitPrice": "unitPrice",
-      "price": "unitPrice",
-      "금액": "amount",
-      "amount": "amount",
-      "total": "amount",
-      "통화": "currency",
-      "currency": "currency",
-      "카탈로그번호": "catalogNumber",
-      "catalogNumber": "catalogNumber",
-      "catalog": "catalogNumber",
-      "단위": "unit",
-      "unit": "unit",
+      "구매일": "purchasedAt", "purchasedAt": "purchasedAt", "date": "purchasedAt",
+      "벤더": "vendorName", "vendorName": "vendorName", "vendor": "vendorName",
+      "카테고리": "category", "category": "category",
+      "품목명": "itemName", "itemName": "itemName", "item": "itemName", "품목": "itemName",
+      "수량": "qty", "qty": "qty", "quantity": "qty",
+      "단가": "unitPrice", "unitPrice": "unitPrice", "price": "unitPrice",
+      "금액": "amount", "amount": "amount", "total": "amount",
+      "통화": "currency", "currency": "currency",
+      "카탈로그번호": "catalogNumber", "catalogNumber": "catalogNumber", "catalog": "catalogNumber",
+      "단위": "unit", "unit": "unit",
     };
 
     const mappedHeaders = headers.map((h) => columnMap[h] || h.toLowerCase());
 
-    // 데이터 행 파싱
     const rows: any[] = [];
+    const errors: { row: number; message: string }[] = [];
+
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(delimiter).map((v) => v.trim());
-      if (values.length !== headers.length) continue;
+      const line = lines[i].trim();
+      if (!line) continue; // 빈 줄 건너뛰기
+
+      const values = line.split(delimiter).map((v) => v.trim());
+      if (values.length !== headers.length) {
+        errors.push({ row: i + 1, message: `컬럼 수 불일치 (기대: ${headers.length}, 실제: ${values.length})` });
+        continue;
+      }
 
       const row: any = {};
-      headers.forEach((header, idx) => {
+      headers.forEach((_header, idx) => {
         const mappedKey = mappedHeaders[idx];
         const value = values[idx];
 
@@ -193,12 +184,20 @@ export default function PurchasesPage() {
       });
 
       // 필수 필드 확인
-      if (row.purchasedAt && row.vendorName && row.itemName && row.qty) {
+      const missing: string[] = [];
+      if (!row.purchasedAt) missing.push("구매일");
+      if (!row.vendorName) missing.push("벤더");
+      if (!row.itemName) missing.push("품목명");
+      if (!row.qty) missing.push("수량");
+
+      if (missing.length > 0) {
+        errors.push({ row: i + 1, message: `필수 필드 누락: ${missing.join(", ")}` });
+      } else {
         rows.push(row);
       }
     }
 
-    return rows;
+    return { rows, errors };
   };
 
   // 구매 내역 등록 Mutation
@@ -312,17 +311,24 @@ export default function PurchasesPage() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, _vars, _ctx) => {
+      const result = {
+        total: (data.successRows ?? 0) + (data.errorRows ?? 0),
+        success: data.successRows ?? 0,
+        errors: (data.rowErrors ?? []) as { row: number; message: string }[],
+      };
+      setImportResult(result);
       toast({
-        title: "Import successful",
-        description: `${data.successRows} rows imported successfully. ${data.errorRows} errors.`,
+        title: `${result.success}건 등록 완료`,
+        description: result.errors.length > 0 ? `${result.errors.length}건 실패` : "전체 성공",
+        variant: result.errors.length > 0 ? "destructive" : "default",
       });
-      setCsvText("");
       queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["purchases-list"] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Import failed",
+        title: "가져오기 실패",
         description: error.message,
         variant: "destructive",
       });
@@ -331,26 +337,28 @@ export default function PurchasesPage() {
 
   const handleImport = () => {
     if (!csvText.trim()) {
-      toast({
-        title: "Error",
-        description: "Please paste TSV/CSV data",
-        variant: "destructive",
-      });
+      toast({ title: "데이터를 붙여넣어 주세요.", variant: "destructive" });
       return;
     }
 
+    setImportResult(null);
+    setTsvParseErrors([]);
+
     try {
-      const rows = parseTsvToRows(csvText);
+      const { rows, errors } = parseTsvToRows(csvText);
+      setTsvParseErrors(errors);
+
       if (rows.length === 0) {
-        throw new Error("No valid rows found");
+        toast({
+          title: "유효한 행이 없습니다",
+          description: errors.length > 0 ? `${errors.length}건 파싱 에러` : "데이터를 확인해 주세요.",
+          variant: "destructive",
+        });
+        return;
       }
       importMutation.mutate(rows);
     } catch (error: any) {
-      toast({
-        title: "Parse error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "파싱 오류", description: error.message, variant: "destructive" });
     }
   };
 
@@ -1048,26 +1056,42 @@ export default function PurchasesPage() {
           </div>
 
           {/* Import Dialog (모달) */}
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <Dialog open={isImportDialogOpen} onOpenChange={(open: boolean) => {
+            setIsImportDialogOpen(open);
+            if (!open) { setImportResult(null); setTsvParseErrors([]); }
+          }}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>구매 내역 등록</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  구매 내역 등록
+                </DialogTitle>
                 <DialogDescription>
-                  간편 입력, TSV 붙여넣기, CSV 업로드 중 선택하세요
+                  건별 직접 입력, 엑셀 복사 붙여넣기, CSV 파일 업로드 중 선택하세요.
                 </DialogDescription>
               </DialogHeader>
-              <Tabs defaultValue="csv-upload" className="w-full">
+              <Tabs defaultValue="simple-form" className="w-full" onValueChange={() => { setImportResult(null); setTsvParseErrors([]); }}>
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="simple-form">간편 입력</TabsTrigger>
-                  <TabsTrigger value="tsv-paste">TSV 붙여넣기</TabsTrigger>
-                  <TabsTrigger value="csv-upload">CSV 업로드</TabsTrigger>
+                  <TabsTrigger value="simple-form" className="gap-1.5 text-xs">
+                    <Receipt className="h-3.5 w-3.5" />
+                    간편 입력
+                  </TabsTrigger>
+                  <TabsTrigger value="tsv-paste" className="gap-1.5 text-xs">
+                    <ClipboardList className="h-3.5 w-3.5" />
+                    TSV 붙여넣기
+                  </TabsTrigger>
+                  <TabsTrigger value="csv-upload" className="gap-1.5 text-xs">
+                    <Upload className="h-3.5 w-3.5" />
+                    CSV 업로드
+                  </TabsTrigger>
                 </TabsList>
 
-                {/* Tab 1: Simple Form */}
-                <TabsContent value="simple-form" className="space-y-4">
+                {/* Tab 1: Simple Form — 건별 직접 입력 */}
+                <TabsContent value="simple-form" className="space-y-4 pt-2">
+                  <p className="text-xs text-slate-500">1건씩 빠르게 등록합니다. <span className="text-red-500">*</span> 표시는 필수 항목입니다.</p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="purchasedAt">구매일 *</Label>
+                      <Label htmlFor="purchasedAt">구매일 <span className="text-red-500">*</span></Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -1100,7 +1124,7 @@ export default function PurchasesPage() {
                       </Popover>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vendorName">벤더 *</Label>
+                      <Label htmlFor="vendorName">벤더 <span className="text-red-500">*</span></Label>
                       <Input
                         id="vendorName"
                         placeholder="Sigma-Aldrich"
@@ -1124,7 +1148,7 @@ export default function PurchasesPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="itemName">품목명 *</Label>
+                      <Label htmlFor="itemName">품목명 <span className="text-red-500">*</span></Label>
                       <Input
                         id="itemName"
                         placeholder="Acetone, ACS grade"
@@ -1133,7 +1157,7 @@ export default function PurchasesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="qty">수량 *</Label>
+                      <Label htmlFor="qty">수량 <span className="text-red-500">*</span></Label>
                       <Input
                         type="number"
                         id="qty"
@@ -1153,7 +1177,7 @@ export default function PurchasesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="amount">금액 *</Label>
+                      <Label htmlFor="amount">금액 <span className="text-red-500">*</span></Label>
                       <Input
                         type="number"
                         id="amount"
@@ -1172,55 +1196,112 @@ export default function PurchasesPage() {
                   <Button
                     className="w-full"
                     onClick={handlePurchaseSubmit}
-                    disabled={createPurchaseMutation.isPending}
+                    disabled={createPurchaseMutation.isPending || !purchaseDate || !vendorName.trim() || !itemName.trim()}
                   >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {createPurchaseMutation.isPending ? "저장 중..." : "추가"}
+                    {createPurchaseMutation.isPending ? (
+                      <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />저장 중...</>
+                    ) : (
+                      <><Plus className="mr-2 h-4 w-4" />등록</>
+                    )}
                   </Button>
                 </TabsContent>
 
-                {/* Tab 2: TSV Paste */}
-                <TabsContent value="tsv-paste" className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">
-                      아래 순서대로 엑셀 데이터를 복사해서 붙여넣어 주세요.
+                {/* Tab 2: TSV Paste — 엑셀 복사 붙여넣기 */}
+                <TabsContent value="tsv-paste" className="space-y-4 pt-2">
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-500">엑셀에서 행을 선택해 복사(Ctrl+C)한 뒤 아래에 붙여넣기(Ctrl+V)하세요.</p>
+
+                    {/* 예시 데이터 (TSV 실제 형식) */}
+                    <div className="rounded-md border border-slate-200 bg-slate-50 overflow-hidden">
+                      <div className="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                        <span className="text-[11px] font-medium text-slate-600">예시 형식 (탭 또는 쉼표 구분)</span>
+                        <Badge variant="outline" className="text-[10px] h-5">필수: 구매일, 벤더, 품목명, 수량</Badge>
+                      </div>
+                      <pre className="p-3 text-[11px] font-mono text-slate-600 overflow-x-auto leading-relaxed">
+{`구매일\t벤더\t카테고리\t품목명\t수량\t단가\t통화
+2026-01-15\tSigma-Aldrich\tREAGENT\tAcetone, ACS\t2\t15000\tKRW
+2026-01-20\tThermo Fisher\tEQUIPMENT\tCentrifuge\t1\t2000000\tKRW`}
+                      </pre>
                     </div>
-                    <div className="flex items-center gap-2 bg-slate-100 p-3 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 flex-wrap">
-                      <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />구매일</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><Package className="h-3 w-3" />벤더</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><FileText className="h-3 w-3" />카테고리</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><Package className="h-3 w-3" />품목명</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><Hash className="h-3 w-3 text-slate-500" />수량</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><DollarSign className="h-3 w-3 text-slate-500" />단가</span>
-                      <span className="text-slate-400">|</span>
-                      <span className="flex items-center gap-1"><CircleDollarSign className="h-3 w-3 text-slate-500" />통화</span>
-                    </div>
+
                     <Textarea
-                      placeholder="2026-01-15	Sigma-Aldrich	REAGENT	Acetone	2	15000	KRW
-2026-01-20	Thermo Fisher	EQUIPMENT	Centrifuge	1	2000000	KRW"
+                      placeholder={`구매일\t벤더\t카테고리\t품목명\t수량\t단가\t통화\n2026-03-01\tSigma-Aldrich\tREAGENT\tEthanol\t5\t12000\tKRW`}
                       value={csvText}
-                      onChange={(e) => setCsvText(e.target.value)}
+                      onChange={(e) => { setCsvText(e.target.value); setTsvParseErrors([]); setImportResult(null); }}
                       rows={8}
-                      className="font-mono text-sm whitespace-pre min-h-[200px]"
+                      className="font-mono text-xs whitespace-pre min-h-[180px]"
                     />
+
+                    {/* 행별 파싱 에러 테이블 */}
+                    {tsvParseErrors.length > 0 && (
+                      <div className="rounded-md border border-red-200 bg-red-50 overflow-hidden">
+                        <div className="px-3 py-1.5 bg-red-100 border-b border-red-200 flex items-center gap-1.5">
+                          <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                          <span className="text-xs font-medium text-red-700">{tsvParseErrors.length}건 파싱 에러</span>
+                        </div>
+                        <div className="max-h-[120px] overflow-y-auto">
+                          <table className="w-full text-xs">
+                            <thead className="bg-red-50 sticky top-0">
+                              <tr>
+                                <th className="px-3 py-1 text-left font-medium text-red-600 w-16">행 번호</th>
+                                <th className="px-3 py-1 text-left font-medium text-red-600">오류 내용</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {tsvParseErrors.map((err, i) => (
+                                <tr key={i} className="border-t border-red-100">
+                                  <td className="px-3 py-1 text-red-700 font-mono">{err.row}</td>
+                                  <td className="px-3 py-1 text-red-600">{err.message}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 가져오기 결과 요약 */}
+                    {importResult && (
+                      <div className={cn(
+                        "rounded-md border p-3 flex items-center gap-3",
+                        importResult.errors.length > 0
+                          ? "border-amber-200 bg-amber-50"
+                          : "border-green-200 bg-green-50"
+                      )}>
+                        {importResult.errors.length > 0 ? (
+                          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        )}
+                        <div className="text-xs">
+                          <span className="font-medium">
+                            전체 {importResult.total}건 중 {importResult.success}건 성공
+                          </span>
+                          {importResult.errors.length > 0 && (
+                            <span className="text-red-600 ml-1">/ {importResult.errors.length}건 실패</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <Button
                     onClick={handleImport}
                     disabled={!csvText.trim() || importMutation.isPending}
                     className="w-full"
                   >
-                    <FileText className="mr-2 h-4 w-4" />
-                    {importMutation.isPending ? "처리 중..." : "가져오기"}
+                    {importMutation.isPending ? (
+                      <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />처리 중...</>
+                    ) : (
+                      <><FileText className="mr-2 h-4 w-4" />가져오기</>
+                    )}
                   </Button>
                 </TabsContent>
 
-                {/* Tab 3: CSV Upload */}
-                <TabsContent value="csv-upload">
+                {/* Tab 3: CSV Upload — 파일 업로드 */}
+                <TabsContent value="csv-upload" className="pt-2">
+                  <p className="text-xs text-slate-500 mb-3">
+                    .csv 파일을 업로드하고 컬럼을 매핑합니다. 최대 5MB, UTF-8 인코딩 권장.
+                  </p>
                   <CsvUploadTab
                     onSuccess={() => {
                       queryClient.invalidateQueries({ queryKey: ["purchase-summary"] });
