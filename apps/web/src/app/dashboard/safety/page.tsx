@@ -6,6 +6,15 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Shield,
   ShieldAlert,
@@ -22,6 +31,9 @@ import {
   Hand,
   Glasses,
   Shirt,
+  Loader2,
+  Upload,
+  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Tooltip,
@@ -258,7 +271,108 @@ export default function SafetyManagerPage() {
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredItems = (safetyItems || []).filter((item) => {
+  // ─── Mutable item state ───────────────────────────────────────────────
+  const [items, setItems] = useState<SafetyItem[]>(safetyItems);
+
+  // ─── MSDS 등록 Dialog ─────────────────────────────────────────────────
+  const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
+  const [msdsTarget, setMsdsTarget] = useState<SafetyItem | null>(null);
+  const [msdsForm, setMsdsForm] = useState({
+    docVersion: "",
+    registeredAt: new Date().toISOString().split("T")[0],
+    expiresAt: "",
+    fileName: "",
+  });
+  const [msdsSaving, setMsdsSaving] = useState(false);
+
+  const openMsdsDialog = (item: SafetyItem) => {
+    setMsdsTarget(item);
+    setMsdsForm({
+      docVersion: "1.0",
+      registeredAt: new Date().toISOString().split("T")[0],
+      expiresAt: "",
+      fileName: "",
+    });
+    setMsdsDialogOpen(true);
+  };
+
+  const handleMsdsSave = async () => {
+    if (!msdsTarget) return;
+    if (!msdsForm.docVersion || !msdsForm.registeredAt) {
+      toast({ title: "필수 항목 누락", description: "문서 버전과 등록일은 필수입니다.", variant: "destructive" });
+      return;
+    }
+    setMsdsSaving(true);
+    // 시뮬레이션 (실제 API 연동 시 대체)
+    await new Promise((r) => setTimeout(r, 800));
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === msdsTarget.id
+          ? {
+              ...i,
+              hasMsds: true,
+              msdsUpdatedAt: msdsForm.registeredAt,
+              actionStatus: i.lastInspection ? "normal" : i.actionStatus === "action_required" ? "caution" : i.actionStatus,
+            }
+          : i
+      )
+    );
+    toast({ title: "MSDS 등록 완료", description: `${msdsTarget.name}의 MSDS가 등록되었습니다.` });
+    setMsdsSaving(false);
+    setMsdsDialogOpen(false);
+  };
+
+  // ─── 점검 기록 Dialog ─────────────────────────────────────────────────
+  const [inspDialogOpen, setInspDialogOpen] = useState(false);
+  const [inspTarget, setInspTarget] = useState<SafetyItem | null>(null);
+  const [inspForm, setInspForm] = useState({
+    inspectedAt: new Date().toISOString().split("T")[0],
+    inspector: "",
+    storageOk: true,
+    ppeOk: true,
+    hasIssue: false,
+    actionTaken: "",
+  });
+  const [inspSaving, setInspSaving] = useState(false);
+
+  const openInspDialog = (item: SafetyItem) => {
+    setInspTarget(item);
+    setInspForm({
+      inspectedAt: new Date().toISOString().split("T")[0],
+      inspector: "",
+      storageOk: true,
+      ppeOk: true,
+      hasIssue: false,
+      actionTaken: "",
+    });
+    setInspDialogOpen(true);
+  };
+
+  const handleInspSave = async () => {
+    if (!inspTarget) return;
+    if (!inspForm.inspector || !inspForm.inspectedAt) {
+      toast({ title: "필수 항목 누락", description: "점검일과 점검자는 필수입니다.", variant: "destructive" });
+      return;
+    }
+    setInspSaving(true);
+    await new Promise((r) => setTimeout(r, 800));
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === inspTarget.id
+          ? {
+              ...i,
+              lastInspection: inspForm.inspectedAt,
+              actionStatus: i.hasMsds && !inspForm.hasIssue ? "normal" : inspForm.hasIssue ? "caution" : i.actionStatus,
+            }
+          : i
+      )
+    );
+    toast({ title: "점검 기록 완료", description: `${inspTarget.name}의 점검이 기록되었습니다.` });
+    setInspSaving(false);
+    setInspDialogOpen(false);
+  };
+
+  const filteredItems = (items || []).filter((item) => {
     if (riskFilter === "high" && item.level !== "HIGH") return false;
     if (riskFilter === "medium" && item.level !== "MEDIUM") return false;
     if (riskFilter === "low" && item.level !== "LOW") return false;
@@ -272,9 +386,9 @@ export default function SafetyManagerPage() {
     return true;
   });
 
-  const totalCount = safetyItems.length;
-  const highRiskCount = safetyItems.filter((i) => i.isHighRisk).length;
-  const msdsMissingCount = safetyItems.filter((i) => !i.hasMsds).length;
+  const totalCount = items.length;
+  const highRiskCount = items.filter((i) => i.isHighRisk).length;
+  const msdsMissingCount = items.filter((i) => !i.hasMsds).length;
 
   const getBorderColor = (level: string) => {
     if (level === "HIGH") return "!border-l-red-500 dark:!border-l-red-400";
@@ -422,7 +536,7 @@ export default function SafetyManagerPage() {
               className="pl-9 h-9 text-xs border-slate-200 dark:border-slate-700"
               placeholder="물질명 또는 CAS 번호 검색..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
@@ -540,9 +654,34 @@ export default function SafetyManagerPage() {
                         </div>
                       </div>
 
-                      {/* RIGHT: 보호구(PPE) — 가로 한 줄 고정 4슬롯 */}
-                      <div className="w-[120px] flex-shrink-0 px-3 pb-2 md:py-3 md:px-3 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800/50 flex items-center justify-center">
-                        <PPERow ppe={item.ppe} />
+                      {/* 3행: 후속 조치 CTA */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                        {!item.hasMsds && (
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                            onClick={() => openMsdsDialog(item)}
+                          >
+                            <FileWarning className="h-3 w-3 mr-1" />MSDS 등록
+                          </Button>
+                        )}
+                        {!item.lastInspection && (
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                            onClick={() => openInspDialog(item)}
+                          >
+                            <ShieldCheck className="h-3 w-3 mr-1" />점검 기록
+                          </Button>
+                        )}
+                        {item.level === "HIGH" && (
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            onClick={() => toast({ title: "폐기 처리", description: `${item.name}의 폐기 절차를 확인하세요.` })}
+                          >
+                            <AlertTriangle className="h-3 w-3 mr-1" />폐기 처리
+                          </Button>
+                        )}
+                        {item.actionStatus === "normal" && item.hasMsds && item.lastInspection && (
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <ShieldCheck className="h-3 w-3" />관리 정상
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -553,6 +692,173 @@ export default function SafetyManagerPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ─── MSDS 등록 Dialog ─────────────────────────────────────────── */}
+      <Dialog open={msdsDialogOpen} onOpenChange={setMsdsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <FileWarning className="h-4 w-4 text-amber-600" />
+              MSDS 등록
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {msdsTarget?.name} ({msdsTarget?.cas})의 안전보건자료를 등록합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="msds-substance" className="text-xs font-medium">물질명</Label>
+                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="msds-cas" className="text-xs font-medium">CAS No.</Label>
+                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="msds-file" className="text-xs font-medium">문서 파일</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="msds-file"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="h-8 text-xs flex-1"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, fileName: e.target.files?.[0]?.name || "" }))}
+                />
+              </div>
+              {msdsForm.fileName && (
+                <p className="text-[11px] text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />{msdsForm.fileName}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="msds-version" className="text-xs font-medium">문서 버전 *</Label>
+                <Input
+                  id="msds-version"
+                  value={msdsForm.docVersion}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, docVersion: e.target.value }))}
+                  placeholder="1.0"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="msds-date" className="text-xs font-medium">등록일 *</Label>
+                <Input
+                  id="msds-date"
+                  type="date"
+                  value={msdsForm.registeredAt}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, registeredAt: e.target.value }))}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="msds-expires" className="text-xs font-medium">만료일</Label>
+                <Input
+                  id="msds-expires"
+                  type="date"
+                  value={msdsForm.expiresAt}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, expiresAt: e.target.value }))}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setMsdsDialogOpen(false)} disabled={msdsSaving}>
+              취소
+            </Button>
+            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleMsdsSave} disabled={msdsSaving}>
+              {msdsSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "MSDS 등록"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── 점검 기록 Dialog ─────────────────────────────────────────── */}
+      <Dialog open={inspDialogOpen} onOpenChange={setInspDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              점검 기록
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {inspTarget?.name} ({inspTarget?.cas})의 안전 점검을 기록합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="insp-date" className="text-xs font-medium">점검일 *</Label>
+                <Input
+                  id="insp-date"
+                  type="date"
+                  value={inspForm.inspectedAt}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInspForm((f) => ({ ...f, inspectedAt: e.target.value }))}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="insp-person" className="text-xs font-medium">점검자 *</Label>
+                <Input
+                  id="insp-person"
+                  value={inspForm.inspector}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInspForm((f) => ({ ...f, inspector: e.target.value }))}
+                  placeholder="이름 입력"
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-xs font-medium">보관 상태 정상</Label>
+                  <p className="text-[11px] text-slate-500">보관 조건 및 용기 상태가 적합합니다.</p>
+                </div>
+                <Switch checked={inspForm.storageOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, storageOk: v }))} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-xs font-medium">PPE 확인</Label>
+                  <p className="text-[11px] text-slate-500">필수 보호구가 비치되어 있습니다.</p>
+                </div>
+                <Switch checked={inspForm.ppeOk} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, ppeOk: v }))} />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-xs font-medium text-amber-700 dark:text-amber-400">이상 여부</Label>
+                  <p className="text-[11px] text-slate-500">점검 중 이상이 발견되었습니다.</p>
+                </div>
+                <Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} />
+              </div>
+            </div>
+            {inspForm.hasIssue && (
+              <div className="space-y-1.5">
+                <Label htmlFor="insp-action" className="text-xs font-medium">조치 내용</Label>
+                <Textarea
+                  id="insp-action"
+                  value={inspForm.actionTaken}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInspForm((f) => ({ ...f, actionTaken: e.target.value }))}
+                  placeholder="발견된 이상 및 조치 내용을 기록하세요."
+                  rows={3}
+                  className="text-xs"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setInspDialogOpen(false)} disabled={inspSaving}>
+              취소
+            </Button>
+            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleInspSave} disabled={inspSaving}>
+              {inspSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "점검 기록 저장"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
