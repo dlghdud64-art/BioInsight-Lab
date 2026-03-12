@@ -1450,22 +1450,11 @@ function InventoryPageContent() {
                               </Button>
                             )}
                             {(issueType === "expiring") && (
-                              /* 유효기간 임박 → 우선 사용 */
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({
-                                    title: "우선 사용 표시",
-                                    description: `${inv.product.name}을(를) 우선 사용 항목으로 표시합니다.`,
-                                  });
-                                }}
-                              >
-                                <Truck className="h-3 w-3 shrink-0" />
+                              /* 유효기간 임박 → 우선 사용 배지 (읽기 전용 상태 표시) */
+                              <Badge variant="outline" className="h-6 px-1.5 text-[10px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800 shrink-0" title="유효기간 임박 또는 먼저 소진해야 하는 항목입니다.">
+                                <Truck className="h-2.5 w-2.5 mr-0.5 shrink-0" />
                                 우선 사용
-                              </Button>
+                              </Badge>
                             )}
                             {(issueType === "expired") && (
                               /* 만료됨 → 폐기 검토 */
