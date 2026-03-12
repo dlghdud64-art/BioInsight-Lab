@@ -72,8 +72,9 @@ import {
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
 /* ── 유틸리티 ── */
-const isValidUUID = (id: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+const isValidQuoteId = (id: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) || // UUID
+  /^c[a-z0-9]{20,32}$/i.test(id); // CUID
 
 /** 블록별 에러 로깅 (userId, orgId, status, navigation, refetch 포함) */
 function logBlockError(
@@ -216,7 +217,7 @@ export default function QuoteDetailPage() {
   }>>({});
 
   // ── quoteId 검증 ────────────────────────────────────────────────
-  const isQuoteIdValid = !!quoteId && isValidUUID(quoteId);
+  const isQuoteIdValid = !!quoteId && isValidQuoteId(quoteId);
 
   // ── 쿼리: 메인 견적 (전체 페이지 에러 분기의 근거) ──────────────
   const quoteQuery = useQuery({
