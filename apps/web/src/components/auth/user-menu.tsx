@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard } from "lucide-react";
+import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { USER_ROLES } from "@/lib/constants";
@@ -75,6 +75,25 @@ export function UserMenu() {
             대시보드
           </DropdownMenuItem>
         </Link>
+        <Link href="/dashboard/quotes">
+          <DropdownMenuItem>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            견적 관리
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/dashboard/purchases">
+          <DropdownMenuItem>
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            구매 운영
+          </DropdownMenuItem>
+        </Link>
+        <Link href="/dashboard/inventory">
+          <DropdownMenuItem>
+            <Package className="mr-2 h-4 w-4" />
+            재고 관리
+          </DropdownMenuItem>
+        </Link>
+        <DropdownMenuSeparator />
         <Link href="/dashboard/settings">
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, FileText, Phone, Info, Headset } from "lucide-react";
+import { Menu, Search, FileText, Phone, Info, Headset, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import {
   Sheet,
@@ -55,8 +55,37 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </div>
                 </div>
 
-                {/* ── 제품 ── */}
+                {/* ── 앱으로 이동 ── */}
                 <nav className="px-4 pt-4 pb-2">
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">앱으로 이동</div>
+                  <SheetClose asChild>
+                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                      <LayoutDashboard className="h-4 w-4 text-blue-500" />
+                      대시보드
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href="/dashboard/quotes" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                      <ClipboardList className="h-4 w-4 text-slate-400" />
+                      견적 관리
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href="/dashboard/purchases" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                      <ShoppingCart className="h-4 w-4 text-slate-400" />
+                      구매 운영
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link href="/dashboard/inventory" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                      <Package className="h-4 w-4 text-slate-400" />
+                      재고 관리
+                    </Link>
+                  </SheetClose>
+                </nav>
+
+                {/* ── 제품 ── */}
+                <nav className="px-4 pb-2">
                   <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
                     <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
@@ -68,17 +97,6 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
                       <FileText className="h-4 w-4 text-slate-400" />
                       프로토콜 맞춤 견적
-                    </Link>
-                  </SheetClose>
-                </nav>
-
-                {/* ── 도입 ── */}
-                <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">도입</div>
-                  <SheetClose asChild>
-                    <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      요금 &amp; 도입
                     </Link>
                   </SheetClose>
                 </nav>
@@ -170,14 +188,22 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* ── 로그인: [검색 시작하기(강조)] ── */
-                <Link
-                  href="/test/search"
-                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  검색 시작하기
-                </Link>
+                /* ── 로그인: [검색] [대시보드로 이동(강조)] ── */
+                <>
+                  <Link
+                    href="/test/search"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                  >
+                    검색
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
+                  >
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    대시보드
+                  </Link>
+                </>
               ) : (
                 /* ── 비로그인: [요금&도입] [로그인] [시작하기] ── */
                 <>
