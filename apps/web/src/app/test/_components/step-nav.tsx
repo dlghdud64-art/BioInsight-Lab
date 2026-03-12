@@ -57,7 +57,7 @@ function StepNavContent() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-white border-b border-gray-300 fixed top-14 left-0 right-0 z-[45] shadow-md" style={{ minHeight: '64px' }}>
+    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 재고에서 온 경우 안내 메시지 */}
@@ -67,39 +67,34 @@ function StepNavContent() {
               <span className="font-medium">재고 관리에서 시작된 구매 프로세스입니다</span>
             </div>
           )}
-          {/* 모바일: 숫자만 원형 배지 */}
-          <div className="flex items-center justify-center gap-2 py-4 md:hidden">
+          {/* 모바일: 미니 인라인 진행 바 */}
+          <div className="flex items-center justify-center gap-1 py-2 md:hidden">
             {steps.map((step, index) => {
               const isActive = step.step === currentStep;
               const isCompleted = step.step < currentStep;
-              const isPending = step.step > currentStep;
-              const lineCompleted = index + 1 < currentStep;
 
               return (
                 <div key={step.id} className="flex items-center">
                   <Link
                     href={step.href}
                     className={cn(
-                      "flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-all",
-                      isActive &&
-                        "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-400/20",
-                      isCompleted && "bg-transparent text-slate-400",
-                      isPending && "bg-slate-100 text-slate-400"
+                      "flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-all",
+                      isActive && "bg-blue-600 text-white",
+                      isCompleted && "text-blue-500",
+                      !isActive && !isCompleted && "text-slate-400"
                     )}
                   >
                     {isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                      <CheckCircle2 className="h-3 w-3" />
                     ) : (
-                      step.step
+                      <span className="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-current text-white text-[9px] font-bold shrink-0">
+                        <span className={cn(isActive ? "text-white" : "text-slate-400")}>{step.step}</span>
+                      </span>
                     )}
+                    <span className={cn(isActive ? "" : "hidden")}>{step.label}</span>
                   </Link>
                   {index < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        "h-[2px] w-6 mx-1 transition-colors",
-                        lineCompleted ? "bg-blue-500" : "bg-slate-200"
-                      )}
-                    />
+                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-slate-200")} />
                   )}
                 </div>
               );
@@ -175,15 +170,15 @@ export function StepNav() {
 
 function StepNavFallback() {
   return (
-    <nav className="w-full bg-white border-b border-gray-300 fixed top-14 left-0 right-0 z-[45] shadow-md" style={{ minHeight: '64px' }}>
+    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center gap-2 py-4">
-            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[2px] w-6 bg-gray-200" />
-            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[2px] w-6 bg-gray-200" />
-            <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
+          <div className="flex items-center justify-center gap-1 py-2">
+            <div className="h-5 w-12 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-gray-200" />
+            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-gray-200" />
+            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
           </div>
         </div>
       </div>
