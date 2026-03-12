@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // 사용자가 생성한 공유 링크 목록 조회
 export async function GET(request: NextRequest) {
   try {
