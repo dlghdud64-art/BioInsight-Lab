@@ -357,7 +357,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 {notification.typeLabel}
               </span>
               {isUrgent && (
-                <Badge variant="destructive" className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm">
+                <Badge className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm bg-red-50 text-red-600 border-0 dark:bg-red-950/40 dark:text-red-400">
                   긴급
                 </Badge>
               )}
@@ -378,9 +378,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <button
             type="button"
             onClick={(e) => handleNotificationCTA(e, notification)}
-            className={`inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
               isUrgent
-                ? "text-white bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500"
+                ? "text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800 dark:hover:bg-red-950/50"
                 : "text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
@@ -465,7 +465,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <Bell className="h-5 w-5" />
                 {pendingCount > 0 && (
                   <span className={`absolute top-1 right-1 flex items-center justify-center h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white px-0.5 ${
-                    immediateActions.length > 0 ? "bg-red-500 animate-pulse" : "bg-blue-500"
+                    immediateActions.length > 0 ? "bg-red-500" : "bg-blue-500"
                   }`}>
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
@@ -484,10 +484,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     <button
                       type="button"
                       onClick={() => setTriageTab("immediate")}
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-colors ${
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
                         triageTab === "immediate"
-                          ? "bg-red-600 text-white shadow-sm"
-                          : "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400"
+                          ? "bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-950/40 dark:text-red-400 dark:ring-red-800"
+                          : "text-red-500 hover:bg-red-50/50 dark:text-red-400 dark:hover:bg-red-950/20"
                       }`}
                     >
                       <Flame className="h-2.5 w-2.5" />
@@ -500,8 +500,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                       onClick={() => setTriageTab("today")}
                       className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
                         triageTab === "today"
-                          ? "bg-amber-500 text-white shadow-sm"
-                          : "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400"
+                          ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-800"
+                          : "text-amber-500 hover:bg-amber-50/50 dark:text-amber-400 dark:hover:bg-amber-950/20"
                       }`}
                     >
                       오늘 처리 {todayActions.length}
@@ -513,8 +513,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                       onClick={() => setTriageTab("completed")}
                       className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors ${
                         triageTab === "completed"
-                          ? "bg-slate-600 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                          ? "bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
+                          : "text-slate-400 hover:bg-slate-50 dark:text-slate-500 dark:hover:bg-slate-800/50"
                       }`}
                     >
                       참고 {completedActions.length}
@@ -556,7 +556,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 >
                   <button
                     type="button"
-                    className="w-full text-center text-xs font-bold py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 transition-colors"
+                    className="w-full text-center text-xs font-semibold py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                   >
                     작업함 보기
                   </button>

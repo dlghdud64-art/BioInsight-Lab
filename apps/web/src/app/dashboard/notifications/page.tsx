@@ -286,7 +286,7 @@ function NotificationsContent() {
                   {notification.typeLabel}
                 </span>
                 {isUrgent && !isCompleted && (
-                  <Badge variant="destructive" className="h-4 px-1.5 text-[10px] font-bold">
+                  <Badge className="h-4 px-1.5 text-[10px] font-bold bg-red-50 text-red-600 border-0 dark:bg-red-950/40 dark:text-red-400">
                     긴급
                   </Badge>
                 )}
@@ -295,8 +295,8 @@ function NotificationsContent() {
                     완료
                   </Badge>
                 )}
-                {!isCompleted && (
-                  <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+                {!isCompleted && !isUrgent && (
+                  <Badge className="h-4 px-1.5 text-[10px] bg-amber-50 text-amber-600 border-0 dark:bg-amber-950/30 dark:text-amber-400">
                     미처리
                   </Badge>
                 )}
@@ -348,10 +348,11 @@ function NotificationsContent() {
                       </Button>
                       <Button
                         size="sm"
+                        variant={isUrgent ? "outline" : "outline"}
                         className={`h-7 px-3 text-xs gap-1 ${
                           isUrgent
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                            ? "border-red-200 text-red-700 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30"
+                            : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
                         }`}
                         asChild
                       >
@@ -415,10 +416,10 @@ function NotificationsContent() {
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className={urgentPendingCount > 0 ? "border-red-200 dark:border-red-900/40 bg-red-50/30 dark:bg-red-950/10" : ""}>
+        <Card className={urgentPendingCount > 0 ? "border-red-100 dark:border-red-900/30" : ""}>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-red-100 dark:bg-red-950/40 p-2.5">
-              <Flame className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div className="rounded-lg bg-red-50 dark:bg-red-950/30 p-2.5">
+              <Flame className="h-5 w-5 text-red-500 dark:text-red-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{urgentPendingCount}</p>
@@ -464,7 +465,7 @@ function NotificationsContent() {
           <TabsTrigger value="pending">
             미처리
             {pendingNotifications.length > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">
+              <Badge className="ml-2 h-5 px-1.5 text-xs bg-amber-50 text-amber-700 border-0 dark:bg-amber-950/40 dark:text-amber-400">
                 {pendingNotifications.length}
               </Badge>
             )}
