@@ -635,33 +635,20 @@ function StickySearchBar() {
         </div>
       </form>
 
-      {/* 검색 전: 검색 가능 항목 안내 + 추천 검색 칩 */}
+      {/* 검색 전: 검색 안내 + 예시 검색어 칩 */}
       {!hasSearched && (
-        <div className="max-w-3xl mx-auto mt-2.5 space-y-2 px-1">
-          {/* 검색 가능 항목 + 예시 */}
-          <div className="text-[11px] md:text-xs text-slate-500 leading-relaxed">
-            <span className="text-slate-400">검색 가능: </span>
-            <span>시약명 · CAS No. · 제조사 · 카탈로그 번호</span>
-            <span className="hidden md:inline text-slate-300 mx-1.5">|</span>
-            <br className="md:hidden" />
-            <span className="text-slate-400">예: </span>
-            <span className="font-mono text-slate-600">Tris-HCl</span>
-            <span className="text-slate-300 mx-1">/</span>
-            <span className="font-mono text-slate-600">67-66-3</span>
-            <span className="text-slate-300 mx-1">/</span>
-            <span className="font-mono text-slate-600">Thermo Fisher</span>
-            <span className="text-slate-300 mx-1">/</span>
-            <span className="font-mono text-slate-600">A1234567</span>
-          </div>
-          {/* 추천 검색 칩 */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-slate-400 mr-0.5">추천 검색</span>
+        <div className="max-w-3xl mx-auto mt-3 px-1 space-y-2.5">
+          <p className="text-[11px] text-slate-400">
+            시약명 · CAS No. · 제조사 · 카탈로그 번호로 검색할 수 있습니다.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-medium text-slate-400 shrink-0">예시 검색어</span>
             {["Tris-HCl", "Thermo Fisher", "A1234567", "Antibody", "67-66-3"].map((term) => (
               <button
                 key={term}
                 type="button"
                 onClick={() => handleChipClick(term)}
-                className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600 font-medium hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer"
+                className="text-[11px] px-2.5 py-1 rounded-full border border-slate-200 bg-white text-slate-600 font-medium hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 active:scale-95 transition-all cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
               >
                 {term}
               </button>
