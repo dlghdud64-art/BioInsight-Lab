@@ -7,10 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import {
   AlertTriangle, Thermometer, Snowflake, Ban, PackagePlus,
   MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown,
-  Clock, RotateCcw, Printer, MapPin, Package, ArrowDownUp,
-  PackageX, Truck, ArrowLeftRight,
+  Clock, RotateCcw, Printer, MapPin, Package,
+  PackageX, Truck, ArrowLeftRight, QrCode,
 } from "lucide-react";
-import { InventoryQRCode } from "./InventoryQRCode";
 import { format } from "date-fns";
 import { getStorageConditionLabel } from "@/lib/constants";
 import {
@@ -287,7 +286,7 @@ export function InventoryTable({
 
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-950 shadow-sm">
-      {/* ══ 모바일: 운영 카드 리스트 ══ */}
+      {/* ══ 모바일: 품목 카드 + Lot 아코디언 ══ */}
       <div className="md:hidden">
         {sortedGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -305,121 +304,230 @@ export function InventoryTable({
               const displayStatus = expiryStatus ?? groupStatus;
               const expiryDays = getExpiryDays(group.earliestExpiry);
               const isRisky = displayStatus === "부족" || displayStatus === "폐기" || displayStatus === "임박";
+              const isExpanded = expandedProducts.has(group.productId);
 
               return (
                 <div
                   key={group.productId}
-                  className={`px-3.5 py-3 ${isRisky ? "bg-red-50/30 dark:bg-red-950/10" : ""}`}
-                  onClick={() => onDetailClick?.(group.lots[0])}
+                  className={`${isRisky ? "bg-red-50/30 dark:bg-red-950/10" : ""}`}
                 >
-                  {/* 1행: 품목명 + 상태 */}
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1 flex-1 min-w-0">
-                      {group.productName}
-                    </h3>
-                    <StatusBadge status={displayStatus} />
-                  </div>
+                  {/* ── 품목 카드 ── */}
+                  <div className="px-3.5 py-3">
+                    {/* 1행: 품목명 + 상태 배지 */}
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3
+                        className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1 flex-1 min-w-0 cursor-pointer"
+                        onClick={() => onDetailClick?.(group.lots[0])}
+                      >
+                        {group.productName}
+                      </h3>
+                      <StatusBadge status={displayStatus} />
+                    </div>
 
-                  {/* 2행: 수량 + 유효기간 */}
-                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    <span className="flex items-center gap-1">
-                      <span className={`font-bold text-sm ${
-                        groupStatus === "부족" ? "text-red-600 dark:text-red-400" :
-                        groupStatus === "주의" ? "text-orange-600 dark:text-orange-400" :
-                        "text-slate-900 dark:text-slate-100"
-                      }`}>
-                        {group.totalQuantity}
+                    {/* 2행: 총 수량 · D-day · Lot 개수 */}
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-2.5">
+                      <span className="flex items-center gap-1">
+                        <span className={`font-bold text-sm ${
+                          groupStatus === "부족" ? "text-red-600 dark:text-red-400" :
+                          groupStatus === "주의" ? "text-orange-600 dark:text-orange-400" :
+                          "text-slate-900 dark:text-slate-100"
+                        }`}>
+                          총 {group.totalQuantity}
+                        </span>
+                        <span>{group.unit}</span>
                       </span>
-                      <span>{group.unit}</span>
-                      {group.safetyStock !== null && group.safetyStock > 0 && (
-                        <span className="text-[10px] text-slate-400">/ 안전 {group.safetyStock}</span>
+                      {group.earliestExpiry && (
+                        <>
+                          <span className="text-slate-300 dark:text-slate-600">·</span>
+                          <span className={`flex items-center gap-0.5 ${
+                            isExpired(group.earliestExpiry) ? "text-red-500" :
+                            isExpiringSoon(group.earliestExpiry) ? "text-amber-500" :
+                            "text-slate-400"
+                          }`}>
+                            <Clock className="h-3 w-3 shrink-0" />
+                            {isExpired(group.earliestExpiry) ? "만료" :
+                             expiryDays !== null && expiryDays <= 30 ? `D-${expiryDays}` :
+                             format(new Date(group.earliestExpiry), "MM.dd")}
+                          </span>
+                        </>
                       )}
-                    </span>
-                    {group.lotCount > 1 && (
-                      <span className="text-[10px]">Lot {group.lotCount}개</span>
-                    )}
-                    {group.earliestExpiry && (
-                      <span className={`flex items-center gap-0.5 ${
-                        isExpired(group.earliestExpiry) ? "text-red-500" :
-                        isExpiringSoon(group.earliestExpiry) ? "text-amber-500" :
-                        "text-slate-400"
-                      }`}>
-                        <Clock className="h-3 w-3 shrink-0" />
-                        {isExpired(group.earliestExpiry) ? "만료" :
-                         expiryDays !== null && expiryDays <= 30 ? `D-${expiryDays}` :
-                         format(new Date(group.earliestExpiry), "MM.dd")}
-                      </span>
-                    )}
-                  </div>
+                      <span className="text-slate-300 dark:text-slate-600">·</span>
+                      <span className="text-[11px]">Lot {group.lotCount}개</span>
+                    </div>
 
-                  {/* 3행: 핵심 액션 1개 */}
-                  <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                    {isRisky || groupStatus === "주의" ? (
+                    {/* 3행: 품목 액션 */}
+                    <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                      {onRestock && !isRisky && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950"
+                          onClick={() => onRestock(group.lots[0])}
+                        >
+                          <PackagePlus className="h-3 w-3 shrink-0" />
+                          입고
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
                         className={`h-7 px-2.5 text-[11px] gap-1 ${
-                          groupStatus === "부족" || displayStatus === "폐기"
-                            ? "text-red-600 border-red-200 hover:bg-red-50"
-                            : displayStatus === "임박"
-                            ? "text-amber-600 border-amber-200 hover:bg-amber-50"
-                            : "text-orange-600 border-orange-200 hover:bg-orange-50"
+                          isRisky
+                            ? groupStatus === "부족" || displayStatus === "폐기"
+                              ? "text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
+                              : "text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950"
+                            : "text-slate-600 border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                         }`}
                         onClick={() => onReorder(group.lots[0])}
                       >
                         <RotateCcw className="h-3 w-3 shrink-0" />
                         재발주
                       </Button>
-                    ) : (
-                      <>
-                        {onConsume && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2.5 text-[11px] gap-1 text-slate-600 border-slate-200 hover:bg-slate-50"
-                            onClick={() => onConsume(group.lots[0])}
-                          >
-                            <Truck className="h-3 w-3 shrink-0" />
-                            출고
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    {onRestock && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                        onClick={() => onRestock(group.lots[0])}
+                        className={`h-7 px-2.5 text-[11px] gap-1 ml-auto ${
+                          isExpanded
+                            ? "text-blue-600 border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30"
+                            : "text-slate-500 border-slate-200 dark:border-slate-700"
+                        }`}
+                        onClick={() => toggleExpand(group.productId)}
                       >
-                        <PackagePlus className="h-3 w-3 shrink-0" />
-                        입고
-                      </Button>
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-400 ml-auto">
-                          <MoreVertical className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => onDetailClick?.(group.lots[0])} className="gap-2 text-xs">
-                          <Eye className="h-3.5 w-3.5 text-blue-500" /> 상세 보기
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(group.lots[0])} className="gap-2 text-xs">
-                          <Pencil className="h-3.5 w-3.5 text-slate-500" /> 정보 수정
-                        </DropdownMenuItem>
-                        {onDelete && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onDelete(group.lots[0])} className="gap-2 text-xs text-red-600 focus:text-red-600">
-                              <Trash2 className="h-3.5 w-3.5" /> 삭제
-                            </DropdownMenuItem>
-                          </>
+                        {isExpanded ? (
+                          <ChevronDown className="h-3 w-3 shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 shrink-0" />
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        Lot {group.lotCount}개 보기
+                      </Button>
+                    </div>
                   </div>
+
+                  {/* ── Lot 아코디언 (카드형) ── */}
+                  {isExpanded && (
+                    <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 px-3 py-2 space-y-2">
+                      {group.lots.map((lot) => {
+                        const lotExpDays = getExpiryDays(lot.expiryDate);
+                        const lotSt = getLotStatus(lot);
+                        const lotExpired = isExpired(lot.expiryDate);
+                        const lotExpiringSoon = isExpiringSoon(lot.expiryDate);
+                        const lotUrgent = lotSt === "부족" || lotExpired || lotSt.startsWith("소진 임박");
+                        return (
+                          <div
+                            key={lot.id}
+                            className={`rounded-lg border p-3 ${
+                              lotUrgent
+                                ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20"
+                                : lotExpiringSoon
+                                  ? "border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/20"
+                                  : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/60"
+                            }`}
+                          >
+                            {/* 1행: Lot 번호 + 수량 + 상태 */}
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px]">
+                                  {lot.lotNumber || "Lot 미지정"}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 shrink-0">
+                                  {lot.currentQuantity}<span className="text-slate-400 font-normal ml-0.5">{lot.unit}</span>
+                                </span>
+                              </div>
+                              <StatusBadge status={lotExpired ? "폐기" : lotExpiringSoon ? "임박" : lotSt} />
+                            </div>
+
+                            {/* 2행: 메타 정보 */}
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap mb-2">
+                              <StorageConditionTag cond={lot.storageCondition} />
+                              {lot.location && (
+                                <span className="flex items-center gap-0.5">
+                                  <MapPin className="h-2.5 w-2.5 shrink-0" />
+                                  {lot.location}
+                                </span>
+                              )}
+                              {lot.expiryDate && (
+                                <span className={`${
+                                  lotExpired ? "text-red-500 font-semibold" :
+                                  lotExpiringSoon ? "text-amber-500 font-semibold" :
+                                  "text-slate-400"
+                                }`}>
+                                  {format(new Date(lot.expiryDate), "yyyy.MM.dd")}
+                                  {lotExpDays !== null && lotExpDays <= 30 && (
+                                    <span className="ml-0.5">
+                                      {lotExpDays <= 0 ? "(만료)" : `(D-${lotExpDays})`}
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                              {lot.inUseOrUnopened && (
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 border-slate-200 dark:border-slate-700">
+                                  {lot.inUseOrUnopened}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* 3행: Lot 액션 (출고 중심) */}
+                            <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                              {onConsume && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={`h-7 px-2.5 text-[11px] gap-1 ${
+                                    lotUrgent
+                                      ? "text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
+                                      : "text-slate-600 border-slate-200 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                                  }`}
+                                  onClick={() => onConsume(lot)}
+                                >
+                                  <Truck className="h-3 w-3 shrink-0" />
+                                  출고
+                                </Button>
+                              )}
+                              {onPrintLabel && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2.5 text-[11px] gap-1 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-950"
+                                  onClick={() => onPrintLabel(group.productName, [lot])}
+                                >
+                                  <Printer className="h-3 w-3 shrink-0" />
+                                  라벨
+                                </Button>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-400 ml-auto">
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem onClick={() => onDetailClick?.(lot)} className="gap-2 text-xs">
+                                    <Eye className="h-3.5 w-3.5 text-blue-500" /> 상세 보기
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
+                                    <Pencil className="h-3.5 w-3.5 text-slate-500" /> 정보 수정
+                                  </DropdownMenuItem>
+                                  {onMoveLocation && (
+                                    <DropdownMenuItem onClick={() => onMoveLocation(lot)} className="gap-2 text-xs">
+                                      <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500" /> 위치 이동
+                                    </DropdownMenuItem>
+                                  )}
+                                  {onDelete && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600">
+                                        <Trash2 className="h-3.5 w-3.5" /> 삭제
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -617,7 +725,7 @@ export function InventoryTable({
                               )}
                             </>
                           ) : (
-                            /* ── 정상 → 입고 + 출고/사용 ── */
+                            /* ── 정상 → 입고 + 재발주 (출고는 Lot에서만) ── */
                             <>
                               {onRestock && (
                                 <TooltipProvider>
@@ -637,24 +745,22 @@ export function InventoryTable({
                                   </Tooltip>
                                 </TooltipProvider>
                               )}
-                              {onConsume && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                        onClick={() => onConsume(group.lots[0])}
-                                      >
-                                        <Truck className="h-3 w-3 shrink-0" />
-                                        출고
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>출고 / 사용 처리</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                      onClick={() => onReorder(group.lots[0])}
+                                    >
+                                      <RotateCcw className="h-3 w-3 shrink-0" />
+                                      재발주
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>재발주 요청</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </>
                           )}
                           {/* 더보기 — 보조/관리 기능 */}
@@ -803,109 +909,52 @@ export function InventoryTable({
                                 )}
                               </TableCell>
 
-                              {/* Lot 작업 — 상태 기반 우선순위 */}
+                              {/* Lot 작업 — 출고/라벨/QR은 Lot에서만 */}
                               <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                 <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                                  <InventoryQRCode
-                                    inventoryId={lot.id}
-                                    productName={lot.product.name}
-                                    catalogNumber={lot.product.catalogNumber}
-                                    location={lot.location}
-                                    unit={lot.unit}
-                                    currentQuantity={lot.currentQuantity}
-                                    lotNumber={lot.lotNumber}
-                                    allLots={group.lots.map((l) => ({
-                                      id: l.id,
-                                      lotNumber: l.lotNumber ?? null,
-                                      location: l.location,
-                                      currentQuantity: l.currentQuantity,
-                                      unit: l.unit,
-                                    }))}
-                                  />
-                                  {lotNeedsUrgent ? (
-                                    /* ── 부족/소진임박/만료 → 재발주(긴급) + 입고 ── */
-                                    <>
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className={`h-7 px-2 text-[11px] gap-1 ${
-                                                lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
+                                  {onConsume && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className={`h-7 px-2 text-[11px] gap-1 ${
+                                              lotNeedsUrgent
+                                                ? lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
                                                   ? "text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
                                                   : "text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950/30"
-                                              }`}
-                                              onClick={() => onReorder(lot)}
-                                            >
-                                              <RotateCcw className="h-3 w-3 shrink-0" />
-                                              재발주
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>재발주 요청</TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                      {onRestock && (
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                                onClick={() => onRestock(lot)}
-                                              >
-                                                <PackagePlus className="h-3 w-3 shrink-0" />
-                                                입고
-                                              </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>입고 등록</TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      )}
-                                    </>
-                                  ) : (
-                                    /* ── 정상 → 출고/사용 + 위치 이동 ── */
-                                    <>
-                                      {onConsume && (
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                                onClick={() => onConsume(lot)}
-                                              >
-                                                <Truck className="h-3 w-3 shrink-0" />
-                                                출고
-                                              </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>출고 / 사용 처리</TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      )}
-                                      {onMoveLocation && (
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-[11px] gap-1 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30"
-                                                onClick={() => onMoveLocation(lot)}
-                                              >
-                                                <ArrowLeftRight className="h-3 w-3 shrink-0" />
-                                                이동
-                                              </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>위치 이동</TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      )}
-                                    </>
+                                                : "text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            }`}
+                                            onClick={() => onConsume(lot)}
+                                          >
+                                            <Truck className="h-3 w-3 shrink-0" />
+                                            출고
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>출고 / 사용 처리</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
-                                  {/* 더보기 — 보조/관리 기능 */}
+                                  {onMoveLocation && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 px-2 text-[11px] gap-1 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                                            onClick={() => onMoveLocation(lot)}
+                                          >
+                                            <ArrowLeftRight className="h-3 w-3 shrink-0" />
+                                            이동
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>위치 이동</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                  {/* 더보기 — QR/라벨/상세/수정/폐기 */}
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" size="sm" className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400">
@@ -917,9 +966,15 @@ export function InventoryTable({
                                         <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                                         상세 보기
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
-                                        <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                                        정보 수정
+                                      <DropdownMenuItem
+                                        className="gap-2 text-xs"
+                                        onClick={() => {
+                                          const url = `${window.location.origin}/dashboard/inventory/scan?id=${lot.id}`;
+                                          navigator.clipboard.writeText(url);
+                                        }}
+                                      >
+                                        <QrCode className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                                        QR 링크 복사
                                       </DropdownMenuItem>
                                       {onPrintLabel && (
                                         <DropdownMenuItem onClick={() => onPrintLabel(lot.product.name, [lot])} className="gap-2 text-xs">
@@ -927,14 +982,16 @@ export function InventoryTable({
                                           라벨 인쇄
                                         </DropdownMenuItem>
                                       )}
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={() => onEdit(lot)} className="gap-2 text-xs">
+                                        <Pencil className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                                        정보 수정
+                                      </DropdownMenuItem>
                                       {onDelete && (
-                                        <>
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600 dark:text-red-400">
-                                            <PackageX className="h-3.5 w-3.5 shrink-0" />
-                                            폐기 검토
-                                          </DropdownMenuItem>
-                                        </>
+                                        <DropdownMenuItem onClick={() => onDelete(lot)} className="gap-2 text-xs text-red-600 focus:text-red-600 dark:text-red-400">
+                                          <PackageX className="h-3.5 w-3.5 shrink-0" />
+                                          폐기 검토
+                                        </DropdownMenuItem>
                                       )}
                                     </DropdownMenuContent>
                                   </DropdownMenu>

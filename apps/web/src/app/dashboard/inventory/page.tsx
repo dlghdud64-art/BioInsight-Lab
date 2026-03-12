@@ -89,6 +89,9 @@ function InventoryPageContent() {
     searchParams.get("filter") ?? "all"
   );
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+
+  const activeFilterCount = [locationFilter, statusFilter, categoryFilter].filter((f) => f !== "all").length;
 
   // URL 파라미터 변경 시 필터 동기화
   useEffect(() => {
@@ -156,6 +159,7 @@ function InventoryPageContent() {
   const [labelPrintLots, setLabelPrintLots] = useState<ProductInventory[]>([]);
   const [labelPrintSelected, setLabelPrintSelected] = useState<Set<string>>(new Set());
   const [labelPrintQty, setLabelPrintQty] = useState<Record<string, number>>({});
+  const [labelPrintMode, setLabelPrintMode] = useState<"a4-multi" | "single">("a4-multi");
 
   // ── purchase-receiving mode ──
   type DrawerMode = "view" | "edit" | "purchase-receiving";
@@ -776,13 +780,21 @@ function InventoryPageContent() {
   }
 
   // ── 라벨 인쇄 공통 유틸 ──
-  const labelStyles = `
-    @page { size: 60mm 40mm; margin: 0mm; }
+  const getLabelStyles = (mode: "a4-multi" | "single") => {
+    const isA4 = mode === "a4-multi";
+    return `
+    @page { ${isA4 ? "size: A4; margin: 8mm;" : "size: 60mm 40mm; margin: 0mm;"} }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .label-grid {
+      ${isA4
+        ? "display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; width: 100%;"
+        : ""}
+    }
     .label-container {
-      width: 60mm; height: 40mm; overflow: hidden;
+      width: 60mm; height: ${isA4 ? "38mm" : "40mm"}; overflow: hidden;
       display: flex; flex-direction: row; align-items: center;
-      padding: 3mm 3.5mm; gap: 3mm; page-break-after: always;
+      padding: 3mm 3.5mm; gap: 3mm;
+      ${isA4 ? "page-break-inside: avoid;" : "page-break-after: always;"}
     }
     .qr-col { flex-shrink: 0; }
     .qr-col img { width: 29mm; height: 29mm; display: block; }
@@ -805,7 +817,11 @@ function InventoryPageContent() {
     @media screen {
       html, body { background: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; padding: 24px; font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; }
       .screen-hint { font-size: 13px; color: #64748b; text-align: center; line-height: 1.6; }
-      .label-container { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 8px; }
+      ${isA4
+        ? `.label-grid { max-width: 210mm; margin: 0 auto; padding: 8mm; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+      .label-container { border: 1px dashed #e2e8f0; border-radius: 4px; }`
+        : `.label-container { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 8px; }`
+      }
       .btn-row { display: flex; gap: 10px; margin-top: 12px; }
       .btn-print { padding: 10px 28px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
       .btn-print:hover { background: #1d4ed8; }
@@ -814,8 +830,10 @@ function InventoryPageContent() {
     @media print {
       .screen-hint, .btn-row { display: none !important; }
       html, body { margin: 0 !important; padding: 0 !important; background: transparent !important; }
+      .label-grid { max-width: none; padding: 0; border: none; box-shadow: none; }
       .label-container { background: #fff !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
     }`;
+  };
 
   const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -851,9 +869,10 @@ function InventoryPageContent() {
         return buildLabelHtml({ qrDataUrl: canvas.toDataURL("image/png"), name: inv.product.name, cat: inv.product.catalogNumber, lot: inv.lotNumber, loc: inv.location, qty: inv.currentQuantity, unitStr: inv.unit, invId: inv.id });
       })
     );
-    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 일괄 인쇄</title><style>${labelStyles}</style></head><body>
-      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${items.length}개 품목</strong> (60×40mm)</p>
-      ${labels.join("\n")}
+    const modeDesc = labelPrintMode === "a4-multi" ? "A4 멀티 라벨 (3×7)" : "개별 라벨 (60×40mm)";
+    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 일괄 인쇄</title><style>${getLabelStyles(labelPrintMode)}</style></head><body>
+      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${items.length}개 품목</strong> · ${modeDesc}</p>
+      <div class="label-grid">${labels.join("\n")}</div>
       <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 전체 인쇄</button><button class="btn-close" onclick="window.close()">닫기</button></div>
     </body></html>`);
     printWindow.document.close();
@@ -869,9 +888,9 @@ function InventoryPageContent() {
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: { dark: "#1e293b", light: "#ffffff" } });
     const label = buildLabelHtml({ qrDataUrl: canvas.toDataURL("image/png"), name: inv.product.name, cat: inv.product.catalogNumber, lot: inv.lotNumber, loc: inv.location, qty: inv.currentQuantity, unitStr: inv.unit, invId: inv.id });
-    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 — ${escHtml(inv.product.name)}</title><style>${labelStyles}</style></head><body>
+    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 — ${escHtml(inv.product.name)}</title><style>${getLabelStyles(labelPrintMode)}</style></head><body>
       <p class="screen-hint">📄 인쇄 미리보기 — <strong>${escHtml(inv.product.name)}</strong></p>
-      ${label}
+      <div class="label-grid">${label}</div>
       <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button><button class="btn-close" onclick="window.close()">닫기</button></div>
     </body></html>`);
     printWindow.document.close();
@@ -1043,14 +1062,52 @@ function InventoryPageContent() {
             {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
             <TabsContent value="manage" className="m-0 p-6 space-y-4">
               <div className="flex flex-col gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-3">
-                <InventorySearch
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  isLoading={isLoading}
-                />
-                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 md:pb-0 scrollbar-hide md:flex-wrap md:overflow-visible">
+                {/* 모바일: 검색 + 필터 버튼 */}
+                <div className="md:hidden flex items-center gap-2">
+                  <div className="flex-1">
+                    <InventorySearch
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterSheetOpen(true)}
+                    className="h-9 px-2.5 gap-1.5 text-xs shrink-0 border-slate-200 dark:border-slate-700"
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    필터
+                    {activeFilterCount > 0 && (
+                      <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
+                {/* 모바일: 필터 요약 텍스트 */}
+                {activeFilterCount > 0 && (
+                  <div className="md:hidden text-[11px] text-slate-500 dark:text-slate-400 px-0.5">
+                    {[
+                      locationFilter !== "all" && `위치 1`,
+                      statusFilter !== "all" && `상태 1`,
+                      categoryFilter !== "all" && `카테고리 1`,
+                    ].filter(Boolean).join(" · ")}
+                  </div>
+                )}
+
+                {/* 데스크탑: 검색 + 필터 셀렉트 */}
+                <div className="hidden md:block">
+                  <InventorySearch
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    isLoading={isLoading}
+                  />
+                </div>
+                <div className="hidden md:flex items-center gap-2 flex-wrap">
                   <Select value={locationFilter} onValueChange={setLocationFilter}>
-                    <SelectTrigger className="w-[120px] md:w-[140px]">
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="위치별" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1064,7 +1121,7 @@ function InventoryPageContent() {
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[120px] md:w-[140px]">
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="상태별" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1074,7 +1131,7 @@ function InventoryPageContent() {
                     </SelectContent>
                   </Select>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[130px] md:w-[140px]">
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="카테고리별" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1086,6 +1143,80 @@ function InventoryPageContent() {
                   </Select>
                 </div>
               </div>
+
+              {/* 모바일 필터 바텀시트 */}
+              <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+                <SheetContent side="bottom" className="rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle>필터</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-4 py-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400">위치</label>
+                      <Select value={locationFilter} onValueChange={setLocationFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="위치별" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 위치</SelectItem>
+                          <SelectItem value="none">위치 미지정</SelectItem>
+                          {uniqueLocations.map((loc) => (
+                            <SelectItem key={loc} value={loc}>
+                              {loc}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400">상태</label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="상태별" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 상태</SelectItem>
+                          <SelectItem value="low">부족</SelectItem>
+                          <SelectItem value="normal">정상</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400">카테고리</label>
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="카테고리별" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 카테고리</SelectItem>
+                          <SelectItem value="reagent">시약</SelectItem>
+                          <SelectItem value="equipment">장비</SelectItem>
+                          <SelectItem value="consumable">소모품</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setLocationFilter("all");
+                          setStatusFilter("all");
+                          setCategoryFilter("all");
+                        }}
+                      >
+                        초기화
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        onClick={() => setFilterSheetOpen(false)}
+                      >
+                        적용
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
 
             {isLoading ? (
               <Card>
@@ -2151,6 +2282,26 @@ function InventoryPageContent() {
                 인쇄할 Lot를 선택하고 라벨 수량을 지정하세요.
               </DialogDescription>
             </DialogHeader>
+            {/* 인쇄 모드 선택 */}
+            <div className="flex items-center gap-2 py-2 px-1">
+              <span className="text-xs text-slate-500 shrink-0">인쇄 모드:</span>
+              <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 transition-colors ${labelPrintMode === "a4-multi" ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                  onClick={() => setLabelPrintMode("a4-multi")}
+                >
+                  A4 멀티 라벨 (3×7)
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 transition-colors ${labelPrintMode === "single" ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                  onClick={() => setLabelPrintMode("single")}
+                >
+                  개별 라벨 (60×40mm)
+                </button>
+              </div>
+            </div>
             <div className="space-y-3 pt-1 max-h-[50vh] overflow-y-auto">
               {labelPrintLots.map((lot) => {
                 const isChecked = labelPrintSelected.has(lot.id);
@@ -2245,9 +2396,10 @@ function InventoryPageContent() {
                       })
                     );
                     const totalLabels = labels.length;
-                    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 인쇄 — ${escHtml(labelPrintTitle)}</title><style>${labelStyles}</style></head><body>
-                      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${selectedLots.length}개 Lot · ${totalLabels}장</strong> (60×40mm)</p>
-                      ${labels.join("\n")}
+                    const dlgModeDesc = labelPrintMode === "a4-multi" ? "A4 멀티 라벨 (3×7)" : "개별 라벨 (60×40mm)";
+                    printWindow.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>라벨 인쇄 — ${escHtml(labelPrintTitle)}</title><style>${getLabelStyles(labelPrintMode)}</style></head><body>
+                      <p class="screen-hint">📄 인쇄 미리보기 — <strong>${selectedLots.length}개 Lot · ${totalLabels}장</strong> · ${dlgModeDesc}</p>
+                      <div class="label-grid">${labels.join("\n")}</div>
                       <div class="btn-row"><button class="btn-print" onclick="window.print()">🖨️ 인쇄하기</button><button class="btn-close" onclick="window.close()">닫기</button></div>
                     </body></html>`);
                     printWindow.document.close();

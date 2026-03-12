@@ -748,7 +748,7 @@ export default function PurchasesPage() {
   ], [repeatPurchaseMap, evidenceChecklist, expandedRowId]);
 
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-8 pt-6 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ══ 1. 페이지 헤더 ══ */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
