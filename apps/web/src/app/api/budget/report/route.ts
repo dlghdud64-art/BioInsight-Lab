@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId");
+    const budgetId = searchParams.get("budgetId");
 
     // 1. 스코프 키 결정
     let scopeKey: string;
@@ -49,13 +50,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. 현재 예산 조회
+    // 2. 예산 조회 (budgetId 지정 시 해당 예산, 아니면 최신 예산)
     const now = new Date();
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const activeBudget = await db.budget.findFirst({
-      where: { scopeKey },
-      orderBy: { yearMonth: "desc" },
-    });
+    const activeBudget = budgetId
+      ? await db.budget.findFirst({
+          where: { id: budgetId, scopeKey },
+        })
+      : await db.budget.findFirst({
+          where: { scopeKey },
+          orderBy: { yearMonth: "desc" },
+        });
 
     if (!activeBudget) {
       return NextResponse.json({ error: "등록된 예산이 없습니다." }, { status: 404 });

@@ -215,12 +215,50 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
     return { label: "운영 중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   })();
 
-  const handleExcelDownload = () => {
-    toast({ title: "엑셀 다운로드", description: "집행 내역이 다운로드됩니다. (준비 중)" });
+  const handleExcelDownload = async () => {
+    try {
+      toast({ title: "엑셀 다운로드", description: "보고서를 생성하고 있습니다..." });
+      const res = await fetch(`/api/budget/report?budgetId=${id}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "다운로드 실패");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `budget_report_${id}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "다운로드 완료", description: "엑셀 파일이 다운로드되었습니다." });
+    } catch (err: any) {
+      toast({ title: "다운로드 실패", description: err.message || "알 수 없는 오류", variant: "destructive" });
+    }
   };
 
-  const handleReportGenerate = () => {
-    toast({ title: "리포트 생성", description: "예산 보고서가 생성됩니다. (준비 중)" });
+  const handleReportGenerate = async () => {
+    try {
+      toast({ title: "리포트 생성", description: "예산 보고서를 생성하고 있습니다..." });
+      const res = await fetch(`/api/budget/report?budgetId=${id}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "리포트 생성 실패");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `budget_summary_${id}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "리포트 완료", description: "예산 보고서가 다운로드되었습니다." });
+    } catch (err: any) {
+      toast({ title: "리포트 실패", description: err.message || "알 수 없는 오류", variant: "destructive" });
+    }
   };
 
   const formatAmount = (n: number) => `₩ ${n.toLocaleString("ko-KR")}`;

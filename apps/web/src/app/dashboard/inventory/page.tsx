@@ -2602,9 +2602,25 @@ function InventoryPageContent() {
                         <TeamInventoryCard
                           key={inventory.id}
                           inventory={inventory}
-                          onLocationClick={() => {}}
-                          onQuantityUpdate={() => {}}
-                          onReorder={() => {}}
+                          onLocationClick={(inv) => {
+                            setEditingInventory(inv);
+                            setIsDialogOpen(true);
+                          }}
+                          onQuantityUpdate={(qty) => {
+                            if (inventory.id && inventory.product?.id) {
+                              createOrUpdateMutation.mutate({
+                                id: inventory.id,
+                                productId: inventory.product.id,
+                                currentQuantity: qty,
+                                unit: inventory.unit || "ea",
+                                location: inventory.location,
+                              });
+                            }
+                          }}
+                          onReorder={() => {
+                            setRestockItem(inventory);
+                            setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+                          }}
                         />
                       ))}
                   </div>

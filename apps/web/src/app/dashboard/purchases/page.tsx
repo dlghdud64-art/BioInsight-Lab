@@ -1293,7 +1293,7 @@ export default function PurchasesPage() {
                 </Button>
               </Link>
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors" onClick={() => {}}>
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 font-medium transition-colors">
                   <Store className="h-3.5 w-3.5 text-slate-500" />
                   벤더 비교 분석
                 </Button>
