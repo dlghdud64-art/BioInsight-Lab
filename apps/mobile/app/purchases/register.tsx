@@ -115,9 +115,10 @@ function QuickEntryForm() {
       },
       {
         onSuccess: () => {
-          Alert.alert("완료", "구매 내역이 등록되었습니다.", [
-            { text: "확인", onPress: () => router.back() },
-          ]);
+          router.replace({
+            pathname: "/purchases/complete",
+            params: { count: "1", total: form.amount },
+          });
         },
         onError: () => {
           Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
@@ -424,12 +425,20 @@ export default function PurchaseRegisterScreen() {
       { rows: parsedRows },
       {
         onSuccess: (data) => {
-          const msg = data.errorRows
-            ? `${data.successRows}건 성공, ${data.errorRows}건 실패`
-            : `${data.successRows}건 등록 완료`;
-          Alert.alert("완료", msg, [
-            { text: "확인", onPress: () => router.back() },
-          ]);
+          if (data.errorRows) {
+            Alert.alert("일부 실패", `${data.successRows}건 성공, ${data.errorRows}건 실패`);
+          }
+          const totalAmount = parsedRows.reduce(
+            (sum, r) => sum + (r.amount || (r.unitPrice || 0) * r.qty),
+            0
+          );
+          router.replace({
+            pathname: "/purchases/complete",
+            params: {
+              count: String(data.successRows),
+              total: String(totalAmount),
+            },
+          });
         },
         onError: () => {
           Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");

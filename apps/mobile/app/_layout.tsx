@@ -42,10 +42,6 @@ export default function RootLayout() {
             options={{ headerShown: true, title: "구매 상세", headerBackTitle: "뒤로" }}
           />
           <Stack.Screen
-            name="purchases/review"
-            options={{ headerShown: true, title: "등록 리뷰", headerBackTitle: "뒤로" }}
-          />
-          <Stack.Screen
             name="purchases/complete"
             options={{ headerShown: true, title: "등록 완료", headerBackTitle: "뒤로" }}
           />
