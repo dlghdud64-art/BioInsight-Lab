@@ -160,10 +160,11 @@ export function PhotoAttachment({
         const updated = [...photos, ...newPhotos];
         onChange(updated);
 
-        // 순차 업로드
-        newPhotos.forEach((photo, i) => {
-          uploadPhoto(photo, photos.length + i, updated);
-        });
+        // 순차 업로드 (동시 업로드 시 인덱스 충돌 방지)
+        for (let i = 0; i < newPhotos.length; i++) {
+          uploadPhoto(newPhotos[i], photos.length + i, updated);
+          // 각 업로드는 독립적으로 인덱스 참조하므로 안전
+        }
       }
     } finally {
       setIsPickerActive(false);
@@ -176,9 +177,10 @@ export function PhotoAttachment({
       index: number,
       currentPhotos: AttachedPhoto[]
     ) => {
-      const updated = [...currentPhotos];
-      updated[index] = { ...photo, status: "uploading" };
-      onChange(updated);
+      // 업로드 중 상태 표시
+      const uploading = [...currentPhotos];
+      uploading[index] = { ...photo, status: "uploading" };
+      onChange(uploading);
 
       try {
         const formData = new FormData();
@@ -194,12 +196,12 @@ export function PhotoAttachment({
         });
 
         const uploadedUrl = res.data?.url ?? res.data?.fileUrl ?? photo.uri;
-        updated[index] = { ...photo, status: "success", uploadedUrl };
-        onChange([...updated]);
+        uploading[index] = { ...photo, status: "success", uploadedUrl };
+        onChange([...uploading]);
         logEvent("photo_upload_success", { context });
       } catch (err) {
-        updated[index] = { ...photo, status: "failed" };
-        onChange([...updated]);
+        uploading[index] = { ...photo, status: "failed" };
+        onChange([...uploading]);
         logEvent("photo_upload_failed", {
           context,
           error: String(err),

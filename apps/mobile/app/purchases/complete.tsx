@@ -41,7 +41,12 @@ export default function PurchaseCompleteScreen() {
           unit: unit || "ea",
           currentQuantity: 0,
         });
-        inventoryId = created.id;
+        inventoryId = created?.id;
+      }
+
+      if (!inventoryId) {
+        Alert.alert("오류", "재고 항목을 생성할 수 없습니다. 다시 시도해주세요.");
+        return;
       }
 
       router.replace({

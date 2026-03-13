@@ -105,6 +105,7 @@ export function useUpdateQuoteMemo() {
     },
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["quote", id] });
+      qc.invalidateQueries({ queryKey: ["quotes"] });
     },
   });
 }
@@ -119,6 +120,7 @@ export function useConvertQuoteToOrder() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["quotes"] });
       qc.invalidateQueries({ queryKey: ["quote", id] });
+      qc.invalidateQueries({ queryKey: ["quote-history", id] });
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
@@ -268,11 +270,15 @@ export function useRestockInventory() {
       });
       return res.data;
     },
-    onSuccess: (_, { id }) => {
+    onSuccess: (_, { id, purchaseId }) => {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
       qc.invalidateQueries({ queryKey: ["purchases"] });
+      // 구매→재고 반영 후 구매 상세도 갱신 (followUpStatus 반영)
+      if (purchaseId) {
+        qc.invalidateQueries({ queryKey: ["purchase", purchaseId] });
+      }
     },
   });
 }

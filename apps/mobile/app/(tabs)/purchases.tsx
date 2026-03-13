@@ -40,7 +40,7 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
       {/* 1행: 제품명 + 상태 */}
       <View className="flex-row items-start justify-between mb-2">
         <Text className="text-sm font-semibold text-slate-900 flex-1 mr-2" numberOfLines={2}>
-          {item.productName}
+          {item.productName || "(제품명 없음)"}
         </Text>
         {item.followUpStatus && <StatusBadge status={item.followUpStatus} />}
       </View>
@@ -87,7 +87,7 @@ export default function PurchasesScreen() {
 
   const filtered = (purchases ?? []).filter((p) => {
     const matchSearch = search
-      ? p.productName.toLowerCase().includes(search.toLowerCase())
+      ? (p.productName ?? "").toLowerCase().includes(search.toLowerCase())
       : true;
     if (!matchSearch) return false;
 
