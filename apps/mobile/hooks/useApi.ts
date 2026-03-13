@@ -234,6 +234,7 @@ export function useRestockInventory() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 }
@@ -265,6 +266,7 @@ export function useConsumeInventory() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 }

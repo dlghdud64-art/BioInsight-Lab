@@ -233,7 +233,7 @@ function QuickEntryForm() {
 }
 
 // ─── 붙여넣기 입력 (TSV/CSV) ──────────────────────────────────
-function PasteEntryForm({ onParsed }: { onParsed: (rows: ParsedRow[]) => void }) {
+function PasteEntryForm({ onParsed, disabled }: { onParsed: (rows: ParsedRow[]) => void; disabled?: boolean }) {
   const [text, setText] = useState("");
   const [parseErrors, setParseErrors] = useState<string[]>([]);
 
@@ -313,10 +313,11 @@ function PasteEntryForm({ onParsed }: { onParsed: (rows: ParsedRow[]) => void })
       )}
 
       <Pressable
-        className="bg-blue-600 rounded-xl py-3.5 items-center mt-4"
+        className={`rounded-xl py-3.5 items-center mt-4 ${disabled ? "bg-slate-200" : "bg-blue-600"}`}
         onPress={handleParse}
+        disabled={disabled}
       >
-        <Text className="text-sm font-semibold text-white">
+        <Text className={`text-sm font-semibold ${disabled ? "text-slate-400" : "text-white"}`}>
           데이터 확인 ({text.trim().split("\n").filter(Boolean).length}행)
         </Text>
       </Pressable>
@@ -425,20 +426,28 @@ export default function PurchaseRegisterScreen() {
       { rows: parsedRows },
       {
         onSuccess: (data) => {
-          if (data.errorRows) {
-            Alert.alert("일부 실패", `${data.successRows}건 성공, ${data.errorRows}건 실패`);
-          }
           const totalAmount = parsedRows.reduce(
             (sum, r) => sum + (r.amount || (r.unitPrice || 0) * r.qty),
             0
           );
-          router.replace({
-            pathname: "/purchases/complete",
-            params: {
-              count: String(data.successRows),
-              total: String(totalAmount),
-            },
-          });
+          const navigateToComplete = () => {
+            router.replace({
+              pathname: "/purchases/complete",
+              params: {
+                count: String(data.successRows),
+                total: String(totalAmount),
+              },
+            });
+          };
+          if (data.errorRows) {
+            Alert.alert(
+              "일부 실패",
+              `${data.successRows}건 성공, ${data.errorRows}건 실패`,
+              [{ text: "확인", onPress: navigateToComplete }]
+            );
+          } else {
+            navigateToComplete();
+          }
         },
         onError: () => {
           Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
@@ -486,7 +495,7 @@ export default function PurchaseRegisterScreen() {
 
           {/* 모드별 폼 */}
           {mode === "quick" && <QuickEntryForm />}
-          {mode === "paste" && <PasteEntryForm onParsed={handleParsed} />}
+          {mode === "paste" && <PasteEntryForm onParsed={handleParsed} disabled={batchImport.isPending} />}
         </>
       )}
     </ScrollView>
