@@ -81,6 +81,7 @@ model Organization {
   budgets       Budget[]
   teams         Team[]
   billingInfo   BillingInfo?
+  aiActionItems AiActionItem[]
 
   @@index([name])
   @@index([plan])
@@ -142,6 +143,7 @@ model User {
   teamMembers         TeamMember[]
   purchaseRequests    PurchaseRequest[] @relation("RequestedPurchases") // 요청한 구매 요청
   approvedRequests    PurchaseRequest[] @relation("ApprovedPurchases") // 승인한 구매 요청 (approverId)
+  aiActionItems       AiActionItem[]
 
   @@index([email])
   @@index([role])
@@ -1615,6 +1617,7 @@ enum AuditEntityType {
   ORGANIZATION       // 조직 설정 변경
   SETTINGS           // 시스템 설정 변경
   INSPECTION         // 점검 기록 생성
+  AI_ACTION          // AI 작업 승인·무시·실행
 }
 
 model DataAuditLog {
@@ -1663,4 +1666,69 @@ model BillingInfo {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+}
+
+// ══════════════════════════════════════════════════════════
+// AI Action Pipeline — 운영형 에이전트 (Human-in-the-Loop)
+// ══════════════════════════════════════════════════════════
+
+enum AiActionType {
+  QUOTE_DRAFT            // RFQ 이메일 초안
+  VENDOR_EMAIL_DRAFT     // 벤더별 이메일 초안
+  REORDER_SUGGESTION     // 재발주 제안
+  EXPIRY_ALERT           // 만료 임박 알림
+  FOLLOWUP_DRAFT         // 후속 이메일 초안
+  VENDOR_RESPONSE_PARSED // 벤더 회신 파싱 결과
+  STATUS_CHANGE_SUGGEST  // 상태 변경 제안
+}
+
+enum AiActionStatus {
+  PENDING     // 승인 대기
+  APPROVED    // 승인 완료
+  DISMISSED   // 무시됨
+  EXPIRED     // 자동 만료
+  EXECUTING   // 승인 후 실행 중
+  FAILED      // 실행 실패
+}
+
+enum AiActionPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model AiActionItem {
+  id                String           @id @default(cuid())
+  type              AiActionType
+  status            AiActionStatus   @default(PENDING)
+  priority          AiActionPriority @default(MEDIUM)
+
+  userId            String
+  organizationId    String?
+
+  title             String           // 표시 제목 (예: "Anti-CD3 항체 외 3건 견적 초안")
+  description       String?          @db.Text
+  payload           Json             // 초안 데이터 (이메일 본문, 품목 리스트 등)
+  result            Json?            // 실행 결과 (생성된 quoteId 등)
+
+  relatedEntityType String?          // "QUOTE", "INVENTORY", "VENDOR_REQUEST"
+  relatedEntityId   String?          // 관련 레코드 ID
+
+  aiModel           String?          // 사용된 AI 모델 (예: "gpt-4o")
+  promptTokens      Int?             // 토큰 사용량 추적
+  completionTokens  Int?
+
+  createdAt         DateTime         @default(now())
+  expiresAt         DateTime?        // 자동 만료 시각
+  resolvedAt        DateTime?        // 승인/무시 처리 시각
+  resolvedBy        String?          // 처리한 사용자 ID
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization      Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([organizationId, status])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }

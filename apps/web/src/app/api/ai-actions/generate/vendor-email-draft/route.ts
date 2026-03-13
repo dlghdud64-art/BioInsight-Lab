@@ -1,0 +1,118 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
+import {
+  generateVendorEmailDraft,
+  AiKeyMissingError,
+  type QuoteDraftItem,
+} from "@/lib/ai/quote-draft-generator";
+
+/**
+ * POST /api/ai-actions/generate/vendor-email-draft
+ *
+ * 특정 벤더에 대한 이메일 초안을 AI로 생성하고
+ * AiActionItem(PENDING)으로 저장합니다.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { vendorName, vendorEmail, items, deliveryDate, customMessage, quoteId } = body;
+
+    if (!vendorName) {
+      return NextResponse.json(
+        { error: "vendorName이 필요합니다" },
+        { status: 400 }
+      );
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: "items 배열이 필요합니다" },
+        { status: 400 }
+      );
+    }
+
+    // 사용자 조직 정보 조회
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        name: true,
+        organizationMembers: {
+          take: 1,
+          include: { organization: { select: { id: true, name: true } } },
+        },
+      },
+    });
+
+    const org = user?.organizationMembers?.[0]?.organization;
+
+    // AI 벤더 이메일 초안 생성
+    const draft = await generateVendorEmailDraft({
+      vendorName,
+      vendorEmail,
+      items: items as QuoteDraftItem[],
+      deliveryDate,
+      organizationName: org?.name,
+      requesterName: user?.name || undefined,
+      customMessage,
+    });
+
+    // AiActionItem 생성
+    const actionItem = await db.aiActionItem.create({
+      data: {
+        type: "VENDOR_EMAIL_DRAFT",
+        status: "PENDING",
+        priority: "HIGH",
+        userId: session.user.id,
+        organizationId: org?.id || null,
+        title: `${vendorName} 견적 요청 이메일 초안`,
+        description: `품목 ${items.length}건 · ${vendorEmail || "이메일 미지정"}`,
+        payload: {
+          emailSubject: draft.emailSubject,
+          emailBody: draft.emailBody,
+          vendorName: draft.vendorName,
+          vendorEmail: vendorEmail || null,
+          items,
+          quoteId: quoteId || null,
+        } as unknown as Prisma.JsonObject,
+        relatedEntityType: quoteId ? "QUOTE" : null,
+        relatedEntityId: quoteId || null,
+        aiModel: draft.aiModel,
+        promptTokens: draft.promptTokens,
+        completionTokens: draft.completionTokens,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return NextResponse.json(
+      {
+        actionId: actionItem.id,
+        preview: {
+          title: actionItem.title,
+          emailSubject: draft.emailSubject,
+          emailBody: draft.emailBody,
+          vendorName: draft.vendorName,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof AiKeyMissingError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 503 }
+      );
+    }
+    console.error("Error generating vendor email draft:", error);
+    return NextResponse.json(
+      { error: "Failed to generate vendor email draft" },
+      { status: 500 }
+    );
+  }
+}

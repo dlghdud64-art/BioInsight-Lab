@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
+import { AiActionInbox } from "@/components/dashboard/ai-action-inbox";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -146,6 +147,9 @@ export default function DashboardPage() {
           {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
         </p>
       </div>
+
+      {/* ═══ AI 작업함: 운영형 에이전트 실행 큐 ═══ */}
+      <AiActionInbox />
 
       {/* ═══ 1순위: 오늘의 우선 작업 ═══ */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">

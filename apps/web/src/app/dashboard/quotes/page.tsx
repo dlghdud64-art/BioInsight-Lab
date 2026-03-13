@@ -35,6 +35,8 @@ import {
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
+import { AiActionButton } from "@/components/ai/ai-action-button";
+import { FileText } from "lucide-react";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -303,15 +305,33 @@ function QuotesPageContent() {
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
           <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
-        <PermissionGate permission="quotes.create">
-          <Link href="/compare/quote" className="flex-shrink-0">
-            <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">새 견적 요청</span>
-              <span className="sm:hidden">새 요청</span>
-            </Button>
-          </Link>
-        </PermissionGate>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <AiActionButton
+            label="견적 요청 초안 만들기"
+            icon={FileText}
+            generateEndpoint="/api/ai-actions/generate/quote-draft"
+            generatePayload={{
+              items: quotes?.slice(0, 3).flatMap((q: Quote) =>
+                q.items?.map((item) => ({
+                  productName: item.product?.name || "품목",
+                  quantity: item.quantity || 1,
+                })) || []
+              ) || [],
+            }}
+            variant="outline"
+            size="sm"
+            className="h-9 text-sm hidden sm:flex"
+          />
+          <PermissionGate permission="quotes.create">
+            <Link href="/compare/quote" className="flex-shrink-0">
+              <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">새 견적 요청</span>
+                <span className="sm:hidden">새 요청</span>
+              </Button>
+            </Link>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* ── 운영 요약 스트립 ── */}
