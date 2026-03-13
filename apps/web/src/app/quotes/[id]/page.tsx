@@ -72,8 +72,10 @@ import {
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
 /* ── 유틸리티 ── */
-const isValidUUID = (id: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+/** Quote ID 유효성 검증: cuid (기본) 또는 uuid 모두 허용 */
+const isValidQuoteId = (id: string) =>
+  /^c[a-z0-9]{20,30}$/i.test(id) || // cuid (Prisma default)
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id); // uuid fallback
 
 /** 블록별 에러 로깅 (userId, orgId, status, navigation, refetch 포함) */
 function logBlockError(
@@ -216,7 +218,7 @@ export default function QuoteDetailPage() {
   }>>({});
 
   // ── quoteId 검증 ────────────────────────────────────────────────
-  const isQuoteIdValid = !!quoteId && isValidUUID(quoteId);
+  const isQuoteIdValid = !!quoteId && isValidQuoteId(quoteId);
 
   // ── 쿼리: 메인 견적 (전체 페이지 에러 분기의 근거) ──────────────
   const quoteQuery = useQuery({
@@ -550,9 +552,9 @@ export default function QuoteDetailPage() {
 
   // ── 로딩/에러 ────────────────────────────────────────────────────
 
-  // 1. quoteId 형식 검증 (UUID가 아니면 즉시 not found)
+  // 1. quoteId 형식 검증 (cuid/uuid가 아니면 즉시 not found)
   if (!quoteId || !isQuoteIdValid) {
-    return <NotFoundUI message="유효하지 않은 견적 ID입니다." />;
+    return <NotFoundUI message="견적을 찾을 수 없습니다. 견적 목록에서 다시 시도해 주세요." />;
   }
 
   // 2. 세션 로딩 / 메인 견적 로딩 중
