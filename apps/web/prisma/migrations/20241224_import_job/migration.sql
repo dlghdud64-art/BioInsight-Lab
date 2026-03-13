@@ -1,8 +1,11 @@
 -- Create ImportJobStatus enum
-CREATE TYPE "ImportJobStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'PARTIAL');
+DO $$ BEGIN
+  CREATE TYPE "ImportJobStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'PARTIAL');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
-CREATE TABLE "ImportJob" (
+CREATE TABLE IF NOT EXISTS "ImportJob" (
     "id" TEXT NOT NULL,
     "scopeKey" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -22,13 +25,13 @@ CREATE TABLE "ImportJob" (
 );
 
 -- CreateIndex
-CREATE INDEX "ImportJob_scopeKey_idx" ON "ImportJob"("scopeKey");
+CREATE INDEX IF NOT EXISTS "ImportJob_scopeKey_idx" ON "ImportJob"("scopeKey");
 
 -- CreateIndex
-CREATE INDEX "ImportJob_status_idx" ON "ImportJob"("status");
+CREATE INDEX IF NOT EXISTS "ImportJob_status_idx" ON "ImportJob"("status");
 
 -- CreateIndex
-CREATE INDEX "ImportJob_type_idx" ON "ImportJob"("type");
+CREATE INDEX IF NOT EXISTS "ImportJob_type_idx" ON "ImportJob"("type");
 
 -- CreateIndex
-CREATE INDEX "ImportJob_createdAt_idx" ON "ImportJob"("createdAt");
+CREATE INDEX IF NOT EXISTS "ImportJob_createdAt_idx" ON "ImportJob"("createdAt");

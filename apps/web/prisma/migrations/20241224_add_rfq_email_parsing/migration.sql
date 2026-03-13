@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "InboundEmailStatus" AS ENUM ('MATCHED', 'UNMATCHED', 'FAILED');
+DO $$ BEGIN
+  CREATE TYPE "InboundEmailStatus" AS ENUM ('MATCHED', 'UNMATCHED', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
-CREATE TABLE "QuoteRfqToken" (
+CREATE TABLE IF NOT EXISTS "QuoteRfqToken" (
     "id" TEXT NOT NULL,
     "quoteId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
@@ -15,7 +18,7 @@ CREATE TABLE "QuoteRfqToken" (
 );
 
 -- CreateTable
-CREATE TABLE "InboundEmail" (
+CREATE TABLE IF NOT EXISTS "InboundEmail" (
     "id" TEXT NOT NULL,
     "provider" TEXT NOT NULL DEFAULT 'sendgrid',
     "messageId" TEXT NOT NULL,
@@ -36,7 +39,7 @@ CREATE TABLE "InboundEmail" (
 );
 
 -- CreateTable
-CREATE TABLE "QuoteReply" (
+CREATE TABLE IF NOT EXISTS "QuoteReply" (
     "id" TEXT NOT NULL,
     "quoteId" TEXT NOT NULL,
     "vendorName" TEXT,
@@ -52,7 +55,7 @@ CREATE TABLE "QuoteReply" (
 );
 
 -- CreateTable
-CREATE TABLE "QuoteReplyAttachment" (
+CREATE TABLE IF NOT EXISTS "QuoteReplyAttachment" (
     "id" TEXT NOT NULL,
     "replyId" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
@@ -66,52 +69,64 @@ CREATE TABLE "QuoteReplyAttachment" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "QuoteRfqToken_quoteId_key" ON "QuoteRfqToken"("quoteId");
+CREATE UNIQUE INDEX IF NOT EXISTS "QuoteRfqToken_quoteId_key" ON "QuoteRfqToken"("quoteId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "QuoteRfqToken_token_key" ON "QuoteRfqToken"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "QuoteRfqToken_token_key" ON "QuoteRfqToken"("token");
 
 -- CreateIndex
-CREATE INDEX "QuoteRfqToken_token_idx" ON "QuoteRfqToken"("token");
+CREATE INDEX IF NOT EXISTS "QuoteRfqToken_token_idx" ON "QuoteRfqToken"("token");
 
 -- CreateIndex
-CREATE INDEX "QuoteRfqToken_enabled_idx" ON "QuoteRfqToken"("enabled");
+CREATE INDEX IF NOT EXISTS "QuoteRfqToken_enabled_idx" ON "QuoteRfqToken"("enabled");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InboundEmail_messageId_key" ON "InboundEmail"("messageId");
+CREATE UNIQUE INDEX IF NOT EXISTS "InboundEmail_messageId_key" ON "InboundEmail"("messageId");
 
 -- CreateIndex
-CREATE INDEX "InboundEmail_messageId_idx" ON "InboundEmail"("messageId");
+CREATE INDEX IF NOT EXISTS "InboundEmail_messageId_idx" ON "InboundEmail"("messageId");
 
 -- CreateIndex
-CREATE INDEX "InboundEmail_status_idx" ON "InboundEmail"("status");
+CREATE INDEX IF NOT EXISTS "InboundEmail_status_idx" ON "InboundEmail"("status");
 
 -- CreateIndex
-CREATE INDEX "InboundEmail_matchedQuoteId_idx" ON "InboundEmail"("matchedQuoteId");
+CREATE INDEX IF NOT EXISTS "InboundEmail_matchedQuoteId_idx" ON "InboundEmail"("matchedQuoteId");
 
 -- CreateIndex
-CREATE INDEX "InboundEmail_receivedAt_idx" ON "InboundEmail"("receivedAt");
+CREATE INDEX IF NOT EXISTS "InboundEmail_receivedAt_idx" ON "InboundEmail"("receivedAt");
 
 -- CreateIndex
-CREATE INDEX "QuoteReply_quoteId_idx" ON "QuoteReply"("quoteId");
+CREATE INDEX IF NOT EXISTS "QuoteReply_quoteId_idx" ON "QuoteReply"("quoteId");
 
 -- CreateIndex
-CREATE INDEX "QuoteReply_fromEmail_idx" ON "QuoteReply"("fromEmail");
+CREATE INDEX IF NOT EXISTS "QuoteReply_fromEmail_idx" ON "QuoteReply"("fromEmail");
 
 -- CreateIndex
-CREATE INDEX "QuoteReply_receivedAt_idx" ON "QuoteReply"("receivedAt");
+CREATE INDEX IF NOT EXISTS "QuoteReply_receivedAt_idx" ON "QuoteReply"("receivedAt");
 
 -- CreateIndex
-CREATE INDEX "QuoteReplyAttachment_replyId_idx" ON "QuoteReplyAttachment"("replyId");
+CREATE INDEX IF NOT EXISTS "QuoteReplyAttachment_replyId_idx" ON "QuoteReplyAttachment"("replyId");
 
 -- AddForeignKey
-ALTER TABLE "QuoteRfqToken" ADD CONSTRAINT "QuoteRfqToken_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "QuoteRfqToken" ADD CONSTRAINT "QuoteRfqToken_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "InboundEmail" ADD CONSTRAINT "InboundEmail_matchedQuoteId_fkey" FOREIGN KEY ("matchedQuoteId") REFERENCES "Quote"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "InboundEmail" ADD CONSTRAINT "InboundEmail_matchedQuoteId_fkey" FOREIGN KEY ("matchedQuoteId") REFERENCES "Quote"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "QuoteReply" ADD CONSTRAINT "QuoteReply_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "QuoteReply" ADD CONSTRAINT "QuoteReply_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "QuoteReplyAttachment" ADD CONSTRAINT "QuoteReplyAttachment_replyId_fkey" FOREIGN KEY ("replyId") REFERENCES "QuoteReply"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "QuoteReplyAttachment" ADD CONSTRAINT "QuoteReplyAttachment_replyId_fkey" FOREIGN KEY ("replyId") REFERENCES "QuoteReply"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

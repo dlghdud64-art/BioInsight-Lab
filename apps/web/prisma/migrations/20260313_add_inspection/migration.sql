@@ -1,14 +1,20 @@
 -- CreateEnum
-CREATE TYPE "InspectionResult" AS ENUM ('PASS', 'CAUTION', 'FAIL');
+DO $$ BEGIN
+  CREATE TYPE "InspectionResult" AS ENUM ('PASS', 'CAUTION', 'FAIL');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AlterEnum: AuditEntityType에 INSPECTION 추가
-ALTER TYPE "AuditEntityType" ADD VALUE 'INSPECTION';
+DO $$ BEGIN
+  ALTER TYPE "AuditEntityType" ADD VALUE 'INSPECTION';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AlterTable
-ALTER TABLE "ProductInventory" ADD COLUMN "lastInspectedAt" TIMESTAMP(3);
+ALTER TABLE "ProductInventory" ADD COLUMN IF NOT EXISTS "lastInspectedAt" TIMESTAMP(3);
 
 -- CreateTable
-CREATE TABLE "Inspection" (
+CREATE TABLE IF NOT EXISTS "Inspection" (
     "id" TEXT NOT NULL,
     "inventoryId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -23,16 +29,22 @@ CREATE TABLE "Inspection" (
 );
 
 -- CreateIndex
-CREATE INDEX "Inspection_inventoryId_idx" ON "Inspection"("inventoryId");
+CREATE INDEX IF NOT EXISTS "Inspection_inventoryId_idx" ON "Inspection"("inventoryId");
 
 -- CreateIndex
-CREATE INDEX "Inspection_userId_idx" ON "Inspection"("userId");
+CREATE INDEX IF NOT EXISTS "Inspection_userId_idx" ON "Inspection"("userId");
 
 -- CreateIndex
-CREATE INDEX "Inspection_organizationId_idx" ON "Inspection"("organizationId");
+CREATE INDEX IF NOT EXISTS "Inspection_organizationId_idx" ON "Inspection"("organizationId");
 
 -- AddForeignKey
-ALTER TABLE "Inspection" ADD CONSTRAINT "Inspection_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "ProductInventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Inspection" ADD CONSTRAINT "Inspection_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "ProductInventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Inspection" ADD CONSTRAINT "Inspection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Inspection" ADD CONSTRAINT "Inspection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
