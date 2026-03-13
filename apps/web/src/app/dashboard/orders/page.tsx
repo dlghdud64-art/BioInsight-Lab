@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronRight, Bell } from "lucide-react";
+import { FileText, ChevronRight, Bell, Sparkles } from "lucide-react";
+import { useOrderAiPanel } from "@/hooks/use-order-ai-panel";
+import { OrderAiAssistantPanel } from "@/components/ai/order-ai-assistant-panel";
 
 type OrderStatus = "pending" | "quoted" | "ordered" | "shipping" | "delivered";
 
@@ -91,11 +93,14 @@ const MOCK_ORDERS = [
 
 function OrderCard({
   order,
+  onTrack,
 }: {
   order: (typeof MOCK_ORDERS)[number];
+  onTrack?: () => void;
 }) {
   const config = STATUS_CONFIG[order.status];
   const isQuoted = order.status === "quoted";
+  const showTrackButton = order.status === "ordered" || order.status === "shipping";
 
   return (
     <div
@@ -143,20 +148,33 @@ function OrderCard({
                 : "-")}
           </p>
         </div>
-        <Button
-          variant={order.actionPrimary ? "default" : "outline"}
-          className={
-            order.actionPrimary
-              ? "bg-blue-600 hover:bg-blue-700 shrink-0"
-              : "text-slate-600 border-slate-200 shrink-0"
-          }
-          asChild
-        >
-          <Link href={`/dashboard/orders/${order.id}`}>
-            {order.actionLabel}
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {showTrackButton && onTrack && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 shrink-0"
+              onClick={onTrack}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              주문 추적 확인
+            </Button>
+          )}
+          <Button
+            variant={order.actionPrimary ? "default" : "outline"}
+            className={
+              order.actionPrimary
+                ? "bg-blue-600 hover:bg-blue-700 shrink-0"
+                : "text-slate-600 border-slate-200 shrink-0"
+            }
+            asChild
+          >
+            <Link href={`/dashboard/orders/${order.id}`}>
+              {order.actionLabel}
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -171,80 +189,155 @@ export default function OrderHistoryPage() {
     ["shipping", "delivered"].includes(o.status)
   );
 
+  const aiPanel = useOrderAiPanel();
+
+  // 주문 추적 AI 패널 열기
+  const handleTrackOrder = (order: (typeof MOCK_ORDERS)[number]) => {
+    const statusMap: Record<string, string> = {
+      pending: "ORDERED",
+      quoted: "ORDERED",
+      ordered: "ORDERED",
+      shipping: "SHIPPING",
+      delivered: "DELIVERED",
+    };
+
+    const daysSince = Math.floor(
+      (Date.now() - new Date(order.requestedAt.replace(/\. /g, "-")).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    aiPanel.preparePanel({
+      orderId: order.id,
+      orderNumber: order.id,
+      quoteTitle: order.title,
+      status: statusMap[order.status] || "ORDERED",
+      totalAmount: order.amount || 0,
+      itemCount: 1,
+      vendorName: "Sigma-Aldrich",
+      expectedDelivery: undefined,
+      createdAt: order.requestedAt,
+      daysSinceOrdered: daysSince,
+      items: [
+        {
+          name: order.title.split(" 외")[0],
+          quantity: 1,
+          unitPrice: order.amount || 0,
+          lineTotal: order.amount || 0,
+        },
+      ],
+    });
+  };
+
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
-      <div className="flex flex-col space-y-2 mb-6">
-        <h2 className="text-3xl font-bold tracking-tight">견적 및 구매 내역</h2>
-        <p className="text-muted-foreground">
-          요청하신 견적과 진행 중인 주문을 확인하세요.
-        </p>
+    <>
+      <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
+        <div className="flex flex-col space-y-2 mb-6">
+          <h2 className="text-3xl font-bold tracking-tight">견적 및 구매 내역</h2>
+          <p className="text-muted-foreground">
+            요청하신 견적과 진행 중인 주문을 확인하세요.
+          </p>
+        </div>
+
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-6 bg-slate-100/50 p-1 flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="all">전체</TabsTrigger>
+            <TabsTrigger value="pending">견적 대기</TabsTrigger>
+            <TabsTrigger
+              value="quoted"
+              className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-600 dark:text-slate-300"
+            >
+              <Bell className="mr-2 h-4 w-4 text-slate-500" />
+              견적 도착
+            </TabsTrigger>
+            <TabsTrigger value="ordered">발주 완료</TabsTrigger>
+            <TabsTrigger value="shipping">배송 중</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-4 mt-0">
+            {allOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onTrack={() => handleTrackOrder(order)}
+              />
+            ))}
+          </TabsContent>
+          <TabsContent value="pending" className="space-y-4 mt-0">
+            {pendingOrders.length > 0 ? (
+              pendingOrders.map((order) => (
+                <OrderCard key={order.id} order={order} />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                견적 대기 중인 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="quoted" className="space-y-4 mt-0">
+            {quotedOrders.length > 0 ? (
+              quotedOrders.map((order) => (
+                <OrderCard key={order.id} order={order} />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                도착한 견적이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="ordered" className="space-y-4 mt-0">
+            {orderedOrders.length > 0 ? (
+              orderedOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onTrack={() => handleTrackOrder(order)}
+                />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                발주 완료된 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="shipping" className="space-y-4 mt-0">
+            {shippingOrders.length > 0 ? (
+              shippingOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onTrack={() => handleTrackOrder(order)}
+                />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                배송 중인 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-6 bg-slate-100/50 p-1 flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="all">전체</TabsTrigger>
-          <TabsTrigger value="pending">견적 대기</TabsTrigger>
-          <TabsTrigger
-            value="quoted"
-            className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-600 dark:text-slate-300"
-          >
-            <Bell className="mr-2 h-4 w-4 text-slate-500" />
-            견적 도착
-          </TabsTrigger>
-          <TabsTrigger value="ordered">발주 완료</TabsTrigger>
-          <TabsTrigger value="shipping">배송 중</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-4 mt-0">
-          {allOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-        </TabsContent>
-        <TabsContent value="pending" className="space-y-4 mt-0">
-          {pendingOrders.length > 0 ? (
-            pendingOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))
-          ) : (
-            <p className="text-muted-foreground py-8 text-center">
-              견적 대기 중인 건이 없습니다.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="quoted" className="space-y-4 mt-0">
-          {quotedOrders.length > 0 ? (
-            quotedOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))
-          ) : (
-            <p className="text-muted-foreground py-8 text-center">
-              도착한 견적이 없습니다.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="ordered" className="space-y-4 mt-0">
-          {orderedOrders.length > 0 ? (
-            orderedOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))
-          ) : (
-            <p className="text-muted-foreground py-8 text-center">
-              발주 완료된 건이 없습니다.
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="shipping" className="space-y-4 mt-0">
-          {shippingOrders.length > 0 ? (
-            shippingOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))
-          ) : (
-            <p className="text-muted-foreground py-8 text-center">
-              배송 중인 건이 없습니다.
-            </p>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+      {/* 주문 추적 AI 보조 패널 */}
+      <OrderAiAssistantPanel
+        open={aiPanel.isOpen}
+        onOpenChange={aiPanel.setIsOpen}
+        state={aiPanel.panelState}
+        data={aiPanel.panelData}
+        actionId={aiPanel.actionId}
+        onRegenerateFollowUp={aiPanel.regenerateFollowUp}
+        onApproveFollowUp={async (actionId, payload) => {
+          const res = await fetch(`/api/ai-actions/${actionId}/approve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payload }),
+          });
+          if (res.ok) {
+            aiPanel.setIsOpen(false);
+          }
+        }}
+        isGenerating={aiPanel.isGenerating}
+        error={aiPanel.error}
+      />
+    </>
   );
 }
