@@ -1,16 +1,24 @@
 import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { useCreatePurchase } from "../../hooks/useApi";
 import { DatePicker } from "../../components/DatePicker";
 
 export default function PurchaseRegisterScreen() {
+  const params = useLocalSearchParams<{
+    prefill?: string;
+    productName?: string;
+    vendor?: string;
+    amount?: string;
+    unit?: string;
+  }>();
+
   const [form, setForm] = useState({
-    productName: "",
-    vendor: "",
-    amount: "",
+    productName: params.productName ?? "",
+    vendor: params.vendor ?? "",
+    amount: params.amount ?? "",
     quantity: "",
-    unit: "ea",
+    unit: params.unit ?? "ea",
     category: "",
     notes: "",
   });
@@ -37,6 +45,7 @@ export default function PurchaseRegisterScreen() {
         unit: form.unit || "ea",
         category: form.category.trim() || undefined,
         purchasedAt: purchaseDate.toISOString(),
+        notes: form.notes.trim() || undefined,
       },
       {
         onSuccess: () => {

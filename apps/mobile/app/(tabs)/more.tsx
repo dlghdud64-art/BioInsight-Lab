@@ -3,45 +3,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
-  Shield,
-  Wallet,
-  Building2,
-  User,
   LogOut,
   Info,
-  ChevronRight,
 } from "lucide-react-native";
-
-const menuItems = [
-  {
-    icon: Shield,
-    label: "안전관리",
-    description: "위험물질 관리 · MSDS · 점검 기록",
-    color: "#ef4444",
-    onPress: () => {},
-  },
-  {
-    icon: Wallet,
-    label: "예산 요약",
-    description: "예산 현황 · 소진율 · 리포트",
-    color: "#3b82f6",
-    onPress: () => {},
-  },
-  {
-    icon: Building2,
-    label: "조직 설정",
-    description: "멤버 관리 · 권한 설정",
-    color: "#8b5cf6",
-    onPress: () => {},
-  },
-  {
-    icon: User,
-    label: "프로필",
-    description: "내 정보 · 알림 설정",
-    color: "#64748b",
-    onPress: () => {},
-  },
-];
 
 export default function MoreScreen() {
   const handleLogout = () => {
@@ -67,35 +31,6 @@ export default function MoreScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* 메뉴 리스트 */}
-        <View className="mt-4 mx-4 bg-white rounded-xl border border-slate-200 overflow-hidden">
-          {menuItems.map((item, idx) => (
-            <Pressable
-              key={item.label}
-              className={`flex-row items-center p-4 ${
-                idx < menuItems.length - 1 ? "border-b border-slate-100" : ""
-              }`}
-              onPress={item.onPress}
-            >
-              <View
-                className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                style={{ backgroundColor: `${item.color}15` }}
-              >
-                <item.icon size={20} color={item.color} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-slate-800">
-                  {item.label}
-                </Text>
-                <Text className="text-xs text-slate-500 mt-0.5">
-                  {item.description}
-                </Text>
-              </View>
-              <ChevronRight size={16} color="#cbd5e1" />
-            </Pressable>
-          ))}
-        </View>
-
         {/* 로그아웃 */}
         <Pressable
           className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 flex-row items-center p-4"

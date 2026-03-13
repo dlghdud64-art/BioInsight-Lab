@@ -31,6 +31,14 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="purchases/[id]"
+            options={{
+              headerShown: true,
+              title: "구매 상세",
+              headerBackTitle: "뒤로",
+            }}
+          />
+          <Stack.Screen
             name="inventory/[id]"
             options={{
               headerShown: true,

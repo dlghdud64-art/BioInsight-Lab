@@ -2,21 +2,33 @@ import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
-  Bell,
-  Search,
   ShoppingCart,
   Package,
   FileText,
-  QrCode,
+  ArrowDownToLine,
+  ArrowUpFromLine,
   AlertTriangle,
-  Clock,
   ChevronRight,
+  Calendar,
 } from "lucide-react-native";
-import { useDashboardSummary } from "../../hooks/useApi";
+import { useDashboardSummary, usePurchases } from "../../hooks/useApi";
+
+function formatAmount(n: number) {
+  return `₩${n.toLocaleString("ko-KR")}`;
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export default function HomeScreen() {
   const { data: summary, isLoading, refetch, isRefetching } = useDashboardSummary();
+  const { data: purchases } = usePurchases();
 
+  const recentPurchases = (purchases ?? []).slice(0, 3);
+
+  // 실제 데이터가 있는 작업만 표시
   const tasks = [
     {
       icon: FileText,
@@ -34,37 +46,9 @@ export default function HomeScreen() {
       bgColor: "bg-red-50",
       onPress: () => router.push("/(tabs)/inventory"),
     },
-    {
-      icon: Package,
-      label: "입고 예정",
-      count: 0,
-      color: "#3b82f6",
-      bgColor: "bg-blue-50",
-      onPress: () => router.push("/(tabs)/purchases"),
-    },
-    {
-      icon: Clock,
-      label: "점검 필요",
-      count: 0,
-      color: "#8b5cf6",
-      bgColor: "bg-purple-50",
-      onPress: () => router.push("/(tabs)/more"),
-    },
-  ];
+  ].filter((t) => t.count > 0);
 
   const shortcuts = [
-    {
-      icon: ShoppingCart,
-      label: "구매 등록",
-      color: "#2563eb",
-      onPress: () => router.push("/purchases/register"),
-    },
-    {
-      icon: Package,
-      label: "입고 처리",
-      color: "#059669",
-      onPress: () => router.push("/(tabs)/inventory"),
-    },
     {
       icon: FileText,
       label: "견적 확인",
@@ -72,8 +56,20 @@ export default function HomeScreen() {
       onPress: () => router.push("/(tabs)/quotes"),
     },
     {
-      icon: QrCode,
-      label: "재고 스캔",
+      icon: ShoppingCart,
+      label: "구매 등록",
+      color: "#2563eb",
+      onPress: () => router.push("/purchases/register"),
+    },
+    {
+      icon: ArrowDownToLine,
+      label: "입고 처리",
+      color: "#059669",
+      onPress: () => router.push("/(tabs)/inventory"),
+    },
+    {
+      icon: ArrowUpFromLine,
+      label: "출고 처리",
       color: "#8b5cf6",
       onPress: () => router.push("/(tabs)/inventory"),
     },
@@ -88,37 +84,23 @@ export default function HomeScreen() {
         }
       >
         {/* 헤더 */}
-        <View className="flex-row items-center justify-between px-5 pt-3 pb-4">
-          <View>
-            <Text className="text-xl font-bold text-slate-900">
-              BioInsight Lab
-            </Text>
-            <Text className="text-xs text-slate-500 mt-0.5">
-              검색·견적·구매·재고 운영 플랫폼
-            </Text>
-          </View>
-          <Pressable className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center">
-            <Bell size={20} color="#64748b" />
-          </Pressable>
+        <View className="px-5 pt-3 pb-4">
+          <Text className="text-xl font-bold text-slate-900">
+            BioInsight Lab
+          </Text>
+          <Text className="text-xs text-slate-500 mt-0.5">
+            검색·견적·구매·재고 운영 플랫폼
+          </Text>
         </View>
 
-        {/* 검색바 */}
-        <Pressable
-          className="mx-5 mb-5 flex-row items-center bg-slate-100 rounded-xl px-4 h-11"
-          onPress={() => router.push("/(tabs)/search" as any)}
-        >
-          <Search size={18} color="#94a3b8" />
-          <Text className="ml-2 text-sm text-slate-400">제품 검색...</Text>
-        </Pressable>
-
-        {/* 오늘 처리할 일 */}
-        <View className="px-5 mb-5">
-          <Text className="text-base font-bold text-slate-900 mb-3">
-            오늘 처리할 일
-          </Text>
-          {isLoading ? (
-            <ActivityIndicator color="#2563eb" className="py-8" />
-          ) : (
+        {/* 오늘 처리할 일 — 실제 데이터가 있는 항목만 */}
+        {isLoading ? (
+          <ActivityIndicator color="#2563eb" className="py-8" />
+        ) : tasks.length > 0 ? (
+          <View className="px-5 mb-5">
+            <Text className="text-base font-bold text-slate-900 mb-3">
+              오늘 처리할 일
+            </Text>
             <View className="gap-2">
               {tasks.map((task) => (
                 <Pressable
@@ -133,26 +115,24 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-1.5">
-                    {task.count > 0 && (
-                      <View className="bg-white rounded-full px-2 py-0.5 min-w-[28px] items-center">
-                        <Text
-                          className="text-xs font-bold"
-                          style={{ color: task.color }}
-                        >
-                          {task.count}
-                        </Text>
-                      </View>
-                    )}
+                    <View className="bg-white rounded-full px-2 py-0.5 min-w-[28px] items-center">
+                      <Text
+                        className="text-xs font-bold"
+                        style={{ color: task.color }}
+                      >
+                        {task.count}
+                      </Text>
+                    </View>
                     <ChevronRight size={16} color="#94a3b8" />
                   </View>
                 </Pressable>
               ))}
             </View>
-          )}
-        </View>
+          </View>
+        ) : null}
 
         {/* 바로가기 */}
-        <View className="px-5 mb-8">
+        <View className="px-5 mb-5">
           <Text className="text-base font-bold text-slate-900 mb-3">
             바로가기
           </Text>
@@ -176,6 +156,46 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
+
+        {/* 최근 구매 내역 */}
+        {recentPurchases.length > 0 && (
+          <View className="px-5 mb-8">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-base font-bold text-slate-900">
+                최근 구매 내역
+              </Text>
+              <Pressable onPress={() => router.push("/(tabs)/purchases")}>
+                <Text className="text-xs text-blue-600 font-medium">전체 보기</Text>
+              </Pressable>
+            </View>
+            <View className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+              {recentPurchases.map((p, idx) => (
+                <Pressable
+                  key={p.id}
+                  className={`flex-row items-center justify-between p-3.5 ${
+                    idx < recentPurchases.length - 1 ? "border-b border-slate-100" : ""
+                  }`}
+                  onPress={() => router.push(`/purchases/${p.id}` as any)}
+                >
+                  <View className="flex-1 mr-3">
+                    <Text className="text-sm font-medium text-slate-800" numberOfLines={1}>
+                      {p.productName}
+                    </Text>
+                    <View className="flex-row items-center gap-1 mt-0.5">
+                      <Calendar size={10} color="#94a3b8" />
+                      <Text className="text-xs text-slate-400">
+                        {formatDate(p.purchasedAt)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="text-sm font-bold text-blue-600">
+                    {formatAmount(p.amount)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
