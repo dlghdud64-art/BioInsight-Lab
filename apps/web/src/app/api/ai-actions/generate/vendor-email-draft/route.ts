@@ -7,6 +7,7 @@ import {
   AiKeyMissingError,
   type QuoteDraftItem,
 } from "@/lib/ai/quote-draft-generator";
+import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 
 /**
  * POST /api/ai-actions/generate/vendor-email-draft
@@ -88,6 +89,26 @@ export async function POST(request: NextRequest) {
         completionTokens: draft.completionTokens,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
+    });
+
+    // 감사 로그: 벤더 이메일 초안 생성 기록
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+    await createAuditLog({
+      userId: session.user.id,
+      organizationId: org?.id || null,
+      action: AuditAction.CREATE,
+      entityType: AuditEntityType.AI_ACTION,
+      entityId: actionItem.id,
+      newData: {
+        type: "VENDOR_EMAIL_DRAFT",
+        status: "PENDING",
+        vendorName,
+        itemCount: items.length,
+        aiModel: draft.aiModel,
+        relatedQuoteId: quoteId || null,
+      },
+      ipAddress,
+      userAgent,
     });
 
     return NextResponse.json(

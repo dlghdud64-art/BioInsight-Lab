@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAiActions, useApproveAiAction, useDismissAiAction, type AiActionItem } from "@/hooks/use-ai-actions";
 import { AiDraftPreviewDialog } from "@/components/ai/ai-draft-preview-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
   Mail,
@@ -29,6 +31,10 @@ interface CardConfig {
   cta: string;
   badgeLabel: string;
   badgeClass: string;
+  /** 승인 후 토스트 메시지 */
+  approveToast: string;
+  /** 승인 후 이동 경로 */
+  approveHref?: string;
 }
 
 const CARD_CONFIG: Record<string, CardConfig> = {
@@ -42,6 +48,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     cta: "견적 요청 검토하기",
     badgeLabel: "즉시 확인 필요",
     badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    approveToast: "견적 요청이 생성되었습니다",
+    approveHref: "/dashboard/quotes",
   },
   VENDOR_EMAIL_DRAFT: {
     icon: Mail,
@@ -53,6 +61,7 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     cta: "이메일 초안 확인하기",
     badgeLabel: "즉시 확인 필요",
     badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    approveToast: "이메일 초안이 승인되었습니다",
   },
   FOLLOWUP_DRAFT: {
     icon: Clock,
@@ -64,6 +73,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     cta: "follow-up 초안 확인하기",
     badgeLabel: "회신 대기",
     badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    approveToast: "Follow-up 메일이 승인되었습니다",
+    approveHref: "/dashboard/orders",
   },
   REORDER_SUGGESTION: {
     icon: Package,
@@ -75,6 +86,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     cta: "재발주 우선순위 보기",
     badgeLabel: "재고 위험",
     badgeClass: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    approveToast: "재발주 요청이 승인되었습니다",
+    approveHref: "/dashboard/inventory",
   },
   EXPIRY_ALERT: {
     icon: AlertTriangle,
@@ -86,6 +99,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     cta: "임박 품목 확인하기",
     badgeLabel: "오늘 처리 권장",
     badgeClass: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+    approveToast: "조치가 확인되었습니다",
+    approveHref: "/dashboard/inventory",
   },
 };
 
@@ -99,6 +114,7 @@ const DEFAULT_CONFIG: CardConfig = {
   cta: "확인하기",
   badgeLabel: "오늘 처리 권장",
   badgeClass: "bg-slate-50 text-slate-600 border-slate-200",
+  approveToast: "작업이 완료되었습니다",
 };
 
 // ── 시간 포맷 ──
@@ -117,11 +133,15 @@ function timeAgo(dateStr: string): string {
 // ── 메인 컴포넌트 ──
 
 export function AiActionInbox() {
+  const router = useRouter();
+  const { toast } = useToast();
   const { data, isLoading } = useAiActions({ status: "PENDING", limit: 5 });
   const approveMutation = useApproveAiAction();
   const dismissMutation = useDismissAiAction();
 
   const [previewItem, setPreviewItem] = useState<AiActionItem | null>(null);
+  // 모바일: 확장된 카드 ID
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const items = data?.items || [];
   const pendingCount = data?.pendingCount || 0;
@@ -160,27 +180,71 @@ export function AiActionInbox() {
   }
 
   const handleReview = (item: AiActionItem) => {
-    setPreviewItem(item);
+    // 이메일 초안 타입: PreviewDialog 모달 오픈
+    if (["QUOTE_DRAFT", "VENDOR_EMAIL_DRAFT", "FOLLOWUP_DRAFT"].includes(item.type)) {
+      setPreviewItem(item);
+      return;
+    }
+
+    // 재고/만료 타입: 해당 도메인 페이지로 이동
+    const config = CARD_CONFIG[item.type] || DEFAULT_CONFIG;
+    if (config.approveHref) {
+      const href = item.relatedEntityId
+        ? `${config.approveHref}?aiAction=${item.id}`
+        : config.approveHref;
+      router.push(href);
+    } else {
+      setPreviewItem(item);
+    }
   };
 
   const handleApprove = async (modified: { emailBody: string; emailSubject?: string }) => {
     if (!previewItem) return;
 
     const payload = (previewItem.payload || {}) as Record<string, unknown>;
-    await approveMutation.mutateAsync({
-      id: previewItem.id,
-      payload: {
-        ...payload,
-        emailBody: modified.emailBody,
-        emailSubject: modified.emailSubject || payload.emailSubject,
-      },
-    });
+    const config = CARD_CONFIG[previewItem.type] || DEFAULT_CONFIG;
 
-    setPreviewItem(null);
+    try {
+      const result = await approveMutation.mutateAsync({
+        id: previewItem.id,
+        payload: {
+          ...payload,
+          emailBody: modified.emailBody,
+          emailSubject: modified.emailSubject || payload.emailSubject,
+        },
+      });
+
+      setPreviewItem(null);
+
+      // 결과 기반 피드백 토스트
+      const resultData = result?.result as Record<string, unknown> | undefined;
+      if (resultData?.quoteId) {
+        toast({
+          title: config.approveToast,
+          description: "견적 목록에서 확인할 수 있습니다.",
+        });
+      } else {
+        toast({ title: config.approveToast });
+      }
+    } catch {
+      toast({
+        title: "승인 실패",
+        description: "잠시 후 다시 시도해 주세요.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDismiss = async (id: string) => {
-    await dismissMutation.mutateAsync(id);
+    try {
+      await dismissMutation.mutateAsync(id);
+    } catch {
+      toast({
+        title: "처리 실패",
+        description: "잠시 후 다시 시도해 주세요.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -210,15 +274,22 @@ export function AiActionInbox() {
           {items.map((item) => {
             const config = CARD_CONFIG[item.type] || DEFAULT_CONFIG;
             const IconComp = config.icon;
-            const payload = (item.payload || {}) as Record<string, unknown>;
-            const isDismissing = dismissMutation.isPending;
+            const isItemDismissing = dismissMutation.isPending && dismissMutation.variables === item.id;
 
             return (
               <div
                 key={item.id}
-                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors`}
+                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all duration-200`}
               >
-                <div className="flex items-start gap-3">
+                <div
+                  className="flex items-start gap-3 cursor-pointer md:cursor-default"
+                  onClick={() => {
+                    // 모바일에서만 토글
+                    if (typeof window !== "undefined" && window.innerWidth < 768) {
+                      setExpandedId(expandedId === item.id ? null : item.id);
+                    }
+                  }}
+                >
                   {/* 아이콘 */}
                   <div className={`flex-shrink-0 rounded-lg p-2 ${config.iconBg}`}>
                     <IconComp className={`h-4 w-4 ${config.iconColor}`} />
@@ -234,17 +305,26 @@ export function AiActionInbox() {
                         {config.badgeLabel}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+
+                    {/* 설명: 모바일에서는 확장 시에만 표시 */}
+                    <p className={`text-xs text-slate-500 dark:text-slate-400 line-clamp-2 ${
+                      expandedId !== item.id ? "hidden md:block" : ""
+                    }`}>
                       {item.description || config.description}
                     </p>
 
-                    {/* 액션 영역 */}
-                    <div className="flex items-center gap-2 mt-2">
+                    {/* 액션 영역: 모바일에서는 확장 시에만 표시 */}
+                    <div className={`flex items-center gap-2 mt-2 ${
+                      expandedId !== item.id ? "hidden md:flex" : "flex"
+                    }`}>
                       <Button
                         variant="default"
                         size="sm"
                         className="h-7 text-[11px] px-3 bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => handleReview(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReview(item);
+                        }}
                       >
                         {config.cta}
                         <ChevronRight className="h-3 w-3 ml-1" />
@@ -253,10 +333,13 @@ export function AiActionInbox() {
                         variant="ghost"
                         size="sm"
                         className="h-7 text-[11px] px-2 text-slate-400 hover:text-slate-600"
-                        onClick={() => handleDismiss(item.id)}
-                        disabled={isDismissing}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDismiss(item.id);
+                        }}
+                        disabled={isItemDismissing}
                       >
-                        {isDismissing ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-0.5" />}
+                        {isItemDismissing ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-0.5" />}
                         무시
                       </Button>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">

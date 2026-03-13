@@ -21,7 +21,7 @@ export interface AiActionItem {
   resolvedAt: string | null;
 }
 
-interface AiActionsResponse {
+export interface AiActionsResponse {
   items: AiActionItem[];
   total: number;
   pendingCount: number;
@@ -56,7 +56,7 @@ interface GenerateVendorEmailInput {
 
 // ── Query Keys ──
 
-const AI_ACTION_KEYS = {
+export const AI_ACTION_KEYS = {
   all: ["ai-actions"] as const,
   list: (filters?: Record<string, string>) => ["ai-actions", "list", filters] as const,
   detail: (id: string) => ["ai-actions", "detail", id] as const,
@@ -102,7 +102,10 @@ export function useAiActionDetail(id: string) {
 }
 
 /**
- * AI 작업 승인
+ * AI 작업 승인 — 낙관적 업데이트 포함
+ *
+ * 승인 클릭 즉시 카드를 목록에서 제거하고,
+ * 서버 실패 시 롤백합니다.
  */
 export function useApproveAiAction() {
   const queryClient = useQueryClient();
@@ -120,7 +123,39 @@ export function useApproveAiAction() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      // 진행 중인 refetch 취소
+      await queryClient.cancelQueries({ queryKey: AI_ACTION_KEYS.all });
+
+      // 모든 list 캐시에서 낙관적 제거
+      const queryCache = queryClient.getQueryCache();
+      const listQueries = queryCache.findAll({ queryKey: ["ai-actions", "list"] });
+      const snapshots: Array<{ key: readonly unknown[]; data: unknown }> = [];
+
+      for (const query of listQueries) {
+        const prev = query.state.data as AiActionsResponse | undefined;
+        if (prev) {
+          snapshots.push({ key: query.queryKey, data: prev });
+          queryClient.setQueryData(query.queryKey, {
+            ...prev,
+            items: prev.items.filter((item: AiActionItem) => item.id !== id),
+            total: Math.max(0, prev.total - 1),
+            pendingCount: Math.max(0, prev.pendingCount - 1),
+          });
+        }
+      }
+
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      // 롤백
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: AI_ACTION_KEYS.all });
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -129,7 +164,10 @@ export function useApproveAiAction() {
 }
 
 /**
- * AI 작업 무시
+ * AI 작업 무시 — 낙관적 업데이트 포함
+ *
+ * 무시 클릭 즉시 카드를 목록에서 제거하고,
+ * 서버 실패 시 롤백합니다.
  */
 export function useDismissAiAction() {
   const queryClient = useQueryClient();
@@ -144,7 +182,39 @@ export function useDismissAiAction() {
       if (!res.ok) throw new Error("Failed to dismiss");
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (id) => {
+      // 진행 중인 refetch 취소
+      await queryClient.cancelQueries({ queryKey: AI_ACTION_KEYS.all });
+
+      // 모든 list 캐시에서 낙관적 제거
+      const queryCache = queryClient.getQueryCache();
+      const listQueries = queryCache.findAll({ queryKey: ["ai-actions", "list"] });
+      const snapshots: Array<{ key: readonly unknown[]; data: unknown }> = [];
+
+      for (const query of listQueries) {
+        const prev = query.state.data as AiActionsResponse | undefined;
+        if (prev) {
+          snapshots.push({ key: query.queryKey, data: prev });
+          queryClient.setQueryData(query.queryKey, {
+            ...prev,
+            items: prev.items.filter((item: AiActionItem) => item.id !== id),
+            total: Math.max(0, prev.total - 1),
+            pendingCount: Math.max(0, prev.pendingCount - 1),
+          });
+        }
+      }
+
+      return { snapshots };
+    },
+    onError: (_err, _id, context) => {
+      // 롤백
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: AI_ACTION_KEYS.all });
     },
   });
