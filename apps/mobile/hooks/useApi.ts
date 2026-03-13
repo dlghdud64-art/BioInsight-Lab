@@ -361,16 +361,19 @@ export function useCreateInspection() {
       result,
       checklist,
       notes,
+      photoUrls,
     }: {
       id: string;
       result: InspectionResult;
       checklist: InspectionChecklist;
       notes?: string;
+      photoUrls?: string[];
     }) => {
       const res = await apiClient.post(`/api/inventory/${id}/inspection`, {
         result,
         checklist,
         notes,
+        photoUrls,
       });
       return res.data;
     },

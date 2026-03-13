@@ -5,6 +5,7 @@ import { CheckCircle, Printer, MapPin, ArrowDownToLine, Package, ArrowLeft } fro
 import { useRestockInventory, useInventoryDetail } from "../../hooks/useApi";
 import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
+import { PhotoAttachment, type AttachedPhoto } from "../../components/PhotoAttachment";
 
 type Step = "form" | "done";
 
@@ -24,6 +25,7 @@ export default function LotReceiveScreen() {
   const [location, setLocation] = useState("");
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
 
   const productName = inventory?.productName || inventory?.product?.name || "";
 
@@ -190,13 +192,23 @@ export default function LotReceiveScreen() {
         />
       </View>
 
-      <View className="mb-6">
+      <View className="mb-4">
         <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
         <TextInput
           className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
           placeholder="추가 메모 (선택)"
           value={notes}
           onChangeText={setNotes}
+        />
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-sm font-medium text-slate-700 mb-1.5">사진 첨부</Text>
+        <PhotoAttachment
+          photos={photos}
+          onChange={setPhotos}
+          context="lot_receive"
+          maxCount={3}
         />
       </View>
 

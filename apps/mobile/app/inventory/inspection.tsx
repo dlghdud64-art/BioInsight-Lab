@@ -18,6 +18,7 @@ import {
 } from "lucide-react-native";
 import { useCreateInspection } from "../../hooks/useApi";
 import { getErrorMessage } from "../../lib/errorMessages";
+import { PhotoAttachment, type AttachedPhoto } from "../../components/PhotoAttachment";
 
 type InspectionResult = "PASS" | "CAUTION" | "FAIL";
 
@@ -81,14 +82,25 @@ export default function InspectionScreen() {
   });
   const [result, setResult] = useState<InspectionResult>("PASS");
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
 
   const toggleCheck = (key: keyof Checklist) => {
     setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleSubmit = () => {
+    const photoUrls = photos
+      .filter((p) => p.status === "success" && p.uploadedUrl)
+      .map((p) => p.uploadedUrl!);
+
     createInspection.mutate(
-      { id, result, checklist, notes: notes.trim() || undefined },
+      {
+        id,
+        result,
+        checklist,
+        notes: notes.trim() || undefined,
+        photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
+      },
       {
         onSuccess: () => {
           Alert.alert("완료", "점검 기록이 저장되었습니다.", [
@@ -175,6 +187,19 @@ export default function InspectionScreen() {
               );
             })}
           </View>
+        </View>
+
+        {/* 사진 첨부 */}
+        <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
+          <Text className="text-sm font-bold text-slate-900 mb-3">
+            사진 첨부
+          </Text>
+          <PhotoAttachment
+            photos={photos}
+            onChange={setPhotos}
+            context="inspection"
+            maxCount={5}
+          />
         </View>
 
         {/* 비고 */}

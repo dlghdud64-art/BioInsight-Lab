@@ -5,6 +5,7 @@ import { useCreatePurchase, useBatchImportPurchases } from "../../hooks/useApi";
 import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
 import { Edit3, ClipboardList, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react-native";
+import { PhotoAttachment, type AttachedPhoto } from "../../components/PhotoAttachment";
 
 // ─── 타입 ─────────────────────────────────────────────────────
 interface ParsedRow {
@@ -91,6 +92,7 @@ function QuickEntryForm() {
     notes: "",
   });
   const [purchaseDate, setPurchaseDate] = useState(new Date());
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
   const createPurchase = useCreatePurchase();
 
   const handleSave = () => {
@@ -213,7 +215,7 @@ function QuickEntryForm() {
         <DatePicker label="구매일" value={purchaseDate} onChange={setPurchaseDate} />
       </View>
 
-      <View className="mb-6">
+      <View className="mb-4">
         <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
         <TextInput
           className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
@@ -223,6 +225,18 @@ function QuickEntryForm() {
           textAlignVertical="top"
           value={form.notes}
           onChangeText={(v) => update("notes", v)}
+        />
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-sm font-medium text-slate-700 mb-1.5">
+          사진 첨부
+        </Text>
+        <PhotoAttachment
+          photos={photos}
+          onChange={setPhotos}
+          context="purchase_register"
+          maxCount={3}
         />
       </View>
 
