@@ -1,13 +1,20 @@
-import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Plus, Calendar, Store } from "lucide-react-native";
+import { Plus, Calendar, Store, ChevronRight } from "lucide-react-native";
 import { usePurchases } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
 import { useState } from "react";
 import type { PurchaseRecord } from "../../types";
+
+const PERIOD_FILTERS = [
+  { key: "ALL", label: "전체" },
+  { key: "1W", label: "1주", days: 7 },
+  { key: "1M", label: "1달", days: 30 },
+  { key: "3M", label: "3달", days: 90 },
+] as const;
 
 function formatAmount(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
@@ -20,7 +27,10 @@ function formatDate(iso: string) {
 
 function PurchaseCard({ item }: { item: PurchaseRecord }) {
   return (
-    <View className="mx-4 mb-3 bg-white border border-slate-200 rounded-xl p-4">
+    <Pressable
+      className="mx-4 mb-3 bg-white border border-slate-200 rounded-xl p-4"
+      onPress={() => router.push(`/purchases/${item.id}` as any)}
+    >
       {/* 1행: 제품명 + 상태 */}
       <View className="flex-row items-start justify-between mb-2">
         <Text className="text-sm font-semibold text-slate-900 flex-1 mr-2" numberOfLines={2}>
@@ -45,28 +55,40 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
         </View>
       </View>
 
-      {/* 3행: 금액 + 수량 */}
+      {/* 3행: 금액 + 수량 + chevron */}
       <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-slate-100">
         <Text className="text-base font-bold text-blue-600">
           {formatAmount(item.amount)}
         </Text>
-        {item.quantity && (
-          <Text className="text-xs text-slate-500">
-            {item.quantity} {item.unit || "ea"}
-          </Text>
-        )}
+        <View className="flex-row items-center gap-2">
+          {item.quantity && (
+            <Text className="text-xs text-slate-500">
+              {item.quantity} {item.unit || "ea"}
+            </Text>
+          )}
+          <ChevronRight size={14} color="#94a3b8" />
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function PurchasesScreen() {
   const { data: purchases, isLoading, refetch, isRefetching } = usePurchases();
   const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState("ALL");
 
-  const filtered = (purchases ?? []).filter((p) =>
-    search ? p.productName.toLowerCase().includes(search.toLowerCase()) : true
-  );
+  const filtered = (purchases ?? []).filter((p) => {
+    const matchSearch = search
+      ? p.productName.toLowerCase().includes(search.toLowerCase())
+      : true;
+    if (!matchSearch) return false;
+    if (period === "ALL") return true;
+    const filter = PERIOD_FILTERS.find((f) => f.key === period);
+    if (!filter || !("days" in filter)) return true;
+    const cutoff = Date.now() - filter.days * 24 * 60 * 60 * 1000;
+    return new Date(p.purchasedAt).getTime() >= cutoff;
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -90,6 +112,34 @@ export default function PurchasesScreen() {
           placeholder="제품명 검색..."
         />
       </View>
+
+      {/* 기간 필터 칩 */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+        className="bg-white border-b border-slate-100"
+      >
+        {PERIOD_FILTERS.map((f) => (
+          <Pressable
+            key={f.key}
+            className={`mr-2 px-3 py-1.5 rounded-full border ${
+              period === f.key
+                ? "bg-blue-600 border-blue-600"
+                : "bg-white border-slate-200"
+            }`}
+            onPress={() => setPeriod(f.key)}
+          >
+            <Text
+              className={`text-xs font-medium ${
+                period === f.key ? "text-white" : "text-slate-600"
+              }`}
+            >
+              {f.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {/* 리스트 */}
       {isLoading ? (

@@ -79,6 +79,35 @@ export function useUpdateQuoteStatus() {
   });
 }
 
+export function useUpdateQuoteMemo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, description }: { id: string; description: string }) => {
+      const res = await apiClient.patch(`/api/quotes/${id}`, { description });
+      return res.data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["quote", id] });
+    },
+  });
+}
+
+export function useConvertQuoteToOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await apiClient.patch(`/api/quotes/${id}`, { status: "PURCHASED" });
+      return res.data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["quote", id] });
+      qc.invalidateQueries({ queryKey: ["purchases"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
 // ─── 구매 ────────────────────────────────────────────────────────────
 
 export function usePurchases() {
@@ -88,6 +117,17 @@ export function usePurchases() {
       const res = await apiClient.get("/api/purchases");
       return res.data?.records ?? res.data ?? [];
     },
+  });
+}
+
+export function usePurchaseDetail(id: string) {
+  return useQuery<PurchaseRecord>({
+    queryKey: ["purchase", id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/purchases/${id}`);
+      return res.data?.record ?? res.data;
+    },
+    enabled: !!id,
   });
 }
 
@@ -128,6 +168,20 @@ export function useInventoryDetail(id: string) {
   });
 }
 
+export function useUpdateInventoryLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, location }: { id: string; location: string }) => {
+      const res = await apiClient.patch(`/api/inventory/${id}`, { location });
+      return res.data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["inventories"] });
+      qc.invalidateQueries({ queryKey: ["inventory", id] });
+    },
+  });
+}
+
 export function useRestockInventory() {
   const qc = useQueryClient();
   return useMutation({
@@ -136,16 +190,19 @@ export function useRestockInventory() {
       quantity,
       lotNumber,
       expiryDate,
+      notes,
     }: {
       id: string;
       quantity: number;
       lotNumber?: string;
       expiryDate?: string;
+      notes?: string;
     }) => {
       const res = await apiClient.post(`/api/inventory/${id}/restock`, {
         quantity,
         lotNumber,
         expiryDate,
+        notes,
       });
       return res.data;
     },

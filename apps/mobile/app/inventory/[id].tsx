@@ -16,10 +16,20 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Tag,
+  Printer,
+  Navigation,
 } from "lucide-react-native";
-import { useInventoryDetail, useRestockInventory, useConsumeInventory } from "../../hooks/useApi";
+import {
+  useInventoryDetail,
+  useRestockInventory,
+  useConsumeInventory,
+  useUpdateInventoryLocation,
+} from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
+import { DatePicker } from "../../components/DatePicker";
 import { useState } from "react";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import type { InventoryLot } from "../../types";
 
 function formatDate(iso?: string) {
@@ -32,10 +42,14 @@ function LotCard({
   lot,
   onRestock,
   onConsume,
+  onLocation,
+  onLabel,
 }: {
   lot: InventoryLot;
   onRestock: (lot: InventoryLot) => void;
   onConsume: (lot: InventoryLot) => void;
+  onLocation: (lot: InventoryLot) => void;
+  onLabel: (lot: InventoryLot) => void;
 }) {
   const isExpired = lot.expiryDate && new Date(lot.expiryDate) < new Date();
   const isExpiringSoon =
@@ -98,66 +112,193 @@ function LotCard({
         )}
       </View>
 
-      {/* 3행: 액션 버튼 */}
+      {/* 3행: 액션 버튼 4개 */}
       <View className="flex-row gap-2">
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg py-2"
           onPress={() => onRestock(lot)}
         >
-          <ArrowDownToLine size={14} color="#059669" />
+          <ArrowDownToLine size={13} color="#059669" />
           <Text className="text-xs font-semibold text-emerald-700">입고</Text>
         </Pressable>
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-blue-50 border border-blue-200 rounded-lg py-2"
           onPress={() => onConsume(lot)}
         >
-          <ArrowUpFromLine size={14} color="#2563eb" />
+          <ArrowUpFromLine size={13} color="#2563eb" />
           <Text className="text-xs font-semibold text-blue-700">출고</Text>
+        </Pressable>
+        <Pressable
+          className="flex-1 flex-row items-center justify-center gap-1 bg-slate-50 border border-slate-200 rounded-lg py-2"
+          onPress={() => onLocation(lot)}
+        >
+          <Navigation size={13} color="#64748b" />
+          <Text className="text-xs font-semibold text-slate-600">위치</Text>
+        </Pressable>
+        <Pressable
+          className="flex-1 flex-row items-center justify-center gap-1 bg-purple-50 border border-purple-200 rounded-lg py-2"
+          onPress={() => onLabel(lot)}
+        >
+          <Printer size={13} color="#7c3aed" />
+          <Text className="text-xs font-semibold text-purple-700">라벨</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-type ActionMode = "restock" | "consume" | null;
+type ModalMode = "restock" | "consume" | "location" | null;
 
 export default function InventoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: inventory, isLoading } = useInventoryDetail(id);
   const restockMutation = useRestockInventory();
   const consumeMutation = useConsumeInventory();
+  const locationMutation = useUpdateInventoryLocation();
 
-  const [actionMode, setActionMode] = useState<ActionMode>(null);
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [actionLot, setActionLot] = useState<InventoryLot | null>(null);
-  const [qty, setQty] = useState("");
 
-  const openAction = (mode: ActionMode, lot: InventoryLot) => {
-    setActionMode(mode);
-    setActionLot(lot);
+  // Restock fields
+  const [qty, setQty] = useState("");
+  const [lotNumber, setLotNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
+  const [notes, setNotes] = useState("");
+
+  // Location field
+  const [newLocation, setNewLocation] = useState("");
+
+  const resetFields = () => {
     setQty("");
+    setLotNumber("");
+    setExpiryDate(null);
+    setNotes("");
+    setNewLocation("");
   };
 
-  const handleAction = () => {
+  const openRestock = (lot: InventoryLot) => {
+    resetFields();
+    setLotNumber(lot.lotNumber || "");
+    setActionLot(lot);
+    setModalMode("restock");
+  };
+
+  const openConsume = (lot: InventoryLot) => {
+    resetFields();
+    setActionLot(lot);
+    setModalMode("consume");
+  };
+
+  const openLocation = (lot: InventoryLot) => {
+    resetFields();
+    setNewLocation(lot.location || "");
+    setActionLot(lot);
+    setModalMode("location");
+  };
+
+  const handleRestock = () => {
     const quantity = parseInt(qty, 10);
     if (isNaN(quantity) || quantity <= 0) {
       Alert.alert("오류", "올바른 수량을 입력하세요.");
       return;
     }
-
-    const mutation = actionMode === "restock" ? restockMutation : consumeMutation;
-    mutation.mutate(
-      { id, quantity },
+    restockMutation.mutate(
+      {
+        id,
+        quantity,
+        lotNumber: lotNumber || undefined,
+        expiryDate: expiryDate ? expiryDate.toISOString() : undefined,
+        notes: notes || undefined,
+      },
       {
         onSuccess: () => {
-          Alert.alert("완료", actionMode === "restock" ? "입고 처리되었습니다." : "출고 처리되었습니다.");
-          setActionMode(null);
-          setActionLot(null);
+          Alert.alert("완료", "입고 처리되었습니다.");
+          setModalMode(null);
         },
-        onError: () => {
-          Alert.alert("오류", "처리에 실패했습니다.");
-        },
+        onError: () => Alert.alert("오류", "입고 처리에 실패했습니다."),
       }
     );
+  };
+
+  const handleConsume = () => {
+    const quantity = parseInt(qty, 10);
+    if (isNaN(quantity) || quantity <= 0) {
+      Alert.alert("오류", "올바른 수량을 입력하세요.");
+      return;
+    }
+    consumeMutation.mutate(
+      { id, quantity, notes: notes || undefined },
+      {
+        onSuccess: () => {
+          Alert.alert("완료", "출고 처리되었습니다.");
+          setModalMode(null);
+        },
+        onError: () => Alert.alert("오류", "출고 처리에 실패했습니다."),
+      }
+    );
+  };
+
+  const handleLocationSave = () => {
+    if (!newLocation.trim()) {
+      Alert.alert("오류", "위치를 입력하세요.");
+      return;
+    }
+    locationMutation.mutate(
+      { id, location: newLocation.trim() },
+      {
+        onSuccess: () => {
+          Alert.alert("완료", "위치가 변경되었습니다.");
+          setModalMode(null);
+        },
+        onError: () => Alert.alert("오류", "위치 변경에 실패했습니다."),
+      }
+    );
+  };
+
+  const handlePrintLabel = async (lot: InventoryLot) => {
+    const productName = inventory?.productName || inventory?.product?.name || "";
+    const brand = inventory?.brand || inventory?.product?.brand || "";
+    const html = `
+      <html>
+        <head>
+          <style>
+            body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; }
+            .label { border: 2px solid #333; border-radius: 8px; padding: 16px; }
+            .title { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+            .brand { font-size: 12px; color: #666; margin-bottom: 12px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+            .key { color: #666; }
+            .val { font-weight: 600; }
+            .lot-big { font-size: 22px; font-weight: bold; text-align: center; margin: 12px 0; letter-spacing: 2px; }
+            .divider { border-top: 1px dashed #ccc; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="label">
+            <div class="title">${productName}</div>
+            <div class="brand">${brand}</div>
+            <div class="divider"></div>
+            <div class="lot-big">${lot.lotNumber || "N/A"}</div>
+            <div class="divider"></div>
+            <div class="row"><span class="key">수량</span><span class="val">${lot.quantity} ${lot.unit}</span></div>
+            <div class="row"><span class="key">유효기한</span><span class="val">${formatDate(lot.expiryDate)}</span></div>
+            <div class="row"><span class="key">위치</span><span class="val">${lot.location || "-"}</span></div>
+            <div class="row"><span class="key">보관조건</span><span class="val">${lot.storageCondition || "-"}</span></div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    try {
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf" });
+      } else {
+        Alert.alert("완료", "라벨이 PDF로 생성되었습니다.");
+      }
+    } catch {
+      Alert.alert("오류", "라벨 생성에 실패했습니다.");
+    }
   };
 
   if (isLoading || !inventory) {
@@ -224,36 +365,28 @@ export default function InventoryDetailScreen() {
               <LotCard
                 key={lot.id || idx}
                 lot={lot}
-                onRestock={(l) => openAction("restock", l)}
-                onConsume={(l) => openAction("consume", l)}
+                onRestock={openRestock}
+                onConsume={openConsume}
+                onLocation={openLocation}
+                onLabel={handlePrintLabel}
               />
             ))
           )}
         </View>
       </ScrollView>
 
-      {/* 입고/출고 모달 */}
-      <Modal visible={actionMode !== null} transparent animationType="slide">
-        <Pressable
-          className="flex-1 bg-black/40 justify-end"
-          onPress={() => setActionMode(null)}
-        >
-          <Pressable
-            className="bg-white rounded-t-2xl px-5 pt-5 pb-10"
-            onPress={() => {}}
-          >
-            <Text className="text-base font-bold text-slate-900 mb-1">
-              {actionMode === "restock" ? "입고 처리" : "출고 처리"}
-            </Text>
+      {/* 입고 모달 */}
+      <Modal visible={modalMode === "restock"} transparent animationType="slide">
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setModalMode(null)}>
+          <Pressable className="bg-white rounded-t-2xl px-5 pt-5 pb-10" onPress={() => {}}>
+            <Text className="text-base font-bold text-slate-900 mb-1">입고 처리</Text>
             <Text className="text-xs text-slate-500 mb-4">
-              {actionLot?.lotNumber || "Lot 미지정"} · 현재 수량: {actionLot?.quantity ?? 0} {actionLot?.unit}
+              {actionLot?.lotNumber || "Lot 미지정"} · 현재 {actionLot?.quantity ?? 0} {actionLot?.unit}
             </Text>
 
-            <Text className="text-sm font-medium text-slate-700 mb-1.5">
-              {actionMode === "restock" ? "입고 수량" : "출고 수량"}
-            </Text>
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">입고 수량 *</Text>
             <TextInput
-              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-4"
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-3"
               placeholder="수량 입력"
               keyboardType="numeric"
               value={qty}
@@ -261,26 +394,129 @@ export default function InventoryDetailScreen() {
               autoFocus
             />
 
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">Lot 번호</Text>
+            <TextInput
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-3"
+              placeholder="Lot 번호 입력"
+              value={lotNumber}
+              onChangeText={setLotNumber}
+            />
+
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">유효기한</Text>
+            <DatePicker
+              value={expiryDate ?? new Date()}
+              onChange={setExpiryDate}
+              placeholder="유효기한 선택"
+            />
+
+            <View className="h-3" />
+
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
+            <TextInput
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-4"
+              placeholder="비고 입력 (선택)"
+              value={notes}
+              onChangeText={setNotes}
+            />
+
             <View className="flex-row gap-3">
-              <Pressable
-                className="flex-1 bg-slate-100 rounded-xl py-3 items-center"
-                onPress={() => setActionMode(null)}
-              >
+              <Pressable className="flex-1 bg-slate-100 rounded-xl py-3 items-center" onPress={() => setModalMode(null)}>
                 <Text className="text-sm font-semibold text-slate-600">취소</Text>
               </Pressable>
               <Pressable
-                className={`flex-1 rounded-xl py-3 items-center ${
-                  actionMode === "restock" ? "bg-emerald-600" : "bg-blue-600"
-                }`}
-                onPress={handleAction}
-                disabled={restockMutation.isPending || consumeMutation.isPending}
+                className="flex-1 bg-emerald-600 rounded-xl py-3 items-center"
+                onPress={handleRestock}
+                disabled={restockMutation.isPending}
               >
-                {restockMutation.isPending || consumeMutation.isPending ? (
+                {restockMutation.isPending ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text className="text-sm font-semibold text-white">
-                    {actionMode === "restock" ? "입고 확인" : "출고 확인"}
-                  </Text>
+                  <Text className="text-sm font-semibold text-white">입고 확인</Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 출고 모달 */}
+      <Modal visible={modalMode === "consume"} transparent animationType="slide">
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setModalMode(null)}>
+          <Pressable className="bg-white rounded-t-2xl px-5 pt-5 pb-10" onPress={() => {}}>
+            <Text className="text-base font-bold text-slate-900 mb-1">출고 처리</Text>
+            <Text className="text-xs text-slate-500 mb-4">
+              {actionLot?.lotNumber || "Lot 미지정"} · 현재 {actionLot?.quantity ?? 0} {actionLot?.unit}
+            </Text>
+
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">출고 수량 *</Text>
+            <TextInput
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-3"
+              placeholder="수량 입력"
+              keyboardType="numeric"
+              value={qty}
+              onChangeText={setQty}
+              autoFocus
+            />
+
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
+            <TextInput
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-4"
+              placeholder="비고 입력 (선택)"
+              value={notes}
+              onChangeText={setNotes}
+            />
+
+            <View className="flex-row gap-3">
+              <Pressable className="flex-1 bg-slate-100 rounded-xl py-3 items-center" onPress={() => setModalMode(null)}>
+                <Text className="text-sm font-semibold text-slate-600">취소</Text>
+              </Pressable>
+              <Pressable
+                className="flex-1 bg-blue-600 rounded-xl py-3 items-center"
+                onPress={handleConsume}
+                disabled={consumeMutation.isPending}
+              >
+                {consumeMutation.isPending ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-sm font-semibold text-white">출고 확인</Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 위치 변경 모달 */}
+      <Modal visible={modalMode === "location"} transparent animationType="slide">
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setModalMode(null)}>
+          <Pressable className="bg-white rounded-t-2xl px-5 pt-5 pb-10" onPress={() => {}}>
+            <Text className="text-base font-bold text-slate-900 mb-1">위치 변경</Text>
+            <Text className="text-xs text-slate-500 mb-4">
+              {actionLot?.lotNumber || "Lot 미지정"}
+            </Text>
+
+            <Text className="text-sm font-medium text-slate-700 mb-1.5">보관 위치</Text>
+            <TextInput
+              className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 mb-4"
+              placeholder="예: 냉장고 A-2, 시약장 B-1"
+              value={newLocation}
+              onChangeText={setNewLocation}
+              autoFocus
+            />
+
+            <View className="flex-row gap-3">
+              <Pressable className="flex-1 bg-slate-100 rounded-xl py-3 items-center" onPress={() => setModalMode(null)}>
+                <Text className="text-sm font-semibold text-slate-600">취소</Text>
+              </Pressable>
+              <Pressable
+                className="flex-1 bg-slate-800 rounded-xl py-3 items-center"
+                onPress={handleLocationSave}
+                disabled={locationMutation.isPending}
+              >
+                {locationMutation.isPending ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-sm font-semibold text-white">저장</Text>
                 )}
               </Pressable>
             </View>

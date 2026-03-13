@@ -2,6 +2,7 @@ import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator 
 import { router } from "expo-router";
 import { useState } from "react";
 import { useCreatePurchase } from "../../hooks/useApi";
+import { DatePicker } from "../../components/DatePicker";
 
 export default function PurchaseRegisterScreen() {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ export default function PurchaseRegisterScreen() {
     category: "",
     notes: "",
   });
+  const [purchaseDate, setPurchaseDate] = useState(new Date());
 
   const createPurchase = useCreatePurchase();
 
@@ -34,7 +36,7 @@ export default function PurchaseRegisterScreen() {
         quantity: form.quantity ? Number(form.quantity) : undefined,
         unit: form.unit || "ea",
         category: form.category.trim() || undefined,
-        purchasedAt: new Date().toISOString(),
+        purchasedAt: purchaseDate.toISOString(),
       },
       {
         onSuccess: () => {
@@ -120,9 +122,7 @@ export default function PurchaseRegisterScreen() {
           />
         </View>
         <View className="flex-1">
-          <Text className="text-sm font-medium text-slate-700 mb-1.5">
-            카테고리
-          </Text>
+          <Text className="text-sm font-medium text-slate-700 mb-1.5">카테고리</Text>
           <TextInput
             className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
             placeholder="시약, 소모품, 장비 등"
@@ -130,6 +130,11 @@ export default function PurchaseRegisterScreen() {
             onChangeText={(v) => update("category", v)}
           />
         </View>
+      </View>
+
+      {/* 구매일 */}
+      <View className="mb-4">
+        <DatePicker label="구매일" value={purchaseDate} onChange={setPurchaseDate} />
       </View>
 
       {/* 비고 */}
