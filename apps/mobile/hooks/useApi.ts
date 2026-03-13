@@ -175,7 +175,13 @@ export function useCreatePurchase() {
         category: data.category,
       };
       const res = await apiClient.post("/api/purchases/import", { rows: [row] });
-      return res.data;
+      const created = res.data?.records?.[0];
+      return { ...res.data, purchaseId: created?.id ?? null } as {
+        totalRows: number;
+        successRows: number;
+        errorRows: number;
+        purchaseId: string | null;
+      };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });

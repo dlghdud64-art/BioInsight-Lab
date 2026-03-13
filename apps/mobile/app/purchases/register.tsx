@@ -115,10 +115,18 @@ function QuickEntryForm() {
         notes: form.notes.trim() || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           router.replace({
             pathname: "/purchases/complete",
-            params: { count: "1", total: form.amount },
+            params: {
+              count: "1",
+              total: form.amount,
+              purchaseId: data.purchaseId || "",
+              productName: form.productName,
+              quantity: form.quantity || "1",
+              unit: form.unit || "ea",
+              catalogNumber: "",
+            },
           });
         },
         onError: (err) => {

@@ -11,6 +11,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   LOW_STOCK: { bg: "bg-orange-100", text: "text-orange-700", label: "부족" },
   OUT_OF_STOCK: { bg: "bg-red-100", text: "text-red-700", label: "품절" },
   EXPIRED: { bg: "bg-red-100", text: "text-red-700", label: "만료" },
+  inventory_reflected: { bg: "bg-emerald-100", text: "text-emerald-700", label: "입고완료" },
 };
 
 export function StatusBadge({ status }: { status: string }) {

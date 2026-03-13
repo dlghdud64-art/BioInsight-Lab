@@ -1,7 +1,7 @@
 import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
-import { CheckCircle, Printer, MapPin, ArrowDownToLine } from "lucide-react-native";
+import { CheckCircle, Printer, MapPin, ArrowDownToLine, Package, ArrowLeft } from "lucide-react-native";
 import { useRestockInventory, useInventoryDetail } from "../../hooks/useApi";
 import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
@@ -102,11 +102,29 @@ export default function LotReceiveScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
-            onPress={() => router.dismissAll()}
+            className="flex-row items-center justify-center gap-2 bg-blue-600 rounded-xl py-3.5"
+            onPress={() => router.replace(`/inventory/${id}`)}
           >
-            <Text className="text-sm font-semibold text-slate-600">재고 목록</Text>
+            <Package size={16} color="white" />
+            <Text className="text-sm font-semibold text-white">재고 상세로 보기</Text>
           </Pressable>
+
+          {purchaseId ? (
+            <Pressable
+              className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
+              onPress={() => router.replace(`/purchases/${purchaseId}` as any)}
+            >
+              <ArrowLeft size={16} color="#64748b" />
+              <Text className="text-sm font-semibold text-slate-600">구매 상세로 돌아가기</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
+              onPress={() => router.dismissAll()}
+            >
+              <Text className="text-sm font-semibold text-slate-600">재고 목록</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     );
