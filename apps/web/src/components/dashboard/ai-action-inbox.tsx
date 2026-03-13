@@ -118,6 +118,31 @@ const DEFAULT_CONFIG: CardConfig = {
   approveToast: "작업이 완료되었습니다",
 };
 
+// ── 승인 단계 배지 ──
+
+const STAGE_CONFIG: Record<string, { label: string; className: string }> = {
+  QUOTE_DRAFT: {
+    label: "검토 필요",
+    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+  },
+  VENDOR_EMAIL_DRAFT: {
+    label: "검토 필요",
+    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+  },
+  FOLLOWUP_DRAFT: {
+    label: "응답 대기",
+    className: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  },
+  REORDER_SUGGESTION: {
+    label: "조치 필요",
+    className: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+  },
+  EXPIRY_ALERT: {
+    label: "확인 필요",
+    className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+  },
+};
+
 // ── 시간 포맷 ──
 
 function timeAgo(dateStr: string): string {
@@ -305,6 +330,11 @@ export function AiActionInbox() {
                       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 flex-shrink-0 ${config.badgeClass}`}>
                         {config.badgeLabel}
                       </Badge>
+                      {STAGE_CONFIG[item.type] && (
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 flex-shrink-0 hidden sm:inline-flex ${STAGE_CONFIG[item.type].className}`}>
+                          {STAGE_CONFIG[item.type].label}
+                        </Badge>
+                      )}
                     </div>
 
                     {/* 설명: 모바일에서는 확장 시에만 표시 */}

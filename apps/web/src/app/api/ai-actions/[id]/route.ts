@@ -29,6 +29,23 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // 활동 로그: PENDING 상태 열람 시에만 기록 (중복 방지)
+    if (item.status === "PENDING") {
+      const { ipAddress, userAgent } = extractRequestMeta(request);
+      await createActivityLog({
+        activityType: "AI_TASK_OPENED",
+        entityType: "AI_ACTION",
+        entityId: params.id,
+        taskType: item.type,
+        afterStatus: item.status,
+        userId: session.user.id,
+        organizationId: item.organizationId,
+        metadata: { title: item.title },
+        ipAddress,
+        userAgent,
+      });
+    }
+
     return NextResponse.json({ item });
   } catch (error) {
     console.error("Error fetching AI action:", error);

@@ -6,6 +6,8 @@ import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { sendEmail } from "@/lib/email/sender";
 import { generateVendorQuoteRequestEmail } from "@/lib/email/vendor-request-templates";
 import { z } from "zod";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { extractRequestMeta } from "@/lib/audit";
 
 // Schema for POST /api/quotes/:id/vendor-requests
 const VendorSchema = z.object({
@@ -167,13 +169,44 @@ export async function POST(
       }
     }
 
+    // 활동 로그: 이메일 발송 기록
+    const session = await auth();
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+    const actorRole = session?.user?.id
+      ? await getActorRole(session.user.id, quote.organizationId)
+      : null;
+
+    const successCount = emailResults.filter((r: any) => r.success).length;
+    const failCount = emailResults.filter((r: any) => !r.success).length;
+
+    if (successCount > 0) {
+      await createActivityLog({
+        activityType: "EMAIL_SENT",
+        entityType: "QUOTE",
+        entityId: id,
+        taskType: "VENDOR_EMAIL_DRAFT",
+        afterStatus: "SENT",
+        userId: session?.user?.id || null,
+        organizationId: quote.organizationId,
+        actorRole,
+        metadata: {
+          vendorCount: vendors.length,
+          emailsSent: successCount,
+          emailsFailed: failCount,
+          vendorEmails: vendors.map((v: { email: string }) => v.email),
+        },
+        ipAddress,
+        userAgent,
+      });
+    }
+
     return NextResponse.json({
       createdRequests,
       emailResults,
       summary: {
         total: vendors.length,
-        emailsSent: emailResults.filter((r: any) => r.success).length,
-        emailsFailed: emailResults.filter((r: any) => !r.success).length,
+        emailsSent: successCount,
+        emailsFailed: failCount,
       },
     }, { status: 201 });
   } catch (error) {

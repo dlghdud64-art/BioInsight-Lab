@@ -55,6 +55,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ActivityTimeline } from "@/components/ai/activity-timeline";
 import {
   Select,
   SelectContent,
@@ -1303,6 +1304,12 @@ export default function QuoteDetailPage() {
                   </div>
                 </div>
               )}
+            </Card>
+
+            {/* ── 5.5 최근 활동 ── */}
+            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 sm:px-6">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">최근 활동</h3>
+              <ActivityTimeline entityType="QUOTE" entityId={quoteId} limit={3} />
             </Card>
 
             {/* ── 6. 하단 액션 바 ── */}

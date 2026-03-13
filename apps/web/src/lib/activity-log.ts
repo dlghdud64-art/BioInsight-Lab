@@ -54,8 +54,14 @@ export interface ActivityLogParams {
 
 type TxClient = Prisma.TransactionClient;
 
+// 중복 방지 윈도우 (초)
+const DEDUP_WINDOW_SEC = 60;
+
 /**
  * ActivityLog 레코드를 생성합니다.
+ *
+ * 동일 entityId + activityType + afterStatus 조합이 최근 DEDUP_WINDOW_SEC 이내에
+ * 이미 기록되어 있으면 중복 insert를 건너뜁니다.
  *
  * @param params   - 이벤트 계약 필드
  * @param txClient - (선택) Prisma 트랜잭션 클라이언트
@@ -67,6 +73,23 @@ export async function createActivityLog(
   const client: any = txClient ?? db;
 
   try {
+    // 중복 방지: 동일 이벤트가 최근 윈도우 내 존재하면 스킵
+    if (params.entityId) {
+      const since = new Date(Date.now() - DEDUP_WINDOW_SEC * 1000);
+      const existing = await client.activityLog.findFirst({
+        where: {
+          entityId: params.entityId,
+          activityType: params.activityType,
+          ...(params.afterStatus ? { afterStatus: params.afterStatus } : {}),
+          createdAt: { gte: since },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        return; // 중복 — 스킵
+      }
+    }
+
     await client.activityLog.create({
       data: {
         userId:         params.userId         ?? null,

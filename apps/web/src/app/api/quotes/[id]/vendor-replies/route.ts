@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { extractRequestMeta } from "@/lib/audit";
 
 // 빈 문자열 → undefined 변환 헬퍼
 const emptyToUndefined = z.preprocess(
@@ -192,6 +194,28 @@ export async function POST(
       }
 
       resolvedVendorRequestId = txVendorRequestId;
+    });
+
+    // 활동 로그: 벤더 회신 수동 기록
+    const { ipAddress, userAgent } = extractRequestMeta(request);
+    const actorRole = await getActorRole(session.user.id, quote.organizationId);
+    await createActivityLog({
+      activityType: "VENDOR_REPLY_LOGGED",
+      entityType: "QUOTE",
+      entityId: quoteId,
+      beforeStatus: existingRequest ? "SENT" : undefined,
+      afterStatus: "RESPONDED",
+      userId: session.user.id,
+      organizationId: quote.organizationId,
+      actorRole,
+      metadata: {
+        vendorName,
+        itemCount: items.length,
+        vendorRequestId: resolvedVendorRequestId!,
+        isEdit: !!existingRequest,
+      },
+      ipAddress,
+      userAgent,
     });
 
     return NextResponse.json({ success: true, vendorRequestId: resolvedVendorRequestId! });
