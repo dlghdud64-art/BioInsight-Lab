@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
-import { ShoppingCart, Languages, Copy, Check, FileText, Download, Share2, Search, X } from "lucide-react";
+import { ShoppingCart, Languages, Copy, Check, FileText, Download, Share2, Search, X, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,8 @@ import { Disclaimer } from "@/components/legal/disclaimer";
 import { SearchStepNav } from "../../search/_components/search-step-nav";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exportQuoteAsCSV } from "@/lib/export/quote-export";
+import { QuoteAiAssistantPanel } from "@/components/ai/quote-ai-assistant-panel";
+import { useQuoteAiPanel, type RecommendedVendor } from "@/hooks/use-quote-ai-panel";
 
 export default function QuotePage() {
   const { data: session, status } = useSession();
@@ -34,6 +36,9 @@ export default function QuotePage() {
   const [isGeneratingEnglish, setIsGeneratingEnglish] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
+
+  // AI 보조 패널
+  const aiPanel = useQuoteAiPanel();
 
   const { data, isLoading } = useQuery({
     queryKey: ["compare", productIds],
@@ -348,6 +353,52 @@ export default function QuotePage() {
                 선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.
               </p>
             </div>
+            {products.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 text-sm gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
+                onClick={() => {
+                  const panelItems = products.map((product: any) => ({
+                    productId: product.id,
+                    productName: product.name || product.nameEn || "품목",
+                    brand: product.brand,
+                    catalogNumber: product.catalogNumber,
+                    quantity: quantities[product.id] || 1,
+                    unit: "ea",
+                    estimatedPrice: product.vendors?.[0]?.priceInKRW,
+                  }));
+
+                  const vendorMap = new Map<string, RecommendedVendor>();
+                  products.forEach((product: any) => {
+                    product.vendors?.forEach((pv: any) => {
+                      if (pv.vendor && !vendorMap.has(pv.vendor.name)) {
+                        vendorMap.set(pv.vendor.name, {
+                          vendorId: pv.vendor.id,
+                          vendorName: pv.vendor.name,
+                          reason: `${product.name} 등 공급 가능`,
+                          recentPrice: pv.priceInKRW,
+                          leadTimeDays: pv.leadTime,
+                          moq: pv.minOrderQty,
+                          contactAvailable: !!pv.vendor.email,
+                          email: pv.vendor.email,
+                        });
+                      }
+                    });
+                  });
+
+                  aiPanel.preparePanel(panelItems, {
+                    vendors: Array.from(vendorMap.values()).slice(0, 5),
+                    deliveryDate: deliveryDate || undefined,
+                    deliveryLocation: deliveryLocation || undefined,
+                  });
+                }}
+              >
+                <Sparkles className="h-4 w-4" />
+                견적 요청 초안 만들기
+              </Button>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -591,6 +642,55 @@ export default function QuotePage() {
           </form>
         </div>
       </div>
+
+      {/* AI 보조 패널 */}
+      <QuoteAiAssistantPanel
+        open={aiPanel.isOpen}
+        onOpenChange={aiPanel.setIsOpen}
+        state={aiPanel.panelState}
+        data={aiPanel.panelData}
+        actionId={aiPanel.actionId}
+        onRegenerate={aiPanel.regenerate}
+        onApprove={async (actionId, payload) => {
+          try {
+            const res = await fetch(`/api/ai-actions/${actionId}/approve`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ payload }),
+            });
+            if (!res.ok) throw new Error("승인 실패");
+            const result = await res.json();
+            aiPanel.setIsOpen(false);
+            toast({
+              title: "견적 요청이 생성되었습니다",
+              description: `견적 ID: ${result.result?.quoteId || "생성 완료"}`,
+            });
+            router.push("/dashboard/quotes");
+          } catch (err) {
+            toast({
+              title: "견적 생성 실패",
+              description: "다시 시도해 주세요.",
+              variant: "destructive",
+            });
+          }
+        }}
+        onFixIssue={(field) => {
+          aiPanel.setIsOpen(false);
+          // 해당 필드로 포커스 이동
+          const fieldMap: Record<string, string> = {
+            "희망 납기": "deliveryDate",
+            "납품 위치": "deliveryLocation",
+          };
+          const inputName = fieldMap[field];
+          if (inputName) {
+            const el = document.querySelector(`[name="${inputName}"], input[placeholder*="${field}"]`) as HTMLInputElement;
+            el?.focus();
+            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }}
+        isGenerating={aiPanel.isGenerating}
+        error={aiPanel.error}
+      />
     </>
   );
 }
