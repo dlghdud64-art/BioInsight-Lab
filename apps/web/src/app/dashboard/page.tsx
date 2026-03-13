@@ -22,13 +22,13 @@ export default function DashboardPage() {
       const guestKey = getGuestKey();
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
-      const response = await fetch("/api/dashboard/stats", { headers, cache: "no-store" });
+      const response = await fetch("/api/dashboard/stats", { headers });
       if (!response.ok) throw new Error("Failed to fetch dashboard stats");
       return response.json();
     },
     enabled: status === "authenticated",
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 5 * 60 * 1000,    // 5분간 캐시 유지 (불필요한 refetch 제거)
+    gcTime: 15 * 60 * 1000,      // 15분간 GC 방지
   });
 
   if (status === "loading" || statsLoading) {
@@ -550,11 +550,7 @@ export default function DashboardPage() {
               {/* 보조 액션 */}
               <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/50 space-y-0.5">
                 <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 pb-1">보조 기능</p>
-                <Link href="/protocol/bom" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
-                  <FileText className="h-3.5 w-3.5 text-teal-500 flex-shrink-0" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100">프로토콜 BOM 생성</span>
-                  <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
-                </Link>
+                {/* 프로토콜 BOM: PDF 분석 미완성으로 베타 기간 중 비노출 */}
                 <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
                   <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100">재고 관리</span>
