@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS "Budget" CASCADE;
 DROP TYPE IF EXISTS "PurchaseSource";
 
 -- Create new PurchaseRecord table with scopeKey
-CREATE TABLE "PurchaseRecord" (
+CREATE TABLE IF NOT EXISTS "PurchaseRecord" (
   "id" TEXT NOT NULL,
   "scopeKey" TEXT NOT NULL,
   "quoteId" TEXT,
@@ -28,16 +28,19 @@ CREATE TABLE "PurchaseRecord" (
 );
 
 -- Create indexes for PurchaseRecord
-CREATE INDEX "PurchaseRecord_scopeKey_purchasedAt_idx" ON "PurchaseRecord"("scopeKey", "purchasedAt");
-CREATE INDEX "PurchaseRecord_scopeKey_vendorName_idx" ON "PurchaseRecord"("scopeKey", "vendorName");
-CREATE INDEX "PurchaseRecord_scopeKey_category_idx" ON "PurchaseRecord"("scopeKey", "category");
-CREATE INDEX "PurchaseRecord_quoteId_idx" ON "PurchaseRecord"("quoteId");
+CREATE INDEX IF NOT EXISTS "PurchaseRecord_scopeKey_purchasedAt_idx" ON "PurchaseRecord"("scopeKey", "purchasedAt");
+CREATE INDEX IF NOT EXISTS "PurchaseRecord_scopeKey_vendorName_idx" ON "PurchaseRecord"("scopeKey", "vendorName");
+CREATE INDEX IF NOT EXISTS "PurchaseRecord_scopeKey_category_idx" ON "PurchaseRecord"("scopeKey", "category");
+CREATE INDEX IF NOT EXISTS "PurchaseRecord_quoteId_idx" ON "PurchaseRecord"("quoteId");
 
 -- Add foreign key for quoteId
-ALTER TABLE "PurchaseRecord" ADD CONSTRAINT "PurchaseRecord_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "PurchaseRecord" ADD CONSTRAINT "PurchaseRecord_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Create Budget table with scopeKey
-CREATE TABLE "Budget" (
+CREATE TABLE IF NOT EXISTS "Budget" (
   "id" TEXT NOT NULL,
   "scopeKey" TEXT NOT NULL,
   "yearMonth" TEXT NOT NULL,
@@ -51,9 +54,9 @@ CREATE TABLE "Budget" (
 );
 
 -- Create unique index and other indexes for Budget
-CREATE UNIQUE INDEX "Budget_scopeKey_yearMonth_key" ON "Budget"("scopeKey", "yearMonth");
-CREATE INDEX "Budget_scopeKey_idx" ON "Budget"("scopeKey");
-CREATE INDEX "Budget_yearMonth_idx" ON "Budget"("yearMonth");
+CREATE UNIQUE INDEX IF NOT EXISTS "Budget_scopeKey_yearMonth_key" ON "Budget"("scopeKey", "yearMonth");
+CREATE INDEX IF NOT EXISTS "Budget_scopeKey_idx" ON "Budget"("scopeKey");
+CREATE INDEX IF NOT EXISTS "Budget_yearMonth_idx" ON "Budget"("yearMonth");
 
 -- Add PURCHASED status to QuoteStatus enum if not exists
 DO $$ BEGIN

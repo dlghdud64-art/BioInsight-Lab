@@ -2,4 +2,7 @@
 -- Previously: vendorEmail String (NOT NULL)
 -- Changed to: vendorEmail String? (nullable)
 
-ALTER TABLE "QuoteVendorRequest" ALTER COLUMN "vendorEmail" DROP NOT NULL;
+DO $$ BEGIN
+  ALTER TABLE "QuoteVendorRequest" ALTER COLUMN "vendorEmail" DROP NOT NULL;
+EXCEPTION WHEN others THEN NULL;
+END $$;

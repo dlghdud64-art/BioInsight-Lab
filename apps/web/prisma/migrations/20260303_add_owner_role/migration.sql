@@ -1,2 +1,5 @@
 -- AlterEnum: Add OWNER value to OrganizationRole enum
-ALTER TYPE "OrganizationRole" ADD VALUE IF NOT EXISTS 'OWNER';
+DO $$ BEGIN
+  ALTER TYPE "OrganizationRole" ADD VALUE IF NOT EXISTS 'OWNER';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

@@ -1,11 +1,17 @@
 -- CreateEnum
-CREATE TYPE "WorkspacePlan" AS ENUM ('FREE', 'TEAM', 'ENTERPRISE');
+DO $$ BEGIN
+  CREATE TYPE "WorkspacePlan" AS ENUM ('FREE', 'TEAM', 'ENTERPRISE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "WorkspaceMemberRole" AS ENUM ('ADMIN', 'MEMBER');
+DO $$ BEGIN
+  CREATE TYPE "WorkspaceMemberRole" AS ENUM ('ADMIN', 'MEMBER');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
-CREATE TABLE "Workspace" (
+CREATE TABLE IF NOT EXISTS "Workspace" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -18,7 +24,7 @@ CREATE TABLE "Workspace" (
 );
 
 -- CreateTable
-CREATE TABLE "WorkspaceMember" (
+CREATE TABLE IF NOT EXISTS "WorkspaceMember" (
     "id" TEXT NOT NULL,
     "workspaceId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -30,7 +36,7 @@ CREATE TABLE "WorkspaceMember" (
 );
 
 -- CreateTable
-CREATE TABLE "WorkspaceInvite" (
+CREATE TABLE IF NOT EXISTS "WorkspaceInvite" (
     "id" TEXT NOT NULL,
     "workspaceId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
@@ -44,73 +50,94 @@ CREATE TABLE "WorkspaceInvite" (
 );
 
 -- AlterTable
-ALTER TABLE "PurchaseRecord" ADD COLUMN "workspaceId" TEXT;
+ALTER TABLE "PurchaseRecord" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Budget" ADD COLUMN "workspaceId" TEXT;
+ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;
 
 -- AlterTable
-ALTER TABLE "Quote" ADD COLUMN "workspaceId" TEXT;
+ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;
 
 -- AlterTable
-ALTER TABLE "ImportJob" ADD COLUMN "workspaceId" TEXT;
+ALTER TABLE "ImportJob" ADD COLUMN IF NOT EXISTS "workspaceId" TEXT;
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Workspace_slug_key" ON "Workspace"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Workspace_slug_key" ON "Workspace"("slug");
 
 -- CreateIndex
-CREATE INDEX "Workspace_slug_idx" ON "Workspace"("slug");
+CREATE INDEX IF NOT EXISTS "Workspace_slug_idx" ON "Workspace"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "WorkspaceMember_workspaceId_userId_key" ON "WorkspaceMember"("workspaceId", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "WorkspaceMember_workspaceId_userId_key" ON "WorkspaceMember"("workspaceId", "userId");
 
 -- CreateIndex
-CREATE INDEX "WorkspaceMember_workspaceId_idx" ON "WorkspaceMember"("workspaceId");
+CREATE INDEX IF NOT EXISTS "WorkspaceMember_workspaceId_idx" ON "WorkspaceMember"("workspaceId");
 
 -- CreateIndex
-CREATE INDEX "WorkspaceMember_userId_idx" ON "WorkspaceMember"("userId");
+CREATE INDEX IF NOT EXISTS "WorkspaceMember_userId_idx" ON "WorkspaceMember"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "WorkspaceInvite_token_key" ON "WorkspaceInvite"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "WorkspaceInvite_token_key" ON "WorkspaceInvite"("token");
 
 -- CreateIndex
-CREATE INDEX "WorkspaceInvite_token_idx" ON "WorkspaceInvite"("token");
+CREATE INDEX IF NOT EXISTS "WorkspaceInvite_token_idx" ON "WorkspaceInvite"("token");
 
 -- CreateIndex
-CREATE INDEX "WorkspaceInvite_workspaceId_idx" ON "WorkspaceInvite"("workspaceId");
+CREATE INDEX IF NOT EXISTS "WorkspaceInvite_workspaceId_idx" ON "WorkspaceInvite"("workspaceId");
 
 -- CreateIndex
-CREATE INDEX "WorkspaceInvite_email_idx" ON "WorkspaceInvite"("email");
+CREATE INDEX IF NOT EXISTS "WorkspaceInvite_email_idx" ON "WorkspaceInvite"("email");
 
 -- CreateIndex
-CREATE INDEX "PurchaseRecord_workspaceId_idx" ON "PurchaseRecord"("workspaceId");
+CREATE INDEX IF NOT EXISTS "PurchaseRecord_workspaceId_idx" ON "PurchaseRecord"("workspaceId");
 
 -- CreateIndex
-CREATE INDEX "Budget_workspaceId_idx" ON "Budget"("workspaceId");
+CREATE INDEX IF NOT EXISTS "Budget_workspaceId_idx" ON "Budget"("workspaceId");
 
 -- CreateIndex
-CREATE INDEX "Quote_workspaceId_idx" ON "Quote"("workspaceId");
+CREATE INDEX IF NOT EXISTS "Quote_workspaceId_idx" ON "Quote"("workspaceId");
 
 -- CreateIndex
-CREATE INDEX "ImportJob_workspaceId_idx" ON "ImportJob"("workspaceId");
+CREATE INDEX IF NOT EXISTS "ImportJob_workspaceId_idx" ON "ImportJob"("workspaceId");
 
 -- AddForeignKey
-ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "WorkspaceInvite" ADD CONSTRAINT "WorkspaceInvite_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "WorkspaceInvite" ADD CONSTRAINT "WorkspaceInvite_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseRecord" ADD CONSTRAINT "PurchaseRecord_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "PurchaseRecord" ADD CONSTRAINT "PurchaseRecord_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Budget" ADD CONSTRAINT "Budget_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Quote" ADD CONSTRAINT "Quote_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Quote" ADD CONSTRAINT "Quote_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ImportJob" ADD CONSTRAINT "ImportJob_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ImportJob" ADD CONSTRAINT "ImportJob_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

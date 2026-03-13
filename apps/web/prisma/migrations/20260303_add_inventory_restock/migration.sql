@@ -19,7 +19,14 @@ CREATE INDEX IF NOT EXISTS "InventoryRestock_userId_idx" ON "InventoryRestock"("
 CREATE INDEX IF NOT EXISTS "InventoryRestock_restockedAt_idx" ON "InventoryRestock"("restockedAt");
 
 -- AddForeignKey
-ALTER TABLE "InventoryRestock" ADD CONSTRAINT "InventoryRestock_inventoryId_fkey"
+DO $$ BEGIN
+  ALTER TABLE "InventoryRestock" ADD CONSTRAINT "InventoryRestock_inventoryId_fkey"
     FOREIGN KEY ("inventoryId") REFERENCES "ProductInventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "InventoryRestock" ADD CONSTRAINT "InventoryRestock_userId_fkey"
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "InventoryRestock" ADD CONSTRAINT "InventoryRestock_userId_fkey"
     FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
