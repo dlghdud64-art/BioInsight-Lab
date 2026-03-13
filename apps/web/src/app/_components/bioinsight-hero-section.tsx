@@ -79,24 +79,19 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none">
+          <h1 className="text-[2rem] sm:text-[3.25rem] md:text-[4.25rem] xl:text-[4.75rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.15] sm:leading-[1.1] max-w-4xl mx-auto">
             <span className="block pb-1.5 md:pb-3">
-              500만 개 시약·장비,
+              시약·장비 검색부터
             </span>
-            <span className="block text-blue-600 pt-0.5 md:pt-2">
-              최저가 검색부터 견적까지
+            <span className="block pt-0.5 md:pt-2">
+              <span className="text-blue-600">구매 운영</span>까지 한곳에서
             </span>
           </h1>
 
           <p className="text-[15px] md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4 sm:px-2 break-keep">
-            구글링 대신 BioInsight Lab.{" "}
+            연구실의 반복 구매와 재고 운영 흐름을{" "}
             <br className="hidden sm:block" />
-            스펙 비교부터 최적 견적까지 한 번에.
-          </p>
-
-          {/* 플랫폼 서사 서브카피 — 모바일 숨김 */}
-          <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed px-2 break-keep hidden sm:block">
-            찾는 품목을 검색하고 비교한 뒤, 견적 요청까지 한 곳에서 처리하세요.
+            한곳에서 관리하세요.
           </p>
         </div>
 

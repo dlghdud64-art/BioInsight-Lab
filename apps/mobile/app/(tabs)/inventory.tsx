@@ -1,13 +1,22 @@
-import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { MapPin, Layers, ChevronRight } from "lucide-react-native";
+import { MapPin, Layers, ChevronRight, Filter } from "lucide-react-native";
 import { useInventory } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
 import { SearchBar } from "../../components/SearchBar";
+import { BottomSheet } from "../../components/BottomSheet";
 import { useState } from "react";
 import type { ProductInventory } from "../../types";
+
+const STATUS_FILTERS = [
+  { key: "ALL", label: "전체" },
+  { key: "NORMAL", label: "정상" },
+  { key: "LOW_STOCK", label: "부족" },
+  { key: "OUT_OF_STOCK", label: "소진" },
+  { key: "EXPIRED", label: "만료" },
+] as const;
 
 function InventoryCard({ item }: { item: ProductInventory }) {
   const borderColor =
@@ -77,14 +86,17 @@ function InventoryCard({ item }: { item: ProductInventory }) {
 export default function InventoryScreen() {
   const { data: inventories, isLoading, refetch, isRefetching } = useInventory();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  const filtered = (inventories ?? []).filter((inv) =>
-    search
+  const filtered = (inventories ?? []).filter((inv) => {
+    const matchSearch = search
       ? (inv.productName || inv.product?.name || "")
           .toLowerCase()
           .includes(search.toLowerCase())
-      : true
-  );
+      : true;
+    const matchStatus = statusFilter === "ALL" || inv.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -101,6 +113,34 @@ export default function InventoryScreen() {
           placeholder="품목명 검색..."
         />
       </View>
+
+      {/* 상태 필터 칩 */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+        className="bg-white border-b border-slate-100"
+      >
+        {STATUS_FILTERS.map((f) => (
+          <Pressable
+            key={f.key}
+            className={`mr-2 px-3 py-1.5 rounded-full border ${
+              statusFilter === f.key
+                ? "bg-blue-600 border-blue-600"
+                : "bg-white border-slate-200"
+            }`}
+            onPress={() => setStatusFilter(f.key)}
+          >
+            <Text
+              className={`text-xs font-medium ${
+                statusFilter === f.key ? "text-white" : "text-slate-600"
+              }`}
+            >
+              {f.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {/* 리스트 */}
       {isLoading ? (

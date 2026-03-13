@@ -49,8 +49,8 @@ export function FeaturesShowcaseSection() {
   const tabs: Tab[] = [
     {
       id: "sourcing",
-      title: "AI 기반 시약·장비 검색",
-      description: "500만 DB에서 시약명·CAS No.로 검색, AI가 대체품까지 추천합니다.",
+      title: "시약·장비 통합 검색",
+      description: "시약명·CAS No.로 검색하고, 여러 벤더의 대체 후보까지 한 번에 확인합니다.",
       features: ["검색", "비교", "대체품", "프로토콜"],
       icon: Search,
       gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",

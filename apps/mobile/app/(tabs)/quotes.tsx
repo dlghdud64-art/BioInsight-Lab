@@ -5,6 +5,7 @@ import { Calendar, ChevronRight } from "lucide-react-native";
 import { useQuotes } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
+import { SearchBar } from "../../components/SearchBar";
 import { useState } from "react";
 import type { Quote } from "../../types";
 
@@ -68,7 +69,12 @@ function QuoteCard({ item }: { item: Quote }) {
 
 export default function QuotesScreen() {
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
   const { data: quotes, isLoading, refetch, isRefetching } = useQuotes(statusFilter);
+
+  const filtered = (quotes ?? []).filter((q) =>
+    search ? q.title.toLowerCase().includes(search.toLowerCase()) : true
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -77,8 +83,17 @@ export default function QuotesScreen() {
         <Text className="text-lg font-bold text-slate-900">견적 관리</Text>
       </View>
 
+      {/* 검색 */}
+      <View className="px-4 py-3 bg-white">
+        <SearchBar
+          value={search}
+          onChangeText={setSearch}
+          placeholder="견적명 검색..."
+        />
+      </View>
+
       {/* 필터 */}
-      <View className="px-4 py-2.5 bg-white flex-row gap-2">
+      <View className="px-4 py-2.5 bg-white border-b border-slate-100 flex-row gap-2">
         {FILTERS.map((f) => (
           <Pressable
             key={f.key}
@@ -105,7 +120,7 @@ export default function QuotesScreen() {
         <ActivityIndicator color="#2563eb" className="mt-10" />
       ) : (
         <FlatList
-          data={quotes ?? []}
+          data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <QuoteCard item={item} />}
           contentContainerStyle={{ paddingTop: 12, paddingBottom: 100 }}

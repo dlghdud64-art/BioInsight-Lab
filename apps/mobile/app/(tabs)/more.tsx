@@ -4,42 +4,46 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
   Shield,
-  Wallet,
-  Building2,
-  User,
+  PieChart,
+  Settings,
+  HelpCircle,
   LogOut,
   Info,
   ChevronRight,
 } from "lucide-react-native";
 
-const menuItems = [
+const MENU_ITEMS = [
   {
     icon: Shield,
-    label: "안전관리",
-    description: "위험물질 관리 · MSDS · 점검 기록",
+    label: "안전 관리",
+    description: "시약 안전 정보 · MSDS",
     color: "#ef4444",
-    onPress: () => {},
+    bgColor: "bg-red-50",
+    route: "/more/safety",
   },
   {
-    icon: Wallet,
+    icon: PieChart,
     label: "예산 요약",
-    description: "예산 현황 · 소진율 · 리포트",
-    color: "#3b82f6",
-    onPress: () => {},
+    description: "지출 현황 · 예산 관리",
+    color: "#2563eb",
+    bgColor: "bg-blue-50",
+    route: "/more/budget",
   },
   {
-    icon: Building2,
+    icon: Settings,
     label: "조직 설정",
-    description: "멤버 관리 · 권한 설정",
-    color: "#8b5cf6",
-    onPress: () => {},
+    description: "멤버 · 권한 · 워크스페이스",
+    color: "#64748b",
+    bgColor: "bg-slate-100",
+    route: "/more/org-settings",
   },
   {
-    icon: User,
-    label: "프로필",
-    description: "내 정보 · 알림 설정",
-    color: "#64748b",
-    onPress: () => {},
+    icon: HelpCircle,
+    label: "고객 지원",
+    description: "문의 · 피드백 · FAQ",
+    color: "#059669",
+    bgColor: "bg-emerald-50",
+    route: "/more/support",
   },
 ];
 
@@ -67,29 +71,22 @@ export default function MoreScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* 메뉴 리스트 */}
-        <View className="mt-4 mx-4 bg-white rounded-xl border border-slate-200 overflow-hidden">
-          {menuItems.map((item, idx) => (
+        {/* 메뉴 그룹 */}
+        <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          {MENU_ITEMS.map((item, idx) => (
             <Pressable
               key={item.label}
               className={`flex-row items-center p-4 ${
-                idx < menuItems.length - 1 ? "border-b border-slate-100" : ""
+                idx < MENU_ITEMS.length - 1 ? "border-b border-slate-100" : ""
               }`}
-              onPress={item.onPress}
+              onPress={() => router.push(item.route as any)}
             >
-              <View
-                className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                style={{ backgroundColor: `${item.color}15` }}
-              >
+              <View className={`w-10 h-10 rounded-full ${item.bgColor} items-center justify-center mr-3`}>
                 <item.icon size={20} color={item.color} />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-slate-800">
-                  {item.label}
-                </Text>
-                <Text className="text-xs text-slate-500 mt-0.5">
-                  {item.description}
-                </Text>
+                <Text className="text-sm font-semibold text-slate-800">{item.label}</Text>
+                <Text className="text-xs text-slate-400">{item.description}</Text>
               </View>
               <ChevronRight size={16} color="#cbd5e1" />
             </Pressable>

@@ -25,6 +25,7 @@ export interface QuoteItem {
 
 export interface QuoteDetail extends Quote {
   items: QuoteItem[];
+  description?: string;
   notes?: string;
   vendorResponses?: VendorResponse[];
 }
@@ -48,6 +49,9 @@ export interface PurchaseRecord {
   category?: string;
   followUpStatus?: string;
   scopeKey?: string;
+  notes?: string;
+  catalogNumber?: string;
+  currency?: string;
 }
 
 export interface ProductInventory {

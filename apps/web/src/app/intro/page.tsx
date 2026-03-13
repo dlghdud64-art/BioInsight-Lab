@@ -38,22 +38,19 @@ export default function IntroPage() {
               {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5 mb-5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                바이오 연구실·구매팀을 위한 통합 플랫폼
+                바이오 시약·장비 운영 플랫폼
               </div>
 
               {/* Headline */}
               <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
-                <span className="md:hidden">시약 검색부터 재고 운영까지</span>
-                <span className="hidden md:inline">시약·장비 검색부터<br />견적·재고 운영까지</span>
+                <span className="md:hidden">시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서</span>
+                <span className="hidden md:inline">시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서</span>
               </h1>
               <p className="hidden md:block text-lg text-slate-600 mb-8 leading-relaxed max-w-xl break-keep">
-                <span className="font-semibold text-slate-800">필요한 시약을 검색</span>하고,
-                후보를 <span className="font-semibold text-slate-800">비교</span>하고,
-                <span className="font-semibold text-slate-800">견적을 요청</span>하세요.<br />
-                구매 이력과 재고 관리까지 — 한 플랫폼에서 이어집니다.
+                연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.
               </p>
               <p className="md:hidden text-sm text-slate-600 mb-5 leading-relaxed break-keep">
-                <span className="font-semibold text-slate-800">검색 → 비교 → 견적 → 재고</span>까지 한 플랫폼
+                연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.
               </p>
 
               {/* Flow chips — 데스크탑만 표시 */}
@@ -127,7 +124,7 @@ export default function IntroPage() {
           <ul className="space-y-1.5">
             <li className="flex items-center gap-2 text-xs text-slate-700">
               <Search className="h-3 w-3 text-blue-500 shrink-0" />
-              500만 DB AI 검색 + 대체품 추천
+              시약·장비 통합 검색 + 대체품 확인
             </li>
             <li className="flex items-center gap-2 text-xs text-slate-700">
               <GitCompare className="h-3 w-3 text-violet-500 shrink-0" />

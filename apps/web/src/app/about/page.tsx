@@ -10,9 +10,11 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="space-y-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">서비스 소개</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서
+            </h1>
             <p className="text-muted-foreground text-lg">
-              BioInsight Lab은 바이오·제약 연구자를 위한 AI 기반 시약·장비 검색·비교·견적 플랫폼입니다.
+              연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.
             </p>
           </div>
 
@@ -22,12 +24,12 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                바이오·제약 연구/품질/생산 현장에서 사용하는 시약·소모품·장비에 대해,
-                검색/AI 분석 → 제품 비교 → 견적 요청 리스트 생성 → 그룹웨어/전자결재용 텍스트·파일 생성까지
-                하나의 웹 서비스 안에서 자연스럽게 이어주는 구매 준비 플랫폼을 만드는 것이 목표입니다.
+                바이오·제약 현장에서 사용하는 시약·소모품·장비에 대해,
+                검색 → 제품 비교 → 견적 요청 → 구매 이력·재고 관리까지
+                하나의 플랫폼에서 이어주는 운영 도구를 만드는 것이 목표입니다.
               </p>
               <p>
-                우리는 "시약 쇼핑몰"이 아니라, 연구실/조직의 시약·장비 구매 준비/정리 도구 + 인사이트 도구를 지향합니다.
+                &quot;시약 쇼핑몰&quot;이 아니라, 연구실과 조직의 구매 흐름을 정리하고 관리하는 운영 플랫폼을 지향합니다.
               </p>
             </CardContent>
           </Card>
@@ -38,10 +40,10 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="list-disc list-inside space-y-2">
-                <li>한 번의 검색/입력 → 여러 벤더 제품 자동 정리</li>
-                <li>GPT로 의미 분석, 유사 제품 추천, 필터 정리</li>
-                <li>비교/견적 리스트를 구조화된 형식으로 자동 생성</li>
-                <li>조직에서 실제로 쓰는 그룹웨어/엑셀 양식에 바로 붙여넣기</li>
+                <li>한 번의 검색으로 여러 벤더 제품을 비교·정리</li>
+                <li>견적 요청 리스트를 구조화된 형식으로 생성</li>
+                <li>구매 이력과 재고 현황을 대시보드에서 관리</li>
+                <li>조직에서 실제로 쓰는 그룹웨어·엑셀 양식에 바로 연결</li>
                 <li>안전·규제 정보까지 한 번에 확인</li>
               </ul>
             </CardContent>

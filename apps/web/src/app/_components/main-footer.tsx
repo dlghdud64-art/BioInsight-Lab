@@ -66,7 +66,7 @@ export function MainFooter() {
               </span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-              시약 검색부터 견적, 구매, 재고 관리까지. 연구에만 집중할 수 있도록 돕는 AI 통합 솔루션입니다.
+              바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼입니다.
             </p>
             <div className="flex items-center gap-3 text-slate-600">
               {/* GitHub */}

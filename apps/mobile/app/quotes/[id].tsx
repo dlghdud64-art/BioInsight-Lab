@@ -1,8 +1,22 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
-import { Calendar, Package, User, MessageSquare } from "lucide-react-native";
-import { useQuoteDetail, useUpdateQuoteStatus } from "../../hooks/useApi";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+} from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck } from "lucide-react-native";
+import {
+  useQuoteDetail,
+  useUpdateQuoteStatus,
+  useUpdateQuoteMemo,
+  useConvertQuoteToOrder,
+} from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
+import { useState, useEffect } from "react";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -18,6 +32,17 @@ export default function QuoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: quote, isLoading } = useQuoteDetail(id);
   const updateStatus = useUpdateQuoteStatus();
+  const updateMemo = useUpdateQuoteMemo();
+  const convertToOrder = useConvertQuoteToOrder();
+
+  const [memo, setMemo] = useState("");
+  const [memoEdited, setMemoEdited] = useState(false);
+
+  useEffect(() => {
+    if (quote?.description) {
+      setMemo(quote.description);
+    }
+  }, [quote?.description]);
 
   const handleStatusChange = (newStatus: string, label: string) => {
     Alert.alert(`${label} 확인`, `이 견적을 '${label}' 상태로 변경하시겠습니까?`, [
@@ -37,6 +62,42 @@ export default function QuoteDetailScreen() {
     ]);
   };
 
+  const handleSaveMemo = () => {
+    updateMemo.mutate(
+      { id, description: memo },
+      {
+        onSuccess: () => {
+          setMemoEdited(false);
+          Alert.alert("완료", "메모가 저장되었습니다.");
+        },
+        onError: () => Alert.alert("오류", "메모 저장에 실패했습니다."),
+      }
+    );
+  };
+
+  const handleConvertToOrder = () => {
+    Alert.alert(
+      "구매 전환",
+      "이 견적을 구매 주문으로 전환하시겠습니까?\n전환 후에는 되돌릴 수 없습니다.",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "구매 전환",
+          style: "destructive",
+          onPress: () => {
+            convertToOrder.mutate(
+              { id },
+              {
+                onSuccess: () => Alert.alert("완료", "구매 주문으로 전환되었습니다."),
+                onError: () => Alert.alert("오류", "구매 전환에 실패했습니다."),
+              }
+            );
+          },
+        },
+      ]
+    );
+  };
+
   if (isLoading || !quote) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
@@ -47,7 +108,8 @@ export default function QuoteDetailScreen() {
 
   const canApprove = ["PENDING", "ON_HOLD"].includes(quote.status);
   const canHold = ["PENDING", "IN_PROGRESS"].includes(quote.status);
-  const canCancel = !["COMPLETED", "CANCELLED"].includes(quote.status);
+  const canCancel = !["COMPLETED", "CANCELLED", "PURCHASED"].includes(quote.status);
+  const canConvert = ["COMPLETED", "RESPONDED"].includes(quote.status);
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -87,6 +149,43 @@ export default function QuoteDetailScreen() {
           </View>
         </View>
 
+        {/* 벤더 응답 */}
+        {quote.vendorResponses && quote.vendorResponses.length > 0 && (
+          <View className="mx-4 mt-4">
+            <Text className="text-sm font-bold text-slate-900 mb-2">
+              벤더 응답 ({quote.vendorResponses.length}건)
+            </Text>
+            {quote.vendorResponses.map((vr, idx) => (
+              <View
+                key={vr.id || idx}
+                className="bg-white rounded-xl border border-slate-200 p-3.5 mb-2"
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="text-sm font-semibold text-slate-800">
+                    {vr.vendorName}
+                  </Text>
+                  <Text className="text-sm font-bold text-blue-600">
+                    {formatAmount(vr.totalAmount)}
+                  </Text>
+                </View>
+                <View className="flex-row gap-3">
+                  {vr.deliveryDays && (
+                    <View className="flex-row items-center gap-1">
+                      <Truck size={12} color="#94a3b8" />
+                      <Text className="text-xs text-slate-500">
+                        납기 {vr.deliveryDays}일
+                      </Text>
+                    </View>
+                  )}
+                  {vr.notes && (
+                    <Text className="text-xs text-slate-400">{vr.notes}</Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* 품목 리스트 */}
         <View className="mx-4 mt-4">
           <Text className="text-sm font-bold text-slate-900 mb-2">
@@ -119,45 +218,92 @@ export default function QuoteDetailScreen() {
           ))}
         </View>
 
-        {/* 메모 */}
-        {quote.notes && (
-          <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
-            <View className="flex-row items-center gap-2 mb-2">
+        {/* 메모 입력 */}
+        <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-2">
               <MessageSquare size={14} color="#94a3b8" />
               <Text className="text-sm font-bold text-slate-900">메모</Text>
             </View>
-            <Text className="text-sm text-slate-600">{quote.notes}</Text>
+            {memoEdited && (
+              <Pressable
+                className="bg-blue-600 rounded-lg px-3 py-1.5"
+                onPress={handleSaveMemo}
+                disabled={updateMemo.isPending}
+              >
+                {updateMemo.isPending ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-xs font-semibold text-white">저장</Text>
+                )}
+              </Pressable>
+            )}
+          </View>
+          <TextInput
+            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 min-h-[80px]"
+            placeholder="메모를 입력하세요..."
+            multiline
+            textAlignVertical="top"
+            value={memo}
+            onChangeText={(text) => {
+              setMemo(text);
+              setMemoEdited(true);
+            }}
+          />
+        </View>
+
+        {/* 구매 전환 버튼 */}
+        {canConvert && (
+          <View className="mx-4 mt-4">
+            <Pressable
+              className="bg-emerald-600 rounded-xl py-3.5 flex-row items-center justify-center gap-2"
+              onPress={handleConvertToOrder}
+              disabled={convertToOrder.isPending}
+            >
+              {convertToOrder.isPending ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <ShoppingCart size={16} color="white" />
+                  <Text className="text-sm font-semibold text-white">
+                    구매 주문으로 전환
+                  </Text>
+                </>
+              )}
+            </Pressable>
           </View>
         )}
       </ScrollView>
 
       {/* 하단 액션 바 */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 pb-8 flex-row gap-2">
-        {canApprove && (
-          <Pressable
-            className="flex-1 bg-blue-600 rounded-xl py-3 items-center"
-            onPress={() => handleStatusChange("IN_PROGRESS", "승인")}
-          >
-            <Text className="text-sm font-semibold text-white">승인</Text>
-          </Pressable>
-        )}
-        {canHold && (
-          <Pressable
-            className="flex-1 bg-purple-100 rounded-xl py-3 items-center"
-            onPress={() => handleStatusChange("ON_HOLD", "보류")}
-          >
-            <Text className="text-sm font-semibold text-purple-700">보류</Text>
-          </Pressable>
-        )}
-        {canCancel && (
-          <Pressable
-            className="flex-1 bg-red-100 rounded-xl py-3 items-center"
-            onPress={() => handleStatusChange("CANCELLED", "반려")}
-          >
-            <Text className="text-sm font-semibold text-red-700">반려</Text>
-          </Pressable>
-        )}
-      </View>
+      {(canApprove || canHold || canCancel) && (
+        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 pb-8 flex-row gap-2">
+          {canApprove && (
+            <Pressable
+              className="flex-1 bg-blue-600 rounded-xl py-3 items-center"
+              onPress={() => handleStatusChange("IN_PROGRESS", "승인")}
+            >
+              <Text className="text-sm font-semibold text-white">승인</Text>
+            </Pressable>
+          )}
+          {canHold && (
+            <Pressable
+              className="flex-1 bg-purple-100 rounded-xl py-3 items-center"
+              onPress={() => handleStatusChange("ON_HOLD", "보류")}
+            >
+              <Text className="text-sm font-semibold text-purple-700">보류</Text>
+            </Pressable>
+          )}
+          {canCancel && (
+            <Pressable
+              className="flex-1 bg-red-100 rounded-xl py-3 items-center"
+              onPress={() => handleStatusChange("CANCELLED", "반려")}
+            >
+              <Text className="text-sm font-semibold text-red-700">반려</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 }
