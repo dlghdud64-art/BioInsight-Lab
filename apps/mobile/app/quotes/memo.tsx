@@ -1,25 +1,80 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { FileText } from "lucide-react-native";
+import { useState, useEffect } from "react";
+import { useQuoteDetail, useUpdateQuoteMemo } from "../../hooks/useApi";
 
 export default function QuoteMemoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: quote, isLoading } = useQuoteDetail(id);
+  const updateMemo = useUpdateQuoteMemo();
+  const [memo, setMemo] = useState("");
+
+  useEffect(() => {
+    if (quote?.description) {
+      setMemo(quote.description);
+    }
+  }, [quote?.description]);
+
+  const handleSave = () => {
+    updateMemo.mutate(
+      { id, description: memo.trim() },
+      {
+        onSuccess: () => {
+          Alert.alert("완료", "메모가 저장되었습니다.", [
+            { text: "확인", onPress: () => router.back() },
+          ]);
+        },
+        onError: () => Alert.alert("오류", "메모 저장에 실패했습니다."),
+      }
+    );
+  };
+
+  if (isLoading || !quote) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator color="#2563eb" />
+      </View>
+    );
+  }
+
+  const hasChanged = memo.trim() !== (quote.description ?? "").trim();
 
   return (
-    <View className="flex-1 bg-white items-center justify-center px-6">
-      <View className="w-14 h-14 rounded-full bg-blue-50 items-center justify-center mb-4">
-        <FileText size={24} color="#2563eb" />
+    <KeyboardAvoidingView
+      className="flex-1 bg-white"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={100}
+    >
+      <View className="flex-1 px-5 pt-4">
+        <Text className="text-base font-bold text-slate-900 mb-1">{quote.title}</Text>
+        <Text className="text-xs text-slate-400 mb-4">견적에 대한 메모를 작성하세요</Text>
+
+        <TextInput
+          className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700"
+          placeholder="메모를 입력하세요..."
+          multiline
+          textAlignVertical="top"
+          value={memo}
+          onChangeText={setMemo}
+          autoFocus
+        />
       </View>
-      <Text className="text-lg font-bold text-slate-900 mb-1">견적 메모</Text>
-      <Text className="text-sm text-slate-500 text-center mb-6">
-        견적에 대한 메모를 작성하거나 수정합니다.
-      </Text>
-      <Pressable
-        className="bg-blue-600 rounded-xl px-6 py-3"
-        onPress={() => id ? router.push(`/quotes/${id}`) : router.back()}
-      >
-        <Text className="text-sm font-semibold text-white">견적 상세로 이동</Text>
-      </Pressable>
-    </View>
+
+      <View className="px-5 py-4 pb-8 border-t border-slate-100 bg-white">
+        <Pressable
+          className={`rounded-xl py-3.5 items-center ${hasChanged ? "bg-blue-600" : "bg-slate-200"}`}
+          onPress={handleSave}
+          disabled={!hasChanged || updateMemo.isPending}
+        >
+          {updateMemo.isPending ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className={`text-sm font-semibold ${hasChanged ? "text-white" : "text-slate-400"}`}>
+              저장
+            </Text>
+          )}
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
