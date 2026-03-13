@@ -76,23 +76,6 @@ export default function RootLayout() {
             options={{ headerShown: true, title: "라벨 인쇄", headerBackTitle: "뒤로" }}
           />
 
-          {/* ─── 더보기 ─── */}
-          <Stack.Screen
-            name="more/safety"
-            options={{ headerShown: true, title: "안전 관리", headerBackTitle: "뒤로" }}
-          />
-          <Stack.Screen
-            name="more/budget"
-            options={{ headerShown: true, title: "예산 요약", headerBackTitle: "뒤로" }}
-          />
-          <Stack.Screen
-            name="more/org-settings"
-            options={{ headerShown: true, title: "조직 설정", headerBackTitle: "뒤로" }}
-          />
-          <Stack.Screen
-            name="more/support"
-            options={{ headerShown: true, title: "고객 지원", headerBackTitle: "뒤로" }}
-          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
