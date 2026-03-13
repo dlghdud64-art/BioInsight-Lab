@@ -1242,9 +1242,23 @@ function InventoryPageContent() {
                       }
                     }}
                     onReorder={(inventory) => {
-                      toast({
-                        title: "주문하기",
-                        description: `${inventory.product.name} 주문 기능은 곧 제공될 예정입니다.`,
+                      aiPanel.preparePanel({
+                        id: inventory.id,
+                        productId: inventory.productId,
+                        productName: inventory.product.name,
+                        brand: inventory.product.brand || undefined,
+                        catalogNumber: inventory.product.catalogNumber || undefined,
+                        currentQuantity: inventory.currentQuantity,
+                        unit: inventory.unit || undefined,
+                        safetyStock: inventory.safetyStock || undefined,
+                        minOrderQty: inventory.minOrderQty || undefined,
+                        location: inventory.location || undefined,
+                        expiryDate: inventory.expiryDate || undefined,
+                        lotNumber: inventory.lotNumber || undefined,
+                        autoReorderEnabled: inventory.autoReorderEnabled || false,
+                        averageDailyUsage: inventory.averageDailyUsage || undefined,
+                        leadTimeDays: inventory.leadTimeDays || undefined,
+                        lastInspectedAt: undefined,
                       });
                     }}
                     onDetailClick={(inventory) => {
@@ -1621,13 +1635,27 @@ function InventoryPageContent() {
                                     <DropdownMenuItem
                                       className="gap-2 text-xs"
                                       onClick={() => {
-                                        toast({
-                                          title: "재발주 검토",
-                                          description: `${inv.product.name} 소진 후 대체품 재발주를 검토하세요.`,
+                                        aiPanel.preparePanel({
+                                          id: inv.id,
+                                          productId: inv.productId,
+                                          productName: inv.product.name,
+                                          brand: inv.product.brand || undefined,
+                                          catalogNumber: inv.product.catalogNumber || undefined,
+                                          currentQuantity: inv.currentQuantity,
+                                          unit: inv.unit || undefined,
+                                          safetyStock: inv.safetyStock || undefined,
+                                          minOrderQty: inv.minOrderQty || undefined,
+                                          location: inv.location || undefined,
+                                          expiryDate: inv.expiryDate || undefined,
+                                          lotNumber: inv.lotNumber || undefined,
+                                          autoReorderEnabled: inv.autoReorderEnabled || false,
+                                          averageDailyUsage: inv.averageDailyUsage || undefined,
+                                          leadTimeDays: inv.leadTimeDays || undefined,
+                                          lastInspectedAt: undefined,
                                         });
                                       }}
                                     >
-                                      <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                      <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                                       재발주 검토
                                     </DropdownMenuItem>
                                   </>
@@ -1638,14 +1666,28 @@ function InventoryPageContent() {
                                     <DropdownMenuItem
                                       className="gap-2 text-xs"
                                       onClick={() => {
-                                        toast({
-                                          title: "대체품 재발주",
-                                          description: `${inv.product.name} 대체품 재발주 기능은 곧 제공될 예정입니다.`,
+                                        aiPanel.preparePanel({
+                                          id: inv.id,
+                                          productId: inv.productId,
+                                          productName: inv.product.name,
+                                          brand: inv.product.brand || undefined,
+                                          catalogNumber: inv.product.catalogNumber || undefined,
+                                          currentQuantity: inv.currentQuantity,
+                                          unit: inv.unit || undefined,
+                                          safetyStock: inv.safetyStock || undefined,
+                                          minOrderQty: inv.minOrderQty || undefined,
+                                          location: inv.location || undefined,
+                                          expiryDate: inv.expiryDate || undefined,
+                                          lotNumber: inv.lotNumber || undefined,
+                                          autoReorderEnabled: inv.autoReorderEnabled || false,
+                                          averageDailyUsage: inv.averageDailyUsage || undefined,
+                                          leadTimeDays: inv.leadTimeDays || undefined,
+                                          lastInspectedAt: undefined,
                                         });
                                       }}
                                     >
-                                      <RotateCcw className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                                      대체품 재발주
+                                      <Sparkles className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                      대체품 재발주 검토
                                     </DropdownMenuItem>
                                   </>
                                 )}
@@ -2144,13 +2186,29 @@ function InventoryPageContent() {
                     <Button
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                       onClick={() => {
-                        toast({
-                          title: "재발주 (견적 요청)",
-                          description: `${selectedItem.product.name} 견적 요청 기능은 곧 제공될 예정입니다.`,
+                        setIsSheetOpen(false);
+                        aiPanel.preparePanel({
+                          id: selectedItem.id,
+                          productId: selectedItem.productId,
+                          productName: selectedItem.product.name,
+                          brand: selectedItem.product.brand || undefined,
+                          catalogNumber: selectedItem.product.catalogNumber || undefined,
+                          currentQuantity: selectedItem.currentQuantity,
+                          unit: selectedItem.unit || undefined,
+                          safetyStock: selectedItem.safetyStock || undefined,
+                          minOrderQty: selectedItem.minOrderQty || undefined,
+                          location: selectedItem.location || undefined,
+                          expiryDate: selectedItem.expiryDate || undefined,
+                          lotNumber: selectedItem.lotNumber || undefined,
+                          autoReorderEnabled: selectedItem.autoReorderEnabled || false,
+                          averageDailyUsage: selectedItem.averageDailyUsage || undefined,
+                          leadTimeDays: selectedItem.leadTimeDays || undefined,
+                          lastInspectedAt: undefined,
                         });
                       }}
                     >
-                      재발주 (견적 요청)
+                      <Sparkles className="h-4 w-4 mr-1.5" />
+                      재발주 검토
                     </Button>
                   </div>
                 </div>
