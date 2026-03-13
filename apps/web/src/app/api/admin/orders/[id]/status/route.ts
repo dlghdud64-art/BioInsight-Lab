@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { sendOrderDeliveredEmail } from "@/lib/email";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { extractRequestMeta } from "@/lib/audit";
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -182,6 +184,28 @@ export async function PATCH(
         })),
       });
     }
+
+    // 활동 로그: 주문 상태 변경
+    const { ipAddress, userAgent } = extractRequestMeta(req);
+    const actorRole = await getActorRole(session.user.id, order.organizationId);
+    await createActivityLog({
+      activityType: "ORDER_STATUS_CHANGED",
+      entityType: "ORDER",
+      entityId: orderId,
+      beforeStatus: order.status,
+      afterStatus: newStatus,
+      userId: session.user.id,
+      organizationId: order.organizationId,
+      actorRole,
+      metadata: {
+        orderNumber: order.orderNumber,
+        notes: notes || null,
+        inventoryItemsCreated: result.inventoryItems.length,
+        emailSent: newStatus === "DELIVERED" && !!order.user.email,
+      },
+      ipAddress,
+      userAgent,
+    });
 
     return NextResponse.json({
       success: true,

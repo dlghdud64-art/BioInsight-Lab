@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { QuoteStatus, OrderStatus, ActivityType, Prisma, TeamRole } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { extractRequestMeta } from "@/lib/audit";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -227,6 +229,27 @@ export async function POST(request: NextRequest) {
       userAgent,
     }).catch((error) => {
       console.error("Failed to create activity log:", error);
+    });
+
+    // Closed-loop 활동 로그: 주문 상태 전이
+    const { ipAddress: ip2, userAgent: ua2 } = extractRequestMeta(request);
+    const actorRole = await getActorRole(session.user.id, result.order.organizationId);
+    await createActivityLog({
+      activityType: "ORDER_STATUS_CHANGED",
+      entityType: "ORDER",
+      entityId: result.order.id,
+      afterStatus: "ORDERED",
+      userId: session.user.id,
+      organizationId: result.order.organizationId,
+      actorRole,
+      metadata: {
+        orderNumber: result.order.orderNumber,
+        quoteId,
+        totalAmount: result.order.totalAmount,
+        trigger: "order_created",
+      },
+      ipAddress: ip2,
+      userAgent: ua2,
     });
 
     return NextResponse.json({

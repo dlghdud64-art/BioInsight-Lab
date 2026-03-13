@@ -1082,8 +1082,11 @@ enum ActivityType {
   EMAIL_SENT                 // 이메일 발송 완료
   VENDOR_REPLY_LOGGED        // 벤더 회신 수신 기록
   ORDER_FOLLOWUP_GENERATED   // 주문 후속 이메일 초안 생성
+  ORDER_FOLLOWUP_REVIEWED    // 주문 후속 이메일 검토 (승인/무시)
+  ORDER_FOLLOWUP_SENT        // 주문 후속 이메일 발송 완료
   ORDER_STATUS_CHANGE_PROPOSED  // 주문 상태 변경 제안
   ORDER_STATUS_CHANGE_APPROVED  // 주문 상태 변경 승인
+  ORDER_STATUS_CHANGED       // 주문 상태 변경 실행 (관리자)
   INVENTORY_RESTOCK_SUGGESTED   // 재발주 제안 생성
   INVENTORY_RESTOCK_REVIEWED    // 재발주 제안 검토
   PURCHASE_REQUEST_CREATED      // 구매 요청 생성
