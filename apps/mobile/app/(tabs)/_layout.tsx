@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Search, FileText, User } from "lucide-react-native";
+import { Home, FileText, ShoppingCart, Package, Menu } from "lucide-react-native";
 
 export default function TabsLayout() {
   return (
@@ -24,18 +24,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "홈",
-          tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: "검색",
-          tabBarIcon: ({ color, size }) => (
-            <Search size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -48,14 +37,33 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="purchases"
         options={{
-          title: "내 정보",
+          title: "구매",
           tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
+            <ShoppingCart size={size} color={color} />
           ),
         }}
       />
+      <Tabs.Screen
+        name="inventory"
+        options={{
+          title: "재고",
+          tabBarIcon: ({ color, size }) => (
+            <Package size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: "더보기",
+          tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
+        }}
+      />
+      {/* 기존 탭 숨김 처리 */}
+      <Tabs.Screen name="search" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
 }

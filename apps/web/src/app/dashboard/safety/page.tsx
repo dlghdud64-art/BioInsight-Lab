@@ -367,6 +367,23 @@ export default function SafetyManagerPage() {
     setInspDialogOpen(false);
   };
 
+  // ─── 폐기 처리 Dialog ──────────────────────────────────────────────
+  const [disposeDialogOpen, setDisposeDialogOpen] = useState(false);
+  const [disposeTarget, setDisposeTarget] = useState<SafetyItem | null>(null);
+
+  const openDisposeDialog = (item: SafetyItem) => {
+    setDisposeTarget(item);
+    setDisposeDialogOpen(true);
+  };
+
+  const handleDispose = () => {
+    if (!disposeTarget) return;
+    setItems((prev) => prev.filter((i) => i.id !== disposeTarget.id));
+    toast({ title: "폐기 처리 완료", description: `${disposeTarget.name}이(가) 목록에서 제거되었습니다.` });
+    setDisposeDialogOpen(false);
+    setDisposeTarget(null);
+  };
+
   const filteredItems = (items || []).filter((item) => {
     if (riskFilter === "high" && item.level !== "HIGH") return false;
     if (riskFilter === "medium" && item.level !== "MEDIUM") return false;
@@ -636,7 +653,7 @@ export default function SafetyManagerPage() {
                         )}
                         {item.level === "HIGH" && (
                           <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            onClick={() => toast({ title: "폐기 처리", description: `${item.name}의 폐기 절차를 확인하세요.` })}
+                            onClick={() => openDisposeDialog(item)}
                           >
                             <AlertTriangle className="h-3 w-3 mr-1" />폐기 처리
                           </Button>
@@ -818,6 +835,41 @@ export default function SafetyManagerPage() {
             </Button>
             <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleInspSave} disabled={inspSaving}>
               {inspSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "점검 기록 저장"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── 폐기 처리 확인 Dialog ────────────────────────────────────── */}
+      <Dialog open={disposeDialogOpen} onOpenChange={setDisposeDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2 text-red-700 dark:text-red-400">
+              <AlertTriangle className="h-5 w-5" />
+              폐기 처리 확인
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              이 작업은 되돌릴 수 없습니다. 해당 물질을 안전 관리 목록에서 제거합니다.
+            </DialogDescription>
+          </DialogHeader>
+          {disposeTarget && (
+            <div className="space-y-3 py-2">
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">{disposeTarget.name}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">CAS: {disposeTarget.cas}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">보관: {disposeTarget.storageCondition} · 위치: {disposeTarget.loc}</p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                폐기 전 MSDS에 명시된 폐기 절차를 반드시 확인하세요. 폐기 후 관련 법규에 따라 폐기 기록을 별도 보관해야 합니다.
+              </p>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setDisposeDialogOpen(false)}>
+              취소
+            </Button>
+            <Button size="sm" className="text-xs bg-red-600 hover:bg-red-700 text-white" onClick={handleDispose}>
+              폐기 처리
             </Button>
           </div>
         </DialogContent>

@@ -961,9 +961,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <PartnerOrgTab
                 currentOrgId={params.id}
                 allOrgs={orgsData?.organizations || []}
-                onLink={(orgId) => {
-                  toast({ title: "협력 조직 연결", description: "해당 기능은 준비 중입니다." });
-                }}
+                onLink={() => {}}
               />
             </TabsContent>
           </Tabs>
@@ -1068,10 +1066,10 @@ function PartnerOrgTab({
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0 text-xs border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
-              onClick={() => onLink(org.id)}
+              className="shrink-0 text-xs border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500"
+              disabled
             >
-              연결
+              Coming Soon
             </Button>
           </div>
         ))}
