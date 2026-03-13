@@ -102,7 +102,7 @@ export default function LoginScreen() {
                   <Text className="text-teal-500">Lab</Text>
                 </Text>
                 <Text className="text-sm text-slate-500 mt-1">
-                  연구실 구매 플랫폼
+                  검색·견적·구매·재고를 한곳에서
                 </Text>
               </View>
 

@@ -33,13 +33,13 @@ function SignInContent() {
 
         {/* 2. 슬로건: 수직 중앙 배치 */}
         <div className="flex-1 flex flex-col justify-center pl-16 pr-14 space-y-6">
-          <h1 className="text-6xl font-extrabold leading-tight text-white tracking-tight antialiased">
-            연구와 실험에<br />
-            <span className="text-blue-500">더 집중하세요.</span>
+          <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tight antialiased">
+            연구실의 <span className="text-blue-400">검색</span>·<span className="text-blue-400">견적</span>·<span className="text-blue-400">구매</span>·<span className="text-blue-400">재고</span><br />
+            업무를 한곳에서.
           </h1>
           <p className="text-slate-300/90 text-[17px] max-w-sm leading-relaxed antialiased">
-            시약 검색, 비교, 견적 요청, 구매 이력과 재고 현황까지<br />
-            BioInsight Lab에서 한곳에 정리할 수 있습니다.
+            조직 단위의 구매 운영과 <span className="text-blue-400">협업</span>까지<br />
+            연결하는 플랫폼으로 확장됩니다.
           </p>
         </div>
 
@@ -85,7 +85,7 @@ function SignInContent() {
                   로그인
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-                  BioInsight Lab에 오신 것을 환영합니다.
+                  연구실의 검색·견적·구매·재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 

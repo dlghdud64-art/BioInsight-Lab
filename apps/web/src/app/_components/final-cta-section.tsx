@@ -13,9 +13,9 @@ export function FinalCTASection() {
             검색부터 운영까지, 한 곳에서
           </h2>
           <p className="text-sm md:text-base text-slate-500 max-w-lg mx-auto leading-relaxed">
-            시약 검색, 벤더 비교, 견적 요청, 구매 이력과 재고 관리까지
+            시약·장비 검색, 벤더 비교, 견적 요청, 구매 이력과 재고 관리까지
             <br />
-            BioInsight Lab에서 한 흐름으로 이어집니다.
+            한 플랫폼에서 이어집니다.
           </p>
         </div>
 

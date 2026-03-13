@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s | BioInsight Lab",
   },
   description:
-    "바이오·제약 연구자를 위한 AI 기반 시약·장비 검색·비교·견적 플랫폼. 프로토콜 자동 분석, 다중 벤더 견적 비교, ERP 연동 지원으로 연구 효율을 극대화하세요.",
+    "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼. 연구실과 조직의 구매 흐름을 통합합니다.",
   keywords: [
     "바이오",
     "제약",
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     "RFQ",
     "실험실",
     "연구소",
-    "AI 프로토콜",
-    "ERP 연동",
+    "구매 관리",
+    "재고 관리",
   ],
   authors: [{ name: "BioInsight Lab" }],
   creator: "BioInsight Lab",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     siteName: "BioInsight Lab",
     title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
     description:
-      "AI 기반 시약·장비 검색·비교·견적 플랫폼. 프로토콜 자동 분석으로 연구 효율 극대화",
+      "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: [
       {
         url: "/og-image.png",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
     description:
-      "AI 기반 시약·장비 검색·비교·견적 플랫폼. 프로토콜 자동 분석으로 연구 효율 극대화",
+      "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: ["/og-image.png"],
   },
 };

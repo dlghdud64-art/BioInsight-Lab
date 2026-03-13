@@ -26,8 +26,8 @@ export function BioInsightFeaturesSection() {
     },
     {
       icon: Brain,
-      title: "AI 예측",
-      description: "떨어질 때를 미리 알려주는 스마트 알림.",
+      title: "재구매 알림",
+      description: "떨어질 때를 미리 알려주는 자동 알림.",
       details: "과거 주문 패턴을 분석하여 재구매 시점을 예측하고 알림을 보내드립니다.",
       color: "from-purple-500 to-purple-600",
       bgColor: "bg-purple-50",

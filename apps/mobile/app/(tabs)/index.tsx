@@ -94,7 +94,7 @@ export default function HomeScreen() {
               BioInsight Lab
             </Text>
             <Text className="text-xs text-slate-500 mt-0.5">
-              연구실 운영 관리
+              검색·견적·구매·재고 운영 플랫폼
             </Text>
           </View>
           <Pressable className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center">
