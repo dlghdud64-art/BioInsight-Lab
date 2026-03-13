@@ -79,12 +79,12 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none">
+          <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none max-w-3xl mx-auto">
             <span className="block pb-1.5 md:pb-3">
-              시약과 장비를 <span className="text-blue-600">검색</span>하고 <span className="text-blue-600">비교</span>한 뒤,
+              시약과 장비를 <span className="text-blue-600">검색</span>한 뒤,
             </span>
             <span className="block pt-0.5 md:pt-2">
-              <span className="text-blue-600">견적 요청</span>부터 <span className="text-blue-600">구매</span>와 <span className="text-blue-600">재고 관리</span>까지
+              견적 요청부터 <span className="text-blue-600">구매와 재고 관리</span>까지
             </span>
           </h1>
 

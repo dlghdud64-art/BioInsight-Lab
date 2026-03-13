@@ -43,14 +43,14 @@ export default function IntroPage() {
 
               {/* Headline */}
               <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
-                <span className="md:hidden">시약·장비 <span className="text-blue-600">검색</span>, <span className="text-blue-600">견적</span>, <span className="text-blue-600">구매</span>, <span className="text-blue-600">재고 관리</span></span>
-                <span className="hidden md:inline">바이오 시약·장비 <span className="text-blue-600">검색</span>, <span className="text-blue-600">견적</span>, <span className="text-blue-600">구매</span>,<br /><span className="text-blue-600">재고 관리</span>를 하나로 연결한 운영 제품</span>
+                <span className="md:hidden">시약·장비 <span className="text-blue-600">검색</span>부터 구매·재고 관리까지</span>
+                <span className="hidden md:inline">바이오 시약·장비 <span className="text-blue-600">검색</span>부터<br /><span className="text-blue-600">구매와 재고 관리</span>까지 하나로 연결</span>
               </h1>
               <p className="hidden md:block text-lg text-slate-600 mb-8 leading-relaxed max-w-xl break-keep">
-                연구실과 조직의 구매 흐름을 통합하는 <span className="font-semibold text-blue-600">운영 플랫폼</span>입니다.
+                연구실과 조직의 구매 흐름을 통합하는 운영 플랫폼입니다.
               </p>
               <p className="md:hidden text-sm text-slate-600 mb-5 leading-relaxed break-keep">
-                연구실과 조직의 구매 흐름을 통합하는 <span className="font-semibold text-blue-600">운영 플랫폼</span>
+                연구실과 조직의 구매 흐름을 통합하는 운영 플랫폼
               </p>
 
               {/* Flow chips — 데스크탑만 표시 */}

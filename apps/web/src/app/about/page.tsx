@@ -12,8 +12,8 @@ export default function AboutPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">서비스 소개</h1>
             <p className="text-muted-foreground text-lg">
-              바이오 시약·장비 <span className="text-blue-600 font-medium">검색</span>, <span className="text-blue-600 font-medium">견적</span>, <span className="text-blue-600 font-medium">구매</span>, <span className="text-blue-600 font-medium">재고 관리</span>를 하나로 연결한 운영 제품.{" "}
-              연구실과 조직의 구매 흐름을 통합하는 <span className="text-blue-600 font-medium">운영 플랫폼</span>입니다.
+              바이오 시약·장비 <span className="text-blue-600 font-medium">검색</span>부터 견적, 구매, <span className="text-blue-600 font-medium">재고 관리</span>까지 하나로 연결한 운영 제품입니다.{" "}
+              연구실과 조직의 구매 흐름을 통합하는 운영 플랫폼입니다.
             </p>
           </div>
 
