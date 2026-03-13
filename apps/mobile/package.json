@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "8.6.0",
+    "@react-native-community/netinfo": "^12.0.1",
+    "@sentry/react-native": "^8.4.0",
     "axios": "^1.13.6",
     "expo": "~55.0.5",
     "expo-constants": "^55.0.7",

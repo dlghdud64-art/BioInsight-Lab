@@ -2,6 +2,7 @@ import { View, Text, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvo
 import { useLocalSearchParams, router } from "expo-router";
 import { useState, useEffect } from "react";
 import { useQuoteDetail, useUpdateQuoteMemo } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 export default function QuoteMemoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,7 +25,7 @@ export default function QuoteMemoScreen() {
             { text: "확인", onPress: () => router.back() },
           ]);
         },
-        onError: () => Alert.alert("오류", "메모 저장에 실패했습니다."),
+        onError: (err) => Alert.alert("오류", getErrorMessage(err)),
       }
     );
   };

@@ -2,6 +2,7 @@ import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator 
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { useCreatePurchase, useBatchImportPurchases } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
 import { Edit3, ClipboardList, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react-native";
 
@@ -120,8 +121,8 @@ function QuickEntryForm() {
             params: { count: "1", total: form.amount },
           });
         },
-        onError: () => {
-          Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
+        onError: (err) => {
+          Alert.alert("오류", getErrorMessage(err));
         },
       }
     );
@@ -449,8 +450,8 @@ export default function PurchaseRegisterScreen() {
             navigateToComplete();
           }
         },
-        onError: () => {
-          Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
+        onError: (err) => {
+          Alert.alert("오류", getErrorMessage(err));
         },
       }
     );

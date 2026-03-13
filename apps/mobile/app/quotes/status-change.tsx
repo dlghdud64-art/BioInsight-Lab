@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from "rea
 import { useLocalSearchParams, router } from "expo-router";
 import { CheckCircle } from "lucide-react-native";
 import { useQuoteDetail, useUpdateQuoteStatus } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 const STATUSES = [
   { key: "PENDING", label: "신규 요청", color: "#f59e0b" },
@@ -35,7 +36,7 @@ export default function QuoteStatusChangeScreen() {
                   { text: "확인", onPress: () => router.back() },
                 ]);
               },
-              onError: () => Alert.alert("오류", "상태 변경에 실패했습니다."),
+              onError: (err) => Alert.alert("오류", getErrorMessage(err)),
             }
           );
         },

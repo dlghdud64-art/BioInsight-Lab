@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from "rea
 import { useLocalSearchParams, router } from "expo-router";
 import { ShoppingCart, Package, Calendar, User } from "lucide-react-native";
 import { useQuoteDetail, useConvertQuoteToOrder } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -36,7 +37,7 @@ export default function QuoteOrderConfirmScreen() {
                     { text: "확인", onPress: () => router.dismissAll() },
                   ]);
                 },
-                onError: () => Alert.alert("오류", "주문 전환에 실패했습니다."),
+                onError: (err) => Alert.alert("오류", getErrorMessage(err)),
               }
             );
           },

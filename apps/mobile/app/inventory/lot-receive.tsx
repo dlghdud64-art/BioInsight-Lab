@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
 import { CheckCircle, Printer, MapPin, ArrowDownToLine } from "lucide-react-native";
 import { useRestockInventory, useInventoryDetail } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
 
 type Step = "form" | "done";
@@ -45,7 +46,7 @@ export default function LotReceiveScreen() {
       },
       {
         onSuccess: () => setStep("done"),
-        onError: () => Alert.alert("오류", "입고 처리에 실패했습니다."),
+        onError: (err) => Alert.alert("오류", getErrorMessage(err)),
       }
     );
   };
