@@ -52,10 +52,6 @@ export default function RootLayout() {
             options={{ headerShown: true, title: "재고 상세", headerBackTitle: "뒤로" }}
           />
           <Stack.Screen
-            name="inventory/lots"
-            options={{ headerShown: true, title: "Lot 목록", headerBackTitle: "뒤로" }}
-          />
-          <Stack.Screen
             name="inventory/lot-receive"
             options={{ headerShown: true, title: "입고 등록", headerBackTitle: "뒤로" }}
           />

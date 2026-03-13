@@ -245,14 +245,20 @@ export function useConsumeInventory() {
       id,
       quantity,
       notes,
+      lotNumber,
+      type = "DISPATCH",
     }: {
       id: string;
       quantity: number;
       notes?: string;
+      lotNumber?: string;
+      type?: "DISPATCH" | "USAGE";
     }) => {
       const res = await apiClient.post(`/api/inventory/${id}/use`, {
         quantity,
         notes,
+        lotNumber,
+        type,
       });
       return res.data;
     },
