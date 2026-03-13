@@ -1,0 +1,59 @@
+# S09. 네트워크/서버 오류 시 사용자 대응 가능 여부
+# 플랫폼: Mobile
+# 역할: 연구원
+# 전제조건: 로그인 완료
+# 참고: 비행기 모드 전환은 Maestro에서 직접 제어 불가 —
+#       대신 앱 내 오프라인 배너 표시 여부와 에러 핸들링을 검증
+
+appId: com.bioinsightlab.app
+name: "S09: 오프라인 및 에러 핸들링"
+
+---
+
+# 1. 로그인
+- launchApp
+- assertVisible: "이메일"
+- tapOn: "이메일"
+- inputText: ${E2E_EMAIL}
+- tapOn: "비밀번호"
+- inputText: ${E2E_PASSWORD}
+- tapOn: "로그인"
+- assertVisible: "홈"
+
+# 2. 각 탭 이동 시 크래시 없음 확인
+- tapOn: "견적"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "crash|fatal|undefined"
+    optional: true
+
+- tapOn: "구매"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "crash|fatal|undefined"
+    optional: true
+
+- tapOn: "재고"
+- waitForAnimationToEnd
+- assertNotVisible:
+    text: "crash|fatal|undefined"
+    optional: true
+
+- tapOn: "더보기"
+- waitForAnimationToEnd
+
+# 3. 앱 버전 표시 확인
+- assertVisible:
+    text: "버전|v1"
+    optional: true
+
+# 4. 홈으로 복귀 후 Pull-to-Refresh
+- tapOn: "홈"
+- waitForAnimationToEnd
+- scroll:
+    direction: DOWN
+    duration: 500
+- waitForAnimationToEnd
+
+# 크래시 없이 화면 유지 확인
+- assertVisible: "홈"

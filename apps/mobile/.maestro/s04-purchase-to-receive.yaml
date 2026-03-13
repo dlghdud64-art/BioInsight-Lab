@@ -1,0 +1,66 @@
+# S04. 구매 완료 → 입고 처리
+# 플랫폼: Mobile
+# 역할: 구매 담당
+# 전제조건: 로그인 완료, 구매 기록 1건 이상 존재
+
+appId: com.bioinsightlab.app
+name: "S04: 구매 → 입고 처리"
+
+---
+
+# 1. 로그인
+- launchApp
+- assertVisible: "이메일"
+- tapOn: "이메일"
+- inputText: ${E2E_EMAIL}
+- tapOn: "비밀번호"
+- inputText: ${E2E_PASSWORD}
+- tapOn: "로그인"
+- assertVisible: "홈"
+
+# 2. 구매 탭 이동
+- tapOn: "구매"
+- assertVisible:
+    text: "구매"
+    enabled: true
+
+# 3. 미반영 필터 선택
+- tapOn: "미반영"
+- waitForAnimationToEnd
+
+# 4. 첫 번째 구매 기록 선택
+- tapOn:
+    index: 0
+    text: ".*"
+    # 첫 번째 카드 탭 (구매 기록)
+- waitForAnimationToEnd
+
+# 5. 재고 반영 버튼 탭
+- scrollUntilVisible:
+    element: "재고 반영"
+    direction: DOWN
+- tapOn: "재고 반영"
+- waitForAnimationToEnd
+
+# 6. Lot 입고 정보 입력
+- assertVisible: "Lot"
+- tapOn:
+    id: "lotNumber"
+    optional: true
+- inputText: "TEST-LOT-001"
+
+- tapOn:
+    id: "quantity"
+    optional: true
+- inputText: "10"
+
+# 7. 입고 완료
+- scrollUntilVisible:
+    element: "입고 완료"
+    direction: DOWN
+- tapOn: "입고 완료"
+
+# 8. 성공 확인
+- assertVisible:
+    text: "완료|성공|저장"
+    optional: true

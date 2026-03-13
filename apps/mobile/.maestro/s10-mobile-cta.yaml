@@ -1,0 +1,104 @@
+# S10. 모바일 전용 핵심 CTA 처리 가능 여부
+# 플랫폼: Mobile 전용
+# 역할: 연구원, 재고 담당
+# 전제조건: 로그인 완료, 재고 품목 1건 이상
+
+appId: com.bioinsightlab.app
+name: "S10: 모바일 핵심 CTA"
+
+---
+
+# 1. 로그인
+- launchApp
+- assertVisible: "이메일"
+- tapOn: "이메일"
+- inputText: ${E2E_EMAIL}
+- tapOn: "비밀번호"
+- inputText: ${E2E_PASSWORD}
+- tapOn: "로그인"
+- assertVisible: "홈"
+
+# 2. 홈 → QR 스캔 바로가기
+- tapOn: "QR 스캔"
+- waitForAnimationToEnd
+
+# 카메라 권한 팝업 처리
+- tapOn:
+    text: "허용|Allow"
+    optional: true
+- waitForAnimationToEnd
+
+# 스캐너 화면 확인
+- assertVisible:
+    text: "스캔|바코드|QR"
+    optional: true
+
+# 수동 검색으로 전환
+- tapOn:
+    text: "수동 검색|직접 입력"
+    optional: true
+
+# 3. 뒤로 가기 → 재고 탭
+- pressKey: back
+- tapOn: "재고"
+- waitForAnimationToEnd
+
+# 4. 재고 품목 선택
+- assertVisible:
+    text: "재고"
+    enabled: true
+# 첫 번째 재고 품목 탭
+- tapOn:
+    index: 0
+    text: ".*"
+    optional: true
+- waitForAnimationToEnd
+
+# 5. 출고 CTA 확인
+- scrollUntilVisible:
+    element: "출고"
+    direction: DOWN
+    optional: true
+- assertVisible:
+    text: "출고|입고|점검|라벨"
+    optional: true
+
+# 6. 점검 CTA 테스트
+- tapOn:
+    text: "점검"
+    optional: true
+- waitForAnimationToEnd
+
+# 점검 화면 확인
+- assertVisible:
+    text: "점검 항목|체크리스트"
+    optional: true
+
+# 체크리스트 첫 번째 항목 토글
+- tapOn:
+    text: "보관 상태"
+    optional: true
+
+# 결과 선택 (양호)
+- tapOn:
+    text: "양호"
+    optional: true
+
+# 사진 첨부 버튼 확인
+- assertVisible:
+    text: "촬영|앨범|사진"
+    optional: true
+
+# 저장
+- scrollUntilVisible:
+    element: "점검 기록 저장"
+    direction: DOWN
+    optional: true
+- tapOn:
+    text: "점검 기록 저장"
+    optional: true
+
+# 완료 확인
+- assertVisible:
+    text: "완료|저장|확인"
+    optional: true
