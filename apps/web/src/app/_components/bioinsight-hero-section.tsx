@@ -81,17 +81,17 @@ export function BioInsightHeroSection() {
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
           <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none max-w-3xl mx-auto">
             <span className="block pb-1.5 md:pb-3">
-              시약과 장비를 <span className="text-blue-600">검색</span>한 뒤,
+              시약·장비 검색부터
             </span>
             <span className="block pt-0.5 md:pt-2">
-              견적 요청부터 <span className="text-blue-600">구매와 재고 관리</span>까지
+              <span className="text-blue-600">구매 운영</span>까지 한곳에서
             </span>
           </h1>
 
           <p className="text-[15px] md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4 sm:px-2 break-keep">
-            개인 연구부터 팀 운영까지 확장할 수 있는{" "}
+            연구실의 반복 구매와 재고 운영 흐름을{" "}
             <br className="hidden sm:block" />
-            바이오 운영 플랫폼입니다.
+            한곳에서 관리하세요.
           </p>
         </div>
 

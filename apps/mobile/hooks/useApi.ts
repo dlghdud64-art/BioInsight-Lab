@@ -135,8 +135,33 @@ export function useCreatePurchase() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<PurchaseRecord>) => {
-      const res = await apiClient.post("/api/purchases/import/manual", data);
+      // 단건 등록: rows[] 형태로 감싸서 batch import API 사용
+      const row = {
+        purchasedAt: data.purchasedAt || new Date().toISOString(),
+        vendorName: data.vendor || "-",
+        itemName: data.productName || "",
+        catalogNumber: data.catalogNumber,
+        unit: data.unit,
+        qty: data.quantity || 1,
+        amount: data.amount,
+        category: data.category,
+      };
+      const res = await apiClient.post("/api/purchases/import", { rows: [row] });
       return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchases"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
+export function useBatchImportPurchases() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { rows: Array<Record<string, any>> }) => {
+      const res = await apiClient.post("/api/purchases/import", data);
+      return res.data as { totalRows: number; successRows: number; errorRows: number };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });

@@ -10,10 +10,11 @@ export default function AboutPage() {
       <div className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
         <div className="space-y-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">서비스 소개</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서
+            </h1>
             <p className="text-muted-foreground text-lg">
-              바이오 시약·장비 <span className="text-blue-600 font-medium">검색</span>부터 견적, 구매, <span className="text-blue-600 font-medium">재고 관리</span>까지 하나로 연결한 운영 제품입니다.{" "}
-              연구실과 조직의 구매 흐름을 통합하는 운영 플랫폼입니다.
+              연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.
             </p>
           </div>
 
