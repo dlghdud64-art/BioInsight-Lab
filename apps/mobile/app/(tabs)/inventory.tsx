@@ -16,6 +16,7 @@ const STATUS_FILTERS = [
   { key: "LOW_STOCK", label: "부족" },
   { key: "OUT_OF_STOCK", label: "소진" },
   { key: "EXPIRED", label: "만료" },
+  { key: "NEEDS_INSPECTION", label: "점검 필요" },
 ] as const;
 
 function InventoryCard({ item }: { item: ProductInventory }) {
@@ -94,7 +95,18 @@ export default function InventoryScreen() {
           .toLowerCase()
           .includes(search.toLowerCase())
       : true;
-    const matchStatus = statusFilter === "ALL" || inv.status === statusFilter;
+
+    let matchStatus: boolean;
+    if (statusFilter === "ALL") {
+      matchStatus = true;
+    } else if (statusFilter === "NEEDS_INSPECTION") {
+      // 점검 미실시: lastInspectedAt이 없거나 30일 이상 경과
+      const last = inv.lastInspectedAt ? new Date(inv.lastInspectedAt).getTime() : 0;
+      matchStatus = !last || Date.now() - last > 30 * 24 * 60 * 60 * 1000;
+    } else {
+      matchStatus = inv.status === statusFilter;
+    }
+
     return matchSearch && matchStatus;
   });
 

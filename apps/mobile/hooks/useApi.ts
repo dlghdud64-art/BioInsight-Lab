@@ -6,6 +6,9 @@ import type {
   PurchaseRecord,
   ProductInventory,
   DashboardSummary,
+  Inspection,
+  InspectionResult,
+  InspectionChecklist,
 } from "../types";
 
 // ─── 대시보드 ───────────────────────────────────────────────────────
@@ -266,6 +269,49 @@ export function useConsumeInventory() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
+// ─── 점검 ────────────────────────────────────────────────────────────
+
+export function useInspections(inventoryId: string) {
+  return useQuery<Inspection[]>({
+    queryKey: ["inspections", inventoryId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/inventory/${inventoryId}/inspection`);
+      return res.data?.inspections ?? [];
+    },
+    enabled: !!inventoryId,
+  });
+}
+
+export function useCreateInspection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      result,
+      checklist,
+      notes,
+    }: {
+      id: string;
+      result: InspectionResult;
+      checklist: InspectionChecklist;
+      notes?: string;
+    }) => {
+      const res = await apiClient.post(`/api/inventory/${id}/inspection`, {
+        result,
+        checklist,
+        notes,
+      });
+      return res.data;
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["inspections", id] });
+      qc.invalidateQueries({ queryKey: ["inventory", id] });
+      qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });

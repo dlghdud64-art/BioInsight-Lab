@@ -16,10 +16,15 @@ import {
   Printer,
   Navigation,
   Plus,
+  ClipboardCheck,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react-native";
-import { useInventoryDetail } from "../../hooks/useApi";
+import { useInventoryDetail, useInspections } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { InventoryLot } from "../../types";
+import { SafetyInfoCard } from "../../components/SafetyInfoCard";
+import type { InventoryLot, Inspection } from "../../types";
 
 function formatDate(iso?: string) {
   if (!iso) return "-";
@@ -133,9 +138,38 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
   );
 }
 
+const RESULT_STYLE: Record<string, { icon: typeof CheckCircle2; color: string; label: string; bg: string }> = {
+  PASS: { icon: CheckCircle2, color: "#059669", label: "양호", bg: "bg-emerald-50" },
+  CAUTION: { icon: AlertTriangle, color: "#d97706", label: "주의", bg: "bg-amber-50" },
+  FAIL: { icon: XCircle, color: "#dc2626", label: "불량", bg: "bg-red-50" },
+};
+
+function InspectionHistoryItem({ item }: { item: Inspection }) {
+  const style = RESULT_STYLE[item.result] || RESULT_STYLE.PASS;
+  const Icon = style.icon;
+  return (
+    <View className={`flex-row items-center gap-3 p-3 rounded-lg mb-2 ${style.bg}`}>
+      <Icon size={18} color={style.color} />
+      <View className="flex-1">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-semibold text-slate-800">{style.label}</Text>
+          <Text className="text-xs text-slate-400">{formatDate(item.inspectedAt)}</Text>
+        </View>
+        {item.user?.name && (
+          <Text className="text-xs text-slate-500 mt-0.5">{item.user.name}</Text>
+        )}
+        {item.notes && (
+          <Text className="text-xs text-slate-500 mt-0.5" numberOfLines={2}>{item.notes}</Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
 export default function InventoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: inventory, isLoading, isError, refetch } = useInventoryDetail(id);
+  const { data: inspections } = useInspections(id);
 
   if (isLoading) {
     return (
@@ -227,6 +261,47 @@ export default function InventoryDetailScreen() {
               <LotCard key={lot.id || idx} lot={lot} inventoryId={id} />
             ))
           )}
+        </View>
+
+        {/* 안전 정보 카드 */}
+        <SafetyInfoCard
+          msdsUrl={inventory.product?.msdsUrl}
+          hazardCodes={inventory.product?.hazardCodes}
+          pictograms={inventory.product?.pictograms}
+          storageCondition={inventory.product?.storageCondition}
+          ppe={inventory.product?.ppe}
+          safetyNote={inventory.product?.safetyNote}
+        />
+
+        {/* 점검 섹션 */}
+        <View className="mx-4 mt-4">
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center gap-1.5">
+              <ClipboardCheck size={14} color="#475569" />
+              <Text className="text-sm font-bold text-slate-900">점검 이력</Text>
+            </View>
+            <Pressable
+              className="flex-row items-center gap-1 bg-blue-600 rounded-lg px-3 py-1.5"
+              onPress={() =>
+                router.push({ pathname: "/inventory/inspection", params: { id } })
+              }
+            >
+              <Plus size={12} color="white" />
+              <Text className="text-xs font-semibold text-white">점검 기록</Text>
+            </Pressable>
+          </View>
+
+          <View className="bg-white rounded-xl border border-slate-200 p-3">
+            {(inspections ?? []).length === 0 ? (
+              <Text className="text-xs text-slate-400 text-center py-3">
+                점검 기록이 없습니다
+              </Text>
+            ) : (
+              (inspections ?? []).slice(0, 3).map((ins) => (
+                <InspectionHistoryItem key={ins.id} item={ins} />
+              ))
+            )}
+          </View>
         </View>
       </ScrollView>
 

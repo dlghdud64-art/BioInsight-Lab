@@ -72,6 +72,10 @@ function RootLayout() {
             name="inventory/lot-label"
             options={{ headerShown: true, title: "라벨 인쇄", headerBackTitle: "뒤로" }}
           />
+          <Stack.Screen
+            name="inventory/inspection"
+            options={{ headerShown: true, title: "점검 기록", headerBackTitle: "뒤로" }}
+          />
 
         </Stack>
       </QueryClientProvider>

@@ -54,6 +54,25 @@ export interface PurchaseRecord {
   currency?: string;
 }
 
+export type InspectionResult = "PASS" | "CAUTION" | "FAIL";
+
+export interface InspectionChecklist {
+  storageOk: boolean;
+  labelOk: boolean;
+  expiryOk: boolean;
+  conditionOk: boolean;
+}
+
+export interface Inspection {
+  id: string;
+  inventoryId: string;
+  result: InspectionResult;
+  checklist: InspectionChecklist;
+  notes?: string;
+  inspectedAt: string;
+  user?: { name: string };
+}
+
 export interface ProductInventory {
   id: string;
   productId?: string;
@@ -68,6 +87,7 @@ export interface ProductInventory {
   expiryDate?: string;
   storageCondition?: string;
   lotNumber?: string;
+  lastInspectedAt?: string;
   lots?: InventoryLot[];
   product?: {
     id: string;
@@ -75,6 +95,12 @@ export interface ProductInventory {
     nameEn?: string;
     brand?: string;
     catalogNumber?: string;
+    msdsUrl?: string;
+    hazardCodes?: string[];
+    pictograms?: string[];
+    storageCondition?: string;
+    ppe?: string[];
+    safetyNote?: string;
   };
 }
 
