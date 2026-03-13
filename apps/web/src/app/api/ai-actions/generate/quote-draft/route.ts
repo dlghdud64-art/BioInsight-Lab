@@ -8,6 +8,7 @@ import {
   type QuoteDraftItem,
 } from "@/lib/ai/quote-draft-generator";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
 /**
  * POST /api/ai-actions/generate/quote-draft
@@ -88,6 +89,8 @@ export async function POST(request: NextRequest) {
 
     // 감사 로그: AI 초안 생성 기록
     const { ipAddress, userAgent } = extractRequestMeta(request);
+    const actorRole = await getActorRole(session.user.id, org?.id);
+
     await createAuditLog({
       userId: session.user.id,
       organizationId: org?.id || null,
@@ -102,6 +105,26 @@ export async function POST(request: NextRequest) {
         aiModel: draft.aiModel,
         promptTokens: draft.promptTokens,
         completionTokens: draft.completionTokens,
+      },
+      ipAddress,
+      userAgent,
+    });
+
+    // 활동 로그: 견적 초안 생성
+    await createActivityLog({
+      activityType: "QUOTE_DRAFT_GENERATED",
+      entityType: "AI_ACTION",
+      entityId: actionItem.id,
+      taskType: "QUOTE_DRAFT",
+      afterStatus: "PENDING",
+      userId: session.user.id,
+      organizationId: org?.id || null,
+      actorRole,
+      metadata: {
+        title,
+        itemCount: items.length,
+        vendorCount: vendorNames?.length || 0,
+        aiModel: draft.aiModel,
       },
       ipAddress,
       userAgent,

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
 /**
  * POST /api/ai-actions/[id]/approve — 승인 → 도메인 액션 실행
@@ -43,11 +44,28 @@ export async function POST(
     const modifiedPayload = body.payload || item.payload;
 
     const { ipAddress, userAgent } = extractRequestMeta(request);
+    const actorRole = await getActorRole(session.user.id, item.organizationId);
 
     // 상태를 EXECUTING으로 전환
     await db.aiActionItem.update({
       where: { id: params.id },
       data: { status: "EXECUTING" },
+    });
+
+    // 활동 로그: 검토 완료 (승인 결정)
+    await createActivityLog({
+      activityType: "QUOTE_DRAFT_REVIEWED",
+      entityType: "AI_ACTION",
+      entityId: params.id,
+      taskType: item.type,
+      beforeStatus: "PENDING",
+      afterStatus: "EXECUTING",
+      userId: session.user.id,
+      organizationId: item.organizationId,
+      actorRole,
+      metadata: { decision: "APPROVE", title: item.title },
+      ipAddress,
+      userAgent,
     });
 
     try {
@@ -95,6 +113,22 @@ export async function POST(
         userAgent,
       });
 
+      // 활동 로그: AI 작업 완료
+      await createActivityLog({
+        activityType: "AI_TASK_COMPLETED",
+        entityType: "AI_ACTION",
+        entityId: params.id,
+        taskType: item.type,
+        beforeStatus: "EXECUTING",
+        afterStatus: "APPROVED",
+        userId: session.user.id,
+        organizationId: item.organizationId,
+        actorRole,
+        metadata: { result, title: item.title },
+        ipAddress,
+        userAgent,
+      });
+
       return NextResponse.json({ item: updated, result });
     } catch (execError) {
       // 실행 실패: FAILED로 전환
@@ -106,6 +140,22 @@ export async function POST(
           resolvedAt: new Date(),
           resolvedBy: session.user.id,
         },
+      });
+
+      // 활동 로그: AI 작업 실패
+      await createActivityLog({
+        activityType: "AI_TASK_FAILED",
+        entityType: "AI_ACTION",
+        entityId: params.id,
+        taskType: item.type,
+        beforeStatus: "EXECUTING",
+        afterStatus: "FAILED",
+        userId: session.user.id,
+        organizationId: item.organizationId,
+        actorRole,
+        metadata: { error: String(execError), title: item.title },
+        ipAddress,
+        userAgent,
       });
 
       console.error("AI action execution failed:", execError);

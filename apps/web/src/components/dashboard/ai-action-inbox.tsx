@@ -7,6 +7,7 @@ import { AiDraftPreviewDialog } from "@/components/ai/ai-draft-preview-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { ActivityStatusLine } from "@/components/ai/activity-timeline";
 import {
   FileText,
   Mail,
@@ -312,6 +313,13 @@ export function AiActionInbox() {
                     }`}>
                       {item.description || config.description}
                     </p>
+
+                    {/* 활동 상태 1줄 요약 */}
+                    <ActivityStatusLine
+                      entityType="AI_ACTION"
+                      entityId={item.id}
+                      className={`mt-1 ${expandedId !== item.id ? "hidden md:flex" : "flex"}`}
+                    />
 
                     {/* 액션 영역: 모바일에서는 확장 시에만 표시 */}
                     <div className={`flex items-center gap-2 mt-2 ${

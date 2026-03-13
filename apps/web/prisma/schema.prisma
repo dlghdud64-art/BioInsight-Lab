@@ -1061,6 +1061,7 @@ model Invoice {
 
 // 액티비티 로그 (P1+)
 enum ActivityType {
+  // ── 기존 사용자 행동 ──
   QUOTE_CREATED // 리스트 생성
   QUOTE_UPDATED // 리스트 수정
   QUOTE_DELETED // 리스트 삭제
@@ -1071,15 +1072,36 @@ enum ActivityType {
   PRODUCT_VIEWED // 제품 조회
   PRODUCT_FAVORITED // 제품 즐겨찾기
   SEARCH_PERFORMED // 검색 수행
+
+  // ── AI 파이프라인 활동 로그 (Closed-Loop) ──
+  AI_TASK_CREATED            // AI 작업 생성 (AiActionItem PENDING)
+  AI_TASK_OPENED             // AI 초안 미리보기 열림
+  QUOTE_DRAFT_GENERATED      // 견적 초안 AI 생성 완료
+  QUOTE_DRAFT_REVIEWED       // 견적 초안 검토 (승인/무시)
+  EMAIL_DRAFT_GENERATED      // 벤더 이메일 초안 AI 생성 완료
+  EMAIL_SENT                 // 이메일 발송 완료
+  VENDOR_REPLY_LOGGED        // 벤더 회신 수신 기록
+  ORDER_FOLLOWUP_GENERATED   // 주문 후속 이메일 초안 생성
+  ORDER_STATUS_CHANGE_PROPOSED  // 주문 상태 변경 제안
+  ORDER_STATUS_CHANGE_APPROVED  // 주문 상태 변경 승인
+  INVENTORY_RESTOCK_SUGGESTED   // 재발주 제안 생성
+  INVENTORY_RESTOCK_REVIEWED    // 재발주 제안 검토
+  PURCHASE_REQUEST_CREATED      // 구매 요청 생성
+  AI_TASK_COMPLETED          // AI 작업 최종 완료 (승인 후 실행 성공)
+  AI_TASK_FAILED             // AI 작업 실패 (실행 에러)
 }
 
 model ActivityLog {
   id             String       @id @default(cuid())
-  userId         String? // 사용자 ID (비로그인 사용자는 null)
-  organizationId String? // 조직 ID
-  activityType   ActivityType // 활동 유형
-  entityType     String // 엔티티 유형 (quote, product, search 등)
-  entityId       String? // 엔티티 ID
+  userId         String? // 행위 수행자 (actor_id), null = 시스템 자동
+  organizationId String? // 조직 격리 (org_id)
+  activityType   ActivityType // action_type: 이벤트 종류
+  entityType     String // entity_type: 대상 도메인 (AI_ACTION, QUOTE, INVENTORY 등)
+  entityId       String? // entity_id: 대상 레코드 ID
+  taskType       String? // AI 작업 타입 (QUOTE_DRAFT, VENDOR_EMAIL_DRAFT 등)
+  beforeStatus   String? // 상태 전이 전 (PENDING, APPROVED 등)
+  afterStatus    String? // 상태 전이 후
+  actorRole      String? // 행위자 조직 역할 (ADMIN, APPROVER 등)
   metadata       Json? // 추가 메타데이터 (JSON)
   ipAddress      String? // IP 주소
   userAgent      String? // User Agent
@@ -1094,7 +1116,9 @@ model ActivityLog {
   @@index([activityType])
   @@index([entityType])
   @@index([entityId])
+  @@index([entityType, entityId]) // 특정 엔티티 이력 조회
   @@index([createdAt])
+  @@index([taskType])
 }
 
 // 감사 로그 (Enterprise - 액티비티 로그 확장)

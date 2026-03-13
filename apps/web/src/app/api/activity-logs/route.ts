@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const entityType = searchParams.get("entityType");
     const entityId = searchParams.get("entityId");
     const organizationId = searchParams.get("organizationId");
+    const taskType = searchParams.get("taskType");
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -58,6 +59,10 @@ export async function GET(request: NextRequest) {
 
     if (entityId) {
       where.entityId = entityId;
+    }
+
+    if (taskType) {
+      where.taskType = taskType;
     }
 
     // 액티비티 로그 조회

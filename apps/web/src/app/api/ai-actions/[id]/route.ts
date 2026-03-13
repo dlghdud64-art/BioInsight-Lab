@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
 /**
  * GET /api/ai-actions/[id] — 단건 상세 (payload 포함)
@@ -93,6 +94,23 @@ export async function PATCH(
       entityId: params.id,
       previousData: { status: item.status },
       newData: { status },
+      ipAddress,
+      userAgent,
+    });
+
+    // 활동 로그: 검토 완료 (무시/만료)
+    const actorRole = await getActorRole(session.user.id, item.organizationId);
+    await createActivityLog({
+      activityType: "QUOTE_DRAFT_REVIEWED",
+      entityType: "AI_ACTION",
+      entityId: params.id,
+      taskType: item.type,
+      beforeStatus: item.status,
+      afterStatus: status,
+      userId: session.user.id,
+      organizationId: item.organizationId,
+      actorRole,
+      metadata: { decision: status, title: item.title },
       ipAddress,
       userAgent,
     });
