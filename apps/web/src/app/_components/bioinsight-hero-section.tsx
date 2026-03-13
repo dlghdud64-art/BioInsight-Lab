@@ -79,7 +79,7 @@ export function BioInsightHeroSection() {
         
         {/* 1. 메인 카피 */}
         <div className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 mb-8 md:mb-12">
-          <h1 className="text-[1.75rem] sm:text-5xl md:text-[4rem] xl:text-[4.5rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.2] sm:leading-none max-w-3xl mx-auto">
+          <h1 className="text-[2rem] sm:text-[3.25rem] md:text-[4.25rem] xl:text-[4.75rem] font-extrabold tracking-tight text-slate-900 break-keep leading-[1.15] sm:leading-[1.1] max-w-4xl mx-auto">
             <span className="block pb-1.5 md:pb-3">
               시약·장비 검색부터
             </span>
