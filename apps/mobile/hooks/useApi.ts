@@ -3,6 +3,7 @@ import { apiClient } from "../lib/api";
 import type {
   Quote,
   QuoteDetail,
+  QuoteStatusHistory,
   PurchaseRecord,
   ProductInventory,
   DashboardSummary,
@@ -17,9 +18,10 @@ export function useDashboardSummary() {
   return useQuery<DashboardSummary>({
     queryKey: ["dashboard-summary"],
     queryFn: async () => {
-      const [quotesRes, inventoryRes] = await Promise.allSettled([
+      const [quotesRes, inventoryRes, allInventoryRes] = await Promise.allSettled([
         apiClient.get("/api/quotes", { params: { status: "PENDING", limit: 1 } }),
         apiClient.get("/api/inventory/reorder-recommendations"),
+        apiClient.get("/api/inventory"),
       ]);
 
       const pendingQuotes =
@@ -32,10 +34,21 @@ export function useDashboardSummary() {
           ? (inventoryRes.value.data?.recommendations?.length ?? 0)
           : 0;
 
+      // 점검 필요: lastInspectedAt 없거나 30일 경과
+      let pendingInspections = 0;
+      if (allInventoryRes.status === "fulfilled") {
+        const inventories = allInventoryRes.value.data?.inventories ?? [];
+        const threshold = 30 * 24 * 60 * 60 * 1000;
+        pendingInspections = inventories.filter((inv: any) => {
+          const last = inv.lastInspectedAt ? new Date(inv.lastInspectedAt).getTime() : 0;
+          return !last || Date.now() - last > threshold;
+        }).length;
+      }
+
       return {
         pendingQuotes,
         lowStockItems,
-        pendingInspections: 0,
+        pendingInspections,
         recentPurchases: 0,
       };
     },
@@ -77,6 +90,7 @@ export function useUpdateQuoteStatus() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ["quotes"] });
       qc.invalidateQueries({ queryKey: ["quote", id] });
+      qc.invalidateQueries({ queryKey: ["quote-history", id] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
@@ -108,6 +122,17 @@ export function useConvertQuoteToOrder() {
       qc.invalidateQueries({ queryKey: ["purchases"] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
+  });
+}
+
+export function useQuoteHistory(quoteId: string) {
+  return useQuery<QuoteStatusHistory[]>({
+    queryKey: ["quote-history", quoteId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/quotes/${quoteId}/history`);
+      return res.data?.history ?? [];
+    },
+    enabled: !!quoteId,
   });
 }
 
@@ -219,18 +244,21 @@ export function useRestockInventory() {
       lotNumber,
       expiryDate,
       notes,
+      purchaseId,
     }: {
       id: string;
       quantity: number;
       lotNumber?: string;
       expiryDate?: string;
       notes?: string;
+      purchaseId?: string;
     }) => {
       const res = await apiClient.post(`/api/inventory/${id}/restock`, {
         quantity,
         lotNumber,
         expiryDate,
         notes,
+        purchaseId,
       });
       return res.data;
     },
@@ -238,6 +266,7 @@ export function useRestockInventory() {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      qc.invalidateQueries({ queryKey: ["purchases"] });
     },
   });
 }
@@ -270,6 +299,37 @@ export function useConsumeInventory() {
       qc.invalidateQueries({ queryKey: ["inventories"] });
       qc.invalidateQueries({ queryKey: ["inventory", id] });
       qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
+// ─── 재고 lookup ─────────────────────────────────────────────────────
+
+export async function lookupInventory(params: {
+  catalogNumber?: string;
+  productName?: string;
+}): Promise<string | null> {
+  const query = new URLSearchParams();
+  if (params.catalogNumber) query.set("catalogNumber", params.catalogNumber);
+  if (params.productName) query.set("productName", params.productName);
+  const res = await apiClient.get(`/api/inventory/lookup?${query.toString()}`);
+  return res.data?.inventoryId ?? null;
+}
+
+export function useCreateInventory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      productName: string;
+      catalogNumber?: string;
+      unit?: string;
+      currentQuantity?: number;
+    }) => {
+      const res = await apiClient.post("/api/inventory", data);
+      return res.data?.inventory as ProductInventory;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventories"] });
     },
   });
 }

@@ -50,7 +50,13 @@
       "expo-secure-store",
       "@react-native-community/datetimepicker",
       "expo-sharing",
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "시약 라벨 QR/바코드 스캔을 위해 카메라 접근이 필요합니다."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

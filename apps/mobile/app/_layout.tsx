@@ -77,6 +77,12 @@ function RootLayout() {
             options={{ headerShown: true, title: "점검 기록", headerBackTitle: "뒤로" }}
           />
 
+          {/* ─── 스캔 ─── */}
+          <Stack.Screen
+            name="scan"
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>

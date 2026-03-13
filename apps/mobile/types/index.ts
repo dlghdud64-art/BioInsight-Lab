@@ -38,6 +38,15 @@ export interface VendorResponse {
   notes?: string;
 }
 
+export interface QuoteStatusHistory {
+  id: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  reason: string | null;
+  changedBy: string;
+  createdAt: string;
+}
+
 export interface PurchaseRecord {
   id: string;
   productName: string;

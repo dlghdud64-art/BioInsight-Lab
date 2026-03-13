@@ -9,15 +9,17 @@ import { DatePicker } from "../../components/DatePicker";
 type Step = "form" | "done";
 
 export default function LotReceiveScreen() {
-  const { id, lotNumber: initLot } = useLocalSearchParams<{
+  const { id, lotNumber: initLot, prefillQty, purchaseId } = useLocalSearchParams<{
     id: string;
     lotNumber?: string;
+    prefillQty?: string;
+    purchaseId?: string;
   }>();
   const { data: inventory } = useInventoryDetail(id);
   const restock = useRestockInventory();
 
   const [step, setStep] = useState<Step>("form");
-  const [qty, setQty] = useState("");
+  const [qty, setQty] = useState(prefillQty || "");
   const [lotNumber, setLotNumber] = useState(initLot || "");
   const [location, setLocation] = useState("");
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
@@ -43,6 +45,7 @@ export default function LotReceiveScreen() {
         lotNumber: lotNumber.trim(),
         expiryDate: expiryDate ? expiryDate.toISOString() : undefined,
         notes: [location && `위치: ${location}`, notes].filter(Boolean).join(" | ") || undefined,
+        purchaseId: purchaseId || undefined,
       },
       {
         onSuccess: () => setStep("done"),
