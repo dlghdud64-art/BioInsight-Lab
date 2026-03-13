@@ -15,9 +15,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: 권한 체크 (관리자 또는 제품 소유자만 업데이트 가능)
-    // 현재는 모든 인증된 사용자가 업데이트 가능하도록 설정
-    // 실제 운영 시에는 권한 체크 로직 추가 필요
+    // 권한 체크: 관리자만 제품 정보 수정 가능
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "관리자 권한이 필요합니다." },
+        { status: 403 }
+      );
+    }
 
     const { id } = await params;
     const body = await request.json();

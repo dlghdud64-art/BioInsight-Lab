@@ -77,14 +77,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. 재고 상태 필터
+    // NOTE: lowStock 필터는 Prisma에서 필드 간 비교(lte: field)를 지원하지 않으므로
+    //       DB 조회 후 JS 사이드에서 필터링합니다 (아래 postFilter 참조).
     if (lowStock) {
-      // 안전 재고 이하: safetyStock 없으면 0 이하를 기준으로 판단
-      andFilters.push({
-        OR: [
-          { safetyStock: { not: null }, currentQuantity: { lte: { safetyStock: true } } },
-          { safetyStock: null,          currentQuantity: { lte: 0 } },
-        ],
-      });
+      // DB 레벨에서는 사전 필터링하지 않음 — JS에서 후처리
     } else if (status === "expired") {
       // 유통기한 만료
       andFilters.push({ expiryDate: { lt: new Date() } });
@@ -137,7 +133,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ inventories });
+    // lowStock 필터: JS 사이드 후처리 (Prisma 필드 간 비교 미지원)
+    const filtered = lowStock
+      ? inventories.filter((inv: any) => {
+          if (inv.safetyStock != null) {
+            return inv.currentQuantity <= inv.safetyStock;
+          }
+          return inv.currentQuantity <= 0;
+        })
+      : inventories;
+
+    return NextResponse.json({ inventories: filtered });
   } catch (error) {
     console.error("Error fetching inventories:", error);
     return NextResponse.json(

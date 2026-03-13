@@ -25,10 +25,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: 실제 환경에서는 관리자 권한 확인 필요
-    // if (session.user.role !== "ADMIN") {
-    //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    // }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "관리자 권한이 필요합니다." },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const { quoteId, shippingAddress, notes } = body;

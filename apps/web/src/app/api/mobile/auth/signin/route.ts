@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { SignJWT } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.MOBILE_JWT_SECRET || process.env.AUTH_SECRET || "bioinsight-mobile-secret-key"
-);
+const jwtSecretRaw = process.env.MOBILE_JWT_SECRET || process.env.AUTH_SECRET;
+if (!jwtSecretRaw) {
+  throw new Error(
+    "[FATAL] MOBILE_JWT_SECRET 또는 AUTH_SECRET 환경변수가 설정되지 않았습니다. 서버를 시작할 수 없습니다."
+  );
+}
+const JWT_SECRET = new TextEncoder().encode(jwtSecretRaw);
 const ACCESS_TOKEN_EXPIRES = "1h";
 const REFRESH_TOKEN_EXPIRES = "30d";
 
@@ -64,25 +68,26 @@ export async function POST(req: NextRequest) {
     }
 
     // NOTE: 현재 시스템은 Google OAuth 전용입니다.
-    // 실제 비밀번호 필드가 추가되면 아래 주석을 해제하여 bcrypt 검증을 추가하세요:
+    // 실제 비밀번호 필드가 추가되면 bcrypt 검증을 추가하세요.
     //
-    // import bcrypt from "bcryptjs";
-    // const isValid = await bcrypt.compare(password, user.passwordHash);
-    // if (!isValid) {
-    //   return NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
-    // }
-    //
-    // 임시: 개발 환경에서는 특정 테스트 비밀번호 허용
+    // 개발 환경에서만 MOBILE_DEV_PASSWORD 환경변수로 임시 로그인 허용
+    // 프로덕션에서는 항상 인증 실패 반환
     const isDev = process.env.NODE_ENV !== "production";
-    const TEMP_DEV_PASSWORD = process.env.MOBILE_DEV_PASSWORD || "bioinsight2024";
+    const devPassword = process.env.MOBILE_DEV_PASSWORD;
 
-    if (!isDev || password !== TEMP_DEV_PASSWORD) {
-      if (!isDev) {
-        return NextResponse.json(
-          { error: "이메일 또는 비밀번호가 올바르지 않습니다." },
-          { status: 401 }
-        );
-      }
+    if (!isDev || !devPassword) {
+      // 프로덕션이거나 개발 비밀번호 미설정 시 — 비밀번호 인증 불가
+      return NextResponse.json(
+        { error: "이메일 또는 비밀번호가 올바르지 않습니다." },
+        { status: 401 }
+      );
+    }
+
+    if (password !== devPassword) {
+      return NextResponse.json(
+        { error: "이메일 또는 비밀번호가 올바르지 않습니다." },
+        { status: 401 }
+      );
     }
 
     // JWT 토큰 발급
