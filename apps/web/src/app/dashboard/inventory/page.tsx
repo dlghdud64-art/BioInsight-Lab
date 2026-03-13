@@ -35,8 +35,10 @@ import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Info, FileText, BellRing, Save } from "lucide-react";
+import { Info, FileText, BellRing, Save, Sparkles } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
+import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
+import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
 
 interface ProductInventory {
   id: string;
@@ -148,6 +150,7 @@ function InventoryPageContent() {
   const [sheetSafetyStock, setSheetSafetyStock] = useState("");
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
+  const aiPanel = useInventoryAiPanel();
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
@@ -1490,7 +1493,7 @@ function InventoryPageContent() {
                           <div className="flex gap-1.5 flex-shrink-0 items-start pt-0.5">
                             {/* 1차 대표 조치 (이슈 유형별 분기) */}
                             {(issueType === "out_of_stock" || issueType === "low_stock" || issueType === "reorder_lead") && (
-                              /* 품절/부족/재주문 → 재발주 */
+                              /* 품절/부족/재주문 → 재발주 (AI 패널) */
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1501,14 +1504,28 @@ function InventoryPageContent() {
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  toast({
-                                    title: "재발주",
-                                    description: `${inv.product.name} 재발주 기능은 곧 제공될 예정입니다.`,
+                                  aiPanel.preparePanel({
+                                    id: inv.id,
+                                    productId: inv.productId,
+                                    productName: inv.product.name,
+                                    brand: inv.product.brand || undefined,
+                                    catalogNumber: inv.product.catalogNumber || undefined,
+                                    currentQuantity: inv.currentQuantity,
+                                    unit: inv.unit || undefined,
+                                    safetyStock: inv.safetyStock || undefined,
+                                    minOrderQty: inv.minOrderQty || undefined,
+                                    location: inv.location || undefined,
+                                    expiryDate: inv.expiryDate || undefined,
+                                    lotNumber: inv.lotNumber || undefined,
+                                    autoReorderEnabled: inv.autoReorderEnabled || false,
+                                    averageDailyUsage: inv.averageDailyUsage || undefined,
+                                    leadTimeDays: inv.leadTimeDays || undefined,
+                                    lastInspectedAt: undefined,
                                   });
                                 }}
                               >
-                                <RotateCcw className="h-3 w-3 shrink-0" />
-                                재발주
+                                <Sparkles className="h-3 w-3 shrink-0" />
+                                재발주 검토
                               </Button>
                             )}
                             {(issueType === "expiring") && (
@@ -2854,6 +2871,42 @@ function InventoryPageContent() {
           </Button>
         </div>
       </div>
+
+      {/* 재고 운영 AI 보조 패널 */}
+      <InventoryAiAssistantPanel
+        open={aiPanel.isOpen}
+        onOpenChange={aiPanel.setIsOpen}
+        state={aiPanel.panelState}
+        data={aiPanel.panelData}
+        onRetry={aiPanel.retry}
+        onReviewReorder={(r) => {
+          toast({
+            title: "재발주안 검토",
+            description: `${r.productName} ${r.recommendedQty}ea 재발주를 검토합니다.`,
+          });
+        }}
+        onViewVendors={(productName) => {
+          router.push(`/compare?search=${encodeURIComponent(productName)}`);
+          aiPanel.setIsOpen(false);
+        }}
+        onViewLotDetail={(lotNumber) => {
+          toast({
+            title: "Lot 상세",
+            description: `Lot #${lotNumber} 상세 정보를 확인합니다.`,
+          });
+        }}
+        onReviewDisposal={(lotNumber) => {
+          toast({
+            title: "폐기/우선사용 검토",
+            description: `Lot #${lotNumber}에 대한 조치를 검토합니다.`,
+          });
+        }}
+        onViewActions={() => {
+          router.push("/dashboard/inventory?filter=low");
+          aiPanel.setIsOpen(false);
+        }}
+        isAnalyzing={aiPanel.isAnalyzing}
+      />
     </div>
   );
 }
