@@ -8,8 +8,11 @@ import Stripe from "stripe";
 
 const logger = createLogger("api/billing/checkout");
 
-// Initialize Stripe - use dummy key during build time
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
+// Initialize Stripe — 환경변수 필수
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn("[billing/checkout] STRIPE_SECRET_KEY 미설정 — 결제 기능 비활성화");
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder_will_fail", {
   apiVersion: "2025-12-15.clover" as any,
 });
 

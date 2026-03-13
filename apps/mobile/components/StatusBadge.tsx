@@ -7,10 +7,16 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   COMPLETED: { bg: "bg-emerald-100", text: "text-emerald-700", label: "완료" },
   CANCELLED: { bg: "bg-red-100", text: "text-red-700", label: "취소" },
   ON_HOLD: { bg: "bg-purple-100", text: "text-purple-700", label: "보류" },
+  PURCHASED: { bg: "bg-green-100", text: "text-green-700", label: "구매전환" },
+  RESPONDED: { bg: "bg-teal-100", text: "text-teal-700", label: "응답완료" },
+  VENDOR_INQUIRY: { bg: "bg-violet-100", text: "text-violet-700", label: "공급사문의" },
+  WAITING_REPLY: { bg: "bg-cyan-100", text: "text-cyan-700", label: "회신대기" },
+  NEEDS_INSPECTION: { bg: "bg-orange-100", text: "text-orange-700", label: "점검필요" },
   NORMAL: { bg: "bg-emerald-100", text: "text-emerald-700", label: "정상" },
   LOW_STOCK: { bg: "bg-orange-100", text: "text-orange-700", label: "부족" },
   OUT_OF_STOCK: { bg: "bg-red-100", text: "text-red-700", label: "품절" },
   EXPIRED: { bg: "bg-red-100", text: "text-red-700", label: "만료" },
+  inventory_reflected: { bg: "bg-emerald-100", text: "text-emerald-700", label: "입고완료" },
 };
 
 export function StatusBadge({ status }: { status: string }) {

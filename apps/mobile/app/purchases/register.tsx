@@ -2,8 +2,10 @@ import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator 
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { useCreatePurchase, useBatchImportPurchases } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
 import { Edit3, ClipboardList, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react-native";
+import { PhotoAttachment, type AttachedPhoto } from "../../components/PhotoAttachment";
 
 // ─── 타입 ─────────────────────────────────────────────────────
 interface ParsedRow {
@@ -90,6 +92,7 @@ function QuickEntryForm() {
     notes: "",
   });
   const [purchaseDate, setPurchaseDate] = useState(new Date());
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
   const createPurchase = useCreatePurchase();
 
   const handleSave = () => {
@@ -114,14 +117,22 @@ function QuickEntryForm() {
         notes: form.notes.trim() || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           router.replace({
             pathname: "/purchases/complete",
-            params: { count: "1", total: form.amount },
+            params: {
+              count: "1",
+              total: form.amount,
+              purchaseId: data.purchaseId || "",
+              productName: form.productName,
+              quantity: form.quantity || "1",
+              unit: form.unit || "ea",
+              catalogNumber: "",
+            },
           });
         },
-        onError: () => {
-          Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
+        onError: (err) => {
+          Alert.alert("오류", getErrorMessage(err));
         },
       }
     );
@@ -204,7 +215,7 @@ function QuickEntryForm() {
         <DatePicker label="구매일" value={purchaseDate} onChange={setPurchaseDate} />
       </View>
 
-      <View className="mb-6">
+      <View className="mb-4">
         <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
         <TextInput
           className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
@@ -214,6 +225,18 @@ function QuickEntryForm() {
           textAlignVertical="top"
           value={form.notes}
           onChangeText={(v) => update("notes", v)}
+        />
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-sm font-medium text-slate-700 mb-1.5">
+          사진 첨부
+        </Text>
+        <PhotoAttachment
+          photos={photos}
+          onChange={setPhotos}
+          context="purchase_register"
+          maxCount={3}
         />
       </View>
 
@@ -233,7 +256,7 @@ function QuickEntryForm() {
 }
 
 // ─── 붙여넣기 입력 (TSV/CSV) ──────────────────────────────────
-function PasteEntryForm({ onParsed }: { onParsed: (rows: ParsedRow[]) => void }) {
+function PasteEntryForm({ onParsed, disabled }: { onParsed: (rows: ParsedRow[]) => void; disabled?: boolean }) {
   const [text, setText] = useState("");
   const [parseErrors, setParseErrors] = useState<string[]>([]);
 
@@ -313,10 +336,11 @@ function PasteEntryForm({ onParsed }: { onParsed: (rows: ParsedRow[]) => void })
       )}
 
       <Pressable
-        className="bg-blue-600 rounded-xl py-3.5 items-center mt-4"
+        className={`rounded-xl py-3.5 items-center mt-4 ${disabled ? "bg-slate-200" : "bg-blue-600"}`}
         onPress={handleParse}
+        disabled={disabled}
       >
-        <Text className="text-sm font-semibold text-white">
+        <Text className={`text-sm font-semibold ${disabled ? "text-slate-400" : "text-white"}`}>
           데이터 확인 ({text.trim().split("\n").filter(Boolean).length}행)
         </Text>
       </Pressable>
@@ -425,23 +449,31 @@ export default function PurchaseRegisterScreen() {
       { rows: parsedRows },
       {
         onSuccess: (data) => {
-          if (data.errorRows) {
-            Alert.alert("일부 실패", `${data.successRows}건 성공, ${data.errorRows}건 실패`);
-          }
           const totalAmount = parsedRows.reduce(
             (sum, r) => sum + (r.amount || (r.unitPrice || 0) * r.qty),
             0
           );
-          router.replace({
-            pathname: "/purchases/complete",
-            params: {
-              count: String(data.successRows),
-              total: String(totalAmount),
-            },
-          });
+          const navigateToComplete = () => {
+            router.replace({
+              pathname: "/purchases/complete",
+              params: {
+                count: String(data.successRows),
+                total: String(totalAmount),
+              },
+            });
+          };
+          if (data.errorRows) {
+            Alert.alert(
+              "일부 실패",
+              `${data.successRows}건 성공, ${data.errorRows}건 실패`,
+              [{ text: "확인", onPress: navigateToComplete }]
+            );
+          } else {
+            navigateToComplete();
+          }
         },
-        onError: () => {
-          Alert.alert("오류", "등록에 실패했습니다. 다시 시도해주세요.");
+        onError: (err) => {
+          Alert.alert("오류", getErrorMessage(err));
         },
       }
     );
@@ -486,7 +518,7 @@ export default function PurchaseRegisterScreen() {
 
           {/* 모드별 폼 */}
           {mode === "quick" && <QuickEntryForm />}
-          {mode === "paste" && <PasteEntryForm onParsed={handleParsed} />}
+          {mode === "paste" && <PasteEntryForm onParsed={handleParsed} disabled={batchImport.isPending} />}
         </>
       )}
     </ScrollView>

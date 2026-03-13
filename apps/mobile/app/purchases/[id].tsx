@@ -1,7 +1,9 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { useState } from "react";
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { Calendar, Store, Tag, Package, FileText, RefreshCw, ArrowDownToLine } from "lucide-react-native";
-import { usePurchaseDetail } from "../../hooks/useApi";
+import { Calendar, Store, Tag, Package, FileText, RefreshCw, ArrowDownToLine, CheckCircle } from "lucide-react-native";
+import { usePurchaseDetail, lookupInventory, useCreateInventory } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 function formatDate(iso?: string) {
   if (!iso) return "-";
@@ -16,12 +18,24 @@ function formatAmount(n?: number) {
 
 export default function PurchaseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: record, isLoading } = usePurchaseDetail(id);
+  const { data: record, isLoading, isError, refetch } = usePurchaseDetail(id);
 
-  if (isLoading || !record) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (isError || !record) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-6">
+        <Text className="text-base font-bold text-slate-900 mb-1">불러오기 실패</Text>
+        <Text className="text-sm text-slate-500 text-center mb-4">구매 정보를 가져올 수 없습니다.</Text>
+        <Pressable className="bg-blue-600 rounded-xl px-6 py-3" onPress={() => refetch()}>
+          <Text className="text-sm font-semibold text-white">다시 시도</Text>
+        </Pressable>
       </View>
     );
   }
@@ -43,6 +57,52 @@ export default function PurchaseDetailScreen() {
     });
     router.push(`/purchases/register?${params.toString()}` as any);
   };
+
+  const createInventory = useCreateInventory();
+  const [isLookingUp, setIsLookingUp] = useState(false);
+
+  const handleReflectToInventory = async () => {
+    setIsLookingUp(true);
+    try {
+      // 1. 기존 재고 검색
+      let inventoryId = await lookupInventory({
+        catalogNumber: record.catalogNumber || undefined,
+        productName: record.productName,
+      });
+
+      // 2. 없으면 자동 생성
+      if (!inventoryId) {
+        const created = await createInventory.mutateAsync({
+          productName: record.productName,
+          catalogNumber: record.catalogNumber || undefined,
+          unit: record.unit || "ea",
+          currentQuantity: 0,
+        });
+        inventoryId = created?.id;
+      }
+
+      if (!inventoryId) {
+        Alert.alert("오류", "재고 항목을 생성할 수 없습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      // 3. lot-receive로 직접 이동 (수량 prefill)
+      router.push({
+        pathname: "/inventory/lot-receive",
+        params: {
+          id: inventoryId,
+          prefillQty: String(record.quantity || ""),
+          purchaseId: record.id,
+        },
+      });
+    } catch (err) {
+      Alert.alert("오류", getErrorMessage(err));
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
+  const isReflected = record.followUpStatus === "inventory_reflected";
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -101,13 +161,29 @@ export default function PurchaseDetailScreen() {
           <RefreshCw size={16} color="white" />
           <Text className="text-sm font-semibold text-white">재구매</Text>
         </Pressable>
-        <Pressable
-          className="flex-1 flex-row items-center justify-center gap-2 bg-emerald-600 rounded-xl py-3"
-          onPress={() => router.push("/(tabs)/inventory")}
-        >
-          <ArrowDownToLine size={16} color="white" />
-          <Text className="text-sm font-semibold text-white">재고 입고</Text>
-        </Pressable>
+        {isReflected ? (
+          <View className="flex-1 flex-row items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl py-3">
+            <CheckCircle size={16} color="#059669" />
+            <Text className="text-sm font-semibold text-emerald-700">입고 완료</Text>
+          </View>
+        ) : (
+          <Pressable
+            className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
+              isLookingUp ? "bg-emerald-400" : "bg-emerald-600"
+            }`}
+            onPress={handleReflectToInventory}
+            disabled={isLookingUp}
+          >
+            {isLookingUp ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <>
+                <ArrowDownToLine size={16} color="white" />
+                <Text className="text-sm font-semibold text-white">재고 입고</Text>
+              </>
+            )}
+          </Pressable>
+        )}
       </View>
     </View>
   );

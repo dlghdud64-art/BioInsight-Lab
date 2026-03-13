@@ -1,26 +1,31 @@
 import { View, Text, TextInput, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
-import { CheckCircle, Printer, MapPin, ArrowDownToLine } from "lucide-react-native";
+import { CheckCircle, Printer, MapPin, ArrowDownToLine, Package, ArrowLeft } from "lucide-react-native";
 import { useRestockInventory, useInventoryDetail } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 import { DatePicker } from "../../components/DatePicker";
+import { PhotoAttachment, type AttachedPhoto } from "../../components/PhotoAttachment";
 
 type Step = "form" | "done";
 
 export default function LotReceiveScreen() {
-  const { id, lotNumber: initLot } = useLocalSearchParams<{
+  const { id, lotNumber: initLot, prefillQty, purchaseId } = useLocalSearchParams<{
     id: string;
     lotNumber?: string;
+    prefillQty?: string;
+    purchaseId?: string;
   }>();
   const { data: inventory } = useInventoryDetail(id);
   const restock = useRestockInventory();
 
   const [step, setStep] = useState<Step>("form");
-  const [qty, setQty] = useState("");
+  const [qty, setQty] = useState(prefillQty || "");
   const [lotNumber, setLotNumber] = useState(initLot || "");
   const [location, setLocation] = useState("");
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<AttachedPhoto[]>([]);
 
   const productName = inventory?.productName || inventory?.product?.name || "";
 
@@ -42,10 +47,11 @@ export default function LotReceiveScreen() {
         lotNumber: lotNumber.trim(),
         expiryDate: expiryDate ? expiryDate.toISOString() : undefined,
         notes: [location && `위치: ${location}`, notes].filter(Boolean).join(" | ") || undefined,
+        purchaseId: purchaseId || undefined,
       },
       {
         onSuccess: () => setStep("done"),
-        onError: () => Alert.alert("오류", "입고 처리에 실패했습니다."),
+        onError: (err) => Alert.alert("오류", getErrorMessage(err)),
       }
     );
   };
@@ -98,11 +104,29 @@ export default function LotReceiveScreen() {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
-            onPress={() => router.dismissAll()}
+            className="flex-row items-center justify-center gap-2 bg-blue-600 rounded-xl py-3.5"
+            onPress={() => router.replace(`/inventory/${id}`)}
           >
-            <Text className="text-sm font-semibold text-slate-600">재고 목록</Text>
+            <Package size={16} color="white" />
+            <Text className="text-sm font-semibold text-white">재고 상세로 보기</Text>
           </Pressable>
+
+          {purchaseId ? (
+            <Pressable
+              className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
+              onPress={() => router.replace(`/purchases/${purchaseId}` as any)}
+            >
+              <ArrowLeft size={16} color="#64748b" />
+              <Text className="text-sm font-semibold text-slate-600">구매 상세로 돌아가기</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              className="flex-row items-center justify-center gap-2 border border-slate-200 rounded-xl py-3.5"
+              onPress={() => router.dismissAll()}
+            >
+              <Text className="text-sm font-semibold text-slate-600">재고 목록</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     );
@@ -168,13 +192,23 @@ export default function LotReceiveScreen() {
         />
       </View>
 
-      <View className="mb-6">
+      <View className="mb-4">
         <Text className="text-sm font-medium text-slate-700 mb-1.5">비고</Text>
         <TextInput
           className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800"
           placeholder="추가 메모 (선택)"
           value={notes}
           onChangeText={setNotes}
+        />
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-sm font-medium text-slate-700 mb-1.5">사진 첨부</Text>
+        <PhotoAttachment
+          photos={photos}
+          onChange={setPhotos}
+          context="lot_receive"
+          maxCount={3}
         />
       </View>
 

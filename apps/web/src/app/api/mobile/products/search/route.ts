@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.MOBILE_JWT_SECRET || process.env.AUTH_SECRET || "bioinsight-mobile-secret-key"
-);
+const jwtSecretRaw = process.env.MOBILE_JWT_SECRET || process.env.AUTH_SECRET;
+if (!jwtSecretRaw) {
+  throw new Error(
+    "[FATAL] MOBILE_JWT_SECRET 또는 AUTH_SECRET 환경변수가 설정되지 않았습니다."
+  );
+}
+const JWT_SECRET = new TextEncoder().encode(jwtSecretRaw);
 
 async function verifyMobileToken(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");

@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
+import { Sentry } from "./sentry";
 
 // 환경변수에서 API URL 가져오기 (없으면 로컬호스트)
 const API_BASE_URL =
@@ -56,6 +57,17 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // 401 이외의 서버 에러를 Sentry에 보고
+    if (error.response?.status && error.response.status >= 500) {
+      Sentry.captureException(error, {
+        extra: {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response.status,
+        },
+      });
+    }
+
     return Promise.reject(error);
   }
 );
@@ -65,5 +77,8 @@ export async function login(email: string, password: string) {
     email,
     password,
   });
-  return res.data as { accessToken: string; refreshToken: string; user: { id: string; name: string; email: string } };
+  const data = res.data as { accessToken: string; refreshToken: string; user: { id: string; name: string; email: string } };
+  // Sentry 유저 컨텍스트 설정
+  Sentry.setUser({ id: data.user.id, email: data.user.email });
+  return data;
 }

@@ -1,9 +1,68 @@
-import { View, Text, Pressable } from "react-native";
+import { useState } from "react";
+import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { CheckCircle, ArrowDownToLine, Plus, List } from "lucide-react-native";
+import { lookupInventory, useCreateInventory } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 export default function PurchaseCompleteScreen() {
-  const { count, total } = useLocalSearchParams<{ count?: string; total?: string }>();
+  const { count, total, purchaseId, productName, quantity, unit, catalogNumber } =
+    useLocalSearchParams<{
+      count?: string;
+      total?: string;
+      purchaseId?: string;
+      productName?: string;
+      quantity?: string;
+      unit?: string;
+      catalogNumber?: string;
+    }>();
+
+  const createInventory = useCreateInventory();
+  const [isLookingUp, setIsLookingUp] = useState(false);
+
+  const handleReflectToInventory = async () => {
+    if (!purchaseId || !productName) {
+      Alert.alert("안내", "구매 상세에서 재고 반영을 진행해주세요.");
+      router.dismissAll();
+      return;
+    }
+
+    setIsLookingUp(true);
+    try {
+      let inventoryId = await lookupInventory({
+        catalogNumber: catalogNumber || undefined,
+        productName,
+      });
+
+      if (!inventoryId) {
+        const created = await createInventory.mutateAsync({
+          productName,
+          catalogNumber: catalogNumber || undefined,
+          unit: unit || "ea",
+          currentQuantity: 0,
+        });
+        inventoryId = created?.id;
+      }
+
+      if (!inventoryId) {
+        Alert.alert("오류", "재고 항목을 생성할 수 없습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      router.replace({
+        pathname: "/inventory/lot-receive",
+        params: {
+          id: inventoryId,
+          prefillQty: quantity || "",
+          purchaseId,
+        },
+      });
+    } catch (err) {
+      Alert.alert("오류", getErrorMessage(err));
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white items-center justify-center px-6">
@@ -24,11 +83,20 @@ export default function PurchaseCompleteScreen() {
 
       <View className="w-full gap-3 mt-2">
         <Pressable
-          className="flex-row items-center justify-center gap-2 bg-emerald-600 rounded-xl py-3.5"
-          onPress={() => router.push("/(tabs)/inventory")}
+          className={`flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
+            isLookingUp ? "bg-emerald-400" : "bg-emerald-600"
+          }`}
+          onPress={handleReflectToInventory}
+          disabled={isLookingUp}
         >
-          <ArrowDownToLine size={16} color="white" />
-          <Text className="text-sm font-semibold text-white">재고 입고</Text>
+          {isLookingUp ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <>
+              <ArrowDownToLine size={16} color="white" />
+              <Text className="text-sm font-semibold text-white">재고 입고</Text>
+            </>
+          )}
         </Pressable>
 
         <Pressable

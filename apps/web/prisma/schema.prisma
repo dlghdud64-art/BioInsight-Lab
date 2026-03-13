@@ -131,6 +131,7 @@ model User {
   inventories         ProductInventory[]
   inventoryUsage      InventoryUsage[]
   inventoryRestocks   InventoryRestock[]
+  inspections         Inspection[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
   dataAuditLogs       DataAuditLog[]
@@ -647,8 +648,10 @@ model ProductInventory {
   user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  usageRecords   InventoryUsage[]
-  restockRecords InventoryRestock[]
+  lastInspectedAt  DateTime?           // 마지막 점검일
+  usageRecords     InventoryUsage[]
+  restockRecords   InventoryRestock[]
+  inspections      Inspection[]
 
   @@unique([userId, productId]) // ?용?별 ?품???나???고 기록
   @@unique([organizationId, productId]) // 조직??품???나???고 기록
@@ -702,6 +705,33 @@ model InventoryRestock {
   @@index([inventoryId])
   @@index([userId])
   @@index([restockedAt])
+}
+
+// 점검 결과
+enum InspectionResult {
+  PASS      // 양호
+  CAUTION   // 주의
+  FAIL      // 불량
+}
+
+// 재고 점검 기록
+model Inspection {
+  id              String           @id @default(cuid())
+  inventoryId     String
+  userId          String
+  organizationId  String?
+  result          InspectionResult
+  checklist       Json             // { storageOk, labelOk, expiryOk, conditionOk }
+  notes           String?          @db.Text
+  inspectedAt     DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+
+  inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 // 공유 링크 (?냅??방식)
@@ -1584,6 +1614,7 @@ enum AuditEntityType {
   USER               // 사용자 생성·수정·삭제
   ORGANIZATION       // 조직 설정 변경
   SETTINGS           // 시스템 설정 변경
+  INSPECTION         // 점검 기록 생성
 }
 
 model DataAuditLog {

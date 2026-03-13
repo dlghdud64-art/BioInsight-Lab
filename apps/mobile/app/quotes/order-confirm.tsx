@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from "rea
 import { useLocalSearchParams, router } from "expo-router";
 import { ShoppingCart, Package, Calendar, User } from "lucide-react-native";
 import { useQuoteDetail, useConvertQuoteToOrder } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -9,13 +10,13 @@ function formatDate(iso: string) {
 }
 
 function formatAmount(n?: number) {
-  if (!n) return "-";
+  if (n == null) return "-";
   return `₩${n.toLocaleString("ko-KR")}`;
 }
 
 export default function QuoteOrderConfirmScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: quote, isLoading } = useQuoteDetail(id);
+  const { data: quote, isLoading, isError, refetch } = useQuoteDetail(id);
   const convertToOrder = useConvertQuoteToOrder();
 
   const handleConvert = () => {
@@ -36,7 +37,7 @@ export default function QuoteOrderConfirmScreen() {
                     { text: "확인", onPress: () => router.dismissAll() },
                   ]);
                 },
-                onError: () => Alert.alert("오류", "주문 전환에 실패했습니다."),
+                onError: (err) => Alert.alert("오류", getErrorMessage(err)),
               }
             );
           },
@@ -45,10 +46,22 @@ export default function QuoteOrderConfirmScreen() {
     );
   };
 
-  if (isLoading || !quote) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (isError || !quote) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-6">
+        <Text className="text-base font-bold text-slate-900 mb-1">불러오기 실패</Text>
+        <Text className="text-sm text-slate-500 text-center mb-4">견적 정보를 가져올 수 없습니다.</Text>
+        <Pressable className="bg-blue-600 rounded-xl px-6 py-3" onPress={() => refetch()}>
+          <Text className="text-sm font-semibold text-white">다시 시도</Text>
+        </Pressable>
       </View>
     );
   }

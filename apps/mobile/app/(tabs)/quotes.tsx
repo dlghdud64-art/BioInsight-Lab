@@ -14,6 +14,7 @@ const FILTERS = [
   { key: "PENDING", label: "대기" },
   { key: "IN_PROGRESS", label: "진행" },
   { key: "COMPLETED", label: "완료" },
+  { key: "PURCHASED", label: "구매전환" },
   { key: "ON_HOLD", label: "보류" },
 ];
 
@@ -36,7 +37,7 @@ function QuoteCard({ item }: { item: Quote }) {
       {/* 1행: 제목 + 상태 */}
       <View className="flex-row items-start justify-between mb-2">
         <Text className="text-sm font-semibold text-slate-900 flex-1 mr-2" numberOfLines={2}>
-          {item.title}
+          {item.title || "(제목 없음)"}
         </Text>
         <StatusBadge status={item.status} />
       </View>
@@ -73,7 +74,7 @@ export default function QuotesScreen() {
   const { data: quotes, isLoading, refetch, isRefetching } = useQuotes(statusFilter);
 
   const filtered = (quotes ?? []).filter((q) =>
-    search ? q.title.toLowerCase().includes(search.toLowerCase()) : true
+    search ? (q.title ?? "").toLowerCase().includes(search.toLowerCase()) : true
   );
 
   return (

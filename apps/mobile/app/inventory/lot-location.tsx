@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
 import { MapPin } from "lucide-react-native";
 import { useUpdateInventoryLocation } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 const STORAGE_CONDITIONS = [
   { key: "room", label: "실온 (15~25°C)" },
@@ -42,7 +43,7 @@ export default function LotLocationScreen() {
             { text: "확인", onPress: () => router.back() },
           ]);
         },
-        onError: () => Alert.alert("오류", "위치 저장에 실패했습니다."),
+        onError: (err) => Alert.alert("오류", getErrorMessage(err)),
       }
     );
   };

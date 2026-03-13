@@ -7,6 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "bioinsight",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -14,7 +17,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bioinsightlab.app"
+      "bundleIdentifier": "com.bioinsightlab.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "시약 및 장비 사진 촬영을 위해 카메라 접근이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "시약 및 장비 사진을 선택하기 위해 사진첩 접근이 필요합니다.",
+        "NSPhotoLibraryAddUsageDescription": "라벨 이미지를 저장하기 위해 사진첩 접근이 필요합니다."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +32,14 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.bioinsightlab.app"
+      "package": "com.bioinsightlab.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,7 +49,28 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      "@sentry/react-native/expo",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "시약 라벨 QR/바코드 스캔을 위해 카메라 접근이 필요합니다."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2563eb"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "시약 및 장비 사진을 선택하기 위해 사진첩 접근이 필요합니다.",
+          "cameraPermission": "시약 및 장비 사진 촬영을 위해 카메라 접근이 필요합니다."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

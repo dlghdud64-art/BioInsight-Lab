@@ -16,6 +16,12 @@ const PERIOD_FILTERS = [
   { key: "3M", label: "3달", days: 90 },
 ] as const;
 
+const STATUS_FILTERS = [
+  { key: "ALL", label: "전체" },
+  { key: "NOT_REFLECTED", label: "미반영" },
+  { key: "REFLECTED", label: "입고완료" },
+] as const;
+
 function formatAmount(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
 }
@@ -34,7 +40,7 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
       {/* 1행: 제품명 + 상태 */}
       <View className="flex-row items-start justify-between mb-2">
         <Text className="text-sm font-semibold text-slate-900 flex-1 mr-2" numberOfLines={2}>
-          {item.productName}
+          {item.productName || "(제품명 없음)"}
         </Text>
         {item.followUpStatus && <StatusBadge status={item.followUpStatus} />}
       </View>
@@ -77,17 +83,32 @@ export default function PurchasesScreen() {
   const { data: purchases, isLoading, refetch, isRefetching } = usePurchases();
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filtered = (purchases ?? []).filter((p) => {
     const matchSearch = search
-      ? p.productName.toLowerCase().includes(search.toLowerCase())
+      ? (p.productName ?? "").toLowerCase().includes(search.toLowerCase())
       : true;
     if (!matchSearch) return false;
-    if (period === "ALL") return true;
-    const filter = PERIOD_FILTERS.find((f) => f.key === period);
-    if (!filter || !("days" in filter)) return true;
-    const cutoff = Date.now() - filter.days * 24 * 60 * 60 * 1000;
-    return new Date(p.purchasedAt).getTime() >= cutoff;
+
+    // 기간 필터
+    if (period !== "ALL") {
+      const filter = PERIOD_FILTERS.find((f) => f.key === period);
+      if (filter && "days" in filter) {
+        const cutoff = Date.now() - filter.days * 24 * 60 * 60 * 1000;
+        if (new Date(p.purchasedAt).getTime() < cutoff) return false;
+      }
+    }
+
+    // 반영 상태 필터
+    if (statusFilter === "REFLECTED") {
+      return p.followUpStatus === "inventory_reflected";
+    }
+    if (statusFilter === "NOT_REFLECTED") {
+      return !p.followUpStatus || p.followUpStatus !== "inventory_reflected";
+    }
+
+    return true;
   });
 
   return (
@@ -133,6 +154,34 @@ export default function PurchasesScreen() {
             <Text
               className={`text-xs font-medium ${
                 period === f.key ? "text-white" : "text-slate-600"
+              }`}
+            >
+              {f.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {/* 반영 상태 필터 칩 */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 6 }}
+        className="bg-white border-b border-slate-100"
+      >
+        {STATUS_FILTERS.map((f) => (
+          <Pressable
+            key={f.key}
+            className={`mr-2 px-3 py-1.5 rounded-full border ${
+              statusFilter === f.key
+                ? "bg-emerald-600 border-emerald-600"
+                : "bg-white border-slate-200"
+            }`}
+            onPress={() => setStatusFilter(f.key)}
+          >
+            <Text
+              className={`text-xs font-medium ${
+                statusFilter === f.key ? "text-white" : "text-slate-600"
               }`}
             >
               {f.label}

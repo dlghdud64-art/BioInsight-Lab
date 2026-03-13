@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   ChevronRight,
   Calendar,
+  QrCode,
+  ClipboardCheck,
 } from "lucide-react-native";
 import { useDashboardSummary, usePurchases } from "../../hooks/useApi";
 
@@ -46,6 +48,14 @@ export default function HomeScreen() {
       bgColor: "bg-red-50",
       onPress: () => router.push("/(tabs)/inventory"),
     },
+    {
+      icon: ClipboardCheck,
+      label: "점검 필요",
+      count: summary?.pendingInspections ?? 0,
+      color: "#7c3aed",
+      bgColor: "bg-purple-50",
+      onPress: () => router.push("/(tabs)/inventory"),
+    },
   ].filter((t) => t.count > 0);
 
   const shortcuts = [
@@ -72,6 +82,12 @@ export default function HomeScreen() {
       label: "출고 처리",
       color: "#8b5cf6",
       onPress: () => router.push("/(tabs)/inventory"),
+    },
+    {
+      icon: QrCode,
+      label: "QR 스캔",
+      color: "#0ea5e9",
+      onPress: () => router.push("/scan"),
     },
   ];
 

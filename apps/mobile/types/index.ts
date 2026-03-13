@@ -3,7 +3,7 @@
 export interface Quote {
   id: string;
   title: string;
-  status: "DRAFT" | "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "ON_HOLD";
+  status: "DRAFT" | "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "ON_HOLD" | "PURCHASED" | "RESPONDED" | "VENDOR_INQUIRY" | "WAITING_REPLY";
   totalAmount?: number;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +38,15 @@ export interface VendorResponse {
   notes?: string;
 }
 
+export interface QuoteStatusHistory {
+  id: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  reason: string | null;
+  changedBy: string;
+  createdAt: string;
+}
+
 export interface PurchaseRecord {
   id: string;
   productName: string;
@@ -54,6 +63,25 @@ export interface PurchaseRecord {
   currency?: string;
 }
 
+export type InspectionResult = "PASS" | "CAUTION" | "FAIL";
+
+export interface InspectionChecklist {
+  storageOk: boolean;
+  labelOk: boolean;
+  expiryOk: boolean;
+  conditionOk: boolean;
+}
+
+export interface Inspection {
+  id: string;
+  inventoryId: string;
+  result: InspectionResult;
+  checklist: InspectionChecklist;
+  notes?: string;
+  inspectedAt: string;
+  user?: { name: string };
+}
+
 export interface ProductInventory {
   id: string;
   productId?: string;
@@ -68,6 +96,7 @@ export interface ProductInventory {
   expiryDate?: string;
   storageCondition?: string;
   lotNumber?: string;
+  lastInspectedAt?: string;
   lots?: InventoryLot[];
   product?: {
     id: string;
@@ -75,6 +104,12 @@ export interface ProductInventory {
     nameEn?: string;
     brand?: string;
     catalogNumber?: string;
+    msdsUrl?: string;
+    hazardCodes?: string[];
+    pictograms?: string[];
+    storageCondition?: string;
+    ppe?: string[];
+    safetyNote?: string;
   };
 }
 

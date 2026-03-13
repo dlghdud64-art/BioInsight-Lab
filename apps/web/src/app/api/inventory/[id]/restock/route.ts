@@ -71,7 +71,7 @@ export async function POST(
 
     const { id } = await params;
     const body = await request.json();
-    const { quantity, lotNumber, expiryDate, notes } = body;
+    const { quantity, lotNumber, expiryDate, notes, purchaseId } = body;
 
     if (!quantity || typeof quantity !== "number" || quantity <= 0) {
       return NextResponse.json(
@@ -161,6 +161,17 @@ export async function POST(
           },
           tx
         );
+
+        // 구매 레코드의 followUpStatus 업데이트 (있을 경우)
+        if (purchaseId && typeof purchaseId === "string") {
+          await tx.purchaseRecord.updateMany({
+            where: { id: purchaseId },
+            data: {
+              followUpStatus: "inventory_reflected",
+              receivedAt: new Date(),
+            },
+          });
+        }
 
         return [updated, restock];
       }

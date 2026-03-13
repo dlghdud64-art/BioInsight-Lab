@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
 import { ArrowUpFromLine, AlertTriangle } from "lucide-react-native";
 import { useConsumeInventory } from "../../hooks/useApi";
+import { getErrorMessage } from "../../lib/errorMessages";
 
 const REASONS = [
   { key: "experiment", label: "실험 사용" },
@@ -60,7 +61,7 @@ export default function LotDispatchScreen() {
             { text: "확인", onPress: () => router.back() },
           ]);
         },
-        onError: () => Alert.alert("오류", "출고 처리에 실패했습니다."),
+        onError: (err) => Alert.alert("오류", getErrorMessage(err)),
       }
     );
   };

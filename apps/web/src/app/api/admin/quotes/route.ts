@@ -13,14 +13,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: 실제 환경에서는 관리자 권한 확인 필요
-    // if (session.user.role !== "ADMIN") {
-    //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    // }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "관리자 권한이 필요합니다." },
+        { status: 403 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    const limit = Math.max(1, Math.min(parseInt(searchParams.get("limit") || "20") || 20, 200));
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status");
 
