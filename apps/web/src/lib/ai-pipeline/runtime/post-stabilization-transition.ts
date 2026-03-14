@@ -255,7 +255,7 @@ export const REMAINING_RISK_BACKLOG: readonly DeferredRisk[] = [
   },
   {
     riskId: "PSR-008",
-    riskTitle: "soak runner 실행 로직 미구현",
+    riskTitle: "soak runner hardening debt (실행 orchestrator 미구현)",
     riskClass: "OPERATIONAL",
     severity: "LOW",
     reason: "12개 scenario pack/exit gate 정의만 존재. 실제 scenario orchestrate runner 없음.",
@@ -503,7 +503,7 @@ export const FINAL_DECISION: FinalDecisionRecord = {
     { id: "IC-02", description: "main freeze at commit f018c25, release-candidate tag v1.0.0-rc.1 생성", status: "DONE" },
     { id: "IC-03", description: "operator sign-off 4개 필드 기록 (추가 merge 전 필수)", status: "PENDING" },
   ],
-  frozenCommit: "f018c25",
+  frozenCommit: "576ce86",
   releaseTag: "v1.0.0-rc.1",
   decidedAt: "2026-03-15T00:00:00Z",
   operatorSignOff: {
