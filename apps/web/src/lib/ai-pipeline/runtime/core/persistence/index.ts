@@ -1,5 +1,5 @@
 /**
- * P1-1 Slice-1B — Persistence Layer Barrel Exports
+ * P1-1 — Persistence Layer Barrel Exports
  */
 
 // Common types
@@ -41,7 +41,7 @@ export type {
   CanonicalAuditRepository,
 } from "./repositories";
 
-// Factory contract
+// Factory contract + concrete registry
 export type {
   PersistenceAdapters,
   PersistenceAdapterFactory,
@@ -49,7 +49,16 @@ export type {
   AdapterRegistry,
 } from "./factory";
 
-export { DEFAULT_PERSISTENCE_CONFIG } from "./factory";
+export {
+  DEFAULT_PERSISTENCE_CONFIG,
+  registerAdapterFactory,
+  resolveAdapters,
+  isAdapterRegistered,
+  _resetAdapterRegistry,
+} from "./factory";
+
+// Prisma adapters (Slice-1C)
+export { createPrismaAdapters } from "./prisma";
 
 // Migration validation
 export {

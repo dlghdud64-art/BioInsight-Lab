@@ -1,13 +1,14 @@
 /**
- * P1-1 Slice-1B — Persistence Adapter Factory Contract
+ * P1-1 — Persistence Adapter Factory
  *
  * Defines the factory that creates all 6 repositories
  * for either MEMORY or PRISMA storage mode.
  *
- * Constraints:
- * - No concrete implementations (Slice-1C/1D)
- * - No env var reading (Slice-1E)
- * - No Prisma imports
+ * Slice-1C: Prisma adapter registered.
+ * Slice-1D: Memory adapter (pending).
+ * Slice-1E: env var wiring (pending).
+ *
+ * No Prisma types leak from this file — prismaClient is `unknown`.
  */
 
 import type { StorageMode } from "./types";
@@ -104,4 +105,54 @@ export interface AdapterRegistry {
   register(mode: StorageMode, factory: () => PersistenceAdapters): void;
   resolve(config: PersistenceProviderConfig): PersistenceAdapters;
   isRegistered(mode: StorageMode): boolean;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Concrete Registry (Slice-1C+)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _adapterFactories = new Map<StorageMode, (config: PersistenceProviderConfig) => PersistenceAdapters>();
+
+/**
+ * Register an adapter factory for a storage mode.
+ * Called by Slice-1C (Prisma) and Slice-1D (Memory).
+ */
+export function registerAdapterFactory(
+  mode: StorageMode,
+  factory: (config: PersistenceProviderConfig) => PersistenceAdapters
+): void {
+  _adapterFactories.set(mode, factory);
+}
+
+/**
+ * Resolve adapters for the given config.
+ * Falls back to MEMORY if requested mode is not registered.
+ *
+ * NOTE: Full wiring (env var reading) is deferred to Slice-1E.
+ * For now, callers must pass config explicitly.
+ */
+export function resolveAdapters(config: PersistenceProviderConfig): PersistenceAdapters {
+  const factory = _adapterFactories.get(config.mode);
+  if (!factory) {
+    // Fallback to MEMORY if available
+    const memoryFactory = _adapterFactories.get("MEMORY");
+    if (memoryFactory) return memoryFactory(config);
+    throw new Error(
+      `No adapter registered for mode="${config.mode}" and no MEMORY fallback available. ` +
+      `Register adapters via registerAdapterFactory() before calling resolveAdapters().`
+    );
+  }
+  return factory(config);
+}
+
+/**
+ * Check if a factory is registered for a given mode.
+ */
+export function isAdapterRegistered(mode: StorageMode): boolean {
+  return _adapterFactories.has(mode);
+}
+
+/** Test-only: reset registry */
+export function _resetAdapterRegistry(): void {
+  _adapterFactories.clear();
 }
