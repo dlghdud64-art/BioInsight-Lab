@@ -72,7 +72,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       <div
         ref={ref}
         className={cn(
-          "absolute z-50 rounded-md border border-slate-200 bg-slate-900 px-3 py-1.5 text-sm text-slate-50 shadow-md",
+          "absolute z-50 rounded-md border border-slate-200 bg-slate-900 px-3 py-1.5 text-sm text-slate-50 shadow-md whitespace-nowrap",
           "bottom-full left-1/2 -translate-x-1/2 mb-2",
           "before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-slate-900",
           className

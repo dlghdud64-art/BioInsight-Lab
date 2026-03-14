@@ -324,7 +324,7 @@ export default function PurchasesPage() {
       const result = {
         total: (data.successRows ?? 0) + (data.errorRows ?? 0),
         success: data.successRows ?? 0,
-        errors: (data.rowErrors ?? []) as { row: number; message: string }[],
+        errors: (data.errorSample ?? []) as { row: number; message: string }[],
       };
       setImportResult(result);
       toast({
@@ -1360,7 +1360,7 @@ export default function PurchasesPage() {
                             mode="single"
                             selected={purchaseDate}
                             onSelect={setPurchaseDate}
-                            initialFocus
+                            autoFocus
                             locale={ko}
                             captionLayout="dropdown"
                             fromYear={2015}
