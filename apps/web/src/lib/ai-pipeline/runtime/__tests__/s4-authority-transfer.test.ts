@@ -160,7 +160,34 @@ describe("S4: Authority Transfer / Succession Consistency", () => {
   });
 
   // 10. transfer rollback restores consistent authority line test
-  // (tested implicitly via continuity failure path)
+  it("should rollback transfer when continuity fails on duplicate transfer attempt", () => {
+    createAuthorityLine("line-1", "auth-A", "bl-1", "ops", "cor-1");
+    // successful first transfer
+    requestTransfer({
+      authorityLineId: "line-1",
+      requestedSuccessorId: "auth-B",
+      actor: "ops",
+      reason: "first",
+      correlationId: "cor-2",
+    });
+    // line is now TRANSFER_FINALIZED (not IDLE)
+    // attempting another transfer triggers CONCURRENT_TRANSFER_BLOCKED, line stays consistent
+    const r2 = requestTransfer({
+      authorityLineId: "line-1",
+      requestedSuccessorId: "auth-C",
+      actor: "ops",
+      reason: "second",
+      correlationId: "cor-3",
+    });
+    expect(r2.success).toBe(false);
+    // authority line should remain consistent
+    const line = getAuthorityLine("line-1")!;
+    expect(line.currentAuthorityId).toBe("auth-B");
+    expect(line.authorityState).toBe("ACTIVE");
+    const integrity = checkAuthorityIntegrity();
+    expect(integrity.splitBrain).toBe(false);
+    expect(integrity.orphanCount).toBe(0);
+  });
 
   // 11. direct authority override blocked test
   it("should block direct registry patch", () => {
