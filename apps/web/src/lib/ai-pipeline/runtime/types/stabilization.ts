@@ -260,6 +260,114 @@ export interface RejectEvent {
   timestamp: Date;
 }
 
+// ── S2: Containment / Rollback Hardening Types ──
+
+export type BreachType =
+  | "UNAUTHORIZED_STATE_MUTATION"
+  | "INVALID_ROUTING_MUTATION"
+  | "AUTHORITY_INCONSISTENCY"
+  | "POLICY_EVALUATION_BREACH"
+  | "ACTIVE_RUNTIME_INVARIANT_BREAK"
+  | "ROLLBACK_PRECONDITION_FAILURE"
+  | "PARTIAL_COMMIT_DETECTION"
+  | "DEV_TEST_EXPERIMENTAL_CONTAMINATION";
+
+export type ContainmentStage =
+  | "FINAL_CONTAINMENT_START"
+  | "ACTIVE_MUTATION_FREEZE"
+  | "SIDE_EFFECT_EMISSION_STOP"
+  | "ROLLBACK_PRECHECK"
+  | "ROLLBACK_EXECUTE"
+  | "POST_ROLLBACK_RESIDUE_SCAN"
+  | "STATE_RECONCILIATION"
+  | "FINAL_CONTAINMENT_FINALIZE";
+
+export const CONTAINMENT_STAGE_ORDER: readonly ContainmentStage[] = [
+  "FINAL_CONTAINMENT_START",
+  "ACTIVE_MUTATION_FREEZE",
+  "SIDE_EFFECT_EMISSION_STOP",
+  "ROLLBACK_PRECHECK",
+  "ROLLBACK_EXECUTE",
+  "POST_ROLLBACK_RESIDUE_SCAN",
+  "STATE_RECONCILIATION",
+  "FINAL_CONTAINMENT_FINALIZE",
+] as const;
+
+export type ContainmentCompletionState =
+  | "CONTAINED_AND_RESTORED"
+  | "CONTAINED_WITH_INCIDENT_ESCALATION"
+  | "CONTAINMENT_FAILED_LOCKDOWN";
+
+export type RollbackScope =
+  | "CONFIG"
+  | "FLAGS"
+  | "ROUTING"
+  | "AUTHORITY"
+  | "POLICY"
+  | "QUEUE_TOPOLOGY"
+  | "ACTIVE_RUNTIME_STATE";
+
+export interface BreachEntry {
+  breachId: string;
+  breachType: BreachType;
+  correlationId: string;
+  incidentId: string;
+  actor: string;
+  mutatedScope: string;
+  detectedAt: Date;
+  detail: string;
+}
+
+export interface RollbackPlan {
+  planId: string;
+  baselineId: string;
+  snapshotId: string;
+  affectedScopes: RollbackScope[];
+  orderedSteps: RollbackStep[];
+  reasonCode: string;
+  createdAt: Date;
+}
+
+export interface RollbackStep {
+  scope: RollbackScope;
+  order: number;
+  precondition: string;
+  postcondition: string;
+  status: "PENDING" | "EXECUTED" | "FAILED";
+}
+
+export type ResidueSeverity = "CRITICAL" | "WARNING" | "INFO";
+
+export interface ResidueEntry {
+  scope: RollbackScope | string;
+  description: string;
+  severity: ResidueSeverity;
+  reconcilable: boolean;
+}
+
+export interface ResidueScanResult {
+  clean: boolean;
+  residues: ResidueEntry[];
+  hasCritical: boolean;
+}
+
+export interface ReconciliationResult {
+  success: boolean;
+  diffs: { scope: string; expected: string; actual: string; resolved: boolean }[];
+  unresolvedCount: number;
+}
+
+export interface ContainmentResult {
+  completionState: ContainmentCompletionState;
+  breachEntry: BreachEntry;
+  stagesCompleted: ContainmentStage[];
+  rollbackPlan: RollbackPlan | null;
+  residueScan: ResidueScanResult | null;
+  reconciliation: ReconciliationResult | null;
+  incidentEscalated: boolean;
+  reason: string;
+}
+
 // ── Audit Events ──
 
 export type StabilizationAuditEventType =
@@ -275,7 +383,17 @@ export type StabilizationAuditEventType =
   | "ACTION_DENIED"
   | "INVALID_COMBINATION_REJECTED"
   | "DEV_PATH_BLOCKED"
-  | "INCIDENT_ESCALATED";
+  | "INCIDENT_ESCALATED"
+  | "BREACH_DETECTED"
+  | "CONTAINMENT_STARTED"
+  | "MUTATION_FROZEN"
+  | "ROLLBACK_PRECHECK_PASSED"
+  | "ROLLBACK_PRECHECK_FAILED"
+  | "ROLLBACK_PLAN_BUILT"
+  | "ROLLBACK_STEP_EXECUTED"
+  | "RESIDUE_SCAN_COMPLETED"
+  | "RECONCILIATION_COMPLETED"
+  | "CONTAINMENT_FINALIZED";
 
 export interface StabilizationAuditEvent {
   eventId: string;
