@@ -1,15 +1,18 @@
 /**
- * S2 — Rollback Executor
+ * S2 — Rollback Executor (Patched)
  *
  * plan 기반 결정론적 rollback.
- * step별 precondition/postcondition 검사.
- * 실패 시 safe-fail + incident escalation.
- * idempotent: 이미 EXECUTED인 step은 skip.
+ * step별 pre-state capture → apply restore → post-state verify.
+ * post-state verify 실패 시 step 성공 처리 금지.
+ * idempotent: EXECUTED + restoreVerified인 step만 skip.
+ * best-effort continue 금지.
  */
 
-import type { RollbackPlan, RollbackStep } from "../../types/stabilization";
+import type { RollbackPlan, RollbackStep, RollbackScope } from "../../types/stabilization";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { isMutationFrozen } from "../containment/mutation-freeze";
+import { getSnapshot } from "../baseline/snapshot-manager";
+import { applyScopeRestore } from "./scope-restore-adapter";
 
 export interface ExecutorResult {
   success: boolean;
@@ -29,31 +32,63 @@ export function executeRollbackPlan(plan: RollbackPlan, correlationId: string, a
     };
   }
 
+  const snap = getSnapshot(plan.snapshotId);
   let stepsExecuted = 0;
 
   for (const step of plan.orderedSteps) {
-    // idempotent: already executed → skip
-    if (step.status === "EXECUTED") {
+    // idempotent: EXECUTED + restoreVerified → skip
+    if (step.status === "EXECUTED" && step.restoreVerified) {
       stepsExecuted++;
       continue;
     }
 
-    // precondition: previous steps must be EXECUTED
+    // precondition: previous steps must be EXECUTED + verified
     if (step.order > 0) {
       const prev = plan.orderedSteps[step.order - 1];
-      if (prev && prev.status !== "EXECUTED") {
+      if (prev && (prev.status !== "EXECUTED" || !prev.restoreVerified)) {
         step.status = "FAILED";
         return {
           success: false,
           stepsExecuted,
           failedStep: step,
-          reason: `ROLLBACK_STEP_PRECONDITION_FAILED: step ${step.order} (${step.scope}) — previous step not executed`,
+          reason: `ROLLBACK_STEP_PRECONDITION_FAILED: step ${step.order} (${step.scope}) — previous step not executed or not verified`,
         };
       }
     }
 
-    // Execute step (deterministic — restore snapshot state for this scope)
+    // resolve snapshot data for this scope
+    const scopeData = resolveScopeData(step.scope, snap);
+
+    if (scopeData) {
+      // actual restore via adapter
+      const restoreResult = applyScopeRestore(step.scope, scopeData, correlationId, actor);
+
+      if (!restoreResult.applied) {
+        step.status = "FAILED";
+        step.restoreVerified = false;
+        return {
+          success: false,
+          stepsExecuted,
+          failedStep: step,
+          reason: `RESTORE_APPLY_FAILED: step ${step.order} (${step.scope}) — ${restoreResult.reason}`,
+        };
+      }
+
+      if (!restoreResult.verified) {
+        step.status = "FAILED";
+        step.restoreVerified = false;
+        return {
+          success: false,
+          stepsExecuted,
+          failedStep: step,
+          reason: `POST_RESTORE_VERIFY_FAILED: step ${step.order} (${step.scope}) — post-state mismatch`,
+        };
+      }
+    }
+
+    // mark executed + verified
     step.status = "EXECUTED";
+    step.restoreVerified = true;
     stepsExecuted++;
 
     emitStabilizationAuditEvent({
@@ -65,16 +100,30 @@ export function executeRollbackPlan(plan: RollbackPlan, correlationId: string, a
       correlationId,
       documentType: "",
       performedBy: actor,
-      detail: `step ${step.order}: ${step.scope} restored`,
+      detail: `step ${step.order}: ${step.scope} restored + verified`,
     });
   }
 
-  const allExecuted = plan.orderedSteps.every((s: RollbackStep) => s.status === "EXECUTED");
+  const allVerified = plan.orderedSteps.every((s: RollbackStep) => s.status === "EXECUTED" && s.restoreVerified);
 
   return {
-    success: allExecuted,
+    success: allVerified,
     stepsExecuted,
     failedStep: null,
-    reason: allExecuted ? "ROLLBACK_COMPLETE" : "ROLLBACK_PARTIAL",
+    reason: allVerified ? "ROLLBACK_COMPLETE_ALL_VERIFIED" : "ROLLBACK_PARTIAL",
   };
+}
+
+/** snapshot에서 scope에 해당하는 data를 가져오기 */
+function resolveScopeData(
+  scope: RollbackScope,
+  snap: ReturnType<typeof getSnapshot>
+): Record<string, unknown> | null {
+  if (!snap) return null;
+  // ACTIVE_RUNTIME_STATE는 snapshot에 직접 없음 — 전체 config 사용
+  if (scope === "ACTIVE_RUNTIME_STATE") {
+    return snap.config as Record<string, unknown>;
+  }
+  const entry = snap.scopes.find((s) => s.scope === scope);
+  return entry ? entry.data : null;
 }

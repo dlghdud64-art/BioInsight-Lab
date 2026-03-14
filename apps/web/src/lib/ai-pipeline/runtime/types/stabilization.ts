@@ -334,13 +334,17 @@ export interface RollbackStep {
   precondition: string;
   postcondition: string;
   status: "PENDING" | "EXECUTED" | "FAILED";
+  restoreVerified: boolean;
 }
 
 export type ResidueSeverity = "CRITICAL" | "WARNING" | "INFO";
 
 export interface ResidueEntry {
   scope: RollbackScope | string;
+  path: string;
   description: string;
+  expectedValue: unknown;
+  actualValue: unknown;
   severity: ResidueSeverity;
   reconcilable: boolean;
 }
@@ -351,9 +355,17 @@ export interface ResidueScanResult {
   hasCritical: boolean;
 }
 
+export interface ReconciliationDiff {
+  scope: string;
+  path: string;
+  expected: unknown;
+  actual: unknown;
+  resolved: boolean;
+}
+
 export interface ReconciliationResult {
   success: boolean;
-  diffs: { scope: string; expected: string; actual: string; resolved: boolean }[];
+  diffs: ReconciliationDiff[];
   unresolvedCount: number;
 }
 
@@ -470,8 +482,15 @@ export type StabilizationAuditEventType =
   | "ROLLBACK_PRECHECK_FAILED"
   | "ROLLBACK_PLAN_BUILT"
   | "ROLLBACK_STEP_EXECUTED"
+  | "RESTORE_APPLY_STARTED"
+  | "RESTORE_APPLY_SUCCEEDED"
+  | "RESTORE_APPLY_FAILED"
+  | "POST_RESTORE_VERIFY_PASSED"
+  | "POST_RESTORE_VERIFY_FAILED"
   | "RESIDUE_SCAN_COMPLETED"
+  | "DEEP_RESIDUE_DIFF_DETECTED"
   | "RECONCILIATION_COMPLETED"
+  | "RECONCILIATION_UNRESOLVED_DIFF"
   | "CONTAINMENT_FINALIZED";
 
 export interface StabilizationAuditEvent {

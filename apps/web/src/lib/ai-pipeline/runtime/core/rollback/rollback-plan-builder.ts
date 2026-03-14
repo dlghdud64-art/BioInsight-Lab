@@ -38,6 +38,7 @@ export function buildRollbackPlan(
       precondition: `${scope} mutation frozen + previous step complete`,
       postcondition: `${scope} restored to snapshot state`,
       status: "PENDING" as const,
+      restoreVerified: false,
     })
   );
 
