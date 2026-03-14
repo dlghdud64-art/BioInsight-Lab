@@ -172,7 +172,58 @@ export async function POST(
           break;
 
         case "REORDER_SUGGESTION":
-          result = { message: "재발주 기능은 P1에서 구현 예정입니다." };
+          result = await executeReorderSuggestion(
+            session.user.id,
+            modifiedPayload as Record<string, unknown>,
+            item.relatedEntityId
+          );
+          // 활동 로그: 재발주 검토 완료
+          await createActivityLog({
+            activityType: "INVENTORY_RESTOCK_REVIEWED",
+            entityType: "INVENTORY",
+            entityId: item.relatedEntityId || params.id,
+            taskType: "REORDER_SUGGESTION",
+            beforeStatus: "PENDING",
+            afterStatus: "APPROVED",
+            userId: session.user.id,
+            organizationId: item.organizationId,
+            actorRole,
+            metadata: {
+              actionItemId: params.id,
+              decision: "APPROVED",
+              productName: (modifiedPayload as Record<string, unknown>).productName,
+              recommendedQty: (modifiedPayload as Record<string, unknown>).recommendedOrderQty,
+            },
+            ipAddress,
+            userAgent,
+          });
+          break;
+
+        case "EXPIRY_ALERT":
+          result = await executeExpiryAlert(
+            modifiedPayload as Record<string, unknown>,
+            item.relatedEntityId
+          );
+          // 활동 로그: Lot 조치 검토
+          await createActivityLog({
+            activityType: "INVENTORY_RESTOCK_REVIEWED",
+            entityType: "INVENTORY",
+            entityId: item.relatedEntityId || params.id,
+            taskType: "EXPIRY_ALERT",
+            beforeStatus: "PENDING",
+            afterStatus: "APPROVED",
+            userId: session.user.id,
+            organizationId: item.organizationId,
+            actorRole,
+            metadata: {
+              actionItemId: params.id,
+              decision: "ACKNOWLEDGED",
+              productName: (modifiedPayload as Record<string, unknown>).productName,
+              suggestedAction: (modifiedPayload as Record<string, unknown>).suggestedAction,
+            },
+            ipAddress,
+            userAgent,
+          });
           break;
 
         default:
@@ -431,5 +482,88 @@ async function executeStatusChangeSuggest(
     previousStatus: order.status,
     newStatus: updated.status,
     message: `주문 상태가 ${order.status} → ${updated.status}로 변경되었습니다.`,
+  };
+}
+
+/**
+ * 재발주 제안 승인 → 자동 재주문 트리거 (기존 auto-reorder 로직 활용)
+ */
+async function executeReorderSuggestion(
+  userId: string,
+  payload: Record<string, unknown>,
+  inventoryId: string | null
+): Promise<Record<string, unknown>> {
+  if (!inventoryId) throw new Error("재고 ID가 없습니다");
+
+  const inventory = await db.productInventory.findUnique({
+    where: { id: inventoryId },
+    select: {
+      id: true,
+      currentQuantity: true,
+      safetyStock: true,
+      product: { select: { id: true, name: true, catalogNumber: true, brand: true } },
+    },
+  });
+
+  if (!inventory) throw new Error("재고 정보를 찾을 수 없습니다");
+
+  const recommendedQty = (payload.recommendedOrderQty as number) || 0;
+  if (recommendedQty <= 0) throw new Error("추천 발주 수량이 유효하지 않습니다");
+
+  // 재입고 이력 생성 (InventoryRestock)
+  const restock = await db.inventoryRestock.create({
+    data: {
+      inventoryId: inventory.id,
+      quantity: recommendedQty,
+      reason: (payload.reason as string) || "AI 재발주 제안 승인",
+      orderedBy: userId,
+      status: "ORDERED",
+    },
+  });
+
+  return {
+    inventoryId: inventory.id,
+    productName: inventory.product?.name || "",
+    recommendedQty,
+    restockId: restock.id,
+    message: `${inventory.product?.name || "품목"} ${recommendedQty}개 재발주가 요청되었습니다.`,
+  };
+}
+
+/**
+ * 유효기한 임박 알림 승인 → 확인(Acknowledge) 처리
+ *
+ * 실제 폐기/사용 처리는 하지 않음 — 사용자가 "확인했음"을 기록하는 것이 목적.
+ */
+async function executeExpiryAlert(
+  payload: Record<string, unknown>,
+  inventoryId: string | null
+): Promise<Record<string, unknown>> {
+  if (!inventoryId) throw new Error("재고 ID가 없습니다");
+
+  const inventory = await db.productInventory.findUnique({
+    where: { id: inventoryId },
+    select: {
+      id: true,
+      lotNumber: true,
+      expiryDate: true,
+      currentQuantity: true,
+      product: { select: { name: true } },
+    },
+  });
+
+  if (!inventory) throw new Error("재고 정보를 찾을 수 없습니다");
+
+  const suggestedAction = (payload.suggestedAction as string) || "확인 완료";
+
+  return {
+    inventoryId: inventory.id,
+    productName: inventory.product?.name || "",
+    lotNumber: inventory.lotNumber || "",
+    expiryDate: inventory.expiryDate?.toISOString() || null,
+    currentQuantity: inventory.currentQuantity,
+    suggestedAction,
+    acknowledged: true,
+    message: `${inventory.product?.name || "품목"} Lot(${inventory.lotNumber || "N/A"}) 유효기한 알림이 확인 처리되었습니다.`,
   };
 }
