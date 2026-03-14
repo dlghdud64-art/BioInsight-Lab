@@ -9,6 +9,8 @@
 import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
+import { logBridgeFailure } from "../persistence/bridge-logger";
+import { normalizeDate } from "../persistence/date-normalizer";
 
 // ── Types ──
 
@@ -115,11 +117,11 @@ export function createAuthorityLine(
       baselineId: line.baselineId || null,
       correlationId: line.correlationId || null,
       updatedBy: line.updatedBy || null,
-    }).catch(function () {
-      // bridge phase: non-fatal
+    }).catch(function (err: unknown) {
+      logBridgeFailure("authority-registry", "saveAuthorityLine", err);
     });
-  } catch (_bridgeErr) {
-    // TODO(Slice-1F): remove legacy store, read from repository directly
+  } catch (err) {
+    logBridgeFailure("authority-registry", "saveAuthorityLine-bootstrap", err);
   }
 
   return line;
@@ -389,6 +391,39 @@ export function checkAuthorityIntegrity(): IntegrityReport {
     pendingResidue,
     detail: splitBrain ? "SPLIT_BRAIN_DETECTED" : orphanCount > 0 ? "ORPHAN_DETECTED" : "INTEGRITY_OK",
   };
+}
+
+// ── Repository-First Async Read ──
+
+/**
+ * Repository-first read with legacy fallback.
+ * Maps PersistedAuthorityLine → AuthorityLine with Date normalization.
+ */
+export async function getAuthorityLineFromRepo(authorityLineId: string): Promise<AuthorityLine | null> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.authority.findAuthorityLineByLineId(authorityLineId);
+    if (result.ok) {
+      const d = result.data;
+      return {
+        authorityLineId: d.authorityLineId,
+        currentAuthorityId: d.currentAuthorityId,
+        authorityState: d.authorityState as AuthorityState,
+        transferState: d.transferState as TransferState,
+        pendingSuccessorId: d.pendingSuccessorId,
+        revokedAuthorityIds: d.revokedAuthorityIds,
+        registryVersion: Number(d.registryVersion),
+        baselineId: d.baselineId || "",
+        updatedAt: normalizeDate(d.updatedAt),
+        updatedBy: d.updatedBy || "",
+        correlationId: d.correlationId || "",
+      };
+    }
+  } catch (err) {
+    logBridgeFailure("authority-registry", "getAuthorityLineFromRepo", err);
+  }
+  // Fallback to legacy store
+  return _registry.get(authorityLineId) ?? null;
 }
 
 /** 테스트용 */

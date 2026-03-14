@@ -8,6 +8,8 @@
 import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
+import { logBridgeFailure } from "../persistence/bridge-logger";
+import { normalizeDate } from "../persistence/date-normalizer";
 
 export interface IncidentRecord {
   incidentId: string;
@@ -50,11 +52,11 @@ export function escalateIncident(
       correlationId: record.correlationId,
       baselineId: null,
       snapshotId: null,
-    }).catch(function () {
-      // bridge phase: non-fatal
+    }).catch(function (err: unknown) {
+      logBridgeFailure("incident-escalation", "createIncident", err);
     });
-  } catch (_bridgeErr) {
-    // TODO(Slice-1F): remove legacy store, read from repository directly
+  } catch (err) {
+    logBridgeFailure("incident-escalation", "createIncident-bootstrap", err);
   }
 
   emitStabilizationAuditEvent({
@@ -94,20 +96,50 @@ export function acknowledgeIncident(incidentId: string): boolean {
             incidentId,
             "system",
             result.data.updatedAt
-          ).catch(function () {
-            // bridge phase: non-fatal
+          ).catch(function (err: unknown) {
+            logBridgeFailure("incident-escalation", "acknowledgeIncident", err);
           });
         }
-      }).catch(function () {
-        // bridge phase: non-fatal
+      }).catch(function (err: unknown) {
+        logBridgeFailure("incident-escalation", "findIncidentForAck", err);
       });
-    } catch (_bridgeErr) {
-      // TODO(Slice-1F): remove legacy store, read from repository directly
+    } catch (err) {
+      logBridgeFailure("incident-escalation", "acknowledgeIncident-bootstrap", err);
     }
 
     return true;
   }
   return false;
+}
+
+// ── Repository-First Async Read ──
+
+/**
+ * Repository-first read with legacy fallback.
+ * Maps PersistedIncident → IncidentRecord with Date normalization.
+ */
+export async function getIncidentsFromRepo(): Promise<IncidentRecord[]> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.incident.listOpenIncidents({ limit: 1000 });
+    if (result.ok) {
+      return result.data.items.map(function (d) {
+        return {
+          incidentId: d.incidentId,
+          reasonCode: d.reasonCode,
+          correlationId: d.correlationId,
+          actor: d.acknowledgedBy || "system",
+          detail: "",
+          escalatedAt: normalizeDate(d.createdAt),
+          acknowledged: d.status !== "OPEN",
+        };
+      });
+    }
+  } catch (err) {
+    logBridgeFailure("incident-escalation", "getIncidentsFromRepo", err);
+  }
+  // Fallback to legacy store
+  return [..._incidents];
 }
 
 /** 테스트용 */

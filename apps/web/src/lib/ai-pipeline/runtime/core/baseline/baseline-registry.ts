@@ -16,6 +16,8 @@ import type {
   BaselineStatus,
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
+import { logBridgeFailure } from "../persistence/bridge-logger";
+import { normalizeDate } from "../persistence/date-normalizer";
 
 // ── In-memory store (legacy — kept for backward compatibility) ──
 // TODO(Slice-1F): remove legacy store, read from repository directly
@@ -138,11 +140,11 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
       containmentPriorityEnabled: true,
       auditStrictMode: true,
       mergeGateStrictMode: true,
-    }).catch(function () {
-      // bridge phase: repository write failure is non-fatal
+    }).catch(function (err: unknown) {
+      logBridgeFailure("baseline-registry", "saveBaseline", err);
     });
-  } catch (_bridgeErr) {
-    // TODO(Slice-1F): remove legacy store, read from repository directly
+  } catch (err) {
+    logBridgeFailure("baseline-registry", "saveBaseline-bootstrap", err);
   }
 
   return registry;
@@ -188,15 +190,15 @@ export function invalidateCanonicalBaseline(): void {
             id: result.data.id,
             expectedUpdatedAt: result.data.updatedAt,
             patch: { baselineStatus: "INVALIDATED" },
-          }).catch(function () {
-            // bridge phase: non-fatal
+          }).catch(function (err: unknown) {
+            logBridgeFailure("baseline-registry", "updateBaseline", err);
           });
         }
-      }).catch(function () {
-        // bridge phase: non-fatal
+      }).catch(function (err: unknown) {
+        logBridgeFailure("baseline-registry", "getCanonicalBaseline-for-invalidate", err);
       });
-    } catch (_bridgeErr) {
-      // TODO(Slice-1F): remove legacy store, read from repository directly
+    } catch (err) {
+      logBridgeFailure("baseline-registry", "invalidateCanonicalBaseline-bootstrap", err);
     }
 
     _canonicalBaseline = {
@@ -206,6 +208,45 @@ export function invalidateCanonicalBaseline(): void {
     };
   }
   _canonicalBaseline = null;
+}
+
+// ── Repository-First Async Read ──
+
+/**
+ * Repository-first read with legacy fallback.
+ * Maps PersistedBaseline → BaselineRegistry with Date normalization.
+ */
+export async function getCanonicalBaselineFromRepo(): Promise<BaselineRegistry | null> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.baseline.getCanonicalBaseline();
+    if (result.ok) {
+      const d = result.data;
+      return {
+        canonicalBaselineId: d.id,
+        baselineVersion: d.baselineVersion,
+        baselineHash: d.baselineHash,
+        baselineSource: "PACKAGE1_COMPLETE_NEW_AI_INTEGRATED",
+        baselineStatus: d.baselineStatus as BaselineStatus,
+        lifecycleState: d.lifecycleState as LifecycleState,
+        releaseMode: d.releaseMode as ReleaseMode,
+        activeSnapshotId: d.activeSnapshotId || "",
+        rollbackSnapshotId: d.rollbackSnapshotId || "",
+        freezeReason: d.freezeReason || "",
+        activePathManifestId: d.activePathManifestId || "",
+        policySetVersion: d.policySetVersion || "",
+        routingRuleVersion: d.routingRuleVersion || "",
+        authorityRegistryVersion: d.authorityRegistryVersion || "",
+        documentType: "",
+        createdAt: normalizeDate(d.createdAt),
+        updatedAt: normalizeDate(d.updatedAt),
+      };
+    }
+  } catch (err) {
+    logBridgeFailure("baseline-registry", "getCanonicalBaselineFromRepo", err);
+  }
+  // Fallback to legacy store
+  return _canonicalBaseline;
 }
 
 /** 테스트용 — 상태 리셋 */

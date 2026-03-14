@@ -14,6 +14,9 @@ import type {
   SnapshotScopeEntry,
   ALL_SNAPSHOT_SCOPES,
 } from "../../types/stabilization";
+import { getPersistenceAdapters } from "../persistence";
+import { baselineSnapshotToCreateInput } from "../persistence/snapshot-adapter";
+import { logBridgeFailure } from "../persistence/bridge-logger";
 
 // ── In-memory store ──
 
@@ -88,6 +91,17 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
 
   _snapshots.set(activeId, active);
   _snapshots.set(rollbackId, rollback);
+
+  // Dual-write: persist checksums to repository (fire-and-forget)
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(active))
+      .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(active)", err));
+    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(rollback))
+      .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(rollback)", err));
+  } catch (err) {
+    logBridgeFailure("snapshot-manager", "createSnapshotPair-bridge", err);
+  }
 
   return { active, rollback };
 }

@@ -10,6 +10,8 @@ import type {
   StabilizationAuditEventType,
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
+import { logBridgeFailure } from "../persistence/bridge-logger";
+import { normalizeDate } from "../persistence/date-normalizer";
 
 // ── In-memory audit store (legacy — kept for backward compatibility) ──
 // TODO(Slice-1F): remove legacy store, read from repository directly
@@ -62,12 +64,11 @@ export function emitStabilizationAuditEvent(input: EmitAuditEventInput): Stabili
       entityId: null,
       resultStatus: null,
       occurredAt: event.timestamp,
-    }).catch(function () {
-      // bridge phase: repository write failure is non-fatal
+    }).catch(function (err: unknown) {
+      logBridgeFailure("audit-events", "appendAuditEvent", err);
     });
-  } catch (_bridgeErr) {
-    // bootstrap not ready yet — legacy path covers this
-    // TODO(Slice-1F): remove legacy store, read from repository directly
+  } catch (err) {
+    logBridgeFailure("audit-events", "appendAuditEvent-bootstrap", err);
   }
 
   _auditEvents.push(event);
@@ -83,6 +84,44 @@ export function getAuditEvents(filter?: { eventType?: StabilizationAuditEventTyp
     if (filter.documentType && e.documentType !== filter.documentType) return false;
     return true;
   });
+}
+
+// ── Repository-First Async Read ──
+
+/**
+ * Repository-first read with legacy fallback.
+ * Maps PersistedStabilizationAuditEvent → StabilizationAuditEvent.
+ */
+export async function getAuditEventsFromRepo(
+  filter?: { eventType?: StabilizationAuditEventType }
+): Promise<StabilizationAuditEvent[]> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = filter && filter.eventType
+      ? await adapters.stabilizationAudit.listAuditEventsByEventType(filter.eventType, { limit: 1000 })
+      : await adapters.stabilizationAudit.listAuditEventsByCorrelationId("", { limit: 1000 });
+    if (result.ok) {
+      return result.data.items.map(function (d) {
+        return {
+          eventId: d.eventId,
+          eventType: d.eventType as StabilizationAuditEventType,
+          baselineId: d.baselineId || "",
+          baselineVersion: "",
+          baselineHash: "",
+          snapshotId: d.snapshotId || "",
+          correlationId: d.correlationId,
+          documentType: "",
+          performedBy: d.actor || "",
+          detail: d.reasonCode || "",
+          timestamp: normalizeDate(d.occurredAt),
+        };
+      });
+    }
+  } catch (err) {
+    logBridgeFailure("audit-events", "getAuditEventsFromRepo", err);
+  }
+  // Fallback to legacy store
+  return getAuditEvents(filter);
 }
 
 /** 테스트용 — 상태 리셋 */

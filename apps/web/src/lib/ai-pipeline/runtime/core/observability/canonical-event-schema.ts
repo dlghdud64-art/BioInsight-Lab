@@ -5,6 +5,8 @@
 
 import { randomUUID } from "crypto";
 import { getPersistenceAdapters } from "../persistence";
+import { logBridgeFailure } from "../persistence/bridge-logger";
+import { normalizeDate } from "../persistence/date-normalizer";
 
 // ── Canonical Event Schema ──
 
@@ -132,12 +134,11 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
       affectedScopes: event.affectedScopes || [],
       resultStatus: event.resultStatus,
       parentEventId: event.parentEventId || null,
-    }).catch(function () {
-      // bridge phase: repository write failure is non-fatal
+    }).catch(function (err: unknown) {
+      logBridgeFailure("canonical-event-schema", "appendCanonicalEvent", err);
     });
-  } catch (_bridgeErr) {
-    // bootstrap not ready yet — legacy path covers this
-    // TODO(Slice-1F): remove legacy store, read from repository directly
+  } catch (err) {
+    logBridgeFailure("canonical-event-schema", "appendCanonicalEvent-bootstrap", err);
   }
 
   _auditLog.push(event);
@@ -314,6 +315,63 @@ export function buildReconstructionView(
     reconstructionStatus: timeline.reconstructionStatus,
     eventCount: timeline.orderedEvents.length,
   };
+}
+
+// ── Repository-First Async Read ──
+
+/**
+ * Repository-first read with legacy fallback.
+ * Maps PersistedCanonicalAuditEvent → CanonicalEvent.
+ */
+export async function getCanonicalAuditLogFromRepo(
+  filter?: { correlationId?: string; timelineId?: string; eventType?: string }
+): Promise<CanonicalEvent[]> {
+  try {
+    const adapters = getPersistenceAdapters();
+    let result;
+    if (filter && filter.correlationId) {
+      result = await adapters.canonicalAudit.listCanonicalEventsByCorrelationId(filter.correlationId, { limit: 1000 });
+    } else if (filter && filter.timelineId) {
+      result = await adapters.canonicalAudit.listCanonicalEventsByTimelineId(filter.timelineId, { limit: 1000 });
+    } else {
+      result = await adapters.canonicalAudit.listCanonicalEventsByCorrelationId("", { limit: 1000 });
+    }
+    if (result.ok) {
+      return result.data.items.map(function (d) {
+        return {
+          eventId: d.eventId,
+          eventType: d.eventType,
+          eventStage: d.eventStage || undefined,
+          correlationId: d.correlationId,
+          incidentId: d.incidentId || undefined,
+          timelineId: d.timelineId,
+          baselineId: d.baselineId || "",
+          baselineVersion: d.baselineVersion || "",
+          baselineHash: d.baselineHash || "",
+          lifecycleState: d.lifecycleState || "",
+          releaseMode: d.releaseMode || "",
+          actor: d.actor || "",
+          sourceModule: d.sourceModule,
+          entityType: d.entityType,
+          entityId: d.entityId,
+          reasonCode: d.reasonCode,
+          severity: d.severity as EventSeverity,
+          occurredAt: normalizeDate(d.occurredAt),
+          recordedAt: normalizeDate(d.recordedAt),
+          snapshotBeforeId: d.snapshotBeforeId || undefined,
+          snapshotAfterId: d.snapshotAfterId || undefined,
+          affectedScopes: d.affectedScopes || [],
+          resultStatus: d.resultStatus as EventResultStatus,
+          parentEventId: d.parentEventId || undefined,
+          schemaVersion: SCHEMA_VERSION,
+        };
+      });
+    }
+  } catch (err) {
+    logBridgeFailure("canonical-event-schema", "getCanonicalAuditLogFromRepo", err);
+  }
+  // Fallback to legacy store
+  return getCanonicalAuditLog(filter);
 }
 
 /** 테스트용 */

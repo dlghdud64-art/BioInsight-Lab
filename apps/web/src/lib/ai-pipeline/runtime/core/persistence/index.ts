@@ -74,6 +74,12 @@ export {
 // Date normalization (Slice-1E)
 export { normalizeDate, normalizeDateOptional } from "./date-normalizer";
 
+// Bridge logger + Truth Source Contract (Slice-1F)
+export { logBridgeFailure, TRUTH_SOURCE_CONTRACT } from "./bridge-logger";
+
+// Snapshot adapter (Slice-1F)
+export { baselineSnapshotToCreateInput } from "./snapshot-adapter";
+
 // Migration validation
 export {
   SCHEMA_VALIDATION_COMMANDS,
