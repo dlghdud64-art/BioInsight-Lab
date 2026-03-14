@@ -2036,3 +2036,195 @@ model AiProcessingLog {
   @@index([createdAt])
   @@index([incidentTriggered])
 }
+
+// ════════════════════════════════════════════════════════════════════
+// P1-1 Slice-1A: Post-Stabilization Persistence Models
+// additive-only — no existing model modifications
+// ════════════════════════════════════════════════════════════════════
+
+// ── Stabilization Baseline ──
+
+model StabilizationBaseline {
+  id                          String   @id @default(cuid())
+  baselineSource              String   // e.g. "PACKAGE1_COMPLETE_NEW_AI_INTEGRATED"
+  baselineVersion             String
+  baselineHash                String
+  lifecycleState              String   // SHADOW | ACTIVE_5 | ACTIVE_25 | ACTIVE_50 | ACTIVE_100 | KILLED
+  releaseMode                 String   // CANARY_ROLLOUT | FULL_ACTIVE_STABILIZATION | POST_STABILIZATION
+  baselineStatus              String   // UNFROZEN | FROZEN | INVALIDATED
+  activeSnapshotId            String?
+  rollbackSnapshotId          String?
+  freezeReason                String?  @db.Text
+  activePathManifestId        String?
+  policySetVersion            String?
+  routingRuleVersion          String?
+  authorityRegistryVersion    String?
+  stabilizationOnly           Boolean  @default(true)
+  featureExpansionAllowed     Boolean  @default(false)
+  experimentalPathAllowed     Boolean  @default(false)
+  structuralRefactorAllowed   Boolean  @default(false)
+  devOnlyPathAllowed          Boolean  @default(false)
+  emergencyRollbackAllowed    Boolean  @default(true)
+  containmentPriorityEnabled  Boolean  @default(true)
+  auditStrictMode             Boolean  @default(true)
+  mergeGateStrictMode         Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  // relations
+  snapshots       StabilizationSnapshot[]
+  authorityLines  StabilizationAuthorityLine[]
+  incidents       StabilizationIncident[]
+
+  @@index([baselineVersion])
+  @@index([lifecycleState])
+  @@index([baselineStatus])
+  @@index([createdAt])
+}
+
+// ── Stabilization Snapshot ──
+
+model StabilizationSnapshot {
+  id                        String   @id @default(cuid())
+  baselineId                String
+  snapshotType              String   // ACTIVE | ROLLBACK
+  configChecksum            String?
+  flagChecksum              String?
+  routingChecksum           String?
+  authorityChecksum         String?
+  policyChecksum            String?
+  queueTopologyChecksum     String?
+  includedScopes            Json     // string[] — scope names
+  restoreVerificationStatus String?  // PENDING | VERIFIED | FAILED
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // relations
+  baseline StabilizationBaseline @relation(fields: [baselineId], references: [id])
+
+  @@index([baselineId])
+  @@index([snapshotType])
+  @@index([baselineId, snapshotType])
+  @@index([createdAt])
+}
+
+// ── Stabilization Authority Line ──
+
+model StabilizationAuthorityLine {
+  id                  String   @id @default(cuid())
+  authorityLineId     String   @unique
+  currentAuthorityId  String
+  authorityState      String   // ACTIVE | FROZEN | REVOKED | TRANSFERRED
+  transferState       String   // IDLE | LOCK_ACQUIRED | PENDING_VALIDATION | FINALIZED | ROLLED_BACK | ESCALATED
+  pendingSuccessorId  String?
+  revokedAuthorityIds Json     @default("[]") // string[]
+  registryVersion     String
+  baselineId          String?
+  correlationId       String?
+  updatedBy           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // relations
+  baseline StabilizationBaseline? @relation(fields: [baselineId], references: [id])
+
+  @@index([currentAuthorityId])
+  @@index([authorityState])
+  @@index([baselineId])
+  @@index([correlationId])
+  @@index([createdAt])
+}
+
+// ── Stabilization Incident ──
+
+model StabilizationIncident {
+  id              String    @id @default(cuid())
+  incidentId      String    @unique
+  reasonCode      String
+  severity        String    // INFO | WARNING | CRITICAL
+  status          String    // OPEN | ACKNOWLEDGED | ESCALATED | RESOLVED | CLOSED
+  correlationId   String
+  baselineId      String?
+  snapshotId      String?
+  acknowledgedBy  String?
+  acknowledgedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // relations
+  baseline StabilizationBaseline? @relation(fields: [baselineId], references: [id])
+
+  @@index([incidentId])
+  @@index([correlationId])
+  @@index([baselineId])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ── Stabilization Audit Event ──
+
+model StabilizationAuditEvent {
+  id              String   @id @default(cuid())
+  eventId         String   @unique
+  eventType       String   // StabilizationAuditEventType values
+  correlationId   String
+  incidentId      String?
+  baselineId      String?
+  snapshotId      String?
+  actor           String?
+  reasonCode      String?
+  severity        String?  // INFO | WARNING | CRITICAL
+  sourceModule    String?
+  entityType      String?
+  entityId        String?
+  resultStatus    String?  // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED
+  occurredAt      DateTime
+  recordedAt      DateTime @default(now())
+
+  @@index([correlationId])
+  @@index([eventType])
+  @@index([incidentId])
+  @@index([baselineId])
+  @@index([occurredAt])
+  @@index([recordedAt])
+}
+
+// ── Canonical Audit Event ──
+
+model CanonicalAuditEvent {
+  id                String   @id @default(cuid())
+  eventId           String   @unique
+  eventType         String
+  eventStage        String?
+  correlationId     String
+  incidentId        String?
+  timelineId        String
+  baselineId        String?
+  baselineVersion   String?
+  baselineHash      String?
+  lifecycleState    String?
+  releaseMode       String?
+  actor             String?
+  sourceModule      String
+  entityType        String
+  entityId          String
+  reasonCode        String
+  severity          String   // INFO | NOTICE | WARNING | ERROR | CRITICAL
+  occurredAt        DateTime
+  recordedAt        DateTime @default(now())
+  snapshotBeforeId  String?
+  snapshotAfterId   String?
+  affectedScopes    Json     @default("[]") // string[]
+  resultStatus      String   // ACCEPTED | DENIED | STARTED | COMPLETED | FAILED | ESCALATED | QUARANTINED
+  parentEventId     String?
+
+  @@index([correlationId])
+  @@index([timelineId])
+  @@index([eventType])
+  @@index([incidentId])
+  @@index([baselineId])
+  @@index([occurredAt])
+  @@index([recordedAt])
+  @@index([parentEventId])
+}

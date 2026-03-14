@@ -191,6 +191,16 @@ export const PERSISTENCE_TARGET_MAP: readonly PersistenceTarget[] = [
     priority: "PHASE_1",
   },
   {
+    component: "Incident Records",
+    sourceFile: "core/containment/containment-orchestrator.ts + core/audit/audit-events.ts",
+    currentStorage: "incident data scattered across ContainmentResult, RejectEvent, AuditEvent (no dedicated store)",
+    targetStorage: "Prisma StabilizationIncident model (incidentId unique, status, severity, correlationId)",
+    migrationNeed: "CREATE TABLE + unique index on incidentId + indexes on correlationId, baselineId, severity, status.",
+    correctnessRisk: "중간. incident lifecycle (OPEN→ACKNOWLEDGED→RESOLVED→CLOSED) 상태 전이 일관성 필요.",
+    canStayInMemory: "NO_MUST_PERSIST",
+    priority: "PHASE_1",
+  },
+  {
     component: "Intake Idempotency Store",
     sourceFile: "core/routing/routing-resolver.ts",
     currentStorage: "Map<string, IntakeTerminalOutcome> + Map<string, string> queueReceipts",
@@ -402,23 +412,52 @@ model StabilizationAuthorityLine {
   @@index([correlationId])
 }
 
+model StabilizationIncident {
+  id              String    @id @default(cuid())
+  incidentId      String    @unique
+  reasonCode      String
+  severity        String    // INFO | WARNING | CRITICAL
+  status          String    // OPEN | ACKNOWLEDGED | ESCALATED | RESOLVED | CLOSED
+  correlationId   String
+  baselineId      String?
+  snapshotId      String?
+  acknowledgedBy  String?
+  acknowledgedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([incidentId])
+  @@index([correlationId])
+  @@index([baselineId])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model StabilizationAuditEvent {
   id              String   @id @default(cuid())
   eventId         String   @unique
   eventType       String
-  baselineId      String
-  baselineVersion String
-  baselineHash    String
-  snapshotId      String
   correlationId   String
-  documentType    String
-  performedBy     String
-  detail          String
-  timestamp       DateTime @default(now())
+  incidentId      String?
+  baselineId      String?
+  snapshotId      String?
+  actor           String?
+  reasonCode      String?
+  severity        String?
+  sourceModule    String?
+  entityType      String?
+  entityId        String?
+  resultStatus    String?
+  occurredAt      DateTime
+  recordedAt      DateTime @default(now())
 
   @@index([correlationId])
   @@index([eventType])
-  @@index([timestamp])
+  @@index([incidentId])
+  @@index([baselineId])
+  @@index([occurredAt])
+  @@index([recordedAt])
 }
 
 model CanonicalAuditEvent {
