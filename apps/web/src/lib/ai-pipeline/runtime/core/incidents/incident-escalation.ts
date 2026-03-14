@@ -7,6 +7,7 @@
 
 import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
+import { getPersistenceAdapters } from "../persistence";
 
 export interface IncidentRecord {
   incidentId: string;
@@ -38,6 +39,24 @@ export function escalateIncident(
 
   _incidents.push(record);
 
+  // Dual-write: persist to repository (fire-and-forget)
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.incident.createIncident({
+      incidentId: record.incidentId,
+      reasonCode: record.reasonCode,
+      severity: "WARNING",
+      status: "OPEN",
+      correlationId: record.correlationId,
+      baselineId: null,
+      snapshotId: null,
+    }).catch(function () {
+      // bridge phase: non-fatal
+    });
+  } catch (_bridgeErr) {
+    // TODO(Slice-1F): remove legacy store, read from repository directly
+  }
+
   emitStabilizationAuditEvent({
     eventType: "INCIDENT_ESCALATED",
     baselineId: "",
@@ -65,6 +84,27 @@ export function acknowledgeIncident(incidentId: string): boolean {
   const incident = _incidents.find((i: IncidentRecord) => i.incidentId === incidentId);
   if (incident) {
     incident.acknowledged = true;
+
+    // Dual-write: persist acknowledgement to repository (fire-and-forget)
+    try {
+      const adapters = getPersistenceAdapters();
+      adapters.incident.findIncidentByIncidentId(incidentId).then(function (result) {
+        if (result.ok) {
+          adapters.incident.acknowledgeIncident(
+            incidentId,
+            "system",
+            result.data.updatedAt
+          ).catch(function () {
+            // bridge phase: non-fatal
+          });
+        }
+      }).catch(function () {
+        // bridge phase: non-fatal
+      });
+    } catch (_bridgeErr) {
+      // TODO(Slice-1F): remove legacy store, read from repository directly
+    }
+
     return true;
   }
   return false;

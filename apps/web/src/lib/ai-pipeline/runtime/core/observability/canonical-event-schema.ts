@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from "crypto";
+import { getPersistenceAdapters } from "../persistence";
 
 // ── Canonical Event Schema ──
 
@@ -103,6 +104,42 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
 
   _writtenIds.add(event.eventId);
   event.recordedAt = new Date();
+
+  // Dual-write: repository first (fire-and-forget), then legacy store
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.canonicalAudit.appendCanonicalEvent({
+      eventId: event.eventId,
+      eventType: event.eventType,
+      eventStage: event.eventStage || null,
+      correlationId: event.correlationId,
+      incidentId: event.incidentId || null,
+      timelineId: event.timelineId,
+      baselineId: event.baselineId || null,
+      baselineVersion: event.baselineVersion || null,
+      baselineHash: event.baselineHash || null,
+      lifecycleState: event.lifecycleState || null,
+      releaseMode: event.releaseMode || null,
+      actor: event.actor || null,
+      sourceModule: event.sourceModule,
+      entityType: event.entityType,
+      entityId: event.entityId,
+      reasonCode: event.reasonCode,
+      severity: event.severity,
+      occurredAt: event.occurredAt,
+      snapshotBeforeId: event.snapshotBeforeId || null,
+      snapshotAfterId: event.snapshotAfterId || null,
+      affectedScopes: event.affectedScopes || [],
+      resultStatus: event.resultStatus,
+      parentEventId: event.parentEventId || null,
+    }).catch(function () {
+      // bridge phase: repository write failure is non-fatal
+    });
+  } catch (_bridgeErr) {
+    // bootstrap not ready yet — legacy path covers this
+    // TODO(Slice-1F): remove legacy store, read from repository directly
+  }
+
   _auditLog.push(event);
 
   return { written: true, reasonCode: "AUDIT_WRITE_SUCCESS", eventId: event.eventId };

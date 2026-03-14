@@ -8,6 +8,7 @@
 
 import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
+import { getPersistenceAdapters } from "../persistence";
 
 // ── Types ──
 
@@ -99,6 +100,28 @@ export function createAuthorityLine(
   };
 
   _registry.set(authorityLineId, line);
+
+  // Dual-write: persist to repository (fire-and-forget)
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.authority.saveAuthorityLine({
+      authorityLineId: line.authorityLineId,
+      currentAuthorityId: line.currentAuthorityId,
+      authorityState: line.authorityState,
+      transferState: line.transferState,
+      pendingSuccessorId: line.pendingSuccessorId,
+      revokedAuthorityIds: line.revokedAuthorityIds,
+      registryVersion: String(line.registryVersion),
+      baselineId: line.baselineId || null,
+      correlationId: line.correlationId || null,
+      updatedBy: line.updatedBy || null,
+    }).catch(function () {
+      // bridge phase: non-fatal
+    });
+  } catch (_bridgeErr) {
+    // TODO(Slice-1F): remove legacy store, read from repository directly
+  }
+
   return line;
 }
 

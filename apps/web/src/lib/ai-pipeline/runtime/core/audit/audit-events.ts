@@ -9,8 +9,10 @@ import type {
   StabilizationAuditEvent,
   StabilizationAuditEventType,
 } from "../../types/stabilization";
+import { getPersistenceAdapters } from "../persistence";
 
-// ── In-memory audit store (production에서는 DB) ──
+// ── In-memory audit store (legacy — kept for backward compatibility) ──
+// TODO(Slice-1F): remove legacy store, read from repository directly
 
 const _auditEvents: StabilizationAuditEvent[] = [];
 
@@ -41,6 +43,32 @@ export function emitStabilizationAuditEvent(input: EmitAuditEventInput): Stabili
     detail: input.detail,
     timestamp: new Date(),
   };
+
+  // Dual-write: repository first (fire-and-forget), then legacy store
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.stabilizationAudit.appendAuditEvent({
+      eventId: event.eventId,
+      eventType: event.eventType,
+      correlationId: event.correlationId,
+      incidentId: null,
+      baselineId: event.baselineId || null,
+      snapshotId: event.snapshotId || null,
+      actor: event.performedBy || null,
+      reasonCode: event.detail || null,
+      severity: null,
+      sourceModule: null,
+      entityType: null,
+      entityId: null,
+      resultStatus: null,
+      occurredAt: event.timestamp,
+    }).catch(function () {
+      // bridge phase: repository write failure is non-fatal
+    });
+  } catch (_bridgeErr) {
+    // bootstrap not ready yet — legacy path covers this
+    // TODO(Slice-1F): remove legacy store, read from repository directly
+  }
 
   _auditEvents.push(event);
   return event;

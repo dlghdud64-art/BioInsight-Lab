@@ -15,8 +15,10 @@ import type {
   ReleaseMode,
   BaselineStatus,
 } from "../../types/stabilization";
+import { getPersistenceAdapters } from "../persistence";
 
-// ── In-memory store (production에서는 Prisma/DB로 교체) ──
+// ── In-memory store (legacy — kept for backward compatibility) ──
+// TODO(Slice-1F): remove legacy store, read from repository directly
 
 let _canonicalBaseline: BaselineRegistry | null = null;
 
@@ -109,6 +111,40 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
   };
 
   _canonicalBaseline = registry;
+
+  // Dual-write: persist to repository (fire-and-forget)
+  try {
+    const adapters = getPersistenceAdapters();
+    adapters.baseline.saveBaseline({
+      baselineSource: registry.baselineSource,
+      baselineVersion: registry.baselineVersion,
+      baselineHash: registry.baselineHash,
+      lifecycleState: registry.lifecycleState,
+      releaseMode: registry.releaseMode,
+      baselineStatus: registry.baselineStatus,
+      activeSnapshotId: registry.activeSnapshotId || null,
+      rollbackSnapshotId: registry.rollbackSnapshotId || null,
+      freezeReason: registry.freezeReason || null,
+      activePathManifestId: registry.activePathManifestId || null,
+      policySetVersion: registry.policySetVersion || null,
+      routingRuleVersion: registry.routingRuleVersion || null,
+      authorityRegistryVersion: registry.authorityRegistryVersion || null,
+      stabilizationOnly: true,
+      featureExpansionAllowed: false,
+      experimentalPathAllowed: false,
+      structuralRefactorAllowed: false,
+      devOnlyPathAllowed: false,
+      emergencyRollbackAllowed: true,
+      containmentPriorityEnabled: true,
+      auditStrictMode: true,
+      mergeGateStrictMode: true,
+    }).catch(function () {
+      // bridge phase: repository write failure is non-fatal
+    });
+  } catch (_bridgeErr) {
+    // TODO(Slice-1F): remove legacy store, read from repository directly
+  }
+
   return registry;
 }
 
@@ -142,6 +178,27 @@ export function assertSingleCanonical(): { valid: boolean; reason: string } {
 /** canonical baseline 무효화 (rollback 또는 재설정 시) */
 export function invalidateCanonicalBaseline(): void {
   if (_canonicalBaseline) {
+    // Dual-write: persist invalidation to repository (fire-and-forget)
+    try {
+      const adapters = getPersistenceAdapters();
+      // Note: updateBaseline requires optimistic lock, so we fetch first
+      adapters.baseline.getCanonicalBaseline().then(function (result) {
+        if (result.ok) {
+          adapters.baseline.updateBaseline({
+            id: result.data.id,
+            expectedUpdatedAt: result.data.updatedAt,
+            patch: { baselineStatus: "INVALIDATED" },
+          }).catch(function () {
+            // bridge phase: non-fatal
+          });
+        }
+      }).catch(function () {
+        // bridge phase: non-fatal
+      });
+    } catch (_bridgeErr) {
+      // TODO(Slice-1F): remove legacy store, read from repository directly
+    }
+
     _canonicalBaseline = {
       ..._canonicalBaseline,
       baselineStatus: "INVALIDATED",

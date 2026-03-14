@@ -63,6 +63,17 @@ export { createPrismaAdapters } from "./prisma";
 // Memory adapters (Slice-1D)
 export { createMemoryAdapters } from "./memory";
 
+// Bootstrap + Provider Selection (Slice-1E)
+export {
+  bootstrapPersistence,
+  getPersistenceAdapters,
+  isPersistenceBootstrapped,
+  _resetPersistenceBootstrap,
+} from "./bootstrap";
+
+// Date normalization (Slice-1E)
+export { normalizeDate, normalizeDateOptional } from "./date-normalizer";
+
 // Migration validation
 export {
   SCHEMA_VALIDATION_COMMANDS,
