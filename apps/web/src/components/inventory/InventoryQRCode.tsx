@@ -9,9 +9,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { QrCode, Printer, Download, Layers } from "lucide-react";
+import { QrCode, Printer, Download, Layers, MoreHorizontal, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface LotInfo {
   id: string;
@@ -282,16 +288,12 @@ export function InventoryQRCode({
               </div>
             )}
 
-            {/* 액션 버튼 */}
+            {/* 주 액션: 인쇄 + 닫기 */}
             <div className="flex gap-2 w-full">
-              <Button variant="outline" className="flex-1 gap-2 text-xs" onClick={handleDownload} disabled={!dataUrl}>
-                <Download className="h-3.5 w-3.5" />
-                PNG 저장
-              </Button>
               {printMode === "single" ? (
                 <Button className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={handlePrintSingle} disabled={!dataUrl}>
                   <Printer className="h-3.5 w-3.5" />
-                  라벨 인쇄 {printQty > 1 ? `(${printQty}장)` : ""}
+                  인쇄하기 {printQty > 1 ? `(${printQty}장)` : ""}
                 </Button>
               ) : (
                 <Button className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs" onClick={handlePrintBatch}>
@@ -299,6 +301,32 @@ export function InventoryQRCode({
                   일괄 인쇄 ({allLots!.length}개)
                 </Button>
               )}
+              <Button variant="outline" className="text-xs px-4" onClick={() => setOpen(false)}>
+                닫기
+              </Button>
+              {/* 보조 액션: overflow menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onClick={handleDownload} disabled={!dataUrl} className="text-xs gap-2">
+                    <Download className="h-3.5 w-3.5" />
+                    PNG 저장
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-xs gap-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(scanUrl);
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    QR 값 복사
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <p className="text-[10px] text-slate-400 text-center">
