@@ -81,7 +81,8 @@ model Organization {
   budgets       Budget[]
   teams         Team[]
   billingInfo   BillingInfo?
-  aiActionItems AiActionItem[]
+  aiActionItems    AiActionItem[]
+  ingestionEntries IngestionEntry[]
 
   @@index([name])
   @@index([plan])
@@ -144,6 +145,7 @@ model User {
   purchaseRequests    PurchaseRequest[] @relation("RequestedPurchases") // 요청한 구매 요청
   approvedRequests    PurchaseRequest[] @relation("ApprovedPurchases") // 승인한 구매 요청 (approverId)
   aiActionItems       AiActionItem[]
+  ingestionUploads    IngestionEntry[] @relation("IngestionUploader")
 
   @@index([email])
   @@index([role])
@@ -1139,6 +1141,14 @@ enum AuditEventType {
   ORGANIZATION_CREATED // 조직 생성
   ORGANIZATION_UPDATED // 조직 수정
   ORGANIZATION_DELETED // 조직 삭제
+
+  // ── Package A: Ingestion Pipeline Events ──
+  INGESTION_RECEIVED              // 외부 입력 수신
+  DOCUMENT_CLASSIFIED             // AI 문서 분류 완료
+  EXTRACTION_COMPLETED            // AI 필드 추출 완료
+  ENTITY_LINKED                   // DB Entity 연결 완료
+  VERIFICATION_COMPLETED          // 검증 완료 (auto_verified/review_needed/mismatch/missing)
+  WORK_QUEUE_TASK_GENERATED       // Ingestion → Work Queue Task 생성
 }
 
 model AuditLog {
@@ -1693,6 +1703,148 @@ model BillingInfo {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+}
+
+// ══════════════════════════════════════════════════════════
+// Package A — 통합 AI 운영 레이어 (Ingestion → Audit Trail)
+// ══════════════════════════════════════════════════════════
+
+/// A-1. 외부 입력 소스 유형
+enum IngestionSourceType {
+  EMAIL              // 이메일 수신 (SendGrid webhook 등)
+  ATTACHMENT         // 이메일 첨부파일
+  UPLOAD             // 사용자 직접 업로드
+  SYSTEM             // 시스템 연동 (ERP, 외부 API 등)
+}
+
+/// A-2. 문서 분류 유형 — AI Classification 결과
+enum DocumentType {
+  VENDOR_QUOTE              // 벤더 견적서
+  VENDOR_REPLY              // 벤더 회신 (일반)
+  INVOICE                   // 세금계산서 / 인보이스
+  TRANSACTION_STATEMENT     // 거래명세서
+  PURCHASE_ORDER_DOCUMENT   // 발주서
+  DELIVERY_UPDATE           // 배송/납기 안내
+  RECEIVING_DOCUMENT        // 입고 확인서 / 수령증
+  UNKNOWN                   // 미분류
+}
+
+/// A-5. 검증 상태 — Entity Linking 후 교차 검증 결과
+enum VerificationStatus {
+  AUTO_VERIFIED      // 링크 명확 + 핵심 필드 일치
+  REVIEW_NEEDED      // 링크 가능하나 일부 필드 불명확
+  MISMATCH           // 연결됨, 핵심 필드 충돌 (금액/수량 등)
+  MISSING            // 필수 문서/필드 누락
+}
+
+/// A-6. Ingestion → Work Queue 매핑용 Task Type
+enum IngestionTaskType {
+  PURCHASE_EVIDENCE_REVIEW  // 구매 증빙 교차 검토
+  INVOICE_MISSING           // 세금계산서 누락
+  DOCUMENT_MISMATCH         // 문서 간 불일치 (금액, 수량)
+  VENDOR_REPLY_REVIEW       // 벤더 회신 검토 필요
+  DELIVERY_UPDATE_REVIEW    // 배송/납기 변경 검토
+}
+
+/// A-7. 파이프라인 감사 이벤트 유형
+enum IngestionAuditAction {
+  INGESTION_RECEIVED               // 외부 입력 수신
+  DOCUMENT_CLASSIFIED              // AI 문서 분류 완료
+  EXTRACTION_COMPLETED             // AI 필드 추출 완료
+  ENTITY_LINKED                    // DB Entity 연결 완료
+  VERIFICATION_AUTO_VERIFIED       // 자동 검증 통과
+  VERIFICATION_REVIEW_REQUESTED    // 수동 검토 요청
+  VERIFICATION_MISMATCH_DETECTED   // 불일치 감지
+  VERIFICATION_MISSING_DETECTED    // 필수 항목 누락 감지
+  WORK_QUEUE_TASK_CREATED          // Work Queue Task 생성
+}
+
+/// A-1. IngestionEntry — 모든 외부 입력의 공통 진입점
+/// 이메일, 첨부파일, 업로드, 시스템 연동 등 모든 소스가 이 모델을 통해 파이프라인에 진입
+model IngestionEntry {
+  id                      String               @id @default(cuid())
+  organizationId          String
+  sourceType              IngestionSourceType
+  sourceRef               String?              // 원본 참조 (InboundEmail.id, Upload URL 등)
+  filename                String?
+  mimeType                String?
+  receivedAt              DateTime             @default(now())
+  uploaderId              String?              // 업로드한 사용자 (SYSTEM 소스일 경우 null)
+
+  // ── AI Classification 결과 (A-2) ──
+  documentType            DocumentType         @default(UNKNOWN)
+  classificationConfidence Float?              // 0.0 ~ 1.0
+  classifiedAt            DateTime?
+
+  // ── AI Extraction 결과 (A-3, JSON 저장) ──
+  rawTextRef              String?              @db.Text  // 원본 텍스트 or S3 key
+  extractionResult        Json?                // ExtractionResult JSON (A-3 Interface 준수)
+  extractedAt             DateTime?
+
+  // ── Entity Linking 결과 (A-4) ──
+  linkedEntityType        String?              // "QUOTE" | "ORDER" | "PURCHASE" | "INVENTORY"
+  linkedEntityId          String?
+  linkingConfidence       Float?               // 0.0 ~ 1.0
+  linkedAt                DateTime?
+
+  // ── Verification 결과 (A-5) ──
+  verificationStatus      VerificationStatus?
+  verificationReason      String?              // 판정 사유 (자동 생성 설명)
+  mismatchedFields        Json?                // ["total_amount", "quantity"] 등
+  missingFields           Json?                // ["invoice_number", "tax_amount"] 등
+  verifiedAt              DateTime?
+
+  // ── Work Queue 연동 (A-6) ──
+  workQueueTaskId         String?              // 생성된 AiActionItem.id (1:1 참조)
+  workQueueTaskType       IngestionTaskType?   // 매핑된 Task Type
+
+  // ── Policy Hook (가드레일 신호) ──
+  policyFlags             Json?                // { "budget_exceeded": true, "amount_threshold": 5000000 }
+  approvalRequired        Boolean              @default(false)
+
+  // ── Metadata ──
+  metadata                Json?                // 소스별 추가 정보 (이메일 헤더, 업로드 경로 등)
+  errorMessage            String?              @db.Text
+
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  // Relations
+  organization            Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploader                User?                @relation("IngestionUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  auditTrail              IngestionAuditLog[]
+
+  @@index([organizationId, documentType])        // 조직별 문서 유형 조회
+  @@index([organizationId, verificationStatus])  // 조직별 검증 상태 필터
+  @@index([linkedEntityType, linkedEntityId])    // Entity 역추적
+  @@index([sourceRef])                           // 원본 소스 역참조
+  @@index([receivedAt])
+  @@index([createdAt])
+}
+
+/// A-7. IngestionAuditLog — 파이프라인 단계별 감사 추적
+/// 각 IngestionEntry가 Classification → Extraction → Linking → Verification을 거칠 때마다 기록
+model IngestionAuditLog {
+  id                String                @id @default(cuid())
+  ingestionEntryId  String
+  action            IngestionAuditAction
+  actorType         String                @default("SYSTEM")  // "SYSTEM" | "USER"
+  actorId           String?               // User ID (수동 검토 시)
+
+  // 단계별 스냅샷
+  before            Json?                 // 변경 전 상태 스냅샷
+  after             Json?                 // 변경 후 상태 스냅샷
+  confidence        Float?                // 해당 단계 AI Confidence
+  durationMs        Int?                  // 처리 소요 시간 (ms)
+  errorMessage      String?               @db.Text
+
+  createdAt         DateTime              @default(now())
+
+  // Relations
+  ingestionEntry    IngestionEntry        @relation(fields: [ingestionEntryId], references: [id], onDelete: Cascade)
+
+  @@index([ingestionEntryId, action])
+  @@index([createdAt])
 }
 
 // ══════════════════════════════════════════════════════════
