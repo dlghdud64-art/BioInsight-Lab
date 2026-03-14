@@ -273,6 +273,11 @@ async function createFollowupAction(
       type: "FOLLOWUP_DRAFT",
       status: "PENDING",
       priority,
+      // 3-Layer 상태 초기화
+      taskStatus: "REVIEW_NEEDED",
+      approvalStatus: "PENDING",
+      substatus: "followup_draft_generated",
+      summary: `${delayDesc} · ${candidate.vendorName || "벤더"}`,
       userId: candidate.userId,
       organizationId: candidate.organizationId,
       title: `${candidate.vendorName || "벤더"} Follow-up — ${candidate.orderNumber}`,

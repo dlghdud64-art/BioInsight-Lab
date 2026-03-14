@@ -67,17 +67,18 @@ const ACTIVITY_LABEL: Record<string, string> = {
 // ── Deep-Link 경로 매핑 ──
 
 function getDeepLinkPath(item: WorkQueueItem): string {
+  // 도메인별 목록 페이지로 라우팅 (상세 페이지가 존재하지 않으므로 목록 + query param)
   const base = (() => {
     switch (item.relatedEntityType) {
-      case "QUOTE": return `/dashboard/quotes/${item.relatedEntityId}`;
-      case "ORDER": return `/dashboard/orders/${item.relatedEntityId}`;
-      case "INVENTORY": return `/dashboard/inventory/${item.relatedEntityId}`;
+      case "QUOTE": return `/dashboard/quotes`;
+      case "ORDER": return `/dashboard/orders`;
+      case "INVENTORY": return `/dashboard/inventory`;
       default: return `/dashboard`;
     }
   })();
 
   // AI 보조 패널 자동 오픈을 위한 query param
-  return `${base}?ai_panel=open&work_item=${item.id}`;
+  return `${base}?ai_panel=open&work_item=${item.id}&entity_id=${item.relatedEntityId || ""}`;
 }
 
 // ── 시간 표시 ──

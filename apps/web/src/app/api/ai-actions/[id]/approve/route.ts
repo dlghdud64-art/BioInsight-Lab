@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { Prisma, TeamRole } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { transitionWorkItem } from "@/lib/work-queue";
 
 /**
  * POST /api/ai-actions/[id]/approve — 승인 → 도메인 액션 실행
@@ -80,10 +81,24 @@ export async function POST(
     const { ipAddress, userAgent } = extractRequestMeta(request);
     const actorRole = await getActorRole(session.user.id, item.organizationId);
 
-    // 상태를 EXECUTING으로 전환
+    // 상태를 EXECUTING으로 전환 (Legacy + 3-Layer 동기화)
+    const approvedSubstatus = {
+      QUOTE_DRAFT: "quote_draft_approved",
+      VENDOR_EMAIL_DRAFT: "vendor_email_approved",
+      FOLLOWUP_DRAFT: "followup_approved",
+      STATUS_CHANGE_SUGGEST: "status_change_approved",
+      REORDER_SUGGESTION: "restock_approved",
+      EXPIRY_ALERT: "expiry_acknowledged",
+    }[item.type] || "quote_draft_approved";
+
     await db.aiActionItem.update({
       where: { id: params.id },
-      data: { status: "EXECUTING" },
+      data: {
+        status: "EXECUTING",
+        taskStatus: "IN_PROGRESS",
+        approvalStatus: "APPROVED",
+        substatus: approvedSubstatus,
+      },
     });
 
     // 활동 로그: 검토 완료 (승인 결정) — 타입에 따라 이벤트 분기
@@ -230,15 +245,19 @@ export async function POST(
           result = { message: `${item.type} 실행 로직은 아직 구현되지 않았습니다.` };
       }
 
-      // 성공: APPROVED로 전환
+      // 성공: APPROVED로 전환 (Legacy + 3-Layer 동기화)
       const updated = await db.aiActionItem.update({
         where: { id: params.id },
         data: {
           status: "APPROVED",
+          taskStatus: "COMPLETED",
+          approvalStatus: "APPROVED",
+          substatus: approvedSubstatus,
           result: result as Prisma.JsonObject,
           payload: modifiedPayload as Prisma.JsonObject,
           resolvedAt: new Date(),
           resolvedBy: session.user.id,
+          completedAt: new Date(),
         },
       });
 
@@ -273,14 +292,18 @@ export async function POST(
 
       return NextResponse.json({ item: updated, result });
     } catch (execError) {
-      // 실행 실패: FAILED로 전환
+      // 실행 실패: FAILED로 전환 (Legacy + 3-Layer 동기화)
       await db.aiActionItem.update({
         where: { id: params.id },
         data: {
           status: "FAILED",
+          taskStatus: "FAILED",
+          approvalStatus: "APPROVED",
+          substatus: "execution_failed",
           result: { error: String(execError) } as Prisma.JsonObject,
           resolvedAt: new Date(),
           resolvedBy: session.user.id,
+          failedAt: new Date(),
         },
       });
 

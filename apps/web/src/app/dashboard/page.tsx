@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
-import { AiActionInbox } from "@/components/dashboard/ai-action-inbox";
+import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -149,7 +149,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══ AI 작업함: 운영형 에이전트 실행 큐 ═══ */}
-      <AiActionInbox />
+      <WorkQueueInbox />
 
       {/* ═══ 1순위: 오늘의 우선 작업 ═══ */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">

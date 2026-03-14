@@ -69,6 +69,11 @@ export async function POST(request: NextRequest) {
         type: "QUOTE_DRAFT",
         status: "PENDING",
         priority: "HIGH",
+        // 3-Layer 상태 초기화
+        taskStatus: "REVIEW_NEEDED",
+        approvalStatus: "PENDING",
+        substatus: "quote_draft_generated",
+        summary: `${vendorNames?.length || 0}개 벤더 · ${items.length}건 품목`,
         userId: session.user.id,
         organizationId: org?.id || null,
         title,

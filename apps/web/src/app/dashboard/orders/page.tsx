@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, ChevronRight, Bell, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useOrderAiPanel } from "@/hooks/use-order-ai-panel";
 import { OrderAiAssistantPanel } from "@/components/ai/order-ai-assistant-panel";
 
@@ -181,6 +183,9 @@ function OrderCard({
 }
 
 export default function OrderHistoryPage() {
+  const searchParams = useSearchParams();
+  const aiPanelOpen = searchParams.get("ai_panel") === "open";
+
   const allOrders = MOCK_ORDERS;
   const pendingOrders = MOCK_ORDERS.filter((o) => o.status === "pending");
   const quotedOrders = MOCK_ORDERS.filter((o) => o.status === "quoted");
@@ -190,6 +195,13 @@ export default function OrderHistoryPage() {
   );
 
   const aiPanel = useOrderAiPanel();
+
+  // Deep-link: ?ai_panel=open 시 패널 자동 오픈
+  useEffect(() => {
+    if (aiPanelOpen && !aiPanel.isOpen) {
+      aiPanel.setIsOpen(true);
+    }
+  }, [aiPanelOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 주문 추적 AI 패널 열기
   const handleTrackOrder = (order: (typeof MOCK_ORDERS)[number]) => {

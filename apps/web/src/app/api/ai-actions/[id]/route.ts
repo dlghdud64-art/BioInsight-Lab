@@ -93,12 +93,21 @@ export async function PATCH(
 
     const { ipAddress, userAgent } = extractRequestMeta(request);
 
+    // 3-Layer 상태 동기화
+    const dismissMapping = status === "DISMISSED"
+      ? { taskStatus: "COMPLETED" as const, approvalStatus: "REJECTED" as const, substatus: "quote_draft_dismissed" }
+      : { taskStatus: "COMPLETED" as const, approvalStatus: "NOT_REQUIRED" as const, substatus: "expired" };
+
     const updated = await db.aiActionItem.update({
       where: { id: params.id },
       data: {
         status,
+        taskStatus: dismissMapping.taskStatus,
+        approvalStatus: dismissMapping.approvalStatus,
+        substatus: dismissMapping.substatus,
         resolvedAt: new Date(),
         resolvedBy: session.user.id,
+        completedAt: new Date(),
       },
     });
 

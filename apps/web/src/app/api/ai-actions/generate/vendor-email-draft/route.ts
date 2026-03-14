@@ -71,6 +71,11 @@ export async function POST(request: NextRequest) {
         type: "VENDOR_EMAIL_DRAFT",
         status: "PENDING",
         priority: "HIGH",
+        // 3-Layer 상태 초기화
+        taskStatus: "REVIEW_NEEDED",
+        approvalStatus: "PENDING",
+        substatus: "vendor_email_generated",
+        summary: `${vendorName} · ${items.length}건 품목`,
         userId: session.user.id,
         organizationId: org?.id || null,
         title: `${vendorName} 견적 요청 이메일 초안`,

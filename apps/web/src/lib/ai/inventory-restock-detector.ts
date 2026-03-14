@@ -362,11 +362,20 @@ async function createRestockAction(
     : candidate.urgency === "high" ? "HIGH"
     : "MEDIUM";
 
+  const summaryText = candidate.estimatedDepletionDays <= 0
+    ? `재고 소진 · ${candidate.currentQuantity}${candidate.unit}`
+    : `소진 예상 ${candidate.estimatedDepletionDays}일`;
+
   const actionItem = await db.aiActionItem.create({
     data: {
       type: "REORDER_SUGGESTION",
       status: "PENDING",
       priority: priority as "HIGH" | "MEDIUM" | "LOW",
+      // 3-Layer 상태 초기화
+      taskStatus: "ACTION_NEEDED",
+      approvalStatus: "PENDING",
+      substatus: "restock_suggested",
+      summary: summaryText,
       userId: candidate.userId,
       organizationId: candidate.organizationId,
       title: `${candidate.productName} 재발주 필요`,
@@ -459,6 +468,11 @@ async function createExpiryAction(
       type: "EXPIRY_ALERT",
       status: "PENDING",
       priority: priority as "HIGH" | "MEDIUM" | "LOW",
+      // 3-Layer 상태 초기화
+      taskStatus: "ACTION_NEEDED",
+      approvalStatus: "NOT_REQUIRED",
+      substatus: "expiry_alert_created",
+      summary: `D-${candidate.daysUntilExpiry} · ${actionLabels[candidate.suggestedAction]}`,
       userId: candidate.userId,
       organizationId: candidate.organizationId,
       title: `${candidate.productName} 유효기한 임박 (D-${candidate.daysUntilExpiry})`,
