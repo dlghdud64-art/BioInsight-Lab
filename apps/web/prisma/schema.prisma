@@ -1949,3 +1949,90 @@ model AiActionItem {
   @@index([createdAt])
   @@index([updatedAt])
 }
+
+// ══════════════════════════════════════════════════════════
+// P0 Runtime — Canary Rollout & AI Processing Observability
+// ══════════════════════════════════════════════════════════
+
+enum CanaryStage {
+  SHADOW      // AI 실행하되 결과 미적용, 비교 로그만
+  ACTIVE_5    // 5% 트래픽에 AI 적용
+  ACTIVE_25   // 25% 트래픽에 AI 적용
+  ACTIVE_50   // 50% 트래픽에 AI 적용
+  STABLE      // 100% AI 적용
+  KILLED      // Kill switch 발동 — 0% AI
+}
+
+enum ProcessingPath {
+  AI
+  FALLBACK
+  SHADOW
+}
+
+enum FallbackReason {
+  NONE
+  TIMEOUT
+  SCHEMA_INVALID
+  LOW_CONFIDENCE
+  PROVIDER_ERROR
+  KILL_SWITCH
+  FEATURE_FLAG_OFF
+  AUTO_VERIFY_BLOCKED
+}
+
+// 문서 타입별 Canary 설정
+model CanaryConfig {
+  id                   String      @id @default(cuid())
+  documentType         String      @unique // QUOTE, INVOICE, ORDER, PURCHASE_ORDER
+  stage                CanaryStage @default(SHADOW)
+  confidenceThreshold  Float       @default(0.8)
+  autoVerifyEnabled    Boolean     @default(false)
+  killSwitchActive     Boolean     @default(false)
+  updatedBy            String      // userId
+  reason               String?     @db.Text
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([documentType])
+  @@index([stage])
+}
+
+// Canary 조작 이력 (promote/hold/rollback/kill)
+model CanaryApprovalRecord {
+  id             String   @id @default(cuid())
+  documentType   String
+  action         String   // PROMOTE, HOLD, ROLLBACK, KILL_SWITCH_ON, KILL_SWITCH_OFF, AUTO_VERIFY_ON, AUTO_VERIFY_OFF
+  fromStage      String?
+  toStage        String?
+  performedBy    String   // userId
+  reason         String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([documentType])
+  @@index([performedBy])
+  @@index([createdAt])
+}
+
+// AI 처리 로그 (observability)
+model AiProcessingLog {
+  id                String         @id @default(cuid())
+  ingestionEntryId  String?
+  organizationId    String
+  documentType      String
+  processingPath    ProcessingPath
+  fallbackReason    FallbackReason @default(NONE)
+  confidence        Float?
+  model             String?        // gpt-4o-mini, gpt-4o
+  latencyMs         Int?
+  tokenUsage        Int?
+  comparisonDiff    Json?          // shadow mode: AI vs rule-based diff
+  mismatchCategory  String?        // FIELD_VALUE_DIFF, MISSING_FIELD, etc.
+  rollbackTriggered Boolean        @default(false)
+  incidentTriggered Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+
+  @@index([organizationId, documentType])
+  @@index([processingPath])
+  @@index([createdAt])
+  @@index([incidentTriggered])
+}
