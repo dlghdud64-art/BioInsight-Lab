@@ -91,6 +91,56 @@ export {
   validateConstraints,
 } from "./rollout-config";
 
+// Shadow Validation & ACTIVE_5 Entry
+export {
+  type ShadowValidationRecord,
+  type ShadowReport,
+  type ConfidenceBandDist,
+  type Active5CriteriaTable,
+  type ShadowDecision,
+  type ShadowDecisionResult,
+  type PreflightItem,
+  type PreflightResult,
+  type Active5LaunchConfig,
+  generateShadowReport,
+  lockActive5Criteria,
+  evaluateShadowDecision,
+  runActive5Preflight,
+  createActive5LaunchConfig,
+} from "./shadow-validation";
+
+// Watchboard Metrics
+export {
+  type WatchboardMetrics,
+  type WatchboardTrend,
+  type WatchboardInterval,
+  collectWatchboardMetrics,
+  collectWatchboardTrend,
+} from "./watchboard";
+
+// ACTIVE_5 Post-Run & ACTIVE_25 Entry
+export {
+  type Active5Decision,
+  type Active5PostRunReport,
+  type Active5Thresholds,
+  type Active25LaunchConfig,
+  generateActive5PostRunReport,
+  createActive25LaunchConfig,
+} from "./active5-postrun";
+
+// ACTIVE_25 Post-Run & ACTIVE_50 Eval
+export {
+  type Active25Decision,
+  type Active25PostRunReport,
+  type Active25Thresholds,
+  type HotspotSummary,
+  type FalseSafeSummary,
+  type CriticalFieldConflictSummary,
+  type Active25FullLaunchConfig,
+  generateActive25PostRunReport,
+  createActive25FullLaunchConfig,
+} from "./active25-postrun";
+
 // P1: Backlog (types only)
 export {
   P1Feature,
