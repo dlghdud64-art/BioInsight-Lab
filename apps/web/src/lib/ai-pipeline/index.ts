@@ -57,3 +57,15 @@ export { VerificationProcessor } from "./processors/verification-processor";
 
 // ── Orchestrator ──
 export { PipelineOrchestrator } from "./orchestrator";
+
+// ── Shadow Mode ──
+export { ShadowRuntimeGateway } from "./shadow";
+export { generateShadowReport } from "./shadow";
+export { evaluateRolloutGate } from "./shadow";
+export { loadShadowConfig } from "./shadow";
+export type {
+  MismatchCategory,
+  ShadowReviewTag,
+  ShadowReport,
+  RolloutGateResult,
+} from "./shadow";

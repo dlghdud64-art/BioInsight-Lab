@@ -8,10 +8,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { PipelineOrchestrator } from "@/lib/ai-pipeline/orchestrator";
+import { ShadowRuntimeGateway } from "@/lib/ai-pipeline/shadow";
 import type { IngestionInput } from "@/lib/ai-pipeline/types";
 
-const orchestrator = new PipelineOrchestrator();
+const gateway = new ShadowRuntimeGateway();
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       metadata,
     };
 
-    const result = await orchestrator.execute(input);
+    const result = await gateway.execute(input);
 
     // 6. 응답
     const statusCode = result.failedStage ? 207 : 201;
