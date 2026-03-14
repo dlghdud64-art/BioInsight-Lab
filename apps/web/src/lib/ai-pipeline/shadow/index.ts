@@ -84,3 +84,35 @@ export { runOrchestrationCycle, runPortfolioOrchestration } from "./rollout-orch
 export type { OrchestrationResult } from "./rollout-orchestrator";
 export { E2E_SCENARIOS, getScenarioById, getScenariosByCategory, listScenarioSummaries } from "./e2e-scenarios";
 export type { E2EScenario, E2EStep } from "./e2e-scenarios";
+
+// ── Phase K: Ops Launch Readiness & Day-2 Operations ──
+export { SLO_DEFINITIONS, ALERT_ROUTING_RULES, resolveAlertSeverity, getSLOForSeverity, getAutoAction, checkSLACompliance } from "./slo-alert-routing";
+export type { SeverityLevel, SLODefinition, AlertRoutingRule } from "./slo-alert-routing";
+export { STANDARD_RUNBOOKS, getRunbookById, getRunbooksBySeverity, createPostmortemTemplate } from "./ops-runbook";
+export type { RunbookEntry, RunbookStep, PostmortemTemplate } from "./ops-runbook";
+export { evaluateLaunchReadiness, createFreezeWindow, cancelFreezeWindow, getActiveFreezeWindows, isInFreezeWindow, checkFreezeBlock } from "./launch-readiness-gate";
+export type { LaunchReadinessResult, ReadinessCheckItem, FreezeWindow } from "./launch-readiness-gate";
+export { enqueueReview, assignReview, resolveReview, getReviewQueue, getReviewQueueStats } from "./review-ops-queue";
+export type { ReviewItem, ReviewQueueStats, ReviewPriority, ReviewStatus, ReviewResolutionType } from "./review-ops-queue";
+export { getPortfolioDashboardData, generateWeeklyCouncilReport, generateDailyOpsSummary } from "./ops-dashboard";
+export type { PortfolioDashboardData, WeeklyCouncilReport, DailyOpsSummary } from "./ops-dashboard";
+export { DRILL_DEFINITIONS, startDrill, markDrillDetected, markDrillRolledBack, completeDrill, getDrillHistory, getDrillDefinition, summarizeDrillResult } from "./incident-drill";
+export type { DrillScenario, DrillExecution, DrillDefinition } from "./incident-drill";
+
+// ── Phase L: Portfolio Governance & Multi-DocType Expansion Control ──
+export { classifyDocTypeTier, validateConcurrentPromotion, TIER_LABELS } from "./doctype-tiering";
+export type { RiskTier, TieringInput, TieringResult } from "./doctype-tiering";
+export { assessCapacity, collectCapacityInput } from "./capacity-manager";
+export type { CapacityStatus, CapacityInput, CapacityAssessment } from "./capacity-manager";
+export { enqueuePromotion, evaluateQueue, markQueueItemExecuting, markQueueItemCompleted, cancelQueueItem, getQueuedItems, getFullQueue, getQueueStats } from "./promotion-queue";
+export type { PromotionQueueItem, QueueItemStatus } from "./promotion-queue";
+export { computeReadinessScore, compareByReadiness } from "./ops-load-scoring";
+export type { OpsLoadInput, ReadinessScoreResult } from "./ops-load-scoring";
+export { registerExclusion, getExclusionsForNewDocType, checkExclusion, applyExclusionsToDocType, deactivateExclusion, getExclusionRegistry, getExclusionStats } from "./shared-exclusion-registry";
+export type { ExclusionEntry, ExclusionSource, ExclusionScope, ExclusionMatchResult } from "./shared-exclusion-registry";
+export { checkExpansionPolicy, getPortfolioMode, setPortfolioMode, EXPANSION_LIMITS, evaluateAutoModeTransition, checkThirdDocTypeAdmission } from "./expansion-policy";
+export type { PortfolioMode, PortfolioModeState, ExpansionPolicyResult } from "./expansion-policy";
+export { evaluateExpansionRequest, getPortfolioRiskSummary } from "./portfolio-governor";
+export type { GovernorDecision, PortfolioRiskSummary } from "./portfolio-governor";
+export { getPortfolioRiskDashboard, generateExpansionCouncilReport } from "./portfolio-risk-dashboard";
+export type { PortfolioRiskDashboardData, ExpansionCouncilReport } from "./portfolio-risk-dashboard";
