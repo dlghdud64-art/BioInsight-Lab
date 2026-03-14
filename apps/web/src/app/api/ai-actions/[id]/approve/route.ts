@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, TeamRole } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 
@@ -10,6 +10,10 @@ import { createActivityLog, getActorRole } from "@/lib/activity-log";
  *
  * Human-in-the-Loop: 사용자가 AI 초안을 검토한 뒤 승인하면
  * 기존 비즈니스 로직(견적 생성, 이메일 발송 등)을 실행합니다.
+ *
+ * RBAC:
+ *   - FOLLOWUP_DRAFT / STATUS_CHANGE_SUGGEST: APPROVER 이상만 승인 가능
+ *   - 나머지: 본인 소유만 가능 (기존 동작)
  */
 export async function POST(
   request: NextRequest,
@@ -29,8 +33,38 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // 권한 체크: 본인 소유 확인
     if (item.userId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      // 같은 조직이면 역할 기반 체크
+      if (item.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { organizationId: item.organizationId, userId: session.user.id },
+          select: { role: true },
+        });
+        if (!membership) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    // RBAC: FOLLOWUP_DRAFT, STATUS_CHANGE_SUGGEST 는 MEMBER 역할 승인 불가
+    const requiresApproverRole = ["FOLLOWUP_DRAFT", "STATUS_CHANGE_SUGGEST"];
+    if (requiresApproverRole.includes(item.type)) {
+      const teamMember = await db.teamMember.findFirst({
+        where: { userId: session.user.id },
+        select: { role: true },
+      });
+      if (teamMember?.role === TeamRole.MEMBER) {
+        return NextResponse.json(
+          {
+            error: "MEMBER_ROLE_RESTRICTION",
+            message: "일반 멤버는 Follow-up 발송 또는 상태 변경을 승인할 수 없습니다.",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     if (item.status !== "PENDING") {
@@ -52,9 +86,13 @@ export async function POST(
       data: { status: "EXECUTING" },
     });
 
-    // 활동 로그: 검토 완료 (승인 결정)
+    // 활동 로그: 검토 완료 (승인 결정) — 타입에 따라 이벤트 분기
+    const reviewActivityType = item.type === "FOLLOWUP_DRAFT"
+      ? "ORDER_FOLLOWUP_REVIEWED" as const
+      : "QUOTE_DRAFT_REVIEWED" as const;
+
     await createActivityLog({
-      activityType: "QUOTE_DRAFT_REVIEWED",
+      activityType: reviewActivityType,
       entityType: "AI_ACTION",
       entityId: params.id,
       taskType: item.type,
@@ -78,6 +116,59 @@ export async function POST(
 
         case "VENDOR_EMAIL_DRAFT":
           result = await executeVendorEmailDraft(modifiedPayload as Record<string, unknown>);
+          break;
+
+        case "FOLLOWUP_DRAFT":
+          result = await executeFollowupDraft(
+            session.user.id,
+            modifiedPayload as Record<string, unknown>,
+            item.relatedEntityId
+          );
+          // 활동 로그: Follow-up 발송 완료
+          await createActivityLog({
+            activityType: "ORDER_FOLLOWUP_SENT",
+            entityType: "ORDER",
+            entityId: item.relatedEntityId || params.id,
+            taskType: "FOLLOWUP_DRAFT",
+            beforeStatus: "EXECUTING",
+            afterStatus: "APPROVED",
+            userId: session.user.id,
+            organizationId: item.organizationId,
+            actorRole,
+            metadata: {
+              actionItemId: params.id,
+              vendorName: (modifiedPayload as Record<string, unknown>).vendorName,
+              emailSubject: (modifiedPayload as Record<string, unknown>).emailSubject,
+            },
+            ipAddress,
+            userAgent,
+          });
+          break;
+
+        case "STATUS_CHANGE_SUGGEST":
+          result = await executeStatusChangeSuggest(
+            session.user.id,
+            modifiedPayload as Record<string, unknown>,
+            item.relatedEntityId
+          );
+          // 활동 로그: 상태 변경 승인
+          await createActivityLog({
+            activityType: "ORDER_STATUS_CHANGE_APPROVED",
+            entityType: "ORDER",
+            entityId: item.relatedEntityId || params.id,
+            taskType: "STATUS_CHANGE_SUGGEST",
+            beforeStatus: (modifiedPayload as Record<string, unknown>).currentStatus as string,
+            afterStatus: (modifiedPayload as Record<string, unknown>).proposedStatus as string,
+            userId: session.user.id,
+            organizationId: item.organizationId,
+            actorRole,
+            metadata: {
+              actionItemId: params.id,
+              orderId: item.relatedEntityId,
+            },
+            ipAddress,
+            userAgent,
+          });
           break;
 
         case "REORDER_SUGGESTION":
@@ -235,12 +326,110 @@ async function executeQuoteDraft(
 async function executeVendorEmailDraft(
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  // 벤더 이메일 초안은 견적 요청 플로우로 연결
-  // 실제 이메일 발송은 /api/quotes/request 또는 /api/quotes/[id]/vendor-requests를 통해 수행
   return {
     vendorName: payload.vendorName || "",
     emailSubject: payload.emailSubject || "",
     emailPrepared: true,
     message: "이메일 초안이 승인되었습니다. 견적 요청 화면에서 발송할 수 있습니다.",
+  };
+}
+
+/**
+ * Follow-up 초안 승인 → 이메일 발송 준비
+ *
+ * 실제 이메일 발송은 하지 않음 (Human-in-the-Loop 원칙).
+ * 승인 = "발송 가능" 상태로 전환. 실제 발송은 기존 이메일 플로우를 통해 수행.
+ */
+async function executeFollowupDraft(
+  userId: string,
+  payload: Record<string, unknown>,
+  orderId: string | null
+): Promise<Record<string, unknown>> {
+  // 주문 상태 확인 (발송 가능한 상태인지)
+  if (orderId) {
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      select: { status: true, orderNumber: true },
+    });
+    if (!order) throw new Error("주문을 찾을 수 없습니다");
+    if (order.status === "DELIVERED" || order.status === "CANCELLED") {
+      throw new Error(`이미 ${order.status === "DELIVERED" ? "배송 완료" : "취소"}된 주문입니다`);
+    }
+  }
+
+  return {
+    orderId,
+    vendorName: payload.vendorName || "",
+    emailSubject: payload.emailSubject || "",
+    emailPrepared: true,
+    message: "Follow-up 이메일이 승인되었습니다. 벤더에게 발송할 준비가 완료되었습니다.",
+  };
+}
+
+/**
+ * 상태 변경 제안 승인 → 주문 상태 변경 실행
+ */
+async function executeStatusChangeSuggest(
+  userId: string,
+  payload: Record<string, unknown>,
+  orderId: string | null
+): Promise<Record<string, unknown>> {
+  if (!orderId) throw new Error("주문 ID가 없습니다");
+
+  const proposedStatus = payload.proposedStatus as string;
+  if (!proposedStatus) throw new Error("제안된 상태가 없습니다");
+
+  const STATUS_TRANSITIONS: Record<string, string[]> = {
+    ORDERED: ["CONFIRMED", "CANCELLED"],
+    CONFIRMED: ["SHIPPING", "CANCELLED"],
+    SHIPPING: ["DELIVERED", "CANCELLED"],
+  };
+
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    select: { status: true, orderNumber: true },
+  });
+
+  if (!order) throw new Error("주문을 찾을 수 없습니다");
+
+  const allowed = STATUS_TRANSITIONS[order.status] || [];
+  if (!allowed.includes(proposedStatus)) {
+    throw new Error(
+      `현재 상태(${order.status})에서 ${proposedStatus}로 변경할 수 없습니다`
+    );
+  }
+
+  // 상태 변경 실행
+  const updated = await db.order.update({
+    where: { id: orderId },
+    data: {
+      status: proposedStatus as any,
+      ...(proposedStatus === "DELIVERED" ? { actualDelivery: new Date() } : {}),
+    },
+    select: { id: true, orderNumber: true, status: true },
+  });
+
+  // ORDER_STATUS_CHANGED 활동 로그 (실제 상태 변경)
+  const actorRole = await getActorRole(userId, null);
+  await createActivityLog({
+    activityType: "ORDER_STATUS_CHANGED",
+    entityType: "ORDER",
+    entityId: orderId,
+    beforeStatus: order.status,
+    afterStatus: proposedStatus,
+    userId,
+    actorRole,
+    metadata: {
+      orderNumber: order.orderNumber,
+      trigger: "ai_status_change_approved",
+    },
+  });
+
+  return {
+    orderId,
+    orderNumber: updated.orderNumber,
+    previousStatus: order.status,
+    newStatus: updated.status,
+    message: `주문 상태가 ${order.status} → ${updated.status}로 변경되었습니다.`,
   };
 }

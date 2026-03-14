@@ -246,6 +246,32 @@ export function useGenerateQuoteDraft() {
 }
 
 /**
+ * 주문 Follow-up 초안 생성
+ */
+export function useGenerateOrderFollowup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { orderId: string }) => {
+      const res = await fetch("/api/ai-actions/generate/order-followup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Failed to generate followup");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AI_ACTION_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["activity-logs"] });
+    },
+  });
+}
+
+/**
  * 벤더 이메일 초안 생성
  */
 export function useGenerateVendorEmailDraft() {

@@ -513,6 +513,23 @@ function FollowUpDraftSection({
         {draft.reason} — {draft.vendorName} 대상 회신 요청 초안입니다
       </p>
 
+      {/* 확인 필요 항목 */}
+      {draft.pendingChecks && draft.pendingChecks.length > 0 && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20 p-3 mb-3">
+          <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
+            확인 필요 항목
+          </p>
+          <div className="space-y-1">
+            {draft.pendingChecks.map((check: string, idx: number) => (
+              <div key={idx} className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                <span>{check}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 초안 카드 */}
       <div className="rounded-lg border border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-3.5 mb-3">
         <div className="flex items-center gap-2 mb-2">

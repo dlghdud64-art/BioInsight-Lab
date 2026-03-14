@@ -77,6 +77,19 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     approveToast: "Follow-up 메일이 승인되었습니다",
     approveHref: "/dashboard/orders",
   },
+  STATUS_CHANGE_SUGGEST: {
+    icon: Clock,
+    iconBg: "bg-purple-50 dark:bg-purple-950/40",
+    iconColor: "text-purple-600 dark:text-purple-400",
+    borderColor: "border-l-purple-500",
+    title: "주문 상태 변경 제안",
+    description: "벤더 회신을 분석하여 주문 상태 변경을 제안합니다.",
+    cta: "상태 변경안 검토하기",
+    badgeLabel: "상태 변경 제안",
+    badgeClass: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+    approveToast: "주문 상태가 변경되었습니다",
+    approveHref: "/dashboard/orders",
+  },
   REORDER_SUGGESTION: {
     icon: Package,
     iconBg: "bg-orange-50 dark:bg-orange-950/40",
@@ -132,6 +145,10 @@ const STAGE_CONFIG: Record<string, { label: string; className: string }> = {
   FOLLOWUP_DRAFT: {
     label: "응답 대기",
     className: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  },
+  STATUS_CHANGE_SUGGEST: {
+    label: "승인 필요",
+    className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 border-purple-200 dark:border-purple-800",
   },
   REORDER_SUGGESTION: {
     label: "조치 필요",
@@ -207,7 +224,7 @@ export function AiActionInbox() {
 
   const handleReview = (item: AiActionItem) => {
     // 이메일 초안 타입: PreviewDialog 모달 오픈
-    if (["QUOTE_DRAFT", "VENDOR_EMAIL_DRAFT", "FOLLOWUP_DRAFT"].includes(item.type)) {
+    if (["QUOTE_DRAFT", "VENDOR_EMAIL_DRAFT", "FOLLOWUP_DRAFT", "STATUS_CHANGE_SUGGEST"].includes(item.type)) {
       setPreviewItem(item);
       return;
     }

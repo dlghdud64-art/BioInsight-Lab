@@ -44,6 +44,7 @@ export interface FollowUpDraft {
   vendorName: string;
   vendorEmail?: string;
   reason: string;
+  pendingChecks?: string[];
 }
 
 export interface VendorResponseSummary {
@@ -93,7 +94,7 @@ export function useOrderAiPanel() {
     statusProposal: null,
   });
 
-  // Follow-up 이메일 초안 생성 mutation
+  // Follow-up 이메일 초안 생성 mutation (order-followup 전용 API 사용)
   const followUpMutation = useMutation({
     mutationFn: async (input: {
       orderId: string;
@@ -103,20 +104,10 @@ export function useOrderAiPanel() {
       items: OrderItemInfo[];
       daysSinceOrdered: number;
     }) => {
-      const res = await fetch("/api/ai-actions/generate/vendor-email-draft", {
+      const res = await fetch("/api/ai-actions/generate/order-followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendorName: input.vendorName,
-          vendorEmail: input.vendorEmail,
-          items: input.items.map((item) => ({
-            productName: item.name,
-            catalogNumber: item.catalogNumber,
-            quantity: item.quantity,
-            unit: "ea",
-          })),
-          customMessage: `주문번호 ${input.orderNumber} 관련 후속 문의입니다. 주문일로부터 ${input.daysSinceOrdered}일이 경과하였으며, 진행 상황 확인을 요청합니다.`,
-        }),
+        body: JSON.stringify({ orderId: input.orderId }),
       });
 
       if (!res.ok) {
@@ -133,9 +124,10 @@ export function useOrderAiPanel() {
         followUpDraft: {
           emailSubject: preview.emailSubject || "",
           emailBody: preview.emailBody || "",
-          vendorName: prev.order?.vendorName || "",
-          vendorEmail: prev.order?.vendorEmail,
-          reason: `주문일로부터 ${prev.order?.daysSinceOrdered || 0}일 경과`,
+          vendorName: preview.vendorName || prev.order?.vendorName || "",
+          vendorEmail: preview.vendorEmail || prev.order?.vendorEmail,
+          reason: `주문일로부터 ${preview.daysSinceOrder || prev.order?.daysSinceOrdered || 0}일 경과`,
+          pendingChecks: preview.pendingChecks || [],
         },
       }));
     },
