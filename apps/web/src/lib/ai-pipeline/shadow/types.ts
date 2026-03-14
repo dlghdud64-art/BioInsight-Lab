@@ -103,6 +103,66 @@ export interface ShadowReport {
   categoryBreakdown: { category: MismatchCategory; count: number }[];
 }
 
+// ── Processing Path ──
+export const PROCESSING_PATHS = [
+  "rules",
+  "ai_shadow",
+  "ai_active_canary",
+  "ai_active_full",
+  "ai_fallback",
+] as const;
+
+export type ProcessingPath = (typeof PROCESSING_PATHS)[number];
+
+// ── Canary Stage (승격 순서 고정) ──
+export const CANARY_STAGES = [
+  "OFF",
+  "SHADOW_ONLY",
+  "ACTIVE_5",
+  "ACTIVE_25",
+  "ACTIVE_50",
+  "ACTIVE_100",
+] as const;
+
+export type CanaryStage = (typeof CANARY_STAGES)[number];
+
+/** 문서 타입별 카나리 설정 */
+export interface DocTypeCanaryConfig {
+  stage: CanaryStage;
+  allowAutoVerify: boolean;
+}
+
+/** 전체 카나리 설정 (JSON 환경변수) */
+export interface CanaryConfig {
+  globalEnabled: boolean;
+  docTypes: Record<string, DocTypeCanaryConfig>;
+}
+
+/** Per-doc-type 운영 지표 */
+export interface DocTypeMetrics {
+  docType: string;
+  currentStage: CanaryStage;
+  totalCount: number;
+  aiActiveCount: number;
+  fallbackCount: number;
+  fallbackRate: number;
+  mismatchCount: number;
+  mismatchRate: number;
+  highRiskCount: number;
+  latencyP50Ms: number;
+  latencyP95Ms: number;
+}
+
+/** 서킷 브레이커 Halt 기록 */
+export interface CanaryHaltEvent {
+  documentType: string;
+  previousStage: CanaryStage;
+  haltedToStage: CanaryStage;
+  reason: string;
+  triggerCategory: MismatchCategory | null;
+  triggerRequestId: string | null;
+}
+
 // ── Go/No-Go Gate ──
 export interface RolloutGateResult {
   decision: "GO" | "NO_GO";

@@ -11,6 +11,8 @@ import type {
   ShadowComparisonRecord,
   MismatchCategory,
   ShadowReviewTag,
+  ProcessingPath,
+  CanaryStage,
 } from "./types";
 
 interface ComparisonInput {
@@ -38,6 +40,10 @@ interface ComparisonInput {
   tokenUsage: number | null;
   provider: string | null;
   model: string | null;
+
+  // Canary 메타 (optional — 하위 호환)
+  processingPath?: ProcessingPath;
+  canaryStage?: CanaryStage;
 }
 
 export async function logShadowComparison(input: ComparisonInput): Promise<void> {
@@ -53,14 +59,18 @@ export async function logShadowComparison(input: ComparisonInput): Promise<void>
         "documentTypeByAi", "verificationByAi", "taskMappingByAi", "dedupOutcomeByAiIfApplied",
         "mismatchCategory", "confidence", "schemaValid", "fallbackReason",
         "aiLatencyMs", "tokenUsage", "provider", "model",
-        "reviewTags", "isReviewCandidate", "createdAt"
+        "reviewTags", "isReviewCandidate",
+        "processingPath", "canaryStage",
+        "createdAt"
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8,
         $9, $10, $11, $12,
         $13::"ShadowMismatchCategory", $14, $15, $16,
         $17, $18, $19, $20,
-        $21::"ShadowReviewTag"[], $22, NOW()
+        $21::"ShadowReviewTag"[], $22,
+        $23::"ProcessingPath", $24::"CanaryStage",
+        NOW()
       )`,
       randomUUID(),
       input.requestId,
@@ -84,6 +94,8 @@ export async function logShadowComparison(input: ComparisonInput): Promise<void>
       input.model,
       reviewTags,
       isReviewCandidate,
+      input.processingPath ?? "rules",
+      input.canaryStage ?? null,
     );
   } catch (err) {
     console.warn("[ShadowComparison] 로그 기록 실패:", err);
