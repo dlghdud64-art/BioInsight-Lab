@@ -34,11 +34,13 @@ interface CircuitBreakerInput {
   mismatchCategory: MismatchCategory;
   processingPath: ProcessingPath;
   requestId: string;
+  autoVerifyActive?: boolean;
 }
 
 interface CircuitBreakerResult {
   halted: boolean;
   haltEvent?: CanaryHaltEvent;
+  autoVerifyKillOnly?: boolean;
 }
 
 export async function checkCircuitBreaker(
@@ -95,6 +97,19 @@ export async function checkCircuitBreaker(
       });
       return { halted: true, haltEvent: event };
     }
+  }
+
+  // ── Auto-Verify False-Safe → 즉시 auto-verify kill ──
+  if (input.mismatchCategory === "AUTO_VERIFY_RISK" && input.autoVerifyActive) {
+    const event = await recordHalt({
+      documentType: input.documentType,
+      previousStage: input.currentStage,
+      haltedToStage: input.currentStage, // stage 유지, auto-verify만 off
+      reason: "Auto-verify false-safe 감지 — restricted auto-verify 즉시 비활성",
+      triggerCategory: input.mismatchCategory,
+      triggerRequestId: input.requestId,
+    });
+    return { halted: true, haltEvent: event, autoVerifyKillOnly: true };
   }
 
   return { halted: false };

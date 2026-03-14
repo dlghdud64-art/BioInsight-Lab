@@ -44,6 +44,17 @@ interface ComparisonInput {
   // Canary 메타 (optional — 하위 호환)
   processingPath?: ProcessingPath;
   canaryStage?: CanaryStage;
+
+  // Auto-verify audit trail (optional)
+  autoVerifyEligibilityDecision?: string | null;
+  autoVerifyPolicyMatched?: boolean;
+  confidenceBand?: string | null;
+  criticalFieldConflictPresent?: boolean;
+  falseSafeCandidate?: boolean;
+  templateFingerprint?: string | null;
+  exclusionMatched?: boolean;
+  finalAutoVerifyAllowed?: boolean;
+  autoVerifyBlockReason?: string | null;
 }
 
 export async function logShadowComparison(input: ComparisonInput): Promise<void> {

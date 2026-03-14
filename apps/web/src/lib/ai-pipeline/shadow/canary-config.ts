@@ -6,7 +6,7 @@
  * 승격 순서: OFF → SHADOW_ONLY → ACTIVE_5 → ACTIVE_25 → ACTIVE_50 → ACTIVE_100
  */
 
-import type { CanaryConfig, CanaryStage, DocTypeCanaryConfig, ProcessingPath } from "./types";
+import type { CanaryConfig, CanaryStage, DocTypeCanaryConfig, AutoVerifyPolicy, ProcessingPath } from "./types";
 import { CANARY_STAGES } from "./types";
 
 const DEFAULT_DOC_TYPE_CONFIG: DocTypeCanaryConfig = {
@@ -30,12 +30,31 @@ export function loadCanaryConfig(): CanaryConfig {
     if (parsed.docTypes && typeof parsed.docTypes === "object") {
       for (const [key, val] of Object.entries(parsed.docTypes)) {
         const v = val as Record<string, unknown>;
-        docTypes[key] = {
+        const config: DocTypeCanaryConfig = {
           stage: CANARY_STAGES.includes(v.stage as CanaryStage)
             ? (v.stage as CanaryStage)
             : "OFF",
           allowAutoVerify: v.allowAutoVerify === true,
         };
+
+        // Auto-Verify Policy 파싱 (opt-in)
+        if (v.autoVerifyPolicy && typeof v.autoVerifyPolicy === "object") {
+          const p = v.autoVerifyPolicy as Record<string, unknown>;
+          config.autoVerifyPolicy = {
+            minConfidence: typeof p.minConfidence === "number" ? p.minConfidence : 0.99,
+            onlyIfSchemaValid: p.onlyIfSchemaValid !== false,
+            onlyIfNoCriticalFieldConflict: p.onlyIfNoCriticalFieldConflict !== false,
+            requireNoClassificationAmbiguity: p.requireNoClassificationAmbiguity !== false,
+            requireNoFallbackReason: p.requireNoFallbackReason !== false,
+            requireStableTemplateHistory: p.requireStableTemplateHistory !== false,
+            maxRecentAnomalyRate: typeof p.maxRecentAnomalyRate === "number" ? p.maxRecentAnomalyRate : 0.05,
+            rollbackOnFirstFalseSafe: p.rollbackOnFirstFalseSafe !== false,
+            excludedTemplates: Array.isArray(p.excludedTemplates) ? p.excludedTemplates as string[] : [],
+            excludedVendors: Array.isArray(p.excludedVendors) ? p.excludedVendors as string[] : [],
+          };
+        }
+
+        docTypes[key] = config;
       }
     }
 

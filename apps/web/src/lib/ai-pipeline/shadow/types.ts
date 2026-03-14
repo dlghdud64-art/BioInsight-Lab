@@ -126,10 +126,149 @@ export const CANARY_STAGES = [
 
 export type CanaryStage = (typeof CANARY_STAGES)[number];
 
+// ── Critical Field Conflict ──
+
+export const CRITICAL_FIELDS = [
+  "vendor",
+  "totalAmount",
+  "currency",
+  "documentDate",
+  "classificationIndicator",
+  "purchaseIdentifier",
+] as const;
+
+export type CriticalField = (typeof CRITICAL_FIELDS)[number];
+
+export const CRITICAL_CONFLICT_TYPES = [
+  "VALUE_DISAGREEMENT",
+  "MISSING_EXPECTED_FIELD",
+  "NORMALIZATION_MISMATCH",
+  "CONFLICTING_CLASSIFICATION",
+  "AMBIGUOUS_HIGH_CONFIDENCE",
+] as const;
+
+export type CriticalConflictType = (typeof CRITICAL_CONFLICT_TYPES)[number];
+
+export interface CriticalFieldConflict {
+  field: CriticalField;
+  conflictType: CriticalConflictType;
+  rulesValue: string | null;
+  aiValue: string | null;
+  severity: "HIGH" | "MEDIUM";
+}
+
+// ── Auto-Verify Eligibility ──
+
+export const AUTO_VERIFY_ELIGIBILITY_DECISIONS = [
+  "NOT_ELIGIBLE",
+  "ELIGIBLE_RESTRICTED",
+  "ELIGIBLE_WITH_TEMPLATE_EXCLUSIONS",
+  "ELIGIBLE_WITH_VENDOR_EXCLUSIONS",
+  "HOLD_REVIEW",
+  "ROLLBACK_REQUIRED",
+] as const;
+
+export type AutoVerifyEligibilityDecision = (typeof AUTO_VERIFY_ELIGIBILITY_DECISIONS)[number];
+
+// ── Final Operational Decision (6단계) ──
+
+export const FINAL_DECISIONS = [
+  "GO_RESTRICTED",
+  "GO_ACTIVE_50_NO_AUTOVERIFY",
+  "HOLD",
+  "ROLLBACK_TO_ACTIVE_5",
+  "ROLLBACK_TO_SHADOW",
+  "DISABLE_RESTRICTED_AUTOVERIFY_ONLY",
+] as const;
+
+export type FinalDecision = (typeof FINAL_DECISIONS)[number];
+
+// 하위 호환용 alias
+export type RolloutDecision = FinalDecision;
+
+// ── Auto-Verify Block Reason ──
+
+export const AUTO_VERIFY_BLOCK_REASONS = [
+  "POLICY_DISABLED",
+  "STAGE_NOT_ELIGIBLE",
+  "CONFIDENCE_TOO_LOW",
+  "BAND_NOT_ALLOWED",
+  "SCHEMA_INVALID",
+  "FALLBACK_TRIGGERED",
+  "CRITICAL_FIELD_CONFLICT",
+  "CLASSIFICATION_AMBIGUOUS",
+  "TEMPLATE_EXCLUDED",
+  "VENDOR_EXCLUDED",
+  "RECENT_ANOMALY_RATE_HIGH",
+  "FALSE_SAFE_RISK",
+  "OPS_HOLD",
+  "GLOBAL_KILL_SWITCH",
+  "UNKNOWN_DOC_TYPE",
+] as const;
+
+export type AutoVerifyBlockReason = (typeof AUTO_VERIFY_BLOCK_REASONS)[number];
+
+// ── Ops Approval ──
+
+export interface OpsApproval {
+  decision: FinalDecision;
+  approvedBy: string;
+  approvedAt: string;
+  basisReportId: string;
+  documentType: string;
+  previousStage: CanaryStage;
+  nextStage: CanaryStage;
+  restrictedAutoVerifyEnabled: boolean;
+  notes: string;
+}
+
+// ── Auto-Verify Audit Trail ──
+
+export interface AutoVerifyAuditFields {
+  autoVerifyEligibilityDecision: AutoVerifyEligibilityDecision | null;
+  autoVerifyPolicyMatched: boolean;
+  confidenceBand: string | null;
+  criticalFieldConflictPresent: boolean;
+  criticalFieldConflictTypes: CriticalConflictType[];
+  falseSafeCandidate: boolean;
+  templateFingerprint: string | null;
+  vendorNormalizationKey: string | null;
+  exclusionMatched: boolean;
+  finalAutoVerifyAllowed: boolean;
+  autoVerifyBlockReason: string | null;
+  rolloutDecision: RolloutDecision | null;
+}
+
+/** 제한적 Auto-Verify 정책 (opt-in) */
+export interface AutoVerifyPolicy {
+  /** auto-verify 허용 최소 confidence (예: 0.99) */
+  minConfidence: number;
+  /** schema valid 필수 여부 */
+  onlyIfSchemaValid: boolean;
+  /** critical field 충돌 시 차단 */
+  onlyIfNoCriticalFieldConflict: boolean;
+  /** classification 모호성 시 차단 */
+  requireNoClassificationAmbiguity: boolean;
+  /** fallback reason 있으면 차단 */
+  requireNoFallbackReason: boolean;
+  /** 안정적 template 이력 필요 */
+  requireStableTemplateHistory: boolean;
+  /** 최근 anomaly rate 상한 */
+  maxRecentAnomalyRate: number;
+  /** false-safe 첫 발생 시 즉시 off */
+  rollbackOnFirstFalseSafe: boolean;
+  /** auto-verify 제외 템플릿 목록 */
+  excludedTemplates: string[];
+  /** auto-verify 제외 벤더(orgId) 목록 */
+  excludedVendors: string[];
+}
+
 /** 문서 타입별 카나리 설정 */
 export interface DocTypeCanaryConfig {
   stage: CanaryStage;
   allowAutoVerify: boolean;
+  /** 제한적 auto-verify 정책 (allowAutoVerify=true일 때만 적용) */
+  autoVerifyPolicy?: AutoVerifyPolicy;
 }
 
 /** 전체 카나리 설정 (JSON 환경변수) */
