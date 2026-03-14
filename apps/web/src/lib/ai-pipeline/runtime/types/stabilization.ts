@@ -173,6 +173,93 @@ export interface MergeGateResult {
   missingFields: string[];
 }
 
+// ── S1: Runtime Gate Lock Types ──
+
+export type S1LifecycleState =
+  | "PRE_ACTIVE"
+  | "ACTIVE_25"
+  | "ACTIVE_50"
+  | "ACTIVE_75"
+  | "ACTIVE_100"
+  | "INCIDENT_LOCKDOWN";
+
+export type S1ReleaseMode =
+  | "NORMAL"
+  | "FULL_ACTIVE_STABILIZATION"
+  | "EMERGENCY_ROLLBACK";
+
+// ── Action Permission ──
+
+export type AllowedAction =
+  | "EMERGENCY_ROLLBACK_START"
+  | "EMERGENCY_ROLLBACK_EXECUTE"
+  | "EMERGENCY_ROLLBACK_FINALIZE"
+  | "FINAL_CONTAINMENT_START"
+  | "FINAL_CONTAINMENT_EXECUTE"
+  | "FINAL_CONTAINMENT_FINALIZE"
+  | "AUDIT_FLUSH"
+  | "AUDIT_RECONCILE"
+  | "OBSERVABILITY_SYNC"
+  | "STABILIZATION_VALIDATION_RUN"
+  | "INCIDENT_ESCALATE"
+  | "INCIDENT_ACK"
+  | "READ_ONLY_STATUS_REFRESH";
+
+export type BlockedAction =
+  | "FEATURE_ENABLE"
+  | "FEATURE_EXPAND"
+  | "EXPERIMENTAL_PATH_ENABLE"
+  | "STRUCTURAL_REFACTOR_APPLY"
+  | "UX_SCOPE_EXPAND"
+  | "ROUTING_OVERRIDE_UNVERIFIED"
+  | "AUTHORITY_OVERRIDE_DIRECT"
+  | "DEV_PATH_EXECUTE"
+  | "HOTPATCH_WITHOUT_STABILIZATION_TAG"
+  | "SILENT_RECOVERY";
+
+export type RuntimeAction = AllowedAction | BlockedAction | string;
+
+// ── Transition Request/Result ──
+
+export interface TransitionRequest {
+  currentState: S1LifecycleState;
+  targetState: S1LifecycleState;
+  releaseMode: S1ReleaseMode;
+  baselineStatus: BaselineStatus;
+  actor: string;
+  reason: string;
+  correlationId: string;
+}
+
+export interface TransitionResult {
+  allowed: boolean;
+  reasonCode: string;
+  detail: string;
+}
+
+// ── Action Permission Result ──
+
+export interface ActionPermissionResult {
+  allowed: boolean;
+  action: string;
+  reasonCode: string;
+  detail: string;
+}
+
+// ── Reject Event ──
+
+export interface RejectEvent {
+  reasonCode: string;
+  currentState: S1LifecycleState;
+  targetState: S1LifecycleState | null;
+  releaseMode: S1ReleaseMode;
+  baselineStatus: BaselineStatus;
+  requestedAction: string;
+  actor: string;
+  correlationId: string;
+  timestamp: Date;
+}
+
 // ── Audit Events ──
 
 export type StabilizationAuditEventType =
@@ -181,7 +268,14 @@ export type StabilizationAuditEventType =
   | "SNAPSHOT_PAIR_CREATED"
   | "FREEZE_GATE_ENABLED"
   | "BOOT_VALIDATION_PASSED"
-  | "BOOT_VALIDATION_FAILED";
+  | "BOOT_VALIDATION_FAILED"
+  | "TRANSITION_ALLOWED"
+  | "TRANSITION_REJECTED"
+  | "ACTION_ALLOWED"
+  | "ACTION_DENIED"
+  | "INVALID_COMBINATION_REJECTED"
+  | "DEV_PATH_BLOCKED"
+  | "INCIDENT_ESCALATED";
 
 export interface StabilizationAuditEvent {
   eventId: string;
