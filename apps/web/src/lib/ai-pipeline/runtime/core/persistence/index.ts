@@ -1,0 +1,65 @@
+/**
+ * P1-1 Slice-1B — Persistence Layer Barrel Exports
+ */
+
+// Common types
+export type {
+  StorageMode,
+  RepositoryResult,
+  RepositoryError,
+  RepositoryErrorCode,
+  ListQuery,
+  ListResult,
+  OptimisticUpdate,
+  TimestampContract,
+  EventTimestampContract,
+  PersistedBaseline,
+  PersistedSnapshot,
+  PersistedAuthorityLine,
+  PersistedIncident,
+  PersistedStabilizationAuditEvent,
+  PersistedCanonicalAuditEvent,
+  CreateBaselineInput,
+  CreateSnapshotInput,
+  CreateAuthorityLineInput,
+  CreateIncidentInput,
+  CreateStabilizationAuditEventInput,
+  CreateCanonicalAuditEventInput,
+  IncidentStatus,
+  IncidentSeverity,
+} from "./types";
+
+export { ok, fail, INCIDENT_STATUS_LIFECYCLE, INCIDENT_SEVERITIES } from "./types";
+
+// Repository interfaces
+export type {
+  BaselineRepository,
+  SnapshotRepository,
+  AuthorityRepository,
+  IncidentRepository,
+  StabilizationAuditRepository,
+  CanonicalAuditRepository,
+} from "./repositories";
+
+// Factory contract
+export type {
+  PersistenceAdapters,
+  PersistenceAdapterFactory,
+  PersistenceProviderConfig,
+  AdapterRegistry,
+} from "./factory";
+
+export { DEFAULT_PERSISTENCE_CONFIG } from "./factory";
+
+// Migration validation
+export {
+  SCHEMA_VALIDATION_COMMANDS,
+  MIGRATION_DRY_RUN_CHECKLIST,
+  REPOSITORY_IMPL_PREREQUISITES,
+  evaluateMigrationReadiness,
+} from "./migration-validation";
+
+export type {
+  ValidationStatus,
+  MigrationValidationResult,
+} from "./migration-validation";
