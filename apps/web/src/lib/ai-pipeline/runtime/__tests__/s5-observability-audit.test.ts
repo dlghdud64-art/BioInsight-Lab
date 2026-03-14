@@ -14,7 +14,6 @@ import {
   _resetCanonicalAudit,
   SCHEMA_VERSION,
 } from "../core/observability/canonical-event-schema";
-import type { ReconstructionStatus } from "../core/observability/canonical-event-schema";
 
 describe("S5: Observability / Audit / Reconstruction", () => {
   beforeEach(() => {
@@ -32,7 +31,7 @@ describe("S5: Observability / Audit / Reconstruction", () => {
 
   // 2. missing required field blocks audit write test
   it("should block write when required field missing", () => {
-    const event = createCanonicalEvent({ actor: "" as any });
+    const event = createCanonicalEvent({ actor: "" });
     const result = writeCanonicalAudit(event);
     expect(result.written).toBe(false);
     expect(result.reasonCode).toContain("REQUIRED_FIELD_MISSING");
@@ -57,7 +56,7 @@ describe("S5: Observability / Audit / Reconstruction", () => {
     });
     writeCanonicalAudit(event);
     const events = getCanonicalAuditLog({ correlationId: "cor-inc" });
-    expect(events[0]!.incidentId).toBe("inc-001");
+    expect(events[0].incidentId).toBe("inc-001");
   });
 
   // 5. snapshot linkage required for critical mutation event test
@@ -69,8 +68,8 @@ describe("S5: Observability / Audit / Reconstruction", () => {
     });
     writeCanonicalAudit(event);
     const events = getCanonicalAuditLog({ eventType: "ROLLBACK_STEP_EXECUTED" });
-    expect(events[0]!.snapshotBeforeId).toBe("snap-before");
-    expect(events[0]!.snapshotAfterId).toBe("snap-after");
+    expect(events[0].snapshotBeforeId).toBe("snap-before");
+    expect(events[0].snapshotAfterId).toBe("snap-after");
   });
 
   // 6. audit writer single entrypoint enforcement test
@@ -155,14 +154,14 @@ describe("S5: Observability / Audit / Reconstruction", () => {
 
   // 13. non-canonical event emission blocked test
   it("should reject event missing required fields as non-canonical", () => {
-    const result = validateCanonicalEvent({ eventType: "SOMETHING" } as any);
+    const result = validateCanonicalEvent({ eventType: "SOMETHING" });
     expect(result.valid).toBe(false);
     expect(result.missingFields.length).toBeGreaterThan(0);
   });
 
   // 14. operator reconstruction status enum only test
   it("should only produce valid reconstruction status", () => {
-    const validStatuses: ReconstructionStatus[] = [
+    const validStatuses = [
       "RECONSTRUCTABLE",
       "PARTIALLY_RECONSTRUCTABLE",
       "BROKEN_CHAIN",

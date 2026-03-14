@@ -292,7 +292,7 @@ export function createCanonicalEvent(overrides: Partial<CanonicalEvent>): Canoni
     eventType: overrides.eventType ?? "UNKNOWN",
     correlationId: overrides.correlationId ?? randomUUID(),
     timelineId: overrides.timelineId ?? `tl-${randomUUID().slice(0, 8)}`,
-    baselineId: overrides.baselineId ?? "",
+    baselineId: overrides.baselineId ?? "bl-default",
     baselineVersion: overrides.baselineVersion ?? "1.0.0",
     baselineHash: overrides.baselineHash ?? "hash",
     lifecycleState: overrides.lifecycleState ?? "ACTIVE_100",
