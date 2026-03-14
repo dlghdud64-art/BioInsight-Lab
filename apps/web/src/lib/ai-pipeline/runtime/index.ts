@@ -199,6 +199,52 @@ export {
   generateStabilizationReport,
 } from "./stabilization";
 
+// Stabilization Packages S0~S6
+export {
+  // S0: Baseline Freeze
+  type BaselineSnapshot,
+  type BaselineRegistry,
+  type FeatureFlagEntry,
+  freezeBaseline,
+  validateStabilizationTag,
+  canRestoreSnapshot,
+  // S1: Runtime Gate Lock
+  type TransitionAction,
+  type TransitionGuard,
+  evaluateTransition,
+  recordTransitionAttempt,
+  // S2: Containment / Rollback Hardening
+  type ContainmentOutcome,
+  type ContainmentResult,
+  type ResidueResult,
+  type RollbackBoundary,
+  executeContainment,
+  scanForResidues,
+  // S3: Routing Integrity
+  type RoutingOutcome,
+  type RoutingDecision,
+  type RoutingIntegrityReport,
+  checkRoutingIntegrity,
+  resolveRouting,
+  // S4: Authority Transfer
+  type TransferPhase,
+  type AuthorityRecord,
+  type TransferProtocol,
+  type AuthorityIntegrityReport,
+  verifyAuthorityIntegrity,
+  validateTransferOrder,
+  // S5: Audit Reconstruction
+  type AuditEvent,
+  type AuditChain,
+  type AuditReconstructionReport,
+  verifyAuditCompleteness,
+  // S6: Soak + Exit Gate
+  type SoakTestResult,
+  type RecurrenceTracker,
+  type ExitGateResult,
+  evaluateExitGate,
+} from "./stabilization-packages";
+
 // P1: Backlog (types only)
 export {
   P1Feature,
