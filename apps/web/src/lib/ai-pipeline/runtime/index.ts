@@ -176,6 +176,29 @@ export {
   createActive100LaunchConfig,
 } from "./active50-postrun";
 
+// Full-Active Stabilization
+export {
+  type LifecycleState,
+  type ReleaseMode,
+  type StabilizationState,
+  type ChangeCategory,
+  type ChangeRequest,
+  type ChangePolicyResult,
+  type WatchpointStatus,
+  type StabilizationWatchboard,
+  type HardStopType,
+  type HardStopIncident,
+  type VerificationItem,
+  type VerificationPack,
+  type StabilizationReport,
+  enterStabilization,
+  evaluateChangeRequest,
+  collectStabilizationWatchboard,
+  checkHardStopTriggers,
+  runVerificationPack,
+  generateStabilizationReport,
+} from "./stabilization";
+
 // P1: Backlog (types only)
 export {
   P1Feature,
