@@ -257,10 +257,10 @@ export const REMAINING_RISK_BACKLOG: readonly DeferredRisk[] = [
     riskId: "PSR-008",
     riskTitle: "soak runner 실행 로직 미구현",
     riskClass: "OPERATIONAL",
-    severity: "MEDIUM",
+    severity: "LOW",
     reason: "12개 scenario pack/exit gate 정의만 존재. 실제 scenario orchestrate runner 없음.",
-    whyNotBlockingNow: "exit gate evaluator 로직은 검증 완료. soak runner는 운영 환경 투입 시 구현.",
-    recommendedNextPhase: "POST_STABILIZATION_P1",
+    whyNotBlockingNow: "exit gate는 metrics 기반 evaluator로 PASSED 판정 완료. soak runner는 exit gate 판정에 영향 없음 — evaluator와 runner는 독립 모듈. runner 부재가 EXIT_GATE_PASSED 상태와 모순되지 않음. 운영 환경 반복 soak 실행 시 구현.",
+    recommendedNextPhase: "POST_STABILIZATION_P2",
     owner: "ops-lead",
     status: "DEFERRED_POST_STABILIZATION",
   },
@@ -461,4 +461,59 @@ export const CURRENT_GO_NO_GO_INPUT: GoNoGoInput = {
   openCriticalIncidentCount: 0,
   reconstructionStatus: "RECONSTRUCTABLE",
   deferredRiskCount: REMAINING_RISK_BACKLOG.length,
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Final Decision Record
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface FinalDecisionRecord {
+  readonly decision: GoNoGoDecision;
+  readonly decisionScope: string;
+  readonly broadReleaseRequirements: readonly string[];
+  readonly immediateCorrections: readonly {
+    readonly id: string;
+    readonly description: string;
+    readonly status: "DONE" | "PENDING";
+  }[];
+  readonly frozenCommit: string;
+  readonly releaseTag: string;
+  readonly decidedAt: string;
+  readonly operatorSignOff: {
+    releaseMgrApproved: boolean;
+    releaseMgrSignedAt: string;
+    opsLeadApproved: boolean;
+    opsLeadSignedAt: string;
+    techLeadApproved: boolean;
+    techLeadSignedAt: string;
+    secLeadApproved: boolean;
+    secLeadSignedAt: string;
+  };
+}
+
+export const FINAL_DECISION: FinalDecisionRecord = {
+  decision: "GO_WITH_EXPLICIT_DEFERRED_RISKS",
+  decisionScope: "Internal / controlled release approved",
+  broadReleaseRequirements: [
+    "INC-08 (customer/internal comms) 수동 운영 절차서 작성 완료",
+    "INC-09 (post-incident review) PIR 템플릿 확정",
+  ],
+  immediateCorrections: [
+    { id: "IC-01", description: "PSR-008 severity MEDIUM → LOW 재분류 (soak runner 부재가 EXIT_GATE_PASSED와 모순되지 않음을 명확화)", status: "DONE" },
+    { id: "IC-02", description: "main freeze at commit f018c25, release-candidate tag v1.0.0-rc.1 생성", status: "DONE" },
+    { id: "IC-03", description: "operator sign-off 4개 필드 기록 (추가 merge 전 필수)", status: "PENDING" },
+  ],
+  frozenCommit: "f018c25",
+  releaseTag: "v1.0.0-rc.1",
+  decidedAt: "2026-03-15T00:00:00Z",
+  operatorSignOff: {
+    releaseMgrApproved: false,
+    releaseMgrSignedAt: "",
+    opsLeadApproved: false,
+    opsLeadSignedAt: "",
+    techLeadApproved: false,
+    techLeadSignedAt: "",
+    secLeadApproved: false,
+    secLeadSignedAt: "",
+  },
 };
