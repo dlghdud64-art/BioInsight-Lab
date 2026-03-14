@@ -30,3 +30,7 @@ export { runPreflightCheck } from "./preflight";
 export type { PreflightCheckResult, PreflightItem } from "./preflight";
 export { getWatchboardMetrics, generateCanaryRunSummary } from "./watchboard";
 export type { WatchboardMetrics, WatchboardQuery, CanaryRunSummary } from "./watchboard";
+export { evaluatePromotionGate } from "./promotion-gate";
+export type { PromotionGateReport, PromotionDecision, PromotionThresholds } from "./promotion-gate";
+export { analyzeAnomalies } from "./anomaly-analyzer";
+export type { AnomalyReport, VendorHotspot, ConfidenceBand } from "./anomaly-analyzer";
