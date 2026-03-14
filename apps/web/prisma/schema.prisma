@@ -1709,6 +1709,7 @@ enum AiActionType {
   STATUS_CHANGE_SUGGEST  // 상태 변경 제안
 }
 
+// ── Legacy 상태 (하위 호환) ──
 enum AiActionStatus {
   PENDING     // 승인 대기
   APPROVED    // 승인 완료
@@ -1724,21 +1725,52 @@ enum AiActionPriority {
   LOW
 }
 
+// ══════════════════════════════════════════════════════════
+// Unified Work Queue — 3-Layer 상태 분리
+// ══════════════════════════════════════════════════════════
+
+/// 글로벌 작업 상태 — 대시보드 필터/배지/정렬의 유일한 기준
+enum TaskStatus {
+  READY              // 초안 생성 완료, 검토 대기
+  REVIEW_NEEDED      // 사용자 검토(승인/수정) 필요
+  IN_PROGRESS        // 실행 중 (API 호출, 이메일 발송 등)
+  WAITING_RESPONSE   // 외부 응답 대기 (벤더 회신 등)
+  ACTION_NEEDED      // 즉시 조치 필요 (임박 알림, 재발주)
+  COMPLETED          // 최종 완료
+  FAILED             // 실행 실패
+  BLOCKED            // 선행 조건 미충족 (예산 부족, 권한 없음)
+}
+
+/// 결재/승인 상태 — TaskStatus와 독립 조합
+enum ApprovalStatus {
+  NOT_REQUIRED       // 승인 불필요 (알림 확인 등)
+  PENDING            // 승인 대기 중
+  APPROVED           // 승인됨
+  REJECTED           // 거절됨 (= DISMISSED)
+}
+
 model AiActionItem {
   id                String           @id @default(cuid())
   type              AiActionType
-  status            AiActionStatus   @default(PENDING)
+  status            AiActionStatus   @default(PENDING)   // Legacy — 기존 API 하위 호환
   priority          AiActionPriority @default(MEDIUM)
+
+  // ── 3-Layer 상태 분리 ──
+  taskStatus        TaskStatus       @default(READY)            // L1: 글로벌 작업 상태
+  approvalStatus    ApprovalStatus   @default(NOT_REQUIRED)     // L2: 결재 상태
+  substatus         String?          // L3: 도메인 세부 상태 (quote_draft_generated, order_followup_sent 등)
 
   userId            String
   organizationId    String?
+  assigneeId        String?          // 담당자 (조직 내 할당 가능)
 
   title             String           // 표시 제목 (예: "Anti-CD3 항체 외 3건 견적 초안")
+  summary           String?          // 1줄 요약 (대시보드 카드 서브텍스트)
   description       String?          @db.Text
   payload           Json             // 초안 데이터 (이메일 본문, 품목 리스트 등)
   result            Json?            // 실행 결과 (생성된 quoteId 등)
 
-  relatedEntityType String?          // "QUOTE", "INVENTORY", "VENDOR_REQUEST"
+  relatedEntityType String?          // "QUOTE", "ORDER", "INVENTORY"
   relatedEntityId   String?          // 관련 레코드 ID
 
   aiModel           String?          // 사용된 AI 모델 (예: "gpt-4o")
@@ -1746,16 +1778,22 @@ model AiActionItem {
   completionTokens  Int?
 
   createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   expiresAt         DateTime?        // 자동 만료 시각
   resolvedAt        DateTime?        // 승인/무시 처리 시각
   resolvedBy        String?          // 처리한 사용자 ID
+  completedAt       DateTime?        // 최종 완료 시각
+  failedAt          DateTime?        // 실패 시각
 
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization      Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
   @@index([organizationId, status])
+  @@index([organizationId, taskStatus])  // 대시보드 Work Queue 조회
+  @@index([taskStatus, priority])         // 상태별 우선순위 정렬
   @@index([type])
   @@index([status])
   @@index([createdAt])
+  @@index([updatedAt])
 }
