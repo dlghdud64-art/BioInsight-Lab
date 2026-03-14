@@ -77,6 +77,7 @@ function InventoryPageContent() {
   const { toast } = useToast();
   const { open: openQRScanner } = useQRScanner();
   const searchParams = useSearchParams();
+  const aiPanelParam = searchParams.get("ai_panel") === "open";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
@@ -151,6 +152,14 @@ function InventoryPageContent() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
+
+  // Deep-link: ?ai_panel=open 시 패널 자동 오픈
+  useEffect(() => {
+    if (aiPanelParam && !aiPanel.isOpen) {
+      aiPanel.setIsOpen(true);
+    }
+  }, [aiPanelParam]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);

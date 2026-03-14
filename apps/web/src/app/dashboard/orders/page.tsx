@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, ChevronRight, Bell, Sparkles } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useOrderAiPanel } from "@/hooks/use-order-ai-panel";
 import { OrderAiAssistantPanel } from "@/components/ai/order-ai-assistant-panel";
 
@@ -182,7 +182,7 @@ function OrderCard({
   );
 }
 
-export default function OrderHistoryPage() {
+function OrderHistoryPageContent() {
   const searchParams = useSearchParams();
   const aiPanelOpen = searchParams.get("ai_panel") === "open";
 
@@ -351,5 +351,19 @@ export default function OrderHistoryPage() {
         error={aiPanel.error}
       />
     </>
+  );
+}
+
+export default function OrderHistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <OrderHistoryPageContent />
+    </Suspense>
   );
 }
