@@ -244,3 +244,84 @@ function buildSummary(dashboard: ClosureDashboardData): string {
 
   return parts.join(" | ");
 }
+
+// ═══════════════════════════════════════════════
+// Scenario 8 확장: 회복력 대시보드 카드
+// ═══════════════════════════════════════════════
+
+/** 회복력 대시보드 카드 */
+export interface ResilienceDashboardCard {
+  /** 카드 ID */
+  cardId: string;
+  /** 카드 제목 */
+  title: string;
+  /** 상태 */
+  status: "GREEN" | "YELLOW" | "RED";
+  /** 값 */
+  value: string;
+  /** 설명 */
+  description: string;
+}
+
+/**
+ * Scenario 8 회복력 관련 대시보드 카드를 생성한다.
+ */
+export function getResilienceDashboardCards(params: {
+  /** 반복 차단 저항성: 반복/위장 시도 차단율 (0~100) */
+  repeatedBlockRate: number;
+  /** 부분 장애 생존성: degraded mode에서 코어 보호 유지율 (0~100) */
+  degradedSurvivalRate: number;
+  /** 역할 충돌 인시던트 수 */
+  roleConflictCount: number;
+  /** fail-open 발생 건수 */
+  failOpenCount: number;
+  /** 경계선 판정 보류 건수 */
+  borderlinePendingCount: number;
+  /** 백로그 P0 건수 */
+  p0BacklogCount: number;
+}): ResilienceDashboardCard[] {
+  return [
+    {
+      cardId: "RES-CARD-01",
+      title: "반복 차단 저항성",
+      status: params.repeatedBlockRate >= 95 ? "GREEN" : params.repeatedBlockRate >= 80 ? "YELLOW" : "RED",
+      value: `${params.repeatedBlockRate.toFixed(1)}%`,
+      description: "반복/위장 코어 침해 시도에 대한 일관된 차단율",
+    },
+    {
+      cardId: "RES-CARD-02",
+      title: "부분 장애 생존성",
+      status: params.degradedSurvivalRate >= 95 ? "GREEN" : params.degradedSurvivalRate >= 80 ? "YELLOW" : "RED",
+      value: `${params.degradedSurvivalRate.toFixed(1)}%`,
+      description: "보조 인프라 장애 시 코어 보호 유지율",
+    },
+    {
+      cardId: "RES-CARD-03",
+      title: "역할 충돌 인시던트",
+      status: params.roleConflictCount === 0 ? "GREEN" : params.roleConflictCount <= 2 ? "YELLOW" : "RED",
+      value: `${params.roleConflictCount}건`,
+      description: "역할 경계 침범 및 권한 혼선 탐지 건수",
+    },
+    {
+      cardId: "RES-CARD-04",
+      title: "Fail-Open 경로",
+      status: params.failOpenCount === 0 ? "GREEN" : "RED",
+      value: `${params.failOpenCount}건`,
+      description: "자동 승인/fail-open 경로 발생 건수 (0이어야 함)",
+    },
+    {
+      cardId: "RES-CARD-05",
+      title: "경계선 판정 보류",
+      status: params.borderlinePendingCount === 0 ? "GREEN" : params.borderlinePendingCount <= 3 ? "YELLOW" : "RED",
+      value: `${params.borderlinePendingCount}건`,
+      description: "리뷰 대기 중인 경계선 케이스",
+    },
+    {
+      cardId: "RES-CARD-06",
+      title: "P0 백로그",
+      status: params.p0BacklogCount === 0 ? "GREEN" : "RED",
+      value: `${params.p0BacklogCount}건`,
+      description: "헌법적 결함 — 즉시 해결 필요 항목",
+    },
+  ];
+}

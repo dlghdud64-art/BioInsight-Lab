@@ -266,3 +266,101 @@ export {
   verifyCoreInvariants,
   runSystemicResilienceSimulation,
 } from "./systemic-resilience-simulation";
+
+// I. Resilience Stress Tester (Scenario 8 Test Suite)
+export {
+  type StressCategory,
+  type ExpectedBehavior,
+  type StressScenario,
+  type InjectedRequest,
+  type RequestProcessingResult,
+  type ScenarioExecutionResult,
+  type AssertionResult,
+  defineStressScenarios,
+  executeStressScenario,
+  runAllStressScenarios,
+  getStressExecutionLog,
+} from "./resilience-stress-tester";
+
+// J. Multi-Crisis Simulator (Orchestrator)
+export {
+  type CrisisPhase,
+  type CrisisTimelineEntry,
+  type IntegratedSimulationResult,
+  assembleIntegratedSimulation,
+  getIntegratedSimulations,
+} from "./multi-crisis-simulator";
+
+// K. Role Misalignment Detector
+export {
+  type RoleMisalignmentType,
+  type RoleMisalignmentIncident,
+  type RoleMisalignmentFollowUp,
+  validateRolePermission,
+  detectEmergencyPersistentUse,
+  detectCrossRoleCollusion,
+  getRoleMisalignmentIncidents,
+  getEmergencyUsageLog,
+  getRolePermissions,
+} from "./role-misalignment-detector";
+
+// L. Borderline Adjudication Protocol
+export {
+  type AdjudicationStatus,
+  type BorderlineType,
+  type AdjudicationCase,
+  detectBorderlineCase,
+  resolveAdjudicationCase,
+  processTimeouts,
+  getAdjudicationCases,
+  getPendingCases,
+  getDetectionRules,
+} from "./borderline-adjudication-protocol";
+
+// M. Degraded Mode Containment
+export {
+  type InfraComponent,
+  type InfraHealth,
+  type InfraStatus,
+  type ContainmentMode,
+  updateInfraHealth,
+  evaluateAndTransition,
+  verifyCoreProtection,
+  deferEvidence,
+  flushDeferredEvidence,
+  getCurrentContainmentMode,
+  getModeTransitionLog,
+  getAllInfraStatuses,
+  getDeferredEvidenceQueue,
+} from "./degraded-mode-containment";
+
+// N. Resilience Scorecard
+export {
+  type ResilienceVerdict,
+  type PostScenarioDecision,
+  type DimensionScore,
+  type ResilienceScorecard,
+  generateResilienceScorecard,
+} from "./resilience-scorecard";
+
+// O. Structural Realignment Backlog
+export {
+  type BacklogPriority,
+  type BacklogStatus,
+  type BacklogCategory,
+  type BacklogItem,
+  addBacklogItem,
+  updateBacklogStatus,
+  generateBacklogFromScenario8,
+  getBacklog,
+  getBacklogByPriority,
+  getOpenBacklog,
+  getOverdueBacklog,
+  getBacklogStats,
+} from "./structural-realignment-backlog";
+
+// Updated closure-dashboard exports
+export {
+  type ResilienceDashboardCard,
+  getResilienceDashboardCards,
+} from "./closure-dashboard";
