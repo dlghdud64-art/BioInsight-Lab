@@ -62,3 +62,25 @@ export { getStabilizationDashboard, buildLongTailBacklog, generateStandardPlaybo
 export type { StabilizationDashboard, StabilizationTrend, LongTailAnomaly, OperatingState, PolicyAdjustmentAdvice } from "./stabilization";
 export { selectSecondCandidate, checkParallelOpsReadiness, generateTightenedConfig, evaluateSecondPromotion, runSecondDocTypePreflight, extractSecondDocTypeReviewSamples } from "./second-doctype-rollout";
 export type { SecondCandidateReport, SecondPromotionReport, SecondPromotionDecision, TightenedLaunchConfig, ParallelOpsCheck } from "./second-doctype-rollout";
+
+// ── Phase J: Rollout Control Plane ──
+export { validateTransition, toCanaryStage, toOperatingState, isActiveState, STATE_ORDER } from "./rollout-state-machine";
+export type { LifecycleState, TransitionRequest, TransitionResult, TransitionType } from "./rollout-state-machine";
+export { initializeRegistry, getRegistryEntry, updateRegistryEntry, getAllRegistryEntries, markAsFirstDocType, getFirstDocTypeState } from "./doctype-registry";
+export type { DocTypeRegistryEntry } from "./doctype-registry";
+export { createApprovalRequest, approveRequest, rejectRequest, markExecuted, getValidApproval, expireStaleApprovals, getPendingApprovals, requiresApproval } from "./approval-store";
+export type { ApprovalRequest, ApprovalStatus } from "./approval-store";
+export { runTransitionGuard } from "./stage-transition-guard";
+export type { GuardResult, GuardCheck } from "./stage-transition-guard";
+export { emitAlert, acknowledgeAlert, getAlertFeed, alertInvariantViolation, alertFalseSafe, alertRollback, alertApprovalPending } from "./alerting-service";
+export type { AlertEvent, AlertSeverity, AlertEventType } from "./alerting-service";
+export { runCertification } from "./certification-runner";
+export type { CertificationReport, CertificationMode, CertificationResult } from "./certification-runner";
+export { generateStageHealthReport, generatePromotionReadinessReport, generateAutoVerifySafetyReport, generateStabilizationReport, generateRollbackIncidentReport, generateSecondDocTypeReport, getPortfolioSummary } from "./rollout-reporting";
+export type { ReportType, ReportEnvelope } from "./rollout-reporting";
+export { requestPromotion, approvePromotion, rejectPromotion, rollbackToStage, emergencyOff, disableAutoVerify, forceHold, markStabilizationComplete } from "./ops-control-plane";
+export type { OpsActionResult } from "./ops-control-plane";
+export { runOrchestrationCycle, runPortfolioOrchestration } from "./rollout-orchestrator";
+export type { OrchestrationResult } from "./rollout-orchestrator";
+export { E2E_SCENARIOS, getScenarioById, getScenariosByCategory, listScenarioSummaries } from "./e2e-scenarios";
+export type { E2EScenario, E2EStep } from "./e2e-scenarios";
