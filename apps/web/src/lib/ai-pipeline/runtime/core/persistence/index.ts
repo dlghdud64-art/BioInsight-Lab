@@ -60,6 +60,9 @@ export {
 // Prisma adapters (Slice-1C)
 export { createPrismaAdapters } from "./prisma";
 
+// Memory adapters (Slice-1D)
+export { createMemoryAdapters } from "./memory";
+
 // Migration validation
 export {
   SCHEMA_VALIDATION_COMMANDS,
