@@ -164,6 +164,18 @@ export {
   checkAutoVerifyGate,
 } from "./active50-eligibility";
 
+// ACTIVE_50 Post-Run & ACTIVE_100 (STABLE) Promotion
+export {
+  type Active50PostRunDecision,
+  type RestrictedAutoVerifySafetyReport,
+  type AutoVerifyBlockReasonSummary,
+  type Active50PostRunReport,
+  type Active50PostRunThresholds,
+  type Active100LaunchConfig,
+  generateActive50PostRunReport,
+  createActive100LaunchConfig,
+} from "./active50-postrun";
+
 // P1: Backlog (types only)
 export {
   P1Feature,
