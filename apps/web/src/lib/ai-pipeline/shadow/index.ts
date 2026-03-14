@@ -26,3 +26,7 @@ export { generateShadowReport } from "./report-aggregator";
 export { evaluateRolloutGate } from "./rollout-gate";
 export { checkCircuitBreaker } from "./circuit-breaker";
 export { getPerDocTypeMetrics } from "./canary-metrics";
+export { runPreflightCheck } from "./preflight";
+export type { PreflightCheckResult, PreflightItem } from "./preflight";
+export { getWatchboardMetrics, generateCanaryRunSummary } from "./watchboard";
+export type { WatchboardMetrics, WatchboardQuery, CanaryRunSummary } from "./watchboard";
