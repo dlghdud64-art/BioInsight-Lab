@@ -11,6 +11,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { resolveState, resolveInitialState, type TaskStatus, type ApprovalStatus, type AiActionType } from "./state-mapper";
+import { computeTotalScore } from "./scoring";
 
 // ── Types ──
 
@@ -232,12 +233,17 @@ export interface WorkQueueItem {
   metadata: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
+  // ── 다차원 스코어링 ──
+  impactScore: number;
+  urgencyScore: number;
+  totalScore: number;
+  urgencyReason: string | null;
 }
 
 /**
  * 대시보드 Work Queue 목록 조회
  *
- * 정렬: taskStatus 우선순위(FAILED→BLOCKED→ACTION_NEEDED→...) → priority DESC → updatedAt DESC
+ * 정렬: taskStatus 우선순위(BLOCKED→FAILED→ACTION_NEEDED→...) → totalScore DESC → updatedAt DESC
  * completed는 기본 제외, includeCompleted=true 시 completedSince 이후만 포함.
  */
 export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
@@ -311,26 +317,45 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
     }),
   ]);
 
-  // 클라이언트 측 TaskStatus 우선순위 정렬 (DB ORDER BY로는 enum 순서 보장 불가)
+  // 다차원 스코어링 + TaskStatus 우선순위 정렬
   const { TASK_STATUS_SORT_ORDER } = await import("./state-mapper");
-  const PRIORITY_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
-  const sorted = items
-    .map((item) => ({
+  const scored = items.map((item) => {
+    const metadata = (item.payload || {}) as Record<string, unknown>;
+    const scoredItem = {
+      type: item.type,
+      substatus: item.substatus,
+      approvalStatus: item.approvalStatus,
+      priority: item.priority,
+      metadata,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
+    const scores = computeTotalScore(scoredItem);
+
+    return {
       ...item,
-      metadata: (item.payload || {}) as Record<string, unknown>,
-    }))
-    .sort((a, b) => {
-      const statusDiff =
-        (TASK_STATUS_SORT_ORDER[a.taskStatus as TaskStatus] ?? 50) -
-        (TASK_STATUS_SORT_ORDER[b.taskStatus as TaskStatus] ?? 50);
-      if (statusDiff !== 0) return statusDiff;
+      metadata,
+      impactScore: scores.impactScore,
+      urgencyScore: scores.urgencyScore,
+      totalScore: scores.totalScore,
+      urgencyReason: scores.urgencyReason,
+    };
+  });
 
-      const priDiff = (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1);
-      if (priDiff !== 0) return priDiff;
+  // 1차: taskStatus 우선순위 → 2차: totalScore DESC → 3차: updatedAt DESC
+  const sorted = scored.sort((a, b) => {
+    const statusDiff =
+      (TASK_STATUS_SORT_ORDER[a.taskStatus as TaskStatus] ?? 50) -
+      (TASK_STATUS_SORT_ORDER[b.taskStatus as TaskStatus] ?? 50);
+    if (statusDiff !== 0) return statusDiff;
 
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
-    });
+    // 동일 taskStatus 내에서 totalScore DESC
+    const scoreDiff = b.totalScore - a.totalScore;
+    if (scoreDiff !== 0) return scoreDiff;
+
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
+  });
 
   return { items: sorted, activeCount, completedCount };
 }

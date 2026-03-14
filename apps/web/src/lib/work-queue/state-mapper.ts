@@ -244,8 +244,8 @@ export function resolveLegacyState(legacyStatus: LegacyStatus, actionType: AiAct
  * 숫자가 작을수록 높은 우선순위(먼저 노출).
  */
 export const TASK_STATUS_SORT_ORDER: Record<TaskStatus, number> = {
-  FAILED: 0,
-  BLOCKED: 1,
+  BLOCKED: 0,
+  FAILED: 1,
   ACTION_NEEDED: 2,
   REVIEW_NEEDED: 3,
   WAITING_RESPONSE: 4,

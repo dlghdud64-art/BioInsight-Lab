@@ -20,6 +20,11 @@ export interface WorkQueueItem {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  // ── 다차원 스코어링 ──
+  impactScore: number;
+  urgencyScore: number;
+  totalScore: number;
+  urgencyReason: string | null;
 }
 
 export interface WorkQueueResponse {

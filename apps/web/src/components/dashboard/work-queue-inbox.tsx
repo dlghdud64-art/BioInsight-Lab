@@ -177,7 +177,7 @@ export function WorkQueueInbox() {
             <p className="text-xs text-slate-400 mt-1">운영 상태 정상</p>
           </div>
         ) : (
-          activeItems.slice(0, 5).map((item) => (
+          activeItems.slice(0, 3).map((item) => (
             <WorkQueueCard
               key={item.id}
               item={item}
@@ -189,12 +189,12 @@ export function WorkQueueInbox() {
           ))
         )}
 
-        {activeItems.length > 5 && (
+        {activeItems.length > 3 && (
           <button
             onClick={() => router.push("/dashboard/work-queue")}
             className="w-full text-center py-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
-            +{activeItems.length - 5}건 더 보기
+            +{activeItems.length - 3}건 더 보기
           </button>
         )}
       </div>
@@ -247,7 +247,10 @@ function WorkQueueCard({
   const activityLabel = ACTIVITY_LABEL[item.substatus || ""] || item.summary || "";
 
   return (
-    <div className="group rounded-lg border border-slate-200/80 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/30 transition-all duration-150">
+    <div className={cn(
+      "group rounded-lg border border-slate-200/80 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/30 transition-all duration-150",
+      (item.impactScore ?? 0) >= 80 && "border-l-2 border-l-red-500"
+    )}>
       <div className="p-3">
         {/* Row 1: Icon + Title + Badges */}
         <div className="flex items-start gap-2.5">
@@ -269,10 +272,16 @@ function WorkQueueCard({
               )}
             </div>
 
-            {/* Row 2: Activity summary */}
+            {/* Row 2: Activity summary + urgency reason */}
             {activityLabel && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {activityLabel}
+              </p>
+            )}
+            {item.urgencyReason && (
+              <p className="text-[11px] font-medium text-orange-600 dark:text-orange-400 mt-0.5 flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                {item.urgencyReason}
               </p>
             )}
 

@@ -26,3 +26,16 @@ export type {
   WorkQueueFilters,
   WorkQueueItem,
 } from "./work-queue-service";
+
+export {
+  computeImpactScore,
+  computeUrgencyScore,
+  computeApprovalBoost,
+  computeTotalScore,
+  getUrgencyReason,
+} from "./scoring";
+
+export type {
+  ScoredItem,
+  ScoreResult,
+} from "./scoring";
