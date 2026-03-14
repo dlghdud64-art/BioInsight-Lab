@@ -141,6 +141,29 @@ export {
   createActive25FullLaunchConfig,
 } from "./active25-postrun";
 
+// ACTIVE_50 Eligibility & Restricted Auto-Verify
+export {
+  type Active50Decision,
+  type ConfidenceBandAnalysis,
+  type CriticalFieldType,
+  type ConflictRiskLevel,
+  type CriticalFieldConflictDetail,
+  type CriticalFieldConflictReport,
+  type ExclusionProposal,
+  type RestrictedAutoVerifyPolicy,
+  type EligibilityEvaluationReport,
+  type Active50LaunchConfig,
+  type Active50Thresholds,
+  type AutoVerifyGateInput,
+  type AutoVerifyGateResult,
+  analyzeConfidenceBands,
+  analyzeCriticalFieldConflicts,
+  buildExclusionProposal,
+  buildRestrictedAutoVerifyPolicy,
+  generateEligibilityReport,
+  checkAutoVerifyGate,
+} from "./active50-eligibility";
+
 // P1: Backlog (types only)
 export {
   P1Feature,
