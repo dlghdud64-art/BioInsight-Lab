@@ -116,3 +116,27 @@ export { evaluateExpansionRequest, getPortfolioRiskSummary } from "./portfolio-g
 export type { GovernorDecision, PortfolioRiskSummary } from "./portfolio-governor";
 export { getPortfolioRiskDashboard, generateExpansionCouncilReport } from "./portfolio-risk-dashboard";
 export type { PortfolioRiskDashboardData, ExpansionCouncilReport } from "./portfolio-risk-dashboard";
+
+// ── Phase M: Policy Learning Loop & Cost/Quality Optimization ──
+export { registerPolicy, updatePolicy, getPolicyById, getPoliciesByScope, getActivePolicies, getPolicyHistory } from "./policy-registry";
+export { analyzeCostQuality, identifyInefficientSegments, identifySafeSegments } from "./cost-quality-analyzer";
+export { proposeModelAllocations } from "./model-allocation-engine";
+export { proposeBandTuning } from "./confidence-band-tuner";
+export { proposeExclusionChanges } from "./exclusion-learning";
+export { runLearningCycle } from "./policy-learning-loop";
+export { createExperiment, advanceExperiment, getExperimentResults } from "./experiment-runner";
+export { evaluateOptimizationProposal } from "./optimization-approval";
+export { monitorPolicyDrift, getPolicyDriftHistory } from "./policy-drift-monitoring";
+export { computeReviewRouting, optimizeQueueRouting } from "./review-routing-optimizer";
+
+// ── Phase P: Strategic Command Layer ──
+export { generateRecommendations } from "./recommendation-engine";
+export { rankExpansionCandidates } from "./expansion-priority-engine";
+export { computeAllocation } from "./risk-budget-allocator";
+export { runSimulation, PREDEFINED_SCENARIOS } from "./portfolio-scenario-simulator";
+export { buildDecisionPackage, recordDecision, vetoDecision, getPendingDecisions } from "./executive-decision-matrix";
+export { logStrategicAction, getStrategicAuditLog } from "./strategic-audit-log";
+export { forecastCapacity, forecastMultiHorizon } from "./capacity-forecast-engine";
+export { generateHeatmap, identifyHotspots, identifyInefficientCells } from "./anomaly-heatmap-engine";
+export { getCommandCenterData } from "./command-center-dashboard";
+export { computeOrgBenchmarks, rankOrgs, identifyOutliers } from "./org-benchmarking";
