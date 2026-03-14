@@ -368,6 +368,85 @@ export interface ContainmentResult {
   reason: string;
 }
 
+// ── S3: Intake / Routing Integrity Types ──
+
+export type IntakeClassification =
+  | "STABILIZATION_VALIDATION"
+  | "FINAL_CONTAINMENT"
+  | "EMERGENCY_ROLLBACK"
+  | "AUDIT_RECONCILIATION"
+  | "OBSERVABILITY_SYNC"
+  | "INCIDENT_WORKFLOW"
+  | "READ_ONLY_STATUS"
+  | "DEAD_LETTER_CANDIDATE"
+  | "REJECTED_INTAKE";
+
+export type IntakeTerminalOutcome =
+  | "ENQUEUED"
+  | "DEAD_LETTERED"
+  | "REJECTED";
+
+export type QueueDestination =
+  | "STABILIZATION_QUEUE"
+  | "CONTAINMENT_QUEUE"
+  | "ROLLBACK_QUEUE"
+  | "AUDIT_QUEUE"
+  | "INCIDENT_QUEUE"
+  | "STATUS_QUEUE"
+  | "DEAD_LETTER_QUEUE";
+
+export interface CanonicalIntake {
+  intakeId: string;
+  intakeType: string;
+  sourceChannel: string;
+  requestedAction: string;
+  actor: string;
+  payloadChecksum: string;
+  correlationId: string;
+  incidentId?: string;
+  receivedAt: Date;
+  schemaVersion: string;
+  requestedPriority: string;
+  requestedDestination?: string;
+}
+
+export interface RoutingDecisionObject {
+  routingDecisionId: string;
+  intakeId: string;
+  classification: IntakeClassification;
+  resolvedDestination: QueueDestination;
+  decisionReason: string;
+  reasonCode: string;
+  decidedBy: string;
+  decidedAt: Date;
+  policyVersion: string;
+  lifecycleState: string;
+  releaseMode: string;
+  isVerified: boolean;
+  requiresDeadLetter: boolean;
+  deadLetterReason?: string;
+}
+
+export interface IntakeTraceEvent {
+  intakeId: string;
+  routingDecisionId?: string;
+  correlationId: string;
+  incidentId?: string;
+  actor: string;
+  intakeType: string;
+  requestedAction: string;
+  requestedDestination?: string;
+  resolvedDestination?: string;
+  classification?: string;
+  reasonCode: string;
+  lifecycleState: string;
+  releaseMode: string;
+  policyVersion: string;
+  queueReceiptId?: string;
+  stage: string;
+  timestamp: Date;
+}
+
 // ── Audit Events ──
 
 export type StabilizationAuditEventType =
