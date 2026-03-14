@@ -48,3 +48,12 @@ export type {
 
 // ── A-6: Task Mapping 로직 ──
 export { TASK_MAPPING_TABLE, findTaskMapping, buildDedupKey } from "./task-mapping";
+
+// ── Processors ──
+export { ClassificationProcessor } from "./processors/classification-processor";
+export { ExtractionProcessor } from "./processors/extraction-processor";
+export { EntityLinkingProcessor } from "./processors/entity-linking-processor";
+export { VerificationProcessor } from "./processors/verification-processor";
+
+// ── Orchestrator ──
+export { PipelineOrchestrator } from "./orchestrator";
