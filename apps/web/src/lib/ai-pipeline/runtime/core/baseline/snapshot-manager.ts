@@ -15,8 +15,8 @@ import type {
   ALL_SNAPSHOT_SCOPES,
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
-import { baselineSnapshotToCreateInput } from "../persistence/snapshot-adapter";
 import { logBridgeFailure } from "../persistence/bridge-logger";
+import { SnapshotOntologyAdapter } from "../ontology/snapshot-adapter";
 
 // ── In-memory store ──
 
@@ -92,12 +92,16 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
   _snapshots.set(activeId, active);
   _snapshots.set(rollbackId, rollback);
 
-  // Dual-write: persist checksums to repository (fire-and-forget)
+  // Dual-write: persist via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(active))
+    const canonicalActive = SnapshotOntologyAdapter.fromLegacy(active);
+    const inputActive = SnapshotOntologyAdapter.toRepositoryInput(canonicalActive);
+    adapters.snapshot.saveSnapshot(inputActive)
       .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(active)", err));
-    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(rollback))
+    const canonicalRollback = SnapshotOntologyAdapter.fromLegacy(rollback);
+    const inputRollback = SnapshotOntologyAdapter.toRepositoryInput(canonicalRollback);
+    adapters.snapshot.saveSnapshot(inputRollback)
       .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(rollback)", err));
   } catch (err) {
     logBridgeFailure("snapshot-manager", "createSnapshotPair-bridge", err);

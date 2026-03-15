@@ -6,7 +6,8 @@
 import { randomUUID } from "crypto";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { CanonicalAuditOntologyAdapter } from "../ontology/canonical-audit-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── Canonical Event Schema ──
 
@@ -107,34 +108,12 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   _writtenIds.add(event.eventId);
   event.recordedAt = new Date();
 
-  // Dual-write: repository first (fire-and-forget), then legacy store
+  // Dual-write: repository first via ontology adapter (fire-and-forget), then legacy store
   try {
     const adapters = getPersistenceAdapters();
-    adapters.canonicalAudit.appendCanonicalEvent({
-      eventId: event.eventId,
-      eventType: event.eventType,
-      eventStage: event.eventStage || null,
-      correlationId: event.correlationId,
-      incidentId: event.incidentId || null,
-      timelineId: event.timelineId,
-      baselineId: event.baselineId || null,
-      baselineVersion: event.baselineVersion || null,
-      baselineHash: event.baselineHash || null,
-      lifecycleState: event.lifecycleState || null,
-      releaseMode: event.releaseMode || null,
-      actor: event.actor || null,
-      sourceModule: event.sourceModule,
-      entityType: event.entityType,
-      entityId: event.entityId,
-      reasonCode: event.reasonCode,
-      severity: event.severity,
-      occurredAt: event.occurredAt,
-      snapshotBeforeId: event.snapshotBeforeId || null,
-      snapshotAfterId: event.snapshotAfterId || null,
-      affectedScopes: event.affectedScopes || [],
-      resultStatus: event.resultStatus,
-      parentEventId: event.parentEventId || null,
-    }).catch(function (err: unknown) {
+    const canonicalRecord = CanonicalAuditOntologyAdapter.fromLegacy(event);
+    const input = CanonicalAuditOntologyAdapter.toRepositoryInput(canonicalRecord);
+    adapters.canonicalAudit.appendCanonicalEvent(input).catch(function (err: unknown) {
       logBridgeFailure("canonical-event-schema", "appendCanonicalEvent", err);
     });
   } catch (err) {
@@ -347,39 +326,20 @@ export async function getCanonicalAuditLogFromRepo(
     }
     if (result.ok) {
       return result.data.items.map(function (d) {
-        return {
-          eventId: d.eventId,
-          eventType: d.eventType,
-          eventStage: d.eventStage || undefined,
-          correlationId: d.correlationId,
-          incidentId: d.incidentId || undefined,
-          timelineId: d.timelineId,
-          baselineId: d.baselineId || "",
-          baselineVersion: d.baselineVersion || "",
-          baselineHash: d.baselineHash || "",
-          lifecycleState: d.lifecycleState || "",
-          releaseMode: d.releaseMode || "",
-          actor: d.actor || "",
-          sourceModule: d.sourceModule,
-          entityType: d.entityType,
-          entityId: d.entityId,
-          reasonCode: d.reasonCode,
-          severity: d.severity as EventSeverity,
-          occurredAt: normalizeDate(d.occurredAt),
-          recordedAt: normalizeDate(d.recordedAt),
-          snapshotBeforeId: d.snapshotBeforeId || undefined,
-          snapshotAfterId: d.snapshotAfterId || undefined,
-          affectedScopes: d.affectedScopes || [],
-          resultStatus: d.resultStatus as EventResultStatus,
-          parentEventId: d.parentEventId || undefined,
-          schemaVersion: SCHEMA_VERSION,
-        };
+        const canonicalRecord = CanonicalAuditOntologyAdapter.fromPersisted(d);
+        return CanonicalAuditOntologyAdapter.toLegacy(canonicalRecord);
       });
     }
   } catch (err) {
     logBridgeFailure("canonical-event-schema", "getCanonicalAuditLogFromRepo", err);
   }
   // Fallback to legacy store
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "getCanonicalAuditLogFromRepo:fallback",
+    { fallbackUsed: true }
+  );
   return getCanonicalAuditLog(filter);
 }
 

@@ -27,7 +27,9 @@ export type OntologyDiagnosticType =
   | "DATE_NORMALIZATION_APPLIED"
   | "DATE_NORMALIZATION_FAILED"
   | "ONTOLOGY_ADAPTER_CONTRACT_VIOLATION"
-  | "LEGACY_FIELD_MAPPING_APPLIED";
+  | "LEGACY_FIELD_MAPPING_APPLIED"
+  | "SNAPSHOT_PAYLOAD_TRANSLATION_APPLIED"
+  | "SNAPSHOT_PAYLOAD_TRANSLATION_FAILED";
 
 export interface OntologyDiagnosticEvent {
   type: OntologyDiagnosticType;
@@ -148,4 +150,87 @@ export interface CanonicalIncident {
   acknowledgedBy: string | null;
   acknowledgedAt: Date | null;
   createdAt: Date;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Canonical Stabilization Audit (P3 Slice 3)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CanonicalStabilizationAudit {
+  eventId: string;
+  eventType: string;
+  correlationId: string;
+  incidentId: string | null;
+  baselineId: string | null;
+  baselineVersion: string | null;
+  baselineHash: string | null;
+  snapshotId: string | null;
+  actor: string | null;
+  reasonCode: string | null;
+  severity: string | null;
+  sourceModule: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  resultStatus: string | null;
+  occurredAt: Date;
+  documentType: string | null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Canonical Audit Record (P3 Slice 3)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CanonicalAuditRecord {
+  eventId: string;
+  eventType: string;
+  eventStage: string | null;
+  correlationId: string;
+  incidentId: string | null;
+  timelineId: string;
+  baselineId: string | null;
+  baselineVersion: string | null;
+  baselineHash: string | null;
+  lifecycleState: string | null;
+  releaseMode: string | null;
+  actor: string | null;
+  sourceModule: string;
+  entityType: string;
+  entityId: string;
+  reasonCode: string;
+  severity: string;
+  occurredAt: Date;
+  recordedAt: Date;
+  snapshotBeforeId: string | null;
+  snapshotAfterId: string | null;
+  affectedScopes: string[];
+  resultStatus: string;
+  parentEventId: string | null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Canonical Snapshot (P3 Slice 3) — full-fidelity payload
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CanonicalSnapshotScope {
+  scope: string;
+  data: Record<string, unknown>;
+  checksum: string;
+}
+
+export interface CanonicalSnapshot {
+  snapshotId: string;
+  baselineId: string;
+  snapshotType: string;
+  scopes: CanonicalSnapshotScope[];
+  config: Record<string, unknown>;
+  capturedAt: Date;
+  capturedBy: string;
+  includedScopes: string[];
+  configChecksum: string | null;
+  flagChecksum: string | null;
+  routingChecksum: string | null;
+  authorityChecksum: string | null;
+  policyChecksum: string | null;
+  queueTopologyChecksum: string | null;
+  restoreVerificationStatus: string | null;
 }

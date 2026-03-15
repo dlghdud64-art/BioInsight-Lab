@@ -1,5 +1,5 @@
 /**
- * P3 Slice 1+2 — Ontology Adapter Barrel Exports
+ * P3 Slice 1+2+3 — Ontology Adapter Barrel Exports
  */
 
 // Types
@@ -9,6 +9,10 @@ export type {
   CanonicalBaseline,
   CanonicalAuthorityLine,
   CanonicalIncident,
+  CanonicalStabilizationAudit,
+  CanonicalAuditRecord,
+  CanonicalSnapshot,
+  CanonicalSnapshotScope,
   OntologyDiagnosticEvent,
   OntologyDiagnosticType,
   AdapterDirection,
@@ -43,6 +47,9 @@ export {
   BASELINE_ALIASES,
   AUTHORITY_ALIASES,
   INCIDENT_ALIASES,
+  STABILIZATION_AUDIT_ALIASES,
+  CANONICAL_AUDIT_ALIASES,
+  SNAPSHOT_ALIASES,
 } from "./common-normalizers";
 
 // Adapters
@@ -50,7 +57,6 @@ export { RecoveryOntologyAdapter, toRepositoryPatch } from "./recovery-adapter";
 export { BaselineOntologyAdapter } from "./baseline-adapter";
 export { AuthorityOntologyAdapter, toAuthorityPatch } from "./authority-adapter";
 export { IncidentOntologyAdapter } from "./incident-adapter";
-
-// TODO(P3-Slice3): StabilizationAuditOntologyAdapter
-// TODO(P3-Slice3): CanonicalAuditOntologyAdapter
-// TODO(P3-Slice3): SnapshotOntologyAdapter (full-fidelity, not checksum-only)
+export { StabilizationAuditOntologyAdapter } from "./stabilization-audit-adapter";
+export { CanonicalAuditOntologyAdapter } from "./canonical-audit-adapter";
+export { SnapshotOntologyAdapter } from "./snapshot-adapter";

@@ -11,7 +11,8 @@ import type {
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { StabilizationAuditOntologyAdapter } from "../ontology/stabilization-audit-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── In-memory audit store (legacy — kept for backward compatibility) ──
 // TODO(Slice-1F): remove legacy store, read from repository directly
@@ -46,25 +47,12 @@ export function emitStabilizationAuditEvent(input: EmitAuditEventInput): Stabili
     timestamp: new Date(),
   };
 
-  // Dual-write: repository first (fire-and-forget), then legacy store
+  // Dual-write: repository first via ontology adapter (fire-and-forget), then legacy store
   try {
     const adapters = getPersistenceAdapters();
-    adapters.stabilizationAudit.appendAuditEvent({
-      eventId: event.eventId,
-      eventType: event.eventType,
-      correlationId: event.correlationId,
-      incidentId: null,
-      baselineId: event.baselineId || null,
-      snapshotId: event.snapshotId || null,
-      actor: event.performedBy || null,
-      reasonCode: event.detail || null,
-      severity: null,
-      sourceModule: null,
-      entityType: null,
-      entityId: null,
-      resultStatus: null,
-      occurredAt: event.timestamp,
-    }).catch(function (err: unknown) {
+    const canonical = StabilizationAuditOntologyAdapter.fromLegacy(event);
+    const input = StabilizationAuditOntologyAdapter.toRepositoryInput(canonical);
+    adapters.stabilizationAudit.appendAuditEvent(input).catch(function (err: unknown) {
       logBridgeFailure("audit-events", "appendAuditEvent", err);
     });
   } catch (err) {
@@ -102,25 +90,20 @@ export async function getAuditEventsFromRepo(
       : await adapters.stabilizationAudit.listAuditEventsByCorrelationId("", { limit: 1000 });
     if (result.ok) {
       return result.data.items.map(function (d) {
-        return {
-          eventId: d.eventId,
-          eventType: d.eventType as StabilizationAuditEventType,
-          baselineId: d.baselineId || "",
-          baselineVersion: "",
-          baselineHash: "",
-          snapshotId: d.snapshotId || "",
-          correlationId: d.correlationId,
-          documentType: "",
-          performedBy: d.actor || "",
-          detail: d.reasonCode || "",
-          timestamp: normalizeDate(d.occurredAt),
-        };
+        const canonical = StabilizationAuditOntologyAdapter.fromPersisted(d);
+        return StabilizationAuditOntologyAdapter.toLegacy(canonical);
       });
     }
   } catch (err) {
     logBridgeFailure("audit-events", "getAuditEventsFromRepo", err);
   }
   // Fallback to legacy store
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "audit-events", "stabilization-audit-adapter", "stabilization-audit",
+    "legacy_to_canonical", "getAuditEventsFromRepo:fallback",
+    { fallbackUsed: true }
+  );
   return getAuditEvents(filter);
 }
 

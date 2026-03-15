@@ -19,6 +19,9 @@ const _registeredRoutes = new Set<string>([
   "baseline-registry",
   "authority-registry",
   "incident-escalation",
+  "audit-events",
+  "canonical-event-schema",
+  "snapshot-manager",
 ]);
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -131,3 +131,19 @@ export const INCIDENT_ALIASES: readonly FieldAlias[] = [
   { legacy: "escalatedAt", canonical: "createdAt", persisted: "createdAt" },
   { legacy: "acknowledged(boolean)", canonical: "status(string)", persisted: "status(string)" },
 ] as const;
+
+export const STABILIZATION_AUDIT_ALIASES: readonly FieldAlias[] = [
+  { legacy: "performedBy", canonical: "actor", persisted: "actor" },
+  { legacy: "detail", canonical: "reasonCode", persisted: "reasonCode" },
+  { legacy: "timestamp", canonical: "occurredAt", persisted: "occurredAt" },
+] as const;
+
+export const CANONICAL_AUDIT_ALIASES: readonly FieldAlias[] = [
+  { legacy: "schemaVersion", canonical: "(none)", persisted: "(none)" },
+] as const;
+
+export const SNAPSHOT_ALIASES: readonly FieldAlias[] = [
+  { legacy: "tag", canonical: "snapshotType", persisted: "snapshotType" },
+  { legacy: "capturedAt", canonical: "capturedAt", persisted: "createdAt" },
+  { legacy: "scopes(full)", canonical: "scopes(full)", persisted: "checksums-only" },
+] as const;
