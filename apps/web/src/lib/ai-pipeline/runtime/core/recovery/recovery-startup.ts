@@ -15,8 +15,9 @@ import { checkAuditChainReconstructable } from "./recovery-preconditions";
 import { getRecoveryStatus } from "./recovery-coordinator";
 import { hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
 import { checkAuthorityIntegrity } from "../authority/authority-registry";
-import { getCanonicalBaseline, assertSingleCanonical } from "../baseline/baseline-registry";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getCanonicalBaseline, assertSingleCanonical, getCanonicalBaselineFromRepo } from "../baseline/baseline-registry";
+import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
+import { emitDiagnostic } from "../ontology/diagnostics";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import type { PersistedRecoveryRecord } from "../persistence/types";
 
@@ -222,12 +223,18 @@ export async function evaluateResumeReadiness(
     });
   }
 
-  // 6. Snapshot/rollback readiness
+  // 6. Snapshot/rollback readiness (P3-4: repo-first cutover)
   let snapshotOk = false;
   try {
-    const baseline = getCanonicalBaseline();
+    emitDiagnostic(
+      "CONSUMER_CUTOVER_APPLIED",
+      "recovery-startup", "snapshot-adapter", "snapshot",
+      "repository_to_canonical", "evaluateResumeReadiness:snapshot-check",
+      { entityId: activeRecord.recoveryId }
+    );
+    const baseline = await getCanonicalBaselineFromRepo();
     if (baseline) {
-      const rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
+      const rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
       snapshotOk = rollbackSnap !== null;
       checks.push({
         name: "SNAPSHOT_ROLLBACK_READY",

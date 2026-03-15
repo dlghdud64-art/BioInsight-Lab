@@ -9,7 +9,8 @@
 import type { RecoveryPreconditionResult, RecoveryOverrideMetadata } from "./recovery-types";
 import { getIncidents, hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
 import { getCanonicalBaseline, assertSingleCanonical } from "../baseline/baseline-registry";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
+import { emitDiagnostic } from "../ontology/diagnostics";
 import { runRollbackPrecheck } from "../rollback/rollback-precheck";
 import { checkAuthorityIntegrity } from "../authority/authority-registry";
 import { detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
@@ -55,8 +56,14 @@ function checkRollbackReadiness(
   };
 }
 
-function checkRequiredSnapshotPresent(snapshotId: string): RecoveryPreconditionResult {
-  const snap = getSnapshot(snapshotId);
+async function checkRequiredSnapshotPresent(snapshotId: string): Promise<RecoveryPreconditionResult> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "recovery-preconditions", "snapshot-adapter", "snapshot",
+    "repository_to_canonical", "checkRequiredSnapshotPresent:repo-first",
+    { entityId: snapshotId }
+  );
+  const snap = await getSnapshotFromRepo(snapshotId);
   return {
     name: "REQUIRED_SNAPSHOT_PRESENT",
     passed: snap !== null,
@@ -64,8 +71,14 @@ function checkRequiredSnapshotPresent(snapshotId: string): RecoveryPreconditionR
   };
 }
 
-function checkSnapshotRestoreVerification(snapshotId: string): RecoveryPreconditionResult {
-  const snap = getSnapshot(snapshotId);
+async function checkSnapshotRestoreVerification(snapshotId: string): Promise<RecoveryPreconditionResult> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "recovery-preconditions", "snapshot-adapter", "snapshot",
+    "repository_to_canonical", "checkSnapshotRestoreVerification:repo-first",
+    { entityId: snapshotId }
+  );
+  const snap = await getSnapshotFromRepo(snapshotId);
   if (!snap) {
     return { name: "SNAPSHOT_RESTORE_VERIFICATION", passed: false, detail: "snapshot missing" };
   }
@@ -201,11 +214,11 @@ export async function runRecoveryPreconditions(
   // 2. Rollback readiness
   results.push(checkRollbackReadiness(input.rollbackSnapshotId, input.activeSnapshotId));
 
-  // 3. Required snapshot present
-  results.push(checkRequiredSnapshotPresent(input.rollbackSnapshotId));
+  // 3. Required snapshot present (P3-4: async repo-first)
+  results.push(await checkRequiredSnapshotPresent(input.rollbackSnapshotId));
 
-  // 4. Snapshot restore verification
-  results.push(checkSnapshotRestoreVerification(input.rollbackSnapshotId));
+  // 4. Snapshot restore verification (P3-4: async repo-first)
+  results.push(await checkSnapshotRestoreVerification(input.rollbackSnapshotId));
 
   // 5. Audit chain reconstructable (exclude recovery flow — still in progress)
   results.push(checkAuditChainReconstructable(input.correlationId, { excludeFlows: ["recovery"] }));

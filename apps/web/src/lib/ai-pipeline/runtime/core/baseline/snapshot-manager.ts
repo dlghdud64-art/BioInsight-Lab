@@ -115,6 +115,12 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
 // ── Snapshot Lookup ──
 
 export function getSnapshot(snapshotId: string): BaselineSnapshot | null {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "getSnapshot:sync-compat",
+    { entityId: snapshotId }
+  );
   return _snapshots.get(snapshotId) ?? null;
 }
 
@@ -157,6 +163,12 @@ export interface RestoreDryRunResult {
 }
 
 export function restoreDryRun(snapshotId: string): RestoreDryRunResult {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "restoreDryRun:sync-compat",
+    { entityId: snapshotId }
+  );
   const snapshot = _snapshots.get(snapshotId);
   if (!snapshot) {
     return {
@@ -194,6 +206,12 @@ export function canEnterActiveRuntime(
   activeSnapshotId: string,
   rollbackSnapshotId: string
 ): { allowed: boolean; reason: string } {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "canEnterActiveRuntime:sync-compat",
+    { entityId: activeSnapshotId }
+  );
   const pairCheck = verifySnapshotPairExists(activeSnapshotId, rollbackSnapshotId);
   if (!pairCheck.exists) {
     return { allowed: false, reason: `BLOCKED: snapshot pair missing — ${pairCheck.reason}` };
@@ -319,6 +337,22 @@ export async function canEnterActiveRuntimeFromRepo(
   }
 
   return { allowed: true, reason: "snapshot pair valid + rollback restorable (repo-first)" };
+}
+
+// ── Direct Access Shutdown Guardrail (P3-4) ──
+
+/**
+ * Sentinel guard — blocks direct store access from new consumers.
+ * Not wired into existing paths; used by tests to enforce repo-first policy.
+ */
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 — 상태 리셋 */

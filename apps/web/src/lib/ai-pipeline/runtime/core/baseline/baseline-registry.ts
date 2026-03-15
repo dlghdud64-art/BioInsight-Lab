@@ -130,8 +130,14 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
   return registry;
 }
 
-/** 현재 canonical baseline 조회. 없으면 null. */
+/** 현재 canonical baseline 조회. 없으면 null. (legacy sync — compat) */
 export function getCanonicalBaseline(): BaselineRegistry | null {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "baseline-registry", "baseline-adapter", "baseline",
+    "legacy_to_canonical", "getCanonicalBaseline:sync-compat",
+    { entityId: _canonicalBaseline?.canonicalBaselineId ?? "none" }
+  );
   return _canonicalBaseline;
 }
 
