@@ -9,6 +9,8 @@
 import { getPersistenceAdapters } from "../persistence/bootstrap";
 import { logBridgeFailure } from "../persistence/bridge-logger";
 import { detectStaleLocks } from "../persistence/lock-manager";
+import { scanLockResidues, buildLockCleanupPlan } from "../persistence/lock-hygiene";
+import type { LockSweepResult, LockCleanupPlan } from "../persistence/lock-hygiene";
 import { checkAuditChainReconstructable } from "./recovery-preconditions";
 import { getRecoveryStatus } from "./recovery-coordinator";
 import { hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
@@ -34,6 +36,19 @@ export type RecommendedAction =
   | "CLEAR_STALE_LOCK_THEN_RETRY"
   | "ESCALATE_INCIDENT";
 
+export type LockCleanupRecommendation =
+  | "NO_ACTION"
+  | "SAFE_RELEASE_AND_RETRY"
+  | "OPERATOR_REVIEW_REQUIRED"
+  | "ESCALATE_INCIDENT";
+
+export interface LockHygieneSummary {
+  staleLockCount: number;
+  operatorReviewRequired: number;
+  safeReleaseCandidates: number;
+  criticalResiduePresent: boolean;
+}
+
 export interface OperatorHandoffPayload {
   recoveryId: string;
   currentRecoveryState: string;
@@ -47,6 +62,7 @@ export interface OperatorHandoffPayload {
   failureReasonCode: string | null;
   reconstructionStatus: "RECONSTRUCTABLE" | "BROKEN_CHAIN" | "UNKNOWN";
   recommendedAction: RecommendedAction;
+  lockCleanupRecommendation: LockCleanupRecommendation;
 }
 
 export interface ResumeReadinessResult {
@@ -62,6 +78,7 @@ export interface StartupScanResult {
   operatorNote: string;
   handoff: OperatorHandoffPayload | null;
   resumeReadiness: ResumeReadinessResult | null;
+  lockHygieneSummary: LockHygieneSummary | null;
   diagnosticEvents: string[];
 }
 
@@ -259,7 +276,8 @@ export async function evaluateResumeReadiness(
 function buildOperatorHandoff(
   record: PersistedRecoveryRecord,
   reconstructionStatus: "RECONSTRUCTABLE" | "BROKEN_CHAIN" | "UNKNOWN",
-  recommendedAction: RecommendedAction
+  recommendedAction: RecommendedAction,
+  lockCleanupRecommendation: LockCleanupRecommendation
 ): OperatorHandoffPayload {
   return {
     recoveryId: record.recoveryId,
@@ -274,6 +292,7 @@ function buildOperatorHandoff(
     failureReasonCode: record.failureReasonCode,
     reconstructionStatus: reconstructionStatus,
     recommendedAction: recommendedAction,
+    lockCleanupRecommendation: lockCleanupRecommendation,
   };
 }
 
@@ -302,6 +321,7 @@ function buildMemoryFallbackHandoff(
     failureReasonCode: memRecord.failReason || null,
     reconstructionStatus: "UNKNOWN",
     recommendedAction: recommendedAction,
+    lockCleanupRecommendation: "NO_ACTION",
   };
 }
 
@@ -340,6 +360,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
       operatorNote: "Clean startup — no in-progress recovery detected.",
       handoff: null,
       resumeReadiness: null,
+      lockHygieneSummary: null,
       diagnosticEvents: diagnosticEvents,
     };
   }
@@ -362,6 +383,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
         operatorNote: "Clean startup (repository unavailable, memory fallback used). Verify repository connectivity.",
         handoff: null,
         resumeReadiness: null,
+        lockHygieneSummary: null,
         diagnosticEvents: diagnosticEvents,
       };
     }
@@ -383,6 +405,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
         operatorNote: "Recovery in terminal state " + memRecord.currentState + " (source=MEMORY_FALLBACK).",
         handoff: null,
         resumeReadiness: null,
+        lockHygieneSummary: null,
         diagnosticEvents: diagnosticEvents,
       };
     }
@@ -412,6 +435,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
       operatorNote: "Recovery residue detected (source=MEMORY_FALLBACK, repository unavailable). Manual verification required.",
       handoff: handoff,
       resumeReadiness: null,
+      lockHygieneSummary: null,
       diagnosticEvents: diagnosticEvents,
     };
   }
@@ -503,14 +527,44 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     diagnosticEvents.push("RECOVERY_ABORT_RECOMMENDED");
   }
 
-  // ── 4f. Build handoff ──
-  const handoff = buildOperatorHandoff(record, reconstructionStatus, readiness.recommendedAction);
+  // ── 4f. Lock hygiene scan ──
+  let lockHygieneSummary: LockHygieneSummary | null = null;
+  let lockCleanupRecommendation: LockCleanupRecommendation = "NO_ACTION";
+  try {
+    const sweepResult = await scanLockResidues();
+    if (sweepResult.entries.length > 0) {
+      const criticalPresent = sweepResult.entries.some(function (e) {
+        return e.hygieneState === "LOCK_RESIDUE_REQUIRES_OPERATOR";
+      });
+      lockHygieneSummary = {
+        staleLockCount: sweepResult.summary.stale,
+        operatorReviewRequired: sweepResult.summary.requiresOperator,
+        safeReleaseCandidates: sweepResult.summary.safeToClean + sweepResult.summary.expired,
+        criticalResiduePresent: criticalPresent,
+      };
+
+      // Determine cleanup recommendation
+      if (hasUnacknowledgedIncidents()) {
+        lockCleanupRecommendation = "ESCALATE_INCIDENT";
+      } else if (sweepResult.summary.requiresOperator > 0 || criticalPresent) {
+        lockCleanupRecommendation = "OPERATOR_REVIEW_REQUIRED";
+      } else if (sweepResult.summary.safeToClean > 0 || sweepResult.summary.expired > 0) {
+        lockCleanupRecommendation = "SAFE_RELEASE_AND_RETRY";
+      }
+    }
+  } catch (_err) {
+    // non-fatal — lock hygiene scan failure should not block startup
+  }
+
+  // ── 4g. Build handoff ──
+  const handoff = buildOperatorHandoff(record, reconstructionStatus, readiness.recommendedAction, lockCleanupRecommendation);
 
   emitStartupDiagnostic(
     "RECOVERY_MANUAL_HANDOFF_CREATED",
     record.correlationId,
     "system",
-    "handoff created for " + record.recoveryId + " action=" + readiness.recommendedAction
+    "handoff created for " + record.recoveryId + " action=" + readiness.recommendedAction +
+    " lockCleanup=" + lockCleanupRecommendation
   );
   diagnosticEvents.push("RECOVERY_MANUAL_HANDOFF_CREATED");
 
@@ -520,6 +574,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     operatorNote: operatorNote,
     handoff: handoff,
     resumeReadiness: readiness,
+    lockHygieneSummary: lockHygieneSummary,
     diagnosticEvents: diagnosticEvents,
   };
 }

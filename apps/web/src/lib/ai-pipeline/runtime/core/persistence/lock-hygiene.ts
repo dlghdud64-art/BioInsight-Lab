@@ -15,6 +15,25 @@ import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import type { PersistedLock } from "./lock-types";
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Cleanup Execution Types (P2-2 Slice B)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CleanupRequest {
+  planId: string;
+  lockKey: string;
+  expectedHygieneState: LockHygieneState;
+  operatorId: string;
+  approvalReason: string;
+}
+
+export interface CleanupResult {
+  executed: boolean;
+  reasonCode: string;
+  requiresEscalation: boolean;
+  cleanupAuditId: string | null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Types
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -522,4 +541,146 @@ export function buildLockCleanupPlan(sweepResult: LockSweepResult): LockCleanupP
       requiresOperator: operatorCount,
     },
   };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Operator Cleanup Execution (P2-2 Slice B)
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Execute a cleanup action from a cleanup plan.
+ * Only autoExecutable=true entries with SAFE_RELEASE can be executed.
+ * Critical target locks (CANONICAL_BASELINE, AUTHORITY_LINE) are always denied.
+ * Re-validates lock state before execution.
+ */
+export async function executeCleanup(
+  plan: LockCleanupPlan,
+  request: CleanupRequest
+): Promise<CleanupResult> {
+  var auditId = randomUUID();
+
+  // Emit request event
+  emitSweepDiagnostic(
+    "LOCK_CLEANUP_EXECUTION_REQUESTED",
+    request.lockKey,
+    "cleanup requested by " + request.operatorId + " reason=" + request.approvalReason
+  );
+
+  // 1. Find plan entry
+  var planEntry = null;
+  for (var i = 0; i < plan.entries.length; i++) {
+    if (plan.entries[i].lockKey === request.lockKey) {
+      planEntry = plan.entries[i];
+      break;
+    }
+  }
+
+  if (!planEntry) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_DENIED",
+      request.lockKey,
+      "plan entry not found for lockKey=" + request.lockKey
+    );
+    return { executed: false, reasonCode: "PLAN_ENTRY_NOT_FOUND", requiresEscalation: false, cleanupAuditId: auditId };
+  }
+
+  // 2. Verify autoExecutable
+  if (!planEntry.autoExecutable) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_DENIED",
+      request.lockKey,
+      "plan entry is not auto-executable — hygieneState=" + planEntry.hygieneState
+    );
+    return { executed: false, reasonCode: "NOT_AUTO_EXECUTABLE", requiresEscalation: planEntry.requiresOperator, cleanupAuditId: auditId };
+  }
+
+  // 3. Verify expectedHygieneState matches
+  if (request.expectedHygieneState !== planEntry.hygieneState) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_DENIED",
+      request.lockKey,
+      "hygiene state mismatch — expected=" + request.expectedHygieneState + " actual=" + planEntry.hygieneState
+    );
+    return { executed: false, reasonCode: "HYGIENE_STATE_MISMATCH", requiresEscalation: false, cleanupAuditId: auditId };
+  }
+
+  // 4. Re-validate: lock still exists
+  var adapters;
+  var currentLock;
+  try {
+    adapters = getPersistenceAdapters();
+    currentLock = await adapters.lock.findByKey(request.lockKey);
+  } catch (err) {
+    logBridgeFailure("lock-hygiene", "executeCleanup-findByKey", err);
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_REVALIDATION_FAILED",
+      request.lockKey,
+      "lock store unavailable during revalidation"
+    );
+    return { executed: false, reasonCode: "REVALIDATION_STORE_UNAVAILABLE", requiresEscalation: false, cleanupAuditId: auditId };
+  }
+
+  if (!currentLock) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_REVALIDATION_FAILED",
+      request.lockKey,
+      "lock no longer exists — already cleaned or released"
+    );
+    return { executed: false, reasonCode: "LOCK_ALREADY_REMOVED", requiresEscalation: false, cleanupAuditId: auditId };
+  }
+
+  // 5. Critical target guard — never auto-release
+  if (CRITICAL_TARGETS.indexOf(currentLock.targetType) !== -1) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_DENIED",
+      request.lockKey,
+      "critical target lock — auto-release denied for " + currentLock.targetType
+    );
+    return { executed: false, reasonCode: "CRITICAL_TARGET_DENIED", requiresEscalation: true, cleanupAuditId: auditId };
+  }
+
+  // 6. Re-validate: check linked state hasn't changed
+  var context = await buildSweepContext();
+  var revalidatedEntry = evaluateLockResidue(currentLock, context, plan.scanId, new Date());
+
+  // If re-classified state is stricter (requires operator now, or became stale)
+  var safeStates: string[] = ["EXPIRED_LEASE", "LOCK_RESIDUE_SAFE_TO_CLEAN"];
+  if (safeStates.indexOf(revalidatedEntry.hygieneState) === -1) {
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_REVALIDATION_FAILED",
+      request.lockKey,
+      "revalidation produced stricter state — was=" + planEntry.hygieneState + " now=" + revalidatedEntry.hygieneState
+    );
+    return { executed: false, reasonCode: "REVALIDATION_STRICTER", requiresEscalation: revalidatedEntry.requiresOperator, cleanupAuditId: auditId };
+  }
+
+  // 7. Execute: forceExpire
+  try {
+    var result = await adapters.lock.forceExpire(request.lockKey);
+    if (!result.acquired) {
+      emitSweepDiagnostic(
+        "LOCK_CLEANUP_REVALIDATION_FAILED",
+        request.lockKey,
+        "forceExpire failed — " + result.message
+      );
+      return { executed: false, reasonCode: "FORCE_EXPIRE_FAILED", requiresEscalation: false, cleanupAuditId: auditId };
+    }
+  } catch (err) {
+    logBridgeFailure("lock-hygiene", "executeCleanup-forceExpire", err);
+    emitSweepDiagnostic(
+      "LOCK_CLEANUP_REVALIDATION_FAILED",
+      request.lockKey,
+      "forceExpire threw — " + (err instanceof Error ? err.message : String(err))
+    );
+    return { executed: false, reasonCode: "FORCE_EXPIRE_ERROR", requiresEscalation: false, cleanupAuditId: auditId };
+  }
+
+  // 8. Success
+  emitSweepDiagnostic(
+    "LOCK_CLEANUP_EXECUTED",
+    request.lockKey,
+    "lock cleanup executed by " + request.operatorId + " — " + request.lockKey + " force-expired"
+  );
+
+  return { executed: true, reasonCode: "CLEANUP_EXECUTED", requiresEscalation: false, cleanupAuditId: auditId };
 }
