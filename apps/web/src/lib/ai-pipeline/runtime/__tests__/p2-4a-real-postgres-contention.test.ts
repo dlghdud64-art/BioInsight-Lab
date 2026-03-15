@@ -409,20 +409,17 @@ describe("P2-4A Real PostgreSQL Multi-Process Contention", function () {
 
         expect(successes.length).toBe(1);
         expect(failures.length).toBe(2);
-        // Under concurrent Promise.all: all 3 pass findFirst() (empty store),
-        // then 1 creates successfully, 2 hit P2002 caught as STORAGE_UNAVAILABLE
-        // (race window between findFirst and create). This is the real concurrent contract.
-        // Sequential calls would get DUPLICATE (findFirst sees existing).
+        // P2-4B fix: concurrent P2002 now correctly maps to DUPLICATE
+        // Both sequential (findFirst path) and concurrent (P2002 catch path) → DUPLICATE
         failures.forEach(function (f) {
-          expect(["DUPLICATE", "STORAGE_UNAVAILABLE"]).toContain(f.error.code);
+          expect(f.error.code).toBe("DUPLICATE");
         });
 
         // Verify no residue — only 1 baseline exists
         return harness.adapters.baseline.getCanonicalBaseline().then(function (check) {
           expect(check.ok).toBe(true);
-          var observedCode = failures[0].error.code;
           recordEvidence("scenario", "RC1", "duplicate canonical baseline contention",
-            true, "P2002→" + observedCode, false, false, harness.mode);
+            true, "P2002→DUPLICATE", false, false, harness.mode);
         });
       });
     });
@@ -692,9 +689,10 @@ describe("P2-4A Real PostgreSQL Multi-Process Contention", function () {
         localAdapters.baseline.saveBaseline(baselineInput4a()),
       ]).then(function (r) {
         var ok = r.filter(function (x) { return x.ok; }).length;
-        var fail = r.filter(function (x) { return !x.ok; }).length;
-        // Under concurrent fire: failures can be DUPLICATE or STORAGE_UNAVAILABLE (P2002 race)
-        results.push({ id: "RC1", pass: ok === 1 && fail === 2, drift: false });
+        var failures = r.filter(function (x) { return !x.ok; });
+        // P2-4B fix: all failures must be DUPLICATE (P2002 → DUPLICATE mapping corrected)
+        var allDuplicate = failures.every(function (f) { return f.error.code === "DUPLICATE"; });
+        results.push({ id: "RC1", pass: ok === 1 && failures.length === 2 && allDuplicate, drift: !allDuplicate });
 
         // RC5 compact
         return Promise.all([
