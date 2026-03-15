@@ -42,4 +42,5 @@ export const TRUTH_SOURCE_CONTRACT = {
   incident:           { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
   stabilizationAudit: { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
   canonicalAudit:     { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
+  recoveryRecord:     { write: "REPO_FIRST_MEMORY_SHIM", read: "REPO_FIRST_MEMORY_FALLBACK" },
 } as const;

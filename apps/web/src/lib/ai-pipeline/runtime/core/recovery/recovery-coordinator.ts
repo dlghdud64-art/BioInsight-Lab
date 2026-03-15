@@ -1,9 +1,14 @@
 /**
- * P1-3 — Recovery Coordinator
+ * P1-3 + P2-1 — Recovery Coordinator
  *
  * Orchestrates the INCIDENT_LOCKDOWN → ACTIVE_100 recovery path.
  * Singleton: only one recovery active at a time.
  * State machine: sequential advancement only, no skip, no implicit unlock.
+ *
+ * P2-1 Slice B: repository-first persistence + memory shim.
+ * Write path: repository-first, memory shim syncs on success.
+ * Read path: getRecoveryStatus() sync (memory), getRecoveryStatusAsync() repo-first.
+ * Failure: structured diagnostic (logBridgeFailure + audit event), never silent.
  */
 
 import { randomUUID } from "crypto";
@@ -24,15 +29,179 @@ import { checkAuthorityIntegrity } from "../authority/authority-registry";
 import { hasUnacknowledgedIncidents, escalateIncident } from "../incidents/incident-escalation";
 import { withLock, detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
+import { logBridgeFailure } from "../persistence/bridge-logger";
 import { guardLifecycleTransition, guardCanonicalCombination } from "../runtime/transition-guard";
 import { runResidueScan } from "../rollback/residue-scan";
 import { reconcileState } from "../rollback/state-reconciliation";
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Singleton Recovery Record
+// Singleton Recovery Record (memory shim)
 // ══════════════════════════════════════════════════════════════════════════════
 
 let _recoveryRecord: RecoveryRecord | null = null;
+
+// Persistence tracking — optimistic lock tokens for repository writes
+let _lastPersistedId: string | null = null;
+let _lastPersistedUpdatedAt: Date | null = null;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Persistence Helper — Repository-First Write
+// ══════════════════════════════════════════════════════════════════════════════
+
+function mapRecordToCreateInput(record: RecoveryRecord): Record<string, unknown> {
+  return {
+    recoveryId: record.recoveryId,
+    correlationId: record.correlationId,
+    incidentId: record.incidentId || null,
+    baselineId: record.baselineId,
+    lifecycleState: "INCIDENT_LOCKDOWN",
+    releaseMode: "FULL_ACTIVE_STABILIZATION",
+    recoveryState: record.currentState,
+    recoveryStage: record.stages.length > 0 ? record.stages[record.stages.length - 1].stage : null,
+    lockKey: null,
+    lockToken: null,
+    operatorId: record.actor,
+    overrideUsed: !!record.overrideMetadata,
+    overrideReason: record.overrideMetadata ? record.overrideMetadata.overrideReason : null,
+    signOffMetadata: record.overrideMetadata ? record.overrideMetadata.signOffMeta : null,
+    startedAt: record.startedAt,
+    completedAt: record.completedAt || null,
+    lastHeartbeatAt: null,
+    failureReasonCode: record.failReason || null,
+    stageResults: record.stages.length > 0 ? record.stages : null,
+    preconditionResults: record.preconditionResults.length > 0 ? record.preconditionResults : null,
+  };
+}
+
+function mapRecordToPatch(record: RecoveryRecord, overrides?: Record<string, unknown>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {
+    recoveryState: record.currentState,
+    recoveryStage: record.stages.length > 0 ? record.stages[record.stages.length - 1].stage : null,
+    failureReasonCode: record.failReason || null,
+    completedAt: record.completedAt || null,
+    stageResults: record.stages.length > 0 ? record.stages : null,
+    preconditionResults: record.preconditionResults.length > 0 ? record.preconditionResults : null,
+    overrideUsed: !!record.overrideMetadata,
+    overrideReason: record.overrideMetadata ? record.overrideMetadata.overrideReason : null,
+    signOffMetadata: record.overrideMetadata ? record.overrideMetadata.signOffMeta : null,
+    lastHeartbeatAt: new Date(),
+  };
+  if (overrides) {
+    for (const key in overrides) {
+      if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+        patch[key] = overrides[key];
+      }
+    }
+  }
+  return patch;
+}
+
+/**
+ * Repository-first persistence for recovery state.
+ * On failure: structured diagnostic (logBridgeFailure + audit), never silent.
+ * On success: updates optimistic lock tokens.
+ */
+function persistRecoveryState(
+  action: "CREATE" | "UPDATE",
+  record: RecoveryRecord,
+  overrides?: Record<string, unknown>
+): void {
+  try {
+    const adapters = getPersistenceAdapters();
+    if (action === "CREATE") {
+      const input = mapRecordToCreateInput(record);
+      adapters.recoveryRecord.saveRecoveryRecord(input as any).then(function (result: any) {
+        if (result.ok) {
+          _lastPersistedId = result.data.id;
+          _lastPersistedUpdatedAt = result.data.updatedAt;
+        } else {
+          logBridgeFailure("recovery-coordinator", "persistRecoveryState:CREATE", result.error.message);
+          emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+            "action=CREATE err=" + result.error.message);
+        }
+      }).catch(function (err: unknown) {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:CREATE", err);
+        emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+          "action=CREATE err=" + (err instanceof Error ? err.message : String(err)));
+      });
+    } else {
+      // UPDATE
+      if (!_lastPersistedId || !_lastPersistedUpdatedAt) {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:UPDATE",
+          "no persisted record to update (CREATE may have failed)");
+        return;
+      }
+      const patch = mapRecordToPatch(record, overrides);
+      adapters.recoveryRecord.updateRecoveryRecord({
+        id: _lastPersistedId,
+        expectedUpdatedAt: _lastPersistedUpdatedAt,
+        patch: patch as any,
+      }).then(function (result: any) {
+        if (result.ok) {
+          _lastPersistedId = result.data.id;
+          _lastPersistedUpdatedAt = result.data.updatedAt;
+        } else {
+          logBridgeFailure("recovery-coordinator", "persistRecoveryState:UPDATE", result.error.message);
+          emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+            "action=UPDATE err=" + result.error.message);
+        }
+      }).catch(function (err: unknown) {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:UPDATE", err);
+        emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+          "action=UPDATE err=" + (err instanceof Error ? err.message : String(err)));
+      });
+    }
+  } catch (err) {
+    logBridgeFailure("recovery-coordinator", "persistRecoveryState:" + action, err);
+  }
+}
+
+/**
+ * Async variant of persist — awaits the result. Used in async functions.
+ */
+async function persistRecoveryStateAsync(
+  action: "CREATE" | "UPDATE",
+  record: RecoveryRecord,
+  overrides?: Record<string, unknown>
+): Promise<void> {
+  try {
+    const adapters = getPersistenceAdapters();
+    if (action === "CREATE") {
+      const input = mapRecordToCreateInput(record);
+      const result = await adapters.recoveryRecord.saveRecoveryRecord(input as any);
+      if (result.ok) {
+        _lastPersistedId = result.data.id;
+        _lastPersistedUpdatedAt = result.data.updatedAt;
+      } else {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:CREATE", result.error.message);
+        emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+          "action=CREATE err=" + result.error.message);
+      }
+    } else {
+      if (!_lastPersistedId || !_lastPersistedUpdatedAt) {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:UPDATE",
+          "no persisted record to update (CREATE may have failed)");
+        return;
+      }
+      const patch = mapRecordToPatch(record, overrides);
+      const result = await adapters.recoveryRecord.updateRecoveryRecord({
+        id: _lastPersistedId,
+        expectedUpdatedAt: _lastPersistedUpdatedAt,
+        patch: patch as any,
+      });
+      if (result.ok) {
+        _lastPersistedId = result.data.id;
+        _lastPersistedUpdatedAt = result.data.updatedAt;
+      } else {
+        logBridgeFailure("recovery-coordinator", "persistRecoveryState:UPDATE", result.error.message);
+        emitRecoveryAudit("RECOVERY_PERSISTENCE_WRITE_FAILURE", record,
+          "action=UPDATE err=" + result.error.message);
+      }
+    }
+  } catch (err) {
+    logBridgeFailure("recovery-coordinator", "persistRecoveryState:" + action, err);
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // State Machine Enforcement
@@ -180,6 +349,9 @@ export function requestRecovery(input: RequestRecoveryInput): RecoveryResult {
     };
   }
 
+  // M1+M2: Persist initial record with RECOVERY_REQUESTED state (fire-and-forget in sync context)
+  persistRecoveryState("CREATE", _recoveryRecord);
+
   emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_REQUESTED", _recoveryRecord, `reason=${input.reason}`);
 
   return {
@@ -224,10 +396,16 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
 
   if (preconditionResult.allPassed) {
     advanceRecoveryState(_recoveryRecord, "RECOVERY_REQUESTED", "RECOVERY_VALIDATED");
+
+    // M3: Persist preconditions + VALIDATED state
+    await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
+
     emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_VALIDATED", _recoveryRecord, "all preconditions passed");
 
     // Emit override audit if override was used
     if (_recoveryRecord.overrideMetadata) {
+      // M11: Persist override metadata
+      await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
       emitRecoveryAudit("LOCKDOWN_OVERRIDE_USED", _recoveryRecord,
         `operator=${_recoveryRecord.overrideMetadata.operatorId} reason=${_recoveryRecord.overrideMetadata.overrideReason}`);
     }
@@ -249,6 +427,9 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
 
   advanceRecoveryState(_recoveryRecord, "RECOVERY_REQUESTED", "RECOVERY_FAILED");
   _recoveryRecord.failReason = `preconditions failed: ${failedChecks.join(",")}`;
+
+  // M4: Persist FAILED state + failureReasonCode
+  await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
 
   emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_DENIED", _recoveryRecord,
     `failed=${failedChecks.join(",")}`);
@@ -298,13 +479,21 @@ export async function executeRecoveryAsync(recoveryId: string): Promise<Recovery
     _recoveryRecord.correlationId,
     120_000, // 120s TTL
     async function (lock) {
-      return executeRecoveryStages(_recoveryRecord!);
+      // M5: Persist lock metadata + LOCKED → EXECUTING states
+      return executeRecoveryStages(_recoveryRecord!, {
+        lockKey: lock.lockKey,
+        lockToken: lock.lockToken,
+      });
     }
   );
 
   if (!lockResult.acquired) {
     advanceRecoveryState(_recoveryRecord, "RECOVERY_VALIDATED", "RECOVERY_FAILED");
     _recoveryRecord.failReason = `lock acquisition failed: ${lockResult.message}`;
+
+    // M10: Persist lock failure state
+    await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
+
     emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_FAILED", _recoveryRecord, `lock: ${lockResult.message}`);
 
     return {
@@ -320,12 +509,22 @@ export async function executeRecoveryAsync(recoveryId: string): Promise<Recovery
   return lockResult.data;
 }
 
-async function executeRecoveryStages(record: RecoveryRecord): Promise<RecoveryResult> {
+async function executeRecoveryStages(
+  record: RecoveryRecord,
+  lockMeta?: { lockKey: string; lockToken: string }
+): Promise<RecoveryResult> {
   // RECOVERY_VALIDATED → RECOVERY_LOCKED
   advanceRecoveryState(record, "RECOVERY_VALIDATED", "RECOVERY_LOCKED");
 
   // RECOVERY_LOCKED → RECOVERY_EXECUTING
   advanceRecoveryState(record, "RECOVERY_LOCKED", "RECOVERY_EXECUTING");
+
+  // M5: Persist EXECUTING state + lock metadata
+  await persistRecoveryStateAsync("UPDATE", record, lockMeta ? {
+    lockKey: lockMeta.lockKey,
+    lockToken: lockMeta.lockToken,
+  } : undefined);
+
   emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_EXECUTING", record, "starting 7-stage execution");
 
   const completedStages: RecoveryStage[] = [];
@@ -341,6 +540,9 @@ async function executeRecoveryStages(record: RecoveryRecord): Promise<RecoveryRe
       record.failReason = `stage ${stage} failed: ${stageResult.detail}`;
       record.completedAt = new Date();
 
+      // M7: Persist FAILED + completedAt
+      await persistRecoveryStateAsync("UPDATE", record);
+
       emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_FAILED", record,
         `stage=${stage} detail=${stageResult.detail}`);
 
@@ -353,6 +555,10 @@ async function executeRecoveryStages(record: RecoveryRecord): Promise<RecoveryRe
       );
 
       advanceRecoveryState(record, "RECOVERY_FAILED", "RECOVERY_ESCALATED");
+
+      // M8: Persist ESCALATED state
+      await persistRecoveryStateAsync("UPDATE", record);
+
       emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_ESCALATED", record,
         `stage=${stage} escalated`);
 
@@ -367,6 +573,9 @@ async function executeRecoveryStages(record: RecoveryRecord): Promise<RecoveryRe
     }
 
     completedStages.push(stage);
+
+    // M6: Persist stage result + heartbeat (per stage)
+    await persistRecoveryStateAsync("UPDATE", record);
   }
 
   // All stages passed
@@ -375,6 +584,10 @@ async function executeRecoveryStages(record: RecoveryRecord): Promise<RecoveryRe
 
   advanceRecoveryState(record, "RECOVERY_VERIFIED", "RECOVERY_RESTORED");
   record.completedAt = new Date();
+
+  // M9: Persist RESTORED + completedAt
+  await persistRecoveryStateAsync("UPDATE", record);
+
   emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_RESTORED", record, "ACTIVE_100 restored");
 
   return {
@@ -547,11 +760,23 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   checks.push({ name: "RESIDUE_SCAN_CLEAN", passed: residueScanClean, detail: residueScanClean ? "clean" : "residues detected" });
 
   // 5. Audit chain not BROKEN_CHAIN (post-recovery: include all flows including recovery)
+  // Repository-first read for correlationId
   let auditOk = true;
-  if (_recoveryRecord) {
+  let correlationForAudit: string | null = null;
+  try {
+    const adapters = getPersistenceAdapters();
+    const repoResult = await adapters.recoveryRecord.findByRecoveryId(recoveryId);
+    if (repoResult.ok) {
+      correlationForAudit = repoResult.data.correlationId;
+    }
+  } catch (_err) { /* fallback below */ }
+  if (!correlationForAudit && _recoveryRecord) {
+    correlationForAudit = _recoveryRecord.correlationId;
+  }
+  if (correlationForAudit) {
     try {
       const { checkAuditChainReconstructable } = require("./recovery-preconditions");
-      const chainResult = checkAuditChainReconstructable(_recoveryRecord.correlationId);
+      const chainResult = checkAuditChainReconstructable(correlationForAudit);
       auditOk = chainResult.passed;
     } catch (_err) {
       auditOk = true;
@@ -583,8 +808,79 @@ export async function verifyRecovery(recoveryId: string): Promise<{
 // Read Status
 // ══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Sync read — returns memory shim. Use getRecoveryStatusAsync() for repository-first.
+ */
 export function getRecoveryStatus(): RecoveryRecord | null {
   return _recoveryRecord ? { ..._recoveryRecord } : null;
+}
+
+/**
+ * Async repository-first read with memory fallback.
+ * Returns the persisted recovery record if available, memory shim otherwise.
+ */
+export async function getRecoveryStatusAsync(): Promise<RecoveryRecord | null> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const active = await adapters.recoveryRecord.findActiveRecovery();
+    if (active) {
+      // Map back to RecoveryRecord shape for compatibility
+      return {
+        recoveryId: active.recoveryId,
+        correlationId: active.correlationId,
+        actor: active.operatorId,
+        reason: "",
+        currentState: active.recoveryState as RecoveryState,
+        baselineId: active.baselineId,
+        incidentId: active.incidentId || undefined,
+        preconditionResults: (active.preconditionResults as any[]) || [],
+        stages: (active.stageResults as any[]) || [],
+        startedAt: active.startedAt,
+        completedAt: active.completedAt || undefined,
+        failReason: active.failureReasonCode || undefined,
+      };
+    }
+  } catch (err) {
+    logBridgeFailure("recovery-coordinator", "getRecoveryStatusAsync", err);
+  }
+  // Memory fallback
+  if (_recoveryRecord) {
+    logBridgeFailure("recovery-coordinator", "getRecoveryStatusAsync:fallback", "using memory shim");
+  }
+  return _recoveryRecord ? { ..._recoveryRecord } : null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Startup Residue Detection
+// ══════════════════════════════════════════════════════════════════════════════
+
+const RECOVERY_STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function detectRecoveryResidue(): Promise<{
+  hasResidue: boolean;
+  detail: string;
+  recoveryId?: string;
+  state?: string;
+}> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const active = await adapters.recoveryRecord.findActiveRecovery();
+    if (active) {
+      const age = Date.now() - (active.lastHeartbeatAt || active.startedAt).getTime();
+      const isStale = age > RECOVERY_STALE_THRESHOLD_MS;
+      return {
+        hasResidue: true,
+        detail: isStale
+          ? `stale recovery ${active.recoveryId} in state ${active.recoveryState} (age=${Math.round(age / 1000)}s)`
+          : `recovery ${active.recoveryId} in state ${active.recoveryState} still active`,
+        recoveryId: active.recoveryId,
+        state: active.recoveryState,
+      };
+    }
+  } catch (err) {
+    logBridgeFailure("recovery-coordinator", "detectRecoveryResidue", err);
+  }
+  return { hasResidue: false, detail: "no recovery residue detected" };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -593,4 +889,6 @@ export function getRecoveryStatus(): RecoveryRecord | null {
 
 export function _resetRecoveryCoordinator(): void {
   _recoveryRecord = null;
+  _lastPersistedId = null;
+  _lastPersistedUpdatedAt = null;
 }

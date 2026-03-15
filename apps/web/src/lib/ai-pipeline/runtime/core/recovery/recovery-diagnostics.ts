@@ -7,6 +7,8 @@
 
 import { detectStaleLocks } from "../persistence/lock-manager";
 import { getRecoveryStatus } from "./recovery-coordinator";
+import { getPersistenceAdapters } from "../persistence/bootstrap";
+import { logBridgeFailure } from "../persistence/bridge-logger";
 import { buildTimeline, validateHops } from "../observability/canonical-event-schema";
 
 export interface RecoveryDiagnostic {
@@ -46,22 +48,37 @@ export async function runRecoveryDiagnostics(
     // lock store unavailable
   }
 
-  // 2. Partial recovery state (non-terminal, no completedAt)
+  // 2. Partial recovery state — repository-first with memory fallback
   try {
-    var record = getRecoveryStatus();
-    if (record) {
-      var terminalStates = ["RECOVERY_RESTORED", "RECOVERY_FAILED", "RECOVERY_ESCALATED"];
-      if (terminalStates.indexOf(record.currentState) === -1 && !record.completedAt) {
-        diagnostics.push({
-          category: "PARTIAL_RECOVERY",
-          reasonCode: "RECOVERY_IN_PROGRESS_WITHOUT_COMPLETION",
-          detail: "recovery " + record.recoveryId + " in state " + record.currentState + " without completedAt",
-          severity: "WARNING",
-        });
-      }
+    var adapters = getPersistenceAdapters();
+    var activeRecord = await adapters.recoveryRecord.findActiveRecovery();
+    if (activeRecord) {
+      diagnostics.push({
+        category: "PARTIAL_RECOVERY",
+        reasonCode: "RECOVERY_IN_PROGRESS_WITHOUT_COMPLETION",
+        detail: "recovery " + activeRecord.recoveryId + " in state " + activeRecord.recoveryState + " without completedAt (source=REPOSITORY)",
+        severity: "WARNING",
+      });
     }
-  } catch (_err) {
-    // coordinator unavailable
+  } catch (_repoErr) {
+    // Repository unavailable — fallback to memory shim
+    try {
+      var record = getRecoveryStatus();
+      if (record) {
+        var terminalStates = ["RECOVERY_RESTORED", "RECOVERY_FAILED", "RECOVERY_ESCALATED"];
+        if (terminalStates.indexOf(record.currentState) === -1 && !record.completedAt) {
+          logBridgeFailure("recovery-diagnostics", "PARTIAL_RECOVERY:fallback", "using memory shim");
+          diagnostics.push({
+            category: "PARTIAL_RECOVERY",
+            reasonCode: "RECOVERY_IN_PROGRESS_WITHOUT_COMPLETION",
+            detail: "recovery " + record.recoveryId + " in state " + record.currentState + " without completedAt (source=MEMORY_FALLBACK)",
+            severity: "WARNING",
+          });
+        }
+      }
+    } catch (_memErr) {
+      // coordinator unavailable
+    }
   }
 
   // 3. Critical lock residue (CANONICAL_BASELINE or AUTHORITY_LINE stale)
