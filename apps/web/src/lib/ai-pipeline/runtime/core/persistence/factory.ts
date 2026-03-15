@@ -19,6 +19,7 @@ import type {
   IncidentRepository,
   StabilizationAuditRepository,
   CanonicalAuditRepository,
+  RecoveryRecordRepository,
 } from "./repositories";
 import type { LockRepository } from "./lock-repository";
 
@@ -39,6 +40,7 @@ export interface PersistenceAdapters {
   readonly stabilizationAudit: StabilizationAuditRepository;
   readonly canonicalAudit: CanonicalAuditRepository;
   readonly lock: LockRepository;
+  readonly recoveryRecord: RecoveryRecordRepository;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

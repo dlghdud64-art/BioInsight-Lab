@@ -14,6 +14,7 @@ import { PrismaIncidentRepository } from "./incident";
 import { PrismaStabilizationAuditRepository } from "./stabilization-audit";
 import { PrismaCanonicalAuditRepository } from "./canonical-audit";
 import { PrismaLockRepository } from "./lock";
+import { PrismaRecoveryRecordRepository } from "./recovery-record";
 
 /**
  * Create Prisma-backed persistence adapters.
@@ -34,6 +35,7 @@ export function createPrismaAdapters(prismaClient: unknown): PersistenceAdapters
     stabilizationAudit: new PrismaStabilizationAuditRepository(client),
     canonicalAudit: new PrismaCanonicalAuditRepository(client),
     lock: new PrismaLockRepository(client),
+    recoveryRecord: new PrismaRecoveryRecordRepository(client),
   };
 }
 
@@ -45,3 +47,4 @@ export { PrismaIncidentRepository } from "./incident";
 export { PrismaStabilizationAuditRepository } from "./stabilization-audit";
 export { PrismaCanonicalAuditRepository } from "./canonical-audit";
 export { PrismaLockRepository } from "./lock";
+export { PrismaRecoveryRecordRepository } from "./recovery-record";

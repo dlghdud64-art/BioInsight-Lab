@@ -2253,3 +2253,34 @@ model StabilizationLock {
   @@index([targetType])
   @@index([expiresAt])
 }
+
+// ── P2-1: Recovery State Persistence ──
+
+model StabilizationRecoveryRecord {
+  id                  String    @id @default(cuid())
+  recoveryId          String    @unique
+  correlationId       String
+  incidentId          String?
+  baselineId          String
+  lifecycleState      String
+  releaseMode         String
+  recoveryState       String
+  recoveryStage       String?
+  lockKey             String?
+  lockToken           String?
+  operatorId          String
+  overrideUsed        Boolean   @default(false)
+  overrideReason      String?
+  signOffMetadata     Json?
+  startedAt           DateTime
+  completedAt         DateTime?
+  lastHeartbeatAt     DateTime?
+  failureReasonCode   String?
+  stageResults        Json?
+  preconditionResults Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([correlationId])
+  @@index([recoveryState])
+}

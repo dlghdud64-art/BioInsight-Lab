@@ -295,6 +295,32 @@ export interface PersistedCanonicalAuditEvent {
   parentEventId: string | null;
 }
 
+export interface PersistedRecoveryRecord {
+  id: string;
+  recoveryId: string;
+  correlationId: string;
+  incidentId: string | null;
+  baselineId: string;
+  lifecycleState: string;
+  releaseMode: string;
+  recoveryState: string;
+  recoveryStage: string | null;
+  lockKey: string | null;
+  lockToken: string | null;
+  operatorId: string;
+  overrideUsed: boolean;
+  overrideReason: string | null;
+  signOffMetadata: unknown;
+  startedAt: Date;
+  completedAt: Date | null;
+  lastHeartbeatAt: Date | null;
+  failureReasonCode: string | null;
+  stageResults: unknown;
+  preconditionResults: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // 7. Create Input Types (omit auto-generated fields)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -305,3 +331,4 @@ export type CreateAuthorityLineInput = Omit<PersistedAuthorityLine, "id" | "crea
 export type CreateIncidentInput = Omit<PersistedIncident, "id" | "createdAt" | "updatedAt" | "acknowledgedBy" | "acknowledgedAt">;
 export type CreateStabilizationAuditEventInput = Omit<PersistedStabilizationAuditEvent, "id" | "recordedAt">;
 export type CreateCanonicalAuditEventInput = Omit<PersistedCanonicalAuditEvent, "id" | "recordedAt">;
+export type CreateRecoveryRecordInput = Omit<PersistedRecoveryRecord, "id" | "createdAt" | "updatedAt">;
