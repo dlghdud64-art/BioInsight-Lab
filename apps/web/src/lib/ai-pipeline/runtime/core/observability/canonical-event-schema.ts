@@ -347,14 +347,14 @@ export async function getCanonicalAuditLogFromRepo(
   } catch (err) {
     logBridgeFailure("canonical-event-schema", "getCanonicalAuditLogFromRepo", err);
   }
-  // Fallback to legacy store
+  // REPO_ONLY (P4-2): no fallback — deterministic empty with diagnostic
   emitDiagnostic(
-    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "REPO_ONLY_PATH_ENFORCED",
     "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
-    "legacy_to_canonical", "getCanonicalAuditLogFromRepo:fallback",
-    { fallbackUsed: true }
+    "repository_to_canonical", "getCanonicalAuditLogFromRepo:repo-only-empty",
+    { fallbackUsed: false }
   );
-  return getCanonicalAuditLog(filter);
+  return [];
 }
 
 // ── Repository-First Async Timeline Builder (P3-5) ──

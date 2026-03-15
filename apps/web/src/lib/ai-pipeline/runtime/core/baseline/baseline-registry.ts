@@ -214,16 +214,14 @@ export async function getCanonicalBaselineFromRepo(): Promise<BaselineRegistry |
   } catch (err) {
     logBridgeFailure("baseline-registry", "getCanonicalBaselineFromRepo", err);
   }
-  // Fallback to legacy store — emit diagnostic
-  if (_canonicalBaseline) {
-    emitDiagnostic(
-      "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
-      "baseline-registry", "baseline-adapter", "baseline",
-      "repository_to_canonical", "memory fallback in getCanonicalBaselineFromRepo",
-      { entityId: _canonicalBaseline.canonicalBaselineId, fallbackUsed: true }
-    );
-  }
-  return _canonicalBaseline;
+  // REPO_ONLY (P4-2): no fallback — deterministic null with diagnostic
+  emitDiagnostic(
+    "REPO_ONLY_PATH_ENFORCED",
+    "baseline-registry", "baseline-adapter", "baseline",
+    "repository_to_canonical", "getCanonicalBaselineFromRepo:repo-only-null",
+    { fallbackUsed: false }
+  );
+  return null;
 }
 
 // ── Direct Access Shutdown Guardrail (P3-5) ──

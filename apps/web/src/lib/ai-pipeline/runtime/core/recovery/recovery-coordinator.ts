@@ -23,8 +23,8 @@ import type {
 import { RECOVERY_STATE_ORDER, RECOVERY_FAILURE_STATES, RECOVERY_STAGE_ORDER } from "./recovery-types";
 import { runRecoveryPreconditions } from "./recovery-preconditions";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
-import { getCanonicalBaseline, getCanonicalBaselineFromRepo, assertSingleCanonical, isCanonicalActiveCombination } from "../baseline/baseline-registry";
-import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
+import { getCanonicalBaselineFromRepo, assertSingleCanonical, isCanonicalActiveCombination } from "../baseline/baseline-registry";
+import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { checkAuthorityIntegrityFromRepo } from "../authority/authority-registry";
 import { hasUnacknowledgedIncidentsFromRepo, escalateIncident } from "../incidents/incident-escalation";
 import { withLock, detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
@@ -236,15 +236,14 @@ async function emitRecoveryAuditAsync(
     "repository_to_canonical", "emitRecoveryAudit:getCanonicalBaseline→getCanonicalBaselineFromRepo",
     { correlationId: record.correlationId }
   );
-  let baseline = await getCanonicalBaselineFromRepo();
+  const baseline = await getCanonicalBaselineFromRepo();
   if (!baseline) {
     emitDiagnostic(
-      "FALLBACK_STILL_REQUIRED",
+      "REPO_FALLBACK_REMOVED",
       "recovery-coordinator", "baseline-adapter", "baseline",
-      "legacy_to_canonical", "emitRecoveryAuditAsync:fallback-to-sync",
-      { correlationId: record.correlationId, fallbackUsed: true }
+      "repository_to_canonical", "emitRecoveryAuditAsync:repo-only-null-accepted",
+      { correlationId: record.correlationId, fallbackUsed: false }
     );
-    baseline = getCanonicalBaseline();
   }
   emitStabilizationAuditEvent({
     eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
@@ -382,15 +381,14 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
     "repository_to_canonical", "validateRecovery:getCanonicalBaseline→getCanonicalBaselineFromRepo",
     { correlationId: _recoveryRecord.correlationId }
   );
-  let baseline = await getCanonicalBaselineFromRepo();
+  const baseline = await getCanonicalBaselineFromRepo();
   if (!baseline) {
     emitDiagnostic(
-      "FALLBACK_STILL_REQUIRED",
+      "REPO_FALLBACK_REMOVED",
       "recovery-coordinator", "baseline-adapter", "baseline",
-      "legacy_to_canonical", "validateRecovery:fallback-to-sync",
-      { correlationId: _recoveryRecord.correlationId, fallbackUsed: true }
+      "repository_to_canonical", "validateRecovery:repo-only-null-accepted",
+      { correlationId: _recoveryRecord.correlationId, fallbackUsed: false }
     );
-    baseline = getCanonicalBaseline();
   }
   const rollbackSnapshotId = baseline ? baseline.rollbackSnapshotId : "";
   const activeSnapshotId = baseline ? baseline.activeSnapshotId : "";
@@ -545,15 +543,14 @@ async function executeRecoveryStages(
     "repository_to_canonical", "executeRecoveryStages:getCanonicalBaseline→getCanonicalBaselineFromRepo",
     { correlationId: record.correlationId }
   );
-  let baseline = await getCanonicalBaselineFromRepo();
+  const baseline = await getCanonicalBaselineFromRepo();
   if (!baseline) {
     emitDiagnostic(
-      "FALLBACK_STILL_REQUIRED",
+      "REPO_FALLBACK_REMOVED",
       "recovery-coordinator", "baseline-adapter", "baseline",
-      "legacy_to_canonical", "executeRecoveryStages:fallback-to-sync",
-      { correlationId: record.correlationId, fallbackUsed: true }
+      "repository_to_canonical", "executeRecoveryStages:repo-only-null-accepted",
+      { correlationId: record.correlationId, fallbackUsed: false }
     );
-    baseline = getCanonicalBaseline();
   }
 
   for (const stage of RECOVERY_STAGE_ORDER) {
@@ -633,7 +630,7 @@ async function executeRecoveryStages(
 async function runRecoveryStage(
   stage: RecoveryStage,
   record: RecoveryRecord,
-  baseline: ReturnType<typeof getCanonicalBaseline>
+  baseline: Awaited<ReturnType<typeof getCanonicalBaselineFromRepo>>
 ): Promise<RecoveryStageResult> {
   const now = new Date();
 
@@ -656,15 +653,14 @@ async function runRecoveryStage(
         "repository_to_canonical", "runRecoveryStage:RESTORE_RECONCILE:getSnapshot→getSnapshotFromRepo",
         { entityId: baseline.rollbackSnapshotId, correlationId: record.correlationId }
       );
-      let rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
+      const rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
       if (!rollbackSnap) {
         emitDiagnostic(
-          "FALLBACK_STILL_REQUIRED",
+          "REPO_FALLBACK_REMOVED",
           "recovery-coordinator", "snapshot-adapter", "snapshot",
-          "legacy_to_canonical", "runRecoveryStage:RESTORE_RECONCILE:fallback-to-sync",
-          { entityId: baseline.rollbackSnapshotId, correlationId: record.correlationId, fallbackUsed: true }
+          "repository_to_canonical", "runRecoveryStage:RESTORE_RECONCILE:repo-only-null-accepted",
+          { entityId: baseline.rollbackSnapshotId, correlationId: record.correlationId, fallbackUsed: false }
         );
-        rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
       }
       if (!rollbackSnap) {
         return { stage, passed: false, detail: "rollback snapshot missing", timestamp: now };
@@ -804,15 +800,14 @@ export async function verifyRecovery(recoveryId: string): Promise<{
     "repository_to_canonical", "verifyRecovery:getCanonicalBaseline→getCanonicalBaselineFromRepo",
     {}
   );
-  let baseline = await getCanonicalBaselineFromRepo();
+  const baseline = await getCanonicalBaselineFromRepo();
   if (!baseline) {
     emitDiagnostic(
-      "FALLBACK_STILL_REQUIRED",
+      "REPO_FALLBACK_REMOVED",
       "recovery-coordinator", "baseline-adapter", "baseline",
-      "legacy_to_canonical", "verifyRecovery:baseline:fallback-to-sync",
-      { fallbackUsed: true }
+      "repository_to_canonical", "verifyRecovery:baseline:repo-only-null-accepted",
+      { fallbackUsed: false }
     );
-    baseline = getCanonicalBaseline();
   }
   let residueScanClean = true;
   if (baseline) {
@@ -822,15 +817,14 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       "repository_to_canonical", "verifyRecovery:getSnapshot→getSnapshotFromRepo",
       { entityId: baseline.rollbackSnapshotId }
     );
-    let rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
+    const rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
     if (!rollbackSnap) {
       emitDiagnostic(
-        "FALLBACK_STILL_REQUIRED",
+        "REPO_FALLBACK_REMOVED",
         "recovery-coordinator", "snapshot-adapter", "snapshot",
-        "legacy_to_canonical", "verifyRecovery:snapshot:fallback-to-sync",
-        { entityId: baseline.rollbackSnapshotId, fallbackUsed: true }
+        "repository_to_canonical", "verifyRecovery:snapshot:repo-only-null-accepted",
+        { entityId: baseline.rollbackSnapshotId, fallbackUsed: false }
       );
-      rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
     }
     if (rollbackSnap) {
       const currentState: Record<string, Record<string, unknown>> = {};

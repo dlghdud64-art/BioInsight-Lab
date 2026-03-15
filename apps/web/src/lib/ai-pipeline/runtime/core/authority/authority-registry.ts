@@ -548,11 +548,11 @@ export async function checkAuthorityIntegrityFromRepo(): Promise<IntegrityReport
     };
   } catch (err) {
     logBridgeFailure("authority-registry", "checkAuthorityIntegrityFromRepo", err);
-    // Fallback to sync
+    // COMPAT_ONLY_TEMPORARY (P4-2): iterates _registry, needs bulk query API for full removal
     emitDiagnostic(
-      "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+      "COMPAT_ONLY_PATH_USED",
       "authority-registry", "authority-adapter", "authority",
-      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:fallback-to-sync",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:compat-fallback-to-sync",
       { fallbackUsed: true }
     );
     return checkAuthorityIntegrity();

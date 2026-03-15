@@ -268,7 +268,81 @@ export const LEGACY_SHUTDOWN_PLAN: readonly LegacyShutdownItem[] = [
 ] as const;
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 6. Compat Usage Diagnostic Aggregation
+// 6. Repo Fallback Inventory (P4-2)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface RepoFallbackEntry {
+  functionName: string;
+  moduleName: string;
+  classification: "REPO_ONLY" | "COMPAT_ONLY_TEMPORARY";
+  reason: string;
+  removedInSlice: string;
+  retentionReason: string;
+  removalCondition: string;
+}
+
+/**
+ * P4-2: 6 repo-first fallback paths — 4 REPO_ONLY (removed), 2 COMPAT_ONLY_TEMPORARY (retained).
+ */
+export const REPO_FALLBACK_INVENTORY: readonly RepoFallbackEntry[] = [
+  {
+    functionName: "getCanonicalBaselineFromRepo",
+    moduleName: "baseline-registry",
+    classification: "REPO_ONLY",
+    reason: "dual-write fully operational; repo is truth source",
+    removedInSlice: "P4-2",
+    retentionReason: "",
+    removalCondition: "",
+  },
+  {
+    functionName: "getIncidentsFromRepo",
+    moduleName: "incident-escalation",
+    classification: "REPO_ONLY",
+    reason: "dual-write fully operational; repo is truth source",
+    removedInSlice: "P4-2",
+    retentionReason: "",
+    removalCondition: "",
+  },
+  {
+    functionName: "getAuditEventsFromRepo",
+    moduleName: "audit-events",
+    classification: "REPO_ONLY",
+    reason: "dual-write fully operational; repo is truth source",
+    removedInSlice: "P4-2",
+    retentionReason: "",
+    removalCondition: "",
+  },
+  {
+    functionName: "getCanonicalAuditLogFromRepo",
+    moduleName: "canonical-event-schema",
+    classification: "REPO_ONLY",
+    reason: "dual-write fully operational; repo is truth source",
+    removedInSlice: "P4-2",
+    retentionReason: "",
+    removalCondition: "",
+  },
+  {
+    functionName: "getSnapshotFromRepo",
+    moduleName: "snapshot-manager",
+    classification: "COMPAT_ONLY_TEMPORARY",
+    reason: "DUAL_CHECKSUM_ONLY write path; full snapshot payload only reliable in memory during transition",
+    removedInSlice: "",
+    retentionReason: "snapshot payload fidelity not guaranteed in repo for RESTORE_RECONCILE",
+    removalCondition: "full payload dual-write enabled + snapshot payload fidelity validated",
+  },
+  {
+    functionName: "checkAuthorityIntegrityFromRepo",
+    moduleName: "authority-registry",
+    classification: "COMPAT_ONLY_TEMPORARY",
+    reason: "iterates _registry.entries() to check all authority lines; no bulk query API",
+    removedInSlice: "",
+    retentionReason: "needs listAllAuthorityLines() repository method for full enumeration",
+    removalCondition: "add listAllAuthorityLines() repository method + migrate integrity check",
+  },
+] as const;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 7. Compat Usage Diagnostic Aggregation
 // ══════════════════════════════════════════════════════════════════════════════
 
 export interface CompatUsageSummary {
@@ -276,11 +350,17 @@ export interface CompatUsageSummary {
   totalDirectAccessBlocked: number;
   totalConsumerCutoverApplied: number;
   totalRepoFirstUsed: number;
+  totalRepoOnlyEnforced: number;
+  totalCompatOnlyUsed: number;
+  totalRepoFallbackRemoved: number;
   byModule: Record<string, {
     compatCalls: number;
     directAccessBlocked: number;
     cutoverApplied: number;
     repoFirstUsed: number;
+    repoOnlyEnforced: number;
+    compatOnlyUsed: number;
+    repoFallbackRemoved: number;
   }>;
 }
 
@@ -294,7 +374,7 @@ export function getCompatUsageSummary(): CompatUsageSummary {
 
   function ensureModule(mod: string) {
     if (!byModule[mod]) {
-      byModule[mod] = { compatCalls: 0, directAccessBlocked: 0, cutoverApplied: 0, repoFirstUsed: 0 };
+      byModule[mod] = { compatCalls: 0, directAccessBlocked: 0, cutoverApplied: 0, repoFirstUsed: 0, repoOnlyEnforced: 0, compatOnlyUsed: 0, repoFallbackRemoved: 0 };
     }
     return byModule[mod]!;
   }
@@ -303,6 +383,9 @@ export function getCompatUsageSummary(): CompatUsageSummary {
   let totalBlocked = 0;
   let totalCutover = 0;
   let totalRepo = 0;
+  let totalRepoOnly = 0;
+  let totalCompatOnly = 0;
+  let totalFallbackRemoved = 0;
 
   for (const event of log) {
     const m = ensureModule(event.moduleName);
@@ -318,6 +401,15 @@ export function getCompatUsageSummary(): CompatUsageSummary {
     } else if (event.type === "ONTOLOGY_REPO_FIRST_PATH_USED" || event.type === "SNAPSHOT_REPO_FIRST_READ_USED") {
       m.repoFirstUsed++;
       totalRepo++;
+    } else if (event.type === "REPO_ONLY_PATH_ENFORCED") {
+      m.repoOnlyEnforced++;
+      totalRepoOnly++;
+    } else if (event.type === "COMPAT_ONLY_PATH_USED") {
+      m.compatOnlyUsed++;
+      totalCompatOnly++;
+    } else if (event.type === "REPO_FALLBACK_REMOVED") {
+      m.repoFallbackRemoved++;
+      totalFallbackRemoved++;
     }
   }
 
@@ -326,6 +418,9 @@ export function getCompatUsageSummary(): CompatUsageSummary {
     totalDirectAccessBlocked: totalBlocked,
     totalConsumerCutoverApplied: totalCutover,
     totalRepoFirstUsed: totalRepo,
+    totalRepoOnlyEnforced: totalRepoOnly,
+    totalCompatOnlyUsed: totalCompatOnly,
+    totalRepoFallbackRemoved: totalFallbackRemoved,
     byModule,
   };
 }

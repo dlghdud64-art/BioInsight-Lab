@@ -273,7 +273,7 @@ describe("P3 Slice 3B — Snapshot Full-Fidelity Persistence", function () {
     expect(fallbackResult.tag).toBe("ACTIVE");
 
     var fallbackDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "SNAPSHOT_LEGACY_FALLBACK_USED";
+      return d.type === "COMPAT_ONLY_PATH_USED";
     });
     expect(fallbackDiags.length).toBeGreaterThanOrEqual(1);
   });

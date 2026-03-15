@@ -103,14 +103,14 @@ export async function getAuditEventsFromRepo(
   } catch (err) {
     logBridgeFailure("audit-events", "getAuditEventsFromRepo", err);
   }
-  // Fallback to legacy store
+  // REPO_ONLY (P4-2): no fallback — deterministic empty with diagnostic
   emitDiagnostic(
-    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "REPO_ONLY_PATH_ENFORCED",
     "audit-events", "stabilization-audit-adapter", "stabilization-audit",
-    "legacy_to_canonical", "getAuditEventsFromRepo:fallback",
-    { fallbackUsed: true }
+    "repository_to_canonical", "getAuditEventsFromRepo:repo-only-empty",
+    { fallbackUsed: false }
   );
-  return getAuditEvents(filter);
+  return [];
 }
 
 // ── Direct Access Shutdown Guardrail (P3-5) ──

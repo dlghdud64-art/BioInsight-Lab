@@ -249,14 +249,14 @@ export async function getSnapshotFromRepo(snapshotId: string): Promise<BaselineS
   } catch (err) {
     logBridgeFailure("snapshot-manager", "getSnapshotFromRepo", err);
   }
-  // Legacy fallback
+  // COMPAT_ONLY_TEMPORARY (P4-2): snapshot payload fidelity — keep memory fallback
   const memSnapshot = _snapshots.get(snapshotId) ?? null;
   if (memSnapshot) {
     emitDiagnostic(
-      "SNAPSHOT_LEGACY_FALLBACK_USED",
+      "COMPAT_ONLY_PATH_USED",
       "snapshot-manager", "snapshot-adapter", "snapshot",
-      "repository_to_canonical", "getSnapshotFromRepo:fallback",
-      { entityId: snapshotId }
+      "repository_to_canonical", "getSnapshotFromRepo:compat-fallback",
+      { entityId: snapshotId, fallbackUsed: true }
     );
   }
   return memSnapshot;

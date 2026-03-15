@@ -177,14 +177,14 @@ export async function getIncidentsFromRepo(): Promise<IncidentRecord[]> {
   } catch (err) {
     logBridgeFailure("incident-escalation", "getIncidentsFromRepo", err);
   }
-  // Fallback to legacy store
+  // REPO_ONLY (P4-2): no fallback — deterministic empty with diagnostic
   emitDiagnostic(
-    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "REPO_ONLY_PATH_ENFORCED",
     "incident-escalation", "incident-adapter", "incident",
-    "legacy_to_canonical", "getIncidentsFromRepo:fallback",
-    { fallbackUsed: true }
+    "repository_to_canonical", "getIncidentsFromRepo:repo-only-empty",
+    { fallbackUsed: false }
   );
-  return [..._incidents];
+  return [];
 }
 
 // ── Repository-First Async Unacknowledged Check (P3-5) ──
