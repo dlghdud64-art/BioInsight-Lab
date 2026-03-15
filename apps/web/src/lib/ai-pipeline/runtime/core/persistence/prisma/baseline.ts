@@ -66,6 +66,7 @@ export class PrismaBaselineRepository implements BaselineRepository {
           containmentPriorityEnabled: input.containmentPriorityEnabled,
           auditStrictMode: input.auditStrictMode,
           mergeGateStrictMode: input.mergeGateStrictMode,
+          canonicalSlot: input.canonicalSlot,
         },
       });
       return ok(mapDbToBaseline(row));

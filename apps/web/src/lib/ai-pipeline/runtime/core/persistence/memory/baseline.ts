@@ -43,6 +43,14 @@ export class MemoryBaselineRepository implements BaselineRepository {
     if (this._store.size > 0) {
       return fail("DUPLICATE", "Canonical baseline already exists. Use updateBaseline instead.", "StabilizationBaseline");
     }
+    // P1-2: canonicalSlot uniqueness enforcement
+    if (input.canonicalSlot) {
+      for (const entry of Array.from(this._store.values())) {
+        if (entry.canonicalSlot === input.canonicalSlot) {
+          return fail("DUPLICATE", `Canonical slot "${input.canonicalSlot}" already occupied by baseline id=${entry.id}`, "StabilizationBaseline");
+        }
+      }
+    }
     const now = monotoneNow();
     const entity: PersistedBaseline = {
       id: nextId(),

@@ -13,6 +13,7 @@ import { MemoryAuthorityRepository } from "./authority";
 import { MemoryIncidentRepository } from "./incident";
 import { MemoryStabilizationAuditRepository } from "./stabilization-audit";
 import { MemoryCanonicalAuditRepository } from "./canonical-audit";
+import { MemoryLockRepository } from "./lock";
 
 /**
  * Create Memory-backed persistence adapters.
@@ -29,6 +30,7 @@ export function createMemoryAdapters(): PersistenceAdapters {
     incident: new MemoryIncidentRepository(),
     stabilizationAudit: new MemoryStabilizationAuditRepository(),
     canonicalAudit: new MemoryCanonicalAuditRepository(),
+    lock: new MemoryLockRepository(),
   };
 }
 
@@ -39,3 +41,4 @@ export { MemoryAuthorityRepository } from "./authority";
 export { MemoryIncidentRepository } from "./incident";
 export { MemoryStabilizationAuditRepository } from "./stabilization-audit";
 export { MemoryCanonicalAuditRepository } from "./canonical-audit";
+export { MemoryLockRepository } from "./lock";

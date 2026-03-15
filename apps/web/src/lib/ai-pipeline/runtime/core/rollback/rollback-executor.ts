@@ -13,6 +13,7 @@ import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { isMutationFrozen } from "../containment/mutation-freeze";
 import { getSnapshot } from "../baseline/snapshot-manager";
 import { applyScopeRestore } from "./scope-restore-adapter";
+import { withLock, snapshotRestoreLockKey } from "../persistence/lock-manager";
 
 export interface ExecutorResult {
   success: boolean;
@@ -112,6 +113,39 @@ export function executeRollbackPlan(plan: RollbackPlan, correlationId: string, a
     failedStep: null,
     reason: allVerified ? "ROLLBACK_COMPLETE_ALL_VERIFIED" : "ROLLBACK_PARTIAL",
   };
+}
+
+/**
+ * P1-2: Async version with distributed lock.
+ * Prevents concurrent rollback on the same baseline.
+ */
+export async function executeRollbackPlanAsync(
+  plan: RollbackPlan,
+  correlationId: string,
+  actor: string
+): Promise<ExecutorResult> {
+  const lockResult = await withLock(
+    snapshotRestoreLockKey(plan.baselineId),
+    actor,
+    "SNAPSHOT_RESTORE",
+    "rollback-execution",
+    correlationId,
+    60_000, // 60s TTL
+    async function () {
+      return executeRollbackPlan(plan, correlationId, actor);
+    }
+  );
+
+  if (!lockResult.acquired) {
+    return {
+      success: false,
+      stepsExecuted: 0,
+      failedStep: null,
+      reason: `SNAPSHOT_RESTORE_LOCK_REQUIRED: ${lockResult.message}`,
+    };
+  }
+
+  return lockResult.data;
 }
 
 /** snapshot에서 scope에 해당하는 data를 가져오기 */

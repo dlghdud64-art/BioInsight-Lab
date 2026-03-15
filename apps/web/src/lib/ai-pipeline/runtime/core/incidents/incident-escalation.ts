@@ -10,6 +10,7 @@ import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
 import { normalizeDate } from "../persistence/date-normalizer";
+import { withLock, incidentStreamLockKey } from "../persistence/lock-manager";
 
 export interface IncidentRecord {
   incidentId: string;
@@ -72,6 +73,39 @@ export function escalateIncident(
   });
 
   return record;
+}
+
+/**
+ * P1-2: Async version with distributed lock on incident stream.
+ * Prevents concurrent escalation on the same correlationId.
+ */
+export async function escalateIncidentAsync(
+  reasonCode: string,
+  correlationId: string,
+  actor: string,
+  detail: string
+): Promise<{ record: IncidentRecord | null; lockBlocked: boolean; reason?: string }> {
+  const lockResult = await withLock(
+    incidentStreamLockKey(correlationId),
+    actor,
+    "INCIDENT_STREAM",
+    "incident-escalation",
+    correlationId,
+    15_000, // 15s TTL
+    async function () {
+      return escalateIncident(reasonCode, correlationId, actor, detail);
+    }
+  );
+
+  if (!lockResult.acquired) {
+    return {
+      record: null,
+      lockBlocked: true,
+      reason: `INCIDENT_STREAM_LOCK_REQUIRED: ${lockResult.message}`,
+    };
+  }
+
+  return { record: lockResult.data, lockBlocked: false };
 }
 
 export function getIncidents(): IncidentRecord[] {

@@ -80,6 +80,32 @@ export { logBridgeFailure, TRUTH_SOURCE_CONTRACT } from "./bridge-logger";
 // Snapshot adapter (Slice-1F)
 export { baselineSnapshotToCreateInput } from "./snapshot-adapter";
 
+// Lock types + repository (P1-2)
+export type {
+  LockTarget,
+  PersistedLock,
+  LockAcquireRequest,
+  LockResult,
+  LockReasonCode,
+} from "./lock-types";
+
+export { lockOk, lockFail, LOCK_REASON_CODES } from "./lock-types";
+
+export type { LockRepository } from "./lock-repository";
+
+// Lock manager (P1-2)
+export {
+  withLock,
+  acquireLock,
+  releaseLock,
+  renewLock,
+  detectStaleLocks,
+  canonicalBaselineLockKey,
+  authorityLineLockKey,
+  snapshotRestoreLockKey,
+  incidentStreamLockKey,
+} from "./lock-manager";
+
 // Migration validation
 export {
   SCHEMA_VALIDATION_COMMANDS,

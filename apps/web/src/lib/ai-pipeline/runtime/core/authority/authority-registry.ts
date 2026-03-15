@@ -11,6 +11,11 @@ import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
 import { normalizeDate } from "../persistence/date-normalizer";
+import {
+  acquireLock,
+  releaseLock,
+  authorityLineLockKey,
+} from "../persistence/lock-manager";
 
 // ── Types ──
 
@@ -218,7 +223,7 @@ export function requestTransfer(req: TransferRequest): TransferResult {
   const s2 = advanceTransferState(line, "TRANSFER_VALIDATED", req.actor, req.correlationId);
   if (!s2.success) return s2;
 
-  // TRANSFER_LOCKED
+  // TRANSFER_LOCKED (in-memory fallback — async distributed lock in requestTransferAsync)
   if (_transferLocks.has(req.authorityLineId)) {
     return { success: false, reasonCode: "CONCURRENT_TRANSFER_DETECTED", detail: "lock already held", transferState: line.transferState };
   }
@@ -271,6 +276,60 @@ export function requestTransfer(req: TransferRequest): TransferResult {
   });
 
   return s8;
+}
+
+// ── P1-2: Async Transfer with Distributed Lock ──
+
+/** Lock token storage for distributed lock cleanup on finalize/rollback */
+const _distributedLockTokens = new Map<string, string>();
+
+/**
+ * Async version of requestTransfer that uses distributed lock.
+ * Multi-instance safe — acquires DB-backed lock before proceeding.
+ */
+export async function requestTransferAsync(req: TransferRequest): Promise<TransferResult> {
+  // Acquire distributed lock first
+  const lockResult = await acquireLock({
+    lockKey: authorityLineLockKey(req.authorityLineId),
+    lockOwner: req.actor,
+    targetType: "AUTHORITY_LINE",
+    reason: req.reason,
+    correlationId: req.correlationId,
+    ttlMs: 30_000, // 30s TTL
+  });
+
+  if (!lockResult.acquired) {
+    return {
+      success: false,
+      reasonCode: "CONCURRENT_TRANSFER_DETECTED",
+      detail: `distributed lock conflict: ${lockResult.message}`,
+      transferState: "TRANSFER_IDLE",
+    };
+  }
+
+  // Store token for cleanup
+  _distributedLockTokens.set(req.authorityLineId, lockResult.data.lockToken);
+
+  // Execute sync transfer logic
+  const result = requestTransfer(req);
+
+  // If failed, release distributed lock
+  if (!result.success) {
+    const token = _distributedLockTokens.get(req.authorityLineId);
+    if (token) {
+      await releaseLock(authorityLineLockKey(req.authorityLineId), token, req.correlationId);
+      _distributedLockTokens.delete(req.authorityLineId);
+    }
+  } else if (result.transferState === "TRANSFER_FINALIZED") {
+    // Transfer succeeded — release lock
+    const token = _distributedLockTokens.get(req.authorityLineId);
+    if (token) {
+      await releaseLock(authorityLineLockKey(req.authorityLineId), token, req.correlationId);
+      _distributedLockTokens.delete(req.authorityLineId);
+    }
+  }
+
+  return result;
 }
 
 // ── Continuity Validation ──
@@ -430,4 +489,5 @@ export async function getAuthorityLineFromRepo(authorityLineId: string): Promise
 export function _resetAuthorityRegistry(): void {
   _registry.clear();
   _transferLocks.clear();
+  _distributedLockTokens.clear();
 }

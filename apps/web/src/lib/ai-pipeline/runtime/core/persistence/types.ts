@@ -180,6 +180,8 @@ export interface PersistedBaseline {
   containmentPriorityEnabled: boolean;
   auditStrictMode: boolean;
   mergeGateStrictMode: boolean;
+  /** P1-2: "CANONICAL" when active canonical, null otherwise. DB-enforced unique. */
+  canonicalSlot: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

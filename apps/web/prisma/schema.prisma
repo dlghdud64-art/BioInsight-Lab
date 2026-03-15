@@ -2068,6 +2068,7 @@ model StabilizationBaseline {
   containmentPriorityEnabled  Boolean  @default(true)
   auditStrictMode             Boolean  @default(true)
   mergeGateStrictMode         Boolean  @default(true)
+  canonicalSlot               String?  @unique // "CANONICAL" when active; null when invalidated — DB-enforced singleton
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
 
@@ -2227,4 +2228,28 @@ model CanonicalAuditEvent {
   @@index([occurredAt])
   @@index([recordedAt])
   @@index([parentEventId])
+}
+
+// ── P1-2: Distributed Lock ──
+
+enum StabilizationLockTarget {
+  CANONICAL_BASELINE
+  AUTHORITY_LINE
+  INCIDENT_STREAM
+  SNAPSHOT_RESTORE
+}
+
+model StabilizationLock {
+  id            String                   @id @default(cuid())
+  lockKey       String                   @unique
+  lockOwner     String
+  lockToken     String
+  targetType    StabilizationLockTarget
+  reason        String
+  correlationId String
+  acquiredAt    DateTime                 @default(now())
+  expiresAt     DateTime
+
+  @@index([targetType])
+  @@index([expiresAt])
 }

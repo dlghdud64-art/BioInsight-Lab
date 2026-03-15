@@ -73,6 +73,7 @@ export function mapDbToBaseline(row: any): PersistedBaseline {
     containmentPriorityEnabled: row.containmentPriorityEnabled,
     auditStrictMode: row.auditStrictMode,
     mergeGateStrictMode: row.mergeGateStrictMode,
+    canonicalSlot: row.canonicalSlot ?? null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };

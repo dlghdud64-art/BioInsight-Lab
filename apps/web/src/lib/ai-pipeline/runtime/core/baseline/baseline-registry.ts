@@ -140,6 +140,7 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
       containmentPriorityEnabled: true,
       auditStrictMode: true,
       mergeGateStrictMode: true,
+      canonicalSlot: "CANONICAL",
     }).catch(function (err: unknown) {
       logBridgeFailure("baseline-registry", "saveBaseline", err);
     });
@@ -189,7 +190,7 @@ export function invalidateCanonicalBaseline(): void {
           adapters.baseline.updateBaseline({
             id: result.data.id,
             expectedUpdatedAt: result.data.updatedAt,
-            patch: { baselineStatus: "INVALIDATED" },
+            patch: { baselineStatus: "INVALIDATED", canonicalSlot: null },
           }).catch(function (err: unknown) {
             logBridgeFailure("baseline-registry", "updateBaseline", err);
           });
