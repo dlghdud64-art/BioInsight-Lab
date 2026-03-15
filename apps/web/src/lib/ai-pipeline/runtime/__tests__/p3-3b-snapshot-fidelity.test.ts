@@ -247,20 +247,7 @@ describe("P3 Slice 3B — Snapshot Full-Fidelity Persistence", function () {
     // Directly access memory — construct a scenario where repo doesn't have this snapshot
     _resetDiagnostics();
 
-    // Force a read where repo will miss but memory has it
-    // We need to use the pair.active.snapshotId — repo should have it, but let's use a unique test
-    // Instead, add a snapshot to memory without persisting
-    var memOnlySnap = buildLegacySnapshot("ROLLBACK", "bl-mem-only", scopeData);
-    // Access internal map through getSnapshot after a createSnapshotPair
-    // Simpler: test that when repo read fails, it falls back to memory
-    // Use the pair that was created — the repo should have it.
-    // Let's test the diagnostic path differently: repo read for non-existent, then memory hit
-
-    // Actually the simplest way: save to memory, but NOT to repo
-    // The _resetSnapshotStore was called in beforeEach, and createSnapshotPair saves to both.
-    // So the diagnostic was already tested above. Let's verify the diagnostics from the FF2 test pattern.
-
-    // Better approach: verify that when repo is empty but memory has data, fallback diagnostic fires
+    // P4-3: snapshot is REPO_ONLY — verify that when repo is empty, null is returned (no memory fallback)
     _resetPersistenceBootstrap();
     _resetAdapterRegistry();
     registerAdapterFactory(createMemoryAdapters);
@@ -269,13 +256,14 @@ describe("P3 Slice 3B — Snapshot Full-Fidelity Persistence", function () {
     _resetDiagnostics();
 
     var fallbackResult = await getSnapshotFromRepo(pair.active.snapshotId);
-    expect(fallbackResult).not.toBeNull();
-    expect(fallbackResult.tag).toBe("ACTIVE");
+    // P4-3: REPO_ONLY — returns null when repo empty, no memory fallback
+    expect(fallbackResult).toBeNull();
 
-    var fallbackDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "COMPAT_ONLY_PATH_USED";
+    var repoOnlyDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "REPO_ONLY_PATH_ENFORCED"
+        && d.moduleName === "snapshot-manager";
     });
-    expect(fallbackDiags.length).toBeGreaterThanOrEqual(1);
+    expect(repoOnlyDiags.length).toBeGreaterThanOrEqual(1);
   });
 
   it("FF6: checksum and payload remain consistent after persistence roundtrip", function () {

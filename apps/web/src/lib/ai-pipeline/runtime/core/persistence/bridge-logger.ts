@@ -37,8 +37,8 @@ export function logBridgeFailure(moduleName: string, operation: string, error: u
  */
 export const TRUTH_SOURCE_CONTRACT = {
   baseline:           { write: "DUAL", read: "REPO_ONLY" },
-  snapshot:           { write: "DUAL_CHECKSUM_ONLY", read: "COMPAT_ONLY_TEMPORARY" },
-  authority:          { write: "DUAL", read: "COMPAT_ONLY_TEMPORARY" },
+  snapshot:           { write: "DUAL", read: "REPO_ONLY" },
+  authority:          { write: "DUAL", read: "REPO_ONLY" },
   incident:           { write: "DUAL", read: "REPO_ONLY" },
   stabilizationAudit: { write: "DUAL", read: "REPO_ONLY" },
   canonicalAudit:     { write: "DUAL", read: "REPO_ONLY" },

@@ -282,7 +282,7 @@ export interface RepoFallbackEntry {
 }
 
 /**
- * P4-2: 6 repo-first fallback paths — 4 REPO_ONLY (removed), 2 COMPAT_ONLY_TEMPORARY (retained).
+ * P4-2/P4-3: 6 repo-first fallback paths — all 6 REPO_ONLY (all removed).
  */
 export const REPO_FALLBACK_INVENTORY: readonly RepoFallbackEntry[] = [
   {
@@ -324,20 +324,20 @@ export const REPO_FALLBACK_INVENTORY: readonly RepoFallbackEntry[] = [
   {
     functionName: "getSnapshotFromRepo",
     moduleName: "snapshot-manager",
-    classification: "COMPAT_ONLY_TEMPORARY",
-    reason: "DUAL_CHECKSUM_ONLY write path; full snapshot payload only reliable in memory during transition",
-    removedInSlice: "",
-    retentionReason: "snapshot payload fidelity not guaranteed in repo for RESTORE_RECONCILE",
-    removalCondition: "full payload dual-write enabled + snapshot payload fidelity validated",
+    classification: "REPO_ONLY",
+    reason: "dual-write full-fidelity confirmed (P3-3B); repo is truth source",
+    removedInSlice: "P4-3",
+    retentionReason: "",
+    removalCondition: "",
   },
   {
     functionName: "checkAuthorityIntegrityFromRepo",
     moduleName: "authority-registry",
-    classification: "COMPAT_ONLY_TEMPORARY",
-    reason: "iterates _registry.entries() to check all authority lines; no bulk query API",
-    removedInSlice: "",
-    retentionReason: "needs listAllAuthorityLines() repository method for full enumeration",
-    removalCondition: "add listAllAuthorityLines() repository method + migrate integrity check",
+    classification: "REPO_ONLY",
+    reason: "listAllAuthorityLines bulk query enabled; repo is truth source",
+    removedInSlice: "P4-3",
+    retentionReason: "",
+    removalCondition: "",
   },
 ] as const;
 
@@ -401,13 +401,13 @@ export function getCompatUsageSummary(): CompatUsageSummary {
     } else if (event.type === "ONTOLOGY_REPO_FIRST_PATH_USED" || event.type === "SNAPSHOT_REPO_FIRST_READ_USED") {
       m.repoFirstUsed++;
       totalRepo++;
-    } else if (event.type === "REPO_ONLY_PATH_ENFORCED") {
+    } else if (event.type === "REPO_ONLY_PATH_ENFORCED" || event.type === "SNAPSHOT_FIDELITY_RECONCILED" || event.type === "AUTHORITY_REPO_QUERY_ENABLED") {
       m.repoOnlyEnforced++;
       totalRepoOnly++;
     } else if (event.type === "COMPAT_ONLY_PATH_USED") {
       m.compatOnlyUsed++;
       totalCompatOnly++;
-    } else if (event.type === "REPO_FALLBACK_REMOVED") {
+    } else if (event.type === "REPO_FALLBACK_REMOVED" || event.type === "COMPAT_PATH_ELIMINATED") {
       m.repoFallbackRemoved++;
       totalFallbackRemoved++;
     }

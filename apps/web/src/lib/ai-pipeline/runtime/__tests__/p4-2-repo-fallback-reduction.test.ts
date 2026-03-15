@@ -6,9 +6,9 @@
  * - FB2: incident getIncidentsFromRepo returns [] + REPO_ONLY_PATH_ENFORCED when repo empty
  * - FB3: audit getAuditEventsFromRepo returns [] when repo empty (REPO_ONLY)
  * - FB4: canonical getCanonicalAuditLogFromRepo returns [] when repo empty (REPO_ONLY)
- * - FB5: snapshot getSnapshotFromRepo still falls back + emits COMPAT_ONLY_PATH_USED
+ * - FB5: snapshot getSnapshotFromRepo is REPO_ONLY (P4-3)
  * - FB6: recovery-coordinator: no FALLBACK_STILL_REQUIRED, emits REPO_FALLBACK_REMOVED
- * - FB7: REPO_FALLBACK_INVENTORY — 6 entries, 4 REPO_ONLY, 2 COMPAT_ONLY_TEMPORARY
+ * - FB7: REPO_FALLBACK_INVENTORY — 6 entries, 6 REPO_ONLY, 0 COMPAT_ONLY_TEMPORARY (P4-3)
  */
 
 var { describe, it, expect, beforeEach } = require("@jest/globals");
@@ -150,34 +150,34 @@ describe("P4 Slice 2 — Repo Fallback Reduction", function () {
     expect(legacyFallbacks.length).toBe(0);
   });
 
-  it("FB5: snapshot getSnapshotFromRepo still falls back + emits COMPAT_ONLY_PATH_USED", async function () {
-    // Create snapshot in memory only (dual-write may not propagate full payload)
+  it("FB5: snapshot getSnapshotFromRepo is REPO_ONLY (P4-3: compat eliminated)", async function () {
+    // Create snapshot — dual-write propagates full payload
     var pair = createSnapshotPair({
       baselineId: "bl-fb5",
       capturedBy: "op-fb5",
       scopeData: SCOPE_DATA,
     });
 
-    // Wait briefly for any async propagation
+    // Wait for async dual-write propagation
     await new Promise(function (r) { setTimeout(r, 50); });
     _resetDiagnostics();
 
-    // Memory store has it, repo may or may not — test that compat fallback path works
+    // Repo should have it via full-fidelity dual-write
     var result = await getSnapshotFromRepo(pair.rollback.snapshotId);
     expect(result).not.toBeNull();
     expect(result.snapshotId).toBe(pair.rollback.snapshotId);
 
-    // Check for either repo-first hit or compat fallback diagnostic
+    // Must use repo-first path — no COMPAT_ONLY_PATH_USED
     var allDiags = getDiagnosticLog();
     var hasRepoHit = allDiags.some(function (d) {
       return d.type === "SNAPSHOT_REPO_FIRST_READ_USED";
     });
+    expect(hasRepoHit).toBe(true);
+
     var hasCompatFallback = allDiags.some(function (d) {
-      return d.type === "COMPAT_ONLY_PATH_USED"
-        && d.moduleName === "snapshot-manager";
+      return d.type === "COMPAT_ONLY_PATH_USED";
     });
-    // Either repo had it (hit) or fallback was used — both are valid
-    expect(hasRepoHit || hasCompatFallback).toBe(true);
+    expect(hasCompatFallback).toBe(false);
   });
 
   it("FB6: recovery-coordinator: no FALLBACK_STILL_REQUIRED, emits REPO_FALLBACK_REMOVED", async function () {
@@ -240,18 +240,18 @@ describe("P4 Slice 2 — Repo Fallback Reduction", function () {
     // The key assertion is: no FALLBACK_STILL_REQUIRED
   });
 
-  it("FB7: REPO_FALLBACK_INVENTORY — 6 entries, 4 REPO_ONLY, 2 COMPAT_ONLY_TEMPORARY", function () {
+  it("FB7: REPO_FALLBACK_INVENTORY — 6 entries, all REPO_ONLY (P4-3: compat eliminated)", function () {
     expect(REPO_FALLBACK_INVENTORY.length).toBe(6);
 
     var repoOnly = REPO_FALLBACK_INVENTORY.filter(function (e) {
       return e.classification === "REPO_ONLY";
     });
-    expect(repoOnly.length).toBe(4);
+    expect(repoOnly.length).toBe(6);
 
     var compatOnly = REPO_FALLBACK_INVENTORY.filter(function (e) {
       return e.classification === "COMPAT_ONLY_TEMPORARY";
     });
-    expect(compatOnly.length).toBe(2);
+    expect(compatOnly.length).toBe(0);
 
     // Verify specific entries
     var baselineEntry = REPO_FALLBACK_INVENTORY.find(function (e) {
@@ -265,16 +265,14 @@ describe("P4 Slice 2 — Repo Fallback Reduction", function () {
       return e.functionName === "getSnapshotFromRepo";
     });
     expect(snapshotEntry).toBeDefined();
-    expect(snapshotEntry.classification).toBe("COMPAT_ONLY_TEMPORARY");
-    expect(snapshotEntry.retentionReason).toBeTruthy();
-    expect(snapshotEntry.removalCondition).toBeTruthy();
+    expect(snapshotEntry.classification).toBe("REPO_ONLY");
+    expect(snapshotEntry.removedInSlice).toBe("P4-3");
 
     var authorityEntry = REPO_FALLBACK_INVENTORY.find(function (e) {
       return e.functionName === "checkAuthorityIntegrityFromRepo";
     });
     expect(authorityEntry).toBeDefined();
-    expect(authorityEntry.classification).toBe("COMPAT_ONLY_TEMPORARY");
-    expect(authorityEntry.retentionReason).toBeTruthy();
-    expect(authorityEntry.removalCondition).toBeTruthy();
+    expect(authorityEntry.classification).toBe("REPO_ONLY");
+    expect(authorityEntry.removedInSlice).toBe("P4-3");
   });
 });

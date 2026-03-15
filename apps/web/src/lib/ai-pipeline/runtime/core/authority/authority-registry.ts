@@ -495,26 +495,35 @@ export async function checkAuthorityIntegrityFromRepo(): Promise<IntegrityReport
 
   try {
     const adapters = getPersistenceAdapters();
-    // Read all authority lines from repo using baseline query (or fallback to memory)
-    // Use a broad query — authority lines are few per baseline
-    const lines: AuthorityLine[] = [];
-    for (const [, line] of Array.from(_registry.entries())) {
-      const repoResult = await adapters.authority.findAuthorityLineByLineId(line.authorityLineId);
-      if (repoResult.ok) {
-        const canonical = AuthorityOntologyAdapter.fromPersisted(repoResult.data);
-        lines.push(AuthorityOntologyAdapter.toLegacy(canonical));
-      } else {
-        // TODO(P4-cutover): remove legacy fallback, direct store read only as compat
-        lines.push(line);
-      }
+    const result = await adapters.authority.listAllAuthorityLines({ limit: 1000 });
+    if (!result.ok) {
+      emitDiagnostic(
+        "REPO_ONLY_PATH_ENFORCED",
+        "authority-registry", "authority-adapter", "authority",
+        "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-only-error",
+        { fallbackUsed: false }
+      );
+      return {
+        splitBrain: false,
+        orphanCount: 0,
+        revokedStillEffective: false,
+        pendingResidue: false,
+        detail: "REPO_UNAVAILABLE",
+      };
     }
 
     emitDiagnostic(
-      "ONTOLOGY_REPO_FIRST_PATH_USED",
+      "AUTHORITY_REPO_QUERY_ENABLED",
       "authority-registry", "authority-adapter", "authority",
-      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-read",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:bulk-query",
       {}
     );
+
+    const lines: AuthorityLine[] = [];
+    for (const persisted of result.data.items) {
+      const canonical = AuthorityOntologyAdapter.fromPersisted(persisted);
+      lines.push(AuthorityOntologyAdapter.toLegacy(canonical));
+    }
 
     // Same integrity analysis as sync version
     const activeByEntity = new Map<string, number>();
@@ -548,14 +557,20 @@ export async function checkAuthorityIntegrityFromRepo(): Promise<IntegrityReport
     };
   } catch (err) {
     logBridgeFailure("authority-registry", "checkAuthorityIntegrityFromRepo", err);
-    // COMPAT_ONLY_TEMPORARY (P4-2): iterates _registry, needs bulk query API for full removal
+    // P4-3: REPO_ONLY — no fallback to sync checkAuthorityIntegrity()
     emitDiagnostic(
-      "COMPAT_ONLY_PATH_USED",
+      "REPO_ONLY_PATH_ENFORCED",
       "authority-registry", "authority-adapter", "authority",
-      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:compat-fallback-to-sync",
-      { fallbackUsed: true }
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-only-error",
+      { fallbackUsed: false }
     );
-    return checkAuthorityIntegrity();
+    return {
+      splitBrain: false,
+      orphanCount: 0,
+      revokedStillEffective: false,
+      pendingResidue: false,
+      detail: "REPO_UNAVAILABLE",
+    };
   }
 }
 

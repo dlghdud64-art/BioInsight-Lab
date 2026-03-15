@@ -152,4 +152,22 @@ export class PrismaAuthorityRepository implements AuthorityRepository {
       return fail("STORAGE_UNAVAILABLE", "Failed to list authority lines by baseline", "StabilizationAuthorityLine", e);
     }
   }
+
+  async listAllAuthorityLines(
+    query?: ListQuery
+  ): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>> {
+    try {
+      const pagination = buildPagination(query);
+      const orderBy = buildOrderBy(query, "createdAt");
+      const rows = await this.prisma.stabilizationAuthorityLine.findMany({
+        orderBy,
+        ...pagination,
+      });
+      const items = rows.map(mapDbToAuthorityLine);
+      const nextCursor = items.length === (pagination.take ?? 100) ? items[items.length - 1].id : null;
+      return ok({ items, nextCursor });
+    } catch (e) {
+      return fail("STORAGE_UNAVAILABLE", "Failed to list all authority lines", "StabilizationAuthorityLine", e);
+    }
+  }
 }

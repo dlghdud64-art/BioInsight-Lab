@@ -108,6 +108,14 @@ export class MemoryAuthorityRepository implements AuthorityRepository {
     return ok({ items: result.items.map((i) => this._clone(i)), nextCursor: result.nextCursor });
   }
 
+  async listAllAuthorityLines(
+    query?: ListQuery
+  ): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>> {
+    const all = Array.from(this._store.values());
+    const result = applyListQuery(all, query, "createdAt");
+    return ok({ items: result.items.map((i) => this._clone(i)), nextCursor: result.nextCursor });
+  }
+
   private _clone(entity: PersistedAuthorityLine): PersistedAuthorityLine {
     return JSON.parse(JSON.stringify(entity));
   }

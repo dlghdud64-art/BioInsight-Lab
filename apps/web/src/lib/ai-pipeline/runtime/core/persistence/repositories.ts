@@ -138,6 +138,11 @@ export interface AuthorityRepository {
    * List all authority lines for a baseline.
    */
   findByBaselineId(baselineId: string, query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>>;
+
+  /**
+   * List all authority lines (no filter). Used by integrity check.
+   */
+  listAllAuthorityLines(query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>>;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

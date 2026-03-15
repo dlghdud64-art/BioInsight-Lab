@@ -45,7 +45,10 @@ export type OntologyDiagnosticType =
   | "REPO_FALLBACK_RETAINED_AS_COMPAT"
   | "REPO_FALLBACK_TRIGGERED"
   | "REPO_ONLY_PATH_ENFORCED"
-  | "COMPAT_ONLY_PATH_USED";
+  | "COMPAT_ONLY_PATH_USED"
+  | "COMPAT_PATH_ELIMINATED"
+  | "SNAPSHOT_FIDELITY_RECONCILED"
+  | "AUTHORITY_REPO_QUERY_ENABLED";
 
 export interface OntologyDiagnosticEvent {
   type: OntologyDiagnosticType;
