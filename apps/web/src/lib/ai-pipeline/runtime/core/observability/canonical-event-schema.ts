@@ -125,13 +125,13 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   return { written: true, reasonCode: "AUDIT_WRITE_SUCCESS", eventId: event.eventId };
 }
 
-/** @deprecated RETAINED in P4-4 — use getCanonicalAuditLogFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P4-5 — use getCanonicalAuditLogFromRepo. Soft removal: impl kept for test compat */
 export function getCanonicalAuditLog(filter?: { correlationId?: string; timelineId?: string; eventType?: string }): CanonicalEvent[] {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
-    "legacy_to_canonical", "getCanonicalAuditLog:sync-compat",
-    { retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" }
+    "legacy_to_canonical", "getCanonicalAuditLog:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P4-5" }
   );
   if (!filter) return [..._auditLog];
   return _auditLog.filter((e: CanonicalEvent) => {

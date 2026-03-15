@@ -103,13 +103,13 @@ export async function escalateIncidentAsync(
   return { record: lockResult.data, lockBlocked: false };
 }
 
-/** @deprecated RETAINED in P4-4 — use getIncidentsFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P4-5 — use getIncidentsFromRepo. Soft removal: impl kept for test compat */
 export function getIncidents(): IncidentRecord[] {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "incident-escalation", "incident-adapter", "incident",
-    "legacy_to_canonical", "getIncidents:sync-compat",
-    { retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" }
+    "legacy_to_canonical", "getIncidents:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P4-5" }
   );
   return [..._incidents];
 }

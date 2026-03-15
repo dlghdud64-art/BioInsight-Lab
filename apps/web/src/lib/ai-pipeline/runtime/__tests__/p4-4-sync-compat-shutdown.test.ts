@@ -2,7 +2,7 @@
  * P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction (7 tests)
  *
  * Validates:
- * - SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY: 2 REMOVED + 8 RETAINED
+ * - SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY: 5 REMOVED + 5 RETAINED
  * - SS2: canEnterActiveRuntime throws + emits LEGACY_SYNC_COMPAT_REMOVED
  * - SS3: Retained getCanonicalBaseline emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
  * - SS4: Retained hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
@@ -118,7 +118,7 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
     setupAll();
   });
 
-  it("SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY has 2 REMOVED + 8 RETAINED", function () {
+  it("SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY has 5 REMOVED + 5 RETAINED", function () {
     expect(SYNC_COMPAT_SHUTDOWN_INVENTORY.length).toBe(10);
 
     var removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
@@ -128,19 +128,21 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(2);
-    expect(retained.length).toBe(8);
+    expect(removed.length).toBe(5);
+    expect(retained.length).toBe(5);
 
-    // All REMOVED entries should have removedInSlice P4-4
+    // All REMOVED entries should have removedInSlice P4-4 or P4-5
     removed.forEach(function (e) {
-      expect(e.removedInSlice).toBe("P4-4");
-      expect(e.shutdownPhase).toBe("P4-4");
+      expect(["P4-4", "P4-5"].indexOf(e.removedInSlice) !== -1).toBe(true);
+      expect(e.productionCallerCount).toBe(0);
     });
 
-    // All RETAINED entries should have shutdownPhase P5
+    // All RETAINED entries should have shutdownPhase P5 and exit conditions
     retained.forEach(function (e) {
       expect(e.shutdownPhase).toBe("P5");
       expect(e.retentionReason.length).toBeGreaterThan(0);
+      expect(e.productionCallerCount).toBeGreaterThan(0);
+      expect(e.removalPrecondition.length).toBeGreaterThan(0);
     });
 
     // Each entry should have required fields
@@ -148,6 +150,9 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
       expect(e.functionName).toBeDefined();
       expect(e.moduleName).toBeDefined();
       expect(e.replacedBy).toBeDefined();
+      expect(typeof e.productionCallerCount).toBe("number");
+      expect(typeof e.owner).toBe("string");
+      expect(e.owner.length).toBeGreaterThan(0);
     });
   });
 

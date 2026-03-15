@@ -53,7 +53,8 @@ export type OntologyDiagnosticType =
   | "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON"
   | "SHUTDOWN_INVENTORY_UPDATED"
   | "INCIDENT_ACK_TIMING_GAP_REDUCED"
-  | "INCIDENT_ACK_DELAY_DIAGNOSTIC";
+  | "INCIDENT_ACK_DELAY_DIAGNOSTIC"
+  | "P4_ACCEPTANCE_EVALUATED";
 
 export interface OntologyDiagnosticEvent {
   type: OntologyDiagnosticType;

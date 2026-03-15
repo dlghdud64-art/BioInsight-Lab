@@ -11,7 +11,7 @@
  * - Compat usage diagnostic aggregation
  */
 
-import { getDiagnosticLog } from "./diagnostics";
+import { getDiagnosticLog, emitDiagnostic } from "./diagnostics";
 import type { OntologyDiagnosticType } from "./types";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -355,24 +355,27 @@ export interface SyncCompatShutdownEntry {
   removedInSlice: string;
   retentionReason: string;
   shutdownPhase: string;
+  productionCallerCount: number;
+  removalPrecondition: string;
+  owner: string;
 }
 
 /**
- * P4-4: 10 deprecated sync compat paths — 2 REMOVED (throw stubs), 8 RETAINED (P5).
+ * P4-5: 10 deprecated sync compat paths — 5 REMOVED, 5 RETAINED (P5).
  */
 export const SYNC_COMPAT_SHUTDOWN_INVENTORY: readonly SyncCompatShutdownEntry[] = [
-  // 2 REMOVED in P4-4 (throw stubs — zero production callers verified)
-  { functionName: "canEnterActiveRuntime", moduleName: "snapshot-manager", replacedBy: "canEnterActiveRuntimeFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4" },
-  { functionName: "restoreDryRun", moduleName: "snapshot-manager", replacedBy: "restoreDryRunFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4" },
-  // 8 RETAINED → P5
-  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5" },
-  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 production callers (preconditions, startup, lock-hygiene)", shutdownPhase: "P5" },
-  { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "5+ legacy test suites depend on sync API", shutdownPhase: "P5" },
-  { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "s4/p3-5/p3-6 tests depend on sync API", shutdownPhase: "P5" },
-  { functionName: "getAuditEvents", moduleName: "audit-events", replacedBy: "getAuditEventsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "8 legacy test suites depend on sync API", shutdownPhase: "P5" },
-  { functionName: "getCanonicalAuditLog", moduleName: "canonical-event-schema", replacedBy: "getCanonicalAuditLogFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" },
-  { functionName: "getIncidents", moduleName: "incident-escalation", replacedBy: "getIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" },
-  { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "buildReconstructionView production caller", shutdownPhase: "P5" },
+  // 5 REMOVED — zero production callers verified
+  { functionName: "canEnterActiveRuntime", moduleName: "snapshot-manager", replacedBy: "canEnterActiveRuntimeFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
+  { functionName: "restoreDryRun", moduleName: "snapshot-manager", replacedBy: "restoreDryRunFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
+  { functionName: "getAuditEvents", moduleName: "audit-events", replacedBy: "getAuditEventsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "audit-events" },
+  { functionName: "getCanonicalAuditLog", moduleName: "canonical-event-schema", replacedBy: "getCanonicalAuditLogFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "canonical-event-schema" },
+  { functionName: "getIncidents", moduleName: "incident-escalation", replacedBy: "getIncidentsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "incident-escalation" },
+  // 5 RETAINED → P5 with exit conditions
+  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5", productionCallerCount: 3, removalPrecondition: "Migrate baseline-validator:51, recovery-startup:109, lock-hygiene:283 to getCanonicalBaselineFromRepo", owner: "baseline-registry" },
+  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 production callers (preconditions, startup×2, lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 4, removalPrecondition: "Migrate recovery-preconditions:39, recovery-startup:136+554, lock-hygiene:146 to hasUnacknowledgedIncidentsFromRepo", owner: "incident-escalation" },
+  { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "5 production callers in rollback subsystem", shutdownPhase: "P5", productionCallerCount: 5, removalPrecondition: "Migrate residue-scan:93, rollback-plan-builder:27, rollback-executor:36, rollback-precheck:25, state-reconciliation:84 to getSnapshotFromRepo", owner: "snapshot-manager" },
+  { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (recovery-startup)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate recovery-startup:191 to checkAuthorityIntegrityFromRepo", owner: "authority-registry" },
+  { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (recovery-diagnostics)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate recovery-diagnostics:105 to buildTimelineFromRepo", owner: "canonical-event-schema" },
 ] as const;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -603,6 +606,123 @@ export function evaluateP3Acceptance(): P3FinalAcceptanceSheet {
     legacyShutdownItemCount: LEGACY_SHUTDOWN_PLAN.length,
     legacyShutdownP4Count: p4Items.length,
     legacyShutdownP5Count: p5Items.length,
+    decision,
+    decisionReason,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 10. P4 Final Acceptance Evaluation
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type P4Decision = "P4_ACCEPTED" | "P4_ACCEPTED_WITH_CAVEATS" | "P4_NOT_ACCEPTED";
+
+export interface P4AcceptanceCriterion {
+  name: string;
+  met: boolean;
+  evidence: string;
+}
+
+export interface P4AcceptanceSheet {
+  evaluatedAt: Date;
+  criteria: P4AcceptanceCriterion[];
+  syncCompatInventory: {
+    totalEntries: number;
+    removedCount: number;
+    retainedCount: number;
+    retainedWithExitConditions: number;
+    zeroCallerRetainedCount: number;
+  };
+  decision: P4Decision;
+  decisionReason: string;
+}
+
+/**
+ * Evaluate P4 final acceptance.
+ * All 5 criteria must be met for P4_ACCEPTED.
+ */
+export function evaluateP4Acceptance(): P4AcceptanceSheet {
+  const removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) { return e.status === "REMOVED"; });
+  const retained = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) { return e.status === "RETAINED"; });
+  const zeroCallerRetained = retained.filter(function (e) { return e.productionCallerCount === 0; });
+  const retainedWithExit = retained.filter(function (e) { return e.removalPrecondition.length > 0; });
+  const allHaveFields = SYNC_COMPAT_SHUTDOWN_INVENTORY.every(function (e) {
+    return typeof e.productionCallerCount === "number" &&
+      typeof e.removalPrecondition === "string" &&
+      typeof e.owner === "string" && e.owner.length > 0;
+  });
+
+  const hasAckAsync = REPO_FIRST_CONSUMER_REGISTRY.some(function (e) {
+    return e.functionName === "acknowledgeIncidentAsync";
+  });
+
+  const allRepoOnly = REPO_FALLBACK_INVENTORY.every(function (e) {
+    return e.classification === "REPO_ONLY";
+  }) && REPO_FALLBACK_INVENTORY.length === 6;
+
+  const criteria: P4AcceptanceCriterion[] = [
+    {
+      name: "SYNC_COMPAT_INVENTORY_COMPLETE",
+      met: SYNC_COMPAT_SHUTDOWN_INVENTORY.length === 10 && allHaveFields,
+      evidence: `${SYNC_COMPAT_SHUTDOWN_INVENTORY.length}/10 entries with productionCallerCount + removalPrecondition + owner`,
+    },
+    {
+      name: "ZERO_CALLER_RETAINED_ELIMINATED",
+      met: zeroCallerRetained.length === 0,
+      evidence: `${zeroCallerRetained.length} retained entries with zero production callers; ${removed.length - 2} promoted to REMOVED in P4-5`,
+    },
+    {
+      name: "ACK_TIMING_GAP_REDUCED",
+      met: hasAckAsync,
+      evidence: hasAckAsync
+        ? "acknowledgeIncidentAsync registered in consumer cutover registry (P4-4)"
+        : "acknowledgeIncidentAsync not found in consumer registry",
+    },
+    {
+      name: "REPO_FALLBACK_ALL_REMOVED",
+      met: allRepoOnly,
+      evidence: `${REPO_FALLBACK_INVENTORY.length}/6 repo-first fallback paths classified REPO_ONLY`,
+    },
+    {
+      name: "RETAINED_EXIT_CONDITIONS_DOCUMENTED",
+      met: retained.length > 0 && retainedWithExit.length === retained.length,
+      evidence: `${retainedWithExit.length}/${retained.length} retained entries have documented exit conditions`,
+    },
+  ];
+
+  const metCount = criteria.filter(function (c) { return c.met; }).length;
+
+  let decision: P4Decision;
+  let decisionReason: string;
+
+  if (metCount === criteria.length) {
+    decision = "P4_ACCEPTED";
+    decisionReason = `All ${criteria.length} criteria met; ${removed.length} sync compat REMOVED, ${retained.length} RETAINED with exit conditions`;
+  } else if (metCount >= criteria.length - 1) {
+    decision = "P4_ACCEPTED_WITH_CAVEATS";
+    decisionReason = `${metCount}/${criteria.length} criteria met; review unmet criteria before P5`;
+  } else {
+    decision = "P4_NOT_ACCEPTED";
+    decisionReason = `Only ${metCount}/${criteria.length} criteria met`;
+  }
+
+  emitDiagnostic(
+    "P4_ACCEPTANCE_EVALUATED",
+    "p3-closeout", "shutdown-inventory", "shutdown",
+    "legacy_to_canonical", "evaluateP4Acceptance:" + decision,
+    { decision, removedCount: removed.length, retainedCount: retained.length }
+  );
+
+  return {
+    evaluatedAt: new Date(),
+    criteria,
+    syncCompatInventory: {
+      totalEntries: SYNC_COMPAT_SHUTDOWN_INVENTORY.length,
+      removedCount: removed.length,
+      retainedCount: retained.length,
+      retainedWithExitConditions: retainedWithExit.length,
+      zeroCallerRetainedCount: zeroCallerRetained.length,
+    },
     decision,
     decisionReason,
   };
