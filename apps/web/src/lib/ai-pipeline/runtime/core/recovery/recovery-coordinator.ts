@@ -30,6 +30,9 @@ import { hasUnacknowledgedIncidents, escalateIncident } from "../incidents/incid
 import { withLock, detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
 import { logBridgeFailure } from "../persistence/bridge-logger";
+import { RecoveryOntologyAdapter, toRepositoryPatch as buildRecoveryPatch } from "../ontology/recovery-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
+import type { CreateRecoveryRecordInput } from "../persistence/types";
 import { guardLifecycleTransition, guardCanonicalCombination } from "../runtime/transition-guard";
 import { runResidueScan } from "../rollback/residue-scan";
 import { reconcileState } from "../rollback/state-reconciliation";
@@ -48,52 +51,14 @@ let _lastPersistedUpdatedAt: Date | null = null;
 // Persistence Helper — Repository-First Write
 // ══════════════════════════════════════════════════════════════════════════════
 
-function mapRecordToCreateInput(record: RecoveryRecord): Record<string, unknown> {
-  return {
-    recoveryId: record.recoveryId,
-    correlationId: record.correlationId,
-    incidentId: record.incidentId || null,
-    baselineId: record.baselineId,
-    lifecycleState: "INCIDENT_LOCKDOWN",
-    releaseMode: "FULL_ACTIVE_STABILIZATION",
-    recoveryState: record.currentState,
-    recoveryStage: record.stages.length > 0 ? record.stages[record.stages.length - 1].stage : null,
-    lockKey: null,
-    lockToken: null,
-    operatorId: record.actor,
-    overrideUsed: !!record.overrideMetadata,
-    overrideReason: record.overrideMetadata ? record.overrideMetadata.overrideReason : null,
-    signOffMetadata: record.overrideMetadata ? record.overrideMetadata.signOffMeta : null,
-    startedAt: record.startedAt,
-    completedAt: record.completedAt || null,
-    lastHeartbeatAt: null,
-    failureReasonCode: record.failReason || null,
-    stageResults: record.stages.length > 0 ? record.stages : null,
-    preconditionResults: record.preconditionResults.length > 0 ? record.preconditionResults : null,
-  };
+function mapRecordToCreateInput(record: RecoveryRecord): CreateRecoveryRecordInput {
+  const canonical = RecoveryOntologyAdapter.fromLegacy(record);
+  return RecoveryOntologyAdapter.toRepositoryInput(canonical);
 }
 
 function mapRecordToPatch(record: RecoveryRecord, overrides?: Record<string, unknown>): Record<string, unknown> {
-  const patch: Record<string, unknown> = {
-    recoveryState: record.currentState,
-    recoveryStage: record.stages.length > 0 ? record.stages[record.stages.length - 1].stage : null,
-    failureReasonCode: record.failReason || null,
-    completedAt: record.completedAt || null,
-    stageResults: record.stages.length > 0 ? record.stages : null,
-    preconditionResults: record.preconditionResults.length > 0 ? record.preconditionResults : null,
-    overrideUsed: !!record.overrideMetadata,
-    overrideReason: record.overrideMetadata ? record.overrideMetadata.overrideReason : null,
-    signOffMetadata: record.overrideMetadata ? record.overrideMetadata.signOffMeta : null,
-    lastHeartbeatAt: new Date(),
-  };
-  if (overrides) {
-    for (const key in overrides) {
-      if (Object.prototype.hasOwnProperty.call(overrides, key)) {
-        patch[key] = overrides[key];
-      }
-    }
-  }
-  return patch;
+  const canonical = RecoveryOntologyAdapter.fromLegacy(record);
+  return buildRecoveryPatch(canonical, overrides);
 }
 
 /**
@@ -110,7 +75,7 @@ function persistRecoveryState(
     const adapters = getPersistenceAdapters();
     if (action === "CREATE") {
       const input = mapRecordToCreateInput(record);
-      adapters.recoveryRecord.saveRecoveryRecord(input as any).then(function (result: any) {
+      adapters.recoveryRecord.saveRecoveryRecord(input).then(function (result: any) {
         if (result.ok) {
           _lastPersistedId = result.data.id;
           _lastPersistedUpdatedAt = result.data.updatedAt;
@@ -168,7 +133,7 @@ async function persistRecoveryStateAsync(
     const adapters = getPersistenceAdapters();
     if (action === "CREATE") {
       const input = mapRecordToCreateInput(record);
-      const result = await adapters.recoveryRecord.saveRecoveryRecord(input as any);
+      const result = await adapters.recoveryRecord.saveRecoveryRecord(input);
       if (result.ok) {
         _lastPersistedId = result.data.id;
         _lastPersistedUpdatedAt = result.data.updatedAt;
@@ -824,28 +789,22 @@ export async function getRecoveryStatusAsync(): Promise<RecoveryRecord | null> {
     const adapters = getPersistenceAdapters();
     const active = await adapters.recoveryRecord.findActiveRecovery();
     if (active) {
-      // Map back to RecoveryRecord shape for compatibility
-      return {
-        recoveryId: active.recoveryId,
-        correlationId: active.correlationId,
-        actor: active.operatorId,
-        reason: "",
-        currentState: active.recoveryState as RecoveryState,
-        baselineId: active.baselineId,
-        incidentId: active.incidentId || undefined,
-        preconditionResults: (active.preconditionResults as any[]) || [],
-        stages: (active.stageResults as any[]) || [],
-        startedAt: active.startedAt,
-        completedAt: active.completedAt || undefined,
-        failReason: active.failureReasonCode || undefined,
-      };
+      // P3 Slice 1: ontology adapter translation (persisted → canonical → legacy)
+      const canonical = RecoveryOntologyAdapter.fromPersisted(active);
+      return RecoveryOntologyAdapter.toLegacy(canonical);
     }
   } catch (err) {
     logBridgeFailure("recovery-coordinator", "getRecoveryStatusAsync", err);
   }
-  // Memory fallback
+  // Memory fallback — emit diagnostic for observability
   if (_recoveryRecord) {
     logBridgeFailure("recovery-coordinator", "getRecoveryStatusAsync:fallback", "using memory shim");
+    emitDiagnostic(
+      "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+      "recovery-coordinator", "recovery-adapter", "recovery",
+      "repository_to_canonical", "memory shim fallback in getRecoveryStatusAsync",
+      { entityId: _recoveryRecord.recoveryId, fallbackUsed: true }
+    );
   }
   return _recoveryRecord ? { ..._recoveryRecord } : null;
 }

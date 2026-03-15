@@ -17,7 +17,8 @@ import type {
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { BaselineOntologyAdapter } from "../ontology/baseline-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── In-memory store (legacy — kept for backward compatibility) ──
 // TODO(Slice-1F): remove legacy store, read from repository directly
@@ -114,34 +115,12 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
 
   _canonicalBaseline = registry;
 
-  // Dual-write: persist to repository (fire-and-forget)
+  // Dual-write: persist to repository via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.baseline.saveBaseline({
-      baselineSource: registry.baselineSource,
-      baselineVersion: registry.baselineVersion,
-      baselineHash: registry.baselineHash,
-      lifecycleState: registry.lifecycleState,
-      releaseMode: registry.releaseMode,
-      baselineStatus: registry.baselineStatus,
-      activeSnapshotId: registry.activeSnapshotId || null,
-      rollbackSnapshotId: registry.rollbackSnapshotId || null,
-      freezeReason: registry.freezeReason || null,
-      activePathManifestId: registry.activePathManifestId || null,
-      policySetVersion: registry.policySetVersion || null,
-      routingRuleVersion: registry.routingRuleVersion || null,
-      authorityRegistryVersion: registry.authorityRegistryVersion || null,
-      stabilizationOnly: true,
-      featureExpansionAllowed: false,
-      experimentalPathAllowed: false,
-      structuralRefactorAllowed: false,
-      devOnlyPathAllowed: false,
-      emergencyRollbackAllowed: true,
-      containmentPriorityEnabled: true,
-      auditStrictMode: true,
-      mergeGateStrictMode: true,
-      canonicalSlot: "CANONICAL",
-    }).catch(function (err: unknown) {
+    const canonical = BaselineOntologyAdapter.fromLegacy(registry);
+    const input = BaselineOntologyAdapter.toRepositoryInput(canonical);
+    adapters.baseline.saveBaseline(input).catch(function (err: unknown) {
       logBridgeFailure("baseline-registry", "saveBaseline", err);
     });
   } catch (err) {
@@ -222,31 +201,22 @@ export async function getCanonicalBaselineFromRepo(): Promise<BaselineRegistry |
     const adapters = getPersistenceAdapters();
     const result = await adapters.baseline.getCanonicalBaseline();
     if (result.ok) {
-      const d = result.data;
-      return {
-        canonicalBaselineId: d.id,
-        baselineVersion: d.baselineVersion,
-        baselineHash: d.baselineHash,
-        baselineSource: "PACKAGE1_COMPLETE_NEW_AI_INTEGRATED",
-        baselineStatus: d.baselineStatus as BaselineStatus,
-        lifecycleState: d.lifecycleState as LifecycleState,
-        releaseMode: d.releaseMode as ReleaseMode,
-        activeSnapshotId: d.activeSnapshotId || "",
-        rollbackSnapshotId: d.rollbackSnapshotId || "",
-        freezeReason: d.freezeReason || "",
-        activePathManifestId: d.activePathManifestId || "",
-        policySetVersion: d.policySetVersion || "",
-        routingRuleVersion: d.routingRuleVersion || "",
-        authorityRegistryVersion: d.authorityRegistryVersion || "",
-        documentType: "",
-        createdAt: normalizeDate(d.createdAt),
-        updatedAt: normalizeDate(d.updatedAt),
-      };
+      // P3 Slice 1: ontology adapter translation (persisted → canonical → legacy)
+      const canonical = BaselineOntologyAdapter.fromPersisted(result.data);
+      return BaselineOntologyAdapter.toLegacy(canonical);
     }
   } catch (err) {
     logBridgeFailure("baseline-registry", "getCanonicalBaselineFromRepo", err);
   }
-  // Fallback to legacy store
+  // Fallback to legacy store — emit diagnostic
+  if (_canonicalBaseline) {
+    emitDiagnostic(
+      "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+      "baseline-registry", "baseline-adapter", "baseline",
+      "repository_to_canonical", "memory fallback in getCanonicalBaselineFromRepo",
+      { entityId: _canonicalBaseline.canonicalBaselineId, fallbackUsed: true }
+    );
+  }
   return _canonicalBaseline;
 }
 
