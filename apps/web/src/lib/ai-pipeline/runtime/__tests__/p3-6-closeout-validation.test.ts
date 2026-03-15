@@ -207,7 +207,7 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     await new Promise(function (r) { setTimeout(r, 50); });
     _resetDiagnostics();
 
-    // Exercise compat paths
+    // Exercise retained compat paths (all emit LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON)
     getSnapshot(pair.active.snapshotId);
     getCanonicalBaseline();
     checkAuthorityIntegrity();
@@ -217,8 +217,8 @@ describe("P3 Slice 6 — Closeout Validation", function () {
 
     var summary = getCompatUsageSummary();
 
-    // Should have tracked compat calls
-    expect(summary.totalCompatCalls).toBeGreaterThanOrEqual(3);
+    // Should have tracked retained compat calls (LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON)
+    expect(summary.totalSyncCompatRetained).toBeGreaterThanOrEqual(3);
 
     // Should have tracked repo-first usage
     expect(summary.totalRepoFirstUsed).toBeGreaterThanOrEqual(1);
@@ -226,10 +226,10 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     // byModule should have entries
     expect(Object.keys(summary.byModule).length).toBeGreaterThanOrEqual(2);
 
-    // snapshot-manager should show both compat and repo-first
+    // snapshot-manager should show retained compat and repo-first
     var snapshotModule = summary.byModule["snapshot-manager"];
     expect(snapshotModule).toBeDefined();
-    expect(snapshotModule.compatCalls).toBeGreaterThanOrEqual(1);
+    expect(snapshotModule.syncCompatRetained).toBeGreaterThanOrEqual(1);
     expect(snapshotModule.repoFirstUsed).toBeGreaterThanOrEqual(1);
   });
 
@@ -274,7 +274,7 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     // Coverage numbers
     expect(sheet.ontologyCoverage.totalEntityTypes).toBe(7);
     expect(sheet.ontologyCoverage.coveredEntityTypes).toBe(7);
-    expect(sheet.ontologyCoverage.totalRepoFirstConsumers).toBe(12);
+    expect(sheet.ontologyCoverage.totalRepoFirstConsumers).toBe(13);
     expect(sheet.ontologyCoverage.totalDeprecatedSyncPaths).toBe(10);
     expect(sheet.ontologyCoverage.totalDirectAccessGuardrails).toBe(6);
 

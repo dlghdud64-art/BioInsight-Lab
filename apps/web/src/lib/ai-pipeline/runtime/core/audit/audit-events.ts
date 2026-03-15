@@ -63,13 +63,13 @@ export function emitStabilizationAuditEvent(input: EmitAuditEventInput): Stabili
   return event;
 }
 
-/** @deprecated Use getAuditEventsFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use getAuditEventsFromRepo. Removal: P5 */
 export function getAuditEvents(filter?: { eventType?: StabilizationAuditEventType; documentType?: string }): StabilizationAuditEvent[] {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "audit-events", "stabilization-audit-adapter", "stabilization-audit",
     "legacy_to_canonical", "getAuditEvents:sync-compat",
-    {}
+    { retentionReason: "8 legacy test suites depend on sync API", shutdownPhase: "P5" }
   );
   if (!filter) return [..._auditEvents];
 

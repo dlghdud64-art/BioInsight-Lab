@@ -130,13 +130,13 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
   return registry;
 }
 
-/** 현재 canonical baseline 조회. 없으면 null. (legacy sync — compat) */
+/** @deprecated RETAINED in P4-4 — use getCanonicalBaselineFromRepo. Removal: P5 */
 export function getCanonicalBaseline(): BaselineRegistry | null {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "baseline-registry", "baseline-adapter", "baseline",
     "legacy_to_canonical", "getCanonicalBaseline:sync-compat",
-    { entityId: _canonicalBaseline?.canonicalBaselineId ?? "none" }
+    { retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5" }
   );
   return _canonicalBaseline;
 }

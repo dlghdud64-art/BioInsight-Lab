@@ -103,29 +103,36 @@ export async function escalateIncidentAsync(
   return { record: lockResult.data, lockBlocked: false };
 }
 
-/** @deprecated Use getIncidentsFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use getIncidentsFromRepo. Removal: P5 */
 export function getIncidents(): IncidentRecord[] {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "incident-escalation", "incident-adapter", "incident",
     "legacy_to_canonical", "getIncidents:sync-compat",
-    {}
+    { retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" }
   );
   return [..._incidents];
 }
 
-/** @deprecated Use hasUnacknowledgedIncidentsFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use hasUnacknowledgedIncidentsFromRepo. Removal: P5 */
 export function hasUnacknowledgedIncidents(): boolean {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "incident-escalation", "incident-adapter", "incident",
     "legacy_to_canonical", "hasUnacknowledgedIncidents:sync-compat",
-    {}
+    { retentionReason: "4 production callers (preconditions, startup, lock-hygiene)", shutdownPhase: "P5" }
   );
   return _incidents.some((i: IncidentRecord) => !i.acknowledged);
 }
 
+/** @deprecated Prefer acknowledgeIncidentAsync for repo-first deterministic ack */
 export function acknowledgeIncident(incidentId: string): boolean {
+  emitDiagnostic(
+    "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "acknowledgeIncident:fire-and-forget",
+    { entityId: incidentId, fallbackUsed: false, reasonCode: "FIRE_AND_FORGET_ACK" }
+  );
   const incident = _incidents.find((i: IncidentRecord) => i.incidentId === incidentId);
   if (incident) {
     incident.acknowledged = true;
@@ -156,6 +163,67 @@ export function acknowledgeIncident(incidentId: string): boolean {
     return true;
   }
   return false;
+}
+
+// ── Repository-First Async Ack (P4-4) ──
+
+/**
+ * Repo-first deterministic acknowledgement.
+ * Awaits repo write before memory update — no fire-and-forget gap.
+ */
+export async function acknowledgeIncidentAsync(incidentId: string): Promise<{
+  success: boolean;
+  repoWriteMs: number;
+  diagnostic: string;
+}> {
+  const start = Date.now();
+  try {
+    const adapters = getPersistenceAdapters();
+    const findResult = await adapters.incident.findIncidentByIncidentId(incidentId);
+    if (!findResult.ok) {
+      emitDiagnostic(
+        "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+        "incident-escalation", "incident-adapter", "incident",
+        "repository_to_canonical", "acknowledgeIncidentAsync:not-found",
+        { entityId: incidentId, fallbackUsed: false, reasonCode: "INCIDENT_NOT_FOUND_IN_REPO" }
+      );
+      return { success: false, repoWriteMs: Date.now() - start, diagnostic: "INCIDENT_NOT_FOUND_IN_REPO" };
+    }
+    const updatedAt = findResult.data.updatedAt instanceof Date
+      ? findResult.data.updatedAt
+      : new Date(findResult.data.updatedAt as unknown as string);
+    const ackResult = await adapters.incident.acknowledgeIncident(incidentId, "system", updatedAt);
+    if (!ackResult.ok) {
+      emitDiagnostic(
+        "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+        "incident-escalation", "incident-adapter", "incident",
+        "repository_to_canonical", "acknowledgeIncidentAsync:repo-ack-failed",
+        { entityId: incidentId, fallbackUsed: false, reasonCode: "REPO_ACK_FAILED" }
+      );
+      return { success: false, repoWriteMs: Date.now() - start, diagnostic: "REPO_ACK_FAILED" };
+    }
+    // Memory update AFTER repo success (repo-first)
+    const incident = _incidents.find((i: IncidentRecord) => i.incidentId === incidentId);
+    if (incident) {
+      incident.acknowledged = true;
+    }
+    emitDiagnostic(
+      "INCIDENT_ACK_TIMING_GAP_REDUCED",
+      "incident-escalation", "incident-adapter", "incident",
+      "repository_to_canonical", "acknowledgeIncidentAsync:success",
+      { entityId: incidentId, fallbackUsed: false, reasonCode: "ACK_REPO_FIRST" }
+    );
+    return { success: true, repoWriteMs: Date.now() - start, diagnostic: "ACK_REPO_FIRST" };
+  } catch (err) {
+    logBridgeFailure("incident-escalation", "acknowledgeIncidentAsync", err);
+    emitDiagnostic(
+      "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+      "incident-escalation", "incident-adapter", "incident",
+      "repository_to_canonical", "acknowledgeIncidentAsync:error",
+      { entityId: incidentId, fallbackUsed: false, reasonCode: "ACK_ERROR" }
+    );
+    return { success: false, repoWriteMs: Date.now() - start, diagnostic: "ACK_ERROR" };
+  }
 }
 
 // ── Repository-First Async Read ──

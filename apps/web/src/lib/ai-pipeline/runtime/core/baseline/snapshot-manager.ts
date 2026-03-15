@@ -114,12 +114,13 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
 
 // ── Snapshot Lookup ──
 
+/** @deprecated RETAINED in P4-4 — use getSnapshotFromRepo. Removal: P5 */
 export function getSnapshot(snapshotId: string): BaselineSnapshot | null {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "snapshot-manager", "snapshot-adapter", "snapshot",
     "legacy_to_canonical", "getSnapshot:sync-compat",
-    { entityId: snapshotId }
+    { entityId: snapshotId, retentionReason: "5+ legacy test suites depend on sync API", shutdownPhase: "P5" }
   );
   return _snapshots.get(snapshotId) ?? null;
 }
@@ -162,67 +163,29 @@ export interface RestoreDryRunResult {
   reason: string;
 }
 
+/** @deprecated REMOVED in P4-4 — use restoreDryRunFromRepo */
 export function restoreDryRun(snapshotId: string): RestoreDryRunResult {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "snapshot-manager", "snapshot-adapter", "snapshot",
-    "legacy_to_canonical", "restoreDryRun:sync-compat",
-    { entityId: snapshotId }
+    "legacy_to_canonical", "restoreDryRun:removed",
+    { entityId: snapshotId, removalStatus: "REMOVED", shutdownPhase: "P4-4" }
   );
-  const snapshot = _snapshots.get(snapshotId);
-  if (!snapshot) {
-    return {
-      success: false,
-      snapshotId,
-      scopeResults: [],
-      reason: `SNAPSHOT_NOT_FOUND: ${snapshotId}`,
-    };
-  }
-
-  const scopeResults = snapshot.scopes.map((entry: SnapshotScopeEntry) => {
-    const recomputed = computeScopeChecksum(entry.scope, entry.data);
-    const match = recomputed === entry.checksum;
-    return {
-      scope: entry.scope,
-      checksumMatch: match,
-      restorable: match && Object.keys(entry.data).length > 0,
-    };
-  });
-
-  const allRestorable = scopeResults.every((r) => r.restorable);
-
-  return {
-    success: allRestorable,
-    snapshotId,
-    scopeResults,
-    reason: allRestorable
-      ? "all scopes restorable"
-      : `${scopeResults.filter((r) => !r.restorable).length} scope(s) not restorable`,
-  };
+  throw new Error("SYNC_COMPAT_REMOVED: restoreDryRun — use restoreDryRunFromRepo");
 }
 
-/** active runtime 진입 가능 여부 (snapshot pair 필수) */
+/** @deprecated REMOVED in P4-4 — use canEnterActiveRuntimeFromRepo */
 export function canEnterActiveRuntime(
   activeSnapshotId: string,
   rollbackSnapshotId: string
 ): { allowed: boolean; reason: string } {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "snapshot-manager", "snapshot-adapter", "snapshot",
-    "legacy_to_canonical", "canEnterActiveRuntime:sync-compat",
-    { entityId: activeSnapshotId }
+    "legacy_to_canonical", "canEnterActiveRuntime:removed",
+    { entityId: activeSnapshotId, removalStatus: "REMOVED", shutdownPhase: "P4-4" }
   );
-  const pairCheck = verifySnapshotPairExists(activeSnapshotId, rollbackSnapshotId);
-  if (!pairCheck.exists) {
-    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ${pairCheck.reason}` };
-  }
-
-  const dryRun = restoreDryRun(rollbackSnapshotId);
-  if (!dryRun.success) {
-    return { allowed: false, reason: `BLOCKED: rollback restore dry-run failed — ${dryRun.reason}` };
-  }
-
-  return { allowed: true, reason: "snapshot pair valid + rollback restorable" };
+  throw new Error("SYNC_COMPAT_REMOVED: canEnterActiveRuntime — use canEnterActiveRuntimeFromRepo");
 }
 
 // ── Repository-First Async Read (P3-3B) ──

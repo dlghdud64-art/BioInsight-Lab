@@ -407,13 +407,13 @@ export interface IntegrityReport {
   detail: string;
 }
 
-/** @deprecated Use checkAuthorityIntegrityFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use checkAuthorityIntegrityFromRepo. Removal: P5 */
 export function checkAuthorityIntegrity(): IntegrityReport {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "authority-registry", "authority-adapter", "authority",
     "legacy_to_canonical", "checkAuthorityIntegrity:sync-compat",
-    {}
+    { retentionReason: "s4/p3-5/p3-6 tests depend on sync API", shutdownPhase: "P5" }
   );
   const lines = Array.from(_registry.values());
   const activeByEntity = new Map<string, number>();

@@ -67,6 +67,8 @@ export const REPO_FIRST_CONSUMER_REGISTRY: readonly RepoFirstConsumerEntry[] = [
   { functionName: "hasUnacknowledgedIncidentsFromRepo", moduleName: "incident-escalation", entityType: "incident", cutoverSlice: "P3-5" },
   { functionName: "checkAuthorityIntegrityFromRepo", moduleName: "authority-registry", entityType: "authority", cutoverSlice: "P3-5" },
   { functionName: "buildTimelineFromRepo", moduleName: "canonical-event-schema", entityType: "canonical-audit", cutoverSlice: "P3-5" },
+  // P4-4
+  { functionName: "acknowledgeIncidentAsync", moduleName: "incident-escalation", entityType: "incident", cutoverSlice: "P4-4" },
 ] as const;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -342,7 +344,39 @@ export const REPO_FALLBACK_INVENTORY: readonly RepoFallbackEntry[] = [
 ] as const;
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 7. Compat Usage Diagnostic Aggregation
+// 7. Sync Compat Shutdown Inventory (P4-4)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface SyncCompatShutdownEntry {
+  functionName: string;
+  moduleName: string;
+  replacedBy: string;
+  status: "REMOVED" | "RETAINED";
+  removedInSlice: string;
+  retentionReason: string;
+  shutdownPhase: string;
+}
+
+/**
+ * P4-4: 10 deprecated sync compat paths — 2 REMOVED (throw stubs), 8 RETAINED (P5).
+ */
+export const SYNC_COMPAT_SHUTDOWN_INVENTORY: readonly SyncCompatShutdownEntry[] = [
+  // 2 REMOVED in P4-4 (throw stubs — zero production callers verified)
+  { functionName: "canEnterActiveRuntime", moduleName: "snapshot-manager", replacedBy: "canEnterActiveRuntimeFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4" },
+  { functionName: "restoreDryRun", moduleName: "snapshot-manager", replacedBy: "restoreDryRunFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4" },
+  // 8 RETAINED → P5
+  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5" },
+  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 production callers (preconditions, startup, lock-hygiene)", shutdownPhase: "P5" },
+  { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "5+ legacy test suites depend on sync API", shutdownPhase: "P5" },
+  { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "s4/p3-5/p3-6 tests depend on sync API", shutdownPhase: "P5" },
+  { functionName: "getAuditEvents", moduleName: "audit-events", replacedBy: "getAuditEventsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "8 legacy test suites depend on sync API", shutdownPhase: "P5" },
+  { functionName: "getCanonicalAuditLog", moduleName: "canonical-event-schema", replacedBy: "getCanonicalAuditLogFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" },
+  { functionName: "getIncidents", moduleName: "incident-escalation", replacedBy: "getIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" },
+  { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "buildReconstructionView production caller", shutdownPhase: "P5" },
+] as const;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 8. Compat Usage Diagnostic Aggregation
 // ══════════════════════════════════════════════════════════════════════════════
 
 export interface CompatUsageSummary {
@@ -353,6 +387,9 @@ export interface CompatUsageSummary {
   totalRepoOnlyEnforced: number;
   totalCompatOnlyUsed: number;
   totalRepoFallbackRemoved: number;
+  totalSyncCompatRemoved: number;
+  totalSyncCompatRetained: number;
+  totalAckTimingDiagnostics: number;
   byModule: Record<string, {
     compatCalls: number;
     directAccessBlocked: number;
@@ -361,6 +398,9 @@ export interface CompatUsageSummary {
     repoOnlyEnforced: number;
     compatOnlyUsed: number;
     repoFallbackRemoved: number;
+    syncCompatRemoved: number;
+    syncCompatRetained: number;
+    ackTimingDiagnostics: number;
   }>;
 }
 
@@ -374,7 +414,7 @@ export function getCompatUsageSummary(): CompatUsageSummary {
 
   function ensureModule(mod: string) {
     if (!byModule[mod]) {
-      byModule[mod] = { compatCalls: 0, directAccessBlocked: 0, cutoverApplied: 0, repoFirstUsed: 0, repoOnlyEnforced: 0, compatOnlyUsed: 0, repoFallbackRemoved: 0 };
+      byModule[mod] = { compatCalls: 0, directAccessBlocked: 0, cutoverApplied: 0, repoFirstUsed: 0, repoOnlyEnforced: 0, compatOnlyUsed: 0, repoFallbackRemoved: 0, syncCompatRemoved: 0, syncCompatRetained: 0, ackTimingDiagnostics: 0 };
     }
     return byModule[mod]!;
   }
@@ -386,6 +426,9 @@ export function getCompatUsageSummary(): CompatUsageSummary {
   let totalRepoOnly = 0;
   let totalCompatOnly = 0;
   let totalFallbackRemoved = 0;
+  let totalSyncRemoved = 0;
+  let totalSyncRetained = 0;
+  let totalAckTiming = 0;
 
   for (const event of log) {
     const m = ensureModule(event.moduleName);
@@ -410,6 +453,15 @@ export function getCompatUsageSummary(): CompatUsageSummary {
     } else if (event.type === "REPO_FALLBACK_REMOVED" || event.type === "COMPAT_PATH_ELIMINATED") {
       m.repoFallbackRemoved++;
       totalFallbackRemoved++;
+    } else if (event.type === "LEGACY_SYNC_COMPAT_REMOVED") {
+      m.syncCompatRemoved++;
+      totalSyncRemoved++;
+    } else if (event.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON") {
+      m.syncCompatRetained++;
+      totalSyncRetained++;
+    } else if (event.type === "INCIDENT_ACK_TIMING_GAP_REDUCED" || event.type === "INCIDENT_ACK_DELAY_DIAGNOSTIC") {
+      m.ackTimingDiagnostics++;
+      totalAckTiming++;
     }
   }
 
@@ -421,12 +473,15 @@ export function getCompatUsageSummary(): CompatUsageSummary {
     totalRepoOnlyEnforced: totalRepoOnly,
     totalCompatOnlyUsed: totalCompatOnly,
     totalRepoFallbackRemoved: totalFallbackRemoved,
+    totalSyncCompatRemoved: totalSyncRemoved,
+    totalSyncCompatRetained: totalSyncRetained,
+    totalAckTimingDiagnostics: totalAckTiming,
     byModule,
   };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 7. P3 Final Acceptance Evaluation
+// 9. P3 Final Acceptance Evaluation
 // ══════════════════════════════════════════════════════════════════════════════
 
 export type P3Decision = "P3_FINAL_ACCEPTED" | "P3_ACCEPTED_WITH_DEFERRED_RISKS" | "P3_NOT_ACCEPTED";

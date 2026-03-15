@@ -1,0 +1,262 @@
+/**
+ * P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction (7 tests)
+ *
+ * Validates:
+ * - SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY: 2 REMOVED + 8 RETAINED
+ * - SS2: canEnterActiveRuntime throws + emits LEGACY_SYNC_COMPAT_REMOVED
+ * - SS3: Retained getCanonicalBaseline emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
+ * - SS4: Retained hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
+ * - SS5: Retained getSnapshot emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
+ * - SS6: acknowledgeIncidentAsync repo-first + emits INCIDENT_ACK_TIMING_GAP_REDUCED
+ * - SS7: Repo-first contract intact after compat elimination
+ */
+
+var { describe, it, expect, beforeEach } = require("@jest/globals");
+
+var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
+var { createMemoryAdapters } = require("../core/persistence/memory");
+var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
+var { bootstrapPersistence, _resetPersistenceBootstrap } = require("../core/persistence/bootstrap");
+var {
+  createSnapshotPair,
+  getSnapshot,
+  getSnapshotFromRepo,
+  _resetSnapshotStore,
+} = require("../core/baseline/snapshot-manager");
+var {
+  createCanonicalBaseline,
+  getCanonicalBaseline,
+  getCanonicalBaselineFromRepo,
+  _resetBaselineRegistry,
+} = require("../core/baseline/baseline-registry");
+var {
+  canEnterActiveRuntime,
+} = require("../core/baseline/snapshot-manager");
+var {
+  createAuthorityLine,
+  checkAuthorityIntegrityFromRepo,
+  _resetAuthorityRegistry,
+} = require("../core/authority/authority-registry");
+var {
+  escalateIncident,
+  hasUnacknowledgedIncidents,
+  acknowledgeIncidentAsync,
+  _resetIncidents,
+} = require("../core/incidents/incident-escalation");
+var {
+  _resetAuditEvents,
+} = require("../core/audit/audit-events");
+var {
+  _resetCanonicalAudit,
+} = require("../core/observability/canonical-event-schema");
+var {
+  _resetRecoveryCoordinator,
+} = require("../core/recovery/recovery-coordinator");
+var {
+  _resetMutationFreeze,
+} = require("../core/containment/mutation-freeze");
+var {
+  SYNC_COMPAT_SHUTDOWN_INVENTORY,
+} = require("../core/ontology/p3-closeout");
+
+// ── Test Fixtures ──
+
+var SCOPE_DATA = {
+  CONFIG: { maxRetries: 3, timeout: 5000 },
+  FLAGS: { enableNewUI: true, darkMode: false },
+  ROUTING: { primary: "us-east-1", fallback: "eu-west-1" },
+  AUTHORITY: { owner: "admin", level: "root" },
+  POLICY: { retention: 90, encryption: "AES256" },
+  QUEUE_TOPOLOGY: { queues: ["intake", "process", "output"], concurrency: 4 },
+};
+
+function setupAll() {
+  _resetDiagnostics();
+  _resetPersistenceBootstrap();
+  _resetAdapterRegistry();
+  _resetBaselineRegistry();
+  _resetSnapshotStore();
+  _resetAuthorityRegistry();
+  _resetIncidents();
+  _resetAuditEvents();
+  _resetRecoveryCoordinator();
+  _resetMutationFreeze();
+  _resetCanonicalAudit();
+  registerAdapterFactory(createMemoryAdapters);
+  bootstrapPersistence();
+}
+
+function createFullScenario() {
+  var pair = createSnapshotPair({
+    baselineId: "bl-ss-test",
+    capturedBy: "op-ss",
+    scopeData: SCOPE_DATA,
+  });
+
+  var baseline = createCanonicalBaseline({
+    documentType: "TEST",
+    baselineVersion: "v1.0",
+    activeSnapshotId: pair.active.snapshotId,
+    rollbackSnapshotId: pair.rollback.snapshotId,
+    activePathManifestId: "manifest-1",
+    policySetVersion: "p1",
+    routingRuleVersion: "r1",
+    authorityRegistryVersion: "a1",
+    freezeReason: "ss test freeze",
+    performedBy: "tester",
+  });
+
+  createAuthorityLine("line-ss-1", "auth-A", "bl-ss-test", "tester", "corr-ss");
+
+  return { pair: pair, baseline: baseline };
+}
+
+// ── Suite ──
+
+describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", function () {
+  beforeEach(function () {
+    setupAll();
+  });
+
+  it("SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY has 2 REMOVED + 8 RETAINED", function () {
+    expect(SYNC_COMPAT_SHUTDOWN_INVENTORY.length).toBe(10);
+
+    var removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
+      return e.status === "REMOVED";
+    });
+    var retained = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
+      return e.status === "RETAINED";
+    });
+
+    expect(removed.length).toBe(2);
+    expect(retained.length).toBe(8);
+
+    // All REMOVED entries should have removedInSlice P4-4
+    removed.forEach(function (e) {
+      expect(e.removedInSlice).toBe("P4-4");
+      expect(e.shutdownPhase).toBe("P4-4");
+    });
+
+    // All RETAINED entries should have shutdownPhase P5
+    retained.forEach(function (e) {
+      expect(e.shutdownPhase).toBe("P5");
+      expect(e.retentionReason.length).toBeGreaterThan(0);
+    });
+
+    // Each entry should have required fields
+    SYNC_COMPAT_SHUTDOWN_INVENTORY.forEach(function (e) {
+      expect(e.functionName).toBeDefined();
+      expect(e.moduleName).toBeDefined();
+      expect(e.replacedBy).toBeDefined();
+    });
+  });
+
+  it("SS2: canEnterActiveRuntime throws SYNC_COMPAT_REMOVED + emits diagnostic", function () {
+    _resetDiagnostics();
+
+    expect(function () {
+      canEnterActiveRuntime("snap-a", "snap-b");
+    }).toThrow("SYNC_COMPAT_REMOVED");
+
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("canEnterActiveRuntime:removed") !== -1;
+    });
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("snapshot-manager");
+  });
+
+  it("SS3: retained getCanonicalBaseline emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+    createFullScenario();
+    _resetDiagnostics();
+
+    var baseline = getCanonicalBaseline();
+    expect(baseline).not.toBeNull();
+
+    var retainedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
+        d.reasonCode.indexOf("getCanonicalBaseline:sync-compat") !== -1;
+    });
+    expect(retainedDiags.length).toBe(1);
+    expect(retainedDiags[0].moduleName).toBe("baseline-registry");
+  });
+
+  it("SS4: retained hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+    createFullScenario();
+    _resetDiagnostics();
+
+    var result = hasUnacknowledgedIncidents();
+    expect(typeof result).toBe("boolean");
+
+    var retainedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
+        d.reasonCode.indexOf("hasUnacknowledgedIncidents:sync-compat") !== -1;
+    });
+    expect(retainedDiags.length).toBe(1);
+    expect(retainedDiags[0].moduleName).toBe("incident-escalation");
+  });
+
+  it("SS5: retained getSnapshot emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+    var scenario = createFullScenario();
+    _resetDiagnostics();
+
+    var snap = getSnapshot(scenario.pair.active.snapshotId);
+    expect(snap).not.toBeNull();
+
+    var retainedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
+        d.reasonCode.indexOf("getSnapshot:sync-compat") !== -1;
+    });
+    expect(retainedDiags.length).toBe(1);
+    expect(retainedDiags[0].moduleName).toBe("snapshot-manager");
+  });
+
+  it("SS6: acknowledgeIncidentAsync repo-first + emits INCIDENT_ACK_TIMING_GAP_REDUCED", async function () {
+    var scenario = createFullScenario();
+
+    // Escalate an incident so there's something to acknowledge
+    var incident = escalateIncident("THRESHOLD_EXCEEDED", "corr-ss6", "tester", "test-ss6-breach");
+    var incidentId = incident.incidentId;
+
+    await new Promise(function (r) { setTimeout(r, 50); });
+    _resetDiagnostics();
+
+    var result = await acknowledgeIncidentAsync(incidentId);
+
+    expect(result.success).toBe(true);
+    expect(result.repoWriteMs).toBeGreaterThanOrEqual(0);
+    expect(result.diagnostic).toBe("ACK_REPO_FIRST");
+
+    // Should have emitted INCIDENT_ACK_TIMING_GAP_REDUCED
+    var gapDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "INCIDENT_ACK_TIMING_GAP_REDUCED";
+    });
+    expect(gapDiags.length).toBe(1);
+    expect(gapDiags[0].moduleName).toBe("incident-escalation");
+  });
+
+  it("SS7: repo-first contract intact after compat elimination", async function () {
+    var scenario = createFullScenario();
+
+    await new Promise(function (r) { setTimeout(r, 50); });
+    _resetDiagnostics();
+
+    // Repo-first snapshot read
+    var snap = await getSnapshotFromRepo(scenario.pair.active.snapshotId);
+    expect(snap).not.toBeNull();
+    expect(snap.snapshotId).toBe(scenario.pair.active.snapshotId);
+
+    // Repo-first baseline read
+    var baseline = await getCanonicalBaselineFromRepo();
+    expect(baseline).not.toBeNull();
+
+    // Repo-first authority check
+    var integrity = await checkAuthorityIntegrityFromRepo();
+    expect(integrity).toBeDefined();
+    expect(typeof integrity.splitBrain).toBe("boolean");
+
+    // All repo-first paths should have emitted diagnostics
+    var allDiags = getDiagnosticLog();
+    expect(allDiags.length).toBeGreaterThanOrEqual(1);
+  });
+});

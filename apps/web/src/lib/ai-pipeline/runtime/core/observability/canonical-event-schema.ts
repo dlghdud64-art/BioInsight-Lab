@@ -125,13 +125,13 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   return { written: true, reasonCode: "AUDIT_WRITE_SUCCESS", eventId: event.eventId };
 }
 
-/** @deprecated Use getCanonicalAuditLogFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use getCanonicalAuditLogFromRepo. Removal: P5 */
 export function getCanonicalAuditLog(filter?: { correlationId?: string; timelineId?: string; eventType?: string }): CanonicalEvent[] {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
     "legacy_to_canonical", "getCanonicalAuditLog:sync-compat",
-    {}
+    { retentionReason: "4 legacy test suites depend on sync API", shutdownPhase: "P5" }
   );
   if (!filter) return [..._auditLog];
   return _auditLog.filter((e: CanonicalEvent) => {
@@ -226,13 +226,13 @@ export interface Timeline {
   reconstructionStatus: ReconstructionStatus;
 }
 
-/** @deprecated Use buildTimelineFromRepo — legacy sync compat */
+/** @deprecated RETAINED in P4-4 — use buildTimelineFromRepo. Removal: P5 */
 export function buildTimeline(correlationId: string): Timeline {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
     "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
     "legacy_to_canonical", "buildTimeline:sync-compat",
-    {}
+    { retentionReason: "buildReconstructionView production caller", shutdownPhase: "P5" }
   );
   const events = _auditLog
     .filter((e: CanonicalEvent) => e.correlationId === correlationId)
