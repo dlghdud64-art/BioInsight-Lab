@@ -456,14 +456,13 @@ async function runRecoveryStage(
 
     case "AUDIT_HOP_COMPLETENESS": {
       try {
-        const { buildTimeline } = require("../observability/canonical-event-schema");
-        const timeline = buildTimeline(record.correlationId);
-        // Exclude recovery-flow missing hops (still accumulating during execution)
-        const nonRecoveryMissing = timeline.missingHops.filter(function (h: string) {
-          return !h.startsWith("recovery:");
-        });
-        if (nonRecoveryMissing.length > 2) {
-          return { stage, passed: false, detail: "audit chain BROKEN_CHAIN", timestamp: now };
+        const { checkAuditChainReconstructable } = require("./recovery-preconditions");
+        const chainResult = checkAuditChainReconstructable(
+          record.correlationId,
+          { excludeFlows: ["recovery"] }
+        );
+        if (!chainResult.passed) {
+          return { stage, passed: false, detail: chainResult.detail, timestamp: now };
         }
       } catch (_err) {
         // canonical module load failure — non-fatal
@@ -547,13 +546,13 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   }
   checks.push({ name: "RESIDUE_SCAN_CLEAN", passed: residueScanClean, detail: residueScanClean ? "clean" : "residues detected" });
 
-  // 5. Audit chain not BROKEN_CHAIN
+  // 5. Audit chain not BROKEN_CHAIN (post-recovery: include all flows including recovery)
   let auditOk = true;
   if (_recoveryRecord) {
     try {
-      const { buildTimeline } = require("../observability/canonical-event-schema");
-      const timeline = buildTimeline(_recoveryRecord.correlationId);
-      auditOk = timeline.reconstructionStatus !== "BROKEN_CHAIN" || timeline.orderedEvents.length === 0;
+      const { checkAuditChainReconstructable } = require("./recovery-preconditions");
+      const chainResult = checkAuditChainReconstructable(_recoveryRecord.correlationId);
+      auditOk = chainResult.passed;
     } catch (_err) {
       auditOk = true;
     }

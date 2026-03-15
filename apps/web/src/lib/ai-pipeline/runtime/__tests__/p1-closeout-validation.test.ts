@@ -90,6 +90,10 @@ var {
 } = require("../core/recovery/recovery-canonical-bridge");
 
 var {
+  checkAuditChainReconstructable,
+} = require("../core/recovery/recovery-preconditions");
+
+var {
   runRecoveryDiagnostics,
 } = require("../core/recovery/recovery-diagnostics");
 
@@ -567,5 +571,103 @@ describe("P1 Closeout: Group 4 — Final Acceptance Gate", function () {
       report.healthStatus === "CLEAN";
 
     expect(accepted).toBe(true);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Group 5: Flow Exclusion & buildTimeline Contract (3 tests)
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe("P1 Closeout: Group 5 — Flow Exclusion & Timeline Contract", function () {
+  beforeEach(function () {
+    setupPersistence();
+  });
+
+  it("T11: in-progress recovery — partial recovery hops do NOT cause precondition BROKEN_CHAIN", function () {
+    var corrId = "corr-in-progress";
+
+    // Emit only REQUESTED (1 of 5 recovery hops) — simulates mid-recovery
+    var record = {
+      recoveryId: "rec-in-progress",
+      correlationId: corrId,
+      actor: "ops-admin",
+      reason: "in-progress test",
+      currentState: "RECOVERY_REQUESTED",
+      baselineId: "bl-test",
+      preconditionResults: [],
+      stages: [],
+      startedAt: new Date(),
+    };
+    emitRecoveryCanonicalEvent("INCIDENT_LOCKDOWN_RECOVERY_REQUESTED", record, "step 1");
+
+    // With excludeFlows: ["recovery"] — should pass (no non-recovery missing hops)
+    var result = checkAuditChainReconstructable(corrId, { excludeFlows: ["recovery"] });
+    expect(result.passed).toBe(true);
+
+    // Without excludeFlows — buildTimeline sees 4 missing recovery hops → BROKEN_CHAIN
+    var resultFull = checkAuditChainReconstructable(corrId);
+    // 4 missing > 2 threshold → BROKEN_CHAIN → passed=false
+    expect(resultFull.passed).toBe(false);
+  });
+
+  it("T12: post-recovery — full recovery flow yields reconstructable including recovery hops", function () {
+    var corrId = "corr-post-recovery";
+
+    var record = {
+      recoveryId: "rec-post-recovery",
+      correlationId: corrId,
+      actor: "ops-admin",
+      reason: "post-recovery test",
+      currentState: "RECOVERY_RESTORED",
+      baselineId: "bl-test",
+      preconditionResults: [],
+      stages: [],
+      startedAt: new Date(),
+    };
+
+    // Emit all 5 recovery hops
+    for (var i = 0; i < RECOVERY_FLOW_HOPS.length; i++) {
+      emitRecoveryCanonicalEvent(RECOVERY_FLOW_HOPS[i], record, "step " + i);
+    }
+
+    // Without excludeFlows — all hops present, should pass
+    var result = checkAuditChainReconstructable(corrId);
+    expect(result.passed).toBe(true);
+
+    // Timeline should be RECONSTRUCTABLE
+    var timeline = buildTimeline(corrId);
+    expect(timeline.reconstructionStatus).toBe("RECONSTRUCTABLE");
+  });
+
+  it("T13: buildTimeline global contract unchanged — BROKEN_CHAIN for partial containment", function () {
+    var corrId = "corr-global-contract";
+
+    // Emit 2 of 8 containment hops → 6 missing → BROKEN_CHAIN
+    var evt1 = createCanonicalEvent({
+      eventType: "BREACH_DETECTED",
+      correlationId: corrId,
+    });
+    writeCanonicalAudit(evt1);
+
+    var evt2 = createCanonicalEvent({
+      eventType: "FINAL_CONTAINMENT_STARTED",
+      correlationId: corrId,
+    });
+    writeCanonicalAudit(evt2);
+
+    var timeline = buildTimeline(corrId);
+    // 6 missing containment hops > 2 → BROKEN_CHAIN
+    expect(timeline.reconstructionStatus).toBe("BROKEN_CHAIN");
+    expect(timeline.missingHops.length).toBe(6);
+
+    // Each missing hop is prefixed with "containment:"
+    var allContainment = timeline.missingHops.every(function (h) {
+      return h.startsWith("containment:");
+    });
+    expect(allContainment).toBe(true);
+
+    // orderedEvents still returns the 2 events
+    expect(timeline.orderedEvents.length).toBe(2);
+    expect(timeline.finalOutcome).not.toBe("NO_EVENTS");
   });
 });

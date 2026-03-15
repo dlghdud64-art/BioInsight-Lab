@@ -80,20 +80,29 @@ function checkSnapshotRestoreVerification(snapshotId: string): RecoveryPrecondit
   };
 }
 
-function checkAuditChainReconstructable(correlationId: string): RecoveryPreconditionResult {
-  // Use the canonical event schema to check timeline reconstruction
-  // We check that audit events are present for the correlationId
+/**
+ * Evaluate audit chain reconstructability.
+ * @param excludeFlows — flow prefixes to exclude from broken-chain evaluation
+ *   (e.g. ["recovery"] during in-progress recovery)
+ */
+export function checkAuditChainReconstructable(
+  correlationId: string,
+  opts?: { excludeFlows?: string[] }
+): RecoveryPreconditionResult {
   try {
     const { buildTimeline } = require("../observability/canonical-event-schema");
     const timeline = buildTimeline(correlationId);
-    // During recovery, recovery-flow hops are still accumulating — exclude them
-    const nonRecoveryMissing = timeline.missingHops.filter(function (h: string) {
-      return !h.startsWith("recovery:");
-    });
     if (timeline.orderedEvents.length === 0) {
       return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no events yet" };
     }
-    if (nonRecoveryMissing.length > 2) {
+    const excludes = (opts && opts.excludeFlows) || [];
+    const evaluatedMissing = timeline.missingHops.filter(function (h: string) {
+      for (let i = 0; i < excludes.length; i++) {
+        if (h.startsWith(excludes[i] + ":")) return false;
+      }
+      return true;
+    });
+    if (evaluatedMissing.length > 2) {
       return {
         name: "AUDIT_CHAIN_RECONSTRUCTABLE",
         passed: false,
@@ -198,8 +207,8 @@ export async function runRecoveryPreconditions(
   // 4. Snapshot restore verification
   results.push(checkSnapshotRestoreVerification(input.rollbackSnapshotId));
 
-  // 5. Audit chain reconstructable
-  results.push(checkAuditChainReconstructable(input.correlationId));
+  // 5. Audit chain reconstructable (exclude recovery flow — still in progress)
+  results.push(checkAuditChainReconstructable(input.correlationId, { excludeFlows: ["recovery"] }));
 
   // 6. Authority continuity
   results.push(checkAuthorityContinuityValid());
