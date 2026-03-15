@@ -23,10 +23,10 @@ import type {
 import { RECOVERY_STATE_ORDER, RECOVERY_FAILURE_STATES, RECOVERY_STAGE_ORDER } from "./recovery-types";
 import { runRecoveryPreconditions } from "./recovery-preconditions";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
-import { getCanonicalBaseline, assertSingleCanonical, isCanonicalActiveCombination } from "../baseline/baseline-registry";
-import { getSnapshot } from "../baseline/snapshot-manager";
-import { checkAuthorityIntegrity } from "../authority/authority-registry";
-import { hasUnacknowledgedIncidents, escalateIncident } from "../incidents/incident-escalation";
+import { getCanonicalBaseline, getCanonicalBaselineFromRepo, assertSingleCanonical, isCanonicalActiveCombination } from "../baseline/baseline-registry";
+import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
+import { checkAuthorityIntegrityFromRepo } from "../authority/authority-registry";
+import { hasUnacknowledgedIncidentsFromRepo, escalateIncident } from "../incidents/incident-escalation";
 import { withLock, detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
 import { logBridgeFailure } from "../persistence/bridge-logger";
@@ -221,12 +221,31 @@ function advanceRecoveryState(
 // Audit Emission Helper
 // ══════════════════════════════════════════════════════════════════════════════
 
-function emitRecoveryAudit(
+/**
+ * Async repo-first audit emission. Uses getCanonicalBaselineFromRepo() for baseline metadata.
+ * Emits RECOVERY_SYNC_READ_REMOVED diagnostic at each replacement site.
+ */
+async function emitRecoveryAuditAsync(
   eventType: string,
   record: RecoveryRecord,
   detail: string
-): void {
-  const baseline = getCanonicalBaseline();
+): Promise<void> {
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "baseline-adapter", "baseline",
+    "repository_to_canonical", "emitRecoveryAudit:getCanonicalBaseline→getCanonicalBaselineFromRepo",
+    { correlationId: record.correlationId }
+  );
+  let baseline = await getCanonicalBaselineFromRepo();
+  if (!baseline) {
+    emitDiagnostic(
+      "FALLBACK_STILL_REQUIRED",
+      "recovery-coordinator", "baseline-adapter", "baseline",
+      "legacy_to_canonical", "emitRecoveryAuditAsync:fallback-to-sync",
+      { correlationId: record.correlationId, fallbackUsed: true }
+    );
+    baseline = getCanonicalBaseline();
+  }
   emitStabilizationAuditEvent({
     eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
     baselineId: record.baselineId,
@@ -244,6 +263,18 @@ function emitRecoveryAudit(
     const { emitRecoveryCanonicalEvent } = require("./recovery-canonical-bridge");
     emitRecoveryCanonicalEvent(eventType, record, detail);
   } catch (_bridgeErr) { /* non-fatal */ }
+}
+
+/**
+ * Sync fire-and-forget wrapper for emitRecoveryAuditAsync.
+ * Used from sync contexts (requestRecovery). Delegates to async repo-first path.
+ */
+function emitRecoveryAudit(
+  eventType: string,
+  record: RecoveryRecord,
+  detail: string
+): void {
+  emitRecoveryAuditAsync(eventType, record, detail).catch(function () { /* fire-and-forget */ });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -345,7 +376,22 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
     };
   }
 
-  const baseline = getCanonicalBaseline();
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "baseline-adapter", "baseline",
+    "repository_to_canonical", "validateRecovery:getCanonicalBaseline→getCanonicalBaselineFromRepo",
+    { correlationId: _recoveryRecord.correlationId }
+  );
+  let baseline = await getCanonicalBaselineFromRepo();
+  if (!baseline) {
+    emitDiagnostic(
+      "FALLBACK_STILL_REQUIRED",
+      "recovery-coordinator", "baseline-adapter", "baseline",
+      "legacy_to_canonical", "validateRecovery:fallback-to-sync",
+      { correlationId: _recoveryRecord.correlationId, fallbackUsed: true }
+    );
+    baseline = getCanonicalBaseline();
+  }
   const rollbackSnapshotId = baseline ? baseline.rollbackSnapshotId : "";
   const activeSnapshotId = baseline ? baseline.activeSnapshotId : "";
 
@@ -365,13 +411,13 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
     // M3: Persist preconditions + VALIDATED state
     await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
 
-    emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_VALIDATED", _recoveryRecord, "all preconditions passed");
+    await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_VALIDATED", _recoveryRecord, "all preconditions passed");
 
     // Emit override audit if override was used
     if (_recoveryRecord.overrideMetadata) {
       // M11: Persist override metadata
       await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
-      emitRecoveryAudit("LOCKDOWN_OVERRIDE_USED", _recoveryRecord,
+      await emitRecoveryAuditAsync("LOCKDOWN_OVERRIDE_USED", _recoveryRecord,
         `operator=${_recoveryRecord.overrideMetadata.operatorId} reason=${_recoveryRecord.overrideMetadata.overrideReason}`);
     }
 
@@ -396,7 +442,7 @@ export async function validateRecovery(recoveryId: string): Promise<RecoveryResu
   // M4: Persist FAILED state + failureReasonCode
   await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
 
-  emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_DENIED", _recoveryRecord,
+  await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_DENIED", _recoveryRecord,
     `failed=${failedChecks.join(",")}`);
 
   return {
@@ -459,7 +505,7 @@ export async function executeRecoveryAsync(recoveryId: string): Promise<Recovery
     // M10: Persist lock failure state
     await persistRecoveryStateAsync("UPDATE", _recoveryRecord);
 
-    emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_FAILED", _recoveryRecord, `lock: ${lockResult.message}`);
+    await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_FAILED", _recoveryRecord, `lock: ${lockResult.message}`);
 
     return {
       success: false,
@@ -490,10 +536,25 @@ async function executeRecoveryStages(
     lockToken: lockMeta.lockToken,
   } : undefined);
 
-  emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_EXECUTING", record, "starting 7-stage execution");
+  await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_EXECUTING", record, "starting 7-stage execution");
 
   const completedStages: RecoveryStage[] = [];
-  const baseline = getCanonicalBaseline();
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "baseline-adapter", "baseline",
+    "repository_to_canonical", "executeRecoveryStages:getCanonicalBaseline→getCanonicalBaselineFromRepo",
+    { correlationId: record.correlationId }
+  );
+  let baseline = await getCanonicalBaselineFromRepo();
+  if (!baseline) {
+    emitDiagnostic(
+      "FALLBACK_STILL_REQUIRED",
+      "recovery-coordinator", "baseline-adapter", "baseline",
+      "legacy_to_canonical", "executeRecoveryStages:fallback-to-sync",
+      { correlationId: record.correlationId, fallbackUsed: true }
+    );
+    baseline = getCanonicalBaseline();
+  }
 
   for (const stage of RECOVERY_STAGE_ORDER) {
     const stageResult = await runRecoveryStage(stage, record, baseline);
@@ -508,7 +569,7 @@ async function executeRecoveryStages(
       // M7: Persist FAILED + completedAt
       await persistRecoveryStateAsync("UPDATE", record);
 
-      emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_FAILED", record,
+      await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_FAILED", record,
         `stage=${stage} detail=${stageResult.detail}`);
 
       // Escalate incident
@@ -524,7 +585,7 @@ async function executeRecoveryStages(
       // M8: Persist ESCALATED state
       await persistRecoveryStateAsync("UPDATE", record);
 
-      emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_ESCALATED", record,
+      await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_ESCALATED", record,
         `stage=${stage} escalated`);
 
       return {
@@ -545,7 +606,7 @@ async function executeRecoveryStages(
 
   // All stages passed
   advanceRecoveryState(record, "RECOVERY_EXECUTING", "RECOVERY_VERIFIED");
-  emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_VERIFIED", record, "all 7 stages passed");
+  await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_VERIFIED", record, "all 7 stages passed");
 
   advanceRecoveryState(record, "RECOVERY_VERIFIED", "RECOVERY_RESTORED");
   record.completedAt = new Date();
@@ -553,7 +614,7 @@ async function executeRecoveryStages(
   // M9: Persist RESTORED + completedAt
   await persistRecoveryStateAsync("UPDATE", record);
 
-  emitRecoveryAudit("INCIDENT_LOCKDOWN_RECOVERY_RESTORED", record, "ACTIVE_100 restored");
+  await emitRecoveryAuditAsync("INCIDENT_LOCKDOWN_RECOVERY_RESTORED", record, "ACTIVE_100 restored");
 
   return {
     success: true,
@@ -589,7 +650,22 @@ async function runRecoveryStage(
       if (!baseline) {
         return { stage, passed: false, detail: "no canonical baseline", timestamp: now };
       }
-      const rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
+      emitDiagnostic(
+        "RECOVERY_SYNC_READ_REMOVED",
+        "recovery-coordinator", "snapshot-adapter", "snapshot",
+        "repository_to_canonical", "runRecoveryStage:RESTORE_RECONCILE:getSnapshot→getSnapshotFromRepo",
+        { entityId: baseline.rollbackSnapshotId, correlationId: record.correlationId }
+      );
+      let rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
+      if (!rollbackSnap) {
+        emitDiagnostic(
+          "FALLBACK_STILL_REQUIRED",
+          "recovery-coordinator", "snapshot-adapter", "snapshot",
+          "legacy_to_canonical", "runRecoveryStage:RESTORE_RECONCILE:fallback-to-sync",
+          { entityId: baseline.rollbackSnapshotId, correlationId: record.correlationId, fallbackUsed: true }
+        );
+        rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
+      }
       if (!rollbackSnap) {
         return { stage, passed: false, detail: "rollback snapshot missing", timestamp: now };
       }
@@ -621,7 +697,13 @@ async function runRecoveryStage(
     }
 
     case "AUTHORITY_CONTINUITY_RECHECK": {
-      const integrity = checkAuthorityIntegrity();
+      emitDiagnostic(
+        "RECOVERY_SYNC_READ_REMOVED",
+        "recovery-coordinator", "authority-adapter", "authority",
+        "repository_to_canonical", "runRecoveryStage:AUTHORITY_CONTINUITY_RECHECK:checkAuthorityIntegrity→checkAuthorityIntegrityFromRepo",
+        { correlationId: record.correlationId }
+      );
+      const integrity = await checkAuthorityIntegrityFromRepo();
       if (integrity.splitBrain || integrity.orphanCount > 0) {
         return {
           stage, passed: false,
@@ -696,8 +778,15 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   const comboValid = isCanonicalActiveCombination("ACTIVE_100", "FULL_ACTIVE_STABILIZATION", "FROZEN");
   checks.push({ name: "CANONICAL_COMBO_VALID", passed: comboValid, detail: comboValid ? "valid" : "invalid combination" });
 
-  // 2. No open critical incidents
-  const noIncidents = !hasUnacknowledgedIncidents();
+  // 2. No open critical incidents (P4-1: repo-first)
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "incident-adapter", "incident",
+    "repository_to_canonical", "verifyRecovery:hasUnacknowledgedIncidents→hasUnacknowledgedIncidentsFromRepo",
+    {}
+  );
+  const hasUnacked = await hasUnacknowledgedIncidentsFromRepo();
+  const noIncidents = !hasUnacked;
   checks.push({ name: "NO_OPEN_INCIDENTS", passed: noIncidents, detail: noIncidents ? "clean" : "unacknowledged incidents remain" });
 
   // 3. No lock residue
@@ -708,11 +797,41 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   const noResidue = residueLocks.length === 0;
   checks.push({ name: "NO_LOCK_RESIDUE", passed: noResidue, detail: noResidue ? "clean" : `${residueLocks.length} stale lock(s)` });
 
-  // 4. Residue scan clean
-  const baseline = getCanonicalBaseline();
+  // 4. Residue scan clean (P4-1: repo-first baseline + snapshot)
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "baseline-adapter", "baseline",
+    "repository_to_canonical", "verifyRecovery:getCanonicalBaseline→getCanonicalBaselineFromRepo",
+    {}
+  );
+  let baseline = await getCanonicalBaselineFromRepo();
+  if (!baseline) {
+    emitDiagnostic(
+      "FALLBACK_STILL_REQUIRED",
+      "recovery-coordinator", "baseline-adapter", "baseline",
+      "legacy_to_canonical", "verifyRecovery:baseline:fallback-to-sync",
+      { fallbackUsed: true }
+    );
+    baseline = getCanonicalBaseline();
+  }
   let residueScanClean = true;
   if (baseline) {
-    const rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
+    emitDiagnostic(
+      "RECOVERY_SYNC_READ_REMOVED",
+      "recovery-coordinator", "snapshot-adapter", "snapshot",
+      "repository_to_canonical", "verifyRecovery:getSnapshot→getSnapshotFromRepo",
+      { entityId: baseline.rollbackSnapshotId }
+    );
+    let rollbackSnap = await getSnapshotFromRepo(baseline.rollbackSnapshotId);
+    if (!rollbackSnap) {
+      emitDiagnostic(
+        "FALLBACK_STILL_REQUIRED",
+        "recovery-coordinator", "snapshot-adapter", "snapshot",
+        "legacy_to_canonical", "verifyRecovery:snapshot:fallback-to-sync",
+        { entityId: baseline.rollbackSnapshotId, fallbackUsed: true }
+      );
+      rollbackSnap = getSnapshot(baseline.rollbackSnapshotId);
+    }
     if (rollbackSnap) {
       const currentState: Record<string, Record<string, unknown>> = {};
       for (const s of rollbackSnap.scopes) {
@@ -749,8 +868,14 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   }
   checks.push({ name: "AUDIT_CHAIN_VALID", passed: auditOk, detail: auditOk ? "valid" : "BROKEN_CHAIN" });
 
-  // 6. Authority integrity
-  const integrity = checkAuthorityIntegrity();
+  // 6. Authority integrity (P4-1: repo-first)
+  emitDiagnostic(
+    "RECOVERY_SYNC_READ_REMOVED",
+    "recovery-coordinator", "authority-adapter", "authority",
+    "repository_to_canonical", "verifyRecovery:checkAuthorityIntegrity→checkAuthorityIntegrityFromRepo",
+    {}
+  );
+  const integrity = await checkAuthorityIntegrityFromRepo();
   const authorityClean = !integrity.splitBrain && integrity.orphanCount === 0;
   checks.push({ name: "AUTHORITY_INTEGRITY", passed: authorityClean, detail: authorityClean ? "clean" : integrity.detail });
 
@@ -766,6 +891,16 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   checks.push({ name: "RECOVERY_AUDIT_HOPS", passed: auditHopsComplete, detail: auditHopsComplete ? "all stages complete" : "incomplete" });
 
   const allPassed = checks.every(function (c) { return c.passed; });
+
+  if (allPassed) {
+    emitDiagnostic(
+      "REPO_FIRST_TRUTH_SOURCE_CONFIRMED",
+      "recovery-coordinator", "recovery-adapter", "recovery",
+      "repository_to_canonical", "verifyRecovery:all-checks-passed-repo-first",
+      { correlationId: _recoveryRecord?.correlationId }
+    );
+  }
+
   return { passed: allPassed, checks };
 }
 
