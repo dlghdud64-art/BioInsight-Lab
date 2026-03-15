@@ -114,3 +114,38 @@ export interface CanonicalBaseline {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Canonical Authority Line (P3 Slice 2)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CanonicalAuthorityLine {
+  authorityLineId: string;
+  currentAuthorityId: string;
+  authorityState: string;
+  transferState: string;
+  pendingSuccessorId: string | null;
+  revokedAuthorityIds: string[];
+  registryVersion: string;
+  baselineId: string | null;
+  correlationId: string | null;
+  updatedBy: string | null;
+  updatedAt: Date;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Canonical Incident (P3 Slice 2)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface CanonicalIncident {
+  incidentId: string;
+  reasonCode: string;
+  severity: string;
+  status: string;
+  correlationId: string;
+  baselineId: string | null;
+  snapshotId: string | null;
+  acknowledgedBy: string | null;
+  acknowledgedAt: Date | null;
+  createdAt: Date;
+}

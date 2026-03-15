@@ -17,6 +17,8 @@ const _diagnosticLog: OntologyDiagnosticEvent[] = [];
 const _registeredRoutes = new Set<string>([
   "recovery-coordinator",
   "baseline-registry",
+  "authority-registry",
+  "incident-escalation",
 ]);
 
 // ══════════════════════════════════════════════════════════════════════════════

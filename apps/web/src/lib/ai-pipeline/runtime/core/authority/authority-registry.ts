@@ -10,7 +10,8 @@ import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { AuthorityOntologyAdapter } from "../ontology/authority-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 import {
   acquireLock,
   releaseLock,
@@ -108,21 +109,12 @@ export function createAuthorityLine(
 
   _registry.set(authorityLineId, line);
 
-  // Dual-write: persist to repository (fire-and-forget)
+  // Dual-write: persist to repository via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.authority.saveAuthorityLine({
-      authorityLineId: line.authorityLineId,
-      currentAuthorityId: line.currentAuthorityId,
-      authorityState: line.authorityState,
-      transferState: line.transferState,
-      pendingSuccessorId: line.pendingSuccessorId,
-      revokedAuthorityIds: line.revokedAuthorityIds,
-      registryVersion: String(line.registryVersion),
-      baselineId: line.baselineId || null,
-      correlationId: line.correlationId || null,
-      updatedBy: line.updatedBy || null,
-    }).catch(function (err: unknown) {
+    const canonical = AuthorityOntologyAdapter.fromLegacy(line);
+    const input = AuthorityOntologyAdapter.toRepositoryInput(canonical);
+    adapters.authority.saveAuthorityLine(input).catch(function (err: unknown) {
       logBridgeFailure("authority-registry", "saveAuthorityLine", err);
     });
   } catch (err) {
@@ -463,25 +455,19 @@ export async function getAuthorityLineFromRepo(authorityLineId: string): Promise
     const adapters = getPersistenceAdapters();
     const result = await adapters.authority.findAuthorityLineByLineId(authorityLineId);
     if (result.ok) {
-      const d = result.data;
-      return {
-        authorityLineId: d.authorityLineId,
-        currentAuthorityId: d.currentAuthorityId,
-        authorityState: d.authorityState as AuthorityState,
-        transferState: d.transferState as TransferState,
-        pendingSuccessorId: d.pendingSuccessorId,
-        revokedAuthorityIds: d.revokedAuthorityIds,
-        registryVersion: Number(d.registryVersion),
-        baselineId: d.baselineId || "",
-        updatedAt: normalizeDate(d.updatedAt),
-        updatedBy: d.updatedBy || "",
-        correlationId: d.correlationId || "",
-      };
+      const canonical = AuthorityOntologyAdapter.fromPersisted(result.data);
+      return AuthorityOntologyAdapter.toLegacy(canonical);
     }
   } catch (err) {
     logBridgeFailure("authority-registry", "getAuthorityLineFromRepo", err);
   }
   // Fallback to legacy store
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "getAuthorityLineFromRepo:fallback",
+    { entityId: authorityLineId, fallbackUsed: true }
+  );
   return _registry.get(authorityLineId) ?? null;
 }
 

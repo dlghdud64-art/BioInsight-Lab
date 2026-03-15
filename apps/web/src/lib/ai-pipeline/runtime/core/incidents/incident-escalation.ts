@@ -9,8 +9,9 @@ import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
 import { withLock, incidentStreamLockKey } from "../persistence/lock-manager";
+import { IncidentOntologyAdapter } from "../ontology/incident-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 export interface IncidentRecord {
   incidentId: string;
@@ -42,18 +43,12 @@ export function escalateIncident(
 
   _incidents.push(record);
 
-  // Dual-write: persist to repository (fire-and-forget)
+  // Dual-write: persist to repository via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.incident.createIncident({
-      incidentId: record.incidentId,
-      reasonCode: record.reasonCode,
-      severity: "WARNING",
-      status: "OPEN",
-      correlationId: record.correlationId,
-      baselineId: null,
-      snapshotId: null,
-    }).catch(function (err: unknown) {
+    const canonical = IncidentOntologyAdapter.fromLegacy(record);
+    const input = IncidentOntologyAdapter.toRepositoryInput(canonical);
+    adapters.incident.createIncident(input).catch(function (err: unknown) {
       logBridgeFailure("incident-escalation", "createIncident", err);
     });
   } catch (err) {
@@ -158,21 +153,20 @@ export async function getIncidentsFromRepo(): Promise<IncidentRecord[]> {
     const result = await adapters.incident.listOpenIncidents({ limit: 1000 });
     if (result.ok) {
       return result.data.items.map(function (d) {
-        return {
-          incidentId: d.incidentId,
-          reasonCode: d.reasonCode,
-          correlationId: d.correlationId,
-          actor: d.acknowledgedBy || "system",
-          detail: "",
-          escalatedAt: normalizeDate(d.createdAt),
-          acknowledged: d.status !== "OPEN",
-        };
+        const canonical = IncidentOntologyAdapter.fromPersisted(d);
+        return IncidentOntologyAdapter.toLegacy(canonical);
       });
     }
   } catch (err) {
     logBridgeFailure("incident-escalation", "getIncidentsFromRepo", err);
   }
   // Fallback to legacy store
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "getIncidentsFromRepo:fallback",
+    { fallbackUsed: true }
+  );
   return [..._incidents];
 }
 

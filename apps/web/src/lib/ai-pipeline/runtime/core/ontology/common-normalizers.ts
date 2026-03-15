@@ -121,3 +121,13 @@ export const RECOVERY_ALIASES: readonly FieldAlias[] = [
 export const BASELINE_ALIASES: readonly FieldAlias[] = [
   { legacy: "canonicalBaselineId", canonical: "baselineId", persisted: "id" },
 ] as const;
+
+export const AUTHORITY_ALIASES: readonly FieldAlias[] = [
+  { legacy: "registryVersion(number)", canonical: "registryVersion(string)", persisted: "registryVersion(string)" },
+] as const;
+
+export const INCIDENT_ALIASES: readonly FieldAlias[] = [
+  { legacy: "actor", canonical: "acknowledgedBy", persisted: "acknowledgedBy" },
+  { legacy: "escalatedAt", canonical: "createdAt", persisted: "createdAt" },
+  { legacy: "acknowledged(boolean)", canonical: "status(string)", persisted: "status(string)" },
+] as const;
