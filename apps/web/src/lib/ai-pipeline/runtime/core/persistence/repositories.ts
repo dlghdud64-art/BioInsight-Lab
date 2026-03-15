@@ -88,6 +88,11 @@ export interface SnapshotRepository {
   findSnapshotsByBaselineId(baselineId: string, query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedSnapshot>>>;
 
   /**
+   * Find a snapshot by its legacy snapshotId (not the internal cuid).
+   */
+  findSnapshotBySnapshotId(snapshotId: string): Promise<RepositoryResult<PersistedSnapshot>>;
+
+  /**
    * Update only the restoreVerificationStatus field.
    * This is the only mutable field on a snapshot.
    */

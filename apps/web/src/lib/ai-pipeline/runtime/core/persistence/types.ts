@@ -198,6 +198,14 @@ export interface PersistedSnapshot {
   queueTopologyChecksum: string | null;
   includedScopes: string[];
   restoreVerificationStatus: string | null;
+  /** P3-3B: full scopes array [{scope, data, checksum}] */
+  scopePayload: unknown;
+  /** P3-3B: full config object */
+  configPayload: unknown;
+  /** P3-3B: operator identifier */
+  capturedBy: string | null;
+  /** P3-3B: legacy snapshotId for repo-first lookup */
+  snapshotId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

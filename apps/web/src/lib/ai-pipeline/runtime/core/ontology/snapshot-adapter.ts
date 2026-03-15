@@ -1,16 +1,17 @@
 /**
- * P3 Slice 3 — Snapshot Ontology Adapter
+ * P3 Slice 3+3B — Snapshot Ontology Adapter (Full-Fidelity)
  *
  * Translates between:
  *   BaselineSnapshot (legacy runtime) ↔ CanonicalSnapshot ↔ PersistedSnapshot
  *
- * Key design: full-fidelity payload in canonical, checksum-only in persistence.
+ * Key design: full-fidelity payload across ALL directions.
+ *   scopePayload/configPayload/capturedBy persisted alongside checksums.
  *
  * Key translations:
  *   tag (legacy) ↔ snapshotType (canonical/persisted)
- *   scopes[] full data (legacy/canonical) → checksums only (persisted)
+ *   scopes[] full data preserved in scopePayload (Json column)
  *   capturedAt (legacy) ↔ createdAt (persisted)
- *   capturedBy (legacy-only, not persisted)
+ *   capturedBy preserved in persisted
  */
 
 import type { BaselineSnapshot, SnapshotScopeEntry } from "../../types/stabilization";
@@ -86,19 +87,23 @@ export const SnapshotOntologyAdapter: OntologyAdapter<
 
   /**
    * CanonicalSnapshot → CreateSnapshotInput
-   * Lossy: drops scope data, config, capturedBy — only checksums persisted
+   * Full-fidelity: preserves scope payload, config, capturedBy alongside checksums
    */
   toRepositoryInput(canonical: CanonicalSnapshot): CreateSnapshotInput {
     emitDiagnostic(
       "LEGACY_BRIDGE_TRANSLATION_APPLIED",
       "snapshot-manager", CTX.adapterName, CTX.entityType,
-      "canonical_to_repository", "toRepositoryInput:checksum-only",
+      "canonical_to_repository", "toRepositoryInput:full-fidelity",
       { entityId: canonical.snapshotId }
     );
 
     return {
+      snapshotId: canonical.snapshotId,
       snapshotType: canonical.snapshotType,
       baselineId: canonical.baselineId,
+      scopePayload: canonical.scopes,
+      configPayload: canonical.config,
+      capturedBy: canonical.capturedBy || null,
       configChecksum: canonical.configChecksum,
       flagChecksum: canonical.flagChecksum,
       routingChecksum: canonical.routingChecksum,
@@ -112,26 +117,54 @@ export const SnapshotOntologyAdapter: OntologyAdapter<
 
   /**
    * PersistedSnapshot → CanonicalSnapshot
-   * Data not available from persistence — scopes/config are empty.
-   * createdAt → capturedAt
+   * Full-fidelity: reconstructs scopes/config/capturedBy from persisted payload.
+   * Falls back to empty for legacy rows without payload (emits FIDELITY diagnostic).
    */
   fromPersisted(persisted: PersistedSnapshot): CanonicalSnapshot {
+    const c = { ...CTX, entityId: persisted.snapshotId || persisted.id };
+    const hasPayload = persisted.scopePayload != null;
+
+    if (!hasPayload) {
+      emitDiagnostic(
+        "SNAPSHOT_FIDELITY_CONTRACT_VIOLATION",
+        "snapshot-manager", CTX.adapterName, CTX.entityType,
+        "repository_to_canonical", "fromPersisted:degraded-null-payload",
+        { entityId: c.entityId }
+      );
+    }
+
     emitDiagnostic(
       "LEGACY_BRIDGE_TRANSLATION_APPLIED",
       "snapshot-manager", CTX.adapterName, CTX.entityType,
-      "repository_to_canonical", "fromPersisted:checksum-only",
-      { entityId: persisted.id }
+      "repository_to_canonical", hasPayload ? "fromPersisted:full-fidelity" : "fromPersisted:degraded",
+      { entityId: c.entityId }
     );
 
-    const c = { ...CTX, entityId: persisted.id };
+    // Reconstruct scopes from payload (or empty for legacy rows)
+    let scopes: CanonicalSnapshotScope[] = [];
+    if (Array.isArray(persisted.scopePayload)) {
+      scopes = (persisted.scopePayload as Array<Record<string, unknown>>).map(function (raw) {
+        return {
+          scope: String(raw.scope ?? ""),
+          data: (raw.data && typeof raw.data === "object" ? raw.data : {}) as Record<string, unknown>,
+          checksum: String(raw.checksum ?? ""),
+        };
+      });
+    }
+
+    // Reconstruct config from payload (or empty)
+    const config = (persisted.configPayload && typeof persisted.configPayload === "object" && !Array.isArray(persisted.configPayload))
+      ? persisted.configPayload as Record<string, unknown>
+      : {};
+
     return {
-      snapshotId: persisted.id,
+      snapshotId: persisted.snapshotId || persisted.id,
       baselineId: persisted.baselineId,
       snapshotType: persisted.snapshotType,
-      scopes: [],
-      config: {},
+      scopes,
+      config,
       capturedAt: requireDateWithDiagnostic(persisted.createdAt, "createdAt", c),
-      capturedBy: "",
+      capturedBy: persisted.capturedBy || "",
       includedScopes: persisted.includedScopes || [],
       configChecksum: persisted.configChecksum,
       flagChecksum: persisted.flagChecksum,

@@ -2097,6 +2097,10 @@ model StabilizationSnapshot {
   queueTopologyChecksum     String?
   includedScopes            Json     // string[] — scope names
   restoreVerificationStatus String?  // PENDING | VERIFIED | FAILED
+  scopePayload              Json?    // full scopes array: [{scope, data, checksum}]
+  configPayload             Json?    // full config object
+  capturedBy                String?  // operator identifier
+  snapshotId                String?  @unique // legacy snapshotId for lookup
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 

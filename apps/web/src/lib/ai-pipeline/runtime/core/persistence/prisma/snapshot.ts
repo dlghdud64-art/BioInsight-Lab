@@ -36,6 +36,10 @@ export class PrismaSnapshotRepository implements SnapshotRepository {
           queueTopologyChecksum: input.queueTopologyChecksum,
           includedScopes: stringArrayToJson(input.includedScopes),
           restoreVerificationStatus: input.restoreVerificationStatus,
+          scopePayload: input.scopePayload ?? undefined,
+          configPayload: input.configPayload ?? undefined,
+          capturedBy: input.capturedBy ?? undefined,
+          snapshotId: input.snapshotId ?? undefined,
         },
       });
       return ok(mapDbToSnapshot(row));
@@ -53,6 +57,18 @@ export class PrismaSnapshotRepository implements SnapshotRepository {
       return ok(mapDbToSnapshot(row));
     } catch (e) {
       return fail("STORAGE_UNAVAILABLE", "Failed to find snapshot", "StabilizationSnapshot", e);
+    }
+  }
+
+  async findSnapshotBySnapshotId(snapshotId: string): Promise<RepositoryResult<PersistedSnapshot>> {
+    try {
+      const row = await this.prisma.stabilizationSnapshot.findFirst({ where: { snapshotId } });
+      if (!row) {
+        return fail("NOT_FOUND", `Snapshot snapshotId=${snapshotId} not found`, "StabilizationSnapshot");
+      }
+      return ok(mapDbToSnapshot(row));
+    } catch (e) {
+      return fail("STORAGE_UNAVAILABLE", "Failed to find snapshot by snapshotId", "StabilizationSnapshot", e);
     }
   }
 

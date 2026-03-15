@@ -97,6 +97,10 @@ export function mapDbToSnapshot(row: any): PersistedSnapshot {
     queueTopologyChecksum: row.queueTopologyChecksum ?? null,
     includedScopes: jsonToStringArray(row.includedScopes),
     restoreVerificationStatus: row.restoreVerificationStatus ?? null,
+    scopePayload: row.scopePayload ?? null,
+    configPayload: row.configPayload ?? null,
+    capturedBy: row.capturedBy ?? null,
+    snapshotId: row.snapshotId ?? null,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };

@@ -39,6 +39,10 @@ export class MemorySnapshotRepository implements SnapshotRepository {
       queueTopologyChecksum: input.queueTopologyChecksum,
       includedScopes: [...input.includedScopes],
       restoreVerificationStatus: input.restoreVerificationStatus,
+      scopePayload: input.scopePayload ?? null,
+      configPayload: input.configPayload ?? null,
+      capturedBy: input.capturedBy ?? null,
+      snapshotId: input.snapshotId ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -50,6 +54,14 @@ export class MemorySnapshotRepository implements SnapshotRepository {
     const entry = this._store.get(id);
     if (!entry) {
       return fail("NOT_FOUND", `Snapshot id=${id} not found`, "StabilizationSnapshot");
+    }
+    return ok(this._clone(entry));
+  }
+
+  async findSnapshotBySnapshotId(snapshotId: string): Promise<RepositoryResult<PersistedSnapshot>> {
+    const entry = Array.from(this._store.values()).find((s) => s.snapshotId === snapshotId);
+    if (!entry) {
+      return fail("NOT_FOUND", `Snapshot snapshotId=${snapshotId} not found`, "StabilizationSnapshot");
     }
     return ok(this._clone(entry));
   }

@@ -1,10 +1,11 @@
 /**
- * S0 — Snapshot Manager
+ * S0+P3-3B — Snapshot Manager
  *
  * - activeSnapshotId / rollbackSnapshotId pair 동시 생성
  * - scope별 checksum 저장
  * - restore dry-run 검증
  * - snapshot pair 없으면 active runtime 진입 차단
+ * - repository-first read with legacy fallback (P3-3B)
  */
 
 import { createHash } from "crypto";
@@ -17,6 +18,7 @@ import type {
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
 import { SnapshotOntologyAdapter } from "../ontology/snapshot-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── In-memory store ──
 
@@ -203,6 +205,120 @@ export function canEnterActiveRuntime(
   }
 
   return { allowed: true, reason: "snapshot pair valid + rollback restorable" };
+}
+
+// ── Repository-First Async Read (P3-3B) ──
+
+/**
+ * Repository-first snapshot read with legacy fallback.
+ * When repo has full-fidelity payload, that is the truth source.
+ */
+export async function getSnapshotFromRepo(snapshotId: string): Promise<BaselineSnapshot | null> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.snapshot.findSnapshotBySnapshotId(snapshotId);
+    if (result.ok) {
+      const canonical = SnapshotOntologyAdapter.fromPersisted(result.data);
+      const legacy = SnapshotOntologyAdapter.toLegacy(canonical);
+      emitDiagnostic(
+        "SNAPSHOT_REPO_FIRST_READ_USED",
+        "snapshot-manager", "snapshot-adapter", "snapshot",
+        "repository_to_canonical", "getSnapshotFromRepo:hit",
+        { entityId: snapshotId }
+      );
+      return legacy;
+    }
+  } catch (err) {
+    logBridgeFailure("snapshot-manager", "getSnapshotFromRepo", err);
+  }
+  // Legacy fallback
+  const memSnapshot = _snapshots.get(snapshotId) ?? null;
+  if (memSnapshot) {
+    emitDiagnostic(
+      "SNAPSHOT_LEGACY_FALLBACK_USED",
+      "snapshot-manager", "snapshot-adapter", "snapshot",
+      "repository_to_canonical", "getSnapshotFromRepo:fallback",
+      { entityId: snapshotId }
+    );
+  }
+  return memSnapshot;
+}
+
+/**
+ * Repository-first restore dry-run.
+ * Same logic as restoreDryRun but uses repo-first read.
+ */
+export async function restoreDryRunFromRepo(snapshotId: string): Promise<RestoreDryRunResult> {
+  const snapshot = await getSnapshotFromRepo(snapshotId);
+  if (!snapshot) {
+    return {
+      success: false,
+      snapshotId,
+      scopeResults: [],
+      reason: `SNAPSHOT_NOT_FOUND: ${snapshotId}`,
+    };
+  }
+
+  const scopeResults = snapshot.scopes.map((entry: SnapshotScopeEntry) => {
+    const recomputed = computeScopeChecksum(entry.scope, entry.data);
+    const match = recomputed === entry.checksum;
+    return {
+      scope: entry.scope,
+      checksumMatch: match,
+      restorable: match && Object.keys(entry.data).length > 0,
+    };
+  });
+
+  const allRestorable = scopeResults.every((r) => r.restorable);
+
+  return {
+    success: allRestorable,
+    snapshotId,
+    scopeResults,
+    reason: allRestorable
+      ? "all scopes restorable"
+      : `${scopeResults.filter((r) => !r.restorable).length} scope(s) not restorable`,
+  };
+}
+
+/**
+ * Repository-first active runtime entry check.
+ * Same logic as canEnterActiveRuntime but uses repo-first reads.
+ */
+export async function canEnterActiveRuntimeFromRepo(
+  activeSnapshotId: string,
+  rollbackSnapshotId: string
+): Promise<{ allowed: boolean; reason: string }> {
+  // Pair verification via repo-first reads
+  const active = await getSnapshotFromRepo(activeSnapshotId);
+  const rollback = await getSnapshotFromRepo(rollbackSnapshotId);
+
+  if (!active && !rollback) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — BOTH_MISSING: active(${activeSnapshotId}), rollback(${rollbackSnapshotId})` };
+  }
+  if (!active) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ACTIVE_MISSING: ${activeSnapshotId}` };
+  }
+  if (!rollback) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ROLLBACK_MISSING: ${rollbackSnapshotId}` };
+  }
+  if (active.tag !== "ACTIVE") {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ACTIVE_TAG_MISMATCH: expected ACTIVE, got ${active.tag}` };
+  }
+  if (rollback.tag !== "ROLLBACK") {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ROLLBACK_TAG_MISMATCH: expected ROLLBACK, got ${rollback.tag}` };
+  }
+  if (active.baselineId !== rollback.baselineId) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — BASELINE_ID_MISMATCH: active=${active.baselineId}, rollback=${rollback.baselineId}` };
+  }
+
+  // Dry-run the rollback using repo-first snapshot
+  const dryRun = await restoreDryRunFromRepo(rollbackSnapshotId);
+  if (!dryRun.success) {
+    return { allowed: false, reason: `BLOCKED: rollback restore dry-run failed — ${dryRun.reason}` };
+  }
+
+  return { allowed: true, reason: "snapshot pair valid + rollback restorable (repo-first)" };
 }
 
 /** 테스트용 — 상태 리셋 */

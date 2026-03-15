@@ -249,7 +249,7 @@ describe("P3 Slice 3 — Audit + Canonical Audit + Snapshot Ontology Adapters", 
     expect(input.snapshotType).toBe("ACTIVE");
     expect(input.includedScopes).toEqual(["CONFIG", "FLAGS", "ROUTING", "AUTHORITY", "POLICY", "QUEUE_TOPOLOGY"]);
 
-    // Simulate persistence (data lost)
+    // Simulate persistence (full-fidelity — payload preserved via scopePayload/configPayload)
     var persisted = Object.assign({}, input, {
       id: "db-snap-round-001",
       createdAt: legacy.capturedAt,
@@ -257,10 +257,11 @@ describe("P3 Slice 3 — Audit + Canonical Audit + Snapshot Ontology Adapters", 
     });
 
     var canonical2 = SnapshotOntologyAdapter.fromPersisted(persisted);
-    // Data not available from persistence
-    expect(canonical2.scopes).toEqual([]);
-    expect(canonical2.config).toEqual({});
-    // But checksums preserved
+    // P3-3B: full-fidelity — scopes/config now reconstructed from scopePayload/configPayload
+    expect(canonical2.scopes).toHaveLength(6);
+    expect(canonical2.scopes[0].data).toEqual({ key: "value" });
+    expect(Object.keys(canonical2.config).length).toBe(2); // original fixture has CONFIG + FLAGS in config
+    // Checksums preserved
     expect(canonical2.configChecksum).toBe("a1b2c3d4e5f6a7b8");
     expect(canonical2.flagChecksum).toBe("b2c3d4e5f6a7b8c9");
 
