@@ -407,7 +407,14 @@ export interface IntegrityReport {
   detail: string;
 }
 
+/** @deprecated Use checkAuthorityIntegrityFromRepo — legacy sync compat */
 export function checkAuthorityIntegrity(): IntegrityReport {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "checkAuthorityIntegrity:sync-compat",
+    {}
+  );
   const lines = Array.from(_registry.values());
   const activeByEntity = new Map<string, number>();
 
@@ -469,6 +476,99 @@ export async function getAuthorityLineFromRepo(authorityLineId: string): Promise
     { entityId: authorityLineId, fallbackUsed: true }
   );
   return _registry.get(authorityLineId) ?? null;
+}
+
+// ── Repository-First Async Integrity Check (P3-5) ──
+
+/**
+ * Repository-first authority integrity check.
+ * Reads authority lines from repo, performs same split-brain/orphan analysis.
+ * Falls back to sync checkAuthorityIntegrity on repo failure.
+ */
+export async function checkAuthorityIntegrityFromRepo(): Promise<IntegrityReport> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "authority-registry", "authority-adapter", "authority",
+    "repository_to_canonical", "checkAuthorityIntegrityFromRepo:entry",
+    {}
+  );
+
+  try {
+    const adapters = getPersistenceAdapters();
+    // Read all authority lines from repo using baseline query (or fallback to memory)
+    // Use a broad query — authority lines are few per baseline
+    const lines: AuthorityLine[] = [];
+    for (const [, line] of Array.from(_registry.entries())) {
+      const repoResult = await adapters.authority.findAuthorityLineByLineId(line.authorityLineId);
+      if (repoResult.ok) {
+        const canonical = AuthorityOntologyAdapter.fromPersisted(repoResult.data);
+        lines.push(AuthorityOntologyAdapter.toLegacy(canonical));
+      } else {
+        // TODO(P4-cutover): remove legacy fallback, direct store read only as compat
+        lines.push(line);
+      }
+    }
+
+    emitDiagnostic(
+      "ONTOLOGY_REPO_FIRST_PATH_USED",
+      "authority-registry", "authority-adapter", "authority",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-read",
+      {}
+    );
+
+    // Same integrity analysis as sync version
+    const activeByEntity = new Map<string, number>();
+    let orphanCount = 0;
+    let revokedStillEffective = false;
+    let pendingResidue = false;
+
+    for (const line of lines) {
+      if (line.authorityState === "ACTIVE") {
+        activeByEntity.set(line.authorityLineId, (activeByEntity.get(line.authorityLineId) || 0) + 1);
+      }
+      if (!line.currentAuthorityId && line.authorityState === "ACTIVE") {
+        orphanCount++;
+      }
+      if (line.revokedAuthorityIds.includes(line.currentAuthorityId)) {
+        revokedStillEffective = true;
+      }
+      if (line.pendingSuccessorId !== null && line.transferState === "TRANSFER_FINALIZED") {
+        pendingResidue = true;
+      }
+    }
+
+    const splitBrain = Array.from(activeByEntity.values()).some((count: number) => count > 1);
+
+    return {
+      splitBrain,
+      orphanCount,
+      revokedStillEffective,
+      pendingResidue,
+      detail: splitBrain ? "SPLIT_BRAIN_DETECTED" : orphanCount > 0 ? "ORPHAN_DETECTED" : "INTEGRITY_OK",
+    };
+  } catch (err) {
+    logBridgeFailure("authority-registry", "checkAuthorityIntegrityFromRepo", err);
+    // Fallback to sync
+    emitDiagnostic(
+      "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+      "authority-registry", "authority-adapter", "authority",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:fallback-to-sync",
+      { fallbackUsed: true }
+    );
+    return checkAuthorityIntegrity();
+  }
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */

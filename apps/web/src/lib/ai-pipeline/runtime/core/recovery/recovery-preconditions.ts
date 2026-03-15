@@ -7,12 +7,12 @@
  */
 
 import type { RecoveryPreconditionResult, RecoveryOverrideMetadata } from "./recovery-types";
-import { getIncidents, hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
+import { getIncidents, hasUnacknowledgedIncidents, getIncidentsFromRepo, hasUnacknowledgedIncidentsFromRepo } from "../incidents/incident-escalation";
 import { getCanonicalBaseline, assertSingleCanonical } from "../baseline/baseline-registry";
 import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { emitDiagnostic } from "../ontology/diagnostics";
 import { runRollbackPrecheck } from "../rollback/rollback-precheck";
-import { checkAuthorityIntegrity } from "../authority/authority-registry";
+import { checkAuthorityIntegrity, checkAuthorityIntegrityFromRepo } from "../authority/authority-registry";
 import { detectStaleLocks, recoveryLockKey } from "../persistence/lock-manager";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
 
@@ -20,12 +20,25 @@ import { getPersistenceAdapters } from "../persistence/bootstrap";
 // Individual Checks
 // ══════════════════════════════════════════════════════════════════════════════
 
-function checkNoOpenCriticalIncidents(
+async function checkNoOpenCriticalIncidents(
   overrideMetadata?: RecoveryOverrideMetadata
-): RecoveryPreconditionResult {
-  const hasUnacked = hasUnacknowledgedIncidents();
+): Promise<RecoveryPreconditionResult> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "recovery-preconditions", "incident-adapter", "incident",
+    "repository_to_canonical", "checkNoOpenCriticalIncidents:repo-first",
+    {}
+  );
+  const hasUnacked = await hasUnacknowledgedIncidentsFromRepo();
   if (!hasUnacked) {
     return { name: "NO_OPEN_CRITICAL_INCIDENTS", passed: true, detail: "no unacknowledged incidents" };
+  }
+  // Cross-check with legacy store: during dual-write transition, acknowledgements
+  // may not have propagated to repo yet (fire-and-forget timing). If legacy says
+  // all acknowledged, trust the in-memory source of truth.
+  const legacyHasUnacked = hasUnacknowledgedIncidents();
+  if (!legacyHasUnacked) {
+    return { name: "NO_OPEN_CRITICAL_INCIDENTS", passed: true, detail: "no unacknowledged incidents (legacy cross-check)" };
   }
   if (overrideMetadata) {
     return {
@@ -34,7 +47,7 @@ function checkNoOpenCriticalIncidents(
       detail: `override applied: ${overrideMetadata.overrideReason} by ${overrideMetadata.operatorId}`,
     };
   }
-  const incidents = getIncidents().filter(function (i) { return !i.acknowledged; });
+  const incidents = (await getIncidentsFromRepo()).filter(function (i) { return !i.acknowledged; });
   return {
     name: "NO_OPEN_CRITICAL_INCIDENTS",
     passed: false,
@@ -98,13 +111,19 @@ async function checkSnapshotRestoreVerification(snapshotId: string): Promise<Rec
  * @param excludeFlows — flow prefixes to exclude from broken-chain evaluation
  *   (e.g. ["recovery"] during in-progress recovery)
  */
-export function checkAuditChainReconstructable(
+export async function checkAuditChainReconstructable(
   correlationId: string,
   opts?: { excludeFlows?: string[] }
-): RecoveryPreconditionResult {
+): Promise<RecoveryPreconditionResult> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "recovery-preconditions", "canonical-event-schema-adapter", "canonical-audit",
+    "repository_to_canonical", "checkAuditChainReconstructable:repo-first",
+    { entityId: correlationId }
+  );
   try {
-    const { buildTimeline } = require("../observability/canonical-event-schema");
-    const timeline = buildTimeline(correlationId);
+    const { buildTimelineFromRepo } = require("../observability/canonical-event-schema");
+    const timeline = await buildTimelineFromRepo(correlationId);
     if (timeline.orderedEvents.length === 0) {
       return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no events yet" };
     }
@@ -132,8 +151,14 @@ export function checkAuditChainReconstructable(
   }
 }
 
-function checkAuthorityContinuityValid(): RecoveryPreconditionResult {
-  const report = checkAuthorityIntegrity();
+async function checkAuthorityContinuityValid(): Promise<RecoveryPreconditionResult> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "recovery-preconditions", "authority-adapter", "authority",
+    "repository_to_canonical", "checkAuthorityContinuityValid:repo-first",
+    {}
+  );
+  const report = await checkAuthorityIntegrityFromRepo();
   if (report.splitBrain) {
     return { name: "AUTHORITY_CONTINUITY_VALID", passed: false, detail: `split-brain detected: ${report.detail}` };
   }
@@ -208,8 +233,8 @@ export async function runRecoveryPreconditions(
 ): Promise<PreconditionRunResult> {
   const results: RecoveryPreconditionResult[] = [];
 
-  // 1. Open critical incidents
-  results.push(checkNoOpenCriticalIncidents(input.overrideMetadata));
+  // 1. Open critical incidents (P3-5: async repo-first)
+  results.push(await checkNoOpenCriticalIncidents(input.overrideMetadata));
 
   // 2. Rollback readiness
   results.push(checkRollbackReadiness(input.rollbackSnapshotId, input.activeSnapshotId));
@@ -220,11 +245,11 @@ export async function runRecoveryPreconditions(
   // 4. Snapshot restore verification (P3-4: async repo-first)
   results.push(await checkSnapshotRestoreVerification(input.rollbackSnapshotId));
 
-  // 5. Audit chain reconstructable (exclude recovery flow — still in progress)
-  results.push(checkAuditChainReconstructable(input.correlationId, { excludeFlows: ["recovery"] }));
+  // 5. Audit chain reconstructable (P3-5: async repo-first)
+  results.push(await checkAuditChainReconstructable(input.correlationId, { excludeFlows: ["recovery"] }));
 
-  // 6. Authority continuity
-  results.push(checkAuthorityContinuityValid());
+  // 6. Authority continuity (P3-5: async repo-first)
+  results.push(await checkAuthorityContinuityValid());
 
   // 7. Canonical baseline uniqueness
   results.push(checkCanonicalBaselineUniqueness());

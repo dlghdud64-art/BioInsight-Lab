@@ -103,11 +103,25 @@ export async function escalateIncidentAsync(
   return { record: lockResult.data, lockBlocked: false };
 }
 
+/** @deprecated Use getIncidentsFromRepo — legacy sync compat */
 export function getIncidents(): IncidentRecord[] {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "getIncidents:sync-compat",
+    {}
+  );
   return [..._incidents];
 }
 
+/** @deprecated Use hasUnacknowledgedIncidentsFromRepo — legacy sync compat */
 export function hasUnacknowledgedIncidents(): boolean {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "hasUnacknowledgedIncidents:sync-compat",
+    {}
+  );
   return _incidents.some((i: IncidentRecord) => !i.acknowledged);
 }
 
@@ -121,10 +135,13 @@ export function acknowledgeIncident(incidentId: string): boolean {
       const adapters = getPersistenceAdapters();
       adapters.incident.findIncidentByIncidentId(incidentId).then(function (result) {
         if (result.ok) {
+          const updatedAt = result.data.updatedAt instanceof Date
+            ? result.data.updatedAt
+            : new Date(result.data.updatedAt as unknown as string);
           adapters.incident.acknowledgeIncident(
             incidentId,
             "system",
-            result.data.updatedAt
+            updatedAt
           ).catch(function (err: unknown) {
             logBridgeFailure("incident-escalation", "acknowledgeIncident", err);
           });
@@ -168,6 +185,31 @@ export async function getIncidentsFromRepo(): Promise<IncidentRecord[]> {
     { fallbackUsed: true }
   );
   return [..._incidents];
+}
+
+// ── Repository-First Async Unacknowledged Check (P3-5) ──
+
+export async function hasUnacknowledgedIncidentsFromRepo(): Promise<boolean> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "incident-escalation", "incident-adapter", "incident",
+    "repository_to_canonical", "hasUnacknowledgedIncidentsFromRepo:entry",
+    {}
+  );
+  const incidents = await getIncidentsFromRepo();
+  return incidents.some(function (i) { return !i.acknowledged; });
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */

@@ -583,7 +583,7 @@ describe("P1 Closeout: Group 5 — Flow Exclusion & Timeline Contract", function
     setupPersistence();
   });
 
-  it("T11: in-progress recovery — partial recovery hops do NOT cause precondition BROKEN_CHAIN", function () {
+  it("T11: in-progress recovery — partial recovery hops do NOT cause precondition BROKEN_CHAIN", async function () {
     var corrId = "corr-in-progress";
 
     // Emit only REQUESTED (1 of 5 recovery hops) — simulates mid-recovery
@@ -600,17 +600,19 @@ describe("P1 Closeout: Group 5 — Flow Exclusion & Timeline Contract", function
     };
     emitRecoveryCanonicalEvent("INCIDENT_LOCKDOWN_RECOVERY_REQUESTED", record, "step 1");
 
+    await new Promise(function (r) { setTimeout(r, 50); });
+
     // With excludeFlows: ["recovery"] — should pass (no non-recovery missing hops)
-    var result = checkAuditChainReconstructable(corrId, { excludeFlows: ["recovery"] });
+    var result = await checkAuditChainReconstructable(corrId, { excludeFlows: ["recovery"] });
     expect(result.passed).toBe(true);
 
     // Without excludeFlows — buildTimeline sees 4 missing recovery hops → BROKEN_CHAIN
-    var resultFull = checkAuditChainReconstructable(corrId);
+    var resultFull = await checkAuditChainReconstructable(corrId);
     // 4 missing > 2 threshold → BROKEN_CHAIN → passed=false
     expect(resultFull.passed).toBe(false);
   });
 
-  it("T12: post-recovery — full recovery flow yields reconstructable including recovery hops", function () {
+  it("T12: post-recovery — full recovery flow yields reconstructable including recovery hops", async function () {
     var corrId = "corr-post-recovery";
 
     var record = {
@@ -630,8 +632,10 @@ describe("P1 Closeout: Group 5 — Flow Exclusion & Timeline Contract", function
       emitRecoveryCanonicalEvent(RECOVERY_FLOW_HOPS[i], record, "step " + i);
     }
 
+    await new Promise(function (r) { setTimeout(r, 50); });
+
     // Without excludeFlows — all hops present, should pass
-    var result = checkAuditChainReconstructable(corrId);
+    var result = await checkAuditChainReconstructable(corrId);
     expect(result.passed).toBe(true);
 
     // Timeline should be RECONSTRUCTABLE

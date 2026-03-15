@@ -125,7 +125,14 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   return { written: true, reasonCode: "AUDIT_WRITE_SUCCESS", eventId: event.eventId };
 }
 
+/** @deprecated Use getCanonicalAuditLogFromRepo — legacy sync compat */
 export function getCanonicalAuditLog(filter?: { correlationId?: string; timelineId?: string; eventType?: string }): CanonicalEvent[] {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "getCanonicalAuditLog:sync-compat",
+    {}
+  );
   if (!filter) return [..._auditLog];
   return _auditLog.filter((e: CanonicalEvent) => {
     if (filter.correlationId && e.correlationId !== filter.correlationId) return false;
@@ -219,7 +226,14 @@ export interface Timeline {
   reconstructionStatus: ReconstructionStatus;
 }
 
+/** @deprecated Use buildTimelineFromRepo — legacy sync compat */
 export function buildTimeline(correlationId: string): Timeline {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "buildTimeline:sync-compat",
+    {}
+  );
   const events = _auditLog
     .filter((e: CanonicalEvent) => e.correlationId === correlationId)
     .sort((a: CanonicalEvent, b: CanonicalEvent) => a.occurredAt.getTime() - b.occurredAt.getTime());
@@ -341,6 +355,96 @@ export async function getCanonicalAuditLogFromRepo(
     { fallbackUsed: true }
   );
   return getCanonicalAuditLog(filter);
+}
+
+// ── Repository-First Async Timeline Builder (P3-5) ──
+
+/**
+ * Repository-first timeline builder.
+ * Uses getCanonicalAuditLogFromRepo to fetch events, then applies same
+ * sorting + hop validation + reconstruction logic.
+ */
+export async function buildTimelineFromRepo(correlationId: string): Promise<Timeline> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "repository_to_canonical", "buildTimelineFromRepo:entry",
+    { entityId: correlationId }
+  );
+
+  const repoEvents = await getCanonicalAuditLogFromRepo({ correlationId });
+
+  const events = repoEvents
+    .filter(function (e) { return e.correlationId === correlationId; })
+    .sort(function (a, b) { return a.occurredAt.getTime() - b.occurredAt.getTime(); });
+
+  if (events.length === 0) {
+    return {
+      timelineId: `tl-empty-${correlationId}`,
+      correlationId,
+      rootEventId: "",
+      orderedEvents: [],
+      missingHops: [],
+      finalOutcome: "NO_EVENTS",
+      reconstructionStatus: "BROKEN_CHAIN",
+    };
+  }
+
+  const rootEvent = events[0]!;
+  const lastEvent = events[events.length - 1]!;
+  const incidentId = events.find(function (e) { return e.incidentId; })?.incidentId;
+
+  // Hop validation using repo events (inline to avoid calling sync validateHops which reads _auditLog)
+  const allMissing: string[] = [];
+  const flowHopMap: Record<string, readonly string[]> = {
+    containment: CONTAINMENT_FLOW_HOPS,
+    routing: ROUTING_FLOW_HOPS,
+    authority_transfer: AUTHORITY_TRANSFER_FLOW_HOPS,
+    recovery: RECOVERY_FLOW_HOPS,
+  };
+
+  const eventTypes = new Set(events.map(function (e) { return e.eventType; }));
+  for (const flow of ["containment", "routing", "authority_transfer", "recovery"]) {
+    const requiredHops = flowHopMap[flow] || [];
+    const present = requiredHops.filter(function (h) { return eventTypes.has(h); });
+    const missing = requiredHops.filter(function (h) { return !eventTypes.has(h); });
+    if (present.length > 0 && missing.length > 0) {
+      allMissing.push(...missing.map(function (m) { return flow + ":" + m; }));
+    }
+  }
+
+  let status: ReconstructionStatus;
+  if (allMissing.length === 0) {
+    status = "RECONSTRUCTABLE";
+  } else if (allMissing.length <= 2) {
+    status = "PARTIALLY_RECONSTRUCTABLE";
+  } else {
+    status = "BROKEN_CHAIN";
+  }
+
+  return {
+    timelineId: rootEvent.timelineId,
+    correlationId,
+    incidentId,
+    rootEventId: rootEvent.eventId,
+    orderedEvents: events,
+    missingHops: allMissing,
+    finalOutcome: lastEvent.resultStatus,
+    residualRisk: allMissing.length > 0 ? `${allMissing.length} missing hops` : undefined,
+    reconstructionStatus: status,
+  };
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */

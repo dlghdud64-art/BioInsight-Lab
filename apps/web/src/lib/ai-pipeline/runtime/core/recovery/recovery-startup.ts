@@ -166,7 +166,7 @@ export async function evaluateResumeReadiness(
   // 3. Audit chain reconstructable
   let chainOk = true;
   try {
-    const chainResult = checkAuditChainReconstructable(
+    const chainResult = await checkAuditChainReconstructable(
       activeRecord.correlationId,
       { excludeFlows: ["recovery"] }
     );
@@ -474,7 +474,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   let reconstructionStatus: "RECONSTRUCTABLE" | "BROKEN_CHAIN" | "UNKNOWN" = "UNKNOWN";
   let hasBrokenChain = false;
   try {
-    const chainResult = checkAuditChainReconstructable(
+    const chainResult = await checkAuditChainReconstructable(
       record.correlationId,
       { excludeFlows: ["recovery"] }
     );

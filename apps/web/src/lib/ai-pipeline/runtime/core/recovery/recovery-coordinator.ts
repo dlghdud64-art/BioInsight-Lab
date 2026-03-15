@@ -635,7 +635,7 @@ async function runRecoveryStage(
     case "AUDIT_HOP_COMPLETENESS": {
       try {
         const { checkAuditChainReconstructable } = require("./recovery-preconditions");
-        const chainResult = checkAuditChainReconstructable(
+        const chainResult = await checkAuditChainReconstructable(
           record.correlationId,
           { excludeFlows: ["recovery"] }
         );
@@ -741,7 +741,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
   if (correlationForAudit) {
     try {
       const { checkAuditChainReconstructable } = require("./recovery-preconditions");
-      const chainResult = checkAuditChainReconstructable(correlationForAudit);
+      const chainResult = await checkAuditChainReconstructable(correlationForAudit);
       auditOk = chainResult.passed;
     } catch (_err) {
       auditOk = true;

@@ -226,6 +226,18 @@ export async function getCanonicalBaselineFromRepo(): Promise<BaselineRegistry |
   return _canonicalBaseline;
 }
 
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "baseline-registry", "baseline-adapter", "baseline",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
+}
+
 /** 테스트용 — 상태 리셋 */
 export function _resetBaselineRegistry(): void {
   _canonicalBaseline = null;

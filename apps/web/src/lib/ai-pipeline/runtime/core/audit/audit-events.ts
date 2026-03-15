@@ -63,8 +63,14 @@ export function emitStabilizationAuditEvent(input: EmitAuditEventInput): Stabili
   return event;
 }
 
-/** audit event 조회 */
+/** @deprecated Use getAuditEventsFromRepo — legacy sync compat */
 export function getAuditEvents(filter?: { eventType?: StabilizationAuditEventType; documentType?: string }): StabilizationAuditEvent[] {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_PATH_USED",
+    "audit-events", "stabilization-audit-adapter", "stabilization-audit",
+    "legacy_to_canonical", "getAuditEvents:sync-compat",
+    {}
+  );
   if (!filter) return [..._auditEvents];
 
   return _auditEvents.filter((e: StabilizationAuditEvent) => {
@@ -105,6 +111,18 @@ export async function getAuditEventsFromRepo(
     { fallbackUsed: true }
   );
   return getAuditEvents(filter);
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "audit-events", "stabilization-audit-adapter", "stabilization-audit",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 — 상태 리셋 */
