@@ -188,6 +188,14 @@ const AUTHORITY_TRANSFER_FLOW_HOPS: readonly string[] = [
   "AUTHORITY_CONTINUITY_VALIDATED",
 ];
 
+export const RECOVERY_FLOW_HOPS: readonly string[] = [
+  "INCIDENT_LOCKDOWN_RECOVERY_REQUESTED",
+  "INCIDENT_LOCKDOWN_RECOVERY_VALIDATED",
+  "INCIDENT_LOCKDOWN_RECOVERY_EXECUTING",
+  "INCIDENT_LOCKDOWN_RECOVERY_VERIFIED",
+  "INCIDENT_LOCKDOWN_RECOVERY_RESTORED",
+];
+
 export interface HopValidationResult {
   flowName: string;
   complete: boolean;
@@ -201,6 +209,7 @@ export function validateHops(flowName: string, correlationId: string): HopValida
     case "containment": requiredHops = CONTAINMENT_FLOW_HOPS; break;
     case "routing": requiredHops = ROUTING_FLOW_HOPS; break;
     case "authority_transfer": requiredHops = AUTHORITY_TRANSFER_FLOW_HOPS; break;
+    case "recovery": requiredHops = RECOVERY_FLOW_HOPS; break;
     default: return { flowName, complete: false, missingHops: ["UNKNOWN_FLOW"], presentHops: [] };
   }
 
@@ -254,7 +263,7 @@ export function buildTimeline(correlationId: string): Timeline {
 
   // check hops for relevant flows
   const allMissing: string[] = [];
-  for (const flow of ["containment", "routing", "authority_transfer"]) {
+  for (const flow of ["containment", "routing", "authority_transfer", "recovery"]) {
     const hop = validateHops(flow, correlationId);
     if (hop.presentHops.length > 0 && !hop.complete) {
       allMissing.push(...hop.missingHops.map((m: string) => `${flow}:${m}`));

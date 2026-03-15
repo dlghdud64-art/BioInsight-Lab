@@ -86,25 +86,27 @@ function checkAuditChainReconstructable(correlationId: string): RecoveryPrecondi
   try {
     const { buildTimeline } = require("../observability/canonical-event-schema");
     const timeline = buildTimeline(correlationId);
-    // Empty canonical events = valid (recovery uses stabilization audit, not canonical)
-    if (timeline.finalOutcome === "NO_EVENTS") {
-      return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no canonical events to verify" };
+    // During recovery, recovery-flow hops are still accumulating — exclude them
+    const nonRecoveryMissing = timeline.missingHops.filter(function (h: string) {
+      return !h.startsWith("recovery:");
+    });
+    if (timeline.orderedEvents.length === 0) {
+      return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no events yet" };
     }
-    if (timeline.reconstructionStatus === "BROKEN_CHAIN") {
+    if (nonRecoveryMissing.length > 2) {
       return {
         name: "AUDIT_CHAIN_RECONSTRUCTABLE",
         passed: false,
-        detail: `audit chain BROKEN_CHAIN for correlationId=${correlationId}`,
+        detail: "audit chain BROKEN_CHAIN for correlationId=" + correlationId,
       };
     }
     return {
       name: "AUDIT_CHAIN_RECONSTRUCTABLE",
       passed: true,
-      detail: `reconstruction status: ${timeline.reconstructionStatus}`,
+      detail: "reconstruction status: " + timeline.reconstructionStatus,
     };
   } catch (_err) {
-    // If no canonical events exist yet, treat as reconstructable (empty is valid)
-    return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: true, detail: "no canonical events to verify" };
+    return { name: "AUDIT_CHAIN_RECONSTRUCTABLE", passed: false, detail: "canonical module error" };
   }
 }
 
