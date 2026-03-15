@@ -655,8 +655,8 @@ describe("P1-2: Lock Key Builders", function () {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe("P1-2: Reason Code Constants", function () {
-  it("should define all 9 lock reason codes", function () {
-    expect(Object.keys(LOCK_REASON_CODES).length).toBe(9);
+  it("should define all 10 lock reason codes", function () {
+    expect(Object.keys(LOCK_REASON_CODES).length).toBe(10);
     expect(LOCK_REASON_CODES.LOCK_ACQUIRE_CONFLICT).toBe("LOCK_ACQUIRE_CONFLICT");
     expect(LOCK_REASON_CODES.LOCK_OWNER_MISMATCH).toBe("LOCK_OWNER_MISMATCH");
     expect(LOCK_REASON_CODES.LOCK_EXPIRED).toBe("LOCK_EXPIRED");
@@ -666,5 +666,6 @@ describe("P1-2: Reason Code Constants", function () {
     expect(LOCK_REASON_CODES.AUTHORITY_MUTATION_REQUIRES_LOCK).toBe("AUTHORITY_MUTATION_REQUIRES_LOCK");
     expect(LOCK_REASON_CODES.SNAPSHOT_RESTORE_LOCK_REQUIRED).toBe("SNAPSHOT_RESTORE_LOCK_REQUIRED");
     expect(LOCK_REASON_CODES.INCIDENT_STREAM_LOCK_REQUIRED).toBe("INCIDENT_STREAM_LOCK_REQUIRED");
+    expect(LOCK_REASON_CODES.RECOVERY_LOCK_REQUIRED).toBe("RECOVERY_LOCK_REQUIRED");
   });
 });

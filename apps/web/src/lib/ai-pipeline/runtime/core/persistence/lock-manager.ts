@@ -55,6 +55,10 @@ export function incidentStreamLockKey(correlationId: string): string {
   return "lock:incident-stream:" + correlationId;
 }
 
+export function recoveryLockKey(recoveryId: string): string {
+  return "lock:recovery:" + recoveryId;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // withLock — Scoped lock pattern
 // ══════════════════════════════════════════════════════════════════════════════

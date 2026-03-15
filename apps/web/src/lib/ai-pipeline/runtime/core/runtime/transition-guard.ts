@@ -32,6 +32,9 @@ const TRANSITION_TABLE: ReadonlyMap<string, ReadonlySet<S1LifecycleState>> = new
   // EMERGENCY_ROLLBACK — from ACTIVE_100 or INCIDENT_LOCKDOWN
   ["ACTIVE_100|EMERGENCY_ROLLBACK", new Set<S1LifecycleState>(["ACTIVE_75", "ACTIVE_50", "ACTIVE_25", "PRE_ACTIVE", "INCIDENT_LOCKDOWN"])],
   ["INCIDENT_LOCKDOWN|EMERGENCY_ROLLBACK", new Set<S1LifecycleState>(["PRE_ACTIVE"])],
+
+  // P1-3: Recovery path — INCIDENT_LOCKDOWN → ACTIVE_100 (recovery coordinator only)
+  ["INCIDENT_LOCKDOWN|FULL_ACTIVE_STABILIZATION", new Set<S1LifecycleState>(["ACTIVE_100"])],
 ]);
 
 /** lifecycle transition guard */

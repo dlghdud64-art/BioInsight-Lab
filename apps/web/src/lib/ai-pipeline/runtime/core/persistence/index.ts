@@ -104,6 +104,7 @@ export {
   authorityLineLockKey,
   snapshotRestoreLockKey,
   incidentStreamLockKey,
+  recoveryLockKey,
 } from "./lock-manager";
 
 // Migration validation
