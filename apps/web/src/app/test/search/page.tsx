@@ -13,11 +13,12 @@ import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, File
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { LayoutDashboard, ClipboardList, TrendingDown } from "lucide-react";
 import {
   AlertDialog,
@@ -65,6 +66,20 @@ export default function SearchPage() {
   const [sheetSide, setSheetSide] = useState<"bottom" | "right">("bottom");
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Batch-fetch compare status for visible products
+  const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
+  const { data: compareStatusData } = useQuery<{ statuses: Record<string, { activeCount: number }> }>({
+    queryKey: ["compare-status", productIds],
+    queryFn: async () => {
+      const res = await fetch(`/api/products/compare-status?productIds=${productIds.join(",")}`);
+      if (!res.ok) return { statuses: {} };
+      return res.json();
+    },
+    enabled: productIds.length > 0 && !!session?.user,
+    staleTime: 30_000,
+  });
+  const compareStatuses = compareStatusData?.statuses ?? {};
 
   const activeFilterCount = [searchCategory, searchBrand, grade].filter(Boolean).length
     + (sortBy !== "relevance" ? 1 : 0)
@@ -305,6 +320,7 @@ export default function SearchPage() {
                         key={product.id}
                         product={product}
                         isInCompare={isInCompare}
+                        compareSessionCount={compareStatuses[product.id]?.activeCount}
                         onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
                         onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
                         onClick={() => handleProtectedAction(() => {

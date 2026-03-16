@@ -11,6 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   GitCompareArrows, FileText, Mail, Clock, ChevronRight, Loader2,
 } from "lucide-react";
+import {
+  getDecisionConfig,
+  getDraftStatusConfig,
+  VERDICT_CONFIG,
+} from "@/lib/compare-workspace/decision-constants";
 
 // ── Types ──
 
@@ -36,18 +41,9 @@ interface CompareHistorySectionProps {
 // ── Badge Components ──
 
 function DecisionStateBadge({ state }: { state: string | null }) {
-  const config: Record<string, { label: string; dot: string; pulse?: boolean }> = {
-    UNDECIDED: { label: "검토 중", dot: "amber", pulse: true },
-    APPROVED: { label: "승인", dot: "emerald" },
-    HELD: { label: "보류", dot: "blue" },
-    REJECTED: { label: "반려", dot: "red" },
-  };
-  const c = state ? config[state] : null;
-  if (!c) {
-    return <Badge variant="outline" dot="slate" className="text-xs">미결정</Badge>;
-  }
+  const c = getDecisionConfig(state);
   return (
-    <Badge variant="outline" dot={c.dot as any} dotPulse={c.pulse} className="text-xs">
+    <Badge variant="outline" dot={c.dotColor as any} dotPulse={c.pulse} className="text-xs">
       {c.label}
     </Badge>
   );
@@ -55,14 +51,12 @@ function DecisionStateBadge({ state }: { state: string | null }) {
 
 function VerdictBadgeMini({ verdict }: { verdict: string | null }) {
   if (!verdict) return null;
-  const config: Record<string, { label: string; className: string }> = {
-    EQUIVALENT: { label: "동일", className: "bg-green-50 text-green-700" },
-    MINOR_DIFFERENCES: { label: "경미", className: "bg-blue-50 text-blue-700" },
-    SIGNIFICANT_DIFFERENCES: { label: "중요", className: "bg-orange-50 text-orange-700" },
-    INCOMPATIBLE: { label: "불가", className: "bg-red-50 text-red-700" },
-    REQUIRES_EXPERT: { label: "전문가", className: "bg-purple-50 text-purple-700" },
-  };
-  const c = config[verdict] || config.MINOR_DIFFERENCES;
+  const c = VERDICT_CONFIG[verdict] ?? VERDICT_CONFIG.MINOR_DIFFERENCES;
+  return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
+}
+
+function DraftStatusBadgeMini({ status }: { status: string }) {
+  const c = getDraftStatusConfig(status);
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
 }
 
@@ -152,6 +146,9 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                         문의 {session.inquiryDraftCount}
                       </Badge>
                     )}
+                    {session.inquiryDraftStatuses.length > 0 && session.inquiryDraftStatuses.map((s, i) => (
+                      <DraftStatusBadgeMini key={i} status={s} />
+                    ))}
                   </div>
 
                   {/* 시간 */}

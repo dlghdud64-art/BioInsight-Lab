@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { CompareInsight } from "@/lib/compare-workspace/compare-insight-generator";
+import { getDecisionConfig, getDraftStatusConfig } from "@/lib/compare-workspace/decision-constants";
 
 // ── Types ──
 
@@ -158,28 +159,14 @@ function VerdictBadge({ verdict }: { verdict: string }) {
 }
 
 function DraftStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    GENERATED: { label: "생성됨", className: "bg-blue-50 text-blue-700" },
-    COPIED: { label: "복사됨", className: "bg-green-50 text-green-700" },
-    SENT: { label: "발송됨", className: "bg-purple-50 text-purple-700" },
-  };
-  const c = config[status] || config.GENERATED;
+  const c = getDraftStatusConfig(status);
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
 }
 
 function DecisionStateBadge({ state }: { state: string | null }) {
-  const config: Record<string, { label: string; dot: string; pulse?: boolean }> = {
-    UNDECIDED: { label: "검토 중", dot: "amber", pulse: true },
-    APPROVED: { label: "승인", dot: "emerald" },
-    HELD: { label: "보류", dot: "blue" },
-    REJECTED: { label: "반려", dot: "red" },
-  };
-  const c = state ? config[state] : null;
-  if (!c) {
-    return <Badge variant="outline" dot="slate" className="text-xs">미결정</Badge>;
-  }
+  const c = getDecisionConfig(state);
   return (
-    <Badge variant="outline" dot={c.dot as any} dotPulse={c.pulse} className="text-xs">
+    <Badge variant="outline" dot={c.dotColor as any} dotPulse={c.pulse} className="text-xs">
       {c.label}
     </Badge>
   );

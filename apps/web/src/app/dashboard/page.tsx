@@ -70,10 +70,11 @@ export default function DashboardPage() {
       amount: number | null; purchasedAt: string; category: string | null;
       qty: number | null; unit: string | null;
     }>,
+    undecidedCompareCount: rawStats.undecidedCompareCount ?? 0,
   };
 
-  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0;
-  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0);
+  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0 || stats.undecidedCompareCount > 0;
+  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0) + (stats.undecidedCompareCount > 0 ? 1 : 0);
 
   // ── 알림 (심각도순 정렬) ──
   const notifications = [
@@ -85,6 +86,9 @@ export default function DashboardPage() {
       : []),
     ...(stats.expiringCount > 0
       ? [{ id: "n-exp", type: "alert" as const, title: `유통기한 임박 ${stats.expiringCount}건`, content: "30일 이내 만료 예정 품목이 있습니다.", time: "최근", unread: true, href: "/dashboard/inventory" }]
+      : []),
+    ...(stats.undecidedCompareCount > 0
+      ? [{ id: "n-compare", type: "quote" as const, title: `비교 판정 대기 ${stats.undecidedCompareCount}건`, content: "비교 결과를 검토하고 판정을 내려주세요.", time: "최근", unread: true, href: "/compare" }]
       : []),
     { id: "n-delivery", type: "delivery" as const, title: "최근 입고 처리 완료", content: "등록된 입고 내역을 확인할 수 있습니다.", time: "최근", unread: false, href: "/dashboard/purchases" },
   ].slice(0, 4);
@@ -225,6 +229,18 @@ export default function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.expiringCount}건 유통기한 임박</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">30일 이내 만료 예정</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              </Link>
+            )}
+            {stats.undecidedCompareCount > 0 && (
+              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className="rounded-md bg-purple-100 dark:bg-purple-950/40 p-2 flex-shrink-0">
+                  <GitCompare className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.undecidedCompareCount}건 비교 판정 대기</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">비교 결과를 검토하고 판정하세요</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
               </Link>

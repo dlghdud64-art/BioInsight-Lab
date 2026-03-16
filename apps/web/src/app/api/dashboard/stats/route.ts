@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
       expiringInventories,
       userInventories,
       fallbackBudget,
+      undecidedCompareCount,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -136,6 +137,10 @@ export async function GET(request: NextRequest) {
               yearMonth: currentYearMonth,
             },
           }),
+      // 비교 판정 대기 건수
+      db.compareSession.count({
+        where: { userId, decisionState: "UNDECIDED" },
+      }).catch(() => 0),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -429,6 +434,7 @@ export async function GET(request: NextRequest) {
       monthlySpending,
       recentOrders,
       recentPurchases,
+      undecidedCompareCount,
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);

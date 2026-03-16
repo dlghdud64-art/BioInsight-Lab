@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ChevronLeft,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Home,
   Building2,
@@ -700,6 +701,17 @@ export default function QuoteDetailPage() {
                 </Button>
               </div>
             </Card>
+
+            {/* ── 1-0.5 비교 분석 출처 배너 ── */}
+            {quote.comparisonId && (
+              <Link href={`/compare?sessionId=${quote.comparisonId}`}>
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
+                  <GitCompare className="h-4 w-4 text-purple-600 shrink-0" />
+                  <span className="text-xs font-medium text-purple-700">비교 분석에서 생성된 견적</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-purple-400 ml-auto" />
+                </div>
+              </Link>
+            )}
 
             {/* ── 1-1. 운영 상태 스트립 ── */}
             <div className="grid grid-cols-3 gap-3">
