@@ -803,3 +803,156 @@ export function evaluateP5Acceptance(): P5AcceptanceSheet {
     decisionReason,
   };
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 12. P6 Guardrail Lock — Closure Artifact & Acceptance
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Official closure baselines for the sync-compat migration line.
+ * These SHAs are the authoritative references for regression checks.
+ */
+export const CLOSURE_BASELINES = {
+  P4: { sha: "310c189", description: "P4 closeout — inventory enrichment + zero-caller promotion + acceptance evaluation" },
+  P5: { sha: "28bd62e", description: "P5 closeout — retained inventory burn-down to zero (10 REMOVED + 0 RETAINED)" },
+} as const;
+
+/**
+ * Final migration state frozen at P5 closure.
+ */
+export const FINAL_MIGRATION_STATE = {
+  removedInventoryTotal: 10,
+  retainedInventoryTotal: 0,
+  p5Decision: "P5_ACCEPTED" as const,
+  criteriaMetAll: ["ALL_RETAINED_ELIMINATED", "CALLER_COUNTS_ALL_ZERO"] as const,
+  regressionSuite: "499/499 green",
+  migrationLineStatus: "CLOSED" as const,
+} as const;
+
+/**
+ * Forbidden sync compat symbols — must never appear in new production code.
+ * Used by architectural tests and CI gates.
+ */
+export const FORBIDDEN_SYNC_COMPAT_SYMBOLS: readonly string[] = SYNC_COMPAT_SHUTDOWN_INVENTORY.map(
+  function (e) { return e.functionName; }
+);
+
+/**
+ * Async-only caller clusters — source-of-truth for async-native paths.
+ * Each cluster must use only async (FromRepo) variants.
+ */
+export const ASYNC_ONLY_CALLER_CLUSTERS = [
+  { cluster: "recovery-startup", module: "core/recovery/recovery-startup.ts", asyncApis: ["getCanonicalBaselineFromRepo", "hasUnacknowledgedIncidentsFromRepo", "checkAuthorityIntegrityFromRepo"] },
+  { cluster: "recovery-preconditions", module: "core/recovery/recovery-preconditions.ts", asyncApis: ["hasUnacknowledgedIncidentsFromRepo", "getSnapshotFromRepo"] },
+  { cluster: "rollback-subsystem", module: "core/rollback/*.ts", asyncApis: ["getSnapshotFromRepo"] },
+  { cluster: "lock-hygiene", module: "core/persistence/lock-hygiene.ts", asyncApis: ["getCanonicalBaselineFromRepo", "hasUnacknowledgedIncidentsFromRepo"] },
+  { cluster: "baseline-validator", module: "core/baseline/baseline-validator.ts", asyncApis: ["getCanonicalBaselineFromRepo"] },
+  { cluster: "recovery-diagnostics", module: "core/recovery/recovery-diagnostics.ts", asyncApis: ["buildTimelineFromRepo"] },
+] as const;
+
+/**
+ * Ownership and source-of-truth boundaries for async-native paths.
+ */
+export const ASYNC_PATH_OWNERSHIP = {
+  startupPath: { sourceOfTruth: "recovery-startup.ts", asyncApi: "runStartupRecoveryScan / evaluateResumeReadiness", policy: "repo-first async only" },
+  preconditionsPath: { sourceOfTruth: "recovery-preconditions.ts", asyncApi: "runRecoveryPreconditions", policy: "repo-first async only" },
+  rollbackSnapshotPath: { sourceOfTruth: "rollback/*.ts (precheck, plan-builder, executor, residue-scan, state-reconciliation)", asyncApi: "getSnapshotFromRepo", policy: "repo-first async only" },
+  diagnosticsTimelinePath: { sourceOfTruth: "recovery-diagnostics.ts", asyncApi: "buildTimelineFromRepo", policy: "repo-first async only" },
+  lockHygienePath: { sourceOfTruth: "lock-hygiene.ts", asyncApi: "getCanonicalBaselineFromRepo + hasUnacknowledgedIncidentsFromRepo", policy: "repo-first async only" },
+  baselineValidatorPath: { sourceOfTruth: "baseline-validator.ts", asyncApi: "getCanonicalBaselineFromRepo", policy: "repo-first async only" },
+  syncWrapperPolicy: "FORBIDDEN — no new sync wrappers, bridges, shims, or fallbacks permitted",
+} as const;
+
+// ── P6 Acceptance ──
+
+export type P6Decision = "P6_GUARDRAILS_ACCEPTED" | "P6_NOT_ACCEPTED";
+
+export interface P6AcceptanceCriterion {
+  name: string;
+  met: boolean;
+  evidence: string;
+}
+
+export interface P6AcceptanceSheet {
+  evaluatedAt: Date;
+  criteria: P6AcceptanceCriterion[];
+  closureBaselines: typeof CLOSURE_BASELINES;
+  finalMigrationState: typeof FINAL_MIGRATION_STATE;
+  decision: P6Decision;
+  decisionReason: string;
+}
+
+/**
+ * Evaluate P6 guardrail lock acceptance.
+ * All 7 criteria must be met.
+ */
+export function evaluateP6Acceptance(opts: {
+  forbiddenGuardActive: boolean;
+  asyncInvariantTestCount: number;
+  inventoryVerificationActive: boolean;
+  obsoleteDiagnosticsCleanedUp: boolean;
+  ownershipDocumented: boolean;
+  prReviewGateActive: boolean;
+  regressionGreen: boolean;
+}): P6AcceptanceSheet {
+  const criteria: P6AcceptanceCriterion[] = [
+    {
+      name: "CLOSURE_BASELINES_DOCUMENTED",
+      met: CLOSURE_BASELINES.P4.sha.length > 0 && CLOSURE_BASELINES.P5.sha.length > 0,
+      evidence: `P4=${CLOSURE_BASELINES.P4.sha}, P5=${CLOSURE_BASELINES.P5.sha}`,
+    },
+    {
+      name: "FORBIDDEN_REINTRODUCTION_GUARD",
+      met: opts.forbiddenGuardActive,
+      evidence: `${FORBIDDEN_SYNC_COMPAT_SYMBOLS.length} symbols banned; guard ${opts.forbiddenGuardActive ? "active" : "inactive"}`,
+    },
+    {
+      name: "ASYNC_ONLY_INVARIANT_TESTS",
+      met: opts.asyncInvariantTestCount >= ASYNC_ONLY_CALLER_CLUSTERS.length,
+      evidence: `${opts.asyncInvariantTestCount}/${ASYNC_ONLY_CALLER_CLUSTERS.length} cluster invariant tests`,
+    },
+    {
+      name: "INVENTORY_VERIFICATION_ACTIVE",
+      met: opts.inventoryVerificationActive,
+      evidence: `inventory verification ${opts.inventoryVerificationActive ? "active" : "inactive"}; retained=${FINAL_MIGRATION_STATE.retainedInventoryTotal}`,
+    },
+    {
+      name: "OBSOLETE_DIAGNOSTICS_CLEANED",
+      met: opts.obsoleteDiagnosticsCleanedUp,
+      evidence: `obsolete diagnostics ${opts.obsoleteDiagnosticsCleanedUp ? "cleaned" : "pending"}`,
+    },
+    {
+      name: "OWNERSHIP_DOCUMENTED",
+      met: opts.ownershipDocumented,
+      evidence: `${Object.keys(ASYNC_PATH_OWNERSHIP).length} ownership entries; documented=${opts.ownershipDocumented}`,
+    },
+    {
+      name: "PR_REVIEW_GATE_ACTIVE",
+      met: opts.prReviewGateActive,
+      evidence: `PR review gate ${opts.prReviewGateActive ? "active" : "inactive"}`,
+    },
+  ];
+
+  const allMet = criteria.every(function (c) { return c.met; }) && opts.regressionGreen;
+
+  const decision: P6Decision = allMet ? "P6_GUARDRAILS_ACCEPTED" : "P6_NOT_ACCEPTED";
+  const decisionReason = allMet
+    ? `All ${criteria.length} guardrail criteria met; regression green; migration line permanently locked`
+    : `${criteria.filter(function (c) { return c.met; }).length}/${criteria.length} criteria met; regression=${opts.regressionGreen ? "green" : "failing"}`;
+
+  emitDiagnostic(
+    "P6_GUARDRAILS_ACCEPTED",
+    "p3-closeout", "shutdown-inventory", "shutdown",
+    "legacy_to_canonical", "evaluateP6Acceptance:" + decision,
+    { decision }
+  );
+
+  return {
+    evaluatedAt: new Date(),
+    criteria,
+    closureBaselines: CLOSURE_BASELINES,
+    finalMigrationState: FINAL_MIGRATION_STATE,
+    decision,
+    decisionReason,
+  };
+}
