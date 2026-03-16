@@ -19,6 +19,9 @@ import {
   RESOLUTION_PATH_LABELS,
   COMPARE_CONVERSION_PATHS,
   NO_MOVEMENT_THRESHOLD_DAYS,
+  COMPARE_HANDOFF_DEFINITIONS,
+  determineHandoffStallPoint,
+  HANDOFF_STALL_LABELS,
 } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── determineCompareSubstatus ──
@@ -459,5 +462,97 @@ describe("computeNoMovementDays", () => {
       hasQuote: false,
     });
     expect(result).toBe(5);
+  });
+});
+
+// ── COMPARE_HANDOFF_DEFINITIONS ──
+
+describe("COMPARE_HANDOFF_DEFINITIONS", () => {
+  it("defines exactly 4 handoff definitions", () => {
+    expect(COMPARE_HANDOFF_DEFINITIONS).toHaveLength(4);
+  });
+
+  it("has unique IDs", () => {
+    const ids = COMPARE_HANDOFF_DEFINITIONS.map((d) => d.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("has all required fields non-empty", () => {
+    for (const def of COMPARE_HANDOFF_DEFINITIONS) {
+      expect(def.id).toBeTruthy();
+      expect(def.label).toBeTruthy();
+      expect(def.sourceEntity).toBeTruthy();
+      expect(def.targetEntity).toBeTruthy();
+      expect(def.sourceState).toBeTruthy();
+      expect(def.targetState).toBeTruthy();
+      expect(def.successCondition).toBeTruthy();
+      expect(def.blockedCondition).toBeTruthy();
+      expect(def.activityLogEvent).toBeTruthy();
+      expect(def.reportingImplication).toBeTruthy();
+    }
+  });
+});
+
+// ── determineHandoffStallPoint ──
+
+describe("determineHandoffStallPoint", () => {
+  it("returns none when no compare-origin quotes exist", () => {
+    expect(determineHandoffStallPoint({
+      compareToQuoteCount: 0,
+      quoteToPurchaseCount: 0,
+      purchaseToReceivingCount: 0,
+      receivingToInventoryCount: 0,
+    })).toBe("none");
+  });
+
+  it("returns quote when biggest drop is at quote stage", () => {
+    expect(determineHandoffStallPoint({
+      compareToQuoteCount: 10,
+      quoteToPurchaseCount: 3,
+      purchaseToReceivingCount: 2,
+      receivingToInventoryCount: 2,
+    })).toBe("quote");
+  });
+
+  it("returns purchase when biggest drop is at purchase stage", () => {
+    expect(determineHandoffStallPoint({
+      compareToQuoteCount: 10,
+      quoteToPurchaseCount: 10,
+      purchaseToReceivingCount: 2,
+      receivingToInventoryCount: 2,
+    })).toBe("purchase");
+  });
+
+  it("returns receiving when biggest drop is at receiving stage", () => {
+    expect(determineHandoffStallPoint({
+      compareToQuoteCount: 10,
+      quoteToPurchaseCount: 10,
+      purchaseToReceivingCount: 10,
+      receivingToInventoryCount: 3,
+    })).toBe("receiving");
+  });
+
+  it("returns none when no drop at any stage", () => {
+    expect(determineHandoffStallPoint({
+      compareToQuoteCount: 5,
+      quoteToPurchaseCount: 5,
+      purchaseToReceivingCount: 5,
+      receivingToInventoryCount: 5,
+    })).toBe("none");
+  });
+});
+
+// ── HANDOFF_STALL_LABELS ──
+
+describe("HANDOFF_STALL_LABELS", () => {
+  it("has labels for all 4 stall points", () => {
+    expect(Object.keys(HANDOFF_STALL_LABELS)).toHaveLength(4);
+  });
+
+  it("all labels are non-empty strings", () => {
+    for (const label of Object.values(HANDOFF_STALL_LABELS)) {
+      expect(typeof label).toBe("string");
+      expect(label.length).toBeGreaterThan(0);
+    }
   });
 });

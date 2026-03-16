@@ -441,3 +441,97 @@ export function computeNoMovementDays(input: {
   const ageDays = Math.floor((Date.now() - new Date(input.createdAt).getTime()) / 86400000);
   return ageDays >= NO_MOVEMENT_THRESHOLD_DAYS ? ageDays : null;
 }
+
+// ── Canonical Handoff Definitions ──
+
+export interface CompareHandoffDefinition {
+  id: string;
+  label: string;
+  sourceEntity: string;
+  targetEntity: string;
+  sourceState: string;
+  targetState: string;
+  successCondition: string;
+  blockedCondition: string;
+  activityLogEvent: string;
+  reportingImplication: string;
+}
+
+export const COMPARE_HANDOFF_DEFINITIONS: CompareHandoffDefinition[] = [
+  {
+    id: "compare_to_quote",
+    label: "비교 → 견적",
+    sourceEntity: "CompareSession",
+    targetEntity: "Quote",
+    sourceState: "decisionState = APPROVED/HELD/REJECTED",
+    targetState: "Quote created with comparisonId",
+    successCondition: "Quote.comparisonId links to CompareSession.id",
+    blockedCondition: "CompareSession UNDECIDED or no quote created",
+    activityLogEvent: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+    reportingImplication: "견적 전환 건수에 포함",
+  },
+  {
+    id: "quote_to_purchase",
+    label: "견적 → 발주",
+    sourceEntity: "Quote",
+    targetEntity: "Order",
+    sourceState: "Quote.status = COMPLETED/PURCHASED",
+    targetState: "Order created with quoteId",
+    successCondition: "Order.quoteId links to compare-origin Quote",
+    blockedCondition: "Quote PENDING/SENT/CANCELLED",
+    activityLogEvent: "ORDER_STATUS_CHANGED",
+    reportingImplication: "발주 전환 건수에 포함",
+  },
+  {
+    id: "purchase_to_receiving",
+    label: "발주 → 입고",
+    sourceEntity: "Order",
+    targetEntity: "InventoryRestock",
+    sourceState: "Order.status = CONFIRMED/SHIPPING/DELIVERED",
+    targetState: "InventoryRestock created with orderId",
+    successCondition: "InventoryRestock.orderId links to compare-origin Order",
+    blockedCondition: "Order ORDERED/CANCELLED, no restock records",
+    activityLogEvent: "INVENTORY_RESTOCK_REVIEWED",
+    reportingImplication: "입고 진행 건수에 포함",
+  },
+  {
+    id: "receiving_to_inventory",
+    label: "입고 → 재고",
+    sourceEntity: "InventoryRestock",
+    targetEntity: "ProductInventory",
+    sourceState: "InventoryRestock.receivingStatus = COMPLETED",
+    targetState: "ProductInventory.currentQuantity updated",
+    successCondition: "receivingStatus = COMPLETED",
+    blockedCondition: "receivingStatus = PENDING/PARTIAL/ISSUE",
+    activityLogEvent: "INVENTORY_UPDATED_FROM_RECEIVING",
+    reportingImplication: "재고 반영 건수에 포함",
+  },
+];
+
+// ── Handoff Stall Point Detection ──
+
+export type HandoffStallPoint = "quote" | "purchase" | "receiving" | "none";
+
+export const HANDOFF_STALL_LABELS: Record<HandoffStallPoint, string> = {
+  quote: "견적 단계에서 정체",
+  purchase: "발주 단계에서 정체",
+  receiving: "입고 단계에서 정체",
+  none: "정체 없음",
+};
+
+export function determineHandoffStallPoint(counts: {
+  compareToQuoteCount: number;
+  quoteToPurchaseCount: number;
+  purchaseToReceivingCount: number;
+  receivingToInventoryCount: number;
+}): HandoffStallPoint {
+  const { compareToQuoteCount, quoteToPurchaseCount, purchaseToReceivingCount, receivingToInventoryCount } = counts;
+  if (compareToQuoteCount === 0) return "none";
+  const drops = [
+    { point: "quote" as const, drop: compareToQuoteCount - quoteToPurchaseCount },
+    { point: "purchase" as const, drop: quoteToPurchaseCount - purchaseToReceivingCount },
+    { point: "receiving" as const, drop: purchaseToReceivingCount - receivingToInventoryCount },
+  ];
+  const max = drops.reduce((a, b) => (b.drop > a.drop ? b : a));
+  return max.drop > 0 ? max.point : "none";
+}

@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
-import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS } from "@/lib/work-queue/compare-queue-semantics";
+import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -81,6 +81,11 @@ export default function DashboardPage() {
       resolutionPathDistribution: (rawStats.compareStats?.resolutionPathDistribution ?? {}) as Record<string, number>,
       noMovementCount: rawStats.compareStats?.noMovementCount ?? 0,
       inquiryFollowupRate: rawStats.compareStats?.inquiryFollowupRate ?? 0,
+      compareToQuoteCount: rawStats.compareStats?.compareToQuoteCount ?? 0,
+      quoteToPurchaseCount: rawStats.compareStats?.quoteToPurchaseCount ?? 0,
+      purchaseToReceivingCount: rawStats.compareStats?.purchaseToReceivingCount ?? 0,
+      receivingToInventoryCount: rawStats.compareStats?.receivingToInventoryCount ?? 0,
+      handoffStallPoint: (rawStats.compareStats?.handoffStallPoint ?? "none") as string,
     },
   };
 
@@ -294,6 +299,19 @@ export default function DashboardPage() {
                   {stats.compareStats.noMovementCount > 0 && (
                     <p className="text-[10px] text-orange-500 font-medium mt-0.5">
                       다음 단계 없음 {stats.compareStats.noMovementCount}건
+                    </p>
+                  )}
+                  {stats.compareStats.compareToQuoteCount > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {"견적 "}{stats.compareStats.compareToQuoteCount}
+                      {" → 발주 "}{stats.compareStats.quoteToPurchaseCount}
+                      {" → 입고 "}{stats.compareStats.purchaseToReceivingCount}
+                      {" → 완료 "}{stats.compareStats.receivingToInventoryCount}
+                      {stats.compareStats.handoffStallPoint !== "none" && (
+                        <span className="text-orange-500 ml-1">
+                          ({HANDOFF_STALL_LABELS[stats.compareStats.handoffStallPoint as keyof typeof HANDOFF_STALL_LABELS]})
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>

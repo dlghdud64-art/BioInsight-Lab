@@ -71,6 +71,34 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Downstream: Quote → Order → InventoryRestock
+    const compareLinkedQuoteIds = linkedQuotes.map((q: any) => q.id);
+    const downstreamOrders = compareLinkedQuoteIds.length > 0
+      ? await db.order.findMany({
+          where: { quoteId: { in: compareLinkedQuoteIds } },
+          select: { id: true, quoteId: true, status: true },
+        })
+      : [];
+
+    const orderByQuoteId = new Map<string, { id: string; status: string }>();
+    for (const o of downstreamOrders) orderByQuoteId.set(o.quoteId, o);
+
+    const orderIds = downstreamOrders.map((o: any) => o.id);
+    const downstreamRestocks = orderIds.length > 0
+      ? await db.inventoryRestock.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { orderId: true, receivingStatus: true },
+        })
+      : [];
+
+    const restocksByOrderId = new Map<string, string[]>();
+    for (const r of downstreamRestocks) {
+      if (!r.orderId) continue;
+      const arr = restocksByOrderId.get(r.orderId) || [];
+      arr.push(r.receivingStatus);
+      restocksByOrderId.set(r.orderId, arr);
+    }
+
     // 제품명 일괄 조회
     const allProductIds = [...new Set(sessions.flatMap((s: any) => {
       const ids = s.productIds;
@@ -117,6 +145,26 @@ export async function GET(request: NextRequest) {
         latestActionAt,
         createdAt: s.createdAt?.toISOString?.() ?? null,
         diffSummaryVerdict,
+        downstreamProgress: (() => {
+          const sessionQuoteIds = linkedQuotes
+            .filter((q: any) => q.comparisonId === s.id)
+            .map((q: any) => q.id);
+          let hasOrder = false, orderStatus: string | undefined;
+          let hasReceiving = false, receivingComplete = false;
+          for (const qid of sessionQuoteIds) {
+            const order = orderByQuoteId.get(qid);
+            if (order) {
+              hasOrder = true;
+              orderStatus = order.status;
+              const statuses = restocksByOrderId.get(order.id);
+              if (statuses && statuses.length > 0) {
+                hasReceiving = true;
+                receivingComplete = statuses.every((rs: string) => rs === "COMPLETED");
+              }
+            }
+          }
+          return { hasOrder, orderStatus, hasReceiving, receivingComplete };
+        })(),
       };
     });
 

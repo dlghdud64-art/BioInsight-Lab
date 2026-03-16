@@ -36,6 +36,12 @@ export interface CompareSessionSummary {
   diffSummaryVerdict: string | null;
   linkedQuoteStatuses: string[];
   latestQuoteStatus: string | null;
+  downstreamProgress?: {
+    hasOrder: boolean;
+    orderStatus?: string;
+    hasReceiving: boolean;
+    receivingComplete: boolean;
+  };
 }
 
 interface CompareHistorySectionProps {
@@ -86,6 +92,21 @@ function CompareSubstatusBadge({ session }: { session: CompareSessionSummary }) 
       {def.label}
     </Badge>
   );
+}
+
+function DownstreamProgressBadge({ progress }: { progress?: CompareSessionSummary["downstreamProgress"] }) {
+  if (!progress || !progress.hasOrder) return null;
+  if (progress.receivingComplete) {
+    return <Badge variant="outline" className="text-xs bg-green-50 text-green-700">입고 완료</Badge>;
+  }
+  if (progress.hasReceiving) {
+    return <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">입고 진행</Badge>;
+  }
+  const label = progress.orderStatus === "DELIVERED" ? "배송 완료"
+    : progress.orderStatus === "SHIPPING" ? "배송 중"
+    : progress.orderStatus === "CONFIRMED" ? "발주 확인"
+    : "발주 진행";
+  return <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">{label}</Badge>;
 }
 
 function relativeTime(dateStr: string | null): string {
@@ -193,6 +214,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                     {session.inquiryDraftStatuses.length > 0 && session.inquiryDraftStatuses.map((s, i) => (
                       <DraftStatusBadgeMini key={i} status={s} />
                     ))}
+                    <DownstreamProgressBadge progress={session.downstreamProgress} />
                   </div>
 
                   {/* 시간 */}

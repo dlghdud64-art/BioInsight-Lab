@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createWorkItem } from "@/lib/work-queue/work-queue-service";
-import { COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
+import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-queue/compare-queue-semantics";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
       compareLinkedQuoteSessions,
       completedCompareItems,
       sessionsWithInquiry,
+      followThroughData,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -178,6 +179,30 @@ export async function GET(request: NextRequest) {
         where: { userId, inquiryDrafts: { some: {} } },
         select: { id: true },
       }).catch(() => [] as { id: string }[]),
+      // Follow-through: compare-origin quotes → orders → restocks
+      db.quote.findMany({
+        where: { comparisonId: { not: null }, userId },
+        select: { id: true },
+      }).then(async (cQuotes: { id: string }[]) => {
+        if (cQuotes.length === 0) return { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+        const qIds = cQuotes.map((q) => q.id);
+        const orders = await db.order.findMany({
+          where: { quoteId: { in: qIds } },
+          select: { id: true },
+        });
+        if (orders.length === 0) return { quoteCount: cQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+        const oIds = orders.map((o: { id: string }) => o.id);
+        const restocks = await db.inventoryRestock.findMany({
+          where: { orderId: { in: oIds } },
+          select: { receivingStatus: true },
+        });
+        return {
+          quoteCount: cQuotes.length,
+          orderCount: orders.length,
+          receivingCount: restocks.length,
+          inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+        };
+      }).catch(() => ({ quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 })),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -479,6 +504,7 @@ export async function GET(request: NextRequest) {
         compareLinkedQuoteSessions as { comparisonId: string | null }[],
         completedCompareItems as { payload: unknown }[],
         sessionsWithInquiry as { id: string }[],
+        followThroughData as { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
       ),
     });
 
@@ -557,6 +583,7 @@ function computeCompareStats(
   linkedQuoteSessions: { comparisonId: string | null }[],
   completedItems: { payload: unknown }[],
   sessionsWithInquiry: { id: string }[],
+  followThrough: { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
 ) {
   const now = Date.now();
   const MS_PER_DAY = 86400000;
@@ -627,5 +654,15 @@ function computeCompareStats(
     resolutionPathDistribution,
     noMovementCount,
     inquiryFollowupRate,
+    compareToQuoteCount: followThrough.quoteCount,
+    quoteToPurchaseCount: followThrough.orderCount,
+    purchaseToReceivingCount: followThrough.receivingCount,
+    receivingToInventoryCount: followThrough.inventoryCount,
+    handoffStallPoint: determineHandoffStallPoint({
+      compareToQuoteCount: followThrough.quoteCount,
+      quoteToPurchaseCount: followThrough.orderCount,
+      purchaseToReceivingCount: followThrough.receivingCount,
+      receivingToInventoryCount: followThrough.inventoryCount,
+    }),
   };
 }

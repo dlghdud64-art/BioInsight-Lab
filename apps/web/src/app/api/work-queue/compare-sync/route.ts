@@ -109,6 +109,17 @@ export async function POST() {
       quotesBySession.set(q.comparisonId, arr);
     }
 
+    // 4b. Downstream orders for auto-close detection
+    const linkedQuoteIds = linkedQuotes.map((q: { id: string }) => q.id);
+    const downstreamOrders = linkedQuoteIds.length > 0
+      ? await db.order.findMany({
+          where: { quoteId: { in: linkedQuoteIds } },
+          select: { quoteId: true, status: true },
+        })
+      : [];
+    const orderStatusByQuoteId = new Map<string, string>();
+    for (const o of downstreamOrders) orderStatusByQuoteId.set(o.quoteId, o.status);
+
     let synced = 0;
 
     for (const cs of compareSessions) {
@@ -133,6 +144,27 @@ export async function POST() {
 
       const active = activeBySession.get(cs.id);
       const completed = completedBySession.get(cs.id);
+
+      // Auto-close: if all linked quotes have orders with status >= CONFIRMED
+      const sessionQuoteIds = linkedQuotes
+        .filter((q: { comparisonId: string | null }) => q.comparisonId === cs.id)
+        .map((q: { id: string }) => q.id);
+      const allQuotesHandedOff = sessionQuoteIds.length > 0 &&
+        sessionQuoteIds.every((qid: string) => {
+          const status = orderStatusByQuoteId.get(qid);
+          return status && ["CONFIRMED", "SHIPPING", "DELIVERED"].includes(status);
+        });
+
+      if (allQuotesHandedOff && active) {
+        await transitionWorkItem({
+          itemId: active.id,
+          substatus: "compare_decided",
+          userId,
+          metadata: { autoClosedReason: "downstream_handoff_complete" },
+        });
+        synced++;
+        continue;
+      }
 
       if (active) {
         // Active item exists — update substatus if changed
@@ -177,6 +209,10 @@ export async function POST() {
               status: d.status,
               createdAt: d.createdAt.toISOString(),
             })),
+            downstreamState: {
+              hasOrder: sessionQuoteIds.some((qid: string) => orderStatusByQuoteId.has(qid)),
+              allOrdersConfirmed: allQuotesHandedOff,
+            },
           },
           relatedEntityType: "COMPARE_SESSION",
           relatedEntityId: cs.id,
