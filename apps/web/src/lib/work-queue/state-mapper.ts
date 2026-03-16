@@ -31,7 +31,8 @@ export type AiActionType =
   | "EXPIRY_ALERT"
   | "FOLLOWUP_DRAFT"
   | "VENDOR_RESPONSE_PARSED"
-  | "STATUS_CHANGE_SUGGEST";
+  | "STATUS_CHANGE_SUGGEST"
+  | "COMPARE_DECISION";
 
 // ── 매핑 결과 ──
 
@@ -143,6 +144,24 @@ const STATE_MAP: Record<string, Omit<StateMapping, "substatus">> = {
     approvalStatus: "PENDING",
   },
 
+  // ═══ 비교 도메인 ═══
+  compare_decision_pending: {
+    taskStatus: "REVIEW_NEEDED",
+    approvalStatus: "PENDING",
+  },
+  compare_inquiry_followup: {
+    taskStatus: "ACTION_NEEDED",
+    approvalStatus: "NOT_REQUIRED",
+  },
+  compare_quote_in_progress: {
+    taskStatus: "WAITING_RESPONSE",
+    approvalStatus: "NOT_REQUIRED",
+  },
+  compare_decided: {
+    taskStatus: "COMPLETED",
+    approvalStatus: "APPROVED",
+  },
+
   // ═══ 공통 ═══
   execution_failed: {
     taskStatus: "FAILED",
@@ -193,6 +212,7 @@ const INITIAL_SUBSTATUS: Record<AiActionType, string> = {
   FOLLOWUP_DRAFT: "followup_draft_generated",
   VENDOR_RESPONSE_PARSED: "vendor_response_parsed",
   STATUS_CHANGE_SUGGEST: "status_change_proposed",
+  COMPARE_DECISION: "compare_decision_pending",
 };
 
 /**

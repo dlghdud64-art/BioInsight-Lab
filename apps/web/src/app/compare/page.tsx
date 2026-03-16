@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,16 @@ export default function ComparePage() {
     "name", "brand", "category", "price", "leadTime", "stockStatus", "minOrderQty", "vendorCount"
   ]);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Auto-open session from URL query param (e.g., from work queue)
+  useEffect(() => {
+    const sid = searchParams.get("sessionId");
+    if (sid && sid !== existingSessionId) {
+      setExistingSessionId(sid);
+      setShowAnalysisDrawer(true);
+    }
+  }, [searchParams]);
 
   // 제품 검색
   const { data: searchData, isLoading: isSearching } = useQuery({

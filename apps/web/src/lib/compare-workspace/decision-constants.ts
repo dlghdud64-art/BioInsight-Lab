@@ -64,6 +64,22 @@ export const VERDICT_CONFIG: Record<string, VerdictConfig> = {
   REQUIRES_EXPERT: { label: "전문가", className: "bg-purple-50 text-purple-700" },
 };
 
+// ── Quote Status ──
+
+export const QUOTE_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  PENDING: { label: "접수", className: "bg-amber-50 text-amber-700" },
+  PARSED: { label: "파싱", className: "bg-slate-50 text-slate-700" },
+  SENT: { label: "발송", className: "bg-blue-50 text-blue-700" },
+  RESPONDED: { label: "회신", className: "bg-green-50 text-green-700" },
+  COMPLETED: { label: "완료", className: "bg-emerald-50 text-emerald-700" },
+  PURCHASED: { label: "구매", className: "bg-teal-50 text-teal-700" },
+  CANCELLED: { label: "취소", className: "bg-red-50 text-red-700" },
+};
+
+export function getQuoteStatusConfig(status: string): { label: string; className: string } {
+  return QUOTE_STATUS_CONFIG[status] ?? QUOTE_STATUS_CONFIG.PENDING;
+}
+
 // ── Formatting ──
 
 export function formatDecisionTimestamp(decidedAt: string | null): string {

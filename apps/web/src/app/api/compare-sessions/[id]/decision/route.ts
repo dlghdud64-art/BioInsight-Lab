@@ -63,6 +63,22 @@ export async function PATCH(
       TERMINAL_STATES.includes(existing.decisionState ?? "") &&
       decisionState === "UNDECIDED";
 
+    // Complete associated work queue item when decision is terminal
+    if (TERMINAL_STATES.includes(decisionState)) {
+      db.aiActionItem.updateMany({
+        where: {
+          relatedEntityType: "COMPARE_SESSION",
+          relatedEntityId: id,
+          taskStatus: { not: "COMPLETED" },
+        },
+        data: {
+          taskStatus: "COMPLETED",
+          substatus: "compare_decided",
+          completedAt: new Date(),
+        },
+      }).catch(() => {});
+    }
+
     await createActivityLog({
       activityType: isReopen
         ? "COMPARE_SESSION_REOPENED"

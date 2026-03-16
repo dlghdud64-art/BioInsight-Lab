@@ -57,6 +57,12 @@ const IMPACT_BASE_SCORE: Record<string, number> = {
   restock_ordered: 55,
   expiry_alert_created: 80,
 
+  // ═══ 비교 도메인 ═══
+  compare_decision_pending: 55,
+  compare_inquiry_followup: 50,
+  compare_quote_in_progress: 40,
+  compare_decided: 25,
+
   // ═══ 공통 장애 ═══
   execution_failed: 80,
   budget_insufficient: 85,
@@ -77,6 +83,7 @@ const IMPACT_TYPE_FALLBACK: Record<string, number> = {
   STATUS_CHANGE_SUGGEST: 70,
   REORDER_SUGGESTION: 75,
   EXPIRY_ALERT: 80,
+  COMPARE_DECISION: 55,
 };
 
 /**
@@ -146,6 +153,14 @@ export function computeUrgencyScore(item: ScoredItem): number {
 
   if (runoutDays !== null && runoutDays >= 0) {
     score += 30 - Math.min(runoutDays, 30);
+  }
+
+  // 비교 판정 지연
+  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup") {
+    const createdTime = new Date(item.createdAt).getTime();
+    const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+    if (ageDays >= 7) score += 15;
+    else if (ageDays >= 3) score += 10;
   }
 
   // 벤더 회신 지연 (updatedAt 기준)
@@ -296,7 +311,16 @@ export function getUrgencyReason(item: ScoredItem): string | null {
     }
   }
 
-  // 8. 승인 대기 지연
+  // 8. 비교 판정 지연
+  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup") {
+    const createdTime = new Date(item.createdAt).getTime();
+    const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+    if (ageDays >= 3) {
+      return `비교 판정 ${ageDays}일 대기`;
+    }
+  }
+
+  // 9. 승인 대기 지연
   if (item.approvalStatus === "PENDING") {
     const createdTime = new Date(item.createdAt).getTime();
     const pendingDays = Math.floor((now - createdTime) / MS_PER_DAY);

@@ -56,12 +56,18 @@ export async function GET(request: NextRequest) {
     // 연결된 견적 조회
     const linkedQuotes = await db.quote.findMany({
       where: { comparisonId: { in: sessionIds } },
-      select: { id: true, comparisonId: true },
+      select: { id: true, comparisonId: true, status: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
     });
     const quoteCountMap: Record<string, number> = {};
+    const quoteStatusMap: Record<string, string[]> = {};
+    const latestQuoteStatusMap: Record<string, string> = {};
     for (const q of linkedQuotes) {
       if (q.comparisonId) {
         quoteCountMap[q.comparisonId] = (quoteCountMap[q.comparisonId] || 0) + 1;
+        if (!quoteStatusMap[q.comparisonId]) quoteStatusMap[q.comparisonId] = [];
+        if (!quoteStatusMap[q.comparisonId].includes(q.status)) quoteStatusMap[q.comparisonId].push(q.status);
+        if (!latestQuoteStatusMap[q.comparisonId]) latestQuoteStatusMap[q.comparisonId] = q.status;
       }
     }
 
@@ -104,6 +110,8 @@ export async function GET(request: NextRequest) {
         decidedBy: s.decidedBy ?? null,
         decidedAt: s.decidedAt?.toISOString?.() ?? null,
         linkedQuoteCount: quoteCountMap[s.id] || 0,
+        linkedQuoteStatuses: quoteStatusMap[s.id] || [],
+        latestQuoteStatus: latestQuoteStatusMap[s.id] || null,
         inquiryDraftCount: drafts.length,
         inquiryDraftStatuses: [...new Set(drafts.map((d: any) => d.status))],
         latestActionAt,

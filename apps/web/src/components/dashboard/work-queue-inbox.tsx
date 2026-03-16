@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   FileText, Package, ShoppingCart, AlertTriangle, Clock,
   CheckCircle2, XCircle, Ban, ChevronRight, ChevronDown,
-  Zap, Eye, RotateCcw, Bell,
+  Zap, Eye, RotateCcw, Bell, GitCompare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ const DOMAIN_CONFIG: Record<string, {
   REORDER_SUGGESTION: { icon: Package, color: "text-emerald-600", bgColor: "bg-emerald-50" },
   EXPIRY_ALERT: { icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50" },
   VENDOR_RESPONSE_PARSED: { icon: ShoppingCart, color: "text-teal-600", bgColor: "bg-teal-50" },
+  COMPARE_DECISION: { icon: GitCompare, color: "text-purple-600", bgColor: "bg-purple-50" },
 };
 
 const CTA_MAP: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {
@@ -62,11 +63,20 @@ const ACTIVITY_LABEL: Record<string, string> = {
   execution_failed: "실행 중 오류가 발생했습니다",
   budget_insufficient: "예산이 부족합니다",
   permission_denied: "권한이 부족합니다",
+  compare_decision_pending: "비교 분석 완료 — 판정을 내려주세요",
+  compare_inquiry_followup: "비교 문의 후속 조치가 필요합니다",
+  compare_quote_in_progress: "비교 기반 견적이 진행 중입니다",
+  compare_decided: "비교 판정이 완료되었습니다",
 };
 
 // ── Deep-Link 경로 매핑 ──
 
 function getDeepLinkPath(item: WorkQueueItem): string {
+  // 비교 세션 → 비교 페이지로 직접 라우팅
+  if (item.type === "COMPARE_DECISION" && item.relatedEntityId) {
+    return `/compare?sessionId=${item.relatedEntityId}`;
+  }
+
   // 도메인별 목록 페이지로 라우팅 (상세 페이지가 존재하지 않으므로 목록 + query param)
   const base = (() => {
     switch (item.relatedEntityType) {

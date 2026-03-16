@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { createWorkItem } from "@/lib/work-queue/work-queue-service";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -381,7 +382,7 @@ export async function GET(request: NextRequest) {
         unit: inv.unit || "ea",
       }));
 
-    return NextResponse.json({
+    const resp = NextResponse.json({
       // 예산 정보
       budget: activeBudget
         ? {
@@ -436,11 +437,65 @@ export async function GET(request: NextRequest) {
       recentPurchases,
       undecidedCompareCount,
     });
+
+    // Non-blocking: sync compare sessions into work queue
+    if (undecidedCompareCount > 0) {
+      syncCompareToWorkQueue(userId).catch(() => {});
+    }
+
+    return resp;
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     return NextResponse.json(
       { error: "Failed to fetch dashboard stats" },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Non-blocking: ensure undecided compare sessions have work queue items.
+ * Lightweight — only creates missing items, no heavy processing.
+ */
+async function syncCompareToWorkQueue(userId: string) {
+  const sessions = await db.compareSession.findMany({
+    where: { userId, OR: [{ decisionState: null }, { decisionState: "UNDECIDED" }] },
+    select: { id: true, productIds: true, createdAt: true, diffResult: true },
+    take: 20,
+  });
+  if (sessions.length === 0) return;
+
+  const sessionIds = sessions.map((s: { id: string }) => s.id);
+  const existing = await db.aiActionItem.findMany({
+    where: { relatedEntityType: "COMPARE_SESSION", relatedEntityId: { in: sessionIds }, taskStatus: { not: "COMPLETED" } },
+    select: { relatedEntityId: true },
+  });
+  const existingSet = new Set(existing.map((e: { relatedEntityId: string | null }) => e.relatedEntityId));
+
+  const allPids = [...new Set(sessions.flatMap((s: { productIds: unknown }) => Array.isArray(s.productIds) ? s.productIds as string[] : []))];
+  const products = await db.product.findMany({
+    where: { id: { in: allPids } },
+    select: { id: true, name: true },
+  });
+  const nameMap = new Map(products.map((p: { id: string; name: string }) => [p.id, p.name]));
+
+  for (const cs of sessions) {
+    if (existingSet.has(cs.id)) continue;
+    const pids = Array.isArray(cs.productIds) ? (cs.productIds as string[]) : [];
+    const names = pids.map((id) => nameMap.get(id) || "제품").slice(0, 2);
+    const title = names.length >= 2 ? `${names[0]} vs ${names[1]} 비교 판정` : "비교 세션 판정 대기";
+    const diffResult = cs.diffResult as any;
+    const verdict = Array.isArray(diffResult) && diffResult[0]?.summary?.overallVerdict || null;
+
+    await createWorkItem({
+      type: "COMPARE_DECISION",
+      userId,
+      title,
+      summary: "비교 분석 완료 — 판정을 내려주세요",
+      payload: { productIds: pids, productNames: names, verdict, sessionCreatedAt: cs.createdAt.toISOString() },
+      relatedEntityType: "COMPARE_SESSION",
+      relatedEntityId: cs.id,
+      priority: "MEDIUM",
+    });
   }
 }

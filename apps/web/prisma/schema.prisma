@@ -1929,6 +1929,7 @@ enum AiActionType {
   FOLLOWUP_DRAFT         // 후속 이메일 초안
   VENDOR_RESPONSE_PARSED // 벤더 회신 파싱 결과
   STATUS_CHANGE_SUGGEST  // 상태 변경 제안
+  COMPARE_DECISION       // 비교 세션 판정 대기
 }
 
 // ── Legacy 상태 (하위 호환) ──

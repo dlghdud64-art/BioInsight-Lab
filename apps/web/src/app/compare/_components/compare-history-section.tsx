@@ -14,6 +14,7 @@ import {
 import {
   getDecisionConfig,
   getDraftStatusConfig,
+  getQuoteStatusConfig,
   VERDICT_CONFIG,
 } from "@/lib/compare-workspace/decision-constants";
 
@@ -32,6 +33,8 @@ export interface CompareSessionSummary {
   latestActionAt: string | null;
   createdAt: string | null;
   diffSummaryVerdict: string | null;
+  linkedQuoteStatuses: string[];
+  latestQuoteStatus: string | null;
 }
 
 interface CompareHistorySectionProps {
@@ -58,6 +61,11 @@ function VerdictBadgeMini({ verdict }: { verdict: string | null }) {
 function DraftStatusBadgeMini({ status }: { status: string }) {
   const c = getDraftStatusConfig(status);
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
+}
+
+function QuoteStatusBadgeMini({ status }: { status: string }) {
+  const c = getQuoteStatusConfig(status);
+  return <Badge variant="outline" className={`text-xs ${c.className}`}>견적 {c.label}</Badge>;
 }
 
 function relativeTime(dateStr: string | null): string {
@@ -134,7 +142,10 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <VerdictBadgeMini verdict={session.diffSummaryVerdict} />
                     <DecisionStateBadge state={session.decisionState} />
-                    {session.linkedQuoteCount > 0 && (
+                    {session.latestQuoteStatus && (
+                      <QuoteStatusBadgeMini status={session.latestQuoteStatus} />
+                    )}
+                    {!session.latestQuoteStatus && session.linkedQuoteCount > 0 && (
                       <Badge variant="outline" className="text-xs gap-1">
                         <FileText className="h-3 w-3" />
                         견적 {session.linkedQuoteCount}
