@@ -9,6 +9,7 @@ import {
   isStale,
   determineResolutionPath,
   computeInquiryAgingDays,
+  computeNoMovementDays,
   COMPARE_SUBSTATUS_DEFS,
   COMPARE_CTA_MAP,
   COMPARE_REPORT_LABELS,
@@ -16,6 +17,8 @@ import {
   COMPARE_METRIC_DEFINITIONS,
   INQUIRY_DRAFT_STATUS_LABELS,
   RESOLUTION_PATH_LABELS,
+  COMPARE_CONVERSION_PATHS,
+  NO_MOVEMENT_THRESHOLD_DAYS,
 } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── determineCompareSubstatus ──
@@ -381,5 +384,80 @@ describe("computeInquiryAgingDays", () => {
       ],
     });
     expect(result).toBe(7);
+  });
+});
+
+// ── COMPARE_CONVERSION_PATHS ──
+
+describe("COMPARE_CONVERSION_PATHS", () => {
+  it("defines exactly 4 conversion paths", () => {
+    expect(COMPARE_CONVERSION_PATHS).toHaveLength(4);
+  });
+
+  it("has unique IDs", () => {
+    const ids = COMPARE_CONVERSION_PATHS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("has all required fields non-empty", () => {
+    for (const path of COMPARE_CONVERSION_PATHS) {
+      expect(path.id).toBeTruthy();
+      expect(path.label).toBeTruthy();
+      expect(path.entryTrigger).toBeTruthy();
+      expect(path.primaryCta).toBeTruthy();
+      expect(path.successCondition).toBeTruthy();
+      expect(path.completionCondition).toBeTruthy();
+      expect(path.activityLogEvent).toBeTruthy();
+      expect(path.reportingImplication).toBeTruthy();
+    }
+  });
+});
+
+// ── NO_MOVEMENT_THRESHOLD_DAYS ──
+
+describe("NO_MOVEMENT_THRESHOLD_DAYS", () => {
+  it("equals 3", () => {
+    expect(NO_MOVEMENT_THRESHOLD_DAYS).toBe(3);
+  });
+});
+
+// ── computeNoMovementDays ──
+
+describe("computeNoMovementDays", () => {
+  it("returns null for non decision_pending substatus", () => {
+    expect(computeNoMovementDays({
+      substatus: "compare_inquiry_followup",
+      createdAt: new Date(Date.now() - 10 * 86400000),
+      hasInquiry: false,
+      hasQuote: false,
+    })).toBeNull();
+  });
+
+  it("returns null when session has inquiry", () => {
+    expect(computeNoMovementDays({
+      substatus: "compare_decision_pending",
+      createdAt: new Date(Date.now() - 10 * 86400000),
+      hasInquiry: true,
+      hasQuote: false,
+    })).toBeNull();
+  });
+
+  it("returns null when age is under threshold", () => {
+    expect(computeNoMovementDays({
+      substatus: "compare_decision_pending",
+      createdAt: new Date(Date.now() - 1 * 86400000),
+      hasInquiry: false,
+      hasQuote: false,
+    })).toBeNull();
+  });
+
+  it("returns age days when decision_pending with no movement for 3+ days", () => {
+    const result = computeNoMovementDays({
+      substatus: "compare_decision_pending",
+      createdAt: new Date(Date.now() - 5 * 86400000),
+      hasInquiry: false,
+      hasQuote: false,
+    });
+    expect(result).toBe(5);
   });
 });

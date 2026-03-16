@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
-import { COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
+import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -78,6 +78,9 @@ export default function DashboardPage() {
       substatusBreakdown: (rawStats.compareStats?.substatusBreakdown ?? {}) as Record<string, number>,
       conversionRate: rawStats.compareStats?.conversionRate ?? 0,
       avgTurnaroundDays: rawStats.compareStats?.avgTurnaroundDays ?? 0,
+      resolutionPathDistribution: (rawStats.compareStats?.resolutionPathDistribution ?? {}) as Record<string, number>,
+      noMovementCount: rawStats.compareStats?.noMovementCount ?? 0,
+      inquiryFollowupRate: rawStats.compareStats?.inquiryFollowupRate ?? 0,
     },
   };
 
@@ -278,6 +281,19 @@ export default function DashboardPage() {
                       {stats.compareStats.avgTurnaroundDays > 0 ? `평균 ${stats.compareStats.avgTurnaroundDays}일` : ""}
                       {stats.compareStats.avgTurnaroundDays > 0 && stats.compareStats.conversionRate > 0 ? " · " : ""}
                       {stats.compareStats.conversionRate > 0 ? `견적 전환 ${stats.compareStats.conversionRate}%` : ""}
+                    </p>
+                  )}
+                  {Object.keys(stats.compareStats.resolutionPathDistribution).length > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {Object.entries(stats.compareStats.resolutionPathDistribution)
+                        .filter(([, count]) => count > 0)
+                        .map(([key, count]) => `${RESOLUTION_PATH_LABELS[key as keyof typeof RESOLUTION_PATH_LABELS] ?? key} ${count}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {stats.compareStats.noMovementCount > 0 && (
+                    <p className="text-[10px] text-orange-500 font-medium mt-0.5">
+                      다음 단계 없음 {stats.compareStats.noMovementCount}건
                     </p>
                   )}
                 </div>

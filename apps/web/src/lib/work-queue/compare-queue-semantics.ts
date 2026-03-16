@@ -365,3 +365,79 @@ export const COMPARE_ACTIVITY_LABELS: Record<string, string> = {
   compare_decided: "비교 판정이 완료되었습니다",
   compare_reopened: "비교 판정이 재개되었습니다 — 재검토가 필요합니다",
 };
+
+// ── Canonical Conversion Paths ──
+
+export interface CompareConversionPath {
+  id: string;
+  label: string;
+  entryTrigger: string;
+  primaryCta: string;
+  successCondition: string;
+  completionCondition: string;
+  activityLogEvent: string;
+  reportingImplication: string;
+}
+
+export const COMPARE_CONVERSION_PATHS: CompareConversionPath[] = [
+  {
+    id: "to_quote",
+    label: "견적 전환",
+    entryTrigger: "UNDECIDED 비교 세션 확인",
+    primaryCta: "견적 시작",
+    successCondition: "Quote 생성 (comparisonId 연결)",
+    completionCondition: "세션 판정 완료 (APPROVED/HELD/REJECTED)",
+    activityLogEvent: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+    reportingImplication: "견적 전환율에 포함",
+  },
+  {
+    id: "to_inquiry",
+    label: "문의 전환",
+    entryTrigger: "비교 분석 결과 확인",
+    primaryCta: "문의 작성",
+    successCondition: "InquiryDraft 생성 (GENERATED)",
+    completionCondition: "세션 판정 완료 (APPROVED/HELD/REJECTED)",
+    activityLogEvent: "COMPARE_INQUIRY_DRAFT_STATUS_CHANGED",
+    reportingImplication: "문의 후속율에 포함",
+  },
+  {
+    id: "to_decision",
+    label: "직접 판정",
+    entryTrigger: "비교 분석 결과 확인",
+    primaryCta: "판정하기",
+    successCondition: "decisionState = APPROVED/HELD/REJECTED",
+    completionCondition: "판정 기록 (= successCondition)",
+    activityLogEvent: "AI_TASK_COMPLETED",
+    reportingImplication: "직접 판정률에 포함",
+  },
+  {
+    id: "to_reopen",
+    label: "재검토",
+    entryTrigger: "판정 완료 세션 재열기",
+    primaryCta: "재검토",
+    successCondition: "decisionState → UNDECIDED",
+    completionCondition: "세션 재판정 완료",
+    activityLogEvent: "COMPARE_SESSION_REOPENED",
+    reportingImplication: "재검토율에 포함",
+  },
+];
+
+// ── No-Movement Detection ──
+
+export const NO_MOVEMENT_THRESHOLD_DAYS = 3;
+
+/**
+ * compare_decision_pending 상태에서 문의/견적 없이 3일 이상 경과한 항목의 경과일을 반환합니다.
+ * 해당 없으면 null.
+ */
+export function computeNoMovementDays(input: {
+  substatus: string;
+  createdAt: Date | string;
+  hasInquiry: boolean;
+  hasQuote: boolean;
+}): number | null {
+  if (input.substatus !== "compare_decision_pending") return null;
+  if (input.hasInquiry || input.hasQuote) return null;
+  const ageDays = Math.floor((Date.now() - new Date(input.createdAt).getTime()) / 86400000);
+  return ageDays >= NO_MOVEMENT_THRESHOLD_DAYS ? ageDays : null;
+}

@@ -325,6 +325,20 @@ function WorkQueueCard({
                 </span>
               );
             })()}
+            {/* No-movement hint for stale decision_pending items */}
+            {item.substatus === "compare_decision_pending" && (() => {
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              const hasInquiry = Number(item.metadata?.inquiryCount || 0) > 0;
+              const hasQuote = Number(item.metadata?.linkedQuoteCount || 0) > 0;
+              if (ageDays >= 3 && !hasInquiry && !hasQuote) {
+                return (
+                  <span className="text-[10px] text-orange-500 font-medium mt-0.5">
+                    다음 단계 없음 — 판정 또는 문의/견적 전환 필요
+                  </span>
+                );
+              }
+              return null;
+            })()}
 
             {/* Row 3: CTA + Dismiss + Time */}
             <div className="flex items-center gap-2 mt-2">

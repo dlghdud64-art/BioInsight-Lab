@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
       decidedCompareSessions,
       compareLinkedQuoteSessions,
       completedCompareItems,
+      sessionsWithInquiry,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -150,8 +151,8 @@ export async function GET(request: NextRequest) {
       // 활성 비교 큐 아이템 (SLA/substatus 분석용)
       db.aiActionItem.findMany({
         where: { userId, type: "COMPARE_DECISION" as any, taskStatus: { notIn: ["COMPLETED", "FAILED"] as any[] } },
-        select: { substatus: true, createdAt: true },
-      }).catch(() => [] as { substatus: string | null; createdAt: Date }[]),
+        select: { substatus: true, createdAt: true, relatedEntityId: true },
+      }).catch(() => [] as { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[]),
       // 판정 완료 세션 (평균 소요일 계산용)
       db.compareSession.findMany({
         where: { userId, decisionState: { in: ["APPROVED", "HELD", "REJECTED"] }, decidedAt: { not: null } },
@@ -172,6 +173,11 @@ export async function GET(request: NextRequest) {
         take: 100,
         orderBy: { completedAt: "desc" },
       }).catch(() => [] as { payload: unknown }[]),
+      // 문의 초안이 있는 세션 (no-movement 감지용)
+      db.compareSession.findMany({
+        where: { userId, inquiryDrafts: { some: {} } },
+        select: { id: true },
+      }).catch(() => [] as { id: string }[]),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -468,10 +474,11 @@ export async function GET(request: NextRequest) {
       undecidedCompareCount,
       compareStats: computeCompareStats(
         undecidedCompareCount as number,
-        activeCompareItems as { substatus: string | null; createdAt: Date }[],
+        activeCompareItems as { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[],
         decidedCompareSessions as { createdAt: Date; decidedAt: Date | null }[],
         compareLinkedQuoteSessions as { comparisonId: string | null }[],
         completedCompareItems as { payload: unknown }[],
+        sessionsWithInquiry as { id: string }[],
       ),
     });
 
@@ -545,10 +552,11 @@ async function syncCompareToWorkQueue(userId: string) {
  */
 function computeCompareStats(
   undecidedCount: number,
-  activeItems: { substatus: string | null; createdAt: Date }[],
+  activeItems: { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[],
   decidedSessions: { createdAt: Date; decidedAt: Date | null }[],
   linkedQuoteSessions: { comparisonId: string | null }[],
   completedItems: { payload: unknown }[],
+  sessionsWithInquiry: { id: string }[],
 ) {
   const now = Date.now();
   const MS_PER_DAY = 86400000;
@@ -591,6 +599,23 @@ function computeCompareStats(
     resolutionPathDistribution[path] = (resolutionPathDistribution[path] || 0) + 1;
   }
 
+  // no-movement: decision_pending 아이템 중 문의/견적 없이 3일+ 경과
+  const inquirySessionIds = new Set(sessionsWithInquiry.map((s) => s.id));
+  const quoteSessionIds = new Set(linkedQuoteSessions.map((q) => q.comparisonId).filter(Boolean));
+  let noMovementCount = 0;
+  for (const item of activeItems) {
+    if (item.substatus !== "compare_decision_pending") continue;
+    const hasInquiry = item.relatedEntityId ? inquirySessionIds.has(item.relatedEntityId) : false;
+    const hasQuote = item.relatedEntityId ? quoteSessionIds.has(item.relatedEntityId) : false;
+    if (hasInquiry || hasQuote) continue;
+    const ageDays = Math.floor((now - new Date(item.createdAt).getTime()) / MS_PER_DAY);
+    if (ageDays >= 3) noMovementCount++;
+  }
+
+  const inquiryFollowupRate = undecidedCount > 0
+    ? Math.round((inquiryFollowupCount / undecidedCount) * 1000) / 10
+    : 0;
+
   return {
     undecidedCount,
     slaBreachedCount,
@@ -600,5 +625,7 @@ function computeCompareStats(
     substatusBreakdown,
     conversionRate,
     resolutionPathDistribution,
+    noMovementCount,
+    inquiryFollowupRate,
   };
 }

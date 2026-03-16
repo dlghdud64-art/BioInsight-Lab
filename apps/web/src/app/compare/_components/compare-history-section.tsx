@@ -17,7 +17,7 @@ import {
   getQuoteStatusConfig,
   VERDICT_CONFIG,
 } from "@/lib/compare-workspace/decision-constants";
-import { determineCompareSubstatus, COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
+import { determineCompareSubstatus, COMPARE_SUBSTATUS_DEFS, determineResolutionPath, RESOLUTION_PATH_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── Types ──
 
@@ -163,6 +163,18 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                     <VerdictBadgeMini verdict={session.diffSummaryVerdict} />
                     <CompareSubstatusBadge session={session} />
                     <DecisionStateBadge state={session.decisionState} />
+                    {session.decisionState && session.decisionState !== "UNDECIDED" && (() => {
+                      const path = determineResolutionPath({
+                        hasLinkedQuote: session.linkedQuoteCount > 0,
+                        hasInquiryDraft: session.inquiryDraftCount > 0,
+                        isReopened: false,
+                      });
+                      return (
+                        <Badge variant="outline" className="text-xs text-slate-500">
+                          {RESOLUTION_PATH_LABELS[path]}
+                        </Badge>
+                      );
+                    })()}
                     {session.latestQuoteStatus && (
                       <QuoteStatusBadgeMini status={session.latestQuoteStatus} />
                     )}
