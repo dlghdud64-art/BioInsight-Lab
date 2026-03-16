@@ -245,8 +245,8 @@ describe("P5 Slice 1 — Startup Async Migration", function () {
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(6);
-    expect(retained.length).toBe(4);
+    expect(removed.length).toBe(10);
+    expect(retained.length).toBe(0);
 
     // checkAuthorityIntegrity should be in REMOVED
     var authorityRemoved = removed.find(function (e) {
@@ -256,32 +256,37 @@ describe("P5 Slice 1 — Startup Async Migration", function () {
     expect(authorityRemoved.removedInSlice).toBe("P5-1");
     expect(authorityRemoved.productionCallerCount).toBe(0);
 
-    // getCanonicalBaseline caller count reduced from 3 to 2
-    var baselineRetained = retained.find(function (e) {
+    // getCanonicalBaseline moved to REMOVED in P5-3
+    var baselineRemoved = removed.find(function (e) {
       return e.functionName === "getCanonicalBaseline";
     });
-    expect(baselineRetained).toBeDefined();
-    expect(baselineRetained.productionCallerCount).toBe(2);
+    expect(baselineRemoved).toBeDefined();
+    expect(baselineRemoved.removedInSlice).toBe("P5-3");
+    expect(baselineRemoved.productionCallerCount).toBe(0);
 
-    // hasUnacknowledgedIncidents caller count reduced from 4 to 1
-    var incidentRetained = retained.find(function (e) {
+    // hasUnacknowledgedIncidents moved to REMOVED in P5-3
+    var incidentRemoved = removed.find(function (e) {
       return e.functionName === "hasUnacknowledgedIncidents";
     });
-    expect(incidentRetained).toBeDefined();
-    expect(incidentRetained.productionCallerCount).toBe(1);
+    expect(incidentRemoved).toBeDefined();
+    expect(incidentRemoved.removedInSlice).toBe("P5-3");
+    expect(incidentRemoved.productionCallerCount).toBe(0);
 
-    // getSnapshot and buildTimeline unchanged
-    var snapshotRetained = retained.find(function (e) {
+    // getSnapshot moved to REMOVED in P5-2
+    var snapshotRemoved = removed.find(function (e) {
       return e.functionName === "getSnapshot";
     });
-    expect(snapshotRetained).toBeDefined();
-    expect(snapshotRetained.productionCallerCount).toBe(5);
+    expect(snapshotRemoved).toBeDefined();
+    expect(snapshotRemoved.removedInSlice).toBe("P5-2");
+    expect(snapshotRemoved.productionCallerCount).toBe(0);
 
-    var timelineRetained = retained.find(function (e) {
+    // buildTimeline moved to REMOVED in P5-4
+    var timelineRemoved = removed.find(function (e) {
       return e.functionName === "buildTimeline";
     });
-    expect(timelineRetained).toBeDefined();
-    expect(timelineRetained.productionCallerCount).toBe(1);
+    expect(timelineRemoved).toBeDefined();
+    expect(timelineRemoved.removedInSlice).toBe("P5-4");
+    expect(timelineRemoved.productionCallerCount).toBe(0);
   });
 
   it("SM7: evaluateP4Acceptance still returns P4_ACCEPTED after inventory update", function () {
@@ -294,8 +299,8 @@ describe("P5 Slice 1 — Startup Async Migration", function () {
       expect(c.met).toBe(true);
     });
 
-    expect(sheet.syncCompatInventory.removedCount).toBe(6);
-    expect(sheet.syncCompatInventory.retainedCount).toBe(4);
+    expect(sheet.syncCompatInventory.removedCount).toBe(10);
+    expect(sheet.syncCompatInventory.retainedCount).toBe(0);
     expect(sheet.syncCompatInventory.zeroCallerRetainedCount).toBe(0);
   });
 });

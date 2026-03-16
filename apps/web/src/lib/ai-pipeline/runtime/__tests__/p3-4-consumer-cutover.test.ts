@@ -307,13 +307,13 @@ describe("P3 Slice 4 — Consumer Cutover to Repo-First Async", function () {
     var snap = getSnapshot(scenario.pair.active.snapshotId);
     expect(snap).not.toBeNull();
 
-    // Should have emitted RETAINED diagnostic (P4-4 upgrade)
-    var retainedDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
-        d.reasonCode.indexOf("getSnapshot:sync-compat") !== -1;
+    // Should have emitted REMOVED diagnostic (P5-2 soft removal)
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("getSnapshot:removed") !== -1;
     });
-    expect(retainedDiags.length).toBe(1);
-    expect(retainedDiags[0].moduleName).toBe("snapshot-manager");
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("snapshot-manager");
   });
 
   it("CC7: legacy sync canEnterActiveRuntime throws SYNC_COMPAT_REMOVED (P4-4)", function () {

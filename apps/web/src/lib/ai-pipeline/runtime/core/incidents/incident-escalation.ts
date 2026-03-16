@@ -114,13 +114,13 @@ export function getIncidents(): IncidentRecord[] {
   return [..._incidents];
 }
 
-/** @deprecated RETAINED in P4-4 — use hasUnacknowledgedIncidentsFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P5-3 — use hasUnacknowledgedIncidentsFromRepo. Soft removal: impl kept for test compat */
 export function hasUnacknowledgedIncidents(): boolean {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "incident-escalation", "incident-adapter", "incident",
-    "legacy_to_canonical", "hasUnacknowledgedIncidents:sync-compat",
-    { retentionReason: "4 production callers (preconditions, startup, lock-hygiene)", shutdownPhase: "P5" }
+    "legacy_to_canonical", "hasUnacknowledgedIncidents:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-3" }
   );
   return _incidents.some((i: IncidentRecord) => !i.acknowledged);
 }

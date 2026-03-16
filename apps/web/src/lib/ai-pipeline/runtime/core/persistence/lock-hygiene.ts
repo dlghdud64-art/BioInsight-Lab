@@ -9,8 +9,8 @@
 import { randomUUID } from "crypto";
 import { getPersistenceAdapters } from "./bootstrap";
 import { logBridgeFailure } from "./bridge-logger";
-import { hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
-import { getCanonicalBaseline } from "../baseline/baseline-registry";
+import { hasUnacknowledgedIncidentsFromRepo } from "../incidents/incident-escalation";
+import { getCanonicalBaselineFromRepo } from "../baseline/baseline-registry";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import type { PersistedLock } from "./lock-types";
 
@@ -143,7 +143,7 @@ async function buildSweepContext(): Promise<SweepContext> {
   }
 
   try {
-    hasUnackedIncidents = hasUnacknowledgedIncidents();
+    hasUnackedIncidents = await hasUnacknowledgedIncidentsFromRepo();
   } catch (_err) {
     hasUnackedIncidents = true;
   }
@@ -280,18 +280,19 @@ function emitSweepDiagnostic(
   detail: string
 ): void {
   try {
-    var baseline = getCanonicalBaseline();
-    emitStabilizationAuditEvent({
-      eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
-      baselineId: baseline ? baseline.baselineId : "",
-      baselineVersion: baseline ? baseline.baselineVersion : "",
-      baselineHash: baseline ? baseline.baselineHash : "",
-      snapshotId: baseline ? baseline.rollbackSnapshotId : "",
-      correlationId: lockKey,
-      documentType: "",
-      performedBy: "lock-hygiene-sweeper",
-      detail: detail,
-    });
+    getCanonicalBaselineFromRepo().then(function (baseline) {
+      emitStabilizationAuditEvent({
+        eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
+        baselineId: baseline ? baseline.baselineId : "",
+        baselineVersion: baseline ? baseline.baselineVersion : "",
+        baselineHash: baseline ? baseline.baselineHash : "",
+        snapshotId: baseline ? baseline.rollbackSnapshotId : "",
+        correlationId: lockKey,
+        documentType: "",
+        performedBy: "lock-hygiene-sweeper",
+        detail: detail,
+      });
+    }).catch(function () { /* non-fatal */ });
   } catch (_err) {
     // non-fatal
   }

@@ -9,7 +9,7 @@ import { detectStaleLocks } from "../persistence/lock-manager";
 import { getRecoveryStatus } from "./recovery-coordinator";
 import { getPersistenceAdapters } from "../persistence/bootstrap";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { buildTimeline, validateHops } from "../observability/canonical-event-schema";
+import { buildTimelineFromRepo } from "../observability/canonical-event-schema";
 
 export interface RecoveryDiagnostic {
   category: "STALE_LOCK" | "PARTIAL_RECOVERY" | "LOCK_RESIDUE" | "INCOMPLETE_CANONICAL_CHAIN";
@@ -102,7 +102,7 @@ export async function runRecoveryDiagnostics(
   // 4. Incomplete canonical chain
   if (correlationId) {
     try {
-      var timeline = buildTimeline(correlationId);
+      var timeline = await buildTimelineFromRepo(correlationId);
       if (timeline.reconstructionStatus === "BROKEN_CHAIN" && timeline.orderedEvents.length > 0) {
         diagnostics.push({
           category: "INCOMPLETE_CANONICAL_CHAIN",

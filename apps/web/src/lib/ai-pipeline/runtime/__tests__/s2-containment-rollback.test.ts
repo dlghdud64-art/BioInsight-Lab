@@ -62,11 +62,11 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(breach.incidentId).toBeTruthy();
   });
 
-  it("should complete full 8-stage containment pipeline", () => {
+  it("should complete full 8-stage containment pipeline", async () => {
     const pair = setupPair();
     const breach = makeBreach();
 
-    const result = executeFinalContainment({
+    const result = await executeFinalContainment({
       breach,
       baselineId: "bl-test",
       activeSnapshotId: pair.active.snapshotId,
@@ -87,55 +87,55 @@ describe("S2: Containment / Rollback Hardening", () => {
     deactivateMutationFreeze();
   });
 
-  it("should fail precheck when snapshot missing", () => {
+  it("should fail precheck when snapshot missing", async () => {
     activateMutationFreeze();
-    const result = runRollbackPrecheck("nonexistent", "also-nonexistent");
+    const result = await runRollbackPrecheck("nonexistent", "also-nonexistent");
     expect(result.passed).toBe(false);
     expect(result.reasonCode).toBe("ROLLBACK_PRECHECK_FAILED");
   });
 
-  it("should execute rollback plan in order", () => {
+  it("should execute rollback plan in order", async () => {
     const pair = setupPair();
     activateMutationFreeze();
     initializeRuntimeState(SCOPE_DATA);
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    const result = executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const result = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result.success).toBe(true);
     expect(plan.orderedSteps.every((s) => s.status === "EXECUTED" && s.restoreVerified)).toBe(true);
   });
 
-  it("should skip already-executed steps on re-run", () => {
+  it("should skip already-executed steps on re-run", async () => {
     const pair = setupPair();
     activateMutationFreeze();
     initializeRuntimeState(SCOPE_DATA);
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    await executeRollbackPlan(plan, "cor-1", "ops");
     // re-run
-    const result2 = executeRollbackPlan(plan, "cor-1", "ops");
+    const result2 = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result2.success).toBe(true);
     expect(result2.stepsExecuted).toBe(plan.orderedSteps.length);
   });
 
-  it("should escalate incident on rollback partial commit (mutation not frozen)", () => {
+  it("should escalate incident on rollback partial commit (mutation not frozen)", async () => {
     const pair = setupPair();
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    const result = executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const result = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result.success).toBe(false);
     expect(result.reason).toContain("mutation freeze not active");
   });
 
-  it("should detect stale keys as residue", () => {
+  it("should detect stale keys as residue", async () => {
     const pair = setupPair();
     const stateWithStale = {
       ...SCOPE_DATA,
       CONFIG: { ...SCOPE_DATA.CONFIG, staleKey: "should not exist" },
     };
-    const result = runResidueScan(pair.rollback.snapshotId, stateWithStale);
+    const result = await runResidueScan(pair.rollback.snapshotId, stateWithStale);
     expect(result.clean).toBe(false);
     expect(result.residues.some((r) => r.path.includes("staleKey"))).toBe(true);
   });
 
-  it("should require reconciliation before finalize — mismatch causes escalation", () => {
+  it("should require reconciliation before finalize — mismatch causes escalation", async () => {
     const pair = setupPair();
     const breach = makeBreach();
     const mismatchState = {
@@ -143,7 +143,7 @@ describe("S2: Containment / Rollback Hardening", () => {
       AUTHORITY: { owner: "hacker" },
     };
 
-    const result = executeFinalContainment({
+    const result = await executeFinalContainment({
       breach,
       baselineId: "bl-test",
       activeSnapshotId: pair.active.snapshotId,
@@ -156,7 +156,7 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(result.completionState).toBe("CONTAINED_AND_RESTORED");
   });
 
-  it("should not finalize when critical residue exists", () => {
+  it("should not finalize when critical residue exists", async () => {
     const pair = setupPair();
     const breach = makeBreach();
     const criticalMismatch = {
@@ -164,7 +164,7 @@ describe("S2: Containment / Rollback Hardening", () => {
       CONFIG: { confidenceThreshold: 0.95, killSwitch: true },
     };
 
-    const result = executeFinalContainment({
+    const result = await executeFinalContainment({
       breach,
       baselineId: "bl-test",
       activeSnapshotId: pair.active.snapshotId,
@@ -177,7 +177,7 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(result.stagesCompleted.length).toBeGreaterThanOrEqual(6);
   });
 
-  it("should only produce defined completion states", () => {
+  it("should only produce defined completion states", async () => {
     const validStates: ContainmentCompletionState[] = [
       "CONTAINED_AND_RESTORED",
       "CONTAINED_WITH_INCIDENT_ESCALATION",
@@ -187,7 +187,7 @@ describe("S2: Containment / Rollback Hardening", () => {
     const pair = setupPair();
     const breach = makeBreach();
 
-    const result = executeFinalContainment({
+    const result = await executeFinalContainment({
       breach,
       baselineId: "bl-test",
       activeSnapshotId: pair.active.snapshotId,
@@ -209,7 +209,7 @@ describe("S2: Containment / Rollback Hardening", () => {
 
   // ── New 8 tests (S2 Patch) ──
 
-  it("should apply actual restore for each affected scope", () => {
+  it("should apply actual restore for each affected scope", async () => {
     const pair = setupPair();
     const mutatedState = {
       ...SCOPE_DATA,
@@ -219,8 +219,8 @@ describe("S2: Containment / Rollback Hardening", () => {
     initializeRuntimeState(mutatedState);
     activateMutationFreeze();
 
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    const result = executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const result = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result.success).toBe(true);
 
     const restored = getAllRuntimeState();
@@ -228,13 +228,13 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(restored["FLAGS"]).toEqual({ ENABLE_NEW_DOCTYPE_EXPANSION: false });
   });
 
-  it("should not mark step executed before restore verify passes", () => {
+  it("should not mark step executed before restore verify passes", async () => {
     const pair = setupPair();
     initializeRuntimeState(SCOPE_DATA);
     activateMutationFreeze();
 
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    const result = executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const result = await executeRollbackPlan(plan, "cor-1", "ops");
 
     for (const step of plan.orderedSteps) {
       if (step.status === "EXECUTED") {
@@ -244,23 +244,23 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should escalate when scope adapter apply fails", () => {
+  it("should escalate when scope adapter apply fails", async () => {
     const pair = setupPair();
     initializeRuntimeState(SCOPE_DATA);
     // NOT freezing mutation → executor returns failure
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
-    const result = executeRollbackPlan(plan, "cor-1", "ops");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const result = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result.success).toBe(false);
     expect(result.reason).toContain("mutation freeze not active");
   });
 
-  it("should detect nested value mismatch in residue scan", () => {
+  it("should detect nested value mismatch in residue scan", async () => {
     const pair = setupPair();
     const nestedState = {
       ...SCOPE_DATA,
       CONFIG: { confidenceThreshold: 0.5 },
     };
-    const result = runResidueScan(pair.rollback.snapshotId, nestedState);
+    const result = await runResidueScan(pair.rollback.snapshotId, nestedState);
     expect(result.clean).toBe(false);
 
     const configResidue = result.residues.find((r) => r.path.includes("confidenceThreshold"));
@@ -269,7 +269,7 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(configResidue!.actualValue).toBe(0.5);
   });
 
-  it("should detect array/object path-level diff", () => {
+  it("should detect array/object path-level diff", async () => {
     const scopeDataWithArray: Record<SnapshotScope, Record<string, unknown>> = {
       ...SCOPE_DATA,
       ROUTING: { primaryQueue: "processing", fallbackQueues: ["review", "dead-letter"] },
@@ -284,7 +284,7 @@ describe("S2: Containment / Rollback Hardening", () => {
       ...scopeDataWithArray,
       ROUTING: { primaryQueue: "processing", fallbackQueues: ["review", "wrong-queue"] },
     };
-    const result = runResidueScan(pair.rollback.snapshotId, mismatchState);
+    const result = await runResidueScan(pair.rollback.snapshotId, mismatchState);
     expect(result.clean).toBe(false);
 
     const arrayResidue = result.residues.find((r) => r.path.includes("fallbackQueues[1]"));
@@ -293,13 +293,13 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(arrayResidue!.actualValue).toBe("wrong-queue");
   });
 
-  it("should block CONTAINED_AND_RESTORED when unresolved diff remains", () => {
+  it("should block CONTAINED_AND_RESTORED when unresolved diff remains", async () => {
     const pair = setupPair();
     const mismatchState = {
       ...SCOPE_DATA,
       AUTHORITY: { owner: "hacker" },
     };
-    const recon = reconcileState(pair.rollback.snapshotId, mismatchState);
+    const recon = await reconcileState(pair.rollback.snapshotId, mismatchState);
     expect(recon.success).toBe(false);
     expect(recon.unresolvedCount).toBeGreaterThan(0);
     const ownerDiff = recon.diffs.find((d) => d.path.includes("owner"));
@@ -307,11 +307,11 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(ownerDiff!.resolved).toBe(false);
   });
 
-  it("should allow CONTAINED_AND_RESTORED only after verified restore + zero residue", () => {
+  it("should allow CONTAINED_AND_RESTORED only after verified restore + zero residue", async () => {
     const pair = setupPair();
     const breach = makeBreach();
 
-    const result = executeFinalContainment({
+    const result = await executeFinalContainment({
       breach,
       baselineId: "bl-test",
       activeSnapshotId: pair.active.snapshotId,
@@ -326,21 +326,21 @@ describe("S2: Containment / Rollback Hardening", () => {
     expect(result.reconciliation!.unresolvedCount).toBe(0);
   });
 
-  it("should preserve idempotency without skipping unverified restore", () => {
+  it("should preserve idempotency without skipping unverified restore", async () => {
     const pair = setupPair();
     initializeRuntimeState(SCOPE_DATA);
     activateMutationFreeze();
 
-    const plan = buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
+    const plan = await buildRollbackPlan("bl-test", pair.rollback.snapshotId, "TEST");
 
-    const result1 = executeRollbackPlan(plan, "cor-1", "ops");
+    const result1 = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result1.success).toBe(true);
 
     // tamper: mark one step as EXECUTED but NOT verified
     plan.orderedSteps[0]!.restoreVerified = false;
 
     // re-run: should NOT skip because restoreVerified is false
-    const result2 = executeRollbackPlan(plan, "cor-1", "ops");
+    const result2 = await executeRollbackPlan(plan, "cor-1", "ops");
     expect(result2.success).toBe(true);
     expect(plan.orderedSteps[0]!.restoreVerified).toBe(true);
   });

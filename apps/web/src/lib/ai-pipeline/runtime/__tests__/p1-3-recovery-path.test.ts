@@ -454,7 +454,7 @@ describe("P1-3: Recovery Execution with Lock", function () {
   });
 
   it("should escalate on execution failure and re-enter lockdown", async function () {
-    // Set up normally, validate, then destroy snapshot store before execution
+    // Set up normally, validate, then destroy both snapshot stores before execution
     setupLockdownState();
 
     var req = requestRecovery({
@@ -468,8 +468,12 @@ describe("P1-3: Recovery Execution with Lock", function () {
     var validated = await validateRecovery(req.recoveryId);
     expect(validated.success).toBe(true);
 
-    // Reset snapshot store after validation — RESTORE_RECONCILE will fail
+    // Reset both in-memory and persistence snapshot stores — RESTORE_RECONCILE will fail
     _resetSnapshotStore();
+    var adapters = getPersistenceAdapters();
+    if (adapters.snapshot && adapters.snapshot._reset) {
+      adapters.snapshot._reset();
+    }
 
     var result = await executeRecoveryAsync(req.recoveryId);
     expect(result.success).toBe(false);

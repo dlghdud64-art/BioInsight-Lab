@@ -361,21 +361,20 @@ export interface SyncCompatShutdownEntry {
 }
 
 /**
- * P5-1: 10 deprecated sync compat paths — 6 REMOVED, 4 RETAINED (P5).
+ * P5-4: 10 deprecated sync compat paths — ALL 10 REMOVED, 0 RETAINED.
  */
 export const SYNC_COMPAT_SHUTDOWN_INVENTORY: readonly SyncCompatShutdownEntry[] = [
-  // 6 REMOVED — zero production callers verified
+  // 10 REMOVED — zero production callers verified, async-only production paths proven
   { functionName: "canEnterActiveRuntime", moduleName: "snapshot-manager", replacedBy: "canEnterActiveRuntimeFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
   { functionName: "restoreDryRun", moduleName: "snapshot-manager", replacedBy: "restoreDryRunFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
   { functionName: "getAuditEvents", moduleName: "audit-events", replacedBy: "getAuditEventsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "audit-events" },
   { functionName: "getCanonicalAuditLog", moduleName: "canonical-event-schema", replacedBy: "getCanonicalAuditLogFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "canonical-event-schema" },
   { functionName: "getIncidents", moduleName: "incident-escalation", replacedBy: "getIncidentsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "incident-escalation" },
   { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "REMOVED", removedInSlice: "P5-1", retentionReason: "", shutdownPhase: "P5-1", productionCallerCount: 0, removalPrecondition: "", owner: "authority-registry" },
-  // 4 RETAINED → P5 with exit conditions
-  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "2 production callers (baseline-validator, lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 2, removalPrecondition: "Migrate baseline-validator:51, lock-hygiene:283 to getCanonicalBaselineFromRepo", owner: "baseline-registry" },
-  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate lock-hygiene:146 to hasUnacknowledgedIncidentsFromRepo", owner: "incident-escalation" },
-  { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "5 production callers in rollback subsystem", shutdownPhase: "P5", productionCallerCount: 5, removalPrecondition: "Migrate residue-scan:93, rollback-plan-builder:27, rollback-executor:36, rollback-precheck:25, state-reconciliation:84 to getSnapshotFromRepo", owner: "snapshot-manager" },
-  { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (recovery-diagnostics)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate recovery-diagnostics:105 to buildTimelineFromRepo", owner: "canonical-event-schema" },
+  { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "REMOVED", removedInSlice: "P5-2", retentionReason: "", shutdownPhase: "P5-2", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
+  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "REMOVED", removedInSlice: "P5-3", retentionReason: "", shutdownPhase: "P5-3", productionCallerCount: 0, removalPrecondition: "", owner: "baseline-registry" },
+  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "REMOVED", removedInSlice: "P5-3", retentionReason: "", shutdownPhase: "P5-3", productionCallerCount: 0, removalPrecondition: "", owner: "incident-escalation" },
+  { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "REMOVED", removedInSlice: "P5-4", retentionReason: "", shutdownPhase: "P5-4", productionCallerCount: 0, removalPrecondition: "", owner: "canonical-event-schema" },
 ] as const;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -685,7 +684,7 @@ export function evaluateP4Acceptance(): P4AcceptanceSheet {
     },
     {
       name: "RETAINED_EXIT_CONDITIONS_DOCUMENTED",
-      met: retained.length > 0 && retainedWithExit.length === retained.length,
+      met: retained.length === 0 || retainedWithExit.length === retained.length,
       evidence: `${retainedWithExit.length}/${retained.length} retained entries have documented exit conditions`,
     },
   ];
@@ -722,6 +721,83 @@ export function evaluateP4Acceptance(): P4AcceptanceSheet {
       retainedCount: retained.length,
       retainedWithExitConditions: retainedWithExit.length,
       zeroCallerRetainedCount: zeroCallerRetained.length,
+    },
+    decision,
+    decisionReason,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 11. P5 Final Acceptance Evaluation
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type P5Decision = "P5_ACCEPTED" | "P5_NOT_ACCEPTED";
+
+export interface P5AcceptanceCriterion {
+  name: string;
+  met: boolean;
+  evidence: string;
+}
+
+export interface P5AcceptanceSheet {
+  evaluatedAt: Date;
+  criteria: P5AcceptanceCriterion[];
+  syncCompatInventory: {
+    totalEntries: number;
+    removedCount: number;
+    retainedCount: number;
+    zeroCallerRetainedCount: number;
+  };
+  decision: P5Decision;
+  decisionReason: string;
+}
+
+/**
+ * Evaluate P5 final acceptance.
+ * All retained entries must be eliminated (retainedCount === 0).
+ */
+export function evaluateP5Acceptance(): P5AcceptanceSheet {
+  const removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) { return e.status === "REMOVED"; });
+  const retained = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) { return e.status === "RETAINED"; });
+  const allCallerCountsZero = SYNC_COMPAT_SHUTDOWN_INVENTORY.every(function (e) {
+    return e.status === "REMOVED" ? e.productionCallerCount === 0 : true;
+  });
+
+  const criteria: P5AcceptanceCriterion[] = [
+    {
+      name: "ALL_RETAINED_ELIMINATED",
+      met: retained.length === 0,
+      evidence: `${retained.length} retained entries remaining (target: 0)`,
+    },
+    {
+      name: "CALLER_COUNTS_ALL_ZERO",
+      met: allCallerCountsZero && removed.length === SYNC_COMPAT_SHUTDOWN_INVENTORY.length,
+      evidence: `${removed.length}/${SYNC_COMPAT_SHUTDOWN_INVENTORY.length} entries REMOVED with zero production callers`,
+    },
+  ];
+
+  const allMet = criteria.every(function (c) { return c.met; });
+
+  const decision: P5Decision = allMet ? "P5_ACCEPTED" : "P5_NOT_ACCEPTED";
+  const decisionReason = allMet
+    ? `All ${criteria.length} criteria met; ${removed.length} sync compat paths fully REMOVED, async-only production paths proven`
+    : `${criteria.filter(function (c) { return c.met; }).length}/${criteria.length} criteria met`;
+
+  emitDiagnostic(
+    "P5_ACCEPTANCE_EVALUATED",
+    "p3-closeout", "shutdown-inventory", "shutdown",
+    "legacy_to_canonical", "evaluateP5Acceptance:" + decision,
+    { decision, removedCount: removed.length, retainedCount: retained.length }
+  );
+
+  return {
+    evaluatedAt: new Date(),
+    criteria,
+    syncCompatInventory: {
+      totalEntries: SYNC_COMPAT_SHUTDOWN_INVENTORY.length,
+      removedCount: removed.length,
+      retainedCount: retained.length,
+      zeroCallerRetainedCount: 0,
     },
     decision,
     decisionReason,

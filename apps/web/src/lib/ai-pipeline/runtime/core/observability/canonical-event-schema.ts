@@ -226,13 +226,13 @@ export interface Timeline {
   reconstructionStatus: ReconstructionStatus;
 }
 
-/** @deprecated RETAINED in P4-4 — use buildTimelineFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P5-4 — use buildTimelineFromRepo. Soft removal: impl kept for test compat */
 export function buildTimeline(correlationId: string): Timeline {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
-    "legacy_to_canonical", "buildTimeline:sync-compat",
-    { retentionReason: "buildReconstructionView production caller", shutdownPhase: "P5" }
+    "legacy_to_canonical", "buildTimeline:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-4" }
   );
   const events = _auditLog
     .filter((e: CanonicalEvent) => e.correlationId === correlationId)
@@ -299,11 +299,11 @@ export interface ReconstructionView {
   eventCount: number;
 }
 
-export function buildReconstructionView(
+export async function buildReconstructionView(
   viewType: "incident" | "containment" | "routing" | "authority_succession",
   correlationId: string
-): ReconstructionView {
-  const timeline = buildTimeline(correlationId);
+): Promise<ReconstructionView> {
+  const timeline = await buildTimelineFromRepo(correlationId);
   const lastEvent = timeline.orderedEvents[timeline.orderedEvents.length - 1];
 
   return {

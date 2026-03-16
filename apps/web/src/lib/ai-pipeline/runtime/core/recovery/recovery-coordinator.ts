@@ -670,7 +670,7 @@ async function runRecoveryStage(
       for (const s of rollbackSnap.scopes) {
         currentState[s.scope] = s.data;
       }
-      const recon = reconcileState(baseline.rollbackSnapshotId, currentState);
+      const recon = await reconcileState(baseline.rollbackSnapshotId, currentState);
       if (recon.unresolvedCount > 0) {
         return { stage, passed: false, detail: `${recon.unresolvedCount} unresolved diffs`, timestamp: now };
       }
@@ -831,7 +831,7 @@ export async function verifyRecovery(recoveryId: string): Promise<{
       for (const s of rollbackSnap.scopes) {
         currentState[s.scope] = s.data;
       }
-      const scan = runResidueScan(baseline.rollbackSnapshotId, currentState);
+      const scan = await runResidueScan(baseline.rollbackSnapshotId, currentState);
       residueScanClean = scan.clean;
     }
   }

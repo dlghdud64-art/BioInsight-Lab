@@ -20,7 +20,6 @@ import type {
   DEFAULT_STABILIZATION_POLICY,
 } from "../../types/stabilization";
 import {
-  getCanonicalBaseline,
   getCanonicalBaselineFromRepo,
   assertSingleCanonical,
   computeBaselineHash,
@@ -29,7 +28,8 @@ import {
 import { verifySnapshotPairExists, restoreDryRun, canEnterActiveRuntimeFromRepo } from "./snapshot-manager";
 import { emitDiagnostic } from "../ontology/diagnostics";
 
-export function validateBaselineAtBoot(
+/** @deprecated P5-3: async migration — use validateBaselineAtBootFromRepo */
+export async function validateBaselineAtBoot(
   runtimeState: {
     lifecycleState: string;
     releaseMode: string;
@@ -37,7 +37,7 @@ export function validateBaselineAtBoot(
     baselineHash: string;
   },
   policy: { stabilizationOnly: boolean; featureExpansionAllowed: boolean; devOnlyPathAllowed: boolean }
-): BaselineValidationResult {
+): Promise<BaselineValidationResult> {
   const checks: BaselineValidationCheck[] = [];
 
   // 1. canonical baseline uniqueness
@@ -48,7 +48,7 @@ export function validateBaselineAtBoot(
     detail: singleCheck.reason,
   });
 
-  const baseline = getCanonicalBaseline();
+  const baseline = await getCanonicalBaselineFromRepo();
 
   // 2. canonical active baseline combination
   if (baseline) {

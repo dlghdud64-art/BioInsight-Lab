@@ -207,8 +207,7 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     await new Promise(function (r) { setTimeout(r, 50); });
     _resetDiagnostics();
 
-    // Exercise retained compat paths (getSnapshot + getCanonicalBaseline emit RETAINED)
-    // checkAuthorityIntegrity now emits REMOVED (P5-1 soft removal)
+    // Exercise compat paths (all three emit REMOVED after P5-3)
     getSnapshot(pair.active.snapshotId);
     getCanonicalBaseline();
     checkAuthorityIntegrity();
@@ -218,8 +217,8 @@ describe("P3 Slice 6 — Closeout Validation", function () {
 
     var summary = getCompatUsageSummary();
 
-    // Should have tracked retained compat calls (2 RETAINED + 1 REMOVED)
-    expect(summary.totalSyncCompatRetained).toBeGreaterThanOrEqual(2);
+    // Should have tracked removed compat calls (3 REMOVED)
+    expect(summary.totalSyncCompatRemoved).toBeGreaterThanOrEqual(3);
 
     // Should have tracked repo-first usage
     expect(summary.totalRepoFirstUsed).toBeGreaterThanOrEqual(1);
@@ -227,10 +226,10 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     // byModule should have entries
     expect(Object.keys(summary.byModule).length).toBeGreaterThanOrEqual(2);
 
-    // snapshot-manager should show retained compat and repo-first
+    // snapshot-manager should show compat and repo-first (getSnapshot now emits REMOVED)
     var snapshotModule = summary.byModule["snapshot-manager"];
     expect(snapshotModule).toBeDefined();
-    expect(snapshotModule.syncCompatRetained).toBeGreaterThanOrEqual(1);
+    expect(snapshotModule.syncCompatRemoved).toBeGreaterThanOrEqual(1);
     expect(snapshotModule.repoFirstUsed).toBeGreaterThanOrEqual(1);
   });
 

@@ -11,7 +11,7 @@
 import type { RollbackPlan, RollbackStep, RollbackScope } from "../../types/stabilization";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { isMutationFrozen } from "../containment/mutation-freeze";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { applyScopeRestore } from "./scope-restore-adapter";
 import { withLock, snapshotRestoreLockKey } from "../persistence/lock-manager";
 
@@ -22,7 +22,7 @@ export interface ExecutorResult {
   reason: string;
 }
 
-export function executeRollbackPlan(plan: RollbackPlan, correlationId: string, actor: string): ExecutorResult {
+export async function executeRollbackPlan(plan: RollbackPlan, correlationId: string, actor: string): Promise<ExecutorResult> {
   // mutation freeze 필수
   if (!isMutationFrozen()) {
     return {
@@ -33,7 +33,7 @@ export function executeRollbackPlan(plan: RollbackPlan, correlationId: string, a
     };
   }
 
-  const snap = getSnapshot(plan.snapshotId);
+  const snap = await getSnapshotFromRepo(plan.snapshotId);
   let stepsExecuted = 0;
 
   for (const step of plan.orderedSteps) {
@@ -132,7 +132,7 @@ export async function executeRollbackPlanAsync(
     correlationId,
     60_000, // 60s TTL
     async function () {
-      return executeRollbackPlan(plan, correlationId, actor);
+      return await executeRollbackPlan(plan, correlationId, actor);
     }
   );
 
@@ -151,7 +151,7 @@ export async function executeRollbackPlanAsync(
 /** snapshot에서 scope에 해당하는 data를 가져오기 */
 function resolveScopeData(
   scope: RollbackScope,
-  snap: ReturnType<typeof getSnapshot>
+  snap: Awaited<ReturnType<typeof getSnapshotFromRepo>>
 ): Record<string, unknown> | null {
   if (!snap) return null;
   // ACTIVE_RUNTIME_STATE는 snapshot에 직접 없음 — 전체 config 사용

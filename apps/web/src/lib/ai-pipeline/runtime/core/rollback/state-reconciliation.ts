@@ -7,7 +7,7 @@
  */
 
 import type { ReconciliationResult, ReconciliationDiff } from "../../types/stabilization";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 
 // ── Critical path patterns (auto-resolve 불가) ──
@@ -75,13 +75,13 @@ function deepPathDiff(expected: unknown, actual: unknown, basePath: string): Pat
 }
 
 /** snapshot 기준 path-level reconciliation */
-export function reconcileState(
+export async function reconcileState(
   snapshotId: string,
   currentState: Record<string, Record<string, unknown>>,
   correlationId?: string,
   actor?: string
-): ReconciliationResult {
-  const snap = getSnapshot(snapshotId);
+): Promise<ReconciliationResult> {
+  const snap = await getSnapshotFromRepo(snapshotId);
   const diffs: ReconciliationDiff[] = [];
 
   if (!snap) {

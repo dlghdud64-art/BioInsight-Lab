@@ -48,11 +48,11 @@ async function checkNoOpenCriticalIncidents(
   };
 }
 
-function checkRollbackReadiness(
+async function checkRollbackReadiness(
   rollbackSnapshotId: string,
   activeSnapshotId: string
-): RecoveryPreconditionResult {
-  const precheck = runRollbackPrecheck(rollbackSnapshotId, activeSnapshotId);
+): Promise<RecoveryPreconditionResult> {
+  const precheck = await runRollbackPrecheck(rollbackSnapshotId, activeSnapshotId);
   return {
     name: "ROLLBACK_READINESS",
     passed: precheck.passed,
@@ -230,7 +230,7 @@ export async function runRecoveryPreconditions(
   results.push(await checkNoOpenCriticalIncidents(input.overrideMetadata));
 
   // 2. Rollback readiness
-  results.push(checkRollbackReadiness(input.rollbackSnapshotId, input.activeSnapshotId));
+  results.push(await checkRollbackReadiness(input.rollbackSnapshotId, input.activeSnapshotId));
 
   // 3. Required snapshot present (P3-4: async repo-first)
   results.push(await checkRequiredSnapshotPresent(input.rollbackSnapshotId));

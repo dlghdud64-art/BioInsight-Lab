@@ -171,10 +171,10 @@ describe("S5: Observability / Audit / Reconstruction", () => {
   });
 
   // 15. reconstruction view contains required fields
-  it("should build reconstruction view with all required fields", () => {
+  it("should build reconstruction view with all required fields", async () => {
     const corId = "cor-view";
     writeCanonicalAudit(createCanonicalEvent({ correlationId: corId, eventType: "BREACH_DETECTED" }));
-    const view = buildReconstructionView("containment", corId);
+    const view = await buildReconstructionView("containment", corId);
     expect(view.viewType).toBe("containment");
     expect(view.correlationId).toBe(corId);
     expect(view.reconstructionStatus).toBeTruthy();

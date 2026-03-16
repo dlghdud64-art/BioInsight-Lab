@@ -114,13 +114,13 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
 
 // ── Snapshot Lookup ──
 
-/** @deprecated RETAINED in P4-4 — use getSnapshotFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P5-2 — use getSnapshotFromRepo. Soft removal: impl kept for test compat */
 export function getSnapshot(snapshotId: string): BaselineSnapshot | null {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "snapshot-manager", "snapshot-adapter", "snapshot",
-    "legacy_to_canonical", "getSnapshot:sync-compat",
-    { entityId: snapshotId, retentionReason: "5+ legacy test suites depend on sync API", shutdownPhase: "P5" }
+    "legacy_to_canonical", "getSnapshot:removed",
+    { entityId: snapshotId, retentionReason: "soft removal — production callers migrated to getSnapshotFromRepo", shutdownPhase: "P5" }
   );
   return _snapshots.get(snapshotId) ?? null;
 }

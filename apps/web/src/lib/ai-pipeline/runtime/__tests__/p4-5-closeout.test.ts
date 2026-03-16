@@ -116,18 +116,20 @@ describe("P4 Slice 5 — P4 Closeout", function () {
     setupAll();
   });
 
-  it("PC1: all RETAINED entries have removalPrecondition + productionCallerCount > 0 + owner", function () {
+  it("PC1: all entries are REMOVED with zero production callers", function () {
     var retained = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
       return e.status === "RETAINED";
     });
+    var removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
+      return e.status === "REMOVED";
+    });
 
-    expect(retained.length).toBeGreaterThan(0);
+    expect(retained.length).toBe(0);
+    expect(removed.length).toBe(10);
 
-    retained.forEach(function (e) {
-      expect(e.productionCallerCount).toBeGreaterThan(0);
-      expect(e.removalPrecondition.length).toBeGreaterThan(0);
+    removed.forEach(function (e) {
+      expect(e.productionCallerCount).toBe(0);
       expect(e.owner.length).toBeGreaterThan(0);
-      expect(e.shutdownPhase).toBe("P5");
     });
   });
 
@@ -216,8 +218,8 @@ describe("P4 Slice 5 — P4 Closeout", function () {
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(6);
-    expect(retained.length).toBe(4);
+    expect(removed.length).toBe(10);
+    expect(retained.length).toBe(0);
 
     // All REMOVED should have zero production callers
     removed.forEach(function (e) {
@@ -242,10 +244,10 @@ describe("P4 Slice 5 — P4 Closeout", function () {
     });
 
     expect(sheet.syncCompatInventory.totalEntries).toBe(10);
-    expect(sheet.syncCompatInventory.removedCount).toBe(6);
-    expect(sheet.syncCompatInventory.retainedCount).toBe(4);
+    expect(sheet.syncCompatInventory.removedCount).toBe(10);
+    expect(sheet.syncCompatInventory.retainedCount).toBe(0);
     expect(sheet.syncCompatInventory.zeroCallerRetainedCount).toBe(0);
-    expect(sheet.syncCompatInventory.retainedWithExitConditions).toBe(4);
+    expect(sheet.syncCompatInventory.retainedWithExitConditions).toBe(0);
 
     // Should emit P4_ACCEPTANCE_EVALUATED diagnostic
     var acceptDiags = getDiagnosticLog().filter(function (d) {

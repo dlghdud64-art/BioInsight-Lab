@@ -130,13 +130,13 @@ export function createCanonicalBaseline(input: CreateBaselineInput): BaselineReg
   return registry;
 }
 
-/** @deprecated RETAINED in P4-4 — use getCanonicalBaselineFromRepo. Removal: P5 */
+/** @deprecated REMOVED in P5-3 — use getCanonicalBaselineFromRepo. Soft removal: impl kept for test compat */
 export function getCanonicalBaseline(): BaselineRegistry | null {
   emitDiagnostic(
-    "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON",
+    "LEGACY_SYNC_COMPAT_REMOVED",
     "baseline-registry", "baseline-adapter", "baseline",
-    "legacy_to_canonical", "getCanonicalBaseline:sync-compat",
-    { retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5" }
+    "legacy_to_canonical", "getCanonicalBaseline:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-3" }
   );
   return _canonicalBaseline;
 }

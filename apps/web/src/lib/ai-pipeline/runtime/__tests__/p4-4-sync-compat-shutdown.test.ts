@@ -128,12 +128,12 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(6);
-    expect(retained.length).toBe(4);
+    expect(removed.length).toBe(10);
+    expect(retained.length).toBe(0);
 
-    // All REMOVED entries should have removedInSlice P4-4, P4-5, or P5-1
+    // All REMOVED entries should have removedInSlice P4-4, P4-5, P5-1, P5-2, P5-3, or P5-4
     removed.forEach(function (e) {
-      expect(["P4-4", "P4-5", "P5-1"].indexOf(e.removedInSlice) !== -1).toBe(true);
+      expect(["P4-4", "P4-5", "P5-1", "P5-2", "P5-3", "P5-4"].indexOf(e.removedInSlice) !== -1).toBe(true);
       expect(e.productionCallerCount).toBe(0);
     });
 
@@ -171,49 +171,49 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
     expect(removedDiags[0].moduleName).toBe("snapshot-manager");
   });
 
-  it("SS3: retained getCanonicalBaseline emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+  it("SS3: removed getCanonicalBaseline emits LEGACY_SYNC_COMPAT_REMOVED (P5-3 soft removal)", function () {
     createFullScenario();
     _resetDiagnostics();
 
     var baseline = getCanonicalBaseline();
     expect(baseline).not.toBeNull();
 
-    var retainedDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
-        d.reasonCode.indexOf("getCanonicalBaseline:sync-compat") !== -1;
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("getCanonicalBaseline:removed") !== -1;
     });
-    expect(retainedDiags.length).toBe(1);
-    expect(retainedDiags[0].moduleName).toBe("baseline-registry");
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("baseline-registry");
   });
 
-  it("SS4: retained hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+  it("SS4: removed hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_REMOVED (P5-3 soft removal)", function () {
     createFullScenario();
     _resetDiagnostics();
 
     var result = hasUnacknowledgedIncidents();
     expect(typeof result).toBe("boolean");
 
-    var retainedDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
-        d.reasonCode.indexOf("hasUnacknowledgedIncidents:sync-compat") !== -1;
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("hasUnacknowledgedIncidents:removed") !== -1;
     });
-    expect(retainedDiags.length).toBe(1);
-    expect(retainedDiags[0].moduleName).toBe("incident-escalation");
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("incident-escalation");
   });
 
-  it("SS5: retained getSnapshot emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON", function () {
+  it("SS5: removed getSnapshot emits LEGACY_SYNC_COMPAT_REMOVED (P5-2 soft removal)", function () {
     var scenario = createFullScenario();
     _resetDiagnostics();
 
     var snap = getSnapshot(scenario.pair.active.snapshotId);
     expect(snap).not.toBeNull();
 
-    var retainedDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
-        d.reasonCode.indexOf("getSnapshot:sync-compat") !== -1;
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("getSnapshot:removed") !== -1;
     });
-    expect(retainedDiags.length).toBe(1);
-    expect(retainedDiags[0].moduleName).toBe("snapshot-manager");
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("snapshot-manager");
   });
 
   it("SS6: acknowledgeIncidentAsync repo-first + emits INCIDENT_ACK_TIMING_GAP_REDUCED", async function () {
