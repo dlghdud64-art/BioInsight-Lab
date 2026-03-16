@@ -106,7 +106,7 @@ export async function POST(
       },
     });
 
-    // Activity log
+    // Activity log: Quote 생성
     await createActivityLog({
       activityType: "QUOTE_CREATED",
       entityType: "QUOTE",
@@ -117,6 +117,19 @@ export async function POST(
       metadata: {
         compareSessionId: id,
         compareVerdict: verdict,
+        productCount: products.length,
+      },
+    });
+
+    // Activity log: 비교 세션에서 견적 초안 시작
+    await createActivityLog({
+      activityType: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+      entityType: "COMPARE_SESSION",
+      entityId: id,
+      userId,
+      organizationId: compareSession.organizationId,
+      metadata: {
+        quoteId: quote.id,
         productCount: products.length,
       },
     });

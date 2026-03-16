@@ -1110,6 +1110,12 @@ enum ActivityType {
   PURCHASE_REQUEST_CREATED      // 구매 요청 생성
   AI_TASK_COMPLETED          // AI 작업 최종 완료 (승인 후 실행 성공)
   AI_TASK_FAILED             // AI 작업 실패 (실행 에러)
+
+  // ── Compare Workspace 확장 (V1-RC) ──
+  QUOTE_DRAFT_STARTED_FROM_COMPARE  // 비교 세션에서 견적 초안 생성 시작
+  COMPARE_INQUIRY_DRAFT_STATUS_CHANGED // 문의 초안 상태 변경
+  COMPARE_RESULT_VIEWED              // 비교 결과 조회
+  COMPARE_SESSION_REOPENED           // 비교 세션 재개 (판정 취소)
 }
 
 model ActivityLog {
@@ -1152,6 +1158,12 @@ model CompareSession {
   organizationId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Decision record (V1-RC)
+  decisionState  String?    // UNDECIDED | APPROVED | HELD | REJECTED
+  decisionNote   String?    @db.Text
+  decidedBy      String?
+  decidedAt      DateTime?
 
   inquiryDrafts  CompareInquiryDraft[]
 

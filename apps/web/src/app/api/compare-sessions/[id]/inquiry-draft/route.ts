@@ -155,15 +155,22 @@ export async function PATCH(
       );
     }
 
+    // 기존 상태 조회 (beforeStatus 기록용)
+    const existing = await db.compareInquiryDraft.findUnique({
+      where: { id: draftId },
+      select: { status: true },
+    });
+
     const draft = await db.compareInquiryDraft.update({
       where: { id: draftId },
       data: { status },
     });
 
     await createActivityLog({
-      activityType: "QUOTE_DRAFT_REVIEWED",
+      activityType: "COMPARE_INQUIRY_DRAFT_STATUS_CHANGED",
       entityType: "COMPARE_INQUIRY_DRAFT",
       entityId: draftId,
+      beforeStatus: existing?.status ?? null,
       afterStatus: status,
       userId,
       metadata: { compareSessionId: id },
