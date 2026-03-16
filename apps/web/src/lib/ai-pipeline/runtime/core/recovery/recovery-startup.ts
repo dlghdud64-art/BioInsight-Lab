@@ -13,9 +13,9 @@ import { scanLockResidues, buildLockCleanupPlan } from "../persistence/lock-hygi
 import type { LockSweepResult, LockCleanupPlan } from "../persistence/lock-hygiene";
 import { checkAuditChainReconstructable } from "./recovery-preconditions";
 import { getRecoveryStatus } from "./recovery-coordinator";
-import { hasUnacknowledgedIncidents } from "../incidents/incident-escalation";
-import { checkAuthorityIntegrity } from "../authority/authority-registry";
-import { getCanonicalBaseline, assertSingleCanonical, getCanonicalBaselineFromRepo } from "../baseline/baseline-registry";
+import { hasUnacknowledgedIncidentsFromRepo } from "../incidents/incident-escalation";
+import { checkAuthorityIntegrityFromRepo } from "../authority/authority-registry";
+import { assertSingleCanonical, getCanonicalBaselineFromRepo } from "../baseline/baseline-registry";
 import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { emitDiagnostic } from "../ontology/diagnostics";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
@@ -99,14 +99,14 @@ const NON_TERMINAL_STATES: readonly string[] = [
 // Diagnostic Event Helper
 // ══════════════════════════════════════════════════════════════════════════════
 
-function emitStartupDiagnostic(
+async function emitStartupDiagnostic(
   eventType: string,
   correlationId: string,
   performedBy: string,
   detail: string
-): void {
+): Promise<void> {
   try {
-    const baseline = getCanonicalBaseline();
+    const baseline = await getCanonicalBaselineFromRepo();
     emitStabilizationAuditEvent({
       eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
       baselineId: baseline ? baseline.baselineId : "",
@@ -133,7 +133,7 @@ export async function evaluateResumeReadiness(
   const checks: Array<{ name: string; passed: boolean; detail: string }> = [];
 
   // 1. No open critical incidents
-  const hasIncidents = hasUnacknowledgedIncidents();
+  const hasIncidents = await hasUnacknowledgedIncidentsFromRepo();
   checks.push({
     name: "NO_OPEN_CRITICAL_INCIDENTS",
     passed: !hasIncidents,
@@ -188,7 +188,7 @@ export async function evaluateResumeReadiness(
   // 4. Authority continuity valid
   let authorityOk = true;
   try {
-    const integrity = checkAuthorityIntegrity();
+    const integrity = await checkAuthorityIntegrityFromRepo();
     authorityOk = !integrity.splitBrain && integrity.orphanCount === 0;
     checks.push({
       name: "AUTHORITY_CONTINUITY_VALID",
@@ -353,7 +353,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
 
   // ── 2. No active record from repository ──
   if (!activeRecord && repoAvailable) {
-    emitStartupDiagnostic(
+    await emitStartupDiagnostic(
       "RECOVERY_STARTUP_SCAN_COMPLETED",
       "",
       "system",
@@ -376,7 +376,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   if (!activeRecord && !repoAvailable) {
     const memRecord = getRecoveryStatus();
     if (!memRecord) {
-      emitStartupDiagnostic(
+      await emitStartupDiagnostic(
         "RECOVERY_STARTUP_SCAN_COMPLETED",
         "",
         "system",
@@ -398,7 +398,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     // Memory has a non-terminal record
     const terminalStates = ["RECOVERY_RESTORED", "RECOVERY_FAILED", "RECOVERY_ESCALATED"];
     if (terminalStates.indexOf(memRecord.currentState) !== -1) {
-      emitStartupDiagnostic(
+      await emitStartupDiagnostic(
         "RECOVERY_STARTUP_SCAN_COMPLETED",
         memRecord.correlationId,
         "system",
@@ -418,7 +418,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
     }
 
     // Non-terminal in memory — residue detected
-    emitStartupDiagnostic(
+    await emitStartupDiagnostic(
       "RECOVERY_RESIDUE_DETECTED",
       memRecord.correlationId,
       "system",
@@ -428,7 +428,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
 
     const handoff = buildMemoryFallbackHandoff(memRecord, "MANUAL_VERIFY_AND_ABORT");
 
-    emitStartupDiagnostic(
+    await emitStartupDiagnostic(
       "RECOVERY_MANUAL_HANDOFF_CREATED",
       memRecord.correlationId,
       "system",
@@ -450,7 +450,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   // ── 4. Active record found from repository ──
   const record = activeRecord!;
 
-  emitStartupDiagnostic(
+  await emitStartupDiagnostic(
     "RECOVERY_RESIDUE_DETECTED",
     record.correlationId,
     "system",
@@ -513,7 +513,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   // ── 4d. Evaluate resume readiness ──
   const readiness = await evaluateResumeReadiness(record);
 
-  emitStartupDiagnostic(
+  await emitStartupDiagnostic(
     "RECOVERY_RESUME_READINESS_EVALUATED",
     record.correlationId,
     "system",
@@ -525,7 +525,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
 
   // ── 4e. Emit abort recommendation if needed ──
   if (readiness.mustAbort) {
-    emitStartupDiagnostic(
+    await emitStartupDiagnostic(
       "RECOVERY_ABORT_RECOMMENDED",
       record.correlationId,
       "system",
@@ -551,7 +551,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
       };
 
       // Determine cleanup recommendation
-      if (hasUnacknowledgedIncidents()) {
+      if (await hasUnacknowledgedIncidentsFromRepo()) {
         lockCleanupRecommendation = "ESCALATE_INCIDENT";
       } else if (sweepResult.summary.requiresOperator > 0 || criticalPresent) {
         lockCleanupRecommendation = "OPERATOR_REVIEW_REQUIRED";
@@ -566,7 +566,7 @@ export async function runStartupRecoveryScan(): Promise<StartupScanResult> {
   // ── 4g. Build handoff ──
   const handoff = buildOperatorHandoff(record, reconstructionStatus, readiness.recommendedAction, lockCleanupRecommendation);
 
-  emitStartupDiagnostic(
+  await emitStartupDiagnostic(
     "RECOVERY_MANUAL_HANDOFF_CREATED",
     record.correlationId,
     "system",

@@ -206,7 +206,7 @@ describe("P4 Slice 5 — P4 Closeout", function () {
     expect(removedDiags[0].moduleName).toBe("incident-escalation");
   });
 
-  it("PC5: inventory is 5 REMOVED + 5 RETAINED", function () {
+  it("PC5: inventory is 6 REMOVED + 4 RETAINED", function () {
     expect(SYNC_COMPAT_SHUTDOWN_INVENTORY.length).toBe(10);
 
     var removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
@@ -216,8 +216,8 @@ describe("P4 Slice 5 — P4 Closeout", function () {
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(5);
-    expect(retained.length).toBe(5);
+    expect(removed.length).toBe(6);
+    expect(retained.length).toBe(4);
 
     // All REMOVED should have zero production callers
     removed.forEach(function (e) {
@@ -242,10 +242,10 @@ describe("P4 Slice 5 — P4 Closeout", function () {
     });
 
     expect(sheet.syncCompatInventory.totalEntries).toBe(10);
-    expect(sheet.syncCompatInventory.removedCount).toBe(5);
-    expect(sheet.syncCompatInventory.retainedCount).toBe(5);
+    expect(sheet.syncCompatInventory.removedCount).toBe(6);
+    expect(sheet.syncCompatInventory.retainedCount).toBe(4);
     expect(sheet.syncCompatInventory.zeroCallerRetainedCount).toBe(0);
-    expect(sheet.syncCompatInventory.retainedWithExitConditions).toBe(5);
+    expect(sheet.syncCompatInventory.retainedWithExitConditions).toBe(4);
 
     // Should emit P4_ACCEPTANCE_EVALUATED diagnostic
     var acceptDiags = getDiagnosticLog().filter(function (d) {

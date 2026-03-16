@@ -2,7 +2,7 @@
  * P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction (7 tests)
  *
  * Validates:
- * - SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY: 5 REMOVED + 5 RETAINED
+ * - SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY: 6 REMOVED + 4 RETAINED
  * - SS2: canEnterActiveRuntime throws + emits LEGACY_SYNC_COMPAT_REMOVED
  * - SS3: Retained getCanonicalBaseline emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
  * - SS4: Retained hasUnacknowledgedIncidents emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON
@@ -118,7 +118,7 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
     setupAll();
   });
 
-  it("SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY has 5 REMOVED + 5 RETAINED", function () {
+  it("SS1: SYNC_COMPAT_SHUTDOWN_INVENTORY has 6 REMOVED + 4 RETAINED", function () {
     expect(SYNC_COMPAT_SHUTDOWN_INVENTORY.length).toBe(10);
 
     var removed = SYNC_COMPAT_SHUTDOWN_INVENTORY.filter(function (e) {
@@ -128,12 +128,12 @@ describe("P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction", funct
       return e.status === "RETAINED";
     });
 
-    expect(removed.length).toBe(5);
-    expect(retained.length).toBe(5);
+    expect(removed.length).toBe(6);
+    expect(retained.length).toBe(4);
 
-    // All REMOVED entries should have removedInSlice P4-4 or P4-5
+    // All REMOVED entries should have removedInSlice P4-4, P4-5, or P5-1
     removed.forEach(function (e) {
-      expect(["P4-4", "P4-5"].indexOf(e.removedInSlice) !== -1).toBe(true);
+      expect(["P4-4", "P4-5", "P5-1"].indexOf(e.removedInSlice) !== -1).toBe(true);
       expect(e.productionCallerCount).toBe(0);
     });
 

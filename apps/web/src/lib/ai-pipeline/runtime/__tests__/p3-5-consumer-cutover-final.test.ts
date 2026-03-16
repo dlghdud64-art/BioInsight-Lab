@@ -254,20 +254,20 @@ describe("P3 Slice 5 — Remaining Consumer Cutover + Legacy Deprecation", funct
     expect(cutoverDiags.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("CF6: deprecated sync checkAuthorityIntegrity emits LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON (P4-4)", function () {
+  it("CF6: deprecated sync checkAuthorityIntegrity emits LEGACY_SYNC_COMPAT_REMOVED (P5-1)", function () {
     createFullScenario();
     _resetDiagnostics();
 
     var report = checkAuthorityIntegrity();
     expect(report).toBeDefined();
 
-    // Should have emitted RETAINED diagnostic (P4-4 upgrade)
-    var retainedDiags = getDiagnosticLog().filter(function (d) {
-      return d.type === "LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON" &&
-        d.reasonCode.indexOf("checkAuthorityIntegrity:sync-compat") !== -1;
+    // Should have emitted REMOVED diagnostic (P5-1 soft removal)
+    var removedDiags = getDiagnosticLog().filter(function (d) {
+      return d.type === "LEGACY_SYNC_COMPAT_REMOVED" &&
+        d.reasonCode.indexOf("checkAuthorityIntegrity:removed") !== -1;
     });
-    expect(retainedDiags.length).toBe(1);
-    expect(retainedDiags[0].moduleName).toBe("authority-registry");
+    expect(removedDiags.length).toBe(1);
+    expect(removedDiags[0].moduleName).toBe("authority-registry");
   });
 
   it("CF7: direct access guardrail: authority _assertNoDirectStoreAccess blocks", function () {

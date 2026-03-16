@@ -361,20 +361,20 @@ export interface SyncCompatShutdownEntry {
 }
 
 /**
- * P4-5: 10 deprecated sync compat paths — 5 REMOVED, 5 RETAINED (P5).
+ * P5-1: 10 deprecated sync compat paths — 6 REMOVED, 4 RETAINED (P5).
  */
 export const SYNC_COMPAT_SHUTDOWN_INVENTORY: readonly SyncCompatShutdownEntry[] = [
-  // 5 REMOVED — zero production callers verified
+  // 6 REMOVED — zero production callers verified
   { functionName: "canEnterActiveRuntime", moduleName: "snapshot-manager", replacedBy: "canEnterActiveRuntimeFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
   { functionName: "restoreDryRun", moduleName: "snapshot-manager", replacedBy: "restoreDryRunFromRepo", status: "REMOVED", removedInSlice: "P4-4", retentionReason: "", shutdownPhase: "P4-4", productionCallerCount: 0, removalPrecondition: "", owner: "snapshot-manager" },
   { functionName: "getAuditEvents", moduleName: "audit-events", replacedBy: "getAuditEventsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "audit-events" },
   { functionName: "getCanonicalAuditLog", moduleName: "canonical-event-schema", replacedBy: "getCanonicalAuditLogFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "canonical-event-schema" },
   { functionName: "getIncidents", moduleName: "incident-escalation", replacedBy: "getIncidentsFromRepo", status: "REMOVED", removedInSlice: "P4-5", retentionReason: "", shutdownPhase: "P4-5", productionCallerCount: 0, removalPrecondition: "", owner: "incident-escalation" },
-  // 5 RETAINED → P5 with exit conditions
-  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "3 production callers (validator, lock-hygiene, recovery-startup)", shutdownPhase: "P5", productionCallerCount: 3, removalPrecondition: "Migrate baseline-validator:51, recovery-startup:109, lock-hygiene:283 to getCanonicalBaselineFromRepo", owner: "baseline-registry" },
-  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "4 production callers (preconditions, startup×2, lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 4, removalPrecondition: "Migrate recovery-preconditions:39, recovery-startup:136+554, lock-hygiene:146 to hasUnacknowledgedIncidentsFromRepo", owner: "incident-escalation" },
+  { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "REMOVED", removedInSlice: "P5-1", retentionReason: "", shutdownPhase: "P5-1", productionCallerCount: 0, removalPrecondition: "", owner: "authority-registry" },
+  // 4 RETAINED → P5 with exit conditions
+  { functionName: "getCanonicalBaseline", moduleName: "baseline-registry", replacedBy: "getCanonicalBaselineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "2 production callers (baseline-validator, lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 2, removalPrecondition: "Migrate baseline-validator:51, lock-hygiene:283 to getCanonicalBaselineFromRepo", owner: "baseline-registry" },
+  { functionName: "hasUnacknowledgedIncidents", moduleName: "incident-escalation", replacedBy: "hasUnacknowledgedIncidentsFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (lock-hygiene)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate lock-hygiene:146 to hasUnacknowledgedIncidentsFromRepo", owner: "incident-escalation" },
   { functionName: "getSnapshot", moduleName: "snapshot-manager", replacedBy: "getSnapshotFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "5 production callers in rollback subsystem", shutdownPhase: "P5", productionCallerCount: 5, removalPrecondition: "Migrate residue-scan:93, rollback-plan-builder:27, rollback-executor:36, rollback-precheck:25, state-reconciliation:84 to getSnapshotFromRepo", owner: "snapshot-manager" },
-  { functionName: "checkAuthorityIntegrity", moduleName: "authority-registry", replacedBy: "checkAuthorityIntegrityFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (recovery-startup)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate recovery-startup:191 to checkAuthorityIntegrityFromRepo", owner: "authority-registry" },
   { functionName: "buildTimeline", moduleName: "canonical-event-schema", replacedBy: "buildTimelineFromRepo", status: "RETAINED", removedInSlice: "", retentionReason: "1 production caller (recovery-diagnostics)", shutdownPhase: "P5", productionCallerCount: 1, removalPrecondition: "Migrate recovery-diagnostics:105 to buildTimelineFromRepo", owner: "canonical-event-schema" },
 ] as const;
 

@@ -207,7 +207,8 @@ describe("P3 Slice 6 — Closeout Validation", function () {
     await new Promise(function (r) { setTimeout(r, 50); });
     _resetDiagnostics();
 
-    // Exercise retained compat paths (all emit LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON)
+    // Exercise retained compat paths (getSnapshot + getCanonicalBaseline emit RETAINED)
+    // checkAuthorityIntegrity now emits REMOVED (P5-1 soft removal)
     getSnapshot(pair.active.snapshotId);
     getCanonicalBaseline();
     checkAuthorityIntegrity();
@@ -217,8 +218,8 @@ describe("P3 Slice 6 — Closeout Validation", function () {
 
     var summary = getCompatUsageSummary();
 
-    // Should have tracked retained compat calls (LEGACY_SYNC_COMPAT_RETAINED_WITH_REASON)
-    expect(summary.totalSyncCompatRetained).toBeGreaterThanOrEqual(3);
+    // Should have tracked retained compat calls (2 RETAINED + 1 REMOVED)
+    expect(summary.totalSyncCompatRetained).toBeGreaterThanOrEqual(2);
 
     // Should have tracked repo-first usage
     expect(summary.totalRepoFirstUsed).toBeGreaterThanOrEqual(1);

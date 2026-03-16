@@ -7,7 +7,7 @@
  */
 
 import type { RecoveryPreconditionResult, RecoveryOverrideMetadata } from "./recovery-types";
-import { getIncidents, hasUnacknowledgedIncidents, getIncidentsFromRepo, hasUnacknowledgedIncidentsFromRepo } from "../incidents/incident-escalation";
+import { getIncidents, getIncidentsFromRepo, hasUnacknowledgedIncidentsFromRepo } from "../incidents/incident-escalation";
 import { getCanonicalBaseline, assertSingleCanonical } from "../baseline/baseline-registry";
 import { getSnapshot, getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { emitDiagnostic } from "../ontology/diagnostics";
@@ -32,13 +32,6 @@ async function checkNoOpenCriticalIncidents(
   const hasUnacked = await hasUnacknowledgedIncidentsFromRepo();
   if (!hasUnacked) {
     return { name: "NO_OPEN_CRITICAL_INCIDENTS", passed: true, detail: "no unacknowledged incidents" };
-  }
-  // Cross-check with legacy store: during dual-write transition, acknowledgements
-  // may not have propagated to repo yet (fire-and-forget timing). If legacy says
-  // all acknowledged, trust the in-memory source of truth.
-  const legacyHasUnacked = hasUnacknowledgedIncidents();
-  if (!legacyHasUnacked) {
-    return { name: "NO_OPEN_CRITICAL_INCIDENTS", passed: true, detail: "no unacknowledged incidents (legacy cross-check)" };
   }
   if (overrideMetadata) {
     return {
