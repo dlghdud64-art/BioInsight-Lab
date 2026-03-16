@@ -169,6 +169,8 @@ export async function POST() {
             productNames: names,
             verdict,
             sessionCreatedAt: cs.createdAt.toISOString(),
+            inquiryCount: cs.inquiryDrafts.length,
+            activeInquiryCount: cs.inquiryDrafts.filter((d: { status: string }) => d.status === "GENERATED" || d.status === "COPIED").length,
           },
           relatedEntityType: "COMPARE_SESSION",
           relatedEntityId: cs.id,

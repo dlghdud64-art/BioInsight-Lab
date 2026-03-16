@@ -17,6 +17,7 @@ import {
   getQuoteStatusConfig,
   VERDICT_CONFIG,
 } from "@/lib/compare-workspace/decision-constants";
+import { determineCompareSubstatus, COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── Types ──
 
@@ -66,6 +67,25 @@ function DraftStatusBadgeMini({ status }: { status: string }) {
 function QuoteStatusBadgeMini({ status }: { status: string }) {
   const c = getQuoteStatusConfig(status);
   return <Badge variant="outline" className={`text-xs ${c.className}`}>견적 {c.label}</Badge>;
+}
+
+function CompareSubstatusBadge({ session }: { session: CompareSessionSummary }) {
+  if (session.decisionState && session.decisionState !== "UNDECIDED") return null;
+
+  const substatus = determineCompareSubstatus({
+    inquiryDrafts: session.inquiryDraftStatuses.map((s) => ({ status: s })),
+    linkedQuoteStatuses: session.linkedQuoteStatuses,
+    isReopened: false,
+  });
+
+  const def = COMPARE_SUBSTATUS_DEFS[substatus];
+  if (!def || def.isTerminal) return null;
+
+  return (
+    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+      {def.label}
+    </Badge>
+  );
 }
 
 function relativeTime(dateStr: string | null): string {
@@ -141,6 +161,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                   {/* 배지 행 */}
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <VerdictBadgeMini verdict={session.diffSummaryVerdict} />
+                    <CompareSubstatusBadge session={session} />
                     <DecisionStateBadge state={session.decisionState} />
                     {session.latestQuoteStatus && (
                       <QuoteStatusBadgeMini status={session.latestQuoteStatus} />
@@ -166,6 +187,15 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                   <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {relativeTime(session.latestActionAt)}
+                    {(!session.decisionState || session.decisionState === "UNDECIDED") && (() => {
+                      const ageDays = session.createdAt
+                        ? Math.floor((Date.now() - new Date(session.createdAt).getTime()) / 86400000)
+                        : 0;
+                      if (ageDays >= 7) {
+                        return <span className="text-[10px] text-orange-500 font-medium ml-1">{ageDays}일 대기</span>;
+                      }
+                      return null;
+                    })()}
                   </p>
                 </div>
 

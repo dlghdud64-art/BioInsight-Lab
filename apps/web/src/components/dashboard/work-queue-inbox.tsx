@@ -20,6 +20,7 @@ import {
   type TaskStatus,
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
+import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -63,11 +64,7 @@ const ACTIVITY_LABEL: Record<string, string> = {
   execution_failed: "실행 중 오류가 발생했습니다",
   budget_insufficient: "예산이 부족합니다",
   permission_denied: "권한이 부족합니다",
-  compare_decision_pending: "비교 분석 완료 — 판정을 내려주세요",
-  compare_inquiry_followup: "비교 문의 후속 조치가 필요합니다",
-  compare_quote_in_progress: "비교 기반 견적이 진행 중입니다",
-  compare_decided: "비교 판정이 완료되었습니다",
-  compare_reopened: "비교 판정이 재개되었습니다 — 재검토가 필요합니다",
+  ...COMPARE_ACTIVITY_LABELS,
 };
 
 // ── Deep-Link 경로 매핑 ──
@@ -254,7 +251,9 @@ function WorkQueueCard({
   const Icon = config.icon;
   const statusBadge = TASK_STATUS_BADGE[item.taskStatus];
   const approvalBadge = APPROVAL_STATUS_BADGE[item.approvalStatus];
-  const cta = CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
+  const cta = item.type === "COMPARE_DECISION" && item.substatus && COMPARE_CTA_MAP[item.substatus]
+    ? COMPARE_CTA_MAP[item.substatus]
+    : CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
   const activityLabel = ACTIVITY_LABEL[item.substatus || ""] || item.summary || "";
 
   return (
@@ -294,6 +293,25 @@ function WorkQueueCard({
                 <Zap className="h-3 w-3" />
                 {item.urgencyReason}
               </p>
+            )}
+            {/* SLA aging indicator for compare items */}
+            {item.type === "COMPARE_DECISION" && item.substatus && COMPARE_SUBSTATUS_DEFS[item.substatus] && (() => {
+              const def = COMPARE_SUBSTATUS_DEFS[item.substatus];
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+                return (
+                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{ageDays}일 경과
+                  </span>
+                );
+              }
+              return null;
+            })()}
+            {/* Inquiry count for compare_inquiry_followup */}
+            {item.substatus === "compare_inquiry_followup" && item.metadata?.inquiryCount && (
+              <span className="text-[10px] text-slate-500 mt-0.5">
+                문의 {String(item.metadata.inquiryCount)}건
+              </span>
             )}
 
             {/* Row 3: CTA + Dismiss + Time */}

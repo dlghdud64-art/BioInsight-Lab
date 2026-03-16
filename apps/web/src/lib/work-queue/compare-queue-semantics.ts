@@ -147,3 +147,14 @@ export function isCompareTerminal(substatus: string): boolean {
 export function isCompareSubstatus(substatus: string): boolean {
   return substatus in COMPARE_SUBSTATUS_DEFS;
 }
+
+// ── Canonical Activity Labels (UI에서 직접 사용) ──
+
+/** Substatus → Korean activity label. 워크 큐 카드의 1줄 상태 설명. */
+export const COMPARE_ACTIVITY_LABELS: Record<string, string> = {
+  compare_decision_pending: "비교 분석 완료 — 판정을 내려주세요",
+  compare_inquiry_followup: "비교 문의 후속 조치가 필요합니다",
+  compare_quote_in_progress: "비교 기반 견적이 진행 중입니다",
+  compare_decided: "비교 판정이 완료되었습니다",
+  compare_reopened: "비교 판정이 재개되었습니다 — 재검토가 필요합니다",
+};
