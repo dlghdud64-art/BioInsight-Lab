@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createWorkItem } from "@/lib/work-queue/work-queue-service";
 import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-queue/compare-queue-semantics";
+import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -94,6 +95,7 @@ export async function GET(request: NextRequest) {
       completedCompareItems,
       sessionsWithInquiry,
       followThroughData,
+      opsFunnelData,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -203,6 +205,32 @@ export async function GET(request: NextRequest) {
           inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
         };
       }).catch(() => ({ quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 })),
+      // Ops funnel: all user quotes → purchased → orders confirmed → receiving completed
+      db.quote.findMany({
+        where: quoteOwnerWhere,
+        select: { id: true, status: true },
+      }).then(async (allQuotes: { id: string; status: string }[]) => {
+        const purchased = allQuotes.filter((q) => q.status === "PURCHASED");
+        if (purchased.length === 0) return { totalQuotes: allQuotes.length, purchasedQuotes: 0, confirmedOrders: 0, completedReceiving: 0 };
+        const purchasedIds = purchased.map((q) => q.id);
+        const ords = await db.order.findMany({
+          where: { quoteId: { in: purchasedIds } },
+          select: { id: true, status: true },
+        });
+        const confirmed = ords.filter((o: { status: string }) => ["CONFIRMED", "SHIPPING", "DELIVERED"].includes(o.status));
+        if (confirmed.length === 0) return { totalQuotes: allQuotes.length, purchasedQuotes: purchased.length, confirmedOrders: 0, completedReceiving: 0 };
+        const oIds = confirmed.map((o: { id: string }) => o.id);
+        const restocks = await db.inventoryRestock.findMany({
+          where: { orderId: { in: oIds } },
+          select: { receivingStatus: true },
+        });
+        return {
+          totalQuotes: allQuotes.length,
+          purchasedQuotes: purchased.length,
+          confirmedOrders: confirmed.length,
+          completedReceiving: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+        };
+      }).catch(() => ({ totalQuotes: 0, purchasedQuotes: 0, confirmedOrders: 0, completedReceiving: 0 })),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -506,6 +534,13 @@ export async function GET(request: NextRequest) {
         sessionsWithInquiry as { id: string }[],
         followThroughData as { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
       ),
+      opsFunnel: (() => {
+        const data = opsFunnelData as { totalQuotes: number; purchasedQuotes: number; confirmedOrders: number; completedReceiving: number };
+        return {
+          ...data,
+          stallPoint: determineOpsStallPoint(data),
+        };
+      })(),
     });
 
     // Non-blocking: sync compare sessions into work queue

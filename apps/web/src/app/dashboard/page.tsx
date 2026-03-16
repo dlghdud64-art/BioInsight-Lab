@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
+import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -86,6 +87,13 @@ export default function DashboardPage() {
       purchaseToReceivingCount: rawStats.compareStats?.purchaseToReceivingCount ?? 0,
       receivingToInventoryCount: rawStats.compareStats?.receivingToInventoryCount ?? 0,
       handoffStallPoint: (rawStats.compareStats?.handoffStallPoint ?? "none") as string,
+    },
+    opsFunnel: {
+      totalQuotes: rawStats.opsFunnel?.totalQuotes ?? 0,
+      purchasedQuotes: rawStats.opsFunnel?.purchasedQuotes ?? 0,
+      confirmedOrders: rawStats.opsFunnel?.confirmedOrders ?? 0,
+      completedReceiving: rawStats.opsFunnel?.completedReceiving ?? 0,
+      stallPoint: (rawStats.opsFunnel?.stallPoint ?? "none") as string,
     },
   };
 
@@ -534,6 +542,19 @@ export default function DashboardPage() {
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getQuoteInsight()}</p>
+                  {stats.opsFunnel.totalQuotes > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {"견적 "}{stats.opsFunnel.totalQuotes}
+                      {" → 발주 "}{stats.opsFunnel.purchasedQuotes}
+                      {" → 입고 "}{stats.opsFunnel.confirmedOrders}
+                      {" → 완료 "}{stats.opsFunnel.completedReceiving}
+                      {stats.opsFunnel.stallPoint !== "none" && (
+                        <span className="text-orange-500 ml-1">
+                          ({OPS_STALL_LABELS[stats.opsFunnel.stallPoint as keyof typeof OPS_STALL_LABELS]})
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </Link>

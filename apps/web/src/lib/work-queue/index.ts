@@ -39,3 +39,24 @@ export type {
   ScoredItem,
   ScoreResult,
 } from "./scoring";
+
+export {
+  OPS_SUBSTATUS_DEFS,
+  OPS_HANDOFF_RULES,
+  OPS_FUNNEL_STAGES,
+  OPS_STALL_LABELS,
+  OPS_ACTIVITY_LABELS,
+  getOpsStage,
+  isOpsTerminal,
+  isOpsSubstatus,
+  isOpsSlaBreach,
+  isOpsStale,
+  determineOpsStallPoint,
+} from "./ops-queue-semantics";
+
+export type {
+  OpsStage,
+  OpsSubstatusDefinition,
+  OpsHandoffRule,
+  OpsStallPoint,
+} from "./ops-queue-semantics";

@@ -8,6 +8,7 @@
  */
 
 import { COMPARE_SUBSTATUS_DEFS } from "./compare-queue-semantics";
+import { OPS_SUBSTATUS_DEFS } from "./ops-queue-semantics";
 
 // ── Types ──
 
@@ -168,6 +169,18 @@ export function computeUrgencyScore(item: ScoredItem): number {
         score += compareDef.scoringBoostOnBreach;
       } else if (ageDays >= 3) {
         score += 10;
+      }
+    }
+  }
+
+  // 운영 SLA 에스컬레이션
+  if (item.substatus) {
+    const opsDef = OPS_SUBSTATUS_DEFS[item.substatus];
+    if (opsDef && !opsDef.isTerminal) {
+      const createdTime = new Date(item.createdAt).getTime();
+      const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+      if (opsDef.slaWarningDays > 0 && ageDays >= opsDef.slaWarningDays) {
+        score += opsDef.scoringBoostOnBreach;
       }
     }
   }
@@ -338,7 +351,22 @@ export function getUrgencyReason(item: ScoredItem): string | null {
     }
   }
 
-  // 9. 승인 대기 지연
+  // 9. 운영 SLA 에스컬레이션 메시지
+  if (item.substatus) {
+    const opsDef = OPS_SUBSTATUS_DEFS[item.substatus];
+    if (opsDef && !opsDef.isTerminal) {
+      const createdTime = new Date(item.createdAt).getTime();
+      const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+      if (opsDef.staleDays > 0 && ageDays >= opsDef.staleDays) {
+        return `${opsDef.label} ${ageDays}일 경과 — 장기 미처리`;
+      }
+      if (opsDef.slaWarningDays > 0 && ageDays >= opsDef.slaWarningDays) {
+        return opsDef.escalationMeaning;
+      }
+    }
+  }
+
+  // 10. 승인 대기 지연
   if (item.approvalStatus === "PENDING") {
     const createdTime = new Date(item.createdAt).getTime();
     const pendingDays = Math.floor((now - createdTime) / MS_PER_DAY);

@@ -21,6 +21,7 @@ import {
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
 import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, computeInquiryAgingDays, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
+import { OPS_ACTIVITY_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -51,19 +52,7 @@ const CTA_MAP: Record<string, { label: string; variant: "default" | "destructive
 // ── Humanized Activity 변환 ──
 
 const ACTIVITY_LABEL: Record<string, string> = {
-  quote_draft_generated: "견적 초안이 생성되었습니다",
-  vendor_email_generated: "벤더 이메일 초안이 준비되었습니다",
-  followup_draft_generated: "Follow-up 이메일 초안이 생성되었습니다",
-  status_change_proposed: "상태 변경이 제안되었습니다",
-  restock_suggested: "재발주가 제안되었습니다",
-  expiry_alert_created: "유효기한 임박 알림",
-  vendor_response_parsed: "벤더 회신이 파싱되었습니다",
-  email_sent: "이메일이 발송되었습니다",
-  followup_sent: "Follow-up이 발송되었습니다, 회신 대기 중",
-  restock_ordered: "재발주가 접수되었습니다",
-  execution_failed: "실행 중 오류가 발생했습니다",
-  budget_insufficient: "예산이 부족합니다",
-  permission_denied: "권한이 부족합니다",
+  ...OPS_ACTIVITY_LABELS,
   ...COMPARE_ACTIVITY_LABELS,
 };
 
