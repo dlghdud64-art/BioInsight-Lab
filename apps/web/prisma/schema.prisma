@@ -1153,9 +1153,34 @@ model CompareSession {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  inquiryDrafts  CompareInquiryDraft[]
+
   @@index([userId])
   @@index([organizationId])
   @@index([createdAt])
+}
+
+model CompareInquiryDraft {
+  id               String   @id @default(cuid())
+  compareSessionId String
+  vendorName       String
+  vendorEmail      String?
+  productName      String
+  subject          String
+  body             String   @db.Text
+  inquiryFields    Json     // string[]
+  status           String   @default("GENERATED") // GENERATED | COPIED | SENT
+  diffIndex        Int      @default(0)
+  userId           String?
+  organizationId   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  compareSession   CompareSession @relation(fields: [compareSessionId], references: [id], onDelete: Cascade)
+
+  @@index([compareSessionId])
+  @@index([userId])
+  @@index([status])
 }
 
 // 감사 로그 (Enterprise - 액티비티 로그 확장)

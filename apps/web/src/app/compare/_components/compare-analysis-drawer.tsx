@@ -1,14 +1,16 @@
 "use client";
 
 /**
- * Compare Analysis Drawer — V1 최소 구현
+ * Compare Analysis Drawer — V1-beta
  *
- * 비교 페이지의 Sheet drawer로 structured diff + AI insight + 공급사 문의 초안을 표시.
- * Dead button 없음: 모든 CTA가 실제 API를 호출.
+ * structured diff + AI insight + 공급사 문의 초안 + 견적 초안 생성.
+ * 모든 CTA가 실제 API를 호출. Dead button 없음.
+ * Inquiry draft는 DB에 영속화됨.
  */
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -21,10 +23,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertTriangle, CheckCircle, Info, Mail, Sparkles, Copy, Check } from "lucide-react";
+import {
+  Loader2, AlertTriangle, CheckCircle, Info, Mail, Sparkles,
+  Copy, Check, ShoppingCart, HelpCircle, FileText,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CompareInsight } from "@/lib/compare-workspace/compare-insight-generator";
-import type { VendorInquiryDraftResult } from "@/lib/compare-workspace/vendor-inquiry-draft";
 
 // ── Types ──
 
@@ -70,6 +74,17 @@ interface ProductInfo {
   catalogNumber?: string;
 }
 
+interface PersistedDraft {
+  id: string;
+  vendorName: string;
+  productName: string;
+  subject: string;
+  body: string;
+  inquiryFields: string[] | any;
+  status: string;
+  createdAt: string;
+}
+
 interface CompareAnalysisDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -77,7 +92,7 @@ interface CompareAnalysisDrawerProps {
   organizationId?: string;
 }
 
-// ── Significance badge ──
+// ── Badges ──
 
 function SignificanceBadge({ significance }: { significance: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -89,6 +104,19 @@ function SignificanceBadge({ significance }: { significance: string }) {
   };
   const c = config[significance] || config.INFO;
   return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
+}
+
+function ActionabilityHint({ actionability }: { actionability: string }) {
+  const hints: Record<string, string> = {
+    REQUIRES_DECISION: "사용자 판단 필요",
+    REQUIRES_REVIEW: "전문가 검토 권장",
+    REQUIRES_INQUIRY: "공급사 확인 필요",
+    AUTO_RESOLVABLE: "자동 해석 가능",
+    INFORMATIONAL: "",
+  };
+  const hint = hints[actionability];
+  if (!hint) return null;
+  return <span className="text-xs text-slate-400 italic">{hint}</span>;
 }
 
 function VerdictBadge({ verdict }: { verdict: string }) {
@@ -109,6 +137,16 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   );
 }
 
+function DraftStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { label: string; className: string }> = {
+    GENERATED: { label: "생성됨", className: "bg-blue-50 text-blue-700" },
+    COPIED: { label: "복사됨", className: "bg-green-50 text-green-700" },
+    SENT: { label: "발송됨", className: "bg-purple-50 text-purple-700" },
+  };
+  const c = config[status] || config.GENERATED;
+  return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
+}
+
 // ── Main Component ──
 
 export function CompareAnalysisDrawer({
@@ -118,10 +156,11 @@ export function CompareAnalysisDrawer({
   organizationId,
 }: CompareAnalysisDrawerProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [sessionData, setSessionData] = useState<CompareSessionData | null>(null);
   const [products, setProducts] = useState<ProductInfo[]>([]);
   const [insight, setInsight] = useState<CompareInsight | null>(null);
-  const [inquiryDraft, setInquiryDraft] = useState<VendorInquiryDraftResult | null>(null);
+  const [persistedDraft, setPersistedDraft] = useState<PersistedDraft | null>(null);
   const [vendorName, setVendorName] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -143,7 +182,7 @@ export function CompareAnalysisDrawer({
       setSessionData(data.session);
       setProducts(data.products);
       setInsight(null);
-      setInquiryDraft(null);
+      setPersistedDraft(null);
     },
     onError: (err: Error) => {
       toast({ title: "비교 분석 실패", description: err.message, variant: "destructive" });
@@ -175,7 +214,7 @@ export function CompareAnalysisDrawer({
     },
   });
 
-  // 공급사 문의 초안
+  // 공급사 문의 초안 (영속화)
   const inquiryMutation = useMutation({
     mutationFn: async () => {
       if (!sessionData) throw new Error("세션 없음");
@@ -194,11 +233,36 @@ export function CompareAnalysisDrawer({
       return res.json();
     },
     onSuccess: (data) => {
-      setInquiryDraft(data.draft);
-      toast({ title: "문의 초안 생성 완료" });
+      setPersistedDraft(data.draft);
+      toast({ title: "문의 초안 생성 및 저장 완료" });
     },
     onError: (err: Error) => {
       toast({ title: "초안 생성 실패", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // 견적 초안 생성 (compare → quote)
+  const quoteDraftMutation = useMutation({
+    mutationFn: async () => {
+      if (!sessionData) throw new Error("세션 없음");
+      const res = await fetch(`/api/compare-sessions/${sessionData.id}/quote-draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "견적 생성 실패");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({ title: "견적 초안 생성 완료", description: "견적 상세 페이지로 이동합니다." });
+      onOpenChange(false);
+      router.push(`/quotes/${data.quote.id}`);
+    },
+    onError: (err: Error) => {
+      toast({ title: "견적 생성 실패", description: err.message, variant: "destructive" });
     },
   });
 
@@ -209,15 +273,32 @@ export function CompareAnalysisDrawer({
     }
   };
 
-  const handleCopyDraft = () => {
-    if (!inquiryDraft) return;
-    navigator.clipboard.writeText(`제목: ${inquiryDraft.subject}\n\n${inquiryDraft.body}`);
+  const handleCopyDraft = async () => {
+    if (!persistedDraft) return;
+    await navigator.clipboard.writeText(`제목: ${persistedDraft.subject}\n\n${persistedDraft.body}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+
+    // 상태를 COPIED로 업데이트
+    if (sessionData) {
+      fetch(`/api/compare-sessions/${sessionData.id}/inquiry-draft`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftId: persistedDraft.id, status: "COPIED" }),
+      }).then(() => {
+        setPersistedDraft((prev) => prev ? { ...prev, status: "COPIED" } : null);
+      }).catch(() => {});
+    }
+
     toast({ title: "클립보드에 복사됨" });
   };
 
   const diffResult = sessionData?.diffResult?.[0];
+
+  // 데이터 출처 부족 항목 카운트
+  const missingDataItems = diffResult?.items.filter(
+    (i) => i.diffType === "SOURCE_ONLY" || i.diffType === "TARGET_ONLY"
+  ) ?? [];
 
   return (
     <Sheet open={open} onOpenChange={handleOpen}>
@@ -257,6 +338,16 @@ export function CompareAnalysisDrawer({
                     <Badge className="bg-yellow-100 text-yellow-800">보통 {diffResult.summary.mediumCount}</Badge>
                   )}
                 </div>
+                {/* 데이터 불완전성 경고 */}
+                {missingDataItems.length > 0 && (
+                  <div className="flex items-start gap-2 mt-3 p-2 bg-amber-50 rounded border border-amber-200">
+                    <HelpCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-800">
+                      {missingDataItems.length}건의 항목에 한쪽 데이터가 누락되어 있습니다.
+                      공급사에 추가 정보를 요청하면 비교 정확도가 높아집니다.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -274,18 +365,36 @@ export function CompareAnalysisDrawer({
                   .map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start justify-between p-3 border rounded-lg bg-slate-50"
+                      className={`p-3 border rounded-lg ${
+                        item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY"
+                          ? "bg-amber-50 border-amber-200"
+                          : "bg-slate-50"
+                      }`}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">{item.fieldLabel}</span>
-                          <SignificanceBadge significance={item.significance} />
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-sm font-medium">{item.fieldLabel}</span>
+                        <SignificanceBadge significance={item.significance} />
+                        {(item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY") && (
+                          <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700">
+                            불완전
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        <div>
+                          <span className="text-slate-400">A:</span>{" "}
+                          {item.sourceValue != null ? formatDisplayValue(item.sourceValue) : (
+                            <span className="text-amber-600 italic">(정보 없음)</span>
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground space-y-0.5">
-                          <div>A: {formatDisplayValue(item.sourceValue)}</div>
-                          <div>B: {formatDisplayValue(item.targetValue)}</div>
+                        <div>
+                          <span className="text-slate-400">B:</span>{" "}
+                          {item.targetValue != null ? formatDisplayValue(item.targetValue) : (
+                            <span className="text-amber-600 italic">(정보 없음)</span>
+                          )}
                         </div>
                       </div>
+                      <ActionabilityHint actionability={item.actionability} />
                     </div>
                   ))}
                 {diffResult.items.filter((i) => i.diffType !== "IDENTICAL").length === 0 && (
@@ -293,6 +402,11 @@ export function CompareAnalysisDrawer({
                     차이가 없습니다. 두 제품이 동일합니다.
                   </p>
                 )}
+                {/* 출처 표시 */}
+                <div className="text-xs text-slate-400 pt-2 border-t">
+                  비교 기준: 제품 DB 등록 정보 (카탈로그, 공급사 데이터).
+                  문서 파싱 기반 비교는 V2에서 지원됩니다.
+                </div>
               </TabsContent>
 
               {/* AI 분석 탭 */}
@@ -318,6 +432,15 @@ export function CompareAnalysisDrawer({
                 )}
                 {insight && (
                   <>
+                    {/* AI 신뢰도 고지 */}
+                    <div className="flex items-start gap-2 p-2 bg-slate-100 rounded text-xs text-slate-600">
+                      <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>
+                        AI 분석은 제품 DB 데이터 기반 참고 자료입니다.
+                        최종 판단은 담당자가 직접 확인하세요.
+                      </span>
+                    </div>
+
                     {/* 핵심 변경 사항 */}
                     <Card>
                       <CardHeader className="pb-2">
@@ -334,6 +457,31 @@ export function CompareAnalysisDrawer({
                         </ul>
                       </CardContent>
                     </Card>
+
+                    {/* 불확실 필드 */}
+                    {insight.uncertainFields.length > 0 && (
+                      <Card className="border-amber-200 bg-amber-50/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-1.5">
+                            <HelpCircle className="h-4 w-4 text-amber-600" />
+                            불확실/미확인 항목
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {insight.uncertainFields.map((field, i) => (
+                              <div key={i} className="text-sm">
+                                <span className="font-medium">{field.field}</span>
+                                <p className="text-xs text-muted-foreground">{field.reason}</p>
+                                <p className="text-xs text-amber-700 mt-0.5">
+                                  해결: {field.suggestedResolution}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
                     {/* 검토 포인트 */}
                     {insight.reviewPoints.length > 0 && (
@@ -395,6 +543,41 @@ export function CompareAnalysisDrawer({
 
               {/* 후속 조치 탭 */}
               <TabsContent value="action" className="space-y-3 mt-3">
+                {/* 견적 초안 생성 CTA */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4" />
+                      비교 기반 견적 초안
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      비교 대상 {products.length}개 제품으로 견적 초안을 생성합니다.
+                      비교 판정 결과가 견적에 연결됩니다.
+                    </p>
+                    <Button
+                      onClick={() => quoteDraftMutation.mutate()}
+                      disabled={quoteDraftMutation.isPending}
+                      className="w-full"
+                      size="sm"
+                    >
+                      {quoteDraftMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                          견적 생성 중...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-3.5 w-3.5 mr-2" />
+                          견적 초안 생성
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* 공급사 문의 초안 */}
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -433,11 +616,15 @@ export function CompareAnalysisDrawer({
                   </CardContent>
                 </Card>
 
-                {inquiryDraft && (
+                {/* 영속화된 초안 표시 */}
+                {persistedDraft && (
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm">생성된 초안</CardTitle>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          생성된 초안
+                          <DraftStatusBadge status={persistedDraft.status} />
+                        </CardTitle>
                         <Button variant="ghost" size="sm" onClick={handleCopyDraft}>
                           {copied ? (
                             <Check className="h-3.5 w-3.5 mr-1" />
@@ -452,21 +639,27 @@ export function CompareAnalysisDrawer({
                       <div className="space-y-2">
                         <div>
                           <span className="text-xs text-muted-foreground">제목</span>
-                          <p className="text-sm font-medium">{inquiryDraft.subject}</p>
+                          <p className="text-sm font-medium">{persistedDraft.subject}</p>
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground">본문</span>
                           <pre className="text-xs whitespace-pre-wrap bg-slate-50 p-3 rounded border mt-1 max-h-60 overflow-y-auto">
-                            {inquiryDraft.body}
+                            {persistedDraft.body}
                           </pre>
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          {inquiryDraft.inquiryFields.map((field, i) => (
+                          {(Array.isArray(persistedDraft.inquiryFields)
+                            ? persistedDraft.inquiryFields
+                            : []
+                          ).map((field: string, i: number) => (
                             <Badge key={i} variant="outline" className="text-xs">
                               {field}
                             </Badge>
                           ))}
                         </div>
+                        <p className="text-xs text-slate-400">
+                          이 초안은 비교 세션에 연결되어 저장되었습니다.
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
