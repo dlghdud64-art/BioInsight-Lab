@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2, Download, Settings } from "lucide-react";
+import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2, Download, Settings, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { CompareAnalysisDrawer } from "./_components/compare-analysis-drawer";
 
 export default function ComparePage() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
@@ -37,6 +38,7 @@ export default function ComparePage() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showFieldSettings, setShowFieldSettings] = useState(false);
+  const [showAnalysisDrawer, setShowAnalysisDrawer] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([
     "name", "brand", "category", "price", "leadTime", "stockStatus", "minOrderQty", "vendorCount"
   ]);
@@ -660,6 +662,16 @@ export default function ComparePage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            {products.length >= 2 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowAnalysisDrawer(true)}
+                className="gap-2"
+              >
+                <GitCompareArrows className="h-4 w-4" />
+                구조적 비교 분석
+              </Button>
+            )}
             <Link href="/compare/quote">
               <Button>
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -928,6 +940,12 @@ export default function ComparePage() {
         </Card>
       </div>
     </div>
+
+    <CompareAnalysisDrawer
+      open={showAnalysisDrawer}
+      onOpenChange={setShowAnalysisDrawer}
+      productIds={productIds}
+    />
     </MainLayout>
   );
 }

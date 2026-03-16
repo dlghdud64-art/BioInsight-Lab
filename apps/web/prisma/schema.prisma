@@ -1142,6 +1142,22 @@ model ActivityLog {
   @@index([taskType])
 }
 
+// ── Compare & Decision Workspace ──
+model CompareSession {
+  id             String   @id @default(cuid())
+  productIds     Json     // string[] — 비교 대상 제품 ID
+  diffResult     Json?    // DiffResult 구조 (structured diff)
+  aiInsight      Json?    // AI 해석 결과
+  userId         String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
 // 감사 로그 (Enterprise - 액티비티 로그 확장)
 enum AuditEventType {
   USER_LOGIN // 사용자 로그인
