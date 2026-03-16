@@ -391,6 +391,12 @@ function mapSubstatusToActivityType(substatus: string): string {
     execution_failed: "AI_TASK_FAILED",
     budget_insufficient: "AI_TASK_FAILED",
     permission_denied: "AI_TASK_FAILED",
+    // ═══ 비교 도메인 ═══
+    compare_decision_pending: "AI_TASK_CREATED",
+    compare_inquiry_followup: "COMPARE_INQUIRY_DRAFT_STATUS_CHANGED",
+    compare_quote_in_progress: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+    compare_decided: "AI_TASK_COMPLETED",
+    compare_reopened: "COMPARE_SESSION_REOPENED",
   };
 
   return map[substatus] || "AI_TASK_CREATED";

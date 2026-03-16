@@ -455,19 +455,22 @@ export async function GET(request: NextRequest) {
 
 /**
  * Non-blocking: ensure undecided compare sessions have work queue items.
- * Lightweight — only creates missing items, no heavy processing.
+ * Lightweight create-only pass — full reconciliation handled by POST /api/work-queue/compare-sync.
+ * Includes duplicate guard: checks both active AND completed items before creating.
  */
 async function syncCompareToWorkQueue(userId: string) {
   const sessions = await db.compareSession.findMany({
     where: { userId, OR: [{ decisionState: null }, { decisionState: "UNDECIDED" }] },
     select: { id: true, productIds: true, createdAt: true, diffResult: true },
-    take: 20,
+    take: 50,
   });
   if (sessions.length === 0) return;
 
   const sessionIds = sessions.map((s: { id: string }) => s.id);
+
+  // Check ALL items (including completed) to prevent duplicates
   const existing = await db.aiActionItem.findMany({
-    where: { relatedEntityType: "COMPARE_SESSION", relatedEntityId: { in: sessionIds }, taskStatus: { not: "COMPLETED" } },
+    where: { relatedEntityType: "COMPARE_SESSION", relatedEntityId: { in: sessionIds } },
     select: { relatedEntityId: true },
   });
   const existingSet = new Set(existing.map((e: { relatedEntityId: string | null }) => e.relatedEntityId));
@@ -482,10 +485,10 @@ async function syncCompareToWorkQueue(userId: string) {
   for (const cs of sessions) {
     if (existingSet.has(cs.id)) continue;
     const pids = Array.isArray(cs.productIds) ? (cs.productIds as string[]) : [];
-    const names = pids.map((id) => nameMap.get(id) || "제품").slice(0, 2);
+    const names = pids.map((id: string) => nameMap.get(id) || "제품").slice(0, 2);
     const title = names.length >= 2 ? `${names[0]} vs ${names[1]} 비교 판정` : "비교 세션 판정 대기";
-    const diffResult = cs.diffResult as any;
-    const verdict = Array.isArray(diffResult) && diffResult[0]?.summary?.overallVerdict || null;
+    const diffResult = cs.diffResult as Record<string, unknown>[] | null;
+    const verdict = Array.isArray(diffResult) && (diffResult[0] as any)?.summary?.overallVerdict || null;
 
     await createWorkItem({
       type: "COMPARE_DECISION",

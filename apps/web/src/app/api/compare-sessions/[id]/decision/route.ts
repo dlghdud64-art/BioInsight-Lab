@@ -1,11 +1,16 @@
 /**
  * PATCH /api/compare-sessions/[id]/decision — 비교 세션 판정 기록
+ *
+ * 판정 저장 + 큐 아이템 상태 동기화 (awaited).
+ * 재개(reopen) 시 큐 아이템을 재활성화합니다.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
+import { transitionWorkItem, createWorkItem } from "@/lib/work-queue/work-queue-service";
+import { determineCompareSubstatus } from "@/lib/work-queue/compare-queue-semantics";
 
 const VALID_DECISION_STATES = ["UNDECIDED", "APPROVED", "HELD", "REJECTED"] as const;
 const TERMINAL_STATES = ["APPROVED", "HELD", "REJECTED"];
@@ -38,7 +43,12 @@ export async function PATCH(
 
     const existing = await db.compareSession.findUnique({
       where: { id },
-      select: { decisionState: true, organizationId: true },
+      select: {
+        decisionState: true,
+        organizationId: true,
+        productIds: true,
+        inquiryDrafts: { select: { status: true } },
+      },
     });
 
     if (!existing) {
@@ -63,26 +73,90 @@ export async function PATCH(
       TERMINAL_STATES.includes(existing.decisionState ?? "") &&
       decisionState === "UNDECIDED";
 
-    // Complete associated work queue item when decision is terminal
+    // ── Work Queue 상태 동기화 (awaited) ──
+
     if (TERMINAL_STATES.includes(decisionState)) {
-      db.aiActionItem.updateMany({
+      // 터미널 판정 → 큐 아이템 완료
+      const activeItem = await db.aiActionItem.findFirst({
         where: {
           relatedEntityType: "COMPARE_SESSION",
           relatedEntityId: id,
           taskStatus: { not: "COMPLETED" },
         },
-        data: {
-          taskStatus: "COMPLETED",
+        select: { id: true },
+      });
+
+      if (activeItem) {
+        await transitionWorkItem({
+          itemId: activeItem.id,
           substatus: "compare_decided",
-          completedAt: new Date(),
+          userId,
+        });
+      }
+    } else if (isReopen) {
+      // 재개 → 완료된 큐 아이템 재활성화 또는 새 생성
+      const completedItem = await db.aiActionItem.findFirst({
+        where: {
+          relatedEntityType: "COMPARE_SESSION",
+          relatedEntityId: id,
+          taskStatus: "COMPLETED",
         },
-      }).catch(() => {});
+        select: { id: true },
+        orderBy: { updatedAt: "desc" },
+      });
+
+      // 연결된 견적/문의 상태에 따라 적절한 substatus 결정
+      const linkedQuotes = await db.quote.findMany({
+        where: { comparisonId: id },
+        select: { status: true },
+      });
+
+      const targetSubstatus = determineCompareSubstatus({
+        inquiryDrafts: existing.inquiryDrafts,
+        linkedQuoteStatuses: linkedQuotes.map((q: { status: string }) => q.status),
+        isReopened: true,
+      });
+
+      if (completedItem) {
+        await transitionWorkItem({
+          itemId: completedItem.id,
+          substatus: targetSubstatus,
+          userId,
+        });
+      } else {
+        // 큐 아이템이 없으면 새로 생성
+        const pids = Array.isArray(existing.productIds) ? (existing.productIds as string[]) : [];
+        const products = await db.product.findMany({
+          where: { id: { in: pids } },
+          select: { id: true, name: true },
+        });
+        const nameMap = new Map(products.map((p: { id: string; name: string }) => [p.id, p.name]));
+        const names = pids.map((pid: string) => nameMap.get(pid) || "제품").slice(0, 2);
+        const title = names.length >= 2
+          ? `${names[0]} vs ${names[1]} 비교 판정`
+          : "비교 세션 판정 대기";
+
+        await createWorkItem({
+          type: "COMPARE_DECISION",
+          userId,
+          title,
+          summary: "비교 판정이 재개되었습니다 — 재검토가 필요합니다",
+          payload: { productIds: pids, productNames: names, isReopened: true },
+          relatedEntityType: "COMPARE_SESSION",
+          relatedEntityId: id,
+          priority: "MEDIUM",
+        });
+      }
     }
+
+    // ── Activity Log ──
 
     await createActivityLog({
       activityType: isReopen
         ? "COMPARE_SESSION_REOPENED"
-        : "QUOTE_STATUS_CHANGED",
+        : TERMINAL_STATES.includes(decisionState)
+          ? "AI_TASK_COMPLETED"
+          : "QUOTE_STATUS_CHANGED",
       entityType: "COMPARE_SESSION",
       entityId: id,
       beforeStatus: existing.decisionState ?? null,

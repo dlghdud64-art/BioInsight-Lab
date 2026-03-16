@@ -38,7 +38,13 @@ jest.mock("@/lib/db", () => ({
     quote: { create: jest.fn(), findMany: jest.fn() },
     product: { findMany: jest.fn() },
     activityLog: { findFirst: jest.fn(), create: jest.fn() },
+    aiActionItem: { findFirst: jest.fn(), findMany: jest.fn(), updateMany: jest.fn() },
   },
+}));
+
+jest.mock("@/lib/work-queue/work-queue-service", () => ({
+  transitionWorkItem: jest.fn().mockResolvedValue(undefined),
+  createWorkItem: jest.fn().mockResolvedValue("new-queue-item-id"),
 }));
 
 jest.mock("@/lib/activity-log", () => ({ createActivityLog: jest.fn() }));
@@ -58,6 +64,7 @@ const { getProductsByIds } = require("@/lib/api/products");
 const { computeMultiProductDiff } = require("@/lib/compare-workspace/compare-engine");
 const { generateVendorInquiryDraft } = require("@/lib/compare-workspace/vendor-inquiry-draft");
 const { NextRequest } = require("next/server");
+const { transitionWorkItem, createWorkItem: createQueueItem } = require("@/lib/work-queue/work-queue-service");
 
 // Route handlers
 const { GET: listSessions, POST: createSession } = require("@/app/api/compare-sessions/route");
@@ -229,7 +236,8 @@ describe("POST /api/compare-sessions/[id]/quote-draft", () => {
 
 describe("PATCH /api/compare-sessions/[id]/decision", () => {
   it("should set decision state", async () => {
-    db.compareSession.findUnique.mockResolvedValue({ decisionState: null, organizationId: "org-1" });
+    db.compareSession.findUnique.mockResolvedValue({ decisionState: null, organizationId: "org-1", productIds: ["prod-a"], inquiryDrafts: [] });
+    db.aiActionItem.findFirst.mockResolvedValue(null);
     db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "APPROVED", decidedBy: "user-1", decidedAt: new Date() });
 
     const res = await patchDecision(
@@ -241,12 +249,15 @@ describe("PATCH /api/compare-sessions/[id]/decision", () => {
     expect(res.status).toBe(200);
     expect(data.session.decisionState).toBe("APPROVED");
     expect(createActivityLog).toHaveBeenCalledWith(expect.objectContaining({
-      activityType: "QUOTE_STATUS_CHANGED", entityType: "COMPARE_SESSION", afterStatus: "APPROVED",
+      activityType: "AI_TASK_COMPLETED", entityType: "COMPARE_SESSION", afterStatus: "APPROVED",
     }));
   });
 
   it("should log COMPARE_SESSION_REOPENED when reverting to UNDECIDED", async () => {
-    db.compareSession.findUnique.mockResolvedValue({ decisionState: "APPROVED", organizationId: "org-1" });
+    db.compareSession.findUnique.mockResolvedValue({ decisionState: "APPROVED", organizationId: "org-1", productIds: ["prod-a"], inquiryDrafts: [] });
+    db.aiActionItem.findFirst.mockResolvedValue(null);
+    db.quote.findMany.mockResolvedValue([]);
+    db.product.findMany.mockResolvedValue([{ id: "prod-a", name: "Product A" }]);
     db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "UNDECIDED" });
 
     const res = await patchDecision(
@@ -317,5 +328,131 @@ describe("GET /api/compare-sessions (list)", () => {
     expect(res.status).toBe(200);
     expect(data.sessions).toEqual([]);
     expect(data.total).toBe(0);
+  });
+});
+
+// ── Decision → Work Queue Integration ──
+
+describe("PATCH decision — work queue integration", () => {
+  it("should call transitionWorkItem with compare_decided on terminal decision", async () => {
+    db.compareSession.findUnique.mockResolvedValue({
+      decisionState: null,
+      organizationId: "org-1",
+      productIds: ["prod-a"],
+      inquiryDrafts: [],
+    });
+    db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "APPROVED" });
+    db.aiActionItem.findFirst.mockResolvedValue({ id: "queue-item-1" });
+
+    const res = await patchDecision(
+      makeRequest("/api/compare-sessions/session-1/decision", { method: "PATCH", body: { decisionState: "APPROVED" } }),
+      makeParams("session-1")
+    );
+
+    expect(res.status).toBe(200);
+    expect(transitionWorkItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemId: "queue-item-1",
+        substatus: "compare_decided",
+        userId: "mock-user",
+      })
+    );
+  });
+
+  it("should not call transitionWorkItem when no active queue item on terminal decision", async () => {
+    db.compareSession.findUnique.mockResolvedValue({
+      decisionState: null,
+      organizationId: "org-1",
+      productIds: ["prod-a"],
+      inquiryDrafts: [],
+    });
+    db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "HELD" });
+    db.aiActionItem.findFirst.mockResolvedValue(null);
+
+    const res = await patchDecision(
+      makeRequest("/api/compare-sessions/session-1/decision", { method: "PATCH", body: { decisionState: "HELD" } }),
+      makeParams("session-1")
+    );
+
+    expect(res.status).toBe(200);
+    expect(transitionWorkItem).not.toHaveBeenCalled();
+  });
+
+  it("should reopen completed queue item when reverting to UNDECIDED", async () => {
+    db.compareSession.findUnique.mockResolvedValue({
+      decisionState: "APPROVED",
+      organizationId: "org-1",
+      productIds: ["prod-a"],
+      inquiryDrafts: [],
+    });
+    db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "UNDECIDED" });
+    db.aiActionItem.findFirst.mockResolvedValue({ id: "completed-item-1" });
+    db.quote.findMany.mockResolvedValue([]);
+
+    const res = await patchDecision(
+      makeRequest("/api/compare-sessions/session-1/decision", { method: "PATCH", body: { decisionState: "UNDECIDED" } }),
+      makeParams("session-1")
+    );
+
+    expect(res.status).toBe(200);
+    expect(transitionWorkItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemId: "completed-item-1",
+        substatus: "compare_reopened",
+      })
+    );
+  });
+
+  it("should create new queue item on reopen when no completed item exists", async () => {
+    db.compareSession.findUnique.mockResolvedValue({
+      decisionState: "REJECTED",
+      organizationId: "org-1",
+      productIds: ["prod-a", "prod-b"],
+      inquiryDrafts: [],
+    });
+    db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "UNDECIDED" });
+    db.aiActionItem.findFirst.mockResolvedValue(null);
+    db.quote.findMany.mockResolvedValue([]);
+    db.product.findMany.mockResolvedValue([
+      { id: "prod-a", name: "Product A" },
+      { id: "prod-b", name: "Product B" },
+    ]);
+
+    const res = await patchDecision(
+      makeRequest("/api/compare-sessions/session-1/decision", { method: "PATCH", body: { decisionState: "UNDECIDED" } }),
+      makeParams("session-1")
+    );
+
+    expect(res.status).toBe(200);
+    expect(createQueueItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "COMPARE_DECISION",
+        relatedEntityId: "session-1",
+        relatedEntityType: "COMPARE_SESSION",
+      })
+    );
+  });
+
+  it("should use AI_TASK_COMPLETED activity type for terminal decisions (not QUOTE_STATUS_CHANGED)", async () => {
+    db.compareSession.findUnique.mockResolvedValue({
+      decisionState: null,
+      organizationId: "org-1",
+      productIds: ["prod-a"],
+      inquiryDrafts: [],
+    });
+    db.compareSession.update.mockResolvedValue({ ...mockCompareSession, decisionState: "APPROVED" });
+    db.aiActionItem.findFirst.mockResolvedValue(null);
+
+    await patchDecision(
+      makeRequest("/api/compare-sessions/session-1/decision", { method: "PATCH", body: { decisionState: "APPROVED" } }),
+      makeParams("session-1")
+    );
+
+    expect(createActivityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activityType: "AI_TASK_COMPLETED",
+        afterStatus: "APPROVED",
+      })
+    );
   });
 });

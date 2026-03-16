@@ -67,6 +67,7 @@ const ACTIVITY_LABEL: Record<string, string> = {
   compare_inquiry_followup: "비교 문의 후속 조치가 필요합니다",
   compare_quote_in_progress: "비교 기반 견적이 진행 중입니다",
   compare_decided: "비교 판정이 완료되었습니다",
+  compare_reopened: "비교 판정이 재개되었습니다 — 재검토가 필요합니다",
 };
 
 // ── Deep-Link 경로 매핑 ──

@@ -62,6 +62,7 @@ const IMPACT_BASE_SCORE: Record<string, number> = {
   compare_inquiry_followup: 50,
   compare_quote_in_progress: 40,
   compare_decided: 25,
+  compare_reopened: 60,
 
   // ═══ 공통 장애 ═══
   execution_failed: 80,
@@ -156,7 +157,7 @@ export function computeUrgencyScore(item: ScoredItem): number {
   }
 
   // 비교 판정 지연
-  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup") {
+  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup" || item.substatus === "compare_reopened") {
     const createdTime = new Date(item.createdAt).getTime();
     const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
     if (ageDays >= 7) score += 15;
@@ -312,7 +313,7 @@ export function getUrgencyReason(item: ScoredItem): string | null {
   }
 
   // 8. 비교 판정 지연
-  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup") {
+  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup" || item.substatus === "compare_reopened") {
     const createdTime = new Date(item.createdAt).getTime();
     const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
     if (ageDays >= 3) {

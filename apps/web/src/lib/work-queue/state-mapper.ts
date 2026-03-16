@@ -161,6 +161,10 @@ const STATE_MAP: Record<string, Omit<StateMapping, "substatus">> = {
     taskStatus: "COMPLETED",
     approvalStatus: "APPROVED",
   },
+  compare_reopened: {
+    taskStatus: "REVIEW_NEEDED",
+    approvalStatus: "PENDING",
+  },
 
   // ═══ 공통 ═══
   execution_failed: {
