@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
 import { transitionWorkItem, createWorkItem } from "@/lib/work-queue/work-queue-service";
-import { determineCompareSubstatus } from "@/lib/work-queue/compare-queue-semantics";
+import { determineCompareSubstatus, determineResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
 
 const VALID_DECISION_STATES = ["UNDECIDED", "APPROVED", "HELD", "REJECTED"] as const;
 const TERMINAL_STATES = ["APPROVED", "HELD", "REJECTED"];
@@ -76,7 +76,7 @@ export async function PATCH(
     // ── Work Queue 상태 동기화 (awaited) ──
 
     if (TERMINAL_STATES.includes(decisionState)) {
-      // 터미널 판정 → 큐 아이템 완료
+      // 터미널 판정 → 큐 아이템 완료 + 해결 경로 기록
       const activeItem = await db.aiActionItem.findFirst({
         where: {
           relatedEntityType: "COMPARE_SESSION",
@@ -87,10 +87,21 @@ export async function PATCH(
       });
 
       if (activeItem) {
+        const linkedQuotes = await db.quote.findMany({
+          where: { comparisonId: id },
+          select: { status: true },
+        });
+        const resolutionPath = determineResolutionPath({
+          hasLinkedQuote: linkedQuotes.length > 0,
+          hasInquiryDraft: existing.inquiryDrafts.length > 0,
+          isReopened: false,
+        });
+
         await transitionWorkItem({
           itemId: activeItem.id,
           substatus: "compare_decided",
           userId,
+          metadata: { resolutionPath, decisionState },
         });
       }
     } else if (isReopen) {

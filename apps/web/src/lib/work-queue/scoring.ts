@@ -7,6 +7,8 @@
  * 모든 함수는 순수 함수(pure function)로 DB 의존성 없음.
  */
 
+import { COMPARE_SUBSTATUS_DEFS } from "./compare-queue-semantics";
+
 // ── Types ──
 
 export interface ScoredItem {
@@ -156,12 +158,18 @@ export function computeUrgencyScore(item: ScoredItem): number {
     score += 30 - Math.min(runoutDays, 30);
   }
 
-  // 비교 판정 지연
-  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup" || item.substatus === "compare_reopened") {
-    const createdTime = new Date(item.createdAt).getTime();
-    const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
-    if (ageDays >= 7) score += 15;
-    else if (ageDays >= 3) score += 10;
+  // 비교 판정 지연 — substatus별 SLA 에스컬레이션
+  if (item.substatus) {
+    const compareDef = COMPARE_SUBSTATUS_DEFS[item.substatus];
+    if (compareDef && !compareDef.isTerminal) {
+      const createdTime = new Date(item.createdAt).getTime();
+      const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+      if (compareDef.slaWarningDays > 0 && ageDays >= compareDef.slaWarningDays) {
+        score += compareDef.scoringBoostOnBreach;
+      } else if (ageDays >= 3) {
+        score += 10;
+      }
+    }
   }
 
   // 벤더 회신 지연 (updatedAt 기준)
@@ -312,12 +320,21 @@ export function getUrgencyReason(item: ScoredItem): string | null {
     }
   }
 
-  // 8. 비교 판정 지연
-  if (item.substatus === "compare_decision_pending" || item.substatus === "compare_inquiry_followup" || item.substatus === "compare_reopened") {
-    const createdTime = new Date(item.createdAt).getTime();
-    const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
-    if (ageDays >= 3) {
-      return `비교 판정 ${ageDays}일 대기`;
+  // 8. 비교 판정 지연 — SLA 에스컬레이션 메시지
+  if (item.substatus) {
+    const compareDef = COMPARE_SUBSTATUS_DEFS[item.substatus];
+    if (compareDef && !compareDef.isTerminal) {
+      const createdTime = new Date(item.createdAt).getTime();
+      const ageDays = Math.floor((now - createdTime) / MS_PER_DAY);
+      if (compareDef.staleDays > 0 && ageDays >= compareDef.staleDays) {
+        return `비교 ${ageDays}일 경과 — 장기 미처리`;
+      }
+      if (compareDef.slaWarningDays > 0 && ageDays >= compareDef.slaWarningDays) {
+        return compareDef.escalationMeaning;
+      }
+      if (ageDays >= 3) {
+        return `비교 판정 ${ageDays}일 대기`;
+      }
     }
   }
 

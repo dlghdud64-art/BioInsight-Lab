@@ -171,6 +171,8 @@ export async function POST() {
             sessionCreatedAt: cs.createdAt.toISOString(),
             inquiryCount: cs.inquiryDrafts.length,
             activeInquiryCount: cs.inquiryDrafts.filter((d: { status: string }) => d.status === "GENERATED" || d.status === "COPIED").length,
+            hasLinkedQuote: quoteStatuses.length > 0,
+            linkedQuoteCount: quoteStatuses.length,
           },
           relatedEntityType: "COMPARE_SESSION",
           relatedEntityId: cs.id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createWorkItem } from "@/lib/work-queue/work-queue-service";
+import { COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -87,6 +88,9 @@ export async function GET(request: NextRequest) {
       userInventories,
       fallbackBudget,
       undecidedCompareCount,
+      activeCompareItems,
+      decidedCompareSessions,
+      compareLinkedQuoteSessions,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -142,6 +146,24 @@ export async function GET(request: NextRequest) {
       db.compareSession.count({
         where: { userId, decisionState: "UNDECIDED" },
       }).catch(() => 0),
+      // 활성 비교 큐 아이템 (SLA/substatus 분석용)
+      db.aiActionItem.findMany({
+        where: { userId, type: "COMPARE_DECISION" as any, taskStatus: { notIn: ["COMPLETED", "FAILED"] as any[] } },
+        select: { substatus: true, createdAt: true },
+      }).catch(() => [] as { substatus: string | null; createdAt: Date }[]),
+      // 판정 완료 세션 (평균 소요일 계산용)
+      db.compareSession.findMany({
+        where: { userId, decisionState: { in: ["APPROVED", "HELD", "REJECTED"] }, decidedAt: { not: null } },
+        select: { createdAt: true, decidedAt: true },
+        take: 100,
+        orderBy: { decidedAt: "desc" },
+      }).catch(() => [] as { createdAt: Date; decidedAt: Date | null }[]),
+      // 견적 연결된 비교 세션 수
+      db.quote.findMany({
+        where: { comparisonId: { not: null }, userId },
+        select: { comparisonId: true },
+        distinct: ["comparisonId" as any],
+      }).catch(() => [] as { comparisonId: string | null }[]),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -436,6 +458,12 @@ export async function GET(request: NextRequest) {
       recentOrders,
       recentPurchases,
       undecidedCompareCount,
+      compareStats: computeCompareStats(
+        undecidedCompareCount as number,
+        activeCompareItems as { substatus: string | null; createdAt: Date }[],
+        decidedCompareSessions as { createdAt: Date; decidedAt: Date | null }[],
+        compareLinkedQuoteSessions as { comparisonId: string | null }[],
+      ),
     });
 
     // Non-blocking: sync compare sessions into work queue
@@ -501,4 +529,48 @@ async function syncCompareToWorkQueue(userId: string) {
       priority: "MEDIUM",
     });
   }
+}
+
+/**
+ * 비교 큐 운영 메트릭 계산
+ */
+function computeCompareStats(
+  undecidedCount: number,
+  activeItems: { substatus: string | null; createdAt: Date }[],
+  decidedSessions: { createdAt: Date; decidedAt: Date | null }[],
+  linkedQuoteSessions: { comparisonId: string | null }[],
+) {
+  const now = Date.now();
+  const MS_PER_DAY = 86400000;
+
+  let slaBreachedCount = 0;
+  let inquiryFollowupCount = 0;
+
+  for (const item of activeItems) {
+    const def = COMPARE_SUBSTATUS_DEFS[item.substatus || ""];
+    if (def && !def.isTerminal) {
+      const ageDays = Math.floor((now - new Date(item.createdAt).getTime()) / MS_PER_DAY);
+      if (def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+        slaBreachedCount++;
+      }
+    }
+    if (item.substatus === "compare_inquiry_followup") {
+      inquiryFollowupCount++;
+    }
+  }
+
+  const avgTurnaroundMs = decidedSessions.length > 0
+    ? decidedSessions.reduce((sum, s) =>
+        sum + (new Date(s.decidedAt!).getTime() - new Date(s.createdAt).getTime()), 0
+      ) / decidedSessions.length
+    : 0;
+  const avgTurnaroundDays = Math.round((avgTurnaroundMs / MS_PER_DAY) * 10) / 10;
+
+  return {
+    undecidedCount,
+    slaBreachedCount,
+    inquiryFollowupCount,
+    linkedQuoteCount: linkedQuoteSessions.length,
+    avgTurnaroundDays,
+  };
 }

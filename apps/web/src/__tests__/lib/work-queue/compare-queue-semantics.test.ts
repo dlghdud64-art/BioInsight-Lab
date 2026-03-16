@@ -5,8 +5,14 @@ import {
   determineCompareSubstatus,
   isCompareTerminal,
   isCompareSubstatus,
+  isSlaBreach,
+  isStale,
+  determineResolutionPath,
   COMPARE_SUBSTATUS_DEFS,
   COMPARE_CTA_MAP,
+  COMPARE_REPORT_LABELS,
+  COMPARE_ESCALATION_RULES,
+  RESOLUTION_PATH_LABELS,
 } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── determineCompareSubstatus ──
@@ -147,7 +153,7 @@ describe("COMPARE_SUBSTATUS_DEFS", () => {
     expect(Object.keys(COMPARE_SUBSTATUS_DEFS)).toHaveLength(5);
   });
 
-  it("all entries have required fields", () => {
+  it("all entries have required fields including escalation", () => {
     for (const [key, def] of Object.entries(COMPARE_SUBSTATUS_DEFS)) {
       expect(def.substatus).toBe(key);
       expect(def.label).toBeTruthy();
@@ -156,6 +162,9 @@ describe("COMPARE_SUBSTATUS_DEFS", () => {
       expect(def.approvalStatus).toBeTruthy();
       expect(typeof def.isTerminal).toBe("boolean");
       expect(def.activityType).toBeTruthy();
+      expect(typeof def.escalationMeaning).toBe("string");
+      expect(typeof def.scoringBoostOnBreach).toBe("number");
+      expect(["always", "on_breach", "never"]).toContain(def.dashboardVisibility);
     }
   });
 
@@ -179,5 +188,112 @@ describe("COMPARE_CTA_MAP", () => {
 
   it("does not have entry for terminal substatus", () => {
     expect(COMPARE_CTA_MAP["compare_decided"]).toBeUndefined();
+  });
+});
+
+// ── isSlaBreach ──
+
+describe("isSlaBreach", () => {
+  it("returns true when ageDays >= slaWarningDays for non-terminal", () => {
+    expect(isSlaBreach("compare_decision_pending", 7)).toBe(true);
+    expect(isSlaBreach("compare_decision_pending", 10)).toBe(true);
+    expect(isSlaBreach("compare_inquiry_followup", 5)).toBe(true);
+    expect(isSlaBreach("compare_quote_in_progress", 10)).toBe(true);
+    expect(isSlaBreach("compare_reopened", 3)).toBe(true);
+  });
+
+  it("returns false when ageDays < slaWarningDays", () => {
+    expect(isSlaBreach("compare_decision_pending", 6)).toBe(false);
+    expect(isSlaBreach("compare_inquiry_followup", 4)).toBe(false);
+    expect(isSlaBreach("compare_reopened", 2)).toBe(false);
+  });
+
+  it("returns false for terminal substatus", () => {
+    expect(isSlaBreach("compare_decided", 100)).toBe(false);
+  });
+
+  it("returns false for unknown substatus", () => {
+    expect(isSlaBreach("unknown", 100)).toBe(false);
+  });
+});
+
+// ── isStale ──
+
+describe("isStale", () => {
+  it("returns true when ageDays >= staleDays", () => {
+    expect(isStale("compare_decision_pending", 30)).toBe(true);
+    expect(isStale("compare_decision_pending", 31)).toBe(true);
+  });
+
+  it("returns false when ageDays < staleDays", () => {
+    expect(isStale("compare_decision_pending", 29)).toBe(false);
+  });
+
+  it("returns false for terminal substatus", () => {
+    expect(isStale("compare_decided", 100)).toBe(false);
+  });
+});
+
+// ── determineResolutionPath ──
+
+describe("determineResolutionPath", () => {
+  it("returns direct_decision when no quote/inquiry", () => {
+    expect(determineResolutionPath({ hasLinkedQuote: false, hasInquiryDraft: false, isReopened: false }))
+      .toBe("direct_decision");
+  });
+
+  it("returns via_inquiry when has inquiry only", () => {
+    expect(determineResolutionPath({ hasLinkedQuote: false, hasInquiryDraft: true, isReopened: false }))
+      .toBe("via_inquiry");
+  });
+
+  it("returns via_quote when has quote only", () => {
+    expect(determineResolutionPath({ hasLinkedQuote: true, hasInquiryDraft: false, isReopened: false }))
+      .toBe("via_quote");
+  });
+
+  it("returns via_inquiry_and_quote when both exist", () => {
+    expect(determineResolutionPath({ hasLinkedQuote: true, hasInquiryDraft: true, isReopened: false }))
+      .toBe("via_inquiry_and_quote");
+  });
+
+  it("returns reopened_then_decided when isReopened (takes priority)", () => {
+    expect(determineResolutionPath({ hasLinkedQuote: true, hasInquiryDraft: true, isReopened: true }))
+      .toBe("reopened_then_decided");
+  });
+});
+
+// ── RESOLUTION_PATH_LABELS ──
+
+describe("RESOLUTION_PATH_LABELS", () => {
+  it("has labels for all 5 resolution paths", () => {
+    expect(Object.keys(RESOLUTION_PATH_LABELS)).toHaveLength(5);
+    for (const label of Object.values(RESOLUTION_PATH_LABELS)) {
+      expect(label).toBeTruthy();
+    }
+  });
+});
+
+// ── COMPARE_REPORT_LABELS ──
+
+describe("COMPARE_REPORT_LABELS", () => {
+  it("has exactly 5 metric labels", () => {
+    expect(Object.keys(COMPARE_REPORT_LABELS)).toHaveLength(5);
+  });
+});
+
+// ── COMPARE_ESCALATION_RULES ──
+
+describe("COMPARE_ESCALATION_RULES", () => {
+  it("has exactly 3 escalation rules", () => {
+    expect(Object.keys(COMPARE_ESCALATION_RULES)).toHaveLength(3);
+  });
+
+  it("all rules have required fields", () => {
+    for (const rule of Object.values(COMPARE_ESCALATION_RULES)) {
+      expect(rule.condition).toBeTruthy();
+      expect(rule.label).toBeTruthy();
+      expect(rule.reportLabel).toBeTruthy();
+    }
   });
 });

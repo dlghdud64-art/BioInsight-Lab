@@ -20,6 +20,12 @@ export interface CompareSubstatusDefinition {
   staleDays: number;
   isTerminal: boolean;
   activityType: string;
+  /** SLA 초과 시 운영자에게 표시할 에스컬레이션 메시지 */
+  escalationMeaning: string;
+  /** SLA 초과 시 urgency score에 추가할 점수 */
+  scoringBoostOnBreach: number;
+  /** 대시보드 가시성: always=항상, on_breach=SLA 초과 시만, never=표시 안함 */
+  dashboardVisibility: "always" | "on_breach" | "never";
 }
 
 export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> = {
@@ -34,6 +40,9 @@ export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> 
     staleDays: 30,
     isTerminal: false,
     activityType: "AI_TASK_CREATED",
+    escalationMeaning: "판정 7일 이상 지연 — 의사결정 필요",
+    scoringBoostOnBreach: 20,
+    dashboardVisibility: "always",
   },
   compare_inquiry_followup: {
     substatus: "compare_inquiry_followup",
@@ -46,6 +55,9 @@ export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> 
     staleDays: 30,
     isTerminal: false,
     activityType: "COMPARE_INQUIRY_DRAFT_STATUS_CHANGED",
+    escalationMeaning: "문의 후속 5일 초과 — 미처리 문의 확인",
+    scoringBoostOnBreach: 15,
+    dashboardVisibility: "on_breach",
   },
   compare_quote_in_progress: {
     substatus: "compare_quote_in_progress",
@@ -58,6 +70,9 @@ export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> 
     staleDays: 30,
     isTerminal: false,
     activityType: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+    escalationMeaning: "연결 견적 10일 이상 진행 — 견적 상태 확인",
+    scoringBoostOnBreach: 10,
+    dashboardVisibility: "on_breach",
   },
   compare_decided: {
     substatus: "compare_decided",
@@ -70,6 +85,9 @@ export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> 
     staleDays: 0,
     isTerminal: true,
     activityType: "AI_TASK_COMPLETED",
+    escalationMeaning: "",
+    scoringBoostOnBreach: 0,
+    dashboardVisibility: "never",
   },
   compare_reopened: {
     substatus: "compare_reopened",
@@ -82,6 +100,9 @@ export const COMPARE_SUBSTATUS_DEFS: Record<string, CompareSubstatusDefinition> 
     staleDays: 30,
     isTerminal: false,
     activityType: "COMPARE_SESSION_REOPENED",
+    escalationMeaning: "재검토 3일 초과 — 즉시 재판정 필요",
+    scoringBoostOnBreach: 25,
+    dashboardVisibility: "always",
   },
 };
 
@@ -147,6 +168,91 @@ export function isCompareTerminal(substatus: string): boolean {
 export function isCompareSubstatus(substatus: string): boolean {
   return substatus in COMPARE_SUBSTATUS_DEFS;
 }
+
+// ── SLA Escalation Checks ──
+
+/**
+ * substatus의 SLA 경고 임계값을 초과했는지 확인합니다.
+ */
+export function isSlaBreach(substatus: string, ageDays: number): boolean {
+  const def = COMPARE_SUBSTATUS_DEFS[substatus];
+  if (!def || def.isTerminal) return false;
+  return def.slaWarningDays > 0 && ageDays >= def.slaWarningDays;
+}
+
+/**
+ * substatus의 장기 미처리(stale) 임계값을 초과했는지 확인합니다.
+ */
+export function isStale(substatus: string, ageDays: number): boolean {
+  const def = COMPARE_SUBSTATUS_DEFS[substatus];
+  if (!def || def.isTerminal) return false;
+  return def.staleDays > 0 && ageDays >= def.staleDays;
+}
+
+// ── Resolution Path ──
+
+export type CompareResolutionPath =
+  | "direct_decision"
+  | "via_inquiry"
+  | "via_quote"
+  | "via_inquiry_and_quote"
+  | "reopened_then_decided";
+
+export interface ResolutionPathInput {
+  hasLinkedQuote: boolean;
+  hasInquiryDraft: boolean;
+  isReopened: boolean;
+}
+
+/**
+ * 비교 판정의 해결 경로를 결정합니다.
+ */
+export function determineResolutionPath(input: ResolutionPathInput): CompareResolutionPath {
+  if (input.isReopened) return "reopened_then_decided";
+  if (input.hasLinkedQuote && input.hasInquiryDraft) return "via_inquiry_and_quote";
+  if (input.hasLinkedQuote) return "via_quote";
+  if (input.hasInquiryDraft) return "via_inquiry";
+  return "direct_decision";
+}
+
+/** 해결 경로 → 한국어 라벨 */
+export const RESOLUTION_PATH_LABELS: Record<CompareResolutionPath, string> = {
+  direct_decision: "직접 판정",
+  via_inquiry: "문의 후 판정",
+  via_quote: "견적 후 판정",
+  via_inquiry_and_quote: "문의+견적 후 판정",
+  reopened_then_decided: "재검토 후 판정",
+};
+
+// ── Canonical Report Labels ──
+
+/** 운영 리포팅 메트릭 라벨 */
+export const COMPARE_REPORT_LABELS = {
+  undecidedCount: "판정 대기",
+  slaBreachedCount: "SLA 초과",
+  inquiryFollowupCount: "문의 후속 필요",
+  linkedQuoteCount: "견적 연결",
+  avgTurnaroundDays: "평균 판정 소요(일)",
+} as const;
+
+/** 문의/견적 관련 에스컬레이션 규칙 정의 */
+export const COMPARE_ESCALATION_RULES = {
+  inquiry_no_followup: {
+    condition: "문의 GENERATED 후 slaWarningDays 내 COPIED/SENT 미전환",
+    label: "문의 미처리",
+    reportLabel: "문의 생성 후 미처리",
+  },
+  inquiry_unresolved_long: {
+    condition: "문의 COPIED/SENT 후 staleDays 내 세션 미판정",
+    label: "문의 발송 후 미해결",
+    reportLabel: "문의 발송 후 장기 미해결",
+  },
+  quote_no_progress: {
+    condition: "연결 견적 존재하나 slaWarningDays 내 상태 변경 없음",
+    label: "견적 진행 정체",
+    reportLabel: "연결 견적 진행 없음",
+  },
+} as const;
 
 // ── Canonical Activity Labels (UI에서 직접 사용) ──
 

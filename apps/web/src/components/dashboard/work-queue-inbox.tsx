@@ -20,7 +20,7 @@ import {
   type TaskStatus,
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
-import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS } from "@/lib/work-queue/compare-queue-semantics";
+import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -372,6 +372,11 @@ function CompletedCard({ item }: { item: WorkQueueItem }) {
     <div className="flex items-center gap-2 py-1.5 px-1">
       <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
       <span className="text-xs text-slate-500 truncate flex-1">{item.title}</span>
+      {item.type === "COMPARE_DECISION" && item.metadata?.resolutionPath && (
+        <span className="text-[10px] text-slate-400 flex-shrink-0">
+          {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
+        </span>
+      )}
       <span className="text-[10px] text-slate-400 flex-shrink-0">{timeAgo(item.updatedAt)}</span>
     </div>
   );
