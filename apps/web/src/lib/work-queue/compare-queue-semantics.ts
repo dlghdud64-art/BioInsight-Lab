@@ -254,6 +254,107 @@ export const COMPARE_ESCALATION_RULES = {
   },
 } as const;
 
+// ── Metric Definition Lock ──
+
+export interface CompareMetricDefinition {
+  key: keyof typeof COMPARE_REPORT_LABELS;
+  label: string;
+  businessMeaning: string;
+  inclusionCriteria: string;
+  exclusionCriteria: string;
+  timeBoundary: string;
+  sourceOfTruth: string;
+  displayLocations: string[];
+}
+
+export const COMPARE_METRIC_DEFINITIONS: CompareMetricDefinition[] = [
+  {
+    key: "undecidedCount",
+    label: COMPARE_REPORT_LABELS.undecidedCount,
+    businessMeaning: "UNDECIDED 상태 비교 세션 수 — 사용자 판정이 필요한 항목",
+    inclusionCriteria: "compareSession.decisionState = UNDECIDED 또는 null",
+    exclusionCriteria: "APPROVED, HELD, REJECTED, 삭제된 세션",
+    timeBoundary: "전체 기간 (시간 제한 없음)",
+    sourceOfTruth: "CompareSession.decisionState",
+    displayLocations: ["dashboard notification", "dashboard priority card"],
+  },
+  {
+    key: "slaBreachedCount",
+    label: COMPARE_REPORT_LABELS.slaBreachedCount,
+    businessMeaning: "SLA 경고 임계일 초과 활성 큐 아이템 수",
+    inclusionCriteria: "AiActionItem: type=COMPARE_DECISION, taskStatus not COMPLETED/FAILED, ageDays >= slaWarningDays",
+    exclusionCriteria: "터미널 substatus (compare_decided), COMPLETED/FAILED 아이템",
+    timeBoundary: "substatus별 slaWarningDays (7/5/10/3일)",
+    sourceOfTruth: "AiActionItem.createdAt + COMPARE_SUBSTATUS_DEFS.slaWarningDays",
+    displayLocations: ["dashboard notification", "dashboard priority card"],
+  },
+  {
+    key: "inquiryFollowupCount",
+    label: COMPARE_REPORT_LABELS.inquiryFollowupCount,
+    businessMeaning: "문의 후속 조치가 필요한 활성 큐 아이템 수",
+    inclusionCriteria: "AiActionItem: substatus=compare_inquiry_followup, taskStatus not COMPLETED/FAILED",
+    exclusionCriteria: "다른 substatus, 완료/실패 아이템",
+    timeBoundary: "전체 기간",
+    sourceOfTruth: "AiActionItem.substatus",
+    displayLocations: ["dashboard notification"],
+  },
+  {
+    key: "linkedQuoteCount",
+    label: COMPARE_REPORT_LABELS.linkedQuoteCount,
+    businessMeaning: "견적이 연결된 비교 세션 수 (distinct)",
+    inclusionCriteria: "Quote.comparisonId IS NOT NULL, 사용자 소유",
+    exclusionCriteria: "comparisonId가 null인 견적",
+    timeBoundary: "전체 기간",
+    sourceOfTruth: "Quote.comparisonId (distinct)",
+    displayLocations: ["dashboard priority card"],
+  },
+  {
+    key: "avgTurnaroundDays",
+    label: COMPARE_REPORT_LABELS.avgTurnaroundDays,
+    businessMeaning: "최근 판정 완료 세션의 평균 판정 소요일 (createdAt → decidedAt)",
+    inclusionCriteria: "CompareSession: decisionState IN (APPROVED, HELD, REJECTED), decidedAt IS NOT NULL",
+    exclusionCriteria: "UNDECIDED, decidedAt가 null인 세션",
+    timeBoundary: "최근 100건 (decidedAt DESC)",
+    sourceOfTruth: "CompareSession.createdAt, CompareSession.decidedAt",
+    displayLocations: ["dashboard priority card"],
+  },
+];
+
+// ── Canonical Inquiry Draft Labels ──
+
+export const INQUIRY_DRAFT_STATUS_LABELS = {
+  GENERATED: "생성됨",
+  COPIED: "복사됨",
+  SENT: "발송됨",
+} as const;
+
+export type InquiryDraftStatus = keyof typeof INQUIRY_DRAFT_STATUS_LABELS;
+
+// ── Inquiry Aging ──
+
+export const INQUIRY_AGING_THRESHOLD_DAYS = 3;
+
+/**
+ * GENERATED 상태 문의 초안 중 임계일(3일) 이상 경과된 최대 경과일을 반환합니다.
+ * 해당 없으면 null.
+ */
+export function computeInquiryAgingDays(input: {
+  inquiryDrafts: { status: string; createdAt: Date | string }[];
+}): number | null {
+  const now = Date.now();
+  const MS_PER_DAY = 86400000;
+  let maxAgingDays: number | null = null;
+
+  for (const d of input.inquiryDrafts) {
+    if (d.status !== "GENERATED") continue;
+    const ageDays = Math.floor((now - new Date(d.createdAt).getTime()) / MS_PER_DAY);
+    if (ageDays >= INQUIRY_AGING_THRESHOLD_DAYS) {
+      maxAgingDays = Math.max(maxAgingDays ?? 0, ageDays);
+    }
+  }
+  return maxAgingDays;
+}
+
 // ── Canonical Activity Labels (UI에서 직접 사용) ──
 
 /** Substatus → Korean activity label. 워크 큐 카드의 1줄 상태 설명. */

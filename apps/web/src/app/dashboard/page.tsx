@@ -13,6 +13,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
+import { COMPARE_SUBSTATUS_DEFS } from "@/lib/work-queue/compare-queue-semantics";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -74,6 +75,9 @@ export default function DashboardPage() {
     compareStats: {
       slaBreachedCount: rawStats.compareStats?.slaBreachedCount ?? 0,
       inquiryFollowupCount: rawStats.compareStats?.inquiryFollowupCount ?? 0,
+      substatusBreakdown: (rawStats.compareStats?.substatusBreakdown ?? {}) as Record<string, number>,
+      conversionRate: rawStats.compareStats?.conversionRate ?? 0,
+      avgTurnaroundDays: rawStats.compareStats?.avgTurnaroundDays ?? 0,
     },
   };
 
@@ -261,6 +265,21 @@ export default function DashboardPage() {
                       ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 — 즉시 처리 필요`
                       : "비교 결과를 검토하고 판정하세요"}
                   </p>
+                  {Object.keys(stats.compareStats.substatusBreakdown).length > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {Object.entries(stats.compareStats.substatusBreakdown)
+                        .filter(([, count]) => count > 0)
+                        .map(([key, count]) => `${COMPARE_SUBSTATUS_DEFS[key]?.label ?? key} ${count}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {(stats.compareStats.avgTurnaroundDays > 0 || stats.compareStats.conversionRate > 0) && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {stats.compareStats.avgTurnaroundDays > 0 ? `평균 ${stats.compareStats.avgTurnaroundDays}일` : ""}
+                      {stats.compareStats.avgTurnaroundDays > 0 && stats.compareStats.conversionRate > 0 ? " · " : ""}
+                      {stats.compareStats.conversionRate > 0 ? `견적 전환 ${stats.compareStats.conversionRate}%` : ""}
+                    </p>
+                  )}
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
               </Link>

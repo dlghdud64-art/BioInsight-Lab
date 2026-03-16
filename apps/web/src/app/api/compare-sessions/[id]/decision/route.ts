@@ -83,7 +83,7 @@ export async function PATCH(
           relatedEntityId: id,
           taskStatus: { not: "COMPLETED" },
         },
-        select: { id: true },
+        select: { id: true, payload: true },
       });
 
       if (activeItem) {
@@ -95,6 +95,18 @@ export async function PATCH(
           hasLinkedQuote: linkedQuotes.length > 0,
           hasInquiryDraft: existing.inquiryDrafts.length > 0,
           isReopened: false,
+        });
+
+        // resolutionPath를 payload에 저장 (완료 카드에서 표시용)
+        await db.aiActionItem.update({
+          where: { id: activeItem.id },
+          data: {
+            payload: {
+              ...((activeItem.payload as Record<string, unknown>) ?? {}),
+              resolutionPath,
+              decisionState,
+            },
+          },
         });
 
         await transitionWorkItem({

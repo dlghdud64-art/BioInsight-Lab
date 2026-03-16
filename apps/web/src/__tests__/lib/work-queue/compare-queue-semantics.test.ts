@@ -8,10 +8,13 @@ import {
   isSlaBreach,
   isStale,
   determineResolutionPath,
+  computeInquiryAgingDays,
   COMPARE_SUBSTATUS_DEFS,
   COMPARE_CTA_MAP,
   COMPARE_REPORT_LABELS,
   COMPARE_ESCALATION_RULES,
+  COMPARE_METRIC_DEFINITIONS,
+  INQUIRY_DRAFT_STATUS_LABELS,
   RESOLUTION_PATH_LABELS,
 } from "@/lib/work-queue/compare-queue-semantics";
 
@@ -295,5 +298,88 @@ describe("COMPARE_ESCALATION_RULES", () => {
       expect(rule.label).toBeTruthy();
       expect(rule.reportLabel).toBeTruthy();
     }
+  });
+});
+
+// ── COMPARE_METRIC_DEFINITIONS ──
+
+describe("COMPARE_METRIC_DEFINITIONS", () => {
+  it("has exactly 5 metric definitions", () => {
+    expect(COMPARE_METRIC_DEFINITIONS).toHaveLength(5);
+  });
+
+  it("all keys match COMPARE_REPORT_LABELS keys", () => {
+    const reportKeys = Object.keys(COMPARE_REPORT_LABELS);
+    for (const def of COMPARE_METRIC_DEFINITIONS) {
+      expect(reportKeys).toContain(def.key);
+    }
+  });
+
+  it("all definitions have required business fields", () => {
+    for (const def of COMPARE_METRIC_DEFINITIONS) {
+      expect(def.businessMeaning).toBeTruthy();
+      expect(def.inclusionCriteria).toBeTruthy();
+      expect(def.exclusionCriteria).toBeTruthy();
+      expect(def.timeBoundary).toBeTruthy();
+      expect(def.sourceOfTruth).toBeTruthy();
+      expect(def.displayLocations.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("labels match COMPARE_REPORT_LABELS", () => {
+    for (const def of COMPARE_METRIC_DEFINITIONS) {
+      expect(def.label).toBe(COMPARE_REPORT_LABELS[def.key]);
+    }
+  });
+});
+
+// ── INQUIRY_DRAFT_STATUS_LABELS ──
+
+describe("INQUIRY_DRAFT_STATUS_LABELS", () => {
+  it("has exactly 3 statuses", () => {
+    expect(Object.keys(INQUIRY_DRAFT_STATUS_LABELS)).toHaveLength(3);
+  });
+
+  it("covers GENERATED, COPIED, SENT", () => {
+    expect(INQUIRY_DRAFT_STATUS_LABELS.GENERATED).toBeTruthy();
+    expect(INQUIRY_DRAFT_STATUS_LABELS.COPIED).toBeTruthy();
+    expect(INQUIRY_DRAFT_STATUS_LABELS.SENT).toBeTruthy();
+  });
+});
+
+// ── computeInquiryAgingDays ──
+
+describe("computeInquiryAgingDays", () => {
+  it("returns null when no GENERATED drafts", () => {
+    expect(computeInquiryAgingDays({
+      inquiryDrafts: [{ status: "SENT", createdAt: new Date("2020-01-01") }],
+    })).toBeNull();
+  });
+
+  it("returns null when GENERATED drafts are under 3 days old", () => {
+    const recent = new Date(Date.now() - 2 * 86400000);
+    expect(computeInquiryAgingDays({
+      inquiryDrafts: [{ status: "GENERATED", createdAt: recent }],
+    })).toBeNull();
+  });
+
+  it("returns aging days when GENERATED drafts are 3+ days old", () => {
+    const old = new Date(Date.now() - 5 * 86400000);
+    const result = computeInquiryAgingDays({
+      inquiryDrafts: [{ status: "GENERATED", createdAt: old }],
+    });
+    expect(result).toBe(5);
+  });
+
+  it("returns max aging days across multiple GENERATED drafts", () => {
+    const older = new Date(Date.now() - 7 * 86400000);
+    const newer = new Date(Date.now() - 4 * 86400000);
+    const result = computeInquiryAgingDays({
+      inquiryDrafts: [
+        { status: "GENERATED", createdAt: older },
+        { status: "GENERATED", createdAt: newer },
+      ],
+    });
+    expect(result).toBe(7);
   });
 });

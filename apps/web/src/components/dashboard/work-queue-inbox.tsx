@@ -20,7 +20,7 @@ import {
   type TaskStatus,
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
-import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
+import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, computeInquiryAgingDays, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -313,6 +313,18 @@ function WorkQueueCard({
                 문의 {String(item.metadata.inquiryCount)}건
               </span>
             )}
+            {/* Inquiry aging indicator */}
+            {item.substatus === "compare_inquiry_followup" && (() => {
+              const drafts = item.metadata?.inquiryDrafts as { status: string; createdAt: string }[] | undefined;
+              if (!drafts) return null;
+              const agingDays = computeInquiryAgingDays({ inquiryDrafts: drafts });
+              if (agingDays === null) return null;
+              return (
+                <span className="text-[10px] text-red-500 font-medium mt-0.5">
+                  문의 미발송 {agingDays}일
+                </span>
+              );
+            })()}
 
             {/* Row 3: CTA + Dismiss + Time */}
             <div className="flex items-center gap-2 mt-2">

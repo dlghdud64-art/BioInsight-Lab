@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
       activeCompareItems,
       decidedCompareSessions,
       compareLinkedQuoteSessions,
+      completedCompareItems,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -164,6 +165,13 @@ export async function GET(request: NextRequest) {
         select: { comparisonId: true },
         distinct: ["comparisonId" as any],
       }).catch(() => [] as { comparisonId: string | null }[]),
+      // 완료된 비교 큐 아이템 (해결 경로 분포 계산용)
+      db.aiActionItem.findMany({
+        where: { userId, type: "COMPARE_DECISION" as any, taskStatus: "COMPLETED" as any },
+        select: { payload: true },
+        take: 100,
+        orderBy: { completedAt: "desc" },
+      }).catch(() => [] as { payload: unknown }[]),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -463,6 +471,7 @@ export async function GET(request: NextRequest) {
         activeCompareItems as { substatus: string | null; createdAt: Date }[],
         decidedCompareSessions as { createdAt: Date; decidedAt: Date | null }[],
         compareLinkedQuoteSessions as { comparisonId: string | null }[],
+        completedCompareItems as { payload: unknown }[],
       ),
     });
 
@@ -539,14 +548,19 @@ function computeCompareStats(
   activeItems: { substatus: string | null; createdAt: Date }[],
   decidedSessions: { createdAt: Date; decidedAt: Date | null }[],
   linkedQuoteSessions: { comparisonId: string | null }[],
+  completedItems: { payload: unknown }[],
 ) {
   const now = Date.now();
   const MS_PER_DAY = 86400000;
 
   let slaBreachedCount = 0;
   let inquiryFollowupCount = 0;
+  const substatusBreakdown: Record<string, number> = {};
 
   for (const item of activeItems) {
+    const key = item.substatus || "unknown";
+    substatusBreakdown[key] = (substatusBreakdown[key] || 0) + 1;
+
     const def = COMPARE_SUBSTATUS_DEFS[item.substatus || ""];
     if (def && !def.isTerminal) {
       const ageDays = Math.floor((now - new Date(item.createdAt).getTime()) / MS_PER_DAY);
@@ -566,11 +580,25 @@ function computeCompareStats(
     : 0;
   const avgTurnaroundDays = Math.round((avgTurnaroundMs / MS_PER_DAY) * 10) / 10;
 
+  const linkedQuoteCount = linkedQuoteSessions.length;
+  const conversionRate = decidedSessions.length > 0
+    ? Math.round((linkedQuoteCount / decidedSessions.length) * 1000) / 10
+    : 0;
+
+  const resolutionPathDistribution: Record<string, number> = {};
+  for (const item of completedItems) {
+    const path = (item.payload as Record<string, unknown>)?.resolutionPath as string || "unknown";
+    resolutionPathDistribution[path] = (resolutionPathDistribution[path] || 0) + 1;
+  }
+
   return {
     undecidedCount,
     slaBreachedCount,
     inquiryFollowupCount,
-    linkedQuoteCount: linkedQuoteSessions.length,
+    linkedQuoteCount,
     avgTurnaroundDays,
+    substatusBreakdown,
+    conversionRate,
+    resolutionPathDistribution,
   };
 }

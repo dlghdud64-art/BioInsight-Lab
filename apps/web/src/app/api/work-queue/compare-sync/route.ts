@@ -44,7 +44,7 @@ export async function POST() {
         createdAt: true,
         diffResult: true,
         inquiryDrafts: {
-          select: { status: true },
+          select: { status: true, createdAt: true },
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -173,6 +173,10 @@ export async function POST() {
             activeInquiryCount: cs.inquiryDrafts.filter((d: { status: string }) => d.status === "GENERATED" || d.status === "COPIED").length,
             hasLinkedQuote: quoteStatuses.length > 0,
             linkedQuoteCount: quoteStatuses.length,
+            inquiryDrafts: cs.inquiryDrafts.map((d: { status: string; createdAt: Date }) => ({
+              status: d.status,
+              createdAt: d.createdAt.toISOString(),
+            })),
           },
           relatedEntityType: "COMPARE_SESSION",
           relatedEntityId: cs.id,
