@@ -8,8 +8,8 @@
  * Inquiry draft는 DB에 영속화됨.
  */
 
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
@@ -25,8 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
   Loader2, AlertTriangle, CheckCircle, Info, Mail, Sparkles,
-  Copy, Check, ShoppingCart, HelpCircle, FileText,
+  Copy, Check, ShoppingCart, HelpCircle, FileText, Clock, ExternalLink, ChevronRight,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { CompareInsight } from "@/lib/compare-workspace/compare-insight-generator";
 
@@ -85,11 +87,29 @@ interface PersistedDraft {
   createdAt: string;
 }
 
+interface LinkedQuote {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+}
+
+interface LinkedOutcomes {
+  linkedQuotes: LinkedQuote[];
+  allDrafts: PersistedDraft[];
+  decisionState: string | null;
+  decisionNote: string | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  latestActionAt: string | null;
+}
+
 interface CompareAnalysisDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   productIds: string[];
   organizationId?: string;
+  existingSessionId?: string;
 }
 
 // ── Badges ──
@@ -147,6 +167,37 @@ function DraftStatusBadge({ status }: { status: string }) {
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
 }
 
+function DecisionStateBadge({ state }: { state: string | null }) {
+  const config: Record<string, { label: string; dot: string; pulse?: boolean }> = {
+    UNDECIDED: { label: "검토 중", dot: "amber", pulse: true },
+    APPROVED: { label: "승인", dot: "emerald" },
+    HELD: { label: "보류", dot: "blue" },
+    REJECTED: { label: "반려", dot: "red" },
+  };
+  const c = state ? config[state] : null;
+  if (!c) {
+    return <Badge variant="outline" dot="slate" className="text-xs">미결정</Badge>;
+  }
+  return (
+    <Badge variant="outline" dot={c.dot as any} dotPulse={c.pulse} className="text-xs">
+      {c.label}
+    </Badge>
+  );
+}
+
+function relativeTime(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "방금 전";
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}일 전`;
+  return new Date(dateStr).toLocaleDateString("ko-KR");
+}
+
 // ── Main Component ──
 
 export function CompareAnalysisDrawer({
@@ -154,15 +205,87 @@ export function CompareAnalysisDrawer({
   onOpenChange,
   productIds,
   organizationId,
+  existingSessionId,
 }: CompareAnalysisDrawerProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [sessionData, setSessionData] = useState<CompareSessionData | null>(null);
   const [products, setProducts] = useState<ProductInfo[]>([]);
   const [insight, setInsight] = useState<CompareInsight | null>(null);
   const [persistedDraft, setPersistedDraft] = useState<PersistedDraft | null>(null);
   const [vendorName, setVendorName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [linkedOutcomes, setLinkedOutcomes] = useState<LinkedOutcomes | null>(null);
+  const [decisionForm, setDecisionForm] = useState<{ state: string; note: string } | null>(null);
+  const [isDecisionSaving, setIsDecisionSaving] = useState(false);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+
+  // Fetch linked outcomes for a session
+  const fetchLinkedOutcomes = useCallback(async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/compare-sessions/${sessionId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setLinkedOutcomes({
+        linkedQuotes: data.linkedQuotes ?? [],
+        allDrafts: data.inquiryDrafts ?? [],
+        decisionState: data.session?.decisionState ?? null,
+        decisionNote: data.session?.decisionNote ?? null,
+        decidedBy: data.session?.decidedBy ?? null,
+        decidedAt: data.session?.decidedAt ?? null,
+        latestActionAt: data.latestActionAt ?? null,
+      });
+    } catch { /* ignore */ }
+  }, []);
+
+  // Load existing session (reopen)
+  const loadExistingSession = useCallback(async (sessionId: string) => {
+    setIsLoadingExisting(true);
+    try {
+      const res = await fetch(`/api/compare-sessions/${sessionId}`);
+      if (!res.ok) throw new Error("세션 로드 실패");
+      const data = await res.json();
+      setSessionData({
+        id: data.session.id,
+        productIds: data.session.productIds,
+        diffResult: data.session.diffResult ?? [],
+        createdAt: data.session.createdAt,
+      });
+      // Build product info from productIds + names (if available from session data)
+      const pIds: string[] = Array.isArray(data.session.productIds) ? data.session.productIds : [];
+      if (pIds.length > 0) {
+        // Fetch product details
+        const pRes = await fetch("/api/products/compare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds: pIds }),
+        });
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          setProducts((pData.products ?? []).map((p: any) => ({
+            id: p.id, name: p.name, brand: p.brand, catalogNumber: p.catalogNumber,
+          })));
+        }
+      }
+      // Load linked outcomes
+      setLinkedOutcomes({
+        linkedQuotes: data.linkedQuotes ?? [],
+        allDrafts: data.inquiryDrafts ?? [],
+        decisionState: data.session?.decisionState ?? null,
+        decisionNote: data.session?.decisionNote ?? null,
+        decidedBy: data.session?.decidedBy ?? null,
+        decidedAt: data.session?.decidedAt ?? null,
+        latestActionAt: data.latestActionAt ?? null,
+      });
+      setInsight(data.session?.aiInsight ?? null);
+      setPersistedDraft(null);
+    } catch (err: any) {
+      toast({ title: "세션 로드 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  }, [toast]);
 
   // 비교 세션 생성 + diff 계산
   const createSessionMutation = useMutation({
@@ -178,11 +301,15 @@ export function CompareAnalysisDrawer({
       }
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setSessionData(data.session);
       setProducts(data.products);
       setInsight(null);
       setPersistedDraft(null);
+      // Fetch linked outcomes
+      await fetchLinkedOutcomes(data.session.id);
+      // Invalidate history list
+      queryClient.invalidateQueries({ queryKey: ["compare-sessions"] });
     },
     onError: (err: Error) => {
       toast({ title: "비교 분석 실패", description: err.message, variant: "destructive" });
@@ -268,8 +395,44 @@ export function CompareAnalysisDrawer({
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
-    if (isOpen && !sessionData && productIds.length >= 2) {
-      createSessionMutation.mutate();
+    if (isOpen && !sessionData) {
+      if (existingSessionId) {
+        loadExistingSession(existingSessionId);
+      } else if (productIds.length >= 2) {
+        createSessionMutation.mutate();
+      }
+    }
+  };
+
+  // Save decision
+  const handleSaveDecision = async () => {
+    if (!sessionData || !decisionForm) return;
+    setIsDecisionSaving(true);
+    try {
+      const res = await fetch(`/api/compare-sessions/${sessionData.id}/decision`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decisionState: decisionForm.state,
+          decisionNote: decisionForm.note || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("판정 저장 실패");
+      const data = await res.json();
+      setLinkedOutcomes((prev) => prev ? {
+        ...prev,
+        decisionState: data.session.decisionState,
+        decisionNote: data.session.decisionNote,
+        decidedBy: data.session.decidedBy,
+        decidedAt: data.session.decidedAt,
+      } : prev);
+      setDecisionForm(null);
+      toast({ title: "판정 저장 완료" });
+      queryClient.invalidateQueries({ queryKey: ["compare-sessions"] });
+    } catch (err: any) {
+      toast({ title: "판정 저장 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDecisionSaving(false);
     }
   };
 
@@ -307,13 +470,21 @@ export function CompareAnalysisDrawer({
           <SheetTitle>구조적 비교 분석</SheetTitle>
           <SheetDescription>
             제품 간 차이를 구조적으로 분석하고 후속 조치를 실행합니다.
+            {linkedOutcomes?.latestActionAt && (
+              <span className="flex items-center gap-1 mt-1 text-xs">
+                <Clock className="h-3 w-3" />
+                마지막 활동: {relativeTime(linkedOutcomes.latestActionAt)}
+              </span>
+            )}
           </SheetDescription>
         </SheetHeader>
 
-        {createSessionMutation.isPending && (
+        {(createSessionMutation.isPending || isLoadingExisting) && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
-            <span className="text-sm text-muted-foreground">비교 분석 중...</span>
+            <span className="text-sm text-muted-foreground">
+              {isLoadingExisting ? "세션 불러오는 중..." : "비교 분석 중..."}
+            </span>
           </div>
         )}
 
@@ -346,6 +517,19 @@ export function CompareAnalysisDrawer({
                       {missingDataItems.length}건의 항목에 한쪽 데이터가 누락되어 있습니다.
                       공급사에 추가 정보를 요청하면 비교 정확도가 높아집니다.
                     </p>
+                  </div>
+                )}
+
+                {/* 판정 상태 */}
+                {linkedOutcomes && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                    <span className="text-xs text-slate-500">판정:</span>
+                    <DecisionStateBadge state={linkedOutcomes.decisionState} />
+                    {linkedOutcomes.decidedAt && (
+                      <span className="text-xs text-slate-400">
+                        ({new Date(linkedOutcomes.decidedAt).toLocaleDateString("ko-KR")})
+                      </span>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -543,6 +727,108 @@ export function CompareAnalysisDrawer({
 
               {/* 후속 조치 탭 */}
               <TabsContent value="action" className="space-y-3 mt-3">
+                {/* 연결된 결과 */}
+                {linkedOutcomes && (linkedOutcomes.linkedQuotes.length > 0 || linkedOutcomes.allDrafts.length > 0 || linkedOutcomes.decisionState) && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        연결된 결과
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {/* 연결된 견적 */}
+                      {linkedOutcomes.linkedQuotes.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-500 mb-1.5">연결된 견적</p>
+                          <div className="space-y-1.5">
+                            {linkedOutcomes.linkedQuotes.map((q) => (
+                              <Link key={q.id} href={`/quotes/${q.id}`} className="flex items-center justify-between p-2 border rounded hover:bg-slate-50 transition-colors">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-3.5 w-3.5 text-slate-400" />
+                                  <span className="text-sm">{q.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">{q.status}</Badge>
+                                  <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 문의 초안 이력 */}
+                      {linkedOutcomes.allDrafts.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-500 mb-1.5">문의 초안 이력</p>
+                          <div className="space-y-1.5">
+                            {linkedOutcomes.allDrafts.map((d) => (
+                              <div key={d.id} className="flex items-center justify-between p-2 border rounded bg-slate-50/50">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3.5 w-3.5 text-slate-400" />
+                                  <span className="text-sm">{d.vendorName}</span>
+                                  <span className="text-xs text-slate-400">{d.productName}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <DraftStatusBadge status={d.status} />
+                                  <span className="text-xs text-slate-400">{relativeTime(d.createdAt)}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 판정 기록 + 변경 폼 */}
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1.5">판정 기록</p>
+                        <div className="p-2 border rounded bg-slate-50/50 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <DecisionStateBadge state={linkedOutcomes.decisionState} />
+                            {linkedOutcomes.decisionNote && (
+                              <span className="text-xs text-slate-500 truncate">{linkedOutcomes.decisionNote}</span>
+                            )}
+                            {linkedOutcomes.decidedAt && (
+                              <span className="text-xs text-slate-400 ml-auto shrink-0">
+                                {new Date(linkedOutcomes.decidedAt).toLocaleDateString("ko-KR")}
+                              </span>
+                            )}
+                          </div>
+                          {!decisionForm ? (
+                            <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setDecisionForm({ state: linkedOutcomes.decisionState || "UNDECIDED", note: linkedOutcomes.decisionNote || "" })}>
+                              판정 변경
+                            </Button>
+                          ) : (
+                            <div className="space-y-2 pt-1">
+                              <Select value={decisionForm.state} onValueChange={(v) => setDecisionForm((f) => f ? { ...f, state: v } : f)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="UNDECIDED">검토 중</SelectItem>
+                                  <SelectItem value="APPROVED">승인</SelectItem>
+                                  <SelectItem value="HELD">보류</SelectItem>
+                                  <SelectItem value="REJECTED">반려</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input placeholder="판정 메모 (선택)" value={decisionForm.note} onChange={(e) => setDecisionForm((f) => f ? { ...f, note: e.target.value } : f)} className="text-xs h-8" />
+                              <div className="flex gap-2">
+                                <Button size="sm" className="flex-1 text-xs h-7" onClick={handleSaveDecision} disabled={isDecisionSaving}>
+                                  {isDecisionSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "저장"}
+                                </Button>
+                                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setDecisionForm(null)}>
+                                  취소
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* 견적 초안 생성 CTA */}
                 <Card>
                   <CardHeader className="pb-2">

@@ -33,7 +33,7 @@ jest.mock("@/auth");
 
 jest.mock("@/lib/db", () => ({
   db: {
-    compareSession: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    compareSession: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
     compareInquiryDraft: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     quote: { create: jest.fn(), findMany: jest.fn() },
     product: { findMany: jest.fn() },
@@ -60,7 +60,7 @@ const { generateVendorInquiryDraft } = require("@/lib/compare-workspace/vendor-i
 const { NextRequest } = require("next/server");
 
 // Route handlers
-const { POST: createSession } = require("@/app/api/compare-sessions/route");
+const { GET: listSessions, POST: createSession } = require("@/app/api/compare-sessions/route");
 const { GET: getSession } = require("@/app/api/compare-sessions/[id]/route");
 const { POST: createInquiryDraft, GET: getInquiryDrafts, PATCH: patchInquiryDraft } = require("@/app/api/compare-sessions/[id]/inquiry-draft/route");
 const { POST: createQuoteDraft } = require("@/app/api/compare-sessions/[id]/quote-draft/route");
@@ -257,5 +257,65 @@ describe("PATCH /api/compare-sessions/[id]/decision", () => {
     expect(createActivityLog).toHaveBeenCalledWith(expect.objectContaining({
       activityType: "COMPARE_SESSION_REOPENED", beforeStatus: "APPROVED", afterStatus: "UNDECIDED",
     }));
+  });
+});
+
+describe("GET /api/compare-sessions (list)", () => {
+  it("should return enriched sessions list", async () => {
+    const mockSessions = [
+      {
+        id: "session-1", productIds: ["prod-a", "prod-b"],
+        diffResult: [{ summary: { overallVerdict: "MINOR_DIFFERENCES" } }],
+        decisionState: "APPROVED", decidedBy: "user-1", decidedAt: new Date("2026-03-10"),
+        userId: "mock-user", organizationId: "org-1",
+        createdAt: new Date("2026-03-01"), updatedAt: new Date("2026-03-10"),
+        inquiryDrafts: [{ id: "d1", status: "COPIED" }],
+      },
+    ];
+    db.compareSession.findMany.mockResolvedValue(mockSessions);
+    db.compareSession.count.mockResolvedValue(1);
+    db.quote.findMany.mockResolvedValue([{ id: "q1", comparisonId: "session-1" }]);
+    db.product.findMany.mockResolvedValue([
+      { id: "prod-a", name: "Product A" },
+      { id: "prod-b", name: "Product B" },
+    ]);
+
+    const res = await listSessions(makeRequest("/api/compare-sessions"));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.sessions).toHaveLength(1);
+    expect(data.total).toBe(1);
+    expect(data.sessions[0].productNames).toEqual(["Product A", "Product B"]);
+    expect(data.sessions[0].linkedQuoteCount).toBe(1);
+    expect(data.sessions[0].inquiryDraftCount).toBe(1);
+    expect(data.sessions[0].diffSummaryVerdict).toBe("MINOR_DIFFERENCES");
+    expect(data.sessions[0].decisionState).toBe("APPROVED");
+  });
+
+  it("should filter by decisionState", async () => {
+    db.compareSession.findMany.mockResolvedValue([]);
+    db.compareSession.count.mockResolvedValue(0);
+
+    const res = await listSessions(makeRequest("/api/compare-sessions?status=APPROVED"));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.sessions).toEqual([]);
+    expect(db.compareSession.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ decisionState: "APPROVED" }) })
+    );
+  });
+
+  it("should return empty for no sessions", async () => {
+    db.compareSession.findMany.mockResolvedValue([]);
+    db.compareSession.count.mockResolvedValue(0);
+
+    const res = await listSessions(makeRequest("/api/compare-sessions"));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.sessions).toEqual([]);
+    expect(data.total).toBe(0);
   });
 });
