@@ -826,6 +826,104 @@ export async function queryDailyReviewData(filters: {
   };
 }
 
+// ── Cadence Governance ──
+
+/**
+ * 케이던스 거버넌스 데이터 조회 — 활성 항목 + 전체 관련 로그
+ */
+export async function queryCadenceGovernanceData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const GOVERNANCE_ACTIVITY_TYPES = [
+    ...ASSIGNMENT_ACTIVITY_TYPES,
+    "ITEM_ESCALATED",
+    "ITEM_REVIEW_COMPLETED",
+    "CADENCE_START_OF_DAY",
+    "CADENCE_MIDDAY_CHECK",
+    "CADENCE_END_OF_DAY",
+    "CADENCE_WEEKLY_REVIEW",
+  ];
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: GOVERNANCE_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
+/**
+ * 케이던스 단계 완료 기록
+ */
+export async function logCadenceStepCompletion(params: {
+  stepId: string;
+  actorUserId: string;
+  organizationId?: string;
+  note?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  const eventMap: Record<string, string> = {
+    start_of_day_review: "CADENCE_START_OF_DAY",
+    midday_escalation_check: "CADENCE_MIDDAY_CHECK",
+    end_of_day_carryover: "CADENCE_END_OF_DAY",
+    weekly_bottleneck_review: "CADENCE_WEEKLY_REVIEW",
+  };
+
+  const activityType = eventMap[params.stepId];
+  if (!activityType) {
+    throw new Error(`Invalid cadence step: ${params.stepId}`);
+  }
+
+  await createActivityLog({
+    activityType: activityType as any,
+    userId: params.actorUserId,
+    metadata: {
+      stepId: params.stepId,
+      note: params.note ?? "",
+      completedAt: new Date().toISOString(),
+    },
+    organizationId: params.organizationId ?? null,
+    ipAddress: params.ipAddress ?? null,
+    userAgent: params.userAgent ?? null,
+  } as any);
+}
+
 // ── Helpers ──
 
 /**

@@ -25,6 +25,8 @@ import {
   useAssignmentAction,
   useDailyReview,
   useDailyReviewAction,
+  useCadenceGovernance,
+  useCadenceStepComplete,
   TASK_STATUS_BADGE,
   type TaskStatus,
 } from "@/hooks/use-work-queue";
@@ -50,6 +52,20 @@ import type {
   DailyReviewCategoryId,
   DailyReviewSurface,
 } from "@/lib/work-queue/console-daily-review";
+import {
+  CADENCE_STEP_DEFS,
+  SLA_CATEGORY_DEFS,
+  SLA_CATEGORY_LABELS,
+  LEAD_INTERVENTION_LABELS,
+  GOVERNANCE_SIGNAL_LABELS,
+} from "@/lib/work-queue/console-cadence-governance";
+import type {
+  GovernanceReport,
+  CadenceStatus,
+  SLAStatus,
+  LeadInterventionTrigger,
+  GovernanceSignalValue,
+} from "@/lib/work-queue/console-cadence-governance";
 
 // ── Tier Visual Config ──
 
@@ -108,7 +124,7 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
 
 // ── Main Console Component ──
 
-type ConsoleMode = "queue" | "daily_review";
+type ConsoleMode = "queue" | "daily_review" | "governance";
 
 export function WorkQueueConsole() {
   const [mode, setMode] = useState<ConsoleMode>("queue");
@@ -171,10 +187,21 @@ export function WorkQueueConsole() {
           >
             일일 검토
           </button>
+          <button
+            onClick={() => setMode("governance")}
+            className={cn(
+              "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+              mode === "governance" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            거버넌스
+          </button>
         </div>
       </div>
 
-      {mode === "daily_review" ? (
+      {mode === "governance" ? (
+        <GovernanceView />
+      ) : mode === "daily_review" ? (
         <DailyReviewView />
       ) : (
         <>
@@ -706,6 +733,187 @@ function DailyReviewCard({ reviewItem, style }: { reviewItem: DailyReviewItem; s
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Governance View ──
+
+function GovernanceView() {
+  const { data: report, isLoading } = useCadenceGovernance();
+  const cadenceComplete = useCadenceStepComplete();
+
+  if (isLoading || !report) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>거버넌스 보고서 로딩 중...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Cadence Statuses */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">운영 케이던스</h3>
+        <div className="grid gap-2">
+          {report.cadenceStatuses.map((cs) => (
+            <CadenceStepCard
+              key={cs.stepId}
+              status={cs}
+              onComplete={() => cadenceComplete.mutate({ stepId: cs.stepId })}
+              isCompleting={cadenceComplete.isPending}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* SLA Statuses */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">SLA 준수 현황</h3>
+        <div className="grid gap-2">
+          {report.slaStatuses.map((sla) => (
+            <SLAStatusCard key={sla.categoryId} status={sla} />
+          ))}
+        </div>
+      </div>
+
+      {/* Lead Intervention Triggers */}
+      {report.interventionTriggers.some((t) => t.triggered) && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-red-600">리드 개입 필요</h3>
+          <div className="grid gap-2">
+            {report.interventionTriggers
+              .filter((t) => t.triggered)
+              .map((t) => (
+                <InterventionTriggerCard key={t.caseId} trigger={t} />
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Governance Signals */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">운영 신호</h3>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {report.signals.map((sig) => (
+            <GovernanceSignalCard key={sig.signalId} signal={sig} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CadenceStepCard({ status, onComplete, isCompleting }: {
+  status: CadenceStatus;
+  onComplete: () => void;
+  isCompleting: boolean;
+}) {
+  const def = CADENCE_STEP_DEFS[status.stepId];
+  return (
+    <div className={cn(
+      "flex items-center justify-between rounded-lg border px-4 py-3",
+      status.isRelevant ? "border-yellow-200 bg-yellow-50" : "border-gray-200 bg-gray-50",
+    )}>
+      <div className="space-y-0.5">
+        <div className="text-sm font-medium">{def.label}</div>
+        <div className="text-xs text-muted-foreground">{status.description}</div>
+      </div>
+      <div className="flex items-center gap-2">
+        {status.pendingItemCount > 0 && (
+          <Badge variant="outline" className="text-xs">
+            {status.pendingItemCount}건 대기
+          </Badge>
+        )}
+        {status.isRelevant && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onComplete}
+            disabled={isCompleting}
+            className="text-xs h-7"
+          >
+            {isCompleting ? <Loader2 className="h-3 w-3 animate-spin" /> : "완료"}
+          </Button>
+        )}
+        {!status.isRelevant && (
+          <Badge variant="secondary" className="text-xs">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            완료
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SLAStatusCard({ status }: { status: SLAStatus }) {
+  const label = SLA_CATEGORY_LABELS[status.categoryId];
+  const compliancePct = Math.round(status.complianceRate * 100);
+  const isBad = status.breached > 0;
+
+  return (
+    <div className={cn(
+      "rounded-lg border px-4 py-3",
+      isBad ? "border-red-200 bg-red-50" : "border-green-200 bg-green-50",
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">{label}</div>
+        <Badge variant={isBad ? "destructive" : "secondary"} className="text-xs">
+          {compliancePct}%
+        </Badge>
+      </div>
+      {status.totalItems > 0 && (
+        <div className="text-xs text-muted-foreground mt-1">
+          목표 {status.withinTarget} · 경고 {status.withinBreach} · 위반 {status.breached} / 전체 {status.totalItems}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InterventionTriggerCard({ trigger }: { trigger: LeadInterventionTrigger }) {
+  const label = LEAD_INTERVENTION_LABELS[trigger.caseId];
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+        <div className="text-sm font-medium text-red-800">{label}</div>
+      </div>
+      <div className="text-xs text-red-700 mt-1">{trigger.detail}</div>
+      {trigger.affectedItemIds.length > 0 && (
+        <div className="text-xs text-muted-foreground mt-1">
+          영향 항목 {trigger.affectedItemIds.length}건
+          {trigger.affectedUserIds.length > 0 && ` · 담당자 ${trigger.affectedUserIds.length}명`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GovernanceSignalCard({ signal }: { signal: GovernanceSignalValue }) {
+  const label = GOVERNANCE_SIGNAL_LABELS[signal.signalId];
+  return (
+    <div className={cn(
+      "rounded-lg border px-4 py-3",
+      signal.thresholdExceeded ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-gray-50",
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">{label}</div>
+        <span className={cn(
+          "text-lg font-bold",
+          signal.thresholdExceeded ? "text-orange-600" : "text-foreground",
+        )}>
+          {typeof signal.value === "number" && signal.value % 1 !== 0
+            ? signal.value.toFixed(1)
+            : signal.value}
+        </span>
+      </div>
+      {signal.thresholdExceeded && (
+        <div className="text-xs text-orange-600 mt-1">임계값 초과</div>
+      )}
     </div>
   );
 }

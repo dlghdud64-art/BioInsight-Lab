@@ -229,8 +229,46 @@ export type {
 export {
   executeDailyReviewAction,
   queryDailyReviewData,
+  queryCadenceGovernanceData,
+  logCadenceStepCompletion,
 } from "./work-queue-service";
 
 export type {
   DailyReviewActionParams,
 } from "./work-queue-service";
+
+export {
+  evaluateCadenceStatuses,
+  evaluateSLAStatuses,
+  evaluateLeadInterventionTriggers,
+  computeGovernanceSignals,
+  generateGovernanceReport,
+  getReviewOutcomeGovernance,
+  getCarryOverReasonForOutcome,
+  CADENCE_STEP_DEFS,
+  CADENCE_STEP_LABELS,
+  SLA_CATEGORY_DEFS,
+  SLA_CATEGORY_LABELS,
+  LEAD_INTERVENTION_CASE_DEFS,
+  LEAD_INTERVENTION_LABELS,
+  GOVERNANCE_SIGNAL_DEFS,
+  GOVERNANCE_SIGNAL_LABELS,
+  REVIEW_OUTCOME_GOVERNANCE,
+} from "./console-cadence-governance";
+
+export type {
+  CadenceStepId,
+  CadenceStepDef,
+  SLACategoryId,
+  SLACategoryDef,
+  LeadInterventionCaseId,
+  LeadInterventionCaseDef,
+  GovernanceSignalId,
+  GovernanceSignalDef,
+  CadenceStatus,
+  SLAStatus,
+  LeadInterventionTrigger,
+  GovernanceSignalValue,
+  GovernanceReport,
+  ReviewOutcomeGovernanceDef,
+} from "./console-cadence-governance";

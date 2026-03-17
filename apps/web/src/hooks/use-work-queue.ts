@@ -494,6 +494,56 @@ export function useDailyReviewAction() {
   });
 }
 
+/**
+ * 케이던스 거버넌스 보고서 조회
+ */
+export function useCadenceGovernance(organizationId?: string) {
+  return useQuery<import("@/lib/work-queue/console-cadence-governance").GovernanceReport>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "cadence-governance", organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue/cadence-governance?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch governance report");
+      return res.json();
+    },
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * 케이던스 단계 완료 기록
+ */
+export function useCadenceStepComplete() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      stepId: string;
+      note?: string;
+      organizationId?: string;
+    }) => {
+      const res = await fetch("/api/work-queue/cadence-governance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Cadence step completion failed");
+      }
+      return res.json();
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };
