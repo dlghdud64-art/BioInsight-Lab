@@ -31,6 +31,7 @@ import {
   Plus,
   RefreshCw,
   Truck,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
@@ -50,37 +51,32 @@ interface Quote {
   deliveryLocation?: string;
   items: Array<{
     id: string;
-    product: {
-      id: string;
-      name: string;
-    };
+    product: { id: string; name: string };
     quantity: number;
   }>;
   responses?: Array<{
     id: string;
-    vendor: {
-      name: string;
-    };
+    vendor: { name: string };
     totalPrice?: number;
     createdAt: string;
   }>;
 }
 
-// ── 운영 상태 파생 ──────────────────────────────────────────
+// ── 운영 상태 파생 ──
 function isDelayed(q: Quote): boolean {
   if (!q.deliveryDate) return false;
   if (q.status === "COMPLETED" || q.status === "CANCELLED") return false;
   return new Date(q.deliveryDate) < new Date();
 }
 
-const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-100",     text: "text-red-800",     border: "border-red-300" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100",  text: "text-purple-800",  border: "border-purple-300" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",   text: "text-amber-800",   border: "border-amber-300" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-slate-100",   text: "text-slate-700",   border: "border-slate-300" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-50",      text: "text-red-600",     border: "border-red-200" },
+const OP_STATUS: Record<string, { label: string; borderClass: string }> = {
+  지연:       { label: "지연",           borderClass: "border-l-red-500" },
+  비교_검토:  { label: "비교 검토 필요", borderClass: "border-l-purple-500" },
+  일부_회신:  { label: "일부 회신 도착", borderClass: "border-l-blue-400" },
+  회신_대기:  { label: "회신 대기 중",   borderClass: "border-l-amber-400" },
+  요청_접수:  { label: "요청 접수",      borderClass: "border-l-slate-300" },
+  발주_완료:  { label: "발주 완료",      borderClass: "border-l-emerald-400" },
+  취소됨:     { label: "취소됨",         borderClass: "border-l-slate-200" },
 };
 
 function getOpStatus(q: Quote) {
@@ -98,127 +94,84 @@ function getOpStatus(q: Quote) {
 
 function getPriority(q: Quote): number {
   if (isDelayed(q)) return 0;
-  const map: Record<QuoteStatus, number> = {
-    RESPONDED: 1, SENT: 2, PENDING: 3, COMPLETED: 4, CANCELLED: 5,
-  };
-  return map[q.status] ?? 9;
+  return { RESPONDED: 1, SENT: 2, PENDING: 3, COMPLETED: 4, CANCELLED: 5 }[q.status] ?? 9;
 }
 
-// ── 견적 카드 ──────────────────────────────────────────────
-function QuoteCard({ quote }: { quote: Quote }) {
+// ── Primary CTA label based on status ──
+function getPrimaryCta(q: Quote): { label: string; variant: "default" | "outline" } {
+  if (q.status === "RESPONDED") return { label: "비교표 보기", variant: "default" };
+  if (q.status === "PENDING") return { label: "발송하기", variant: "default" };
+  if (q.status === "SENT" && (q.responses?.length ?? 0) > 0) return { label: "회신 확인", variant: "outline" };
+  if (q.status === "COMPLETED") return { label: "구매 요청", variant: "default" };
+  return { label: "상세보기", variant: "outline" };
+}
+
+// ── Quote Row ──
+function QuoteRow({ quote }: { quote: Quote }) {
   const opStatus = getOpStatus(quote);
   const itemCount = quote.items.length;
   const responseCount = quote.responses?.length ?? 0;
-  const prices = (quote.responses ?? [])
-    .map((r) => r.totalPrice)
-    .filter((p): p is number => typeof p === "number" && p > 0);
+  const prices = (quote.responses ?? []).map((r) => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
   const maxPrice = prices.length ? Math.max(...prices) : null;
   const delayed = isDelayed(quote);
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
+  const cta = getPrimaryCta(quote);
+  const ctaHref = quote.status === "COMPLETED"
+    ? `/dashboard/purchases?quoteId=${quote.id}`
+    : `/quotes/${quote.id}`;
+
+  const ageDays = Math.floor((Date.now() - new Date(quote.createdAt).getTime()) / 86400000);
 
   return (
-    <div className={`bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow p-4 ${delayed ? "border-red-200" : "border-slate-200/80"}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          {/* 상태 뱃지 + 참조번호 */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
-              {opStatus.label}
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">{quoteRef}</span>
-            {delayed && (
-              <span className="text-[10px] font-semibold text-red-600 flex items-center gap-0.5">
-                <AlertCircle className="h-3 w-3" /> 마감 초과
-              </span>
-            )}
-          </div>
-
-          {/* 제목 */}
-          <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-2">{quote.title}</h3>
-
-          {/* 메타 정보 */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              {itemCount}개 품목
-            </span>
-            <span className={`text-xs flex items-center gap-1 ${responseCount > 0 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
-              <Send className="h-3 w-3" />
-              {responseCount > 0 ? `회신 ${responseCount}건` : "회신 없음"}
-            </span>
-            {minPrice !== null && (
-              <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
-                <Truck className="h-3 w-3 text-slate-400" />
-                {minPrice === maxPrice
-                  ? `₩${minPrice.toLocaleString()}`
-                  : `₩${minPrice.toLocaleString()} ~ ₩${maxPrice!.toLocaleString()}`}
-              </span>
-            )}
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
-            </span>
-            {quote.deliveryDate && (
-              <span className={`text-xs flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
-                <Clock className="h-3 w-3" />
-                납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 빠른 액션 */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[88px]">
-          <Link href={`/quotes/${quote.id}`}>
-            <Button
-              size="sm"
-              variant={quote.status === "RESPONDED" ? "default" : "outline"}
-              className={`h-7 text-xs w-full ${quote.status === "RESPONDED" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-            >
-              {quote.status === "RESPONDED" ? "비교표 보기" : "상세보기"}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
+    <div className={`flex items-center gap-3 px-3 py-2 border-b border-l-[3px] hover:bg-muted/30 transition-colors ${opStatus.borderClass}`}>
+      {/* Title + status + meta */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <Link href={`/quotes/${quote.id}`} className="text-sm font-medium text-foreground truncate hover:underline underline-offset-2">
+            {quote.title}
           </Link>
-          {quote.status === "PENDING" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-amber-500 hover:bg-amber-600 text-white">
-                발송하기
-              </Button>
-            </Link>
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+            {opStatus.label}
+          </Badge>
+          {delayed && (
+            <span className="text-[10px] font-medium text-red-600 flex-shrink-0">마감 초과</span>
           )}
-          {quote.status === "RESPONDED" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50">
-                발주 전환
-              </Button>
-            </Link>
-          )}
-          {quote.status === "SENT" && responseCount > 0 && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full text-slate-600">
-                회신 확인
-              </Button>
-            </Link>
-          )}
-          {quote.status === "COMPLETED" && (
-            <Link href={`/dashboard/purchases?quoteId=${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                <ShoppingCart className="h-3 w-3 mr-1" />
-                구매 요청
-              </Button>
-            </Link>
+        </div>
+        <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+          <span className="font-mono">{quoteRef}</span>
+          <span>{itemCount}개 품목</span>
+          {responseCount > 0 && <span className="text-blue-600 font-medium">회신 {responseCount}건</span>}
+          {minPrice !== null && (
+            <span className="font-medium text-foreground">
+              {minPrice === maxPrice ? `₩${minPrice.toLocaleString()}` : `₩${minPrice.toLocaleString()} ~ ₩${maxPrice!.toLocaleString()}`}
+            </span>
           )}
         </div>
       </div>
 
-      {/* 운영 실행 현황 */}
-      <OpsExecutionContext
-        entityType="QUOTE"
-        entityId={quote.id}
-        compact
-        className="mt-3 pt-3 border-t border-slate-100"
-      />
+      {/* Age */}
+      <span className={`text-xs tabular-nums flex-shrink-0 whitespace-nowrap ${delayed ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
+        {ageDays === 0 ? "오늘" : `${ageDays}일`}
+      </span>
+
+      {/* Primary CTA */}
+      <Link href={ctaHref} className="flex-shrink-0">
+        <Button size="sm" variant={cta.variant} className="h-6 text-[11px] px-2.5">
+          {cta.label}
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+// ── Section Header ──
+function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 border-b pb-2">
+      {icon}
+      <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</h2>
+      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
     </div>
   );
 }
@@ -227,19 +180,15 @@ function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  // URL ?status= 파라미터가 있으면 초기 필터로 세팅 (대시보드 카드 원클릭 진입)
   const [statusFilter, setStatusFilter] = useState<string>(
     searchParams.get("status") ?? "all"
   );
-  const [sortBy, setSortBy] = useState<string>("newest");
 
-  // URL 파라미터 변경 시 필터 동기화 (뒤로가기 후 재진입 등)
   useEffect(() => {
     const s = searchParams.get("status");
     if (s) setStatusFilter(s);
   }, [searchParams]);
 
-  // Deep-link: work_item + entity_id → 해당 견적으로 스크롤
   const entityIdParam = searchParams.get("entity_id");
   useEffect(() => {
     if (entityIdParam) {
@@ -248,15 +197,11 @@ function QuotesPageContent() {
     }
   }, [entityIdParam]);
 
-  // 견적 목록 조회
-  // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)
-  // refetchOnMount: "always" - 페이지 재방문 시 항상 재요청 (Next.js 라우터 캐시 우회)
   const { data: quotesData, isLoading } = useQuery({
-    queryKey: ["quotes", statusFilter, sortBy],
+    queryKey: ["quotes", statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (statusFilter !== "all" && statusFilter !== "DEADLINE_TODAY") params.append("status", statusFilter);
-      if (sortBy) params.append("sortBy", sortBy);
       const response = await fetch(`/api/quotes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
@@ -270,9 +215,10 @@ function QuotesPageContent() {
   if (status === "loading") {
     return (
       <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />)}
+        <div className="h-5 w-48 bg-muted rounded animate-pulse" />
+        <div className="h-10 bg-muted rounded-md animate-pulse" />
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />)}
         </div>
       </div>
     );
@@ -280,7 +226,6 @@ function QuotesPageContent() {
 
   const quotes: Quote[] = quotesData?.quotes || [];
 
-  // 검색 필터링
   const filteredQuotes = quotes
     .filter((quote) => {
       if (!searchQuery) return true;
@@ -300,28 +245,26 @@ function QuotesPageContent() {
     })
     .sort((a, b) => getPriority(a) - getPriority(b));
 
-  // 운영 요약 카운트
   const today = new Date().toDateString();
   const summaryStats = {
     pendingResponse: quotes.filter((q) => q.status === "SENT").length,
-    needsReview:     quotes.filter((q) => q.status === "RESPONDED").length,
-    todayDeadline:   quotes.filter((q) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED").length,
-    readyToOrder:    quotes.filter((q) => q.status === "RESPONDED" && (q.responses?.length ?? 0) > 0).length,
+    needsReview: quotes.filter((q) => q.status === "RESPONDED").length,
+    todayDeadline: quotes.filter((q) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED").length,
+    readyToOrder: quotes.filter((q) => q.status === "RESPONDED" && (q.responses?.length ?? 0) > 0).length,
   };
 
-  // 섹션 분류 (검색/필터 결과 기준)
-  const urgentQuotes     = filteredQuotes.filter((q) => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
+  const urgentQuotes = filteredQuotes.filter((q) => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
   const inProgressQuotes = filteredQuotes.filter((q) => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
-  const completedQuotes  = filteredQuotes.filter((q) => q.status === "COMPLETED" || q.status === "CANCELLED");
+  const completedQuotes = filteredQuotes.filter((q) => q.status === "COMPLETED" || q.status === "CANCELLED");
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
-      {/* ── 헤더 ── */}
+      {/* ── Header ── */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
-          <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
+          <h1 className="text-lg font-semibold text-foreground">견적 운영 워크큐</h1>
+          <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <AiActionButton
@@ -338,12 +281,12 @@ function QuotesPageContent() {
             }}
             variant="outline"
             size="sm"
-            className="h-9 text-sm hidden sm:flex"
+            className="h-8 text-xs hidden sm:flex"
           />
           <PermissionGate permission="quotes.create">
             <Link href="/compare/quote" className="flex-shrink-0">
-              <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4" />
+              <Button size="sm" className="h-8 text-xs gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">새 견적 요청</span>
                 <span className="sm:hidden">새 요청</span>
               </Button>
@@ -352,45 +295,48 @@ function QuotesPageContent() {
         </div>
       </div>
 
-      {/* ── 운영 요약 스트립 ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-500" />,      filter: "SENT",           hover: "hover:border-amber-300",   active: "border-amber-300 bg-amber-50/30 ring-2 ring-amber-400/50" },
-          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-500" />,  filter: "RESPONDED",      hover: "hover:border-purple-300",  active: "border-purple-300 bg-purple-50/30 ring-2 ring-purple-400/50" },
-          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-500" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-300",     active: "border-red-300 bg-red-50/30 ring-2 ring-red-400/50" },
-          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-500" />, filter: "RESPONDED",      hover: "hover:border-emerald-300", active: "border-emerald-300 bg-emerald-50/30 ring-2 ring-emerald-400/50" },
-        ].map(({ label, count, icon, filter, hover, active }) => {
-          const isActive = statusFilter === filter;
-          return (
-          <button
-            key={label}
-            onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-            className={`text-left rounded-xl border bg-white p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {icon}
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
-            </div>
-            <div className="text-2xl font-bold text-slate-900">{isLoading ? "—" : count}</div>
-          </button>
-          );
-        })}
+      {/* ── Summary Strip ── */}
+      <div className="flex flex-wrap items-center gap-4 border rounded-md px-3 py-1.5">
+        <button onClick={() => setStatusFilter(p => p === "SENT" ? "all" : "SENT")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "SENT" ? "font-bold" : ""}`}>
+          <span className="text-xs text-muted-foreground">회신 대기</span>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.pendingResponse > 0 ? "text-amber-600" : "text-foreground"}`}>
+            {isLoading ? "—" : summaryStats.pendingResponse}
+          </span>
+        </button>
+        <button onClick={() => setStatusFilter(p => p === "RESPONDED" ? "all" : "RESPONDED")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "RESPONDED" ? "font-bold" : ""}`}>
+          <span className="text-xs text-muted-foreground">비교 검토 필요</span>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.needsReview > 0 ? "text-purple-600" : "text-foreground"}`}>
+            {isLoading ? "—" : summaryStats.needsReview}
+          </span>
+        </button>
+        <button onClick={() => setStatusFilter(p => p === "DEADLINE_TODAY" ? "all" : "DEADLINE_TODAY")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "DEADLINE_TODAY" ? "font-bold" : ""}`}>
+          <span className="text-xs text-muted-foreground">오늘 마감</span>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.todayDeadline > 0 ? "text-red-600" : "text-foreground"}`}>
+            {isLoading ? "—" : summaryStats.todayDeadline}
+          </span>
+        </button>
+        <button onClick={() => setStatusFilter(p => p === "RESPONDED" ? "all" : "RESPONDED")} className="flex items-center gap-1.5 hover:underline underline-offset-2">
+          <span className="text-xs text-muted-foreground">발주 전환 가능</span>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.readyToOrder > 0 ? "text-emerald-600" : "text-foreground"}`}>
+            {isLoading ? "—" : summaryStats.readyToOrder}
+          </span>
+        </button>
       </div>
 
-      {/* ── 검색 + 필터 ── */}
+      {/* ── Search + Filter ── */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="견적명 / 품목명 / 요청 번호 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-sm"
+            className="pl-9 h-8 text-sm"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm">
-            <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" />
+          <SelectTrigger className="w-full sm:w-[160px] h-8 text-sm">
+            <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
             <SelectValue placeholder="상태 필터" />
           </SelectTrigger>
           <SelectContent>
@@ -405,67 +351,58 @@ function QuotesPageContent() {
         </Select>
       </div>
 
-      {/* ── 로딩 스켈레톤 ── */}
+      {/* ── Loading ── */}
       {isLoading && (
         <div className="space-y-2">
-          {[0,1,2].map((i) => (
-            <div key={i} className="h-28 bg-slate-100 rounded-xl animate-pulse" />
-          ))}
+          {[0, 1, 2].map((i) => <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />)}
         </div>
       )}
 
-      {/* ── 섹션: 즉시 처리 필요 ── */}
+      {/* ── Section: Urgent ── */}
       {!isLoading && urgentQuotes.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">{urgentQuotes.length}</span>
+        <div className="space-y-0">
+          <SectionHeader icon={<AlertCircle className="h-3.5 w-3.5 text-red-500" />} title="즉시 처리 필요" count={urgentQuotes.length} />
+          <div className="bg-card border border-t-0 rounded-b-md">
+            {urgentQuotes.map((quote) => <QuoteRow key={quote.id} quote={quote} />)}
           </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
         </div>
       )}
 
-      {/* ── 섹션: 진행 중 ── */}
+      {/* ── Section: In Progress ── */}
       {!isLoading && inProgressQuotes.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{inProgressQuotes.length}</span>
+        <div className="space-y-0">
+          <SectionHeader icon={<Clock className="h-3.5 w-3.5 text-amber-500" />} title="진행 중" count={inProgressQuotes.length} />
+          <div className="bg-card border border-t-0 rounded-b-md">
+            {inProgressQuotes.map((quote) => <QuoteRow key={quote.id} quote={quote} />)}
           </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
         </div>
       )}
 
-      {/* ── 섹션: 완료 (접을 수 있는) ── */}
+      {/* ── Section: Completed ── */}
       {!isLoading && completedQuotes.length > 0 && (
         <details className="group">
-          <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold text-slate-700">완료 / 취소</span>
-            <span className="text-xs text-slate-400">({completedQuotes.length}건)</span>
-            <span className="ml-1 text-xs text-slate-400 group-open:hidden">▶ 펼치기</span>
-            <span className="ml-1 text-xs text-slate-400 hidden group-open:inline">▼ 접기</span>
+          <summary className="flex items-center gap-2 cursor-pointer list-none select-none border-b pb-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">완료 / 취소</span>
+            <span className="text-xs text-muted-foreground">({completedQuotes.length}건)</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground ml-auto group-open:rotate-90 transition-transform" />
           </summary>
-          <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
+          <div className="bg-card border border-t-0 rounded-b-md mt-0">
+            {completedQuotes.map((quote) => <QuoteRow key={quote.id} quote={quote} />)}
           </div>
         </details>
       )}
 
-      {/* ── 빈 상태 ── */}
+      {/* ── Empty State ── */}
       {!isLoading && filteredQuotes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-          <ShoppingCart className="h-10 w-10 opacity-25" />
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+          <ShoppingCart className="h-8 w-8 opacity-25" />
           <p className="text-sm">
             {searchQuery || statusFilter !== "all" ? "조건에 맞는 견적이 없습니다" : "아직 견적 요청이 없습니다"}
           </p>
           {!searchQuery && statusFilter === "all" && (
             <Link href="/compare/quote">
-              <Button size="sm" className="mt-1 h-8 text-xs bg-blue-600 hover:bg-blue-700">
-                첫 견적 요청하기
-              </Button>
+              <Button size="sm" className="mt-1 h-7 text-xs">첫 견적 요청하기</Button>
             </Link>
           )}
           {(searchQuery || statusFilter !== "all") && (
@@ -484,7 +421,7 @@ export default function QuotesPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       }
     >
