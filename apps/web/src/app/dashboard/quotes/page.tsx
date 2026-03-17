@@ -74,9 +74,9 @@ const OP_STATUS: Record<string, { label: string; borderClass: string }> = {
   비교_검토:  { label: "비교 검토 필요", borderClass: "border-l-purple-500" },
   일부_회신:  { label: "일부 회신 도착", borderClass: "border-l-blue-400" },
   회신_대기:  { label: "회신 대기 중",   borderClass: "border-l-amber-400" },
-  요청_접수:  { label: "요청 접수",      borderClass: "border-l-slate-300" },
+  요청_접수:  { label: "요청 접수",      borderClass: "border-l-slate-600" },
   발주_완료:  { label: "발주 완료",      borderClass: "border-l-emerald-400" },
-  취소됨:     { label: "취소됨",         borderClass: "border-l-slate-200" },
+  취소됨:     { label: "취소됨",         borderClass: "border-l-slate-700" },
 };
 
 function getOpStatus(q: Quote) {
@@ -135,13 +135,13 @@ function QuoteRow({ quote }: { quote: Quote }) {
             {opStatus.label}
           </Badge>
           {delayed && (
-            <span className="text-[10px] font-medium text-red-600 flex-shrink-0">마감 초과</span>
+            <span className="text-[10px] font-medium text-red-400 flex-shrink-0">마감 초과</span>
           )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
           <span className="font-mono">{quoteRef}</span>
           <span>{itemCount}개 품목</span>
-          {responseCount > 0 && <span className="text-blue-600 font-medium">회신 {responseCount}건</span>}
+          {responseCount > 0 && <span className="text-blue-400 font-medium">회신 {responseCount}건</span>}
           {minPrice !== null && (
             <span className="font-medium text-foreground">
               {minPrice === maxPrice ? `₩${minPrice.toLocaleString()}` : `₩${minPrice.toLocaleString()} ~ ₩${maxPrice!.toLocaleString()}`}
@@ -151,7 +151,7 @@ function QuoteRow({ quote }: { quote: Quote }) {
       </div>
 
       {/* Age */}
-      <span className={`text-xs tabular-nums flex-shrink-0 whitespace-nowrap ${delayed ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
+      <span className={`text-xs tabular-nums flex-shrink-0 whitespace-nowrap ${delayed ? "text-red-400 font-medium" : "text-muted-foreground"}`}>
         {ageDays === 0 ? "오늘" : `${ageDays}일`}
       </span>
 
@@ -299,25 +299,25 @@ function QuotesPageContent() {
       <div className="flex flex-wrap items-center gap-4 border rounded-md px-3 py-1.5">
         <button onClick={() => setStatusFilter(p => p === "SENT" ? "all" : "SENT")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "SENT" ? "font-bold" : ""}`}>
           <span className="text-xs text-muted-foreground">회신 대기</span>
-          <span className={`text-sm font-semibold tabular-nums ${summaryStats.pendingResponse > 0 ? "text-amber-600" : "text-foreground"}`}>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.pendingResponse > 0 ? "text-amber-400" : "text-foreground"}`}>
             {isLoading ? "—" : summaryStats.pendingResponse}
           </span>
         </button>
         <button onClick={() => setStatusFilter(p => p === "RESPONDED" ? "all" : "RESPONDED")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "RESPONDED" ? "font-bold" : ""}`}>
           <span className="text-xs text-muted-foreground">비교 검토 필요</span>
-          <span className={`text-sm font-semibold tabular-nums ${summaryStats.needsReview > 0 ? "text-purple-600" : "text-foreground"}`}>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.needsReview > 0 ? "text-purple-400" : "text-foreground"}`}>
             {isLoading ? "—" : summaryStats.needsReview}
           </span>
         </button>
         <button onClick={() => setStatusFilter(p => p === "DEADLINE_TODAY" ? "all" : "DEADLINE_TODAY")} className={`flex items-center gap-1.5 hover:underline underline-offset-2 ${statusFilter === "DEADLINE_TODAY" ? "font-bold" : ""}`}>
           <span className="text-xs text-muted-foreground">오늘 마감</span>
-          <span className={`text-sm font-semibold tabular-nums ${summaryStats.todayDeadline > 0 ? "text-red-600" : "text-foreground"}`}>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.todayDeadline > 0 ? "text-red-400" : "text-foreground"}`}>
             {isLoading ? "—" : summaryStats.todayDeadline}
           </span>
         </button>
         <button onClick={() => setStatusFilter(p => p === "RESPONDED" ? "all" : "RESPONDED")} className="flex items-center gap-1.5 hover:underline underline-offset-2">
           <span className="text-xs text-muted-foreground">발주 전환 가능</span>
-          <span className={`text-sm font-semibold tabular-nums ${summaryStats.readyToOrder > 0 ? "text-emerald-600" : "text-foreground"}`}>
+          <span className={`text-sm font-semibold tabular-nums ${summaryStats.readyToOrder > 0 ? "text-emerald-400" : "text-foreground"}`}>
             {isLoading ? "—" : summaryStats.readyToOrder}
           </span>
         </button>
@@ -406,7 +406,7 @@ function QuotesPageContent() {
             </Link>
           )}
           {(searchQuery || statusFilter !== "all") && (
-            <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="text-xs text-blue-600 hover:underline">
+            <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="text-xs text-blue-400 hover:underline">
               필터 초기화
             </button>
           )}

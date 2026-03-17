@@ -236,7 +236,7 @@ export function DateRangePicker({
                   key={p.key}
                   type="button"
                   onClick={() => handlePreset(p.key)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700 bg-slate-800 text-slate-300 hover:bg-blue-950/30 hover:border-blue-700 hover:text-blue-400 transition-colors"
                 >
                   {p.label}
                 </button>
@@ -245,8 +245,8 @@ export function DateRangePicker({
 
             {/* Current selection display */}
             {date?.from && (
-              <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              <div className="mb-4 p-3 rounded-lg bg-blue-950/20 border border-blue-900/40">
+                <p className="text-xs text-blue-400 font-medium">
                   {format(date.from, "yyyy.MM.dd", { locale: ko })}
                   {date.to && <> ~ {format(date.to, "yyyy.MM.dd", { locale: ko })}</>}
                 </p>
@@ -274,7 +274,7 @@ export function DateRangePicker({
             </SheetHeader>
 
             {/* Month navigation */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
               <Button
                 variant="ghost"
                 size="sm"
@@ -287,7 +287,7 @@ export function DateRangePicker({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <span className="text-sm font-semibold text-slate-300">
                 {format(mobileMonth, "yyyy년 M월", { locale: ko })}
               </span>
               <Button
@@ -309,13 +309,13 @@ export function DateRangePicker({
               <p className="text-xs text-slate-500">
                 {mobileTempDate?.from ? (
                   <>
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                    <span className="font-medium text-slate-300">
                       {format(mobileTempDate.from, "MM.dd", { locale: ko })}
                     </span>
                     {mobileTempDate.to ? (
                       <>
                         {" ~ "}
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-slate-300">
                           {format(mobileTempDate.to, "MM.dd", { locale: ko })}
                         </span>
                       </>
@@ -344,7 +344,7 @@ export function DateRangePicker({
             </div>
 
             {/* Bottom fixed bar: 초기화 + 적용 */}
-            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-800 bg-slate-900">
               <Button
                 variant="outline"
                 className="flex-1 h-10 text-sm"

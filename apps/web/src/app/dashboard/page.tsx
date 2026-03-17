@@ -58,7 +58,7 @@ function ActionRow({ icon, title, subtitle, href, warn }: {
     <Link href={href} className="flex items-center gap-3 px-3 py-2 border-b last:border-b-0 hover:bg-muted/30 transition-colors group">
       <div className="flex-shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${warn ? "text-red-700 dark:text-red-400" : "text-foreground"}`}>{title}</p>
+        <p className={`text-sm font-medium truncate ${warn ? "text-red-400" : "text-foreground"}`}>{title}</p>
         <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
       </div>
       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0 group-hover:text-foreground transition-colors" />

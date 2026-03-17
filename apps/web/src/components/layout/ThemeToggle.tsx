@@ -34,7 +34,7 @@ export function FloatingThemeToggle() {
   };
 
   const buttonClass =
-    "fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full shadow-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:scale-110 transition-transform hidden md:flex";
+    "fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full shadow-2xl border-slate-700 bg-slate-900 hover:scale-110 transition-transform hidden md:flex";
 
   if (!mounted) {
     return (
@@ -58,8 +58,7 @@ export function FloatingThemeToggle() {
       aria-label={(resolvedTheme ?? theme) === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
       className={buttonClass}
     >
-      <Sun className="h-6 w-6 dark:hidden text-amber-500" />
-      <Moon className="hidden dark:block h-6 w-6 text-blue-400" />
+      <Moon className="h-6 w-6 text-blue-400" />
     </Button>
   );
 }

@@ -77,11 +77,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased dark:bg-[#0b1120] dark:text-slate-100">
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <LocaleProvider>
@@ -92,7 +92,6 @@ export default function RootLayout({
                 </QRScannerProviderWrapper>
                 <Toaster />
                 <CompareFlowGuard />
-                <FloatingThemeToggle />
                 <Analytics />
               </QueryProvider>
             </AuthSessionProvider>

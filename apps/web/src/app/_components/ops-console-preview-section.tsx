@@ -35,17 +35,17 @@ const KEY_FEATURES = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-14 md:py-20 bg-slate-50 border-b border-slate-200">
+    <section className="py-14 md:py-20 bg-slate-900 border-b border-slate-800">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-8 md:mb-12">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
             Operations Console
           </p>
-          <h2 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight mb-1">
+          <h2 className="text-lg md:text-2xl font-bold text-slate-100 tracking-tight mb-1">
             운영 콘솔: 4개 모드로 구매 운영을 통제합니다
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 max-w-xl">
+          <p className="text-xs md:text-sm text-slate-400 max-w-xl">
             작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 모드가 운영 단계에 맞는 뷰를 제공합니다.
           </p>
         </div>
@@ -55,20 +55,20 @@ export function OpsConsolePreviewSection() {
           {CONSOLE_MODES.map((mode) => {
             const Icon = mode.icon;
             return (
-              <div key={mode.title} className="border rounded-md bg-white px-4 py-3">
+              <div key={mode.title} className="border border-slate-800 rounded-md bg-slate-950 px-4 py-3">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Icon className="h-4 w-4 text-slate-600" strokeWidth={1.8} />
-                  <span className="text-sm font-semibold text-slate-800">{mode.title}</span>
+                  <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
+                  <span className="text-sm font-semibold text-slate-200">{mode.title}</span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">{mode.desc}</p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">{mode.desc}</p>
               </div>
             );
           })}
         </div>
 
         {/* Key Features */}
-        <div className="border rounded-md bg-white px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5">
+        <div className="border border-slate-800 rounded-md bg-slate-950 px-4 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2.5">
             Key Capabilities
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -76,8 +76,8 @@ export function OpsConsolePreviewSection() {
               const Icon = feat.icon;
               return (
                 <div key={feat.text} className="flex items-center gap-2.5 py-1">
-                  <Icon className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" strokeWidth={1.8} />
-                  <span className="text-xs text-slate-600">{feat.text}</span>
+                  <Icon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" strokeWidth={1.8} />
+                  <span className="text-xs text-slate-400">{feat.text}</span>
                 </div>
               );
             })}

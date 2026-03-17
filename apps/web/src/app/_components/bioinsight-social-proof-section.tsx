@@ -29,9 +29,9 @@ const metrics = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section className="py-0 bg-slate-50/80 border-y border-slate-200">
+    <section className="py-0 bg-slate-900/80 border-y border-slate-800">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-200/60">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-800/60">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
@@ -39,17 +39,17 @@ export function BioInsightSocialProofSection() {
                 key={metric.label}
                 className="flex items-center justify-center gap-3 py-4 md:py-4 md:px-6"
               >
-                <Icon className="h-5 w-5 text-blue-600 flex-shrink-0" strokeWidth={1.8} />
+                <Icon className="h-5 w-5 text-blue-400 flex-shrink-0" strokeWidth={1.8} />
                 <div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-base md:text-lg font-bold text-blue-700 leading-none">
+                    <span className="text-base md:text-lg font-bold text-blue-400 leading-none">
                       {metric.value}
                     </span>
-                    <span className="text-xs font-medium text-slate-600 leading-none">
+                    <span className="text-xs font-medium text-slate-400 leading-none">
                       {metric.label}
                     </span>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5 whitespace-nowrap">
                     {metric.sub}
                   </div>
                 </div>

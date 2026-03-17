@@ -153,7 +153,7 @@ export default function FAQPage() {
     <div className="flex-1 space-y-4 sm:space-y-6 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
       {/* 페이지 헤더 */}
       <div className="space-y-1 mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-100 tracking-tight">
           도움말 센터
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed hidden sm:block">
@@ -168,7 +168,7 @@ export default function FAQPage() {
           placeholder="질문 키워드로 검색 (예: 견적, 재고, 세금계산서)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 border-slate-200 text-sm bg-white"
+          className="pl-10 h-11 border-slate-700 text-sm bg-slate-900"
         />
       </div>
 
@@ -187,7 +187,7 @@ export default function FAQPage() {
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  : "bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-800/80 hover:border-slate-600"
               }`}
             >
               <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-400"}`} />

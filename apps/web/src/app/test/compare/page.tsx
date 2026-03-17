@@ -287,7 +287,7 @@ export default function TestComparePage() {
     if (!showHighlightDifferences) return "";
     const uniqueValues = new Set(values.map((v) => String(v || "-")));
     if (uniqueValues.size > 1) {
-      return "bg-yellow-50 border-yellow-200";
+      return "bg-yellow-600/10 border-yellow-700";
     }
     return "";
   };
@@ -301,7 +301,7 @@ export default function TestComparePage() {
       if (numericValues.length > 0) {
         const minValue = Math.min(...numericValues);
         if (value === minValue) {
-          return "bg-green-50 border-green-200 font-semibold";
+          return "bg-green-600/10 border-green-700 font-semibold";
         }
       }
     }
@@ -311,7 +311,7 @@ export default function TestComparePage() {
       if (numericValues.length > 0) {
         const minValue = Math.min(...numericValues);
         if (value === minValue) {
-          return "bg-blue-50 border-blue-200 font-semibold";
+          return "bg-blue-600/10 border-blue-700 font-semibold";
         }
       }
     }
@@ -324,8 +324,8 @@ export default function TestComparePage() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-16 px-4 mt-8">
         {/* 헤더 강화 */}
         <div className="text-center mb-12">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Step 2. 제품 비교</h1>
-          <p className="text-sm text-slate-600">스펙·가격·납기를 한눈에 비교하세요</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-100 mb-2">Step 2. 제품 비교</h1>
+          <p className="text-sm text-slate-400">스펙·가격·납기를 한눈에 비교하세요</p>
         </div>
 
         {/* Empty State 디자인 */}
@@ -334,9 +334,9 @@ export default function TestComparePage() {
           <div className="absolute inset-0 opacity-10 pointer-events-none">
             <div className="grid grid-cols-3 gap-4 h-full">
               {[1, 2, 3].map((col) => (
-                <div key={col} className="border-2 border-slate-300 rounded-lg p-4 space-y-2">
+                <div key={col} className="border-2 border-slate-700 rounded-lg p-4 space-y-2">
                   {[1, 2, 3, 4].map((row) => (
-                    <div key={row} className="h-4 bg-slate-200 rounded"></div>
+                    <div key={row} className="h-4 bg-slate-700 rounded"></div>
                   ))}
                 </div>
               ))}
@@ -345,15 +345,15 @@ export default function TestComparePage() {
 
           {/* 저울 아이콘 */}
           <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center mb-6 shadow-lg">
-              <ArrowUpDown className="h-12 w-12 text-indigo-500" strokeWidth={1.5} />
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-900 to-blue-900 flex items-center justify-center mb-6 shadow-lg">
+              <ArrowUpDown className="h-12 w-12 text-indigo-400" strokeWidth={1.5} />
             </div>
             
-            <h3 className="text-xl font-semibold text-slate-900 mb-3">비교할 제품이 없습니다</h3>
-            <p className="text-base text-slate-600 mb-2 max-w-md text-center leading-relaxed">
+            <h3 className="text-xl font-semibold text-slate-100 mb-3">비교할 제품이 없습니다</h3>
+            <p className="text-base text-slate-400 mb-2 max-w-md text-center leading-relaxed">
               Step 1에서 제품을 선택하고 '비교 담기'를 눌러주세요.
             </p>
-            <p className="text-sm text-slate-500 mb-6 max-w-md text-center">
+            <p className="text-sm text-slate-400 mb-6 max-w-md text-center">
               최대 5개까지 제품을 비교할 수 있습니다.
             </p>
             
@@ -390,10 +390,10 @@ export default function TestComparePage() {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <p className="text-sm text-red-600 mb-2">
+              <p className="text-sm text-red-400 mb-2">
                 제품 정보를 불러오는 중 오류가 발생했습니다.
               </p>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-400 mb-4">
                 제품 ID: {compareIds.join(", ")}
               </p>
               <Button
@@ -470,11 +470,11 @@ export default function TestComparePage() {
   return (
       <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-4">
       {/* 헤더 + 주요 액션 */}
-      <div className="border-b border-slate-200 pb-4">
+      <div className="border-b border-slate-700 pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Step 2. 제품 비교</h1>
-            <p className="text-sm text-slate-600">
+            <h1 className="text-2xl font-bold text-slate-100 mb-1">Step 2. 제품 비교</h1>
+            <p className="text-sm text-slate-400">
               스펙·가격·납기를 비교하고 견적 요청할 품목을 선택하세요 ({products.length}개)
             </p>
             <div className="mt-2">
@@ -497,7 +497,7 @@ export default function TestComparePage() {
               선택 항목 견적 리스트에 담기
             </Button>
             <Link href="/test/quote" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto border-slate-300 text-slate-700 whitespace-nowrap">
+              <Button variant="outline" className="w-full sm:w-auto border-slate-700 text-slate-300 whitespace-nowrap">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {quoteItemsCount > 0
                   ? `견적 요청 리스트 보기 (${quoteItemsCount}개)`
@@ -511,7 +511,7 @@ export default function TestComparePage() {
       {/* 비교 도구 버튼 */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="w-full sm:w-auto">
-          <h2 className="text-base font-semibold text-slate-900">비교 도구</h2>
+          <h2 className="text-base font-semibold text-slate-100">비교 도구</h2>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
           <Button
@@ -536,7 +536,7 @@ export default function TestComparePage() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200">
+              <Button variant="outline" size="sm" className="text-[10px] sm:text-xs md:text-sm h-7 sm:h-8 text-slate-400 hover:text-red-400 hover:bg-red-600/10 hover:border-red-700">
                 전체 비우기
               </Button>
             </AlertDialogTrigger>
@@ -606,23 +606,23 @@ export default function TestComparePage() {
       {products.length >= 2 && (
         <div className={`rounded-xl border px-4 py-3 space-y-2 ${
           suitabilityLevel === "high"
-            ? "bg-green-50 border-green-200"
+            ? "bg-green-600/10 border-green-700"
             : suitabilityLevel === "medium"
-            ? "bg-amber-50 border-amber-200"
-            : "bg-orange-50 border-orange-200"
+            ? "bg-amber-600/10 border-amber-700"
+            : "bg-orange-600/10 border-orange-700"
         }`}>
           {/* 적합도 라벨 + 설명 */}
           <div className="flex flex-wrap items-center gap-2">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
               suitabilityLevel === "high"
-                ? "bg-green-100 text-green-700"
+                ? "bg-green-600/20 text-green-400"
                 : suitabilityLevel === "medium"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-orange-100 text-orange-700"
+                ? "bg-amber-600/20 text-amber-400"
+                : "bg-orange-600/20 text-orange-400"
             }`}>
               비교 적합도: {suitabilityLevel === "high" ? "높음" : suitabilityLevel === "medium" ? "보통" : "낮음"}
             </span>
-            <span className="text-xs text-slate-600">
+            <span className="text-xs text-slate-400">
               {suitabilityLevel === "high"
                 ? "선택된 제품이 동일 카테고리에 속해 직접 비교에 적합합니다."
                 : suitabilityLevel === "medium"
@@ -633,18 +633,18 @@ export default function TestComparePage() {
           {/* 빠른 요약 */}
           <div className="flex flex-wrap gap-x-5 gap-y-1">
             {hasPriceDiff && cheapestProduct && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 최저가:{" "}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-slate-300">
                   {cheapestProduct.name.length > 14 ? cheapestProduct.name.slice(0, 14) + "…" : cheapestProduct.name}
                 </span>{" "}
                 (₩{cheapestPrice.toLocaleString("ko-KR")})
               </span>
             )}
             {hasLeadTimeData && fastestProduct && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 납기 빠름:{" "}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-slate-300">
                   {fastestProduct.name.length > 14 ? fastestProduct.name.slice(0, 14) + "…" : fastestProduct.name}
                 </span>{" "}
                 ({getAverageLeadTime(fastestProduct)}일)
@@ -688,7 +688,7 @@ export default function TestComparePage() {
                     <Filter className="h-3 w-3 mr-1" />
                     필터
                     {(filterCategory !== "all" || filterBrand !== "all" || filterVendor !== "all") && (
-                      <span className="ml-1 text-blue-600">●</span>
+                      <span className="ml-1 text-blue-400">●</span>
                     )}
                   </Button>
                 </DialogTrigger>
@@ -782,11 +782,11 @@ export default function TestComparePage() {
               return (
                 <div
                   key={product.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-3 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <p className="font-medium text-[11px] sm:text-xs md:text-sm text-slate-900 w-full sm:w-auto text-center sm:text-left break-words">
+                      <p className="font-medium text-[11px] sm:text-xs md:text-sm text-slate-100 w-full sm:w-auto text-center sm:text-left break-words">
                         {product.name}
                       </p>
                       <Link href={`/products/${product.id}`} className="w-full sm:w-auto flex justify-center sm:justify-start">
@@ -812,12 +812,12 @@ export default function TestComparePage() {
                         </Badge>
                       )}
                       {vendor?.vendor?.name && (
-                        <span className="text-[10px] sm:text-xs text-slate-500">
+                        <span className="text-[10px] sm:text-xs text-slate-400">
                           {vendor.vendor.name}
                         </span>
                       )}
                       {vendor?.priceInKRW && (
-                        <span className="text-[10px] sm:text-xs font-medium text-slate-900">
+                        <span className="text-[10px] sm:text-xs font-medium text-slate-100">
                           ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
                         </span>
                       )}
@@ -834,7 +834,7 @@ export default function TestComparePage() {
                         });
                         toggleCompare(product.id);
                       }}
-                      className="text-[10px] sm:text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex-1 sm:flex-none h-7 sm:h-8"
+                      className="text-[10px] sm:text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700 flex-1 sm:flex-none h-7 sm:h-8"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
@@ -889,13 +889,13 @@ export default function TestComparePage() {
               </p>
               {/* 판단 요약 */}
               {cheapestProduct && hasPriceDiff && (
-                <div className="mt-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="text-xs text-slate-700 leading-relaxed">
-                    <span className="font-semibold text-blue-700">최저가</span>는{" "}
+                <div className="mt-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    <span className="font-semibold text-blue-400">최저가</span>는{" "}
                     <span className="font-medium">{cheapestProduct.name.length > 20 ? cheapestProduct.name.substring(0, 20) + "..." : cheapestProduct.name}</span>
                     {" "}(₩{cheapestPrice.toLocaleString()})
                     {highestPrice > cheapestPrice && (
-                      <span className="text-slate-500">
+                      <span className="text-slate-400">
                         , 최고가 대비 {Math.round(((highestPrice - cheapestPrice) / highestPrice) * 100)}% 저렴
                       </span>
                     )}
@@ -973,15 +973,15 @@ export default function TestComparePage() {
                 </div>
                 {/* 납기 판단 요약 */}
                 {fastestProduct && hasLeadTimeData && (
-                  <div className="mt-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-xs text-slate-700 leading-relaxed">
-                      <span className="font-semibold text-blue-700">최단 납기</span>는{" "}
+                  <div className="mt-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-700">
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      <span className="font-semibold text-blue-400">최단 납기</span>는{" "}
                       <span className="font-medium">{fastestProduct.name.length > 20 ? fastestProduct.name.substring(0, 20) + "..." : fastestProduct.name}</span>
                       {" "}({getAverageLeadTime(fastestProduct)}일)
                       {productsWithLeadTime.length > 1 && (() => {
                         const avgAll = Math.round(productsWithLeadTime.reduce((sum: number, p: any) => sum + getAverageLeadTime(p), 0) / productsWithLeadTime.length);
                         return avgAll > getAverageLeadTime(fastestProduct) ? (
-                          <span className="text-slate-500">, 전체 평균({avgAll}일) 대비 빠름</span>
+                          <span className="text-slate-400">, 전체 평균({avgAll}일) 대비 빠름</span>
                         ) : null;
                       })()}
                     </p>
@@ -999,7 +999,7 @@ export default function TestComparePage() {
                 <CardDescription className="text-center sm:text-left">납기 정보가 있는 제품이 없습니다</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-slate-500 text-sm">
+                <div className="text-center py-8 text-slate-400 text-sm">
                   <FileText className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                   <p>평균 납기일 정보가 있는 제품이 없습니다.</p>
                   <p className="text-xs mt-2">
@@ -1027,9 +1027,9 @@ export default function TestComparePage() {
             {/* 모바일: 카드형 레이아웃 */}
             <div className="md:hidden space-y-4 p-4">
               {products.map((product: any, productIndex: number) => (
-                <div key={product.id} className="border border-slate-200 rounded-lg p-4 space-y-3">
+                <div key={product.id} className="border border-slate-700 rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-sm text-slate-900 flex-1">{product.name}</h3>
+                    <h3 className="font-semibold text-sm text-slate-100 flex-1">{product.name}</h3>
                     <Badge variant="outline" className="text-xs flex-shrink-0">
                       제품 {productIndex + 1}
                     </Badge>
@@ -1058,9 +1058,9 @@ export default function TestComparePage() {
                       if (field.key === "leadTime" && value === 0) return null;
                       
                       return (
-                        <div key={field.key} className="flex items-start justify-between gap-2 py-1 border-b border-slate-100 last:border-0">
-                          <span className="text-xs text-slate-500 font-medium">{field.label}</span>
-                          <span className="text-xs text-slate-900 text-right flex-1">
+                        <div key={field.key} className="flex items-start justify-between gap-2 py-1 border-b border-slate-800 last:border-0">
+                          <span className="text-xs text-slate-400 font-medium">{field.label}</span>
+                          <span className="text-xs text-slate-100 text-right flex-1">
                             {field.key === "price" && value > 0 ? (
                               `₩${value.toLocaleString()}`
                             ) : (
@@ -1081,7 +1081,7 @@ export default function TestComparePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-white z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
+                      <TableHead className="sticky left-0 bg-slate-900 z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
                       {products.map((product: any, index: number) => (
                         <TableHead key={product.id} className="min-w-[120px] sm:min-w-[150px] md:min-w-[180px] text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-4">
                           <div className="flex items-start justify-between gap-0.5 sm:gap-1 md:gap-2">
@@ -1116,7 +1116,7 @@ export default function TestComparePage() {
                   <TableBody>
                     {compareFields.map((field) => (
                       <TableRow key={field.key}>
-                        <TableCell className="sticky left-0 bg-white font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">
+                        <TableCell className="sticky left-0 bg-slate-900 font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">
                           {field.label}
                         </TableCell>
                       {products.map((product: any) => {
@@ -1190,7 +1190,7 @@ export default function TestComparePage() {
                             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-0.5 sm:gap-1 md:gap-2">
                               {displayLeadTime > 0 ? (
                                 <>
-                                  <span className={isAverage ? "text-slate-600" : ""}>
+                                  <span className={isAverage ? "text-slate-400" : ""}>
                                     {displayLeadTime}일
                                     {isAverage && (
                                       <span className="text-[9px] sm:text-[10px] md:text-xs text-slate-400 ml-0.5 sm:ml-1">
@@ -1246,7 +1246,7 @@ export default function TestComparePage() {
         <Card className="mt-4 sm:mt-6">
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="text-sm sm:text-base md:text-lg flex items-center gap-1.5 sm:gap-2 justify-center sm:justify-start">
-              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-600" />
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-400" />
               대체품 추천
             </CardTitle>
             <CardDescription className="text-[10px] sm:text-xs md:text-sm text-center sm:text-left leading-relaxed">
@@ -1366,9 +1366,9 @@ function ProductAlternativesCard({
       <div className="p-4 border rounded-lg">
         <div className="flex items-center gap-2 mb-3">
           <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-          <span className="text-sm font-medium text-slate-700">{product.name}</span>
+          <span className="text-sm font-medium text-slate-300">{product.name}</span>
         </div>
-        <p className="text-xs text-slate-500">대체품을 찾는 중...</p>
+        <p className="text-xs text-slate-400">대체품을 찾는 중...</p>
       </div>
     );
   }
@@ -1385,7 +1385,7 @@ function ProductAlternativesCard({
   return (
     <div className="p-4 border rounded-lg space-y-3">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-900">{product.name}</span>
+        <span className="text-sm font-semibold text-slate-100">{product.name}</span>
         <Badge variant="outline" className="text-xs">
           대체품 {qualifiedAlts.length}개
         </Badge>
@@ -1437,32 +1437,32 @@ function ProductAlternativesCard({
                 {/* 유사도 및 근거 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[10px] text-slate-500 font-medium">스펙 유사도</span>
+                    <span className="text-[10px] text-slate-400 font-medium">스펙 유사도</span>
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                       alt.similarity >= 0.8
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-green-600/20 text-green-400"
                         : alt.similarity >= 0.6
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-100 text-slate-600"
+                        ? "bg-blue-600/20 text-blue-400"
+                        : "bg-slate-800 text-slate-400"
                     }`}>
                       {Math.round(alt.similarity * 100)}%
                     </span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5">
+                  <div className="w-full bg-slate-800 rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full transition-all ${
                         alt.similarity >= 0.8
-                          ? "bg-green-500"
+                          ? "bg-green-600/100"
                           : alt.similarity >= 0.6
-                          ? "bg-blue-500"
+                          ? "bg-blue-600/100"
                           : "bg-slate-400"
                       }`}
                       style={{ width: `${Math.round(alt.similarity * 100)}%` }}
                     />
                   </div>
                   {alt.similarityReasons && alt.similarityReasons.length > 0 && (
-                    <p className="text-xs text-slate-600 leading-relaxed pt-0.5">
-                      <span className="font-medium text-slate-700">대체 가능: </span>
+                    <p className="text-xs text-slate-400 leading-relaxed pt-0.5">
+                      <span className="font-medium text-slate-300">대체 가능: </span>
                       {alt.similarityReasons.slice(0, 3).join(", ")}
                     </p>
                   )}
@@ -1480,7 +1480,7 @@ function ProductAlternativesCard({
                   <Button
                     variant={inCompare ? "secondary" : "outline"}
                     size="sm"
-                    className={`flex-1 text-xs ${inCompare ? "text-slate-500" : "text-blue-700 border-blue-200 hover:bg-blue-50"}`}
+                    className={`flex-1 text-xs ${inCompare ? "text-slate-400" : "text-blue-400 border-blue-700 hover:bg-blue-600/10"}`}
                     onClick={() => onAddToCompare(alt.id)}
                     disabled={inCompare}
                   >
@@ -1490,7 +1490,7 @@ function ProductAlternativesCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-slate-500 hover:text-slate-700 px-2"
+                    className="text-xs text-slate-400 hover:text-slate-300 px-2"
                     asChild
                   >
                     <Link href={`/products/${alt.id}`}>

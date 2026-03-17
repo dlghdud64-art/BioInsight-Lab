@@ -158,7 +158,7 @@ function InventoryScanContent() {
   // ─── 재고 ID가 있을 때 — 상세 뷰 ─────────────────────────────────────
   if (inventoryId) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4">
+      <div className="min-h-screen bg-slate-900 p-4">
         <div className="max-w-lg mx-auto space-y-4">
           {/* 헤더 */}
           <div className="flex items-center gap-3 pt-2">
@@ -184,10 +184,10 @@ function InventoryScanContent() {
 
           {/* 에러 */}
           {inventoryError && (
-            <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
+            <Card className="border-red-200 bg-red-900/20">
               <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
-                <p className="font-semibold text-red-700 dark:text-red-400">재고를 찾을 수 없습니다</p>
+                <p className="font-semibold text-red-400">재고를 찾을 수 없습니다</p>
                 <p className="text-xs text-red-500">ID: {inventoryId}</p>
                 <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/inventory/scan")}>
                   다시 스캔
@@ -232,14 +232,14 @@ function InventoryScanContent() {
                 <CardContent className="space-y-3">
                   {/* 핵심 수치 */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                    <div className="bg-blue-900/20 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-blue-400">
                         {inventory.currentQuantity}
                       </p>
-                      <p className="text-xs text-blue-600 dark:text-blue-500">{inventory.unit || "개"} (현재)</p>
+                      <p className="text-xs text-blue-500">{inventory.unit || "개"} (현재)</p>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-slate-600 dark:text-slate-300">
+                    <div className="bg-slate-800 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-slate-300">
                         {inventory.safetyStock ?? "—"}
                       </p>
                       <p className="text-xs text-slate-500">안전 재고</p>
@@ -249,19 +249,19 @@ function InventoryScanContent() {
                   {/* 메타 정보 */}
                   <div className="space-y-2 text-sm">
                     {inventory.location && (
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-400">
                         <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{inventory.location}</span>
                       </div>
                     )}
                     {inventory.lotNumber && (
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-400">
                         <Package className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>Lot: {inventory.lotNumber}</span>
                       </div>
                     )}
                     {inventory.expiryDate && (
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-400">
                         <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>
                           유효기한:{" "}
@@ -273,7 +273,7 @@ function InventoryScanContent() {
                       </div>
                     )}
                     {inventory.notes && (
-                      <p className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800 rounded p-2 italic">
+                      <p className="text-xs text-slate-500 bg-slate-800 rounded p-2 italic">
                         {inventory.notes}
                       </p>
                     )}

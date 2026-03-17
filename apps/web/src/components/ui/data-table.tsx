@@ -85,7 +85,7 @@ export function DataTable<TData, TValue>({
       )}
       <div className="rounded-md border">
         {/* 테이블 헤더 영역: 보기 옵션 */}
-        <div className="flex items-center justify-end px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+        <div className="flex items-center justify-end px-3 py-2 border-b border-slate-800 bg-slate-900/30">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-slate-500 hover:text-slate-700">

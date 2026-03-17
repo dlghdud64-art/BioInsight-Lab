@@ -59,7 +59,7 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
           className={cn(
             "text-xs px-3 py-1.5 rounded-sm font-medium transition-colors",
             view === v
-              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              ? "bg-blue-600/10 text-blue-400 border border-blue-800"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >
@@ -100,7 +100,7 @@ function StripStat({ label, count, warn }: { label: string; count: number; warn:
   return (
     <div className="flex items-center gap-1.5">
       <span className={TYPOGRAPHY.metadata}>{label}</span>
-      <span className={cn("text-sm font-semibold tabular-nums", warn && count > 0 ? "text-red-600" : "text-foreground")}>
+      <span className={cn("text-sm font-semibold tabular-nums", warn && count > 0 ? "text-red-400" : "text-foreground")}>
         {count}
       </span>
     </div>
@@ -150,7 +150,7 @@ export function WorkQueueConsole() {
     return (
       <div className="p-6 space-y-4">
         <h1 className={TYPOGRAPHY.pageTitle}>운영 콘솔</h1>
-        <div className="flex items-center gap-2 text-sm text-red-600">
+        <div className="flex items-center gap-2 text-sm text-red-400">
           <XCircle className="h-4 w-4" />
           <span>운영 큐 로딩 실패. 페이지를 새로고침해 주세요.</span>
         </div>
@@ -307,7 +307,7 @@ function DailyReviewSection() {
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 text-sm text-red-600">
+      <div className="flex items-center gap-2 text-sm text-red-400">
         <XCircle className="h-4 w-4" />
         <span>일일 검토 로딩 실패</span>
       </div>

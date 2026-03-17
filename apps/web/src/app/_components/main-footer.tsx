@@ -53,28 +53,28 @@ export function MainFooter() {
   ];
 
   return (
-    <footer className="border-t border-slate-200 bg-white">
+    <footer className="border-t border-slate-800 bg-slate-950">
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
           {/* 왼쪽: 로고/설명/소셜 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BioInsightLogo showText={true} className="h-6" />
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-700">
+              <BioInsightLogo showText={true} variant="dark" className="h-6" />
+              <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
                 Beta
               </span>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼입니다.
             </p>
-            <div className="flex items-center gap-3 text-slate-600">
+            <div className="flex items-center gap-3 text-slate-400">
               {/* GitHub */}
               <a
                 href="https://github.com/..."
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
                 aria-label="GitHub"
               >
                 <Github className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function MainFooter() {
               {/* Mail */}
               <a
                 href="mailto:contact@bioinsight.lab"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
                 aria-label="이메일 문의"
               >
                 <Mail className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function MainFooter() {
                 href="#"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:text-slate-900 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
                 aria-label="문서"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -115,21 +115,21 @@ export function MainFooter() {
                           href={link.href}
                           target={link.href.startsWith("http") ? "_blank" : undefined}
                           rel={link.href.startsWith("http") ? "noreferrer" : undefined}
-                          className="text-slate-600 hover:text-slate-900 transition-colors"
+                          className="text-slate-400 hover:text-slate-100 transition-colors"
                         >
                           {link.label}
                         </a>
                       ) : link.onClick ? (
                         <button
                           onClick={link.onClick}
-                          className="text-slate-600 hover:text-slate-900 transition-colors text-left"
+                          className="text-slate-400 hover:text-slate-100 transition-colors text-left"
                         >
                           {link.label}
                         </button>
                       ) : (
                         <Link
                           href={link.href}
-                          className="text-slate-600 hover:text-slate-900 transition-colors"
+                          className="text-slate-400 hover:text-slate-100 transition-colors"
                         >
                           {link.label}
                         </Link>
@@ -143,12 +143,12 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-slate-200 pt-4 text-center md:text-left text-[11px] text-slate-500">
-          <span>© {year} BioInsight Lab. All rights reserved.</span>
+        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-slate-800 pt-4 text-center md:text-left text-[11px] text-slate-500">
+          <span>&copy; {year} BioInsight Lab. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
-            <Link href="/terms" className="hover:text-slate-700 transition-colors">이용약관</Link>
-            <span className="text-slate-300">|</span>
-            <Link href="/privacy" className="hover:text-slate-700 transition-colors">개인정보처리방침</Link>
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
+            <span className="text-slate-700">|</span>
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">개인정보처리방침</Link>
           </div>
         </div>
       </div>

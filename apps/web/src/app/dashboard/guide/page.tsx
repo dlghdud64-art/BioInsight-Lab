@@ -64,11 +64,11 @@ const GUIDE_STEPS = [
 ];
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; stepBg: string; stepText: string }> = {
-  blue: { bg: "bg-blue-50", icon: "text-blue-600", stepBg: "bg-blue-600", stepText: "text-white" },
-  teal: { bg: "bg-teal-50", icon: "text-teal-600", stepBg: "bg-teal-600", stepText: "text-white" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", stepBg: "bg-emerald-600", stepText: "text-white" },
-  purple: { bg: "bg-purple-50", icon: "text-purple-600", stepBg: "bg-purple-600", stepText: "text-white" },
-  amber: { bg: "bg-amber-50", icon: "text-amber-600", stepBg: "bg-amber-600", stepText: "text-white" },
+  blue: { bg: "bg-blue-600/10", icon: "text-blue-400", stepBg: "bg-blue-600", stepText: "text-white" },
+  teal: { bg: "bg-teal-600/10", icon: "text-teal-400", stepBg: "bg-teal-600", stepText: "text-white" },
+  emerald: { bg: "bg-emerald-600/10", icon: "text-emerald-400", stepBg: "bg-emerald-600", stepText: "text-white" },
+  purple: { bg: "bg-purple-600/10", icon: "text-purple-400", stepBg: "bg-purple-600", stepText: "text-white" },
+  amber: { bg: "bg-amber-600/10", icon: "text-amber-400", stepBg: "bg-amber-600", stepText: "text-white" },
 };
 
 export default function GuidePage() {
@@ -76,7 +76,7 @@ export default function GuidePage() {
     <div className="flex-1 space-y-4 sm:space-y-6 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
       {/* 페이지 헤더 */}
       <div className="space-y-1 mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-100 tracking-tight">
           이용 가이드
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed hidden sm:block">
@@ -85,9 +85,9 @@ export default function GuidePage() {
       </div>
 
       {/* 업데이트 안내 (축소) */}
-      <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-100">
-        <Info className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-        <p className="text-xs text-blue-700">
+      <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-blue-600/10 border border-blue-800">
+        <Info className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />
+        <p className="text-xs text-blue-400">
           상세 비디오 튜토리얼과 매뉴얼 문서가 곧 업데이트될 예정입니다.
         </p>
       </div>
@@ -98,7 +98,7 @@ export default function GuidePage() {
           const Icon = item.icon;
           const colors = COLOR_MAP[item.color];
           return (
-            <Card key={item.step} className="border-slate-200 shadow-sm overflow-hidden">
+            <Card key={item.step} className="border-slate-800 shadow-sm overflow-hidden">
               <CardContent className="p-4 md:p-5">
                 <div className="flex items-start gap-4">
                   {/* 스텝 번호 + 아이콘 */}
@@ -113,7 +113,7 @@ export default function GuidePage() {
 
                   {/* 내용 */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 mb-1">
+                    <p className="text-sm font-semibold text-slate-100 mb-1">
                       {item.title}
                     </p>
                     <p className="text-sm text-slate-500 leading-relaxed mb-3">
@@ -123,7 +123,7 @@ export default function GuidePage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1.5 text-xs border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                        className="gap-1.5 text-xs border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-600"
                       >
                         {item.cta.label}
                         <ArrowRight className="h-3 w-3" />
@@ -138,11 +138,11 @@ export default function GuidePage() {
       </div>
 
       {/* 하단 지원 연결 */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-5 mt-8">
-        <p className="text-sm font-semibold text-slate-900 mb-3">추가 도움이 필요하신가요?</p>
+      <div className="rounded-xl border border-slate-800 bg-slate-800 px-5 py-5 mt-8">
+        <p className="text-sm font-semibold text-slate-100 mb-3">추가 도움이 필요하신가요?</p>
         <div className="flex flex-col sm:flex-row gap-2.5">
           <Link href="/dashboard/faq">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs border-slate-200 text-slate-700 hover:bg-white">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs border-slate-700 text-slate-300 hover:bg-slate-800">
               <HelpCircle className="h-3.5 w-3.5" />
               도움말 센터
             </Button>

@@ -73,12 +73,12 @@ export function ProductCard({
   const keySpecs = getKeySpecs();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
+    <div className="bg-slate-900 rounded-lg shadow-sm hover:shadow-md border border-slate-800 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
         {/* 썸네일 + 제품명 */}
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-white overflow-hidden flex items-center justify-center">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-800 bg-slate-800 overflow-hidden flex items-center justify-center">
             {!showFallback ? (
               <img
                 src={imageSrc}
@@ -92,12 +92,12 @@ export function ProductCard({
           </div>
           <div className="flex-1 min-w-0">
             <Link href={`/products/${product.id}`} className="block">
-              <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 hover:text-blue-600 transition-colors">
+              <h3 className="text-base font-bold text-slate-100 leading-tight line-clamp-2 hover:text-blue-400 transition-colors">
                 {product.name}
               </h3>
             </Link>
             {/* 브랜드/캣넘버 */}
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
           {product.vendor && (
             <>
               <span>{product.vendor}</span>
@@ -117,7 +117,7 @@ export function ProductCard({
             <Badge
               key={idx}
               variant="outline"
-              className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
+              className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded border-0 font-normal"
             >
               {spec.value}
             </Badge>
@@ -135,7 +135,7 @@ export function ProductCard({
         </div>
 
         {/* 가격 & 액션 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 pt-2 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 pt-2 border-t border-slate-800">
           {/* 가격 */}
           <div className="flex-shrink-0">
             {product.price && product.price > 0 ? (
@@ -144,14 +144,14 @@ export function ProductCard({
                   <span className="text-lg font-bold text-blue-600">
                     ₩{product.price.toLocaleString("ko-KR")}
                   </span>
-                  <span className="text-xs text-gray-400 font-normal">(VAT 별도)</span>
+                  <span className="text-xs text-slate-500 font-normal">(VAT 별도)</span>
                 </div>
                 {product.unit && (
-                  <div className="text-xs text-gray-500 whitespace-nowrap">/ {product.unit}</div>
+                  <div className="text-xs text-slate-400 whitespace-nowrap">/ {product.unit}</div>
                 )}
               </div>
             ) : (
-              <div className="text-sm font-semibold text-gray-500">가격 문의</div>
+              <div className="text-sm font-semibold text-slate-400">가격 문의</div>
             )}
           </div>
 
@@ -160,7 +160,7 @@ export function ProductCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded h-9 w-9 p-0"
+              className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded h-9 w-9 p-0"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

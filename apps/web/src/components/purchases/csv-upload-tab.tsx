@@ -470,14 +470,14 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
               <div className="text-2xl font-bold">{importResult.totalRows}</div>
               <div className="text-sm text-muted-foreground">총 행 수</div>
             </div>
-            <div className="border rounded-lg p-4 text-center bg-green-50 dark:bg-green-950">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div className="border rounded-lg p-4 text-center bg-green-950">
+              <div className="text-2xl font-bold text-green-400">
                 {importResult.successRows}
               </div>
               <div className="text-sm text-muted-foreground">성공</div>
             </div>
-            <div className="border rounded-lg p-4 text-center bg-red-50 dark:bg-red-950">
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div className="border rounded-lg p-4 text-center bg-red-950">
+              <div className="text-2xl font-bold text-red-400">
                 {importResult.errorRows}
               </div>
               <div className="text-sm text-muted-foreground">실패</div>

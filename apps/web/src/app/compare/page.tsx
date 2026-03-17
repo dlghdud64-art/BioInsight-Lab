@@ -181,7 +181,7 @@ function ComparePageContent() {
     if (!showHighlightDifferences) return "";
     const uniqueValues = new Set(values.map((v) => String(v || "-")));
     if (uniqueValues.size > 1) {
-      return "bg-yellow-50 border-yellow-200";
+      return "bg-yellow-600/10 border-yellow-700";
     }
     return "";
   };
@@ -195,7 +195,7 @@ function ComparePageContent() {
       if (numericValues.length > 0) {
         const minValue = Math.min(...numericValues);
         if (value === minValue) {
-          return "bg-green-50 border-green-200 font-semibold";
+          return "bg-green-600/10 border-green-700 font-semibold";
         }
       }
     }
@@ -205,7 +205,7 @@ function ComparePageContent() {
       if (numericValues.length > 0) {
         const minValue = Math.min(...numericValues);
         if (value === minValue) {
-          return "bg-blue-50 border-blue-200 font-semibold";
+          return "bg-blue-600/10 border-blue-700 font-semibold";
         }
       }
     }
@@ -280,25 +280,25 @@ function ComparePageContent() {
                         return (
                           <div
                             key={product.id}
-                            className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50"
+                            className="flex items-center justify-between p-3 border border-slate-700 rounded-lg hover:bg-slate-800"
                           >
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm text-slate-900 truncate">
+                              <h3 className="font-medium text-sm text-slate-100 truncate">
                                 {product.name}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
                                 {vendor?.vendor?.name && (
-                                  <span className="text-xs text-slate-500">
+                                  <span className="text-xs text-slate-400">
                                     {vendor.vendor.name}
                                   </span>
                                 )}
                                 {product.category && (
-                                  <span className="text-xs text-slate-500">
+                                  <span className="text-xs text-slate-400">
                                     · {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
                                   </span>
                                 )}
                                 {vendor?.priceInKRW && (
-                                  <span className="text-xs font-medium text-slate-900">
+                                  <span className="text-xs font-medium text-slate-100">
                                     · ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
                                   </span>
                                 )}
@@ -455,11 +455,11 @@ function ComparePageContent() {
               </div>
             ) : error ? (
               <div className="space-y-2">
-                <div className="p-4 bg-slate-50 border border-slate-300 rounded">
-                  <p className="text-sm text-slate-800 mb-2">
+                <div className="p-4 bg-slate-900 border border-slate-700 rounded">
+                  <p className="text-sm text-slate-200 mb-2">
                     제품 정보를 불러오는 중 오류가 발생했습니다.
                   </p>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-slate-400">
                     제품 ID: {productIds.join(", ")}
                   </p>
                 </div>
@@ -467,13 +467,13 @@ function ComparePageContent() {
                 {productIds.map((id: string) => (
                   <div
                     key={id}
-                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50"
+                    className="flex items-center justify-between p-3 border border-slate-700 rounded-lg bg-slate-900"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-slate-900 truncate">
+                      <p className="font-medium text-sm text-slate-100 truncate">
                         제품 ID: {id}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-slate-400 mt-1">
                         정보를 불러오는 중...
                       </p>
                     </div>
@@ -481,7 +481,7 @@ function ComparePageContent() {
                       size="sm"
                       variant="outline"
                       onClick={() => removeProduct(id)}
-                      className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      className="ml-4 text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
@@ -491,14 +491,14 @@ function ComparePageContent() {
               </div>
             ) : products.length === 0 && productIds.length > 0 ? (
               <div className="space-y-2">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                  <p className="text-sm text-slate-800 mb-2">
+                <div className="p-4 bg-slate-900 border border-slate-700 rounded-lg">
+                  <p className="text-sm text-slate-200 mb-2">
                     제품 정보를 찾을 수 없습니다.
                   </p>
-                  <p className="text-xs text-slate-600 mb-3">
+                  <p className="text-xs text-slate-400 mb-3">
                     제품 ID: {productIds.join(", ")}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     제품이 데이터베이스에 없거나 삭제되었을 수 있습니다.
                   </p>
                 </div>
@@ -506,13 +506,13 @@ function ComparePageContent() {
                 {productIds.map((id: string) => (
                   <div
                     key={id}
-                    className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-slate-50"
+                    className="flex items-center justify-between p-3 border border-slate-700 rounded-lg bg-slate-900"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-slate-900 truncate">
+                      <p className="font-medium text-sm text-slate-100 truncate">
                         제품 ID: {id}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-slate-400 mt-1">
                         정보 없음
                       </p>
                     </div>
@@ -520,7 +520,7 @@ function ComparePageContent() {
                       size="sm"
                       variant="outline"
                       onClick={() => removeProduct(id)}
-                      className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      className="ml-4 text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700"
                     >
                       <X className="h-3 w-3 mr-1" />
                       제거
@@ -535,22 +535,22 @@ function ComparePageContent() {
                   return (
                     <div
                       key={product.id}
-                      className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-slate-900 truncate">
+                        <p className="font-medium text-sm text-slate-100 truncate">
                           {product.name || product.id}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           {product.brand && (
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-slate-400">
                               {product.brand}
                             </span>
                           )}
                           {vendor?.vendor?.name && (
                             <>
                               <span className="text-slate-400">·</span>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-slate-400">
                                 {vendor.vendor.name}
                               </span>
                             </>
@@ -558,7 +558,7 @@ function ComparePageContent() {
                           {vendor?.priceInKRW && (
                             <>
                               <span className="text-slate-400">·</span>
-                              <span className="text-xs font-medium text-slate-900">
+                              <span className="text-xs font-medium text-slate-100">
                                 ₩{vendor.priceInKRW.toLocaleString("ko-KR")}
                               </span>
                             </>
@@ -569,7 +569,7 @@ function ComparePageContent() {
                         size="sm"
                         variant="outline"
                         onClick={() => removeProduct(product.id)}
-                        className="ml-4 text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                        className="ml-4 text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700"
                       >
                         <X className="h-3 w-3 mr-1" />
                         제거
@@ -677,7 +677,7 @@ function ComparePageContent() {
             </Dialog>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-slate-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200">
+                <Button variant="outline" className="text-slate-400 hover:text-red-400 hover:bg-red-600/10 hover:border-red-700">
                   전체 비우기
                 </Button>
               </AlertDialogTrigger>
@@ -908,7 +908,7 @@ function ComparePageContent() {
                               null
                             );
                             value = minPrice ? (
-                              <span className="font-semibold text-green-600">
+                              <span className="font-semibold text-green-400">
                                 ₩{minPrice.toLocaleString()}
                               </span>
                             ) : (
@@ -935,7 +935,7 @@ function ComparePageContent() {
                               (v: any) => v.stockStatus === "재고 있음" || v.stockStatus === "In Stock"
                             );
                             value = (
-                              <span className={inStock ? "text-green-600 font-medium" : "text-red-600"}>
+                              <span className={inStock ? "text-green-400 font-medium" : "text-red-400"}>
                                 {inStock ? "재고 있음" : "재고 없음"}
                               </span>
                             );
@@ -949,7 +949,7 @@ function ComparePageContent() {
                           } else if (field.key === "vendorCount") {
                             const count = product.vendors?.length || 0;
                             value = (
-                              <span className="text-blue-600 font-medium">
+                              <span className="text-blue-400 font-medium">
                                 {count}개 공급사
                               </span>
                             );

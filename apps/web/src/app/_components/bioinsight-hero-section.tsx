@@ -30,34 +30,33 @@ export function BioInsightHeroSection() {
   };
 
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-white border-b border-slate-200">
+    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-slate-950 border-b border-slate-800">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
         {/* Value Proposition */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 md:mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">
             Biotech Procurement Operations Platform
           </p>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight break-keep">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-100 leading-tight break-keep">
             구매 요청부터 입고까지,{" "}
             <br className="hidden sm:block" />
-            <span className="text-blue-700">운영 상태를 한눈에</span>
+            <span className="text-blue-400">운영 상태를 한눈에</span>
           </h1>
-          <p className="text-sm md:text-base text-slate-500 max-w-xl mx-auto leading-relaxed break-keep">
+          <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed break-keep">
             비교 → 견적 → 발주 → 입고 → 재고까지.
-            <br />
             연구실 구매 운영의 전 과정을 하나의 콘솔에서 추적하고 통제합니다.
           </p>
 
           {/* CTAs */}
           <div className="flex items-center justify-center gap-3 pt-4">
             <Link href="/dashboard">
-              <Button className="h-11 px-8 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm">
+              <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
                 운영 콘솔 시작하기
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/support">
-              <Button variant="ghost" className="h-11 px-6 text-slate-600 hover:text-slate-900 font-medium text-sm">
+              <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
                 데모 요청
               </Button>
             </Link>
@@ -66,7 +65,7 @@ export function BioInsightHeroSection() {
 
         {/* 6-Step Pipeline */}
         <div className="max-w-4xl mx-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 text-center mb-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 text-center mb-4">
             End-to-End Operations Pipeline
           </p>
 
@@ -76,15 +75,15 @@ export function BioInsightHeroSection() {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-slate-50 transition-colors">
-                    <div className="w-10 h-10 rounded-md border border-blue-100 bg-blue-50/50 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-blue-700" strokeWidth={1.8} />
+                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-slate-900 transition-colors">
+                    <div className="w-10 h-10 rounded-md border border-blue-500/20 bg-blue-600/10 flex items-center justify-center">
+                      <Icon className="h-5 w-5 text-blue-400" strokeWidth={1.8} />
                     </div>
-                    <span className="text-xs font-semibold text-slate-800">{step.label}</span>
-                    <span className="text-[10px] text-slate-400 whitespace-nowrap">{step.sub}</span>
+                    <span className="text-xs font-semibold text-slate-200">{step.label}</span>
+                    <span className="text-[10px] text-slate-500 whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 mx-0.5" />
+                    <ChevronRight className="h-4 w-4 text-slate-700 flex-shrink-0 mx-0.5" />
                   )}
                 </div>
               );
@@ -96,9 +95,9 @@ export function BioInsightHeroSection() {
             {PIPELINE_STEPS.map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-blue-100 bg-blue-50/30">
-                  <Icon className="h-4 w-4 text-blue-700" strokeWidth={1.8} />
-                  <span className="text-[11px] font-semibold text-slate-700">{step.label}</span>
+                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/10">
+                  <Icon className="h-4 w-4 text-blue-400" strokeWidth={1.8} />
+                  <span className="text-[11px] font-semibold text-slate-300">{step.label}</span>
                 </div>
               );
             })}
@@ -107,16 +106,16 @@ export function BioInsightHeroSection() {
 
         {/* Compact Search Bar */}
         <div className="max-w-md mx-auto mt-10">
-          <form onSubmit={handleSearch} className="flex items-center h-10 border border-slate-200 rounded-md bg-slate-50 px-3 focus-within:ring-1 focus-within:ring-slate-400 focus-within:border-slate-400 transition-all">
-            <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
+          <form onSubmit={handleSearch} className="flex items-center h-10 border border-slate-700 rounded-md bg-slate-900 px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-500 transition-all">
+            <Search className="h-4 w-4 text-slate-500 flex-shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="시약명, CAS No., 제조사 검색"
-              className="flex-1 bg-transparent px-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+              className="flex-1 bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none"
             />
-            <Button type="submit" variant="ghost" size="sm" className="h-7 px-3 text-xs text-slate-600 hover:text-slate-900">
+            <Button type="submit" variant="ghost" size="sm" className="h-7 px-3 text-xs text-slate-400 hover:text-slate-100">
               검색
             </Button>
           </form>

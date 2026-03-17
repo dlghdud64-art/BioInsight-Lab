@@ -51,7 +51,7 @@ function SignInContent() {
       </div>
 
       {/* 우측 로그인 영역 */}
-      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-white dark:bg-slate-950">
+      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-slate-950">
         {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="group flex items-center gap-3 cursor-pointer">
@@ -60,10 +60,10 @@ function SignInContent() {
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-1">
-                <span className="text-lg font-bold tracking-tighter text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">BioInsight</span>
-                <span className="text-lg font-bold tracking-tighter text-teal-500 dark:text-teal-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Lab</span>
+                <span className="text-lg font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+                <span className="text-lg font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
               </div>
-              <div className="text-[10px] text-gray-500 dark:text-slate-400 tracking-tight">Procurement & Research</div>
+              <div className="text-[10px] text-slate-400 tracking-tight">Procurement & Research</div>
             </div>
           </Link>
         </div>
@@ -72,7 +72,7 @@ function SignInContent() {
             <div className="text-center lg:text-left">
               <Link
                 href="/"
-                className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 mb-8 transition-colors"
+                className="inline-flex items-center text-sm text-slate-500 hover:text-slate-100 mb-8 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 홈으로 돌아가기
@@ -81,10 +81,10 @@ function SignInContent() {
 
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                <h2 className="text-2xl font-bold text-slate-100">
                   로그인
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+                <p className="text-slate-400 mt-1 text-sm">
                   연구실의 검색·견적·구매·재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
@@ -92,7 +92,7 @@ function SignInContent() {
               {/* Google 로그인 버튼 */}
               <Button
                 variant="outline"
-                className="w-full h-12 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-600 font-medium"
+                className="w-full h-12 border-slate-700 hover:bg-slate-900/50 hover:border-slate-600 font-medium"
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -119,10 +119,10 @@ function SignInContent() {
               {/* 또는 이메일로 계속하기 구분선 */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-slate-200 dark:border-slate-700" />
+                  <span className="w-full border-t border-slate-700" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white dark:bg-slate-950 px-3 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="bg-slate-950 px-3 text-xs text-slate-400">
                     또는 이메일로 계속하기
                   </span>
                 </div>
@@ -134,17 +134,17 @@ function SignInContent() {
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed text-base"
+                  className="bg-slate-900/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed text-base"
+                  className="bg-slate-900/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
-                <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+                <p className="text-xs text-slate-500 text-center">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
               </div>
@@ -154,16 +154,16 @@ function SignInContent() {
 
         {/* 하단 푸터 */}
         <div className="p-6 sm:p-8 pt-0 space-y-4">
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-center text-sm text-slate-400">
             계정이 없으신가요?{" "}
             <Link
               href="/test/search"
-              className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2"
+              className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2"
             >
               무료로 시작하기
             </Link>
           </p>
-          <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
+          <p className="text-center text-[11px] text-slate-500 leading-relaxed">
             BioInsight Lab은 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
           </p>
         </div>
@@ -175,7 +175,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
