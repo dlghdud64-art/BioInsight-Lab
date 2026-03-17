@@ -41,6 +41,8 @@ export const WORK_QUEUE_KEYS = {
   list: (filters?: Record<string, string>) => ["work-queue", "list", filters] as const,
   active: ["work-queue", "active"] as const,
   completed: ["work-queue", "completed"] as const,
+  entity: (entityType: string, entityId: string) =>
+    ["work-queue", "entity", entityType, entityId] as const,
 };
 
 // ── Hooks ──
@@ -232,7 +234,10 @@ export function useExecuteOpsAction() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(err.message || err.error || "Failed to execute action");
+        const error = new Error(err.message || err.error || "Failed to execute action");
+        (error as any).status = res.status;
+        (error as any).errorCode = err.error;
+        throw error;
       }
       return res.json();
     },
@@ -269,6 +274,34 @@ export function useExecuteOpsAction() {
       queryClient.invalidateQueries({ queryKey: ["ai-actions"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
+  });
+}
+
+/**
+ * 특정 엔티티의 큐 아이템 조회 — 상세 화면용
+ *
+ * entityType + entityId로 해당 엔티티의 모든 큐 아이템을 조회합니다.
+ * 완료/실패 항목도 포함하여 audit trail 확인 가능.
+ */
+export function useEntityQueueItems(
+  entityType: string | null | undefined,
+  entityId: string | null | undefined,
+) {
+  return useQuery<WorkQueueResponse>({
+    queryKey: WORK_QUEUE_KEYS.entity(entityType!, entityId!),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        entityType: entityType!,
+        entityId: entityId!,
+        includeCompleted: "true",
+      });
+      const res = await fetch(`/api/work-queue?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch entity queue items");
+      return res.json();
+    },
+    enabled: !!entityType && !!entityId,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 }
 

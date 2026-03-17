@@ -36,6 +36,7 @@ import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
+import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { FileText } from "lucide-react";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
@@ -210,6 +211,14 @@ function QuoteCard({ quote }: { quote: Quote }) {
           )}
         </div>
       </div>
+
+      {/* 운영 실행 현황 */}
+      <OpsExecutionContext
+        entityType="QUOTE"
+        entityId={quote.id}
+        compact
+        className="mt-3 pt-3 border-t border-slate-100"
+      />
     </div>
   );
 }
@@ -229,6 +238,15 @@ function QuotesPageContent() {
     const s = searchParams.get("status");
     if (s) setStatusFilter(s);
   }, [searchParams]);
+
+  // Deep-link: work_item + entity_id → 해당 견적으로 스크롤
+  const entityIdParam = searchParams.get("entity_id");
+  useEffect(() => {
+    if (entityIdParam) {
+      const el = document.getElementById("ops-execution-context");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [entityIdParam]);
 
   // 견적 목록 조회
   // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)

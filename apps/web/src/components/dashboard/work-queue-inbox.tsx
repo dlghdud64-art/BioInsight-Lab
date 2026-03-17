@@ -76,8 +76,8 @@ function getDeepLinkPath(item: WorkQueueItem): string {
     }
   })();
 
-  // AI 보조 패널 자동 오픈을 위한 query param
-  return `${base}?ai_panel=open&work_item=${item.id}&entity_id=${item.relatedEntityId || ""}`;
+  // AI 보조 패널 자동 오픈 + ops context 스크롤을 위한 query param
+  return `${base}?ai_panel=open&work_item=${item.id}&entity_id=${item.relatedEntityId || ""}&scroll_to=ops_context`;
 }
 
 // ── 시간 표시 ──

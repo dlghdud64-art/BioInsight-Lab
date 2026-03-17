@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const includeCompleted = searchParams.get("includeCompleted") === "true";
     const organizationId = searchParams.get("organizationId") || undefined;
+    const entityType = searchParams.get("entityType") || undefined;
+    const entityId = searchParams.get("entityId") || undefined;
 
     // 최근 24시간 완료 항목만 포함
     const completedSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -39,8 +41,10 @@ export async function GET(request: NextRequest) {
       organizationId,
       taskStatus,
       limit,
-      includeCompleted,
-      completedSince,
+      includeCompleted: entityType ? true : includeCompleted,
+      completedSince: entityType ? undefined : completedSince,
+      relatedEntityType: entityType,
+      relatedEntityId: entityId,
     });
 
     return NextResponse.json(result);

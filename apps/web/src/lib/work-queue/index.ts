@@ -71,3 +71,25 @@ export type {
   OpsQueueItemTypeInput,
   OpsCTACompletionDef,
 } from "./ops-queue-semantics";
+
+export {
+  detectEntityQueueDrift,
+  detectQueueAnomalies,
+} from "./ops-reconciliation";
+
+export type {
+  DriftResult,
+  DriftType,
+  QueueAnomaly,
+} from "./ops-reconciliation";
+
+export {
+  OPS_RETRY_POLICIES,
+  resolveRetryPolicy,
+  resolveRetryPolicyFromResponse,
+} from "./ops-retry-semantics";
+
+export type {
+  RetryPolicy,
+  RecoveryAction,
+} from "./ops-retry-semantics";

@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { useOrderAiPanel } from "@/hooks/use-order-ai-panel";
 import { OrderAiAssistantPanel } from "@/components/ai/order-ai-assistant-panel";
+import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 
 type OrderStatus = "pending" | "quoted" | "ordered" | "shipping" | "delivered";
 
@@ -185,6 +186,7 @@ function OrderCard({
 function OrderHistoryPageContent() {
   const searchParams = useSearchParams();
   const aiPanelOpen = searchParams.get("ai_panel") === "open";
+  const entityIdParam = searchParams.get("entity_id");
 
   const allOrders = MOCK_ORDERS;
   const pendingOrders = MOCK_ORDERS.filter((o) => o.status === "pending");
@@ -328,6 +330,17 @@ function OrderHistoryPageContent() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* 운영 실행 현황 (deep-link로 진입 시) */}
+      {entityIdParam && (
+        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white dark:bg-slate-900 shadow-lg p-4">
+          <OpsExecutionContext
+            entityType="ORDER"
+            entityId={entityIdParam}
+            compact
+          />
+        </div>
+      )}
 
       {/* 주문 추적 AI 보조 패널 */}
       <OrderAiAssistantPanel

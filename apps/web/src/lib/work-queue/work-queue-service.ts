@@ -217,6 +217,8 @@ export interface WorkQueueFilters {
   limit?: number;
   includeCompleted?: boolean;
   completedSince?: Date; // completed 항목을 이 시각 이후만 포함
+  relatedEntityType?: string;
+  relatedEntityId?: string;
 }
 
 export interface WorkQueueItem {
@@ -269,6 +271,13 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
 
   if (filters.approvalStatus) {
     where.approvalStatus = filters.approvalStatus as any;
+  }
+
+  if (filters.relatedEntityType) {
+    where.relatedEntityType = filters.relatedEntityType;
+  }
+  if (filters.relatedEntityId) {
+    where.relatedEntityId = filters.relatedEntityId;
   }
 
   if (filters.includeCompleted && filters.completedSince) {
