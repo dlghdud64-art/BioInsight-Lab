@@ -46,12 +46,16 @@ export {
   OPS_FUNNEL_STAGES,
   OPS_STALL_LABELS,
   OPS_ACTIVITY_LABELS,
+  OPS_QUEUE_ITEM_TYPES,
+  OPS_QUEUE_CTA_MAP,
+  OPS_OWNERSHIP_TRANSFERS,
   getOpsStage,
   isOpsTerminal,
   isOpsSubstatus,
   isOpsSlaBreach,
   isOpsStale,
   determineOpsStallPoint,
+  determineOpsQueueItemType,
 } from "./ops-queue-semantics";
 
 export type {
@@ -59,4 +63,7 @@ export type {
   OpsSubstatusDefinition,
   OpsHandoffRule,
   OpsStallPoint,
+  OpsQueueItemType,
+  OpsOwnershipTransfer,
+  OpsQueueItemTypeInput,
 } from "./ops-queue-semantics";

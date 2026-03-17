@@ -509,3 +509,257 @@ export const OPS_ACTIVITY_LABELS: Record<string, string> = {
   budget_insufficient: "예산이 부족합니다",
   permission_denied: "권한이 부족합니다",
 };
+
+// ── Canonical Ops Queue Item Types ──
+
+/** 운영자 큐 아이템 타입 — 실행 가능한 단위 */
+export interface OpsQueueItemType {
+  id: string;
+  label: string;
+  meaning: string;
+  stage: OpsStage;
+  sourceSubstatuses: string[];
+  sourceEntityType: string;
+  owner: "REQUESTER" | "APPROVER" | "OPERATOR";
+  primaryCta: { label: string; variant: "default" | "destructive" | "outline"; actionId: string };
+  secondaryCta?: { label: string; variant: "default" | "destructive" | "outline"; actionId: string };
+  completionRule: string;
+  staleRule: { days: number; message: string };
+  targetSubstatusOnComplete: string;
+}
+
+export const OPS_QUEUE_ITEM_TYPES: Record<string, OpsQueueItemType> = {
+  ops_quote_followup: {
+    id: "ops_quote_followup",
+    label: "견적 후속 조치",
+    meaning: "벤더에 견적 발송 후 응답 대기 또는 응답 처리 필요",
+    stage: "quote",
+    sourceSubstatuses: ["email_sent", "vendor_reply_received"],
+    sourceEntityType: "QUOTE",
+    owner: "REQUESTER",
+    primaryCta: { label: "견적 확인", variant: "default", actionId: "navigate_quote" },
+    completionRule: "Quote.status = COMPLETED 또는 PURCHASED",
+    staleRule: { days: 14, message: "견적 후속 14일 초과 — 벤더 확인 필요" },
+    targetSubstatusOnComplete: "quote_completed",
+  },
+  ops_purchase_approval: {
+    id: "ops_purchase_approval",
+    label: "구매 승인 대기",
+    meaning: "구매 요청이 승인자 검토를 기다리는 중",
+    stage: "order",
+    sourceSubstatuses: ["purchase_request_created"],
+    sourceEntityType: "PURCHASE_REQUEST",
+    owner: "APPROVER",
+    primaryCta: { label: "구매 승인", variant: "default", actionId: "approve_purchase" },
+    secondaryCta: { label: "구매 반려", variant: "destructive", actionId: "reject_purchase" },
+    completionRule: "PurchaseRequest.status = APPROVED 또는 REJECTED",
+    staleRule: { days: 5, message: "구매 승인 5일 초과 — 승인자 확인 필요" },
+    targetSubstatusOnComplete: "status_change_approved",
+  },
+  ops_order_tracking: {
+    id: "ops_order_tracking",
+    label: "발주 추적",
+    meaning: "발주 완료 후 배송 확인까지 추적 필요",
+    stage: "order",
+    sourceSubstatuses: ["followup_sent", "status_change_proposed", "vendor_response_parsed"],
+    sourceEntityType: "ORDER",
+    owner: "OPERATOR",
+    primaryCta: { label: "발주 확인", variant: "outline", actionId: "navigate_order" },
+    completionRule: "Order.status = DELIVERED 또는 CANCELLED",
+    staleRule: { days: 14, message: "발주 추적 14일 초과 — 배송 확인 필요" },
+    targetSubstatusOnComplete: "status_change_approved",
+  },
+  ops_receiving_pending: {
+    id: "ops_receiving_pending",
+    label: "입고 대기",
+    meaning: "배송 완료 후 입고 등록 필요",
+    stage: "receiving",
+    sourceSubstatuses: ["restock_ordered"],
+    sourceEntityType: "INVENTORY_RESTOCK",
+    owner: "OPERATOR",
+    primaryCta: { label: "입고 등록", variant: "default", actionId: "navigate_receiving" },
+    completionRule: "InventoryRestock.receivingStatus = COMPLETED",
+    staleRule: { days: 10, message: "입고 대기 10일 초과 — 입고 처리 필요" },
+    targetSubstatusOnComplete: "restock_completed",
+  },
+  ops_receiving_issue: {
+    id: "ops_receiving_issue",
+    label: "입고 이슈",
+    meaning: "입고 과정에서 문제가 발생하여 해결 필요",
+    stage: "receiving",
+    sourceSubstatuses: ["restock_suggested"],
+    sourceEntityType: "INVENTORY_RESTOCK",
+    owner: "OPERATOR",
+    primaryCta: { label: "이슈 해결", variant: "destructive", actionId: "navigate_receiving" },
+    completionRule: "InventoryRestock.receivingStatus = COMPLETED 또는 재발주",
+    staleRule: { days: 5, message: "입고 이슈 5일 초과 — 즉시 해결 필요" },
+    targetSubstatusOnComplete: "restock_completed",
+  },
+  ops_restock_confirm: {
+    id: "ops_restock_confirm",
+    label: "재고 반영 확인",
+    meaning: "입고 완료 후 재고 수량 반영 확인 필요",
+    stage: "inventory",
+    sourceSubstatuses: ["restock_completed"],
+    sourceEntityType: "INVENTORY_RESTOCK",
+    owner: "OPERATOR",
+    primaryCta: { label: "재고 확인", variant: "default", actionId: "confirm_restock" },
+    completionRule: "ProductInventory.currentQuantity 반영 확인",
+    staleRule: { days: 3, message: "재고 반영 3일 초과 — 확인 필요" },
+    targetSubstatusOnComplete: "restock_completed",
+  },
+  ops_stalled_handoff: {
+    id: "ops_stalled_handoff",
+    label: "정체 핸드오프",
+    meaning: "다음 단계로의 전환이 SLA를 초과하여 정체됨",
+    stage: "quote",
+    sourceSubstatuses: [],
+    sourceEntityType: "MIXED",
+    owner: "OPERATOR",
+    primaryCta: { label: "정체 해소", variant: "destructive", actionId: "resolve_stall" },
+    completionRule: "하위 단계 진행 또는 취소",
+    staleRule: { days: 7, message: "핸드오프 정체 7일 초과 — 즉시 조치 필요" },
+    targetSubstatusOnComplete: "execution_failed",
+  },
+};
+
+// ── Queue Ownership Transfer Rules ──
+
+export interface OpsOwnershipTransfer {
+  id: string;
+  label: string;
+  previousOwner: "REQUESTER" | "APPROVER" | "OPERATOR";
+  nextOwner: "REQUESTER" | "APPROVER" | "OPERATOR";
+  fromQueueItemType: string;
+  toQueueItemType: string;
+  transferEvent: string;
+  blockingCondition: string;
+  closesSubstatus: string;
+  opensSubstatus: string;
+}
+
+export const OPS_OWNERSHIP_TRANSFERS: OpsOwnershipTransfer[] = [
+  {
+    id: "quote_to_purchase",
+    label: "견적 → 구매 승인",
+    previousOwner: "REQUESTER",
+    nextOwner: "APPROVER",
+    fromQueueItemType: "ops_quote_followup",
+    toQueueItemType: "ops_purchase_approval",
+    transferEvent: "Quote.status = COMPLETED → PurchaseRequest 생성",
+    blockingCondition: "예산 부족 또는 승인자 미지정",
+    closesSubstatus: "quote_completed",
+    opensSubstatus: "purchase_request_created",
+  },
+  {
+    id: "order_to_receiving",
+    label: "발주 → 입고",
+    previousOwner: "OPERATOR",
+    nextOwner: "OPERATOR",
+    fromQueueItemType: "ops_order_tracking",
+    toQueueItemType: "ops_receiving_pending",
+    transferEvent: "Order.status = DELIVERED → InventoryRestock 입고 대기",
+    blockingCondition: "배송 지연 또는 주문 취소",
+    closesSubstatus: "status_change_approved",
+    opensSubstatus: "restock_ordered",
+  },
+  {
+    id: "receiving_to_inventory",
+    label: "입고 → 재고 반영",
+    previousOwner: "OPERATOR",
+    nextOwner: "OPERATOR",
+    fromQueueItemType: "ops_receiving_pending",
+    toQueueItemType: "ops_restock_confirm",
+    transferEvent: "InventoryRestock.receivingStatus = COMPLETED",
+    blockingCondition: "입고 이슈 미해결",
+    closesSubstatus: "restock_ordered",
+    opensSubstatus: "restock_completed",
+  },
+];
+
+// ── Ops Queue CTA Map (for work-queue-inbox.tsx) ──
+
+/** substatus → 큐 카드 CTA 매핑. COMPARE_CTA_MAP 패턴과 동일. */
+export const OPS_QUEUE_CTA_MAP: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {
+  // 견적 단계
+  quote_draft_generated: { label: "견적 검토", variant: "default" },
+  quote_draft_approved: { label: "이메일 발송", variant: "default" },
+  vendor_email_generated: { label: "이메일 검토", variant: "default" },
+  vendor_email_approved: { label: "이메일 발송", variant: "default" },
+  email_sent: { label: "응답 확인", variant: "outline" },
+  vendor_reply_received: { label: "견적 처리", variant: "destructive" },
+  // 발주 단계
+  followup_draft_generated: { label: "이메일 검토", variant: "default" },
+  followup_approved: { label: "이메일 발송", variant: "default" },
+  followup_sent: { label: "응답 확인", variant: "outline" },
+  status_change_proposed: { label: "상태 변경 검토", variant: "default" },
+  vendor_response_parsed: { label: "응답 확인", variant: "destructive" },
+  purchase_request_created: { label: "구매 승인", variant: "default" },
+  // 입고 단계
+  restock_suggested: { label: "재발주 검토", variant: "default" },
+  restock_approved: { label: "발주 진행", variant: "default" },
+  restock_ordered: { label: "입고 확인", variant: "outline" },
+  // 재고 단계
+  expiry_alert_created: { label: "재고 확인", variant: "destructive" },
+};
+
+// ── determineOpsQueueItemType ──
+
+export interface OpsQueueItemTypeInput {
+  entityType: "QUOTE" | "PURCHASE_REQUEST" | "ORDER" | "INVENTORY_RESTOCK";
+  quoteStatus?: string;
+  purchaseRequestStatus?: string;
+  orderStatus?: string;
+  receivingStatus?: string;
+  inventoryReflected?: boolean;
+  ageDays?: number;
+  slaWarningDays?: number;
+}
+
+/**
+ * 엔티티 상태를 기반으로 적절한 큐 아이템 타입 ID를 반환합니다.
+ * 해당 없으면 null.
+ */
+export function determineOpsQueueItemType(input: OpsQueueItemTypeInput): string | null {
+  const { entityType, quoteStatus, purchaseRequestStatus, orderStatus, receivingStatus, inventoryReflected, ageDays, slaWarningDays } = input;
+
+  // SLA 초과 시 stalled handoff
+  if (ageDays !== undefined && slaWarningDays !== undefined && slaWarningDays > 0 && ageDays >= slaWarningDays * 2) {
+    return "ops_stalled_handoff";
+  }
+
+  switch (entityType) {
+    case "QUOTE":
+      if (quoteStatus === "SENT" || quoteStatus === "RESPONDED") {
+        return "ops_quote_followup";
+      }
+      return null;
+
+    case "PURCHASE_REQUEST":
+      if (purchaseRequestStatus === "PENDING") {
+        return "ops_purchase_approval";
+      }
+      return null;
+
+    case "ORDER":
+      if (orderStatus === "ORDERED" || orderStatus === "CONFIRMED" || orderStatus === "SHIPPING") {
+        return "ops_order_tracking";
+      }
+      return null;
+
+    case "INVENTORY_RESTOCK":
+      if (receivingStatus === "ISSUE") {
+        return "ops_receiving_issue";
+      }
+      if (receivingStatus === "PENDING" || receivingStatus === "PARTIAL") {
+        return "ops_receiving_pending";
+      }
+      if (receivingStatus === "COMPLETED" && !inventoryReflected) {
+        return "ops_restock_confirm";
+      }
+      return null;
+
+    default:
+      return null;
+  }
+}

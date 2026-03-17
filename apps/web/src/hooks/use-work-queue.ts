@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TaskStatus, ApprovalStatus } from "@/lib/work-queue/state-mapper";
 import { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE } from "@/lib/work-queue/state-mapper";
@@ -180,6 +181,29 @@ export function useDismissWorkItem() {
       queryClient.invalidateQueries({ queryKey: ["ai-actions"] });
     },
   });
+}
+
+/**
+ * Ops queue sync — 대시보드 마운트 시 ops-sync + compare-sync 병렬 호출
+ *
+ * 운영 도메인 큐 아이템을 실제 엔티티 상태와 동기화합니다.
+ * 3분 디바운스로 중복 호출 방지.
+ */
+export function useSyncOpsQueue() {
+  const synced = useRef(false);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (synced.current) return;
+    synced.current = true;
+
+    Promise.all([
+      fetch("/api/work-queue/ops-sync", { method: "POST" }).catch(() => null),
+      fetch("/api/work-queue/compare-sync", { method: "POST" }).catch(() => null),
+    ]).then(() => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+    });
+  }, [queryClient]);
 }
 
 // ── Re-exports for UI convenience ──

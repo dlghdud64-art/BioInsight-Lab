@@ -14,6 +14,7 @@ import {
   useWorkQueue,
   useApproveWorkItem,
   useDismissWorkItem,
+  useSyncOpsQueue,
   TASK_STATUS_BADGE,
   APPROVAL_STATUS_BADGE,
   type WorkQueueItem,
@@ -21,7 +22,7 @@ import {
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
 import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, computeInquiryAgingDays, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
-import { OPS_ACTIVITY_LABELS } from "@/lib/work-queue/ops-queue-semantics";
+import { OPS_ACTIVITY_LABELS, OPS_QUEUE_CTA_MAP, OPS_SUBSTATUS_DEFS } from "@/lib/work-queue/ops-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -96,6 +97,7 @@ function timeAgo(dateStr: string): string {
 export function WorkQueueInbox() {
   const router = useRouter();
   const [showCompleted, setShowCompleted] = useState(false);
+  useSyncOpsQueue(); // Sync ops + compare queue on mount
   const { data, isLoading, error } = useWorkQueue({
     includeCompleted: showCompleted,
     limit: 20,
@@ -242,7 +244,9 @@ function WorkQueueCard({
   const approvalBadge = APPROVAL_STATUS_BADGE[item.approvalStatus];
   const cta = item.type === "COMPARE_DECISION" && item.substatus && COMPARE_CTA_MAP[item.substatus]
     ? COMPARE_CTA_MAP[item.substatus]
-    : CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
+    : (item.substatus && OPS_QUEUE_CTA_MAP[item.substatus])
+      ? OPS_QUEUE_CTA_MAP[item.substatus]
+      : CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
   const activityLabel = ACTIVITY_LABEL[item.substatus || ""] || item.summary || "";
 
   return (
@@ -291,6 +295,19 @@ function WorkQueueCard({
                 return (
                   <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
                     <Clock className="h-3 w-3" />{ageDays}일 경과
+                  </span>
+                );
+              }
+              return null;
+            })()}
+            {/* SLA aging indicator for ops items */}
+            {item.type !== "COMPARE_DECISION" && item.substatus && OPS_SUBSTATUS_DEFS[item.substatus] && (() => {
+              const def = OPS_SUBSTATUS_DEFS[item.substatus!];
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+                return (
+                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{ageDays}일 경과 — {def.escalationMeaning}
                   </span>
                 );
               }
