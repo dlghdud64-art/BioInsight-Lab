@@ -244,7 +244,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-400" : isInventory ? "text-blue-400" : "text-slate-400")} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
+                        <span className="ml-auto text-[10px] md:text-xs bg-blue-900/30 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
                           {item.badge}
                         </span>
                       )}

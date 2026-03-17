@@ -176,7 +176,7 @@ export function VendorRequestModal({
               {vendors.map((vendor, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50"
+                  className="flex items-start gap-2 p-3 rounded-lg border border-slate-800 bg-slate-900"
                 >
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export function VendorRequestModal({
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value) || 14)}
                 className="h-8 text-sm w-24"
               />
-              <span className="text-sm text-slate-600">일 후</span>
+              <span className="text-sm text-slate-400">일 후</span>
             </div>
             <p className="text-xs text-slate-500">
               {expiresInDays}일 후에 견적 회신이 마감됩니다.

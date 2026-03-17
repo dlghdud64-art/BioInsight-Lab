@@ -23,7 +23,7 @@ export function QueryAnalysisCard({ intent }: QueryAnalysisCardProps) {
       {intent ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-purple-600" />
+            <Sparkles className="h-4 w-4 text-purple-400" />
             <span className="text-xs font-medium">GPT 분석 결과</span>
           </div>
           {intent.target && (
@@ -50,7 +50,7 @@ export function QueryAnalysisCard({ intent }: QueryAnalysisCardProps) {
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
               Raw JSON 보기
             </summary>
-            <pre className="mt-2 p-2 bg-slate-100 rounded text-[10px] overflow-auto">
+            <pre className="mt-2 p-2 bg-slate-800 rounded text-[10px] overflow-auto">
               {JSON.stringify(intent, null, 2)}
             </pre>
           </details>

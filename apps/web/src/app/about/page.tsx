@@ -11,7 +11,7 @@ export default function AboutPage() {
         <div className="space-y-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서
+              시약·장비 검색부터<br /><span className="text-blue-400">구매 운영</span>까지 한곳에서
             </h1>
             <p className="text-muted-foreground text-lg">
               연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.

@@ -348,11 +348,11 @@ export default function BudgetPage() {
                           const now = new Date();
                           const start = new Date(budget.periodStart);
                           const end = new Date(budget.periodEnd);
-                          if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-50 text-red-700 border-red-200">초과</Badge>;
-                          if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-50 text-orange-700 border-orange-200">경고</Badge>;
+                          if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-950/30 text-red-700 border-red-800">초과</Badge>;
+                          if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-950/20 text-orange-700 border-orange-800">경고</Badge>;
                           if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-800 text-slate-400 border-slate-800">예정</Badge>;
                           if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-800 text-slate-500 border-slate-800">종료</Badge>;
-                          return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200">운영 중</Badge>;
+                          return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-900/20 text-emerald-700 border-emerald-800">운영 중</Badge>;
                         })()}
                       </CardTitle>
                       <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">

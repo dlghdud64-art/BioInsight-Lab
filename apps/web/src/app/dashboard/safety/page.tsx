@@ -482,7 +482,7 @@ export default function SafetyManagerPage() {
               <ShieldAlert className="text-slate-400 text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-red-900/50 bg-red-50/20 bg-red-950/30 shadow-none">
+          <Card className="border-red-900/50 bg-red-950/30/20 bg-red-950/30 shadow-none">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-red-400">고위험</p>
@@ -493,7 +493,7 @@ export default function SafetyManagerPage() {
               <Biohazard className="text-red-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-amber-900/50 bg-amber-50/20 bg-amber-950/30 shadow-none">
+          <Card className="border-amber-900/50 bg-amber-950/30/20 bg-amber-950/30 shadow-none">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-amber-400">MSDS 누락</p>
@@ -573,15 +573,15 @@ export default function SafetyManagerPage() {
               <div className="space-y-2 antialiased">
                 {filteredItems.map((item) => {
                   const riskBadge = item.level === "HIGH"
-                    ? { label: "고위험", cls: "bg-red-100 text-red-700 border-red-200 bg-red-900/40 text-red-300 border-red-800" }
+                    ? { label: "고위험", cls: "bg-red-900/40 text-red-700 border-red-800 bg-red-900/40 text-red-300 border-red-800" }
                     : item.level === "MEDIUM"
-                      ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200 bg-orange-900/40 text-orange-300 border-orange-800" }
+                      ? { label: "중위험", cls: "bg-orange-900/40 text-orange-700 border-orange-800 bg-orange-900/40 text-orange-300 border-orange-800" }
                       : { label: "일반", cls: "bg-slate-800 text-slate-400 border-slate-800 bg-slate-800 text-slate-400 border-slate-700" };
                   const actionBadge = item.actionStatus === "action_required"
-                    ? { label: "조치 필요", cls: "bg-red-50 text-red-400 border-red-200 bg-red-950/40 text-red-400 border-red-800" }
+                    ? { label: "조치 필요", cls: "bg-red-950/30 text-red-400 border-red-800 bg-red-950/40 text-red-400 border-red-800" }
                     : item.actionStatus === "caution"
-                      ? { label: "주의", cls: "bg-amber-50 text-amber-400 border-amber-200 bg-amber-950/40 text-amber-400 border-amber-800" }
-                      : { label: "정상", cls: "bg-emerald-50 text-emerald-400 border-emerald-200 bg-emerald-950/40 text-emerald-400 border-emerald-800" };
+                      ? { label: "주의", cls: "bg-amber-950/30 text-amber-400 border-amber-800 bg-amber-950/40 text-amber-400 border-amber-800" }
+                      : { label: "정상", cls: "bg-emerald-900/20 text-emerald-400 border-emerald-800 bg-emerald-950/40 text-emerald-400 border-emerald-800" };
                   const requiredPpe = item.ppe.filter((p) => p.required).map((p) =>
                     p.type === "gloves" ? "보호장갑" : p.type === "goggles" ? "보안경" : p.type === "coat" ? "실험복" : p.type === "mask" ? "마스크" : ""
                   ).filter(Boolean);

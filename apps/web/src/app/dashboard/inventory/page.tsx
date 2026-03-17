@@ -1063,14 +1063,14 @@ function InventoryPageContent() {
               <TabsList className="flex bg-slate-800 p-1 rounded-xl w-fit">
                 <TabsTrigger
                   value="manage"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
                   <span className="hidden sm:inline">시약 </span>관리
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
                   점검 사항
@@ -1340,9 +1340,9 @@ function InventoryPageContent() {
                 <span className={`text-lg font-bold tabular-nums ${lowOrOutOfStockCount > 0 ? "text-red-400" : "text-foreground"}`}>{lowOrOutOfStockCount}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-orange-600" />
+                <Calendar className="h-4 w-4 text-orange-400" />
                 <span className="text-xs text-muted-foreground">폐기 임박</span>
-                <span className={`text-lg font-bold tabular-nums ${expiringSoonCount > 0 ? "text-orange-600" : "text-foreground"}`}>{expiringSoonCount}</span>
+                <span className={`text-lg font-bold tabular-nums ${expiringSoonCount > 0 ? "text-orange-400" : "text-foreground"}`}>{expiringSoonCount}</span>
               </div>
             </div>
 
@@ -2338,7 +2338,7 @@ function InventoryPageContent() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
-                <Printer className="h-4 w-4 text-indigo-600" />
+                <Printer className="h-4 w-4 text-indigo-400" />
                 라벨 인쇄 — {labelPrintTitle}
               </DialogTitle>
               <DialogDescription>
@@ -2385,7 +2385,7 @@ function InventoryPageContent() {
                           return next;
                         });
                       }}
-                      className="mt-1 h-4 w-4 rounded border-slate-700 text-indigo-600 shrink-0"
+                      className="mt-1 h-4 w-4 rounded border-slate-700 text-indigo-400 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-sm">
@@ -3053,7 +3053,7 @@ function InventoryCard({
             className={`w-full ${
               hasRestockRequest
                 ? "bg-green-900/30 text-green-400 border-green-800 hover:bg-green-900/30 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-none hover:shadow-xl"
             }`}
           >
             {isRequestingRestock ? (
@@ -3439,7 +3439,7 @@ function TeamInventoryCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-md ${
+      className={`transition-all duration-200 hover:shadow-none ${
         isOutOfStock
           ? "border-red-800 bg-red-950/20 opacity-75"
           : isLocationMissing

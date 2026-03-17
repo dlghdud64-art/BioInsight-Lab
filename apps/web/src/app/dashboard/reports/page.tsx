@@ -215,9 +215,9 @@ export default function ReportsPage() {
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-lg p-12 text-center h-64 flex flex-col items-center justify-center cursor-pointer transition-colors${
                       isDragging
-                        ? "border-blue-500 bg-blue-50"
+                        ? "border-blue-500 bg-blue-950/20"
                         : selectedFile
-                        ? "border-blue-300 bg-blue-50/50"
+                        ? "border-blue-300 bg-blue-950/20/50"
                         : "border-slate-700 bg-slate-900 hover:border-gray-400"
                     }`}
                     onClick={() => document.getElementById("file-input")?.click()}
@@ -304,7 +304,7 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 총 구매액
@@ -321,7 +321,7 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 총 건수
@@ -338,7 +338,7 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 평균가
@@ -355,7 +355,7 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
               <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 거래처
@@ -376,7 +376,7 @@ export default function ReportsPage() {
       )}
 
       {/* 3. 압축된 한 줄 필터 바 */}
-      <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-3 sm:p-6">
+      <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-3 sm:p-6">
         <CardContent className="p-2 sm:p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="space-y-1.5">
@@ -521,7 +521,7 @@ export default function ReportsPage() {
           {/* 차트 영역: 3단 Grid (기간별 / 벤더별 / 카테고리별 균등 배치) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* 월별 구매 추이 차트 */}
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
             </CardHeader>
@@ -564,7 +564,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* 벤더별 구매 현황 */}
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
             </CardHeader>
@@ -607,7 +607,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* 카테고리별 구매 현황 (파이 차트) */}
-          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
             </CardHeader>
@@ -646,7 +646,7 @@ export default function ReportsPage() {
 
           {/* 상세 테이블 (Detailed Logs) */}
           {details && details.length > 0 && (
-            <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-6">
+            <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 p-6">
               <CardHeader className="space-y-1">
                 <CardTitle className="tracking-normal leading-relaxed">상세 내역</CardTitle>
                 <CardDescription className="text-sm leading-relaxed tracking-normal text-muted-foreground">

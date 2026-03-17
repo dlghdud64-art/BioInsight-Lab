@@ -96,21 +96,21 @@ export default function AdminUsersPage() {
   };
 
   const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-    active:   { label: "활성",     className: "bg-emerald-50 text-emerald-700 border-0" },
-    pending:  { label: "승인 대기", className: "bg-amber-50 text-amber-700 border-0" },
-    inactive: { label: "비활성",   className: "bg-slate-100 text-slate-500 border-0" },
+    active:   { label: "활성",     className: "bg-emerald-900/20 text-emerald-700 border-0" },
+    pending:  { label: "승인 대기", className: "bg-amber-950/30 text-amber-700 border-0" },
+    inactive: { label: "비활성",   className: "bg-slate-800 text-slate-500 border-0" },
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-900">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-h-screen">
         {/* 헤더 */}
-        <div className="bg-white border-b border-slate-200 px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base font-bold text-slate-900">사용자 관리</h1>
+              <h1 className="text-base font-bold text-slate-100">사용자 관리</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 사용자 계정을 관리하고 권한을 설정합니다.
               </p>
@@ -138,7 +138,7 @@ export default function AdminUsersPage() {
           </div>
 
           {/* ── 검색/필터 바 ── */}
-          <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
               <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               <Input
@@ -177,11 +177,11 @@ export default function AdminUsersPage() {
           </div>
 
           {/* ── 테이블 ── */}
-          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
             <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/80 hover:bg-transparent">
+                  <TableRow className="bg-slate-900/80 hover:bg-transparent">
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[120px]">이름</TableHead>
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[160px]">이메일</TableHead>
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[120px]">조직</TableHead>
@@ -196,10 +196,10 @@ export default function AdminUsersPage() {
                     <TableRow>
                       <TableCell colSpan={7} className="h-48 text-center">
                         <div className="space-y-2">
-                          <div className="inline-flex items-center justify-center p-3 rounded-full bg-slate-100 mb-1">
+                          <div className="inline-flex items-center justify-center p-3 rounded-full bg-slate-800 mb-1">
                             <Users className="h-5 w-5 text-slate-400" />
                           </div>
-                          <p className="text-sm font-medium text-slate-600">등록된 사용자가 없습니다.</p>
+                          <p className="text-sm font-medium text-slate-400">등록된 사용자가 없습니다.</p>
                           <p className="text-xs text-slate-400">사용자 초대 또는 승인 대기 목록을 확인할 수 있습니다.</p>
                           <div className="flex items-center justify-center gap-2 mt-3">
                             <Button size="sm" variant="outline" className="text-xs gap-1.5 h-7">
@@ -209,7 +209,7 @@ export default function AdminUsersPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-xs text-blue-600 h-7"
+                              className="text-xs text-blue-400 h-7"
                               onClick={() => setStatusFilter("pending")}
                             >
                               승인 대기 보기
@@ -220,12 +220,12 @@ export default function AdminUsersPage() {
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => {
-                      const statusCfg = STATUS_BADGE[user.status] || { label: user.status, className: "bg-slate-100 text-slate-500 border-0" };
+                      const statusCfg = STATUS_BADGE[user.status] || { label: user.status, className: "bg-slate-800 text-slate-500 border-0" };
                       return (
-                        <TableRow key={user.id} className="text-xs hover:bg-slate-50/50">
-                          <TableCell className="font-medium text-slate-800">{user.name}</TableCell>
+                        <TableRow key={user.id} className="text-xs hover:bg-slate-900/50">
+                          <TableCell className="font-medium text-slate-200">{user.name}</TableCell>
                           <TableCell className="text-slate-500">{user.email}</TableCell>
-                          <TableCell className="text-slate-600">{user.orgName}</TableCell>
+                          <TableCell className="text-slate-400">{user.orgName}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-[10px] font-medium">{user.role}</Badge>
                           </TableCell>
@@ -240,7 +240,7 @@ export default function AdminUsersPage() {
                               </Button>
                               {user.status === "pending" && (
                                 <>
-                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:bg-red-50">
+                                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:bg-red-950/30">
                                     <XCircle className="h-3 w-3 mr-0.5" />반려
                                   </Button>
                                   <Button size="sm" className="h-6 px-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white">
@@ -278,15 +278,15 @@ function MiniKPI({
   color: "blue" | "amber" | "slate" | "green";
 }) {
   const colorMap = {
-    blue:  { bg: "bg-blue-50",    text: "text-blue-500",    count: "text-blue-600" },
-    amber: { bg: "bg-amber-50",   text: "text-amber-500",   count: "text-amber-600" },
-    slate: { bg: "bg-slate-100",  text: "text-slate-500",   count: "text-slate-600" },
-    green: { bg: "bg-emerald-50", text: "text-emerald-500", count: "text-emerald-600" },
+    blue:  { bg: "bg-blue-950/20",    text: "text-blue-500",    count: "text-blue-400" },
+    amber: { bg: "bg-amber-950/30",   text: "text-amber-500",   count: "text-amber-400" },
+    slate: { bg: "bg-slate-800",  text: "text-slate-500",   count: "text-slate-400" },
+    green: { bg: "bg-emerald-900/20", text: "text-emerald-500", count: "text-emerald-400" },
   };
   const c = colorMap[color];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-3 flex items-center gap-3">
+    <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 flex items-center gap-3">
       <div className={cn("p-1.5 rounded-md", c.bg)}>
         <Icon className={cn("h-3.5 w-3.5", c.text)} />
       </div>

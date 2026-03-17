@@ -27,11 +27,11 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-slate-400">
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
@@ -53,11 +53,11 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-slate-400">
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
@@ -83,41 +83,41 @@ export function SearchAnalysisCard() {
         {expanded && (
           <CardContent className="pt-0">
             <div className="space-y-3">
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 검색어를 분석하여 <strong>타깃</strong>, <strong>실험 유형</strong>, <strong>카테고리</strong> 등을 자동으로 추출한 결과가 여기에 표시됩니다.
               </p>
-              <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 space-y-3">
+              <div className="rounded-lg border border-blue-800 bg-blue-950/20/50 p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Brain className="h-3.5 w-3.5 text-blue-600" />
+                  <Brain className="h-3.5 w-3.5 text-blue-400" />
                   <p className="text-xs font-semibold text-blue-900">예시 분석 결과</p>
                 </div>
                 <div className="space-y-2.5 text-xs">
-                  <div className="bg-white rounded border border-blue-100 p-2.5">
+                  <div className="bg-slate-900 rounded border border-blue-800 p-2.5">
                     <div className="text-[10px] font-medium text-slate-500 mb-1.5">검색어</div>
-                    <div className="text-xs font-medium text-slate-800">"Human IL-6 Sandwich ELISA kit"</div>
+                    <div className="text-xs font-medium text-slate-200">"Human IL-6 Sandwich ELISA kit"</div>
                   </div>
                   <div className="space-y-1.5 pt-1.5">
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">타깃:</span>
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      <Badge variant="secondary" className="text-xs bg-blue-900/30 text-blue-700 border-blue-800">
                         Human IL-6
                       </Badge>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">실험 유형:</span>
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      <Badge variant="secondary" className="text-xs bg-blue-900/30 text-blue-700 border-blue-800">
                         Sandwich ELISA
                       </Badge>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] text-slate-500 font-medium min-w-[60px]">카테고리:</span>
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                      <Badge variant="secondary" className="text-xs bg-blue-900/30 text-blue-700 border-blue-800">
                         ELISA Kit
                       </Badge>
                     </div>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-blue-200">
+                <div className="pt-2 border-t border-blue-800">
                   <p className="text-[10px] text-blue-700 leading-relaxed">
                     검색어에 <strong>제품명</strong>, <strong>타깃</strong>, <strong>실험 유형</strong>을 함께 입력하면 GPT가 자동으로 분석합니다.
                   </p>
@@ -136,18 +136,18 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-slate-400">
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-slate-600">
+            <div className="flex items-center gap-2 text-sm text-slate-400">
               <Loader2 className="h-4 w-4 animate-spin" />
               GPT가 검색어를 분석하는 중입니다...
             </div>
@@ -169,18 +169,18 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-slate-400">
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-start gap-2 text-sm text-slate-600">
+            <div className="flex items-start gap-2 text-sm text-slate-400">
               <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500" />
               <div>
                 <p className="font-medium">GPT 분석 중 오류가 발생했습니다.</p>
@@ -209,11 +209,11 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-slate-400">
               검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
             </p>
           </div>
@@ -256,19 +256,19 @@ export function SearchAnalysisCard() {
               {queryAnalysis.target && (
                 <div className="text-xs">
                   <span className="text-slate-500">타깃:</span>{" "}
-                  <strong className="text-slate-700">{queryAnalysis.target}</strong>
+                  <strong className="text-slate-300">{queryAnalysis.target}</strong>
                 </div>
               )}
               {queryAnalysis.targetExperiment && (
                 <div className="text-xs">
                   <span className="text-slate-500">실험 유형:</span>{" "}
-                  <strong className="text-slate-700">{queryAnalysis.targetExperiment}</strong>
+                  <strong className="text-slate-300">{queryAnalysis.targetExperiment}</strong>
                 </div>
               )}
               {queryAnalysis.category && (
                 <div className="text-xs">
                   <span className="text-slate-500">카테고리:</span>{" "}
-                  <strong className="text-slate-700">
+                  <strong className="text-slate-300">
                     {queryAnalysis.category === "REAGENT" ? "시약" :
                     queryAnalysis.category === "TOOL" ? "기구" :
                     queryAnalysis.category === "EQUIPMENT" ? "장비" :
@@ -277,7 +277,7 @@ export function SearchAnalysisCard() {
                 </div>
               )}
               {queryAnalysis.properties && queryAnalysis.properties.length > 0 && (
-                <div className="pt-2 border-t border-slate-200">
+                <div className="pt-2 border-t border-slate-800">
                   <div className="flex flex-wrap gap-1.5">
                     {queryAnalysis.properties.map((prop: string, idx: number) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
@@ -289,9 +289,9 @@ export function SearchAnalysisCard() {
               )}
             </div>
             {queryAnalysis.purpose && (
-              <div className="mt-3 pt-3 border-t border-slate-200">
+              <div className="mt-3 pt-3 border-t border-slate-800">
                 <p className="text-xs text-slate-500 mb-1">목적</p>
-                <p className="text-sm text-slate-700">{queryAnalysis.purpose}</p>
+                <p className="text-sm text-slate-300">{queryAnalysis.purpose}</p>
               </div>
             )}
           </CardContent>
@@ -305,11 +305,11 @@ export function SearchAnalysisCard() {
     <Card>
       <CardHeader className="flex items-center justify-between pb-3">
         <div className="flex-1">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+          <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>
-          <p className="mt-1 text-xs text-slate-600">
+          <p className="mt-1 text-xs text-slate-400">
             검색어에서 핵심 키워드, 항목, 카테고리를 추출해 보여줍니다.
           </p>
         </div>

@@ -470,24 +470,24 @@ export default function PurchasesPage() {
 
     // 구매 상태
     const purchaseStatus = days <= 7
-      ? { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200 bg-blue-950/20 text-blue-400 border-blue-800" }
-      : { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 bg-emerald-950/20 text-emerald-400 border-emerald-800" };
+      ? { label: "입고 대기", className: "bg-blue-950/20 text-blue-700 border-blue-800 bg-blue-950/20 text-blue-400 border-blue-800" }
+      : { label: "구매 완료", className: "bg-emerald-900/20 text-emerald-700 border-emerald-800 bg-emerald-950/20 text-emerald-400 border-emerald-800" };
 
     // 후속 처리 상태
     let followUpStatus: { label: string; className: string; action?: string } | null = null;
 
     if (amount >= 2000000 && days <= 14) {
       if (completedCount === 0) {
-        followUpStatus = { label: "증빙 업로드 필요", className: "bg-amber-50 text-amber-700 border-amber-200 bg-amber-950/20 text-amber-400 border-amber-800", action: "증빙 파일 등록" };
+        followUpStatus = { label: "증빙 업로드 필요", className: "bg-amber-950/30 text-amber-700 border-amber-800 bg-amber-950/20 text-amber-400 border-amber-800", action: "증빙 파일 등록" };
       } else if (completedCount < totalItems) {
-        followUpStatus = { label: "증빙 검토 필요", className: "bg-orange-50 text-orange-700 border-orange-200 bg-orange-950/20 text-orange-400 border-orange-800", action: "회계팀 전달" };
+        followUpStatus = { label: "증빙 검토 필요", className: "bg-orange-950/20 text-orange-700 border-orange-800 bg-orange-950/20 text-orange-400 border-orange-800", action: "회계팀 전달" };
       } else {
-        followUpStatus = { label: "정산 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 bg-emerald-950/20 text-emerald-400 border-emerald-800" };
+        followUpStatus = { label: "정산 완료", className: "bg-emerald-900/20 text-emerald-700 border-emerald-800 bg-emerald-950/20 text-emerald-400 border-emerald-800" };
       }
     }
 
     if (!followUpStatus && days > 7 && days <= 14) {
-      followUpStatus = { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200 bg-violet-950/20 text-violet-400 border-violet-800", action: "재고로 반영" };
+      followUpStatus = { label: "재고 반영 필요", className: "bg-violet-900/20 text-violet-700 border-violet-200 bg-violet-950/20 text-violet-400 border-violet-800", action: "재고로 반영" };
     }
 
     return { purchaseStatus, followUpStatus };
@@ -639,7 +639,7 @@ export default function PurchasesPage() {
                 <span className="text-[11px] text-slate-400 font-mono">{item.catalogNumber}</span>
               )}
               {count >= 2 && (
-                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-blue-200 text-blue-400 bg-blue-950/20 border-blue-800 text-blue-400">
+                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-blue-800 text-blue-400 bg-blue-950/20 border-blue-800 text-blue-400">
                   <Repeat className="h-2.5 w-2.5 mr-0.5" />{count}회
                 </Badge>
               )}
@@ -717,7 +717,7 @@ export default function PurchasesPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 text-violet-400 hover:bg-violet-950/30 gap-1 whitespace-nowrap"
+                className="h-7 text-[11px] text-violet-400 hover:text-violet-700 hover:bg-violet-900/20 text-violet-400 hover:bg-violet-950/30 gap-1 whitespace-nowrap"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`);
@@ -731,7 +731,7 @@ export default function PurchasesPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 text-[11px] text-amber-400 hover:text-amber-700 hover:bg-amber-50 text-amber-400 hover:bg-amber-950/30 gap-1 whitespace-nowrap"
+                className="h-7 text-[11px] text-amber-400 hover:text-amber-700 hover:bg-amber-950/30 text-amber-400 hover:bg-amber-950/30 gap-1 whitespace-nowrap"
                 onClick={(e) => {
                   e.stopPropagation();
                   setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id);
@@ -816,7 +816,7 @@ export default function PurchasesPage() {
             {/* 공급사 집중도 */}
             <div className={`rounded-xl border p-4 shadow-none ${
               operationalKPIs.vendorConcentration >= 70
-                ? "border-amber-200/60 bg-amber-50/30 bg-amber-950/10 border-amber-900/30"
+                ? "border-amber-800/60 bg-amber-950/30/30 bg-amber-950/10 border-amber-900/30"
                 : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
@@ -850,7 +850,7 @@ export default function PurchasesPage() {
             {/* 후속 처리 필요 */}
             <div className={`rounded-xl border p-4 shadow-none ${
               operationalKPIs.pendingActions > 0
-                ? "border-blue-200/60 bg-blue-50/30 bg-blue-950/10 border-blue-900/30"
+                ? "border-blue-800/60 bg-blue-950/20/30 bg-blue-950/10 border-blue-900/30"
                 : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
@@ -1130,7 +1130,7 @@ export default function PurchasesPage() {
                           {formatCurrency(purchase.amount)}
                         </span>
                         {repeatCount >= 2 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-blue-200 text-blue-400 bg-blue-950/20 border-blue-800 text-blue-400">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-blue-800 text-blue-400 bg-blue-950/20 border-blue-800 text-blue-400">
                             <Repeat className="h-2.5 w-2.5 mr-0.5" />반복 {repeatCount}회
                           </Badge>
                         )}
@@ -1154,7 +1154,7 @@ export default function PurchasesPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 text-violet-400 hover:bg-violet-950/30 gap-1"
+                            className="h-7 text-[11px] text-violet-400 hover:text-violet-700 hover:bg-violet-900/20 text-violet-400 hover:bg-violet-950/30 gap-1"
                             onClick={() => router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`)}
                           >
                             <PackageCheck className="h-3 w-3" />
@@ -1165,7 +1165,7 @@ export default function PurchasesPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-[11px] text-amber-400 hover:text-amber-700 hover:bg-amber-50 text-amber-400 hover:bg-amber-950/30 gap-1"
+                            className="h-7 text-[11px] text-amber-400 hover:text-amber-700 hover:bg-amber-950/30 text-amber-400 hover:bg-amber-950/30 gap-1"
                             onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
                           >
                             <ClipboardList className="h-3 w-3" />
@@ -1214,7 +1214,7 @@ export default function PurchasesPage() {
             const checks = evidenceChecklist[expandedRowId] || {};
             const completedCount = Object.values(checks).filter(Boolean).length;
             return (
-              <Card className="rounded-xl border-amber-200/60 border-amber-800/50 shadow-none bg-amber-50/30 bg-amber-950/10">
+              <Card className="rounded-xl border-amber-800/60 border-amber-800/50 shadow-none bg-amber-950/30/30 bg-amber-950/10">
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1237,7 +1237,7 @@ export default function PurchasesPage() {
                       <button
                         key={item.key}
                         type="button"
-                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-900/30 bg-slate-900 cursor-pointer hover:bg-amber-50/50 hover:bg-amber-950/20 transition-colors text-left"
+                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-900/30 bg-slate-900 cursor-pointer hover:bg-amber-950/30/50 hover:bg-amber-950/20 transition-colors text-left"
                         onClick={() => {
                           setEvidenceChecklist((prev) => ({
                             ...prev,
@@ -1480,14 +1480,14 @@ export default function PurchasesPage() {
 
                     {/* 행별 파싱 에러 테이블 */}
                     {tsvParseErrors.length > 0 && (
-                      <div className="rounded-md border border-red-200 bg-red-50 overflow-hidden">
-                        <div className="px-3 py-1.5 bg-red-100 border-b border-red-200 flex items-center gap-1.5">
+                      <div className="rounded-md border border-red-800 bg-red-950/30 overflow-hidden">
+                        <div className="px-3 py-1.5 bg-red-900/40 border-b border-red-800 flex items-center gap-1.5">
                           <AlertCircle className="h-3.5 w-3.5 text-red-400" />
                           <span className="text-xs font-medium text-red-700">{tsvParseErrors.length}건 파싱 에러</span>
                         </div>
                         <div className="max-h-[120px] overflow-y-auto">
                           <table className="w-full text-xs">
-                            <thead className="bg-red-50 sticky top-0">
+                            <thead className="bg-red-950/30 sticky top-0">
                               <tr>
                                 <th className="px-3 py-1 text-left font-medium text-red-400 w-16">행 번호</th>
                                 <th className="px-3 py-1 text-left font-medium text-red-400">오류 내용</th>
@@ -1495,7 +1495,7 @@ export default function PurchasesPage() {
                             </thead>
                             <tbody>
                               {tsvParseErrors.map((err, i) => (
-                                <tr key={i} className="border-t border-red-100">
+                                <tr key={i} className="border-t border-red-800">
                                   <td className="px-3 py-1 text-red-700 font-mono">{err.row}</td>
                                   <td className="px-3 py-1 text-red-400">{err.message}</td>
                                 </tr>
@@ -1511,8 +1511,8 @@ export default function PurchasesPage() {
                       <div className={cn(
                         "rounded-md border p-3 flex items-center gap-3",
                         importResult.errors.length > 0
-                          ? "border-amber-200 bg-amber-50"
-                          : "border-green-200 bg-green-50"
+                          ? "border-amber-800 bg-amber-950/30"
+                          : "border-green-800 bg-green-900/20"
                       )}>
                         {importResult.errors.length > 0 ? (
                           <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />

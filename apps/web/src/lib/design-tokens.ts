@@ -47,7 +47,7 @@ export const TYPE = {
   sectionTitle: "text-xs font-medium uppercase tracking-wider text-slate-500",
   rowTitle: "text-sm font-medium text-slate-200",
   metadata: "text-xs text-slate-500",
-  timestamp: "text-[11px] text-slate-600 tabular-nums",
+  timestamp: "text-[11px] text-slate-400 tabular-nums",
   value: "text-sm font-semibold tabular-nums text-slate-100",
   valueLarge: "text-lg font-bold tabular-nums text-slate-100",
   badge: "text-[10px] font-medium px-1.5 py-0.5",

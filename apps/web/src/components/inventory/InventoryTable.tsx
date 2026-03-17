@@ -361,7 +361,7 @@ export function InventoryTable({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 px-2.5 text-[11px] gap-1 text-emerald-400 border-emerald-200 hover:bg-emerald-50 border-emerald-800 hover:bg-emerald-950"
+                          className="h-7 px-2.5 text-[11px] gap-1 text-emerald-400 border-emerald-800 hover:bg-emerald-900/20 border-emerald-800 hover:bg-emerald-950"
                           onClick={() => onRestock(group.lots[0])}
                         >
                           <PackagePlus className="h-3 w-3 shrink-0" />
@@ -374,8 +374,8 @@ export function InventoryTable({
                         className={`h-7 px-2.5 text-[11px] gap-1${
                           isRisky
                             ? groupStatus === "부족" || displayStatus === "폐기"
-                              ? "text-red-400 border-red-200 hover:bg-red-50 border-red-800 hover:bg-red-950"
-                              : "text-amber-400 border-amber-200 hover:bg-amber-50 border-amber-800 hover:bg-amber-950"
+                              ? "text-red-400 border-red-800 hover:bg-red-950/30 border-red-800 hover:bg-red-950"
+                              : "text-amber-400 border-amber-800 hover:bg-amber-950/30 border-amber-800 hover:bg-amber-950"
                             : "text-slate-400 border-slate-800 hover:bg-slate-900 border-slate-700 hover:bg-slate-800"
                         }`}
                         onClick={() => onReorder(group.lots[0])}
@@ -388,7 +388,7 @@ export function InventoryTable({
                         size="sm"
                         className={`h-7 px-2.5 text-[11px] gap-1 ml-auto${
                           isExpanded
-                            ? "text-blue-400 border-blue-200 bg-blue-50/50 border-blue-800 bg-blue-950/30"
+                            ? "text-blue-400 border-blue-800 bg-blue-950/20/50 border-blue-800 bg-blue-950/30"
                             : "text-slate-500 border-slate-700"
                         }`}
                         onClick={() => toggleExpand(group.productId)}
@@ -417,9 +417,9 @@ export function InventoryTable({
                             key={lot.id}
                             className={`rounded-lg border p-3 ${
                               lotUrgent
-                                ? "border-red-200 bg-red-50/40 border-red-900 bg-red-950/20"
+                                ? "border-red-800 bg-red-950/30/40 border-red-900 bg-red-950/20"
                                 : lotExpiringSoon
-                                  ? "border-amber-200 bg-amber-50/30 border-amber-900 bg-amber-950/20"
+                                  ? "border-amber-800 bg-amber-950/30/30 border-amber-900 bg-amber-950/20"
                                   : "border-slate-800 bg-slate-900 border-slate-700 bg-slate-900/60"
                             }`}
                           >
@@ -474,7 +474,7 @@ export function InventoryTable({
                                   size="sm"
                                   className={`h-7 px-2.5 text-[11px] gap-1${
                                     lotUrgent
-                                      ? "text-red-400 border-red-200 hover:bg-red-50 border-red-800 hover:bg-red-950"
+                                      ? "text-red-400 border-red-800 hover:bg-red-950/30 border-red-800 hover:bg-red-950"
                                       : "text-slate-400 border-slate-800 hover:bg-slate-800 border-slate-700 hover:bg-slate-800"
                                   }`}
                                   onClick={() => onConsume(lot)}
@@ -487,7 +487,7 @@ export function InventoryTable({
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-7 px-2.5 text-[11px] gap-1 text-indigo-400 border-indigo-200 hover:bg-indigo-50 border-indigo-800 hover:bg-indigo-950"
+                                  className="h-7 px-2.5 text-[11px] gap-1 text-indigo-400 border-indigo-800 hover:bg-indigo-900/20 border-indigo-800 hover:bg-indigo-950"
                                   onClick={() => onPrintLabel(group.productName, [lot])}
                                 >
                                   <Printer className="h-3 w-3 shrink-0" />
@@ -576,9 +576,9 @@ export function InventoryTable({
                     {/* ══════ 상위 품목 row ══════ */}
                     <TableRow
                       className={`cursor-pointer select-none transition-all duration-150 border-b border-slate-700${isExpanded
-                          ? "bg-blue-50/60 bg-blue-950/20 hover:bg-blue-50/80 hover:bg-blue-950/30 shadow-none"
+                          ? "bg-blue-950/20/60 bg-blue-950/20 hover:bg-blue-950/20/80 hover:bg-blue-950/30 shadow-none"
                           : isRisky
-                          ? "bg-red-50/20 bg-red-950/5 hover:bg-red-50/40 hover:bg-red-950/10"
+                          ? "bg-red-950/30/20 bg-red-950/5 hover:bg-red-950/30/40 hover:bg-red-950/10"
                           : "bg-slate-950 hover:bg-slate-900/50"
                         }
                       `}

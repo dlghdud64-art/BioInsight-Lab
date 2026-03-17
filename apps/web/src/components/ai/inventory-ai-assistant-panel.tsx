@@ -668,7 +668,7 @@ function LotExpirySection({
                   </Badge>
                 )}
                 {!isExpired && !isSoon && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-slate-200">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-slate-800">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -691,7 +691,7 @@ function LotExpirySection({
               <div className="flex items-center gap-2 mt-2">
                 {onViewDetail && (
                   <button
-                    className="text-[11px] text-blue-500 hover:text-blue-600 font-medium flex items-center gap-0.5"
+                    className="text-[11px] text-blue-500 hover:text-blue-400 font-medium flex items-center gap-0.5"
                     onClick={() => onViewDetail(lot.lotNumber)}
                   >
                     <Eye className="h-3 w-3" />
@@ -701,7 +701,7 @@ function LotExpirySection({
                 {(isExpired || isSoon) && onReviewDisposal && (
                   <button
                     className={`text-[11px] font-medium flex items-center gap-0.5 ml-auto${
-                      isExpired ? "text-red-500 hover:text-red-600" : "text-amber-600 hover:text-amber-700"
+                      isExpired ? "text-red-500 hover:text-red-400" : "text-amber-400 hover:text-amber-700"
                     }`}
                     onClick={() => onReviewDisposal(lot.lotNumber)}
                   >
@@ -828,7 +828,7 @@ function StickyActions({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full mt-2 h-7 text-[11px] text-slate-500 hover:text-slate-700"
+          className="w-full mt-2 h-7 text-[11px] text-slate-500 hover:text-slate-300"
           onClick={onCreatePurchaseRequest}
         >
           <ArrowRight className="h-3 w-3 mr-1" />

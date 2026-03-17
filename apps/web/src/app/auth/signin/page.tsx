@@ -19,7 +19,7 @@ function SignInContent() {
       <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
         {/* 1. 브랜드 로고 */}
         <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
+          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-none transition-transform group-hover:scale-105">
             <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={48} height={48} className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col justify-center leading-tight">
@@ -55,7 +55,7 @@ function SignInContent() {
         {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="group flex items-center gap-3 cursor-pointer">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-none transition-transform group-hover:scale-105">
               <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={40} height={40} className="w-full h-full object-cover" />
             </div>
             <div className="leading-tight">

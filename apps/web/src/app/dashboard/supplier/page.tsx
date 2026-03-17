@@ -274,7 +274,7 @@ function QuoteCard({ quote }: { quote: any }) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-none transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -286,10 +286,10 @@ function QuoteCard({ quote }: { quote: any }) {
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${
               quote.status === "COMPLETED"
-                ? "bg-green-100 text-green-800"
+                ? "bg-green-900/30 text-green-800"
                 : quote.status === "RESPONDED"
-                ? "bg-blue-100 text-blue-800"
-                : "bg-yellow-100 text-yellow-800"
+                ? "bg-blue-900/30 text-blue-800"
+                : "bg-yellow-900/40 text-yellow-800"
             }`}
           >
             {QUOTE_STATUS[quote.status as keyof typeof QUOTE_STATUS]}
@@ -360,7 +360,7 @@ function QuoteCard({ quote }: { quote: any }) {
         </div>
 
         {existingResponse ? (
-          <div className="p-3 bg-green-50 rounded border border-green-200">
+          <div className="p-3 bg-green-900/20 rounded border border-green-800">
             <p className="text-sm font-medium text-green-800 mb-2">견적 응답 완료</p>
             {existingResponse.totalPrice && (
               <p className="text-lg font-bold text-green-900">
@@ -371,7 +371,7 @@ function QuoteCard({ quote }: { quote: any }) {
               <p className="text-sm text-green-700 mt-2">{existingResponse.message}</p>
             )}
             {existingResponse.validUntil && (
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-green-400 mt-1">
                 유효기간: {new Date(existingResponse.validUntil).toLocaleDateString("ko-KR")}
               </p>
             )}
@@ -454,7 +454,7 @@ function QuoteCard({ quote }: { quote: any }) {
                 </label>
               </div>
               {extractedData && extractedData.items && extractedData.items.length > 0 && (
-                <div className="mt-2 p-3 bg-blue-50 rounded border border-blue-200">
+                <div className="mt-2 p-3 bg-blue-950/20 rounded border border-blue-800">
                   <p className="text-xs font-medium text-blue-900 mb-2">추출된 품목 정보:</p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {extractedData.items.slice(0, 5).map((item, idx) => (
@@ -465,7 +465,7 @@ function QuoteCard({ quote }: { quote: any }) {
                       </div>
                     ))}
                     {extractedData.items.length > 5 && (
-                      <div className="text-xs text-blue-600">
+                      <div className="text-xs text-blue-400">
                         ... 외 {extractedData.items.length - 5}개 품목
                       </div>
                     )}

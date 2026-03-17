@@ -74,12 +74,12 @@ export default function SupportPage() {
       <div className="w-full pt-14">
 
         {/* ── 페이지 헤더 ── */}
-        <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100 py-12 md:py-16">
+        <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-800 py-12 md:py-16">
           <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-100 mb-3 tracking-tight">
               도입 문의 및 서비스 안내
             </h1>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed">
+            <p className="text-slate-400 text-base md:text-lg leading-relaxed">
               BioInsight Lab 도입을 검토 중이거나, 요금·기능에 대해 궁금한 점이 있으신가요?<br className="hidden sm:block" />
               담당팀이 확인 후 빠르게 안내해드립니다.
             </p>
@@ -90,7 +90,7 @@ export default function SupportPage() {
 
           {/* ── 문의 유형 선택 ── */}
           <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-6">어떤 문의가 필요하신가요?</h2>
+            <h2 className="text-lg font-bold text-slate-100 mb-6">어떤 문의가 필요하신가요?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {INQUIRY_TYPES.map((item) => {
                 const Icon = item.icon;
@@ -102,23 +102,23 @@ export default function SupportPage() {
                     onClick={() => setSelectedType(item.key)}
                     className={`w-full text-left rounded-xl border p-5 flex items-start gap-4 transition-all duration-150 ${
                       isSelected
-                        ? "border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                        ? "border-blue-500 bg-blue-950/20 shadow-none ring-1 ring-blue-500"
+                        : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-900/50"
                     }`}
                   >
                     <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
-                      isSelected ? "bg-blue-600" : "bg-blue-50"
+                      isSelected ? "bg-blue-600" : "bg-blue-950/20"
                     }`}>
-                      <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-blue-600"}`} />
+                      <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-blue-400"}`} />
                     </div>
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold mb-0.5 ${isSelected ? "text-blue-900" : "text-slate-900"}`}>
+                      <p className={`text-sm font-semibold mb-0.5 ${isSelected ? "text-blue-900" : "text-slate-100"}`}>
                         {item.title}
                       </p>
                       <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5 ml-auto" />
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5 ml-auto" />
                     )}
                   </button>
                 );
@@ -128,20 +128,20 @@ export default function SupportPage() {
 
           {/* ── 문의 폼 ── */}
           <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-2">문의 남기기</h2>
+            <h2 className="text-lg font-bold text-slate-100 mb-2">문의 남기기</h2>
             <p className="text-sm text-slate-500 mb-6">
               문의 내용을 남겨주시면 확인 후 순차적으로 답변드립니다.
               도입 상담이나 기관·기업 문의는 우선 검토 후 별도로 안내드립니다.
             </p>
 
             {submitted ? (
-              <div className="rounded-xl border border-green-200 bg-green-50 px-6 py-8 text-center">
-                <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-3" />
-                <p className="text-base font-semibold text-slate-900 mb-1">문의가 접수되었습니다.</p>
-                <p className="text-sm text-slate-600">확인 후 순차적으로 답변 드리겠습니다. 평일 기준으로 처리됩니다.</p>
+              <div className="rounded-xl border border-green-800 bg-green-900/20 px-6 py-8 text-center">
+                <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <p className="text-base font-semibold text-slate-100 mb-1">문의가 접수되었습니다.</p>
+                <p className="text-sm text-slate-400">확인 후 순차적으로 답변 드리겠습니다. 평일 기준으로 처리됩니다.</p>
                 <Button
                   variant="outline"
-                  className="mt-5 border-slate-300 text-slate-700"
+                  className="mt-5 border-slate-700 text-slate-300"
                   onClick={handleReset}
                 >
                   다른 문의 남기기
@@ -150,44 +150,44 @@ export default function SupportPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {selectedInquiry && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-950/20 border border-blue-800">
                     <span className="text-xs font-semibold text-blue-700">선택된 문의 유형:</span>
-                    <span className="text-xs text-blue-600">{selectedInquiry.title}</span>
+                    <span className="text-xs text-blue-400">{selectedInquiry.title}</span>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">이름 또는 기관명</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">이름 또는 기관명</label>
                     <input
                       type="text"
                       required
                       placeholder="홍길동 / BioLab Institute"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">이메일</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">이메일</label>
                     <input
                       type="email"
                       required
                       placeholder="your@email.com"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">문의 내용</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">문의 내용</label>
                   <textarea
                     required
                     rows={5}
                     placeholder={selectedInquiry?.placeholder ?? DEFAULT_PLACEHOLDER}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -205,14 +205,14 @@ export default function SupportPage() {
           </section>
 
           {/* ── 이메일 직접 문의 ── */}
-          <section className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <section className="rounded-xl border border-slate-800 bg-slate-900 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900 mb-0.5">이메일로 직접 문의하기</p>
+              <p className="text-sm font-semibold text-slate-100 mb-0.5">이메일로 직접 문의하기</p>
               <p className="text-xs text-slate-500">위 양식 대신 이메일로 바로 문의하실 수도 있습니다.</p>
             </div>
             <a
               href="mailto:support@bioinsightlab.com"
-              className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0"
+              className="flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-700 transition-colors flex-shrink-0"
             >
               <Mail className="h-4 w-4" />
               support@bioinsightlab.com
@@ -220,36 +220,36 @@ export default function SupportPage() {
           </section>
 
           {/* ── 지원 보조 네비게이션 ── */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
-            <h3 className="text-sm font-bold text-slate-900">문의 후 다음 단계</h3>
+          <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 space-y-5">
+            <h3 className="text-sm font-bold text-slate-100">문의 후 다음 단계</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <Link href="/support" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
-                <Mail className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">고객 지원 및 문의</span>
+              <Link href="/support" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
+                <Mail className="h-4 w-4 text-blue-400" />
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">고객 지원 및 문의</span>
               </Link>
-              <Link href="/support#faq" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
-                <Search className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">FAQ</span>
+              <Link href="/support#faq" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
+                <Search className="h-4 w-4 text-blue-400" />
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">FAQ</span>
               </Link>
-              <Link href="/intro" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <Link href="/intro" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
                 <FileText className="h-4 w-4 text-slate-500" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">서비스 소개</span>
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">서비스 소개</span>
               </Link>
-              <Link href="/pricing" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <Link href="/pricing" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
                 <Building2 className="h-4 w-4 text-slate-500" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">요금 &amp; 도입</span>
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">요금 &amp; 도입</span>
               </Link>
-              <Link href="/login" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <Link href="/login" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
                 <LogIn className="h-4 w-4 text-slate-500" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">로그인</span>
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">로그인</span>
               </Link>
-              <Link href="/privacy" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <Link href="/privacy" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
                 <FileText className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">개인정보처리방침</span>
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">개인정보처리방침</span>
               </Link>
-              <Link href="/terms" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+              <Link href="/terms" className="group flex flex-col items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-3 hover:border-blue-300 hover:bg-blue-950/20 transition-colors">
                 <FileText className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-medium text-slate-700 group-hover:text-blue-700">이용약관</span>
+                <span className="text-xs font-medium text-slate-300 group-hover:text-blue-700">이용약관</span>
               </Link>
             </div>
           </section>

@@ -52,7 +52,7 @@ export default function HelpPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {guides.map((guide) => (
-              <Card key={guide.title} className="hover:shadow-md transition-shadow">
+              <Card key={guide.title} className="hover:shadow-none transition-shadow">
                 <CardHeader>
                   <CardTitle className="text-lg">{guide.title}</CardTitle>
                   <CardDescription>{guide.description}</CardDescription>

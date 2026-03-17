@@ -101,16 +101,16 @@ export function AnalyticsDashboard() {
                   <span
                     className={cn(
                       "font-semibold",
-                      isPositive ? "text-blue-600" : "text-red-600"
+                      isPositive ? "text-blue-400" : "text-red-400"
                     )}
                   >
                     {isPositive ? "+" : ""}
                     {data?.monthOverMonthChange || "0"}%
                   </span>
                   {isPositive ? (
-                    <TrendingUp className="h-3 w-3 text-blue-600" />
+                    <TrendingUp className="h-3 w-3 text-blue-400" />
                   ) : (
-                    <TrendingDown className="h-3 w-3 text-red-600" />
+                    <TrendingDown className="h-3 w-3 text-red-400" />
                   )}
                 </div>
               </>
@@ -123,9 +123,9 @@ export function AnalyticsDashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
             <CardTitle className="text-sm font-medium truncate min-w-0">전월 대비 증감</CardTitle>
             {isPositive ? (
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <TrendingUp className="h-4 w-4 text-blue-400" />
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
+              <TrendingDown className="h-4 w-4 text-red-400" />
             )}
           </CardHeader>
           <CardContent>
@@ -136,7 +136,7 @@ export function AnalyticsDashboard() {
                 <div
                   className={cn(
                     "text-2xl font-bold",
-                    isPositive ? "text-blue-600" : "text-red-600"
+                    isPositive ? "text-blue-400" : "text-red-400"
                   )}
                 >
                   {isPositive ? "+" : ""}
@@ -174,7 +174,7 @@ export function AnalyticsDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
             <CardTitle className="text-sm font-medium truncate min-w-0">재주문 필요</CardTitle>
-            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertCircle className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -294,10 +294,10 @@ export function AnalyticsDashboard() {
 
       {/* Insight Section */}
       {insights.length > 0 && (
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-800">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-blue-400" />
               <CardTitle>스마트 인사이트</CardTitle>
             </div>
             <CardDescription>데이터 기반 인사이트와 조언</CardDescription>
@@ -307,22 +307,22 @@ export function AnalyticsDashboard() {
               {insights.map((insight, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100"
+                  className="flex items-start gap-3 p-3 bg-slate-900 rounded-lg border border-blue-800"
                 >
                   <div
                     className={cn(
                       "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold",
                       insight.type === "positive"
-                        ? "bg-emerald-100 text-emerald-700"
+                        ? "bg-emerald-900/40 text-emerald-700"
                         : insight.type === "warning"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-amber-900/40 text-amber-700"
+                        : "bg-blue-900/30 text-blue-700"
                     )}
                   >
                     {index + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{insight.message}</p>
+                    <p className="text-sm text-slate-100">{insight.message}</p>
                     {insight.badge && (
                       <Badge variant="outline" className="mt-2 text-xs">
                         {insight.badge}

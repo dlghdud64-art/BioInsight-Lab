@@ -47,12 +47,12 @@ export function QuoteListPreviewCard() {
   };
 
   return (
-    <Card className="rounded-lg border border-slate-200 bg-white">
+    <Card className="rounded-lg border border-slate-800 bg-slate-900">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-50">
+            <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400 bg-slate-900">
                 Step 3
               </span>
               <span>견적 요청 리스트 정리</span>
@@ -68,7 +68,7 @@ export function QuoteListPreviewCard() {
         <div className="border rounded-lg overflow-hidden">
           <div className="max-h-[400px] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-white z-10">
+              <TableHeader className="sticky top-0 bg-slate-900 z-10">
                 <TableRow className="h-9">
                   <TableHead className="w-8 text-[10px] p-2">No.</TableHead>
                   <TableHead className="text-[10px] p-2">제품명</TableHead>
@@ -158,10 +158,10 @@ export function QuoteListPreviewCard() {
         {quoteItems.length > 0 && (
           <div className="mt-3 space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-600">
+              <span className="text-slate-400">
                 견적 요청 리스트 ({quoteItems.length}개)
               </span>
-              <span className="font-semibold text-slate-900">
+              <span className="font-semibold text-slate-100">
                 합계 {totalAmount.toLocaleString("ko-KR")}원
               </span>
             </div>

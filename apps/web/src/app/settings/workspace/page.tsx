@@ -354,7 +354,7 @@ function WorkspaceSettingsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -367,7 +367,7 @@ function WorkspaceSettingsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -390,7 +390,7 @@ function WorkspaceSettingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -402,7 +402,7 @@ function WorkspaceSettingsPageContent() {
                   title="워크스페이스 설정"
                   description="멤버를 관리하고 초대 링크를 생성합니다."
                   icon={Building2}
-                  iconColor="text-blue-600"
+                  iconColor="text-blue-400"
                 />
               </div>
 
@@ -424,11 +424,11 @@ function WorkspaceSettingsPageContent() {
                 <>
                   {/* 권한 안내 */}
                   {!isAdmin && (
-                    <Card className="border-yellow-200 bg-yellow-50">
+                    <Card className="border-yellow-200 bg-yellow-900/20">
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-yellow-100 p-2">
-                            <Users className="h-4 w-4 text-yellow-600" />
+                          <div className="rounded-full bg-yellow-900/40 p-2">
+                            <Users className="h-4 w-4 text-yellow-400" />
                           </div>
                           <div className="flex-1">
                             <p className="text-sm text-yellow-900 font-medium">
@@ -490,10 +490,10 @@ function WorkspaceSettingsPageContent() {
                             return (
                               <div
                                 key={member.id}
-                                className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                                className="flex items-center justify-between p-3 border border-slate-800 rounded-lg hover:bg-slate-900 transition-colors"
                               >
                                 <div className="flex items-center gap-3 flex-1">
-                                  <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                  <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center">
                                     <Users className="h-4 w-4 text-slate-500" />
                                   </div>
                                   <div className="flex-1">
@@ -561,7 +561,7 @@ function WorkspaceSettingsPageContent() {
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end" className="w-40">
                                         <DropdownMenuItem
-                                          className="text-red-600"
+                                          className="text-red-400"
                                           onClick={() =>
                                             handleDeleteMember(
                                               member.id,
@@ -597,11 +597,11 @@ function WorkspaceSettingsPageContent() {
                           <CardContent className="space-y-4">
                             {activeInvite ? (
                               <div className="space-y-3">
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="p-4 bg-blue-950/20 border border-blue-800 rounded-lg">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 mb-2">
-                                        <Check className="h-4 w-4 text-blue-600" />
+                                        <Check className="h-4 w-4 text-blue-400" />
                                         <span className="text-sm font-medium text-blue-900">
                                           활성 초대 링크
                                         </span>
@@ -654,7 +654,7 @@ function WorkspaceSettingsPageContent() {
                                 </Button>
                               </div>
                             )}
-                            <div className="pt-3 border-t border-slate-200">
+                            <div className="pt-3 border-t border-slate-800">
                               <p className="text-xs text-muted-foreground flex items-center gap-2">
                                 <Clock className="h-3 w-3" />
                                 초대 링크는 기본적으로 7일 후 만료됩니다.
@@ -674,9 +674,9 @@ function WorkspaceSettingsPageContent() {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="bg-blue-950/20 border border-blue-800 rounded-lg p-4">
                               <div className="flex items-start gap-3">
-                                <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
                                 <div className="flex-1">
                                   <p className="text-sm text-blue-900 font-medium mb-1">
                                     이메일 도메인 제한
@@ -713,7 +713,7 @@ function WorkspaceSettingsPageContent() {
                                 로딩 중...
                               </div>
                             ) : allowedDomains.length === 0 ? (
-                              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-slate-200 rounded-lg">
+                              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-slate-800 rounded-lg">
                                 <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                                 <p>허용된 도메인이 없습니다.</p>
                                 <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>

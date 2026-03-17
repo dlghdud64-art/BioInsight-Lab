@@ -438,7 +438,7 @@ export default function VendorQuotesPage() {
 
                   {/* 기존 응답 표시 */}
                   {quote.responses && quote.responses.length > 0 && (
-                    <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                    <div className="mb-4 p-3 bg-slate-900 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-sm font-semibold">기존 견적 응답</h4>
                         <Button

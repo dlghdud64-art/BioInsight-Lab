@@ -114,7 +114,7 @@ export function WorkspaceSwitcher({
               <div className="flex items-center gap-2">
                 <span>{org.name}</span>
                 {org.plan !== "FREE" && (
-                  <span className="text-xs text-blue-600">({org.plan})</span>
+                  <span className="text-xs text-blue-400">({org.plan})</span>
                 )}
               </div>
             </SelectItem>

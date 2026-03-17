@@ -150,7 +150,7 @@ function InventoryScanContent() {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
       </div>
     );
   }
@@ -184,7 +184,7 @@ function InventoryScanContent() {
 
           {/* 에러 */}
           {inventoryError && (
-            <Card className="border-red-200 bg-red-900/20">
+            <Card className="border-red-800 bg-red-900/20">
               <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
                 <p className="font-semibold text-red-400">재고를 찾을 수 없습니다</p>
@@ -199,7 +199,7 @@ function InventoryScanContent() {
           {/* 재고 정보 카드 */}
           {inventory && (
             <>
-              <Card className="shadow-sm">
+              <Card className="shadow-none">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -215,10 +215,10 @@ function InventoryScanContent() {
                     <Badge
                       className={
                         inventory.currentQuantity <= 0
-                          ? "bg-red-100 text-red-700 border-red-200"
+                          ? "bg-red-900/40 text-red-700 border-red-800"
                           : inventory.safetyStock && inventory.currentQuantity <= inventory.safetyStock
-                          ? "bg-amber-100 text-amber-700 border-amber-200"
-                          : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                          ? "bg-amber-900/40 text-amber-700 border-amber-800"
+                          : "bg-emerald-900/40 text-emerald-700 border-emerald-800"
                       }
                     >
                       {inventory.currentQuantity <= 0
@@ -322,7 +322,7 @@ function InventoryScanContent() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 text-white">
         <Link href="/dashboard/inventory">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 gap-1 pl-0">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-slate-900/10 gap-1 pl-0">
             <ArrowLeft className="h-4 w-4" />
             재고 목록
           </Button>
@@ -391,7 +391,7 @@ function InventoryScanContent() {
               size="lg"
               variant="outline"
               onClick={stopScanner}
-              className="gap-2 border-white/30 text-white hover:bg-white/10 px-8 rounded-xl h-12"
+              className="gap-2 border-white/30 text-white hover:bg-slate-900/10 px-8 rounded-xl h-12"
             >
               <CameraOff className="h-5 w-5" />
               중지
@@ -407,9 +407,9 @@ function InventoryScanContent() {
 
         {/* 구분선 */}
         <div className="flex items-center gap-3 w-full max-w-sm">
-          <div className="flex-1 h-px bg-white/20" />
+          <div className="flex-1 h-px bg-slate-900/20" />
           <span className="text-white/40 text-xs">또는 ID 직접 입력</span>
-          <div className="flex-1 h-px bg-white/20" />
+          <div className="flex-1 h-px bg-slate-900/20" />
         </div>
 
         {/* 수동 ID 입력 */}
@@ -419,12 +419,12 @@ function InventoryScanContent() {
             value={manualId}
             onChange={(e) => setManualId(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+            className="bg-slate-900/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
           />
           <Button
             variant="outline"
             onClick={handleManualSearch}
-            className="border-white/30 text-white hover:bg-white/10 rounded-xl px-4"
+            className="border-white/30 text-white hover:bg-slate-900/10 rounded-xl px-4"
           >
             <Search className="h-4 w-4" />
           </Button>

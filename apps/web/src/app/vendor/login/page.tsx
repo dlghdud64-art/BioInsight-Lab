@@ -49,18 +49,18 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">
             벤더 포털
           </h1>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-400">
             견적 요청을 확인하고 회신하세요
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 shadow-sm p-6">
+        <div className="bg-slate-900 border border-slate-800 shadow-none p-6">
           <div className="space-y-4">
             <div>
               <Label htmlFor="email" className="text-sm font-medium">
@@ -100,7 +100,7 @@ export default function VendorLoginPage() {
             </Button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-slate-800">
             <p className="text-xs text-slate-500 text-center">
               입력하신 이메일로 로그인 링크가 발송됩니다.
               <br />
@@ -112,7 +112,7 @@ export default function VendorLoginPage() {
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-500">
             문의사항이 있으신가요?{" "}
-            <a href="mailto:support@bioinsight.lab" className="text-blue-600 hover:underline">
+            <a href="mailto:support@bioinsight.lab" className="text-blue-400 hover:underline">
               support@bioinsight.lab
             </a>
           </p>

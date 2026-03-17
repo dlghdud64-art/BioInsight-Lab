@@ -18,8 +18,8 @@ export function getSafetyLevelFromHazardCodes(hazardCodes: string[] | null | und
     return {
       level: "low",
       color: "text-green-700",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
+      bgColor: "bg-green-900/20",
+      borderColor: "border-green-800",
       label: "낮음",
     };
   }
@@ -35,7 +35,7 @@ export function getSafetyLevelFromHazardCodes(hazardCodes: string[] | null | und
     return {
       level: "critical",
       color: "text-red-700",
-      bgColor: "bg-red-50",
+      bgColor: "bg-red-950/30",
       borderColor: "border-red-300",
       label: "매우 위험",
     };
@@ -45,8 +45,8 @@ export function getSafetyLevelFromHazardCodes(hazardCodes: string[] | null | und
     return {
       level: "high",
       color: "text-orange-700",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
+      bgColor: "bg-orange-950/20",
+      borderColor: "border-orange-800",
       label: "위험",
     };
   }
@@ -55,7 +55,7 @@ export function getSafetyLevelFromHazardCodes(hazardCodes: string[] | null | und
     return {
       level: "medium",
       color: "text-yellow-700",
-      bgColor: "bg-yellow-50",
+      bgColor: "bg-yellow-900/20",
       borderColor: "border-yellow-200",
       label: "주의",
     };
@@ -64,8 +64,8 @@ export function getSafetyLevelFromHazardCodes(hazardCodes: string[] | null | und
   return {
     level: "low",
     color: "text-green-700",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
+    bgColor: "bg-green-900/20",
+    borderColor: "border-green-800",
     label: "낮음",
   };
 }
@@ -78,8 +78,8 @@ export function getSafetyLevelFromPictograms(pictograms: string[] | null | undef
     return {
       level: "low",
       color: "text-green-700",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
+      bgColor: "bg-green-900/20",
+      borderColor: "border-green-800",
       label: "낮음",
     };
   }
@@ -95,7 +95,7 @@ export function getSafetyLevelFromPictograms(pictograms: string[] | null | undef
     return {
       level: "critical",
       color: "text-red-700",
-      bgColor: "bg-red-50",
+      bgColor: "bg-red-950/30",
       borderColor: "border-red-300",
       label: "매우 위험",
     };
@@ -105,8 +105,8 @@ export function getSafetyLevelFromPictograms(pictograms: string[] | null | undef
     return {
       level: "high",
       color: "text-orange-700",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
+      bgColor: "bg-orange-950/20",
+      borderColor: "border-orange-800",
       label: "위험",
     };
   }
@@ -114,7 +114,7 @@ export function getSafetyLevelFromPictograms(pictograms: string[] | null | undef
   return {
     level: "medium",
     color: "text-yellow-700",
-    bgColor: "bg-yellow-50",
+    bgColor: "bg-yellow-900/20",
     borderColor: "border-yellow-200",
     label: "주의",
   };
@@ -148,8 +148,8 @@ export function getProductSafetyLevel(product: {
     return {
       level: adjustedLevel,
       color: adjustedLevel === "critical" ? "text-red-700" : adjustedLevel === "high" ? "text-orange-700" : "text-yellow-700",
-      bgColor: adjustedLevel === "critical" ? "bg-red-50" : adjustedLevel === "high" ? "bg-orange-50" : "bg-yellow-50",
-      borderColor: adjustedLevel === "critical" ? "border-red-300" : adjustedLevel === "high" ? "border-orange-200" : "border-yellow-200",
+      bgColor: adjustedLevel === "critical" ? "bg-red-950/30" : adjustedLevel === "high" ? "bg-orange-950/20" : "bg-yellow-900/20",
+      borderColor: adjustedLevel === "critical" ? "border-red-300" : adjustedLevel === "high" ? "border-orange-800" : "border-yellow-200",
       label: adjustedLevel === "critical" ? "매우 위험 (MSDS 없음)" : adjustedLevel === "high" ? "위험 (MSDS 없음)" : "주의 (MSDS 없음)",
     };
   }

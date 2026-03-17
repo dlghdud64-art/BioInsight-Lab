@@ -95,7 +95,7 @@ export function DispatchDialog({
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Truck className="h-4 w-4 text-slate-600" />
+            <Truck className="h-4 w-4 text-slate-400" />
             출고 처리
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -143,7 +143,7 @@ export function DispatchDialog({
               </span>
             </div>
             {quantity && parseFloat(quantity) > (selectedLot?.currentQuantity ?? 0) && (
-              <p className="text-[11px] text-amber-600">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
+              <p className="text-[11px] text-amber-400">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
             )}
           </div>
 

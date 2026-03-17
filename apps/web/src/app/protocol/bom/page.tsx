@@ -88,13 +88,13 @@ function StepIndicator({ current }: { current: 0 | 1 | 2 | 3 }) {
         <div key={i} className="flex items-center gap-1 flex-shrink-0">
           <div className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
             i < current
-              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              ? "bg-blue-950/20 text-blue-700 border border-blue-800"
               : i === current
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-slate-100 text-slate-400 border border-slate-200"
+              ? "bg-blue-600 text-white shadow-none"
+              : "bg-slate-800 text-slate-400 border border-slate-800"
           }`}>
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-              i < current ? "bg-blue-600 text-white" : i === current ? "bg-white/25 text-white" : "bg-slate-200 text-slate-400"
+              i < current ? "bg-blue-600 text-white" : i === current ? "bg-slate-900/25 text-white" : "bg-slate-200 text-slate-400"
             }`}>{i < current ? "✓" : i + 1}</span>
             {label}
           </div>
@@ -355,19 +355,19 @@ export default function ProtocolBOMPage() {
     return map[cat] || "기타";
   };
   const getCategoryColor = (cat?: string) => {
-    if (!cat) return "bg-slate-100 text-slate-500";
+    if (!cat) return "bg-slate-800 text-slate-500";
     const map: Record<string, string> = {
-      REAGENT: "bg-blue-50 text-blue-700 border-blue-200",
-      TOOL: "bg-violet-50 text-violet-700 border-violet-200",
-      EQUIPMENT: "bg-teal-50 text-teal-700 border-teal-200",
+      REAGENT: "bg-blue-950/20 text-blue-700 border-blue-800",
+      TOOL: "bg-violet-900/20 text-violet-700 border-violet-200",
+      EQUIPMENT: "bg-teal-900/20 text-teal-700 border-teal-200",
     };
-    return map[cat] || "bg-slate-100 text-slate-500";
+    return map[cat] || "bg-slate-800 text-slate-500";
   };
 
   /* ──── 로딩 상태 ──── */
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-12 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -380,7 +380,7 @@ export default function ProtocolBOMPage() {
      RENDER
   ══════════════════════════════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-8">
 
@@ -388,7 +388,7 @@ export default function ProtocolBOMPage() {
         <div className="mb-8 space-y-5">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-100 tracking-tight leading-tight mb-2">
                 프로토콜 기반 BOM 추출
               </h1>
               <p className="text-sm md:text-base text-slate-500 leading-relaxed max-w-2xl">
@@ -416,9 +416,9 @@ export default function ProtocolBOMPage() {
 
         {/* ── BOM 저장 완료 배너 ── */}
         {bomSaved && (
-          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="mb-5 rounded-xl border border-emerald-800 bg-emerald-900/20 px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-emerald-900">BOM이 저장되었습니다</p>
                 <p className="text-xs text-emerald-700">총 {reagents.length}개 항목 · 예상 {estimatedTotal > 0 ? `₩${estimatedTotal.toLocaleString("ko-KR")}` : "금액 미산출"}</p>
@@ -426,7 +426,7 @@ export default function ProtocolBOMPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Link href={`/test/search?q=${encodeURIComponent(reagents.slice(0, 3).map(r => r.name).join(" OR "))}`}>
-                <Button variant="outline" size="sm" className="gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-100">
+                <Button variant="outline" size="sm" className="gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-900/40">
                   <Search className="h-3.5 w-3.5" />시약 검색하기
                 </Button>
               </Link>
@@ -445,9 +445,9 @@ export default function ProtocolBOMPage() {
 
           {/* ════ 좌측: 프로토콜 입력 ════ */}
           <div className="space-y-4">
-            <Card className="shadow-sm border-slate-200 bg-white">
+            <Card className="shadow-none border-slate-800 bg-slate-900">
               <CardHeader className="pb-3 p-4 md:p-5">
-                <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                   <Upload className="h-4 w-4 text-blue-500" />
                   프로토콜 업로드
                 </CardTitle>
@@ -480,32 +480,32 @@ export default function ProtocolBOMPage() {
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
-                          isDragging ? "border-blue-500 bg-blue-50" :
-                          pdfFile ? "border-emerald-400 bg-emerald-50" :
-                          "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40 cursor-pointer"
+                          isDragging ? "border-blue-500 bg-blue-950/20" :
+                          pdfFile ? "border-emerald-400 bg-emerald-900/20" :
+                          "border-slate-800 bg-slate-900 hover:border-blue-300 hover:bg-blue-950/20/40 cursor-pointer"
                         }`}
                       >
                         <input id="protocol-file" type="file" accept=".pdf"
                           onChange={(e) => handleFile(e.target.files?.[0] || null)} className="hidden" />
                         {pdfFile ? (
                           <div className="space-y-2">
-                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
-                              <FileCheck className="h-5 w-5 text-emerald-600" />
+                            <div className="w-10 h-10 rounded-full bg-emerald-900/40 flex items-center justify-center mx-auto">
+                              <FileCheck className="h-5 w-5 text-emerald-400" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-slate-900 truncate max-w-[200px] mx-auto">{pdfFile.name}</p>
+                              <p className="text-sm font-medium text-slate-100 truncate max-w-[200px] mx-auto">{pdfFile.name}</p>
                               <p className="text-xs text-slate-500">{(pdfFile.size / 1024 / 1024).toFixed(2)} MB</p>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => { setPdfFile(null); const el = document.getElementById("protocol-file") as HTMLInputElement; if (el) el.value = ""; }} className="text-xs text-slate-400 hover:text-slate-600 h-7">
+                            <Button variant="ghost" size="sm" onClick={() => { setPdfFile(null); const el = document.getElementById("protocol-file") as HTMLInputElement; if (el) el.value = ""; }} className="text-xs text-slate-400 hover:text-slate-400 h-7">
                               <X className="h-3 w-3 mr-1" />파일 제거
                             </Button>
                           </div>
                         ) : (
                           <label htmlFor="protocol-file" className="cursor-pointer space-y-2 block">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto ${isDragging ? "bg-blue-100" : "bg-slate-200"}`}>
-                              <Upload className={`h-5 w-5 ${isDragging ? "text-blue-600" : "text-slate-500"}`} />
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto ${isDragging ? "bg-blue-900/30" : "bg-slate-200"}`}>
+                              <Upload className={`h-5 w-5 ${isDragging ? "text-blue-400" : "text-slate-500"}`} />
                             </div>
-                            <p className="text-sm text-slate-600 font-medium">
+                            <p className="text-sm text-slate-400 font-medium">
                               {isDragging ? "파일을 놓아주세요" : "PDF 드래그 또는 클릭하여 선택"}
                             </p>
                             <p className="text-xs text-slate-400">최대 10MB</p>
@@ -526,9 +526,9 @@ export default function ProtocolBOMPage() {
 
                       {/* PDF 분석 실패 안내 */}
                       {pdfParseError && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2.5">
+                        <div className="rounded-lg border border-amber-800 bg-amber-950/30 p-3 space-y-2.5">
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
                             <p className="text-xs text-amber-800 leading-relaxed">{pdfParseError}</p>
                           </div>
                           <p className="text-xs text-amber-700 leading-relaxed pl-6">
@@ -538,7 +538,7 @@ export default function ProtocolBOMPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                              className="h-7 text-xs border-amber-300 text-amber-800 hover:bg-amber-900/40"
                               onClick={() => { setPdfParseError(null); pdfFile && extractFromFileMutation.mutate(pdfFile); }}
                             >
                               다시 시도
@@ -584,18 +584,18 @@ export default function ProtocolBOMPage() {
 
             {/* BOM 설정 (결과 있을 때만) */}
             {extractionResult && (
-              <Card className="shadow-sm border-slate-200 bg-white">
+              <Card className="shadow-none border-slate-800 bg-slate-900">
                 <CardHeader className="pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold text-slate-900">BOM 설정</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-slate-100">BOM 설정</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="bom-title" className="text-xs font-medium text-slate-700">BOM 제목</Label>
+                    <Label htmlFor="bom-title" className="text-xs font-medium text-slate-300">BOM 제목</Label>
                     <Input id="bom-title" value={bomTitle} onChange={(e) => setBomTitle(e.target.value)}
                       placeholder="예: ELISA 프로토콜 BOM" className="text-sm h-9" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="experiment-rounds" className="text-xs font-medium text-slate-700">실험 횟수</Label>
+                    <Label htmlFor="experiment-rounds" className="text-xs font-medium text-slate-300">실험 횟수</Label>
                     <Input id="experiment-rounds" type="number" min="1" value={experimentRounds}
                       onChange={(e) => setExperimentRounds(parseInt(e.target.value) || 1)} className="text-sm h-9" />
                     <p className="text-[10px] text-slate-400">수량은 실험 횟수에 따라 자동 계산됩니다.</p>
@@ -632,18 +632,18 @@ export default function ProtocolBOMPage() {
           <div>
             {isAnalyzing ? (
               /* ── 분석 중 스켈레톤 ── */
-              <Card className="shadow-sm border-slate-200 bg-white h-full">
+              <Card className="shadow-none border-slate-800 bg-slate-900 h-full">
                 <CardContent className="p-5 space-y-3">
-                  <div className="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 flex-shrink-0" />
+                  <div className="flex items-center gap-3 rounded-lg bg-blue-950/20 border border-blue-800 px-4 py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-400 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-semibold text-blue-800">프로토콜 분석 중...</p>
-                      <p className="text-xs text-blue-600">시약·기구·장비 항목을 추출하고 있습니다.</p>
+                      <p className="text-xs text-blue-400">시약·기구·장비 항목을 추출하고 있습니다.</p>
                     </div>
                   </div>
                   <div className="space-y-2 animate-pulse">
                     {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                      <div key={i} className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900 p-3">
                         <div className="h-7 w-7 rounded-md bg-slate-200 flex-shrink-0" />
                         <div className="flex-1 space-y-1.5">
                           <div className="h-2.5 w-3/4 rounded bg-slate-200" />
@@ -657,13 +657,13 @@ export default function ProtocolBOMPage() {
               </Card>
             ) : pdfParseError && !extractionResult ? (
               /* ── 분석 실패 ── */
-              <Card className="shadow-sm border-amber-200 bg-white h-full">
+              <Card className="shadow-none border-amber-800 bg-slate-900 h-full">
                 <CardContent className="p-5 flex flex-col items-center justify-center min-h-[280px] text-center space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-amber-900/40 flex items-center justify-center">
                     <AlertTriangle className="h-6 w-6 text-amber-500" />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-slate-800">PDF 분석에 실패했습니다</p>
+                    <p className="text-sm font-semibold text-slate-200">PDF 분석에 실패했습니다</p>
                     <p className="text-xs text-slate-500 max-w-xs leading-relaxed">{pdfParseError}</p>
                   </div>
                   <div className="flex gap-2">
@@ -688,7 +688,7 @@ export default function ProtocolBOMPage() {
               <div className="space-y-4">
 
                 {/* 결과 요약 위젯 */}
-                <Card className="shadow-sm border-slate-200 bg-white">
+                <Card className="shadow-none border-slate-800 bg-slate-900">
                   <CardContent className="p-4">
                     <div className="flex flex-wrap items-start gap-3">
                       {/* 프로토콜 타입 */}
@@ -702,36 +702,36 @@ export default function ProtocolBOMPage() {
                           )}
                         </div>
                         {extractionResult.summary && (
-                          <p className="text-xs text-slate-600 leading-relaxed">{extractionResult.summary}</p>
+                          <p className="text-xs text-slate-400 leading-relaxed">{extractionResult.summary}</p>
                         )}
                       </div>
                       {/* 통계 */}
                       <div className="flex gap-3 flex-shrink-0">
                         <div className="text-center">
-                          <p className="text-lg font-bold text-slate-900">{reagents.length}</p>
+                          <p className="text-lg font-bold text-slate-100">{reagents.length}</p>
                           <p className="text-[10px] text-slate-500">전체 항목</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-bold text-emerald-600">{matchedCount}</p>
+                          <p className="text-lg font-bold text-emerald-400">{matchedCount}</p>
                           <p className="text-[10px] text-slate-500">매칭 완료</p>
                         </div>
                         {unmatchedCount > 0 && (
                           <div className="text-center">
-                            <p className="text-lg font-bold text-amber-600">{unmatchedCount}</p>
+                            <p className="text-lg font-bold text-amber-400">{unmatchedCount}</p>
                             <p className="text-[10px] text-slate-500">미매칭</p>
                           </div>
                         )}
                         {estimatedTotal > 0 && (
-                          <div className="text-center border-l border-slate-100 pl-3">
-                            <p className="text-lg font-bold text-slate-900">₩{(estimatedTotal / 10000).toFixed(0)}만</p>
+                          <div className="text-center border-l border-slate-800 pl-3">
+                            <p className="text-lg font-bold text-slate-100">₩{(estimatedTotal / 10000).toFixed(0)}만</p>
                             <p className="text-[10px] text-slate-500">예상 총액</p>
                           </div>
                         )}
                       </div>
                     </div>
                     {highRiskCount > 0 && (
-                      <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-                        <AlertTriangle className="h-3.5 w-3.5 text-red-600 flex-shrink-0" />
+                      <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-950/30 border border-red-800 px-3 py-2">
+                        <AlertTriangle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
                         <p className="text-xs text-red-700 font-medium">고위험 시약 {highRiskCount}개 — 취급 시 안전 수칙을 확인하세요.</p>
                       </div>
                     )}
@@ -739,10 +739,10 @@ export default function ProtocolBOMPage() {
                 </Card>
 
                 {/* BOM 드래프트 테이블 */}
-                <Card className="shadow-sm border-slate-200 bg-white">
+                <Card className="shadow-none border-slate-800 bg-slate-900">
                   <CardHeader className="pb-2 p-4">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                      <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                         <Brain className="h-4 w-4 text-blue-500" />
                         BOM 초안
                         <span className="text-xs font-normal text-slate-400">— 인라인 편집 가능</span>
@@ -769,7 +769,7 @@ export default function ProtocolBOMPage() {
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-slate-50 border-b border-slate-200">
+                          <TableRow className="bg-slate-900 border-b border-slate-800">
                             <TableHead className="w-10 text-[10px] pl-4">No.</TableHead>
                             <TableHead className="text-[10px]">품목명</TableHead>
                             <TableHead className="w-20 text-[10px]">분류</TableHead>
@@ -788,7 +788,7 @@ export default function ProtocolBOMPage() {
 
                             return (
                               <React.Fragment key={reagent.id}>
-                                <TableRow className={`${reagent.matchedProduct?.isHighRisk ? "bg-red-50/30" : ""} hover:bg-slate-50/60`}>
+                                <TableRow className={`${reagent.matchedProduct?.isHighRisk ? "bg-red-950/30/30" : ""} hover:bg-slate-900/60`}>
                                   <TableCell className="text-[11px] text-slate-400 pl-4">{idx + 1}</TableCell>
                                   <TableCell>
                                     {isEditing ? (
@@ -799,13 +799,13 @@ export default function ProtocolBOMPage() {
                                     ) : (
                                       <div>
                                         <div className="flex items-center gap-1.5">
-                                          <span className="text-xs font-medium text-slate-800">{reagent.name || "—"}</span>
+                                          <span className="text-xs font-medium text-slate-200">{reagent.name || "—"}</span>
                                           {reagent.matchedProduct?.isHighRisk && (
                                             <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0" />
                                           )}
                                           {reagent.description && (
                                             <button onClick={() => toggleEvidence(reagent.id)}
-                                              className="text-[10px] text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-0.5">
+                                              className="text-[10px] text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-0.5">
                                               <Info className="h-3 w-3" />근거
                                             </button>
                                           )}
@@ -832,7 +832,7 @@ export default function ProtocolBOMPage() {
                                       </Badge>
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-[11px] text-slate-600">
+                                  <TableCell className="text-[11px] text-slate-400">
                                     {isEditing ? (
                                       <div className="flex gap-1">
                                         <Input value={reagent.quantity || ""} placeholder="수량"
@@ -851,7 +851,7 @@ export default function ProtocolBOMPage() {
                                       <div>
                                         <div className="flex items-center gap-1">
                                           <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0" />
-                                          <span className="text-[11px] text-slate-700 truncate max-w-[140px]"
+                                          <span className="text-[11px] text-slate-300 truncate max-w-[140px]"
                                             title={reagent.matchedProduct.productName}>
                                             {reagent.matchedProduct.productName}
                                           </span>
@@ -861,7 +861,7 @@ export default function ProtocolBOMPage() {
                                         </p>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center gap-1 text-amber-600">
+                                      <div className="flex items-center gap-1 text-amber-400">
                                         <AlertCircle className="h-3 w-3" />
                                         <span className="text-[10px]">미매칭</span>
                                       </div>
@@ -869,7 +869,7 @@ export default function ProtocolBOMPage() {
                                   </TableCell>
                                   <TableCell className="text-right text-[11px] font-medium pr-4">
                                     {estimatedAmt > 0
-                                      ? <span className="text-slate-800">₩{estimatedAmt.toLocaleString("ko-KR")}</span>
+                                      ? <span className="text-slate-200">₩{estimatedAmt.toLocaleString("ko-KR")}</span>
                                       : <span className="text-slate-300">—</span>
                                     }
                                   </TableCell>
@@ -900,13 +900,13 @@ export default function ProtocolBOMPage() {
                                 </TableRow>
                                 {/* 추출 근거 행 */}
                                 {reagent.showEvidence && reagent.description && (
-                                  <TableRow className="bg-blue-50/40">
+                                  <TableRow className="bg-blue-950/20/40">
                                     <TableCell colSpan={7} className="py-2 px-4">
                                       <div className="flex items-start gap-2">
                                         <Info className="h-3.5 w-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
                                         <div>
-                                          <p className="text-[10px] font-semibold text-blue-600 mb-0.5">추출 근거</p>
-                                          <p className="text-xs text-slate-600 leading-relaxed">{reagent.description}</p>
+                                          <p className="text-[10px] font-semibold text-blue-400 mb-0.5">추출 근거</p>
+                                          <p className="text-xs text-slate-400 leading-relaxed">{reagent.description}</p>
                                         </div>
                                       </div>
                                     </TableCell>
@@ -921,18 +921,18 @@ export default function ProtocolBOMPage() {
 
                     {/* 테이블 하단 합계 */}
                     {estimatedTotal > 0 && (
-                      <div className="border-t border-slate-100 px-4 py-3 flex items-center justify-between bg-slate-50">
+                      <div className="border-t border-slate-800 px-4 py-3 flex items-center justify-between bg-slate-900">
                         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">예상 총액 ({experimentRounds}회 기준)</span>
-                        <span className="text-base font-bold text-slate-900">₩{estimatedTotal.toLocaleString("ko-KR")}</span>
+                        <span className="text-base font-bold text-slate-100">₩{estimatedTotal.toLocaleString("ko-KR")}</span>
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* 다음 단계 연결 */}
-                <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 mb-0.5">BOM 검토가 완료되었나요?</p>
+                    <p className="text-sm font-semibold text-slate-100 mb-0.5">BOM 검토가 완료되었나요?</p>
                     <p className="text-xs text-slate-500">확정 후 바로 제품 검색이나 견적 요청으로 이어갈 수 있습니다.</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -953,19 +953,19 @@ export default function ProtocolBOMPage() {
               </div>
             ) : (
               /* ── Empty state: 결과 안내 영역 ── */
-              <Card className="shadow-sm border-slate-200 bg-white h-full min-h-[400px] flex flex-col items-center justify-center">
+              <Card className="shadow-none border-slate-800 bg-slate-900 h-full min-h-[400px] flex flex-col items-center justify-center">
                 <CardContent className="py-10 px-6 text-center max-w-md mx-auto">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-950/20 border border-blue-800 flex items-center justify-center mx-auto mb-5">
                     <FileCheck className="h-7 w-7 text-blue-400" />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 mb-1.5">
+                  <h3 className="text-base font-bold text-slate-200 mb-1.5">
                     BOM 생성 결과가 여기에 표시됩니다
                   </h3>
                   <p className="text-sm text-slate-500 leading-relaxed mb-6">
                     좌측에서 프로토콜을 업로드하면 AI가 시약·장비 항목을 추출하고,
                     BOM 초안을 자동 생성합니다.
                   </p>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-left space-y-3">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-left space-y-3">
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">생성되는 결과물</p>
                     {[
                       { icon: Package, label: "시약·장비 항목 목록", desc: "프로토콜에서 자동 추출" },
@@ -973,11 +973,11 @@ export default function ProtocolBOMPage() {
                       { icon: FileText, label: "BOM 초안 테이블", desc: "수량·금액·분류 포함 편집 가능" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <item.icon className="h-3.5 w-3.5 text-blue-500" />
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                          <p className="text-xs font-medium text-slate-300">{item.label}</p>
                           <p className="text-[11px] text-slate-400">{item.desc}</p>
                         </div>
                       </div>
@@ -1000,24 +1000,24 @@ export default function ProtocolBOMPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-600">전체 항목</span>
-              <span className="font-semibold text-slate-900">{reagents.length}개</span>
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-800">
+              <span className="text-slate-400">전체 항목</span>
+              <span className="font-semibold text-slate-100">{reagents.length}개</span>
             </div>
-            <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-600">매칭 완료</span>
-              <span className="font-semibold text-emerald-600">{matchedCount}개</span>
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-800">
+              <span className="text-slate-400">매칭 완료</span>
+              <span className="font-semibold text-emerald-400">{matchedCount}개</span>
             </div>
             {unmatchedCount > 0 && (
-              <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-600">미매칭 (수동 검색 필요)</span>
-                <span className="font-semibold text-amber-600">{unmatchedCount}개</span>
+              <div className="flex items-center justify-between py-1.5 border-b border-slate-800">
+                <span className="text-slate-400">미매칭 (수동 검색 필요)</span>
+                <span className="font-semibold text-amber-400">{unmatchedCount}개</span>
               </div>
             )}
             {estimatedTotal > 0 && (
               <div className="flex items-center justify-between py-1.5">
-                <span className="text-slate-600">예상 총액</span>
-                <span className="font-bold text-slate-900">₩{estimatedTotal.toLocaleString("ko-KR")}</span>
+                <span className="text-slate-400">예상 총액</span>
+                <span className="font-bold text-slate-100">₩{estimatedTotal.toLocaleString("ko-KR")}</span>
               </div>
             )}
           </div>

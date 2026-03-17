@@ -140,7 +140,7 @@ export function QueueDetailPanel({
                   사유: {item.handoffInfo.note}
                 </p>
                 {item.handoffInfo.nextAction && (
-                  <p className={cn(TYPOGRAPHY.metadata, "text-purple-600 mt-1")}>
+                  <p className={cn(TYPOGRAPHY.metadata, "text-purple-400 mt-1")}>
                     다음 조치: {item.handoffInfo.nextAction}
                   </p>
                 )}

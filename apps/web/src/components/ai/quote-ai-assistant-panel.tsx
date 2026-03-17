@@ -565,8 +565,8 @@ function ValidationSection({
           variant="outline"
           className={`text-[10px] h-4 px-1.5${
             errors.length > 0
-              ? "bg-red-50 text-red-700 border-red-200 bg-red-950/30 text-red-400"
-              : "bg-amber-50 text-amber-700 border-amber-200 bg-amber-950/30 text-amber-400"
+              ? "bg-red-950/30 text-red-700 border-red-800 bg-red-950/30 text-red-400"
+              : "bg-amber-950/30 text-amber-700 border-amber-800 bg-amber-950/30 text-amber-400"
           }`}
         >
           {issues.length}건
@@ -599,8 +599,8 @@ function IssueCard({
     <div
       className={`flex items-center justify-between p-2.5 rounded-lg border ${
         isError
-          ? "border-red-200 bg-red-50/50 border-red-800/50 bg-red-950/20"
-          : "border-amber-200 bg-amber-50/50 border-amber-800/50 bg-amber-950/20"
+          ? "border-red-800 bg-red-950/30/50 border-red-800/50 bg-red-950/20"
+          : "border-amber-800 bg-amber-950/30/50 border-amber-800/50 bg-amber-950/20"
       }`}
     >
       <div className="flex items-center gap-2">

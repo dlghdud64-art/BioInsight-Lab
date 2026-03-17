@@ -161,9 +161,9 @@ export function FeaturesShowcaseSection() {
               </div>
 
               {/* 테이블 행 */}
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-800">
                 {/* Row 1 */}
-                <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 px-3 py-2.5 bg-blue-50/40">
+                <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 px-3 py-2.5 bg-blue-950/20/40">
                   <div>
                     <div className="text-xs font-medium text-slate-100">FBS (500ml)</div>
                     <div className="text-[10px] text-slate-500">Gibco 16000-044</div>
@@ -187,7 +187,7 @@ export function FeaturesShowcaseSection() {
                 </div>
 
                 {/* Row 2 */}
-                <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 px-3 py-2.5 bg-blue-50/40">
+                <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 px-3 py-2.5 bg-blue-950/20/40">
                   <div>
                     <div className="text-xs font-medium text-slate-100">DMEM Medium (500ml)</div>
                     <div className="text-[10px] text-slate-500">Sigma D5671</div>
@@ -235,7 +235,7 @@ export function FeaturesShowcaseSection() {
             </div>
 
             {/* 선택 요약 + 액션 */}
-            <div className="rounded-lg border border-violet-200 bg-violet-50/50 px-3 py-2.5 flex items-center justify-between">
+            <div className="rounded-lg border border-violet-200 bg-violet-900/20/50 px-3 py-2.5 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-violet-400" />
@@ -285,7 +285,7 @@ export function FeaturesShowcaseSection() {
               </div>
 
               {/* 알림 리스트 */}
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-800">
                 {/* 알림 1: 긴급 재고 부족 */}
                 <div className="px-4 py-3 hover:bg-slate-800 transition-colors cursor-pointer">
                   <div className="flex items-start gap-3">
@@ -380,7 +380,7 @@ export function FeaturesShowcaseSection() {
         <div className="hidden md:grid md:grid-cols-[5fr_7fr] rounded-2xl border border-slate-800 shadow-none overflow-hidden">
 
           {/* 좌측: 기능 선택 패널 */}
-          <div className="bg-slate-50/80 border-r border-slate-800 p-6 flex flex-col">
+          <div className="bg-slate-900/80 border-r border-slate-800 p-6 flex flex-col">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-800 mb-4">기능 선택</p>
             <div className="space-y-2 flex-1">
               {tabs.map((tab) => {
@@ -393,7 +393,7 @@ export function FeaturesShowcaseSection() {
                     className={`w-full text-left p-4 rounded-xl transition-all duration-200${
                       isActive
                         ? "bg-slate-900 border border-slate-800 shadow-none"
-                        : "hover:bg-white/70 border border-transparent"
+                        : "hover:bg-slate-900/70 border border-transparent"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -461,7 +461,7 @@ export function FeaturesShowcaseSection() {
               </div>
             </div>
             {/* 미리보기 콘텐츠 */}
-            <div className="flex-1 p-6 min-h-[420px] relative bg-slate-50/20">
+            <div className="flex-1 p-6 min-h-[420px] relative bg-slate-900/20">
               <div
                 key={activeTab}
                 className="absolute inset-6 animate-fadeIn max-w-full overflow-hidden"

@@ -50,7 +50,7 @@ export default function MonthlyAnalyticsPage() {
   return (
     <div className="flex-1 space-y-6 p-8 pt-6 w-full max-w-6xl mx-auto">
       <div className="flex flex-col space-y-4 mb-6">
-        <Button variant="ghost" className="w-fit -ml-2 text-slate-500 hover:text-blue-600" asChild>
+        <Button variant="ghost" className="w-fit -ml-2 text-slate-500 hover:text-blue-400" asChild>
           <Link href="/dashboard/analytics">
             <ArrowLeft className="mr-2 h-4 w-4" />
             지출 분석 홈으로 돌아가기

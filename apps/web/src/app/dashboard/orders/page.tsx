@@ -205,15 +205,15 @@ function OrderHistoryPageContent() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">견적 대기</span>
-            <span className={`text-sm font-semibold tabular-nums ${pendingOrders.length > 0 ? "text-amber-600" : "text-foreground"}`}>{pendingOrders.length}</span>
+            <span className={`text-sm font-semibold tabular-nums ${pendingOrders.length > 0 ? "text-amber-400" : "text-foreground"}`}>{pendingOrders.length}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">견적 도착</span>
-            <span className={`text-sm font-semibold tabular-nums ${quotedOrders.length > 0 ? "text-blue-600" : "text-foreground"}`}>{quotedOrders.length}</span>
+            <span className={`text-sm font-semibold tabular-nums ${quotedOrders.length > 0 ? "text-blue-400" : "text-foreground"}`}>{quotedOrders.length}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">배송 중</span>
-            <span className={`text-sm font-semibold tabular-nums ${shippingOrders.length > 0 ? "text-emerald-600" : "text-foreground"}`}>{shippingOrders.length}</span>
+            <span className={`text-sm font-semibold tabular-nums ${shippingOrders.length > 0 ? "text-emerald-400" : "text-foreground"}`}>{shippingOrders.length}</span>
           </div>
         </div>
 

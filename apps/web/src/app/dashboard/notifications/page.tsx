@@ -266,7 +266,7 @@ function NotificationsContent() {
     return (
       <Card
         key={notification.id}
-        className={`transition-all hover:shadow-md cursor-pointer ${
+        className={`transition-all hover:shadow-none cursor-pointer ${
           isCompleted
             ? "opacity-60 bg-slate-900/50"
             : isUrgent
@@ -321,7 +321,7 @@ function NotificationsContent() {
                 <span className="text-xs text-slate-400">
                   {notification.statusText}
                 </span>
-                <span className="text-slate-600">·</span>
+                <span className="text-slate-400">·</span>
                 <span className="text-xs text-slate-500">
                   {formatTime(notification.time)}
                 </span>
@@ -338,7 +338,7 @@ function NotificationsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2 text-xs text-slate-500 hover:text-slate-700"
+                        className="h-7 px-2 text-xs text-slate-500 hover:text-slate-300"
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsCompleted(notification.id);
@@ -562,7 +562,7 @@ function NotificationsContent() {
 
 export default function NotificationsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-800 border-t-blue-600" /></div>}>
       <NotificationsContent />
     </Suspense>
   );

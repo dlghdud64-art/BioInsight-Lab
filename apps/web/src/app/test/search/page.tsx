@@ -179,7 +179,7 @@ export default function SearchPage() {
               <CardContent className="py-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <GitCompare className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                    <GitCompare className="h-4 w-4 text-indigo-400 flex-shrink-0" />
                     <span className="text-sm font-medium text-slate-100">
                       비교 중인 제품: {compareIds.length}개
                     </span>
@@ -376,7 +376,7 @@ export default function SearchPage() {
       {/* 미니 품목 바 (하단 고정) */}
       {quoteItems.length > 0 && (
         <div className="fixed bottom-4 left-1/2 z-40 w-full max-w-3xl -translate-x-1/2 px-2 sm:px-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-slate-700 bg-slate-900/95 px-3 sm:px-4 py-2 shadow-lg backdrop-blur">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-slate-700 bg-slate-900/95 px-3 sm:px-4 py-2 shadow-none backdrop-blur">
             <p className="text-[10px] sm:text-xs text-slate-300 text-center sm:text-left">
               견적 요청 리스트 {quoteItems.length}개 · 합계 ₩{totalAmount.toLocaleString("ko-KR")}
             </p>
@@ -418,7 +418,7 @@ export default function SearchPage() {
                       return (
                         <div
                           key={item.id}
-                          className="relative bg-slate-900 border border-slate-800 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                          className="relative bg-slate-900 border border-slate-800 rounded-xl p-4 hover:shadow-none transition-all duration-200"
                         >
                           {/* 삭제 버튼 - 우측 상단 */}
                           <Button
@@ -488,7 +488,7 @@ export default function SearchPage() {
                                   단가: <PriceDisplay price={unitPrice} currency="KRW" />
                                 </div>
                               )}
-                              <div className="font-bold text-base text-blue-600 transition-all duration-200 whitespace-nowrap">
+                              <div className="font-bold text-base text-blue-400 transition-all duration-200 whitespace-nowrap">
                                 {lineTotal > 0 ? (
                                   <PriceDisplay price={lineTotal} currency="KRW" />
                                 ) : (
@@ -509,7 +509,7 @@ export default function SearchPage() {
                     {/* 총액 */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-400">Total</span>
-                      <span className="text-xl font-bold text-blue-600 transition-all duration-200 whitespace-nowrap">
+                      <span className="text-xl font-bold text-blue-400 transition-all duration-200 whitespace-nowrap">
                         ₩{totalAmount.toLocaleString("ko-KR")}
                       </span>
                     </div>

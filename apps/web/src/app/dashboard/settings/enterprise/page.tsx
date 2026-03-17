@@ -142,7 +142,7 @@ export default function EnterpriseSettingsPage() {
         title="Enterprise 설정"
         description="SSO 연동, 감사 로그, 권한 관리 등 Enterprise 기능을 설정합니다."
         icon={Shield}
-        iconColor="text-purple-600"
+        iconColor="text-purple-400"
       />
 
               {/* 조직 선택 */}
@@ -258,9 +258,9 @@ export default function EnterpriseSettingsPage() {
                             )}
 
                             {(ssoProvider === "oauth" || ssoProvider === "okta" || ssoProvider === "azure" || ssoProvider === "google_workspace") && (
-                              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="p-4 bg-blue-950/20 border border-blue-800 rounded-lg">
                                 <div className="flex items-start gap-2">
-                                  <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                                  <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5" />
                                   <div className="text-sm text-blue-700">
                                     <p className="font-medium mb-1">OAuth 설정</p>
                                     <p>OAuth 설정은 조직 관리자에게 문의하거나 별도 설정이 필요합니다.</p>
@@ -291,7 +291,7 @@ export default function EnterpriseSettingsPage() {
                         )}
 
                         {!ssoEnabled && (
-                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
+                          <div className="p-4 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-400">
                             SSO를 활성화하려면 위의 스위치를 켜주세요.
                           </div>
                         )}
@@ -347,12 +347,12 @@ export default function EnterpriseSettingsPage() {
                               return (
                                 <div
                                   key={log.id}
-                                  className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                                  className="flex items-start gap-4 p-4 border border-slate-800 rounded-lg hover:bg-slate-900 transition-colors"
                                 >
                                   <div className={`p-2 rounded-lg ${
                                     log.success
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-red-100 text-red-700"
+                                      ? "bg-green-900/30 text-green-700"
+                                      : "bg-red-900/40 text-red-700"
                                   }`}>
                                     {log.success ? (
                                       <CheckCircle2 className="h-4 w-4" />
@@ -369,7 +369,7 @@ export default function EnterpriseSettingsPage() {
                                         {log.action}
                                       </span>
                                     </div>
-                                    <div className="text-sm text-slate-700 mb-2">
+                                    <div className="text-sm text-slate-300 mb-2">
                                       {log.user && (
                                         <span className="font-medium">{log.user.name || log.user.email}</span>
                                       )}
@@ -383,7 +383,7 @@ export default function EnterpriseSettingsPage() {
                                       {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss", { locale: ko })}
                                     </div>
                                     {log.errorMessage && (
-                                      <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded">
+                                      <div className="mt-2 text-xs text-red-400 bg-red-950/30 p-2 rounded">
                                         {log.errorMessage}
                                       </div>
                                     )}
@@ -409,74 +409,74 @@ export default function EnterpriseSettingsPage() {
                       </CardHeader>
                       <CardContent className="pb-6 md:pb-4">
                         <div className="grid gap-4 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-slate-900 shadow-none hover:shadow-none transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">VIEWER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>견적 조회</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>제품 검색</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>비교 테이블 조회</span>
                               </li>
                             </ul>
                           </div>
-                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-slate-900 shadow-none hover:shadow-none transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">REQUESTER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>VIEWER 권한</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>견적 생성/수정</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>공유 링크 생성</span>
                               </li>
                             </ul>
                           </div>
-                          <div className="p-4 md:p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-slate-900 shadow-none hover:shadow-none transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">APPROVER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>REQUESTER 권한</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>견적 승인</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>예산 조회</span>
                               </li>
                             </ul>
                           </div>
-                          <div className="p-4 md:p-3 border rounded-lg bg-purple-50 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-purple-900/20 shadow-none hover:shadow-none transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">ADMIN</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>모든 권한</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>멤버 관리</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>SSO 설정</span>
                               </li>
                               <li className="flex items-start gap-1.5">
-                                <span className="text-green-600 mt-0.5">✓</span>
+                                <span className="text-green-400 mt-0.5">✓</span>
                                 <span>조직 설정</span>
                               </li>
                             </ul>
@@ -611,7 +611,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-xs md:text-sm text-slate-600">
+                <TableCell className="text-xs md:text-sm text-slate-400">
                   {member.user?.email}
                 </TableCell>
                 <TableCell>
@@ -655,7 +655,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
           </TableBody>
         </Table>
       </div>
-      <div className="text-xs md:text-sm text-slate-600 p-3 bg-slate-50 rounded-lg">
+      <div className="text-xs md:text-sm text-slate-400 p-3 bg-slate-900 rounded-lg">
         <p className="font-medium mb-1 flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-slate-500" />
           참고
@@ -666,7 +666,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
           <li>멤버 초대는{" "}
             <a
               href="/dashboard/organizations"
-              className="text-blue-600 hover:underline"
+              className="text-blue-400 hover:underline"
             >
               조직 관리 페이지
             </a>

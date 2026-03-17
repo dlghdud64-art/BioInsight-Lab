@@ -143,7 +143,7 @@ export function StockLifespanGauge({
               key={index}
               className={cn(
                 "h-6 w-4 rounded-sm transition-colors duration-300",
-                isFilled ? barColor : "bg-gray-200"
+                isFilled ? barColor : "bg-slate-800"
               )}
             />
           );
@@ -167,10 +167,10 @@ export function StockLifespanGauge({
                 className={cn(
                   "text-xs font-medium",
                   isCritical
-                    ? "text-red-600 animate-pulse"
+                    ? "text-red-400 animate-pulse"
                     : gaugeState.color === "yellow"
-                    ? "text-yellow-600"
-                    : "text-green-600"
+                    ? "text-yellow-400"
+                    : "text-green-400"
                 )}
               >
                 예상 소진까지 D-{daysUntilDepletion}일

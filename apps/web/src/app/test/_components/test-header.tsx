@@ -5,7 +5,7 @@ import { ExternalLink } from "lucide-react";
 
 export function TestHeader() {
   return (
-    <header className="mb-8 border-b bg-white pb-6">
+    <header className="mb-8 border-b bg-slate-900 pb-6">
       <div className="flex items-start justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -18,7 +18,7 @@ export function TestHeader() {
             <h1 className="text-3xl font-bold tracking-tight">
               데모 플로우
             </h1>
-            <p className="text-sm text-slate-600 max-w-2xl">
+            <p className="text-sm text-slate-400 max-w-2xl">
               검색/AI 분석 → 제품 비교 → 견적 요청 → 그룹웨어 공유까지 전체 플로우를 단계별로 체험할 수 있는 페이지입니다.
             </p>
           </div>

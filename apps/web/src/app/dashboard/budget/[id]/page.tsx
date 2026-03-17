@@ -310,7 +310,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </Button>
             <Link
               href="/dashboard/budget"
-              className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-900 text-slate-400 hover:text-slate-100"
+              className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-100 text-slate-400 hover:text-slate-100"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               목록

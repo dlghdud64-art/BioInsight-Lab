@@ -411,7 +411,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Link href="/dashboard/settings/plans">
-              <Button variant="outline" size="sm" className="border-indigo-200 text-indigo-400 hover:bg-indigo-50 hover:border-indigo-300">
+              <Button variant="outline" size="sm" className="border-indigo-800 text-indigo-400 hover:bg-indigo-900/20 hover:border-indigo-300">
                 <Wallet className="h-4 w-4 mr-1.5" />
                 플랜 관리
               </Button>
@@ -430,7 +430,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       </div>
 
       {/* 조직 기본 정보 요약 카드 */}
-      <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 bg-slate-900 border-slate-800 overflow-hidden">
+      <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 bg-slate-900 border-slate-800 overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
@@ -439,7 +439,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </CardTitle>
             {(organization as any).plan && (
               <Link href="/dashboard/settings/plans">
-                <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 cursor-pointer text-xs">
+                <Badge className="bg-indigo-900/20 text-indigo-700 border border-indigo-800 hover:bg-indigo-100 cursor-pointer text-xs">
                   {(organization as any).plan === "ORGANIZATION" ? "Pro" : (organization as any).plan === "TEAM" ? "Basic" : "Starter"} 플랜
                 </Badge>
               </Link>
@@ -647,7 +647,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 bg-slate-900 border-slate-800 overflow-hidden">
+              <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-800 bg-slate-900 border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -709,9 +709,9 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                             </TableCell>
                             <TableCell className="py-4">
                               {isPending ? (
-                                <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-700 bg-amber-900/30 text-amber-400">초대 대기</Badge>
+                                <Badge variant="secondary" className="text-xs bg-amber-950/30 text-amber-700 bg-amber-900/30 text-amber-400">초대 대기</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs border-emerald-200 text-emerald-700 border-emerald-800 text-emerald-400">활동 중</Badge>
+                                <Badge variant="outline" className="text-xs border-emerald-800 text-emerald-700 border-emerald-800 text-emerald-400">활동 중</Badge>
                               )}
                             </TableCell>
                             <TableCell className="py-4 hidden md:table-cell">
@@ -981,7 +981,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             <div className="space-y-4 mt-2">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-blue-100 text-blue-700 bg-blue-900/40 text-blue-300">
+                  <AvatarFallback className="bg-blue-900/30 text-blue-700 bg-blue-900/40 text-blue-300">
                     {permissionDialogMember.initial}
                   </AvatarFallback>
                 </Avatar>

@@ -317,7 +317,7 @@ export function QRScanner({
             size="lg"
             variant="outline"
             onClick={handleReset}
-            className="gap-2 border-white/30 text-white hover:bg-white/10 px-8 rounded-xl h-12"
+            className="gap-2 border-white/30 text-white hover:bg-slate-900/10 px-8 rounded-xl h-12"
           >
             <CameraOff className="h-5 w-5" />
             중지

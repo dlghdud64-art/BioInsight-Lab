@@ -356,7 +356,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
         </Dialog>
 
         {shareLink && (
-          <div className="mt-4 p-3 bg-slate-50 rounded-md space-y-2">
+          <div className="mt-4 p-3 bg-slate-900 rounded-md space-y-2">
             <p className="text-xs font-medium">생성된 공유 링크:</p>
             <div className="flex items-center gap-2">
               <Input value={shareLink} readOnly className="flex-1 text-xs" />

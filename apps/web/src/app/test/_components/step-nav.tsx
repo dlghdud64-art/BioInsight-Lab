@@ -57,12 +57,12 @@ function StepNavContent() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-slate-900 border-b border-slate-800 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 재고에서 온 경우 안내 메시지 */}
           {fromInventory && currentStep === 1 && (
-            <div className="py-2 flex items-center justify-center gap-2 text-xs text-blue-700 bg-blue-50 border-b border-blue-100">
+            <div className="py-2 flex items-center justify-center gap-2 text-xs text-blue-700 bg-blue-950/20 border-b border-blue-800">
               <Package className="h-3.5 w-3.5" />
               <span className="font-medium">재고 관리에서 시작된 구매 프로세스입니다</span>
             </div>
@@ -117,9 +117,9 @@ function StepNavContent() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all relative",
                       isActive &&
-                        "bg-blue-600 text-white shadow-md shadow-blue-600/25",
+                        "bg-blue-600 text-white shadow-none shadow-blue-600/25",
                       isCompleted &&
-                        "bg-transparent text-slate-400 hover:text-slate-600 cursor-pointer",
+                        "bg-transparent text-slate-400 hover:text-slate-400 cursor-pointer",
                       isPending && "bg-transparent text-slate-400 cursor-pointer"
                     )}
                   >
@@ -170,15 +170,15 @@ export function StepNav() {
 
 function StepNavFallback() {
   return (
-    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-slate-900 border-b border-slate-800 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-1 py-2">
-            <div className="h-5 w-12 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-gray-200" />
-            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-gray-200" />
-            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-5 w-12 rounded-full bg-slate-800 animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-slate-800" />
+            <div className="h-5 w-5 rounded-full bg-slate-800 animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-slate-800" />
+            <div className="h-5 w-5 rounded-full bg-slate-800 animate-pulse" />
           </div>
         </div>
       </div>

@@ -129,14 +129,14 @@ export default function TemplatesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <PageHeader
           title="실험 템플릿"
           description="자주 사용하는 실험 구성을 템플릿으로 저장하고 빠르게 불러오세요."
           icon={FileText}
-          iconColor="text-purple-600"
+          iconColor="text-purple-400"
         />
 
         {/* Search & Filter */}
@@ -164,7 +164,7 @@ export default function TemplatesPage() {
         ) : filteredTemplates.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-sm text-slate-600 mb-1">
+            <p className="text-sm text-slate-400 mb-1">
               {searchQuery ? "검색 결과가 없습니다." : "저장된 템플릿이 없습니다."}
             </p>
             <p className="text-xs text-slate-500">
@@ -176,15 +176,15 @@ export default function TemplatesPage() {
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="bg-white border border-slate-200 rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all"
+                className="bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-700 hover:shadow-none transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-900 mb-1 truncate">
+                    <h3 className="font-semibold text-slate-100 mb-1 truncate">
                       {template.name}
                     </h3>
                     {template.description && (
-                      <p className="text-xs text-slate-600 line-clamp-2">
+                      <p className="text-xs text-slate-400 line-clamp-2">
                         {template.description}
                       </p>
                     )}

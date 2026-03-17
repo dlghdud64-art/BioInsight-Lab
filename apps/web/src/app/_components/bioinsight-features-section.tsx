@@ -11,8 +11,8 @@ export function BioInsightFeaturesSection() {
       description: "배송 완료와 동시에 인벤토리 등록.",
       details: "주문 내역이 자동으로 인벤토리에 반영되어 수동 입력이 필요 없습니다.",
       color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
+      bgColor: "bg-blue-950/20",
+      iconColor: "text-blue-400",
     },
     {
       icon: Users,
@@ -21,8 +21,8 @@ export function BioInsightFeaturesSection() {
       description: "옆 실험대에 있는데 또 주문하셨나요?",
       details: "연구실 전체 재고를 통합 검색하세요. 불필요한 지출을 막고, 동료의 시약을 바로 찾을 수 있습니다.",
       color: "from-indigo-500 to-indigo-600",
-      bgColor: "bg-indigo-50",
-      iconColor: "text-indigo-600",
+      bgColor: "bg-indigo-900/20",
+      iconColor: "text-indigo-400",
     },
     {
       icon: Brain,
@@ -30,19 +30,19 @@ export function BioInsightFeaturesSection() {
       description: "떨어질 때를 미리 알려주는 자동 알림.",
       details: "과거 주문 패턴을 분석하여 재구매 시점을 예측하고 알림을 보내드립니다.",
       color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      iconColor: "text-purple-600",
+      bgColor: "bg-purple-900/20",
+      iconColor: "text-purple-400",
     },
   ];
 
   return (
-    <section className="py-12 md:py-24 bg-white">
+    <section className="py-12 md:py-24 bg-slate-900">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-8 md:mb-16">
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3 md:mb-4">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-100 mb-3 md:mb-4">
             연구에만 집중하세요
           </h2>
-          <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto break-keep">
+          <p className="text-base md:text-xl text-slate-400 max-w-2xl mx-auto break-keep">
             재고 관리는 우리가 알아서 처리합니다
           </p>
         </div>
@@ -53,13 +53,13 @@ export function BioInsightFeaturesSection() {
             return (
               <Card
                 key={index}
-                className={`${feature.bgColor} border-2 border-transparent hover:border-slate-300 transition-all duration-300 hover:shadow-xl p-6`}
+                className={`${feature.bgColor} border-2 border-transparent hover:border-slate-700 transition-all duration-300 hover:shadow-xl p-6`}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-none`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
                 <CardHeader className="p-0">
-                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
+                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-100 mb-1">
                     {feature.title}
                     {feature.titleSub && (
                       <span className="text-xs md:text-sm font-normal text-slate-500 ml-2">
@@ -67,12 +67,12 @@ export function BioInsightFeaturesSection() {
                       </span>
                     )}
                   </CardTitle>
-                  <CardDescription className="text-sm md:text-lg font-semibold text-slate-700">
+                  <CardDescription className="text-sm md:text-lg font-semibold text-slate-300">
                     {feature.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 pt-4">
-                  <p className="text-sm md:text-base text-slate-600 leading-relaxed">
+                  <p className="text-sm md:text-base text-slate-400 leading-relaxed">
                     {feature.details}
                   </p>
                 </CardContent>

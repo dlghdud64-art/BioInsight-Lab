@@ -253,7 +253,7 @@ export default function ExtractPage() {
               AI Powered
             </Badge>
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-400">
             실험 프로토콜 텍스트 또는 PDF를 업로드하면 AI가 필요한 시약과 장비를 자동으로 추출합니다.
           </p>
         </div>
@@ -262,13 +262,13 @@ export default function ExtractPage() {
           {/* Left Panel: 입력 */}
           <div className="space-y-4">
             <SecurityAlert />
-            <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/50 shadow-none rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               
               <div className="relative z-10 flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-slate-900">프로토콜 입력</h2>
+                  <h2 className="font-semibold text-slate-100">프로토콜 입력</h2>
                   <SecurityIndicator />
                 </div>
 
@@ -280,10 +280,10 @@ export default function ExtractPage() {
                   className={`
                     relative mb-4 border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300
                     ${isDragging 
-                      ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20 scale-[1.02]" 
+                      ? "border-blue-500 bg-blue-950/20/50 shadow-none shadow-blue-500/20 scale-[1.02]" 
                       : pdfFile 
-                      ? "border-green-500 bg-green-50/50" 
-                      : "border-slate-300 bg-slate-50/50 hover:border-slate-400 hover:bg-slate-100/50"
+                      ? "border-green-500 bg-green-900/20/50" 
+                      : "border-slate-700 bg-slate-900/50 hover:border-slate-400 hover:bg-slate-800/50"
                     }
                   `}
                 >
@@ -298,8 +298,8 @@ export default function ExtractPage() {
                   
                   {pdfFile ? (
                     <div className="space-y-2">
-                      <FileText className="h-10 w-10 mx-auto text-green-600" />
-                      <p className="text-sm font-medium text-slate-900">{pdfFile.name}</p>
+                      <FileText className="h-10 w-10 mx-auto text-green-400" />
+                      <p className="text-sm font-medium text-slate-100">{pdfFile.name}</p>
                       <p className="text-xs text-slate-500">{(pdfFile.size / 1024).toFixed(1)} KB</p>
                       <Button
                         variant="ghost"
@@ -317,7 +317,7 @@ export default function ExtractPage() {
                   ) : (
                     <>
                       <Upload className={`h-12 w-12 mx-auto mb-3 ${isDragging ? "text-blue-500" : "text-slate-400"}`} />
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">
+                      <h3 className="text-sm font-semibold text-slate-300 mb-1">
                         PDF 파일 업로드
                       </h3>
                       <p className="text-xs text-slate-500 mb-3">
@@ -343,10 +343,10 @@ export default function ExtractPage() {
 
                 <div className="relative mb-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200"></div>
+                    <div className="w-full border-t border-slate-800"></div>
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white/80 px-2 text-slate-500">또는</span>
+                    <span className="bg-slate-900/80 px-2 text-slate-500">또는</span>
                   </div>
                 </div>
 
@@ -360,13 +360,13 @@ export default function ExtractPage() {
 1. Add 5ml of PBS buffer to the cell culture.
 2. Incubate at 37°C for 30 minutes.
 3. Add trypsin-EDTA solution..."
-                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-white/50 backdrop-blur-sm border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-slate-900/50 backdrop-blur-sm border-slate-800 focus:border-blue-400 focus:ring-blue-400"
                 />
                 
                 <Button
                   onClick={handleExtract}
                   disabled={(!protocolText.trim() && !pdfFile) || isExtracting}
-                  className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-none hover:shadow-xl transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isExtracting ? (
                     <>
@@ -386,16 +386,16 @@ export default function ExtractPage() {
 
           {/* Right Panel: 결과 */}
           <div className="space-y-4">
-            <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/50 shadow-none rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               
               <div className="relative z-10 flex flex-col flex-1">
-                <h2 className="font-semibold text-slate-900 mb-4">추출 결과</h2>
+                <h2 className="font-semibold text-slate-100 mb-4">추출 결과</h2>
 
                 {hasLowConfidenceItems && (
-                  <Alert className="mb-4 border-orange-200 bg-orange-50/80 backdrop-blur-sm">
-                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <Alert className="mb-4 border-orange-800 bg-orange-950/20/80 backdrop-blur-sm">
+                    <AlertCircle className="h-4 w-4 text-orange-400" />
                     <AlertDescription className="text-sm text-orange-800">
                       일부 품목의 신뢰도가 낮습니다. 결과를 확인하고 필요시 수정해주세요.
                     </AlertDescription>
@@ -413,7 +413,7 @@ export default function ExtractPage() {
                         </div>
                         <Button
                           onClick={handleSendToCompare}
-                          className="w-full mt-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="w-full mt-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-none hover:shadow-xl transition-all duration-300"
                         >
                           <GitCompare className="h-4 w-4 mr-2" />
                           Send to Compare ({extractionResult.items.length}개)
@@ -445,10 +445,10 @@ export default function ExtractPage() {
                         </div>
                       </div>
                       
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                      <h3 className="text-xl font-bold text-slate-100 mb-2">
                         AI가 분석할 준비가 되었습니다
                       </h3>
-                      <p className="text-sm text-slate-600 max-w-md leading-relaxed mb-4">
+                      <p className="text-sm text-slate-400 max-w-md leading-relaxed mb-4">
                         PDF를 업로드하거나 프로토콜 텍스트를 입력하면 AI가 시약 이름, 용량, 카탈로그 번호를 자동으로 추출하여 엑셀 표로 정리합니다.
                       </p>
                       <div className="flex items-center gap-2 text-xs text-slate-500">

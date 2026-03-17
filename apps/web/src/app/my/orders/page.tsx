@@ -41,11 +41,11 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  ORDERED: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  CONFIRMED: "bg-blue-100 text-blue-800 border-blue-300",
-  SHIPPING: "bg-purple-100 text-purple-800 border-purple-300",
-  DELIVERED: "bg-green-100 text-green-800 border-green-300",
-  CANCELLED: "bg-red-100 text-red-800 border-red-300",
+  ORDERED: "bg-yellow-900/40 text-yellow-800 border-yellow-300",
+  CONFIRMED: "bg-blue-900/30 text-blue-800 border-blue-300",
+  SHIPPING: "bg-purple-900/30 text-purple-800 border-purple-300",
+  DELIVERED: "bg-green-900/30 text-green-800 border-green-300",
+  CANCELLED: "bg-red-900/40 text-red-800 border-red-300",
 };
 
 const ORDER_STATUS_ICONS: Record<OrderStatus, React.ReactNode> = {
@@ -78,7 +78,7 @@ export default function MyOrdersPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -91,7 +91,7 @@ export default function MyOrdersPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <Card>
@@ -112,7 +112,7 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -174,7 +174,7 @@ export default function MyOrdersPage() {
                             <TableCell>
                               <Link
                                 href={`/quotes/${order.quoteId}`}
-                                className="text-blue-600 hover:underline"
+                                className="text-blue-400 hover:underline"
                               >
                                 {order.quote?.title || "견적 없음"}
                               </Link>

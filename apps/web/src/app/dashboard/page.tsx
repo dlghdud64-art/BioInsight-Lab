@@ -22,7 +22,7 @@ function StripStat({ label, count, warn, href }: {
   const inner = (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={`text-sm font-semibold tabular-nums ${warn ? "text-red-600" : "text-foreground"}`}>
+      <span className={`text-sm font-semibold tabular-nums ${warn ? "text-red-400" : "text-foreground"}`}>
         {typeof count === "number" ? count.toLocaleString("ko-KR") : count}
       </span>
     </div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
 
   if (stats.lowStockAlerts > 0) {
     actionItems.push({
-      icon: <AlertTriangle className="h-4 w-4 text-red-600" />,
+      icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
       title: `재고 부족 ${stats.lowStockAlerts}건 — 발주 검토 필요`,
       subtitle: stats.lowStockAlerts >= 3 ? "즉시 발주 검토가 필요합니다" : "해당 품목의 발주를 검토하세요",
       href: "/dashboard/inventory?filter=low",
@@ -194,7 +194,7 @@ export default function DashboardPage() {
   if (stats.undecidedCompareCount > 0) {
     const sla = stats.compareStats.slaBreachedCount;
     actionItems.push({
-      icon: <GitCompare className={`h-4 w-4 ${sla > 0 ? "text-red-600" : "text-purple-600"}`} />,
+      icon: <GitCompare className={`h-4 w-4 ${sla > 0 ? "text-red-400" : "text-purple-400"}`} />,
       title: sla > 0
         ? `비교 판정 대기 ${stats.undecidedCompareCount}건 (SLA 초과 ${sla}건)`
         : `비교 판정 대기 ${stats.undecidedCompareCount}건`,
@@ -206,7 +206,7 @@ export default function DashboardPage() {
 
   if (stats.activeQuotes > 0) {
     actionItems.push({
-      icon: <FileText className="h-4 w-4 text-blue-600" />,
+      icon: <FileText className="h-4 w-4 text-blue-400" />,
       title: `견적 ${stats.activeQuotes}건 검토 대기`,
       subtitle: stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신 — 검토 필요` : "공급사 응답 대기 중",
       href: "/dashboard/quotes?status=PENDING",
@@ -215,7 +215,7 @@ export default function DashboardPage() {
 
   if (stats.expiringCount > 0) {
     actionItems.push({
-      icon: <Calendar className="h-4 w-4 text-amber-600" />,
+      icon: <Calendar className="h-4 w-4 text-amber-400" />,
       title: `유통기한 임박 ${stats.expiringCount}건`,
       subtitle: "30일 이내 만료 예정",
       href: "/dashboard/inventory",
@@ -254,8 +254,8 @@ export default function DashboardPage() {
         {stats.monthlySpending > 0 && (
           <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
             {stats.monthOverMonthChange >= 0
-              ? <><TrendingUp className="h-3 w-3 text-red-500" /> <span className="text-red-600 font-medium">▲{Math.abs(stats.monthOverMonthChange).toFixed(1)}%</span></>
-              : <><TrendingDown className="h-3 w-3 text-emerald-500" /> <span className="text-emerald-600 font-medium">▼{Math.abs(stats.monthOverMonthChange).toFixed(1)}%</span></>
+              ? <><TrendingUp className="h-3 w-3 text-red-500" /> <span className="text-red-400 font-medium">▲{Math.abs(stats.monthOverMonthChange).toFixed(1)}%</span></>
+              : <><TrendingDown className="h-3 w-3 text-emerald-500" /> <span className="text-emerald-400 font-medium">▼{Math.abs(stats.monthOverMonthChange).toFixed(1)}%</span></>
             }
             <span>전월 대비</span>
           </div>
@@ -315,7 +315,7 @@ export default function DashboardPage() {
                   </p>
                 )}
                 {stats.compareStats.noMovementCount > 0 && (
-                  <p className="text-xs text-orange-600 font-medium">다음 단계 없음 {stats.compareStats.noMovementCount}건</p>
+                  <p className="text-xs text-orange-400 font-medium">다음 단계 없음 {stats.compareStats.noMovementCount}건</p>
                 )}
               </div>
             </div>
@@ -381,14 +381,14 @@ export default function DashboardPage() {
               <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 transition-colors">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                 <span className="text-xs text-foreground flex-1">응답 수신</span>
-                <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${stats.respondedQuotes > 0 ? "text-emerald-600" : "text-muted-foreground"}`}>
+                <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${stats.respondedQuotes > 0 ? "text-emerald-400" : "text-muted-foreground"}`}>
                   {stats.respondedQuotes}
                 </span>
               </Link>
               <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 transition-colors">
                 <Clock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
                 <span className="text-xs text-foreground flex-1">응답 대기</span>
-                <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${stats.activeQuotes > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${stats.activeQuotes > 0 ? "text-amber-400" : "text-muted-foreground"}`}>
                   {stats.activeQuotes}
                 </span>
               </Link>
@@ -409,7 +409,7 @@ export default function DashboardPage() {
                   <div key={item.id} className="flex items-center justify-between px-3 py-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{item.productName}</p>
-                      <p className="text-xs text-red-600">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
+                      <p className="text-xs text-red-400">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
                     </div>
                     <span className="inline-flex h-2 w-2 rounded-full bg-red-500 flex-shrink-0" />
                   </div>
@@ -430,8 +430,8 @@ export default function DashboardPage() {
             <p className="text-xl font-bold text-foreground tabular-nums">{stats.totalInventory.toLocaleString("ko-KR")}</p>
           </Link>
           <Link href="/dashboard/inventory?filter=low" className={`border rounded-md px-3 py-2 ${stats.lowStockAlerts > 0 ? "border-l-2 border-l-red-500" : ""}`}>
-            <span className="text-xs text-red-600 uppercase tracking-wider">재고 부족</span>
-            <p className="text-xl font-bold text-red-600 tabular-nums">{stats.lowStockAlerts}</p>
+            <span className="text-xs text-red-400 uppercase tracking-wider">재고 부족</span>
+            <p className="text-xl font-bold text-red-400 tabular-nums">{stats.lowStockAlerts}</p>
           </Link>
           <Link href="/dashboard/purchases" className="border rounded-md px-3 py-2">
             <span className="text-xs text-muted-foreground uppercase tracking-wider">이번 달 지출</span>

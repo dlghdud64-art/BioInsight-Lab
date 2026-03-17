@@ -132,7 +132,7 @@ export default function TeamAnalyticsView() {
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
-        <div className={`rounded-xl border p-4 shadow-none ${riskTeams > 0 ? "border-amber-200/60 bg-amber-950/10 border-amber-900/30" : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"}`}>
+        <div className={`rounded-xl border p-4 shadow-none ${riskTeams > 0 ? "border-amber-800/60 bg-amber-950/10 border-amber-900/30" : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"}`}>
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>

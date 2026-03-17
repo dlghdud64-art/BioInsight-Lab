@@ -113,7 +113,7 @@ export function UsageDialog({
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <FlaskConical className="h-4 w-4 text-blue-600" />
+            <FlaskConical className="h-4 w-4 text-blue-400" />
             사용 처리
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -161,7 +161,7 @@ export function UsageDialog({
               </span>
             </div>
             {quantity && parseFloat(quantity) > (selectedLot?.currentQuantity ?? 0) && (
-              <p className="text-[11px] text-amber-600">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
+              <p className="text-[11px] text-amber-400">현재 재고보다 많습니다. 음수 재고가 됩니다.</p>
             )}
           </div>
 

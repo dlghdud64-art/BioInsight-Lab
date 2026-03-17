@@ -676,9 +676,9 @@ function PlansPageContent() {
                         className={cn(
                           "text-xs",
                           currentPlan === SubscriptionPlan.ORGANIZATION
-                            ? "bg-indigo-100 text-indigo-700 border-indigo-200 bg-indigo-900/30 text-indigo-400 border-indigo-800"
+                            ? "bg-indigo-100 text-indigo-700 border-indigo-800 bg-indigo-900/30 text-indigo-400 border-indigo-800"
                             : currentPlan === SubscriptionPlan.TEAM
-                              ? "bg-blue-100 text-blue-700 border-blue-200 bg-blue-900/30 text-blue-400 border-blue-800"
+                              ? "bg-blue-900/30 text-blue-700 border-blue-800 bg-blue-900/30 text-blue-400 border-blue-800"
                               : "bg-slate-800 text-slate-400 border-slate-800 bg-slate-800 text-slate-400 border-slate-700"
                         )}
                       >
@@ -834,7 +834,7 @@ function PlansPageContent() {
                     "text-xs px-2 py-0.5 rounded-full font-medium",
                     isAnnual
                       ? "bg-green-500 text-white"
-                      : "bg-green-100 text-green-700 bg-green-900/30 text-green-400"
+                      : "bg-green-900/30 text-green-700 bg-green-900/30 text-green-400"
                   )}
                 >
                   10% 할인
@@ -861,9 +861,9 @@ function PlansPageContent() {
                 <Card
                   key={card.id}
                   className={cn(
-                    "relative flex flex-col transition-all duration-300 hover:shadow-lg bg-slate-900",
+                    "relative flex flex-col transition-all duration-300 hover:shadow-none bg-slate-900",
                     isCurrentPlan &&
-                      "ring-2 ring-emerald-500 shadow-lg border-emerald-800",
+                      "ring-2 ring-emerald-500 shadow-none border-emerald-800",
                     !isCurrentPlan &&
                       display.isRecommended &&
                       "ring-2 ring-blue-500 shadow-xl border-blue-800",
@@ -992,7 +992,7 @@ function PlansPageContent() {
                       ) : (
                         <Button
                           className={cn(
-                            "w-full shadow-none hover:shadow-md transition-all",
+                            "w-full shadow-none hover:shadow-none transition-all",
                             btnInfo.isDowngrade
                               ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
                               : isBusiness
@@ -1027,7 +1027,7 @@ function PlansPageContent() {
             })}
 
             {/* Enterprise 카드 */}
-            <Card className="relative flex flex-col border-slate-800 bg-slate-900 hover:shadow-lg transition-all duration-300">
+            <Card className="relative flex flex-col border-slate-800 bg-slate-900 hover:shadow-none transition-all duration-300">
               <CardHeader className="pb-3 pt-6">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 rounded-lg bg-slate-800">
@@ -1109,7 +1109,7 @@ function PlansPageContent() {
                       <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
                         Team
                       </th>
-                      <th className="text-center py-3 px-3 font-semibold text-blue-400 bg-blue-50/50 bg-blue-900/10 w-[100px]">
+                      <th className="text-center py-3 px-3 font-semibold text-blue-400 bg-blue-950/20/50 bg-blue-900/10 w-[100px]">
                         Business
                       </th>
                       <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
@@ -1122,14 +1122,14 @@ function PlansPageContent() {
                       <td className="py-2.5 px-4 font-medium text-slate-400">팀원 수</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">1명</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">5명</td>
-                      <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-900/5 text-blue-400 font-semibold">무제한</td>
+                      <td className="text-center py-2.5 px-3 bg-blue-950/20/30 bg-blue-900/5 text-blue-400 font-semibold">무제한</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">무제한</td>
                     </tr>
                     <tr className="border-b border-slate-800 bg-slate-900/50 bg-slate-800/30">
                       <td className="py-2.5 px-4 font-medium text-slate-400">품목 등록 수</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">10개</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">50개</td>
-                      <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-900/5 text-blue-400 font-semibold">무제한</td>
+                      <td className="text-center py-2.5 px-3 bg-blue-950/20/30 bg-blue-900/5 text-blue-400 font-semibold">무제한</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">무제한</td>
                     </tr>
                     {FEATURE_COMPARISON.map((feat) => {
@@ -1174,7 +1174,7 @@ function PlansPageContent() {
                           </td>
                           <td className="text-center py-2.5 px-3">{renderCell(starterHas)}</td>
                           <td className="text-center py-2.5 px-3">{renderCell(teamHas)}</td>
-                          <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-900/5">
+                          <td className="text-center py-2.5 px-3 bg-blue-950/20/30 bg-blue-900/5">
                             {renderCell(businessHas, true)}
                           </td>
                           <td className="text-center py-2.5 px-3">{renderCell(enterpriseHas)}</td>

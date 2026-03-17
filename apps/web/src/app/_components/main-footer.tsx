@@ -147,7 +147,7 @@ export function MainFooter() {
           <span>&copy; {year} BioInsight Lab. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
-            <span className="text-slate-700">|</span>
+            <span className="text-slate-300">|</span>
             <Link href="/privacy" className="hover:text-slate-300 transition-colors">개인정보처리방침</Link>
           </div>
         </div>

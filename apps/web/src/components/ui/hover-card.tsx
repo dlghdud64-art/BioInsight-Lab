@@ -64,7 +64,7 @@ const HoverCardContent = React.forwardRef<HTMLDivElement, HoverCardContentProps>
       <div
         ref={ref}
         className={cn(
-          "absolute z-50 w-80 rounded-md border border-slate-200 bg-white p-4 text-slate-950 shadow-lg",
+          "absolute z-50 w-80 rounded-md border border-slate-800 bg-slate-900 p-4 text-slate-950 shadow-none",
           "top-full left-0 mt-2",
           className
         )}

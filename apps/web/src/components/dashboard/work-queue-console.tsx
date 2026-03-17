@@ -342,7 +342,7 @@ function DailyReviewSection() {
           onClick={() => setRoleView("operator")}
           className={cn(
             "text-xs px-3 py-1 rounded-sm font-medium transition-colors",
-            roleView === "operator" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            roleView === "operator" ? "bg-background text-foreground shadow-none" : "text-muted-foreground hover:text-foreground"
           )}
         >
           운영자 뷰 ({surface.operatorItems.length})
@@ -351,7 +351,7 @@ function DailyReviewSection() {
           onClick={() => setRoleView("lead")}
           className={cn(
             "text-xs px-3 py-1 rounded-sm font-medium transition-colors",
-            roleView === "lead" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            roleView === "lead" ? "bg-background text-foreground shadow-none" : "text-muted-foreground hover:text-foreground"
           )}
         >
           리드 뷰 ({surface.leadItems.length})

@@ -73,7 +73,7 @@ export default function PricingPage() {
         </Card>
 
         {/* Pro (Best Choice) */}
-        <Card className="border-blue-500 shadow-lg relative flex flex-col transform md:-translate-y-4">
+        <Card className="border-blue-500 shadow-none relative flex flex-col transform md:-translate-y-4">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide">
             BEST CHOICE
           </div>

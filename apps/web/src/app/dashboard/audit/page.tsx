@@ -57,7 +57,7 @@ export default function AuditTrailPage() {
   if (!canAccessAudit) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="max-w-md border-amber-800 bg-amber-50/50">
+        <Card className="max-w-md border-amber-800 bg-amber-950/30/50">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4 text-center">
               <ShieldAlert className="h-12 w-12 text-amber-400" />

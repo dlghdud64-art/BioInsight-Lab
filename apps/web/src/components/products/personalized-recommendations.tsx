@@ -68,7 +68,7 @@ export function PersonalizedRecommendations({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-purple-600" />
+          <Sparkles className="h-5 w-5 text-purple-400" />
           {title}
         </CardTitle>
         <CardDescription>
@@ -116,14 +116,14 @@ export function PersonalizedRecommendations({
           return (
             <div
               key={product.id}
-              className="flex items-start gap-4 p-4 border rounded-lg hover:border-slate-300 hover:bg-slate-50 transition-all"
+              className="flex items-start gap-4 p-4 border rounded-lg hover:border-slate-700 hover:bg-slate-900 transition-all"
             >
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <Link
                       href={`/products/${product.id}`}
-                      className="font-semibold text-slate-900 hover:text-blue-600 transition-colors"
+                      className="font-semibold text-slate-100 hover:text-blue-400 transition-colors"
                     >
                       {product.name}
                     </Link>
@@ -162,7 +162,7 @@ export function PersonalizedRecommendations({
                   {priceRange && (
                     <div className="flex items-center gap-2 text-sm">
                       <DollarSign className="h-3 w-3 text-slate-500" />
-                      <span className="font-medium text-slate-700">{priceRange}</span>
+                      <span className="font-medium text-slate-300">{priceRange}</span>
                       {priceDiff !== null && (
                         <Badge
                           variant={priceDiff < -10 ? "default" : priceDiff > 10 ? "destructive" : "secondary"}
@@ -176,7 +176,7 @@ export function PersonalizedRecommendations({
                   )}
 
                   {minLeadTime && (
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
                       <Package className="h-3 w-3" />
                       <span>납기: {minLeadTime}일</span>
                     </div>
@@ -185,14 +185,14 @@ export function PersonalizedRecommendations({
 
                 {/* 추천 근거 (Explainability) */}
                 {rec.reason && (
-                  <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="p-2 bg-blue-950/20 border border-blue-800 rounded-lg">
                     <div className="flex items-start gap-2">
-                      <Info className="h-3 w-3 mt-0.5 text-blue-600 flex-shrink-0" />
+                      <Info className="h-3 w-3 mt-0.5 text-blue-400 flex-shrink-0" />
                       <div className="flex-1">
                         <p className="text-xs font-medium text-blue-900 mb-1">추천 근거</p>
                         <p className="text-xs text-blue-700">{rec.reason}</p>
                         {(rec as any).source === "purchase_pattern" && (
-                          <Badge variant="outline" className="text-[10px] mt-1 bg-green-50 text-green-700 border-green-200">
+                          <Badge variant="outline" className="text-[10px] mt-1 bg-green-900/20 text-green-700 border-green-800">
                             구매 패턴 기반
                           </Badge>
                         )}
@@ -206,7 +206,7 @@ export function PersonalizedRecommendations({
                   (product as any).specification !== (currentProduct as any).specification && (
                     <div className="flex items-center gap-2 text-xs">
                       <Zap className="h-3 w-3 text-amber-500" />
-                      <span className="text-slate-600">
+                      <span className="text-slate-400">
                         규격 차이: {(currentProduct as any).specification} → {(product as any).specification}
                       </span>
                     </div>

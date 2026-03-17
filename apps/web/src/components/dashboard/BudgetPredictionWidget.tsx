@@ -167,7 +167,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (isLoadingState) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-slate-900 border-slate-800 animate-pulse">
+      <Card className="border border-slate-800 shadow-none bg-slate-900 border-slate-800 animate-pulse">
         <CardContent className="p-4 h-[100px] sm:p-5 sm:h-[140px]" />
       </Card>
     );
@@ -175,7 +175,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (!selectedBudget || !selectedBudget.hasBudget) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-slate-900 border-slate-800">
+      <Card className="border border-slate-800 shadow-none bg-slate-900 border-slate-800">
         <CardContent className="py-6 px-5 flex items-center gap-4">
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-950/40">
             <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-blue-300 opacity-50" />
@@ -207,7 +207,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
   const otherWarningCount = otherWarningBudgets.length;
 
   return (
-    <Card className={`border border-slate-800 shadow-sm overflow-hidden ${hasWarning ? "bg-red-950/20" : "bg-slate-900"}`}>
+    <Card className={`border border-slate-800 shadow-none overflow-hidden ${hasWarning ? "bg-red-950/20" : "bg-slate-900"}`}>
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}

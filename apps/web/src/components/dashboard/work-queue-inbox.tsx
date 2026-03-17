@@ -118,7 +118,7 @@ export function WorkQueueInbox() {
 
   if (error) {
     return (
-      <div className="border border-red-200 rounded-md px-3 py-2">
+      <div className="border border-red-800 rounded-md px-3 py-2">
         <p className="text-sm text-red-700">작업함을 불러오는 데 실패했습니다.</p>
       </div>
     );
@@ -176,7 +176,7 @@ export function WorkQueueInbox() {
         {activeItems.length > 3 && (
           <button
             onClick={() => router.push("/dashboard/work-queue")}
-            className="w-full text-center py-2 text-xs text-blue-600 hover:text-blue-700 font-medium border-t"
+            className="w-full text-center py-2 text-xs text-blue-400 hover:text-blue-700 font-medium border-t"
           >
             +{activeItems.length - 3}건 더 보기
           </button>
@@ -274,7 +274,7 @@ function InboxRow({
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-foreground truncate">{item.title}</span>
           {item.metadata?.ownerName && (
-            <span className="text-[10px] text-blue-600 font-medium flex-shrink-0">@{String(item.metadata.ownerName)}</span>
+            <span className="text-[10px] text-blue-400 font-medium flex-shrink-0">@{String(item.metadata.ownerName)}</span>
           )}
           <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 leading-4 flex-shrink-0", statusBadge.color)}>
             {statusBadge.label}
@@ -289,7 +289,7 @@ function InboxRow({
             <span className="text-xs text-muted-foreground truncate">{activityLabel}</span>
           )}
           {item.urgencyReason && (
-            <span className="text-xs text-orange-600 font-medium truncate">{item.urgencyReason}</span>
+            <span className="text-xs text-orange-400 font-medium truncate">{item.urgencyReason}</span>
           )}
         </div>
       </div>
@@ -297,7 +297,7 @@ function InboxRow({
       {/* Age */}
       <span className={cn(
         "text-xs tabular-nums flex-shrink-0 whitespace-nowrap",
-        slaWarning ? "text-orange-600 font-medium" : "text-muted-foreground"
+        slaWarning ? "text-orange-400 font-medium" : "text-muted-foreground"
       )}>
         {timeAgo(item.updatedAt)}
       </span>
@@ -331,7 +331,7 @@ function CompletedRow({ item }: { item: WorkQueueItem }) {
       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
       <span className="text-xs text-muted-foreground truncate flex-1">{item.title}</span>
       {item.type === "COMPARE_DECISION" && !!item.metadata?.resolutionPath && (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 flex-shrink-0">
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-400 border-emerald-800 flex-shrink-0">
           {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
         </Badge>
       )}

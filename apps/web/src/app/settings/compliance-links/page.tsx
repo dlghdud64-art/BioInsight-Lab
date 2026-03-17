@@ -312,7 +312,7 @@ function ComplianceLinksPageContent() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -330,16 +330,16 @@ function ComplianceLinksPageContent() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
           <div className="flex-1 overflow-auto min-w-0 pt-12 md:pt-0">
             <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
-              <Card className="border-yellow-200 bg-yellow-50">
+              <Card className="border-yellow-200 bg-yellow-900/20">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-yellow-600 mt-0.5" />
+                    <Shield className="h-5 w-5 text-yellow-400 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-yellow-900">
                         관리자 권한이 필요합니다
@@ -359,7 +359,7 @@ function ComplianceLinksPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -371,7 +371,7 @@ function ComplianceLinksPageContent() {
                   title="규제/절차 링크 관리"
                   description="제품 상세 페이지에 표시될 규제 및 절차 링크를 관리합니다."
                   icon={Shield}
-                  iconColor="text-blue-600"
+                  iconColor="text-blue-400"
                 />
                 <Button onClick={handleAdd}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -439,7 +439,7 @@ function ComplianceLinksPageContent() {
                                   href={link.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-slate-400 hover:text-slate-600"
+                                  className="text-slate-400 hover:text-slate-400"
                                 >
                                   <ExternalLink className="h-3 w-3" />
                                 </a>
@@ -482,7 +482,7 @@ function ComplianceLinksPageContent() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleDelete(link.id)}
-                                    className="text-red-600"
+                                    className="text-red-400"
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     삭제

@@ -198,7 +198,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </Link>
                   <Link
                     href="/dashboard"
-                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
+                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-none"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     대시보드
@@ -221,7 +221,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </Link>
                   <Link
                     href="/auth/signin?callbackUrl=/dashboard"
-                    className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
+                    className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-none"
                   >
                     무료로 시작하기
                   </Link>

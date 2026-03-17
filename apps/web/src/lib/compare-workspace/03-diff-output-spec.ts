@@ -102,11 +102,11 @@ export const SIGNIFICANCE_LABELS: Record<DiffSignificance, string> = {
 };
 
 export const SIGNIFICANCE_BADGE_COLORS: Record<DiffSignificance, string> = {
-  CRITICAL: "bg-red-100 text-red-800",
-  HIGH: "bg-orange-100 text-orange-800",
-  MEDIUM: "bg-yellow-100 text-yellow-800",
-  LOW: "bg-blue-100 text-blue-800",
-  INFO: "bg-gray-100 text-gray-600",
+  CRITICAL: "bg-red-900/40 text-red-800",
+  HIGH: "bg-orange-900/40 text-orange-800",
+  MEDIUM: "bg-yellow-900/40 text-yellow-800",
+  LOW: "bg-blue-900/30 text-blue-800",
+  INFO: "bg-slate-800 text-slate-400",
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

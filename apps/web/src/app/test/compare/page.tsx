@@ -345,7 +345,7 @@ export default function TestComparePage() {
 
           {/* 저울 아이콘 */}
           <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-900 to-blue-900 flex items-center justify-center mb-6 shadow-lg">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-900 to-blue-900 flex items-center justify-center mb-6 shadow-none">
               <ArrowUpDown className="h-12 w-12 text-indigo-400" strokeWidth={1.5} />
             </div>
             
@@ -1395,7 +1395,7 @@ function ProductAlternativesCard({
           const inCompare = compareIds.includes(alt.id);
           
           return (
-            <Card key={alt.id} className="hover:shadow-md transition-shadow">
+            <Card key={alt.id} className="hover:shadow-none transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-2">
                   {alt.imageUrl ? (

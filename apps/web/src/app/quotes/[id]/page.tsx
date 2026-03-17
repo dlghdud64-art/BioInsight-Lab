@@ -108,7 +108,7 @@ const safeLocaleAmount = (val: number | null | undefined): string =>
 
 function FullPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <div className="container mx-auto px-4 py-8">{children}</div>
     </div>
   );
@@ -596,11 +596,11 @@ export default function QuoteDetailPage() {
 
   // 운영 상태 구성
   const statusConfig: Record<QuoteStatus, { label: string; cls: string; icon: React.ReactNode }> = {
-    PENDING:   { label: "접수",        cls: "bg-amber-100 text-amber-800 border-amber-300",     icon: <Clock className="h-3.5 w-3.5" /> },
-    SENT:      { label: "발송 완료",   cls: "bg-blue-100 text-blue-800 border-blue-300",         icon: <Send className="h-3.5 w-3.5" /> },
-    RESPONDED: { label: "비교 가능",   cls: "bg-green-100 text-green-800 border-green-300",      icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    COMPLETED: { label: "구매 완료",   cls: "bg-emerald-100 text-emerald-800 border-emerald-300", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    CANCELLED: { label: "취소됨",      cls: "bg-red-100 text-red-800 border-red-300",             icon: <XCircle className="h-3.5 w-3.5" /> },
+    PENDING:   { label: "접수",        cls: "bg-amber-900/40 text-amber-800 border-amber-300",     icon: <Clock className="h-3.5 w-3.5" /> },
+    SENT:      { label: "발송 완료",   cls: "bg-blue-900/30 text-blue-800 border-blue-300",         icon: <Send className="h-3.5 w-3.5" /> },
+    RESPONDED: { label: "비교 가능",   cls: "bg-green-900/30 text-green-800 border-green-300",      icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    COMPLETED: { label: "구매 완료",   cls: "bg-emerald-900/40 text-emerald-800 border-emerald-300", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    CANCELLED: { label: "취소됨",      cls: "bg-red-900/40 text-red-800 border-red-300",             icon: <XCircle className="h-3.5 w-3.5" /> },
   };
   const sc = statusConfig[quoteStatus] ?? statusConfig.PENDING;
 
@@ -619,11 +619,11 @@ export default function QuoteDetailPage() {
 
   const getUrgency = (): { label: string; cls: string } => {
     const deadline = quote.deliveryDate || quote.validUntil;
-    if (!deadline) return { label: "일반", cls: "bg-slate-100 text-slate-600" };
+    if (!deadline) return { label: "일반", cls: "bg-slate-800 text-slate-400" };
     const daysLeft = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-100 text-red-700" };
-    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-100 text-amber-700" };
-    return { label: "일반", cls: "bg-slate-100 text-slate-600" };
+    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-900/40 text-red-700" };
+    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-900/40 text-amber-700" };
+    return { label: "일반", cls: "bg-slate-800 text-slate-400" };
   };
   const urgency = getUrgency();
 
@@ -656,22 +656,22 @@ export default function QuoteDetailPage() {
   // ── JSX ──────────────────────────────────────────────────────────
   return (
     <>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-5">
 
             {/* ── 1. 헤더 카드 ── */}
-            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-8 md:py-5">
+            <Card className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-4 md:px-8 md:py-5">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                   {/* 브레드크럼 */}
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+                    <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-slate-300 transition-colors">
                       <Home className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Home</span>
                     </Link>
                     <span>/</span>
-                    <Link href="/dashboard/quotes" className="hover:text-slate-700 transition-colors whitespace-nowrap">견적 운영</Link>
+                    <Link href="/dashboard/quotes" className="hover:text-slate-300 transition-colors whitespace-nowrap">견적 운영</Link>
                     <span>/</span>
                     <span className="text-slate-500 truncate max-w-[140px] sm:max-w-xs">{quote.title || "견적 상세"}</span>
                   </div>
@@ -679,11 +679,11 @@ export default function QuoteDetailPage() {
                   {/* 제목 + 상태 */}
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href="/quotes">
-                      <Button variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md">
+                      <Button variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-100 hover:bg-slate-800 rounded-md">
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 truncate">{quote.title}</h1>
+                    <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-100 truncate">{quote.title}</h1>
                     <Badge variant="outline" className={cn("flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border", sc.cls)}>
                       {sc.icon}
                       {sc.label}
@@ -697,7 +697,7 @@ export default function QuoteDetailPage() {
 
                 {/* 공유 버튼 */}
                 <Button onClick={handleSmartShare} variant="outline" size="sm" className="shrink-0 text-xs h-8">
-                  {copied ? <><Check className="h-3.5 w-3.5 mr-1.5 text-green-600" />복사됨!</> : <><Share2 className="h-3.5 w-3.5 mr-1.5" />공유하기</>}
+                  {copied ? <><Check className="h-3.5 w-3.5 mr-1.5 text-green-400" />복사됨!</> : <><Share2 className="h-3.5 w-3.5 mr-1.5" />공유하기</>}
                 </Button>
               </div>
             </Card>
@@ -705,8 +705,8 @@ export default function QuoteDetailPage() {
             {/* ── 1-0.5 비교 분석 출처 배너 ── */}
             {quote.comparisonId && (
               <Link href={`/compare?sessionId=${quote.comparisonId}`}>
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
-                  <GitCompare className="h-4 w-4 text-purple-600 shrink-0" />
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-900/20 border border-purple-800 rounded-lg hover:bg-purple-900/30 transition-colors cursor-pointer">
+                  <GitCompare className="h-4 w-4 text-purple-400 shrink-0" />
                   <span className="text-xs font-medium text-purple-700">비교 분석에서 생성된 견적</span>
                   <ChevronRight className="h-3.5 w-3.5 text-purple-400 ml-auto" />
                 </div>
@@ -715,19 +715,19 @@ export default function QuoteDetailPage() {
 
             {/* ── 1-1. 운영 상태 스트립 ── */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">현재 단계</span>
-                <span className="text-sm font-bold text-slate-800">{sc.label}</span>
+                <span className="text-sm font-bold text-slate-200">{sc.label}</span>
               </div>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">다음 액션</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-blue-600">{nextAction.actor}</span>
+                  <span className="text-xs font-semibold text-blue-400">{nextAction.actor}</span>
                   <ArrowRight className="h-3 w-3 text-slate-300" />
-                  <span className="text-xs text-slate-600">{nextAction.label}</span>
+                  <span className="text-xs text-slate-400">{nextAction.label}</span>
                 </div>
               </div>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">긴급도</span>
                 <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 w-fit font-semibold", urgency.cls)}>{urgency.label}</Badge>
               </div>
@@ -735,30 +735,30 @@ export default function QuoteDetailPage() {
 
             {/* ── 2. 운영 KPI 스트립 ── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">수신 견적</span>
-                <span className={cn("text-xl font-bold", respondedCount > 0 ? "text-emerald-600" : "text-slate-400")}>
+                <span className={cn("text-xl font-bold", respondedCount > 0 ? "text-emerald-400" : "text-slate-400")}>
                   {respondedCount}<span className="text-sm font-medium text-slate-500 ml-1">건</span>
                 </span>
               </div>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">미응답 벤더</span>
                 <span className={cn("text-xl font-bold", pendingCount > 0 ? "text-amber-500" : "text-slate-400")}>
                   {pendingCount}<span className="text-sm font-medium text-slate-500 ml-1">건</span>
                 </span>
               </div>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">승인 필요</span>
                 {needsApproval ? (
-                  <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-blue-50 text-blue-700 border-blue-200">예</Badge>
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-blue-950/20 text-blue-700 border-blue-800">예</Badge>
                 ) : (
                   <span className="text-sm font-medium text-slate-400">—</span>
                 )}
               </div>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">구매 전환</span>
                 {canConvert ? (
-                  <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-emerald-50 text-emerald-700 border-emerald-200">가능</Badge>
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-emerald-900/20 text-emerald-700 border-emerald-800">가능</Badge>
                 ) : (
                   <span className="text-sm font-medium text-slate-400">불가</span>
                 )}
@@ -766,19 +766,19 @@ export default function QuoteDetailPage() {
             </div>
 
             {/* ── 3. 견적 정보 (컴팩트 + 접힘) ── */}
-            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-6 md:py-5">
+            <Card className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-4 md:px-6 md:py-5">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">요청자</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.user?.name || quote.user?.email || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.user?.name || quote.user?.email || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">조직</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.organization?.name || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.organization?.name || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">납기 희망일</p>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-200">
                     {quote.deliveryDate
                       ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
                       : quote.validUntil
@@ -788,11 +788,11 @@ export default function QuoteDetailPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">납품 장소</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.deliveryLocation || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.deliveryLocation || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">총 예상 금액</p>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-200">
                     {quote.totalAmount != null ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}` : "-"}
                   </p>
                 </div>
@@ -800,17 +800,17 @@ export default function QuoteDetailPage() {
 
               {/* 요청 메시지 (접힘) */}
               {(quote.description || quote.message) && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="mt-3 pt-3 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={() => setMessageExpanded(!messageExpanded)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-800 transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-200 transition-colors"
                   >
                     {messageExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     요청 메시지 {messageExpanded ? "접기" : "펼치기"}
                   </button>
                   {messageExpanded && (
-                    <blockquote className="mt-2 rounded-lg bg-blue-50/50 border-l-4 border-blue-200 pl-4 pr-4 py-3 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">
+                    <blockquote className="mt-2 rounded-lg bg-blue-950/20/50 border-l-4 border-blue-800 pl-4 pr-4 py-3 text-sm text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
                       {quote.description || quote.message}
                     </blockquote>
                   )}
@@ -820,13 +820,13 @@ export default function QuoteDetailPage() {
 
             {/* ── 4. 3탭 구조: 수신 견적 / 비교·추천 / 구매 처리 ── */}
             <Tabs value={isAdmin ? activeTab : (activeTab === "received" ? "compare" : activeTab)} onValueChange={setActiveTab} className="w-full">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <TabsList className="flex bg-slate-50/80 border-b border-slate-200 gap-0 rounded-none p-0 h-auto w-full justify-start">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-none overflow-hidden">
+                <TabsList className="flex bg-slate-900/80 border-b border-slate-800 gap-0 rounded-none p-0 h-auto w-full justify-start">
                   {/* 수신 견적 탭 - 관리자 전용 */}
                   {isAdmin && (
                     <TabsTrigger
                       value="received"
-                      className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-white data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                      className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-400 data-[state=active]:bg-slate-900 data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                     >
                       <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                       수신 견적
@@ -837,14 +837,14 @@ export default function QuoteDetailPage() {
                   )}
                   <TabsTrigger
                     value="compare"
-                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-white data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-400 data-[state=active]:bg-slate-900 data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                   >
                     <GitCompare className="h-3.5 w-3.5 flex-shrink-0" />
                     비교/추천
                   </TabsTrigger>
                   <TabsTrigger
                     value="purchase"
-                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-white data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-400 data-[state=active]:bg-slate-900 data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                   >
                     <ShoppingCart className="h-3.5 w-3.5 flex-shrink-0" />
                     구매 처리
@@ -862,11 +862,11 @@ export default function QuoteDetailPage() {
                     <>
                     {/* 벤더 가격 회신 입력 */}
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800 mb-1">벤더 견적 입력</h3>
+                      <h3 className="text-sm font-bold text-slate-200 mb-1">벤더 견적 입력</h3>
                       <p className="text-xs text-slate-500 mb-4">벤더명을 입력하고 각 품목의 단가를 기록하세요. 저장 후 비교/추천 탭에 자동 반영됩니다.</p>
 
                       {/* 벤더 기본 입력 */}
-                      <div className="flex items-center gap-3 mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="flex items-center gap-3 mb-3 p-3 bg-slate-900 rounded-lg border border-slate-800">
                         <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
                         <Label className="text-sm font-semibold whitespace-nowrap">벤더명 *</Label>
                         <Input
@@ -878,7 +878,7 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 벤더 확장 필드 (관리자 전용) */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 p-3 bg-slate-50/50 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-800">
                         <div className="space-y-1">
                           <Label className="text-[11px] text-slate-500">응답 상태</Label>
                           <Select value={vendorResponseStatus} onValueChange={setVendorResponseStatus}>
@@ -901,7 +901,7 @@ export default function QuoteDetailPage() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-[11px] text-slate-500">대체품 여부</Label>
-                          <label className="flex items-center gap-2 h-8 px-2 border rounded-md bg-white text-xs cursor-pointer">
+                          <label className="flex items-center gap-2 h-8 px-2 border rounded-md bg-slate-900 text-xs cursor-pointer">
                             <input type="checkbox" checked={vendorHasSubstitute} onChange={(e) => setVendorHasSubstitute(e.target.checked)} className="rounded" />
                             대체품 있음
                           </label>
@@ -909,26 +909,26 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 품목별 단가 테이블 */}
-                      <div className="overflow-x-auto rounded-lg border border-slate-200">
+                      <div className="overflow-x-auto rounded-lg border border-slate-800">
                         <table className="w-full text-sm">
-                          <thead className="bg-slate-50">
-                            <tr className="border-b border-slate-200">
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">품목명</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">수량</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">단가 *</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600 hidden md:table-cell">통화</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600 hidden md:table-cell">납기(일)</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600 hidden md:table-cell">MOQ</th>
-                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600 hidden lg:table-cell">비고</th>
+                          <thead className="bg-slate-900">
+                            <tr className="border-b border-slate-800">
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400">품목명</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400">수량</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400">단가 *</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400 hidden md:table-cell">통화</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400 hidden md:table-cell">납기(일)</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400 hidden md:table-cell">MOQ</th>
+                              <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-400 hidden lg:table-cell">비고</th>
                             </tr>
                           </thead>
                           <tbody>
                             {quote.items?.map((item: any) => {
                               const ri = replyItems[item.id] || {};
                               return (
-                                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                <tr key={item.id} className="border-b border-slate-800 hover:bg-slate-900/50">
                                   <td className="p-2 md:p-3">
-                                    <div className="text-xs md:text-sm font-medium text-slate-800">{item.name || item.product?.name || "제품 정보 없음"}</div>
+                                    <div className="text-xs md:text-sm font-medium text-slate-200">{item.name || item.product?.name || "제품 정보 없음"}</div>
                                     {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
                                   </td>
                                   <td className="p-2 md:p-3">
@@ -983,11 +983,11 @@ export default function QuoteDetailPage() {
                     <>
                       {/* 추천 벤더 요약 */}
                       {cheapestVendor && respondedCount > 1 && (
-                        <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                        <div className="flex items-center gap-3 p-3 bg-emerald-900/20 rounded-lg border border-emerald-800">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
                           <div>
                             <p className="text-sm font-bold text-emerald-800">추천: {cheapestVendor.name}</p>
-                            <p className="text-xs text-emerald-600">최저 총액 {cheapestVendor.total.toLocaleString()} KRW</p>
+                            <p className="text-xs text-emerald-400">최저 총액 {cheapestVendor.total.toLocaleString()} KRW</p>
                           </div>
                         </div>
                       )}
@@ -995,19 +995,19 @@ export default function QuoteDetailPage() {
                       {/* 벤더 가격 비교 테이블 */}
                       <div>
                         <div className="flex items-center gap-2 mb-3">
-                          <GitCompare className="h-4 w-4 text-blue-600" />
-                          <h3 className="text-sm font-bold text-slate-800">벤더 가격 비교</h3>
+                          <GitCompare className="h-4 w-4 text-blue-400" />
+                          <h3 className="text-sm font-bold text-slate-200">벤더 가격 비교</h3>
                           <span className="text-xs text-slate-500">{respondedVendors.length}개 벤더 · 최저가 강조</span>
-                          {isAdmin && <button onClick={() => refetchVendorRequests()} className="ml-auto text-xs text-blue-600 hover:underline">새로고침</button>}
+                          {isAdmin && <button onClick={() => refetchVendorRequests()} className="ml-auto text-xs text-blue-400 hover:underline">새로고침</button>}
                         </div>
 
-                        <div className="overflow-x-auto rounded-lg border border-slate-200">
+                        <div className="overflow-x-auto rounded-lg border border-slate-800">
                           <table className="w-full text-xs">
-                            <thead className="bg-slate-50">
-                              <tr className="border-b border-slate-200">
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600">품목</th>
+                            <thead className="bg-slate-900">
+                              <tr className="border-b border-slate-800">
+                                <th className="text-left py-2.5 px-3 font-semibold text-slate-400">품목</th>
                                 {respondedVendors.map((vr: any) => (
-                                  <th key={vr.id} className="text-center py-2.5 px-3 font-semibold text-slate-600 min-w-[130px]">
+                                  <th key={vr.id} className="text-center py-2.5 px-3 font-semibold text-slate-400 min-w-[130px]">
                                     {vr.vendorName || vr.vendorEmail || "벤더"}
                                   </th>
                                 ))}
@@ -1023,9 +1023,9 @@ export default function QuoteDetailPage() {
                                 const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : null;
                                 const maxPrice = validPrices.length > 1 ? Math.max(...validPrices) : null;
                                 return (
-                                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                  <tr key={item.id} className="border-b border-slate-800 hover:bg-slate-900/50">
                                     <td className="py-3 px-3">
-                                      <div className="font-medium text-slate-800">{item.name || item.product?.name}</div>
+                                      <div className="font-medium text-slate-200">{item.name || item.product?.name}</div>
                                       {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
                                     </td>
                                     {respondedVendors.map((vr: any) => {
@@ -1036,14 +1036,14 @@ export default function QuoteDetailPage() {
                                       return (
                                         <td key={vr.id} className="py-3 px-3 text-center">
                                           {price !== null ? (
-                                            <div className={cn("inline-flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg", isLowest ? "bg-emerald-50 border border-emerald-200" : "")}>
-                                              <span className={cn("font-bold text-sm", isLowest ? "text-emerald-700" : "text-slate-700")}>
+                                            <div className={cn("inline-flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg", isLowest ? "bg-emerald-900/20 border border-emerald-800" : "")}>
+                                              <span className={cn("font-bold text-sm", isLowest ? "text-emerald-700" : "text-slate-300")}>
                                                 {price > 0 ? price.toLocaleString() : "—"}
                                                 <span className="text-[10px] font-normal ml-0.5">{ri?.currency || "KRW"}</span>
                                               </span>
-                                              {isLowest && <span className="text-[9px] font-bold text-emerald-600 uppercase">최저가</span>}
+                                              {isLowest && <span className="text-[9px] font-bold text-emerald-400 uppercase">최저가</span>}
                                               {isLowest && savingVsMax && (
-                                                <span className="text-[9px] text-emerald-600">-{savingVsMax.toLocaleString()} 절약</span>
+                                                <span className="text-[9px] text-emerald-400">-{savingVsMax.toLocaleString()} 절약</span>
                                               )}
                                               {ri?.leadTimeDays && (
                                                 <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
@@ -1063,8 +1063,8 @@ export default function QuoteDetailPage() {
                               })}
 
                               {/* 합계 행 */}
-                              <tr className="border-t-2 border-slate-200 bg-slate-50">
-                                <td className="py-3 px-3 font-bold text-sm text-slate-700">총 합계</td>
+                              <tr className="border-t-2 border-slate-800 bg-slate-900">
+                                <td className="py-3 px-3 font-bold text-sm text-slate-300">총 합계</td>
                                 {respondedVendors.map((vr: any) => {
                                   const total = quote.items?.reduce((sum: number, item: any) => {
                                     const ri = vr.responseItems?.find((r: any) => r.quoteItemId === item.id);
@@ -1083,10 +1083,10 @@ export default function QuoteDetailPage() {
                                   const saving = isLowestTotal && maxTotal > minTotal ? maxTotal - minTotal : null;
                                   return (
                                     <td key={vr.id} className="py-3 px-3 text-center">
-                                      <div className={cn("inline-flex flex-col items-center gap-0.5", isLowestTotal ? "text-emerald-700" : "text-slate-700")}>
+                                      <div className={cn("inline-flex flex-col items-center gap-0.5", isLowestTotal ? "text-emerald-700" : "text-slate-300")}>
                                         <span className="font-bold text-sm">{total > 0 ? `${total.toLocaleString()} KRW` : "—"}</span>
                                         {isLowestTotal && saving && (
-                                          <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5">
+                                          <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
                                             <TrendingDown className="h-3 w-3" />최저가 · {saving.toLocaleString()}원 절약
                                           </span>
                                         )}
@@ -1101,9 +1101,9 @@ export default function QuoteDetailPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                    <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-slate-800 rounded-lg bg-slate-900">
                       <GitCompare className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                      <p className="font-medium text-slate-600 mb-1">수신된 견적이 없습니다</p>
+                      <p className="font-medium text-slate-400 mb-1">수신된 견적이 없습니다</p>
                       <p className="text-xs text-slate-400">벤더 회신이 도착하면 자동으로 비교 테이블이 생성됩니다.</p>
                     </div>
                   )}
@@ -1114,24 +1114,24 @@ export default function QuoteDetailPage() {
                   {quoteStatus === "COMPLETED" && quote.order ? (
                     <div className="text-center py-10">
                       <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-                      <p className="text-sm font-bold text-slate-800 mb-1">구매 처리가 완료되었습니다</p>
+                      <p className="text-sm font-bold text-slate-200 mb-1">구매 처리가 완료되었습니다</p>
                       <p className="text-xs text-slate-500">주문 내역에서 상세 정보를 확인할 수 있습니다.</p>
                     </div>
                   ) : quoteStatus === "CANCELLED" ? (
                     <div className="text-center py-10">
                       <XCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
-                      <p className="text-sm font-bold text-slate-800 mb-1">취소된 견적입니다</p>
+                      <p className="text-sm font-bold text-slate-200 mb-1">취소된 견적입니다</p>
                       <p className="text-xs text-slate-500">구매 처리를 진행할 수 없습니다.</p>
                     </div>
                   ) : respondedVendors.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                    <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-slate-800 rounded-lg bg-slate-900">
                       <ShoppingCart className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                      <p className="font-medium text-slate-600 mb-1">구매 처리 준비 중</p>
+                      <p className="font-medium text-slate-400 mb-1">구매 처리 준비 중</p>
                       <p className="text-xs text-slate-400">벤더 회신이 1건 이상 있어야 구매 처리가 가능합니다.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800">구매 진행 처리</h3>
+                      <h3 className="text-sm font-bold text-slate-200">구매 진행 처리</h3>
 
                       {/* 벤더 선택 (다중 회신 시) */}
                       {respondedVendors.length > 1 && (
@@ -1146,9 +1146,9 @@ export default function QuoteDetailPage() {
 
                       {/* 결제 금액 */}
                       {purchaseTotal > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800 text-sm">
                           <span className="text-muted-foreground font-medium">결제 금액</span>
-                          <span className="font-bold text-slate-900">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
+                          <span className="font-bold text-slate-100">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
                         </div>
                       )}
 
@@ -1181,14 +1181,14 @@ export default function QuoteDetailPage() {
                             if (!selBudget) return null;
                             const afterAmount = (selBudget.remainingAmount ?? 0) - purchaseTotal;
                             return (
-                              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1.5">
+                              <div className="p-3 bg-blue-950/20 rounded-lg border border-blue-800 space-y-1.5">
                                 <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{(selBudget.remainingAmount ?? 0).toLocaleString("ko-KR")}</span></div>
-                                <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
-                                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200">
+                                <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-400">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
+                                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-800">
                                   <span className="font-medium">차감 후 잔액</span>
-                                  <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-600" : "text-emerald-600")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
+                                  <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-400" : "text-emerald-400")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
                                 </div>
-                                {afterAmount < 0 && <p className="text-xs text-red-600 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
+                                {afterAmount < 0 && <p className="text-xs text-red-400 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
                               </div>
                             );
                           })()}
@@ -1202,10 +1202,10 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 재고 반영 옵션 */}
-                      <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
+                      <label className="flex items-center gap-2 p-3 bg-slate-900 rounded-lg border border-slate-800 cursor-pointer">
                         <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
                         <div>
-                          <span className="text-sm font-medium text-slate-800">입고 시 재고에 자동 반영</span>
+                          <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>
                           <p className="text-xs text-slate-500">구매 완료 처리 후 재고 관리에 자동으로 반영됩니다.</p>
                         </div>
                       </label>
@@ -1216,11 +1216,11 @@ export default function QuoteDetailPage() {
             </Tabs>
 
             {/* ── 5. 견적 요청 품목 (접힘) ── */}
-            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <Card className="bg-slate-900 rounded-xl border border-slate-800 shadow-none overflow-hidden">
               <button
                 type="button"
                 onClick={() => setItemsExpanded(!itemsExpanded)}
-                className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 text-sm font-semibold text-slate-300 hover:bg-slate-900 transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <Package className="h-4 w-4 text-slate-400" />
@@ -1231,15 +1231,15 @@ export default function QuoteDetailPage() {
               </button>
 
               {itemsExpanded && (
-                <div className="border-t border-slate-100">
+                <div className="border-t border-slate-800">
                   {/* 모바일: 카드 */}
                   <div className="md:hidden space-y-3 p-4">
                     {quote.items?.map((item: any) => {
                       const vendor = item.product?.vendors?.[0]?.vendor;
                       const isEditing = editingNoteId === item.id;
                       return (
-                        <div key={item.id} className="p-3 border border-slate-200 rounded-lg space-y-2">
-                          <div className="font-semibold text-sm text-slate-900">{item.product?.name || item.name || "제품 정보 없음"}</div>
+                        <div key={item.id} className="p-3 border border-slate-800 rounded-lg space-y-2">
+                          <div className="font-semibold text-sm text-slate-100">{item.product?.name || item.name || "제품 정보 없음"}</div>
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             {(vendor?.name || item.product?.brand) && <div>벤더: {vendor?.name || item.product?.brand}</div>}
                             {item.product?.spec && <div>규격: {item.product.spec}</div>}
@@ -1269,13 +1269,13 @@ export default function QuoteDetailPage() {
                   {/* 데스크탑: 테이블 */}
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-50">
-                        <tr className="border-b border-slate-200">
-                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">제품명</th>
-                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">벤더</th>
-                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">규격</th>
-                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">수량</th>
-                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600 min-w-[200px]">메모</th>
+                      <thead className="bg-slate-900">
+                        <tr className="border-b border-slate-800">
+                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-400">제품명</th>
+                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-400">벤더</th>
+                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-400">규격</th>
+                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-400">수량</th>
+                          <th className="text-left py-3 px-4 font-semibold text-xs text-slate-400 min-w-[200px]">메모</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1283,9 +1283,9 @@ export default function QuoteDetailPage() {
                           const vendor = item.product?.vendors?.[0]?.vendor;
                           const isEditing = editingNoteId === item.id;
                           return (
-                            <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                            <tr key={item.id} className="border-b border-slate-800 hover:bg-slate-900/50">
                               <td className="py-3 px-4 min-w-[180px]">
-                                <div className="font-semibold text-sm text-slate-900 truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
+                                <div className="font-semibold text-sm text-slate-100 truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
                               </td>
                               <td className="py-3 px-4 text-sm text-muted-foreground">{vendor?.name || item.product?.brand || "-"}</td>
                               <td className="py-3 px-4 text-sm text-muted-foreground">{item.product?.spec || "-"}</td>
@@ -1319,13 +1319,13 @@ export default function QuoteDetailPage() {
             </Card>
 
             {/* ── 5.5 최근 활동 ── */}
-            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 sm:px-6">
+            <Card className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-3 sm:px-6">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">최근 활동</h3>
               <ActivityTimeline entityType="QUOTE" entityId={quoteId} limit={3} />
             </Card>
 
             {/* ── 6. 하단 액션 바 ── */}
-            <Card className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-4 sm:px-6">
+            <Card className="bg-slate-900 rounded-xl border border-slate-800 shadow-none px-4 py-4 sm:px-6">
               <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
 
                 {/* 관리자: 견적 저장 */}
@@ -1333,7 +1333,7 @@ export default function QuoteDetailPage() {
                   <Button
                     onClick={() => saveVendorReplyMutation.mutate()}
                     disabled={saveVendorReplyMutation.isPending || !replyVendorName.trim()}
-                    className="w-full sm:w-auto text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm disabled:opacity-50"
+                    className="w-full sm:w-auto text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-none disabled:opacity-50"
                   >
                     <Save className="h-4 w-4 mr-2 shrink-0" />
                     {saveVendorReplyMutation.isPending ? "저장 중..." : "견적 저장"}
@@ -1346,7 +1346,7 @@ export default function QuoteDetailPage() {
                     onClick={handleMarkAsCompleted}
                     disabled={updateStatusMutation.isPending}
                     variant="outline"
-                    className="w-full sm:w-auto text-sm h-10 border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                    className="w-full sm:w-auto text-sm h-10 border-emerald-300 text-emerald-700 hover:bg-emerald-900/20 font-semibold"
                   >
                     <Package className="h-4 w-4 mr-2 shrink-0" />
                     {updateStatusMutation.isPending ? "처리 중..." : "구매 진행 처리"}
@@ -1405,13 +1405,13 @@ export default function QuoteDetailPage() {
                             </SelectContent>
                           </Select>
                           {selectedBudget && (
-                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1 text-sm">
+                            <div className="p-3 bg-blue-950/20 rounded-lg border border-blue-800 space-y-1 text-sm">
                               <div className="flex justify-between"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩ {safeLocaleAmount(selectedBudget.remainingAmount)}</span></div>
-                              <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-600">- ₩ {quoteTotal.toLocaleString()}</span></div>
-                              <div className="flex justify-between pt-1.5 border-t border-blue-200"><span className="font-medium">예상 잔액</span>
-                                <span className={cn("font-bold", expectedRemaining !== null && expectedRemaining < 0 ? "text-red-600" : "text-green-600")}>₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}</span>
+                              <div className="flex justify-between"><span className="text-muted-foreground">주문 금액</span><span className="font-semibold text-red-400">- ₩ {quoteTotal.toLocaleString()}</span></div>
+                              <div className="flex justify-between pt-1.5 border-t border-blue-800"><span className="font-medium">예상 잔액</span>
+                                <span className={cn("font-bold", expectedRemaining !== null && expectedRemaining < 0 ? "text-red-400" : "text-green-400")}>₩ {expectedRemaining !== null ? expectedRemaining.toLocaleString() : "0"}</span>
                               </div>
-                              {expectedRemaining !== null && expectedRemaining < 0 && <p className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />예산이 부족합니다</p>}
+                              {expectedRemaining !== null && expectedRemaining < 0 && <p className="text-xs text-red-400 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />예산이 부족합니다</p>}
                             </div>
                           )}
                         </div>
@@ -1503,7 +1503,7 @@ export default function QuoteDetailPage() {
                 {/* 요청 취소 처리 */}
                 {quoteStatus === "PENDING" && (
                   <Button type="button" variant="outline" onClick={handleCancelQuote} disabled={updateStatusMutation.isPending}
-                    className="w-full sm:w-auto text-sm h-10 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400">
+                    className="w-full sm:w-auto text-sm h-10 text-red-400 border-red-300 hover:bg-red-950/30 hover:border-red-400">
                     <XCircle className="h-4 w-4 mr-1.5 shrink-0" />
                     {updateStatusMutation.isPending && updateStatusMutation.variables?.status === "CANCELLED" ? "처리 중..." : "요청 취소 처리"}
                   </Button>
@@ -1512,7 +1512,7 @@ export default function QuoteDetailPage() {
                 {/* 회원사: 요청 취소 */}
                 {!isAdmin && quoteStatus !== "COMPLETED" && quoteStatus !== "CANCELLED" && quoteStatus !== "PENDING" && (
                   <Button type="button" variant="outline" onClick={handleCancelQuote} disabled={updateStatusMutation.isPending}
-                    className="w-full sm:w-auto text-sm h-10 text-red-600 border-red-300 hover:bg-red-50">
+                    className="w-full sm:w-auto text-sm h-10 text-red-400 border-red-300 hover:bg-red-950/30">
                     <XCircle className="h-4 w-4 mr-1.5 shrink-0" />
                     요청 취소 처리
                   </Button>
@@ -1529,7 +1529,7 @@ export default function QuoteDetailPage() {
         <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-blue-600" />구매 진행 처리
+              <Package className="h-5 w-5 text-blue-400" />구매 진행 처리
             </DialogTitle>
             <DialogDescription>차감할 예산을 선택하세요. 구매 내역과 예산 사용액이 자동으로 기록됩니다.</DialogDescription>
           </DialogHeader>
@@ -1545,9 +1545,9 @@ export default function QuoteDetailPage() {
             )}
 
             {purchaseTotal > 0 && (
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+              <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800 text-sm">
                 <span className="text-muted-foreground font-medium">결제 금액</span>
-                <span className="font-bold text-slate-900">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
+                <span className="font-bold text-slate-100">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
               </div>
             )}
 
@@ -1572,14 +1572,14 @@ export default function QuoteDetailPage() {
               if (!selBudget) return null;
               const afterAmount = (selBudget.remainingAmount ?? 0) - purchaseTotal;
               return (
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-1.5">
+                <div className="p-3 bg-blue-950/20 rounded-lg border border-blue-800 space-y-1.5">
                   <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">현재 잔액</span><span className="font-semibold">₩{safeLocaleAmount(selBudget.remainingAmount)}</span></div>
-                  <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-600">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
-                  <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-200">
+                  <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">차감 금액</span><span className="font-semibold text-red-400">- ₩{purchaseTotal.toLocaleString("ko-KR")}</span></div>
+                  <div className="flex items-center justify-between text-sm pt-1.5 border-t border-blue-800">
                     <span className="font-medium">차감 후 잔액</span>
-                    <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-600" : "text-emerald-600")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
+                    <span className={cn("font-bold text-base", afterAmount < 0 ? "text-red-400" : "text-emerald-400")}>₩{afterAmount.toLocaleString("ko-KR")}</span>
                   </div>
-                  {afterAmount < 0 && <p className="text-xs text-red-600 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
+                  {afterAmount < 0 && <p className="text-xs text-red-400 flex items-center gap-1 pt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" />예산 잔액이 부족합니다.</p>}
                 </div>
               );
             })()}
@@ -1591,10 +1591,10 @@ export default function QuoteDetailPage() {
             </div>
 
             {/* 재고 반영 옵션 */}
-            <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer">
+            <label className="flex items-center gap-2 p-3 bg-slate-900 rounded-lg border border-slate-800 cursor-pointer">
               <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
               <div>
-                <span className="text-sm font-medium text-slate-800">입고 시 재고에 자동 반영</span>
+                <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>
                 <p className="text-xs text-slate-500">구매 완료 처리 후 재고 관리에 자동 반영</p>
               </div>
             </label>

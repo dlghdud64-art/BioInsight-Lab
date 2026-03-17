@@ -31,7 +31,7 @@ export function PostUpgradeCard({
   if (dismissed) return null;
 
   return (
-    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <Card className="border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -48,7 +48,7 @@ export function PostUpgradeCard({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-blue-600 hover:text-blue-900"
+            className="h-6 w-6 text-blue-400 hover:text-blue-900"
             onClick={handleDismiss}
           >
             <X className="h-4 w-4" />
@@ -61,11 +61,11 @@ export function PostUpgradeCard({
           <Link href="/settings/workspace">
             <Button
               variant="outline"
-              className="w-full justify-between bg-white hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-slate-900 hover:bg-blue-950/20 border-blue-800"
               size="lg"
             >
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-600" />
+                <Users className="h-4 w-4 text-blue-400" />
                 <span className="font-medium">팀원 초대하기</span>
               </div>
               <ArrowRight className="h-4 w-4" />
@@ -76,11 +76,11 @@ export function PostUpgradeCard({
           <Link href="/dashboard/organizations">
             <Button
               variant="outline"
-              className="w-full justify-between bg-white hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-slate-900 hover:bg-blue-950/20 border-blue-800"
               size="lg"
             >
               <div className="flex items-center gap-2">
-                <Download className="h-4 w-4 text-blue-600" />
+                <Download className="h-4 w-4 text-blue-400" />
                 <span className="font-medium">기존 임시 데이터 가져오기</span>
               </div>
               <ArrowRight className="h-4 w-4" />
@@ -91,11 +91,11 @@ export function PostUpgradeCard({
           <Link href="/dashboard/budget">
             <Button
               variant="outline"
-              className="w-full justify-between bg-white hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-slate-900 hover:bg-blue-950/20 border-blue-800"
               size="lg"
             >
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-blue-600" />
+                <DollarSign className="h-4 w-4 text-blue-400" />
                 <span className="font-medium">구매내역/예산 보러가기</span>
               </div>
               <ArrowRight className="h-4 w-4" />
@@ -103,8 +103,8 @@ export function PostUpgradeCard({
           </Link>
         </div>
 
-        <div className="pt-2 border-t border-blue-200">
-          <p className="text-xs text-blue-600 text-center">
+        <div className="pt-2 border-t border-blue-800">
+          <p className="text-xs text-blue-400 text-center">
             언제든지 설정에서 이 안내를 다시 볼 수 있습니다.
           </p>
         </div>

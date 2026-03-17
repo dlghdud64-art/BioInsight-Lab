@@ -86,7 +86,7 @@ export function TestBoard() {
   return (
     <section>
       <div className="mb-4">
-        <h2 className="text-sm font-semibold text-slate-700">
+        <h2 className="text-sm font-semibold text-slate-300">
           핵심 기능 체험
         </h2>
         <p className="text-xs text-slate-500">

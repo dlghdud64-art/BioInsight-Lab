@@ -138,7 +138,7 @@ function AuditLogsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -151,7 +151,7 @@ function AuditLogsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -173,7 +173,7 @@ function AuditLogsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -184,7 +184,7 @@ function AuditLogsPageContent() {
                 title="감사 로그"
                 description="워크스페이스의 모든 중요한 활동을 추적합니다."
                 icon={FileText}
-                iconColor="text-indigo-600"
+                iconColor="text-indigo-400"
               />
 
               {/* 워크스페이스 선택 */}
@@ -204,11 +204,11 @@ function AuditLogsPageContent() {
               {currentOrg && (
                 <>
                   {!isAdmin ? (
-                    <Card className="border-yellow-200 bg-yellow-50">
+                    <Card className="border-yellow-200 bg-yellow-900/20">
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-yellow-100 p-2">
-                            <FileText className="h-4 w-4 text-yellow-600" />
+                          <div className="rounded-full bg-yellow-900/40 p-2">
+                            <FileText className="h-4 w-4 text-yellow-400" />
                           </div>
                           <div className="flex-1">
                             <p className="text-sm text-yellow-900 font-medium">
@@ -424,14 +424,14 @@ function AuditLogsPageContent() {
                                         </TableRow>
                                         <CollapsibleContent asChild>
                                           <TableRow>
-                                            <TableCell colSpan={7} className="bg-slate-50">
+                                            <TableCell colSpan={7} className="bg-slate-900">
                                               <div className="p-4 space-y-3">
                                                 {log.metadata && (
                                                   <div>
                                                     <p className="text-xs font-semibold mb-2">
                                                       메타데이터
                                                     </p>
-                                                    <pre className="text-xs bg-white p-3 rounded border border-slate-200 overflow-x-auto">
+                                                    <pre className="text-xs bg-slate-900 p-3 rounded border border-slate-800 overflow-x-auto">
                                                       {JSON.stringify(log.metadata, null, 2)}
                                                     </pre>
                                                   </div>
@@ -441,17 +441,17 @@ function AuditLogsPageContent() {
                                                     <p className="text-xs font-semibold mb-2">
                                                       변경 사항
                                                     </p>
-                                                    <pre className="text-xs bg-white p-3 rounded border border-slate-200 overflow-x-auto">
+                                                    <pre className="text-xs bg-slate-900 p-3 rounded border border-slate-800 overflow-x-auto">
                                                       {JSON.stringify(log.changes, null, 2)}
                                                     </pre>
                                                   </div>
                                                 )}
                                                 {log.errorMessage && (
                                                   <div>
-                                                    <p className="text-xs font-semibold mb-2 text-red-600">
+                                                    <p className="text-xs font-semibold mb-2 text-red-400">
                                                       오류 메시지
                                                     </p>
-                                                    <p className="text-xs text-red-600">
+                                                    <p className="text-xs text-red-400">
                                                       {log.errorMessage}
                                                     </p>
                                                   </div>

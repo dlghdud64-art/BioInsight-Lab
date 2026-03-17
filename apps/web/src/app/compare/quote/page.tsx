@@ -518,7 +518,7 @@ export default function QuotePage() {
             </Card>
 
             {/* 제품 테이블 */}
-            <div className="border border-slate-700 rounded-xl overflow-hidden shadow-sm bg-slate-900">
+            <div className="border border-slate-700 rounded-xl overflow-hidden shadow-none bg-slate-900">
               <div className="bg-slate-900 px-6 py-4 border-b border-slate-700">
                 <h2 className="text-lg font-semibold text-slate-100">요청 제품 ({products.length}개)</h2>
               </div>

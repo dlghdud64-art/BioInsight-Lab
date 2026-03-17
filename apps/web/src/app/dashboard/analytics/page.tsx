@@ -395,9 +395,9 @@ export default function AnalyticsPage() {
           {/* 예산 사용률 */}
           <div className={`rounded-xl border p-4 shadow-none ${
             budget.usageRate >= 90
-              ? "border-red-200/60 bg-red-950/10 border-red-900/30"
+              ? "border-red-800/60 bg-red-950/10 border-red-900/30"
               : budget.usageRate >= 75
-                ? "border-amber-200/60 bg-amber-950/10 border-amber-900/30"
+                ? "border-amber-800/60 bg-amber-950/10 border-amber-900/30"
                 : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"
           }`}>
             <div className="flex items-center gap-2 mb-2">
@@ -440,7 +440,7 @@ export default function AnalyticsPage() {
 
         {/* ── 인사이트 텍스트 카드 ── */}
         {!isLoading && insights.length > 0 && (
-          <Card className="rounded-xl border-blue-900/30 bg-blue-50/40 bg-blue-950/10 shadow-none">
+          <Card className="rounded-xl border-blue-900/30 bg-blue-950/20/40 bg-blue-950/10 shadow-none">
             <CardHeader className="pb-2 p-4">
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4 text-blue-400 flex-shrink-0" />
@@ -532,7 +532,7 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* 잔액 */}
-            <Card className={`overflow-hidden rounded-xl shadow-none ${budget.usageRate >= 90 ? "border-red-200/60 border-red-900/30 bg-red-50/20 bg-red-950/10" : "border-slate-800/60 border-slate-800/50 bg-[#161d2f]"}`}>
+            <Card className={`overflow-hidden rounded-xl shadow-none ${budget.usageRate >= 90 ? "border-red-800/60 border-red-900/30 bg-red-950/30/20 bg-red-950/10" : "border-slate-800/60 border-slate-800/50 bg-[#161d2f]"}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
                 <CardTitle className={`text-xs font-semibold uppercase tracking-wider${budget.usageRate >= 90 ? "text-red-400" : "text-slate-400"}`}>
                   잔액
@@ -849,7 +849,7 @@ export default function AnalyticsPage() {
 
         {/* ── 카테고리 인사이트 요약 ── */}
         {!isLoading && (
-          <Card className="rounded-xl border-blue-900/30 bg-blue-50/40 bg-blue-950/10 shadow-none">
+          <Card className="rounded-xl border-blue-900/30 bg-blue-950/20/40 bg-blue-950/10 shadow-none">
             <CardContent className="p-4">
               <div className="flex items-center gap-2.5">
                 <PieChartIcon className="h-4 w-4 text-blue-400 flex-shrink-0" />
@@ -1082,7 +1082,7 @@ export default function AnalyticsPage() {
 
         {/* ── 벤더 인사이트 요약 ── */}
         {!isLoading && (
-          <Card className="rounded-xl border-blue-900/30 bg-blue-50/40 bg-blue-950/10 shadow-none">
+          <Card className="rounded-xl border-blue-900/30 bg-blue-950/20/40 bg-blue-950/10 shadow-none">
             <CardContent className="p-4">
               <div className="flex items-center gap-2.5">
                 <Store className="h-4 w-4 text-blue-400 flex-shrink-0" />
@@ -1116,7 +1116,7 @@ export default function AnalyticsPage() {
             {/* 벤더 집중도 */}
             <div className={`rounded-xl border p-4 shadow-none ${
               vendorConcentration >= 70
-                ? "border-amber-200/60 bg-amber-50/30 bg-amber-950/10 border-amber-900/30"
+                ? "border-amber-800/60 bg-amber-950/30/30 bg-amber-950/10 border-amber-900/30"
                 : "border-slate-800/60 bg-[#161d2f] border-slate-800/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">

@@ -281,7 +281,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="-ml-2 text-slate-500 hover:text-slate-700"
+                  className="-ml-2 text-slate-500 hover:text-slate-300"
                   onClick={() => {
                     setSelectedProduct(null);
                     setIsManualEntry(false);
@@ -458,7 +458,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               variant="ghost"
               size="sm"
               onClick={() => setIsManualEntry(false)}
-              className="-ml-2 text-slate-500 hover:text-slate-700"
+              className="-ml-2 text-slate-500 hover:text-slate-300"
             >
               ← 다시 검색하기
             </Button>
@@ -538,7 +538,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                         variant="outline"
                         size="sm"
                         onClick={() => setIsManualEntry(true)}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        className="text-blue-400 border-blue-800 hover:bg-blue-950/20"
                       >
                         + 직접 제품 정보 입력하기
                       </Button>
@@ -554,12 +554,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                       key={product.id}
                       type="button"
                       onClick={() => handleProductSelect(product)}
-                      className="w-full p-4 text-left hover:bg-slate-50 transition-colors"
+                      className="w-full p-4 text-left hover:bg-slate-900 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 rounded-lg border">
                           <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
-                          <AvatarFallback className="bg-slate-100 text-slate-600">
+                          <AvatarFallback className="bg-slate-800 text-slate-400">
                             {product.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>

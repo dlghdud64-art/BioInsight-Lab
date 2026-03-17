@@ -221,14 +221,14 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
       // 벤더 헤더 행 (그룹화 모드일 때만)
       if (groupByVendor && vendorName !== "전체") {
         rows.push(
-          <TableRow key={`vendor-${vendorName}`} className="bg-slate-50 hover:bg-slate-100">
-            <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
+          <TableRow key={`vendor-${vendorName}`} className="bg-slate-900 hover:bg-slate-800">
+            <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-300 whitespace-nowrap">
               <span className="truncate block" title={vendorName}>{vendorName}</span>
             </TableCell>
-            <TableCell colSpan={7} className="px-3 py-2 text-xs text-slate-600">
+            <TableCell colSpan={7} className="px-3 py-2 text-xs text-slate-400">
               {vendorItemCount}개 품목
             </TableCell>
-            <TableCell className="px-3 py-2 text-xs font-semibold text-slate-900 text-right">
+            <TableCell className="px-3 py-2 text-xs font-semibold text-slate-100 text-right">
               <PriceDisplay price={vendorTotal} currency="KRW" />
             </TableCell>
             <TableCell></TableCell>
@@ -241,23 +241,23 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
         globalIndex++;
         const product = products?.find((p: any) => p.id === item.productId);
         rows.push(
-          <TableRow key={item.id} className="h-14 hover:bg-gray-50">
+          <TableRow key={item.id} className="h-14 hover:bg-slate-900">
             <TableCell>
               <Checkbox
                 checked={selectedQuoteIds.includes(item.id)}
                 onCheckedChange={() => toggleSelectQuote(item.id)}
               />
             </TableCell>
-            <TableCell className="text-center text-sm text-gray-700">
+            <TableCell className="text-center text-sm text-slate-300">
               {globalIndex}
             </TableCell>
-            <TableCell className="text-sm text-gray-900 font-medium">
+            <TableCell className="text-sm text-slate-100 font-medium">
               {item.productName}
             </TableCell>
-            <TableCell className="text-sm text-gray-600">
+            <TableCell className="text-sm text-slate-400">
               {product?.brand || "-"}
             </TableCell>
-            <TableCell className="text-sm text-gray-600 font-mono">
+            <TableCell className="text-sm text-slate-400 font-mono">
               {product?.catalogNumber || "-"}
             </TableCell>
             <TableCell>
@@ -273,19 +273,19 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 className="w-20 h-9 text-sm"
               />
             </TableCell>
-            <TableCell className="text-right text-sm text-gray-900 font-medium">
+            <TableCell className="text-right text-sm text-slate-100 font-medium">
               <PriceDisplay
                 price={item.unitPrice || 0}
                 currency="KRW"
               />
             </TableCell>
-            <TableCell className="text-right text-sm text-gray-900 font-semibold">
+            <TableCell className="text-right text-sm text-slate-100 font-semibold">
               <PriceDisplay
                 price={item.lineTotal || 0}
                 currency="KRW"
               />
             </TableCell>
-            <TableCell className="text-sm text-gray-500">
+            <TableCell className="text-sm text-slate-400">
               {item.notes || "-"}
             </TableCell>
           </TableRow>
@@ -300,11 +300,11 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
     <>
     <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
       {/* 견적 요청 섹션 */}
-      <Card className="rounded-lg border border-slate-200 bg-white">
+      <Card className="rounded-lg border border-slate-800 bg-slate-900">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1">
-              <CardTitle className="text-sm font-semibold text-slate-900">
+              <CardTitle className="text-sm font-semibold text-slate-100">
                 견적 요청
               </CardTitle>
               <CardDescription className="text-xs text-slate-500 mt-1">
@@ -313,7 +313,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-600">벤더별 그룹화</span>
+                <span className="text-xs text-slate-400">벤더별 그룹화</span>
                 <button
                   type="button"
                   onClick={() => setGroupByVendor(!groupByVendor)}
@@ -322,7 +322,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-slate-900 transition-transform ${
                       groupByVendor ? "translate-x-5" : "translate-x-0.5"
                     }`}
                   />
@@ -332,7 +332,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 </span>
               </div>
               <Link href="/test/search">
-                <Button variant="outline" size="sm" className="text-xs w-full sm:w-auto text-blue-600 hover:text-blue-800 hover:border-blue-300">
+                <Button variant="outline" size="sm" className="text-xs w-full sm:w-auto text-blue-400 hover:text-blue-800 hover:border-blue-300">
                   <Plus className="w-4 h-4 mr-2" />
                   품목 추가
                 </Button>
@@ -344,7 +344,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
           <div className="space-y-4">
             {/* 선택 액션바 */}
             {selectedQuoteIds.length > 0 && quoteItems.length > 0 && (
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300">
                 <span>선택된 {selectedQuoteIds.length}개 품목</span>
                 <div className="flex items-center gap-2">
                   <Button
@@ -371,13 +371,13 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
             {/* 테이블 - 항상 헤더 표시 */}
             {quoteItems.length === 0 ? (
               <div className="text-center py-10 md:py-20">
-                <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 md:p-12 max-w-md mx-auto">
-                  <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                <div className="border-2 border-dashed border-slate-700 rounded-xl p-6 md:p-12 max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4">
                     <ShoppingCart className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
                   </div>
                   <Badge variant="secondary" className="text-xs mb-3">선택 품목 0개</Badge>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">견적 바구니가 비어있습니다</h3>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-5">
+                  <h3 className="text-lg font-semibold text-slate-100 mb-1">견적 바구니가 비어있습니다</h3>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto mb-5">
                     제품을 검색하거나 비교 목록에서 불러와 견적에 추가하세요.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
@@ -397,9 +397,9 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 </div>
               </div>
             ) : (
-              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
-                <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
-                  <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-1.5">요청 제품 ({quoteItems.length}개)</h2>
+              <div className="border border-slate-800 rounded-xl overflow-hidden shadow-none bg-slate-900">
+                <div className="bg-slate-900 px-4 md:px-6 py-3 md:py-4 border-b border-slate-800">
+                  <h2 className="text-base md:text-lg font-semibold text-slate-100 mb-1.5">요청 제품 ({quoteItems.length}개)</h2>
                   <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <Package className="h-3 w-3" />
@@ -409,7 +409,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                       <Target className="h-3 w-3" />
                       공급사 {new Set(quoteItems.map(item => item.vendorName).filter(Boolean)).size || 1}개
                     </span>
-                    <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                    <Badge variant="secondary" className="text-[10px] bg-green-900/20 text-green-700 border-green-800">
                       발송 준비 완료
                     </Badge>
                   </div>
@@ -419,8 +419,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 <div className="hidden md:block w-full overflow-x-auto">
                   <Table className="w-full">
                     <TableHeader>
-                      <TableRow className="bg-gray-50 hover:bg-gray-50">
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-16">
+                      <TableRow className="bg-slate-900 hover:bg-slate-900">
+                        <TableHead className="text-xs font-bold text-slate-400 uppercase w-16">
                           {quoteItems.length > 0 && (
                             <Checkbox
                               checked={
@@ -437,7 +437,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                             />
                           )}
                         </TableHead>
-                        <TableHead className="text-xs font-bold text-gray-500 uppercase w-16"
+                        <TableHead className="text-xs font-bold text-slate-400 uppercase w-16"
                         style={{
                           display: 'table-cell',
                           writingMode: 'horizontal-tb',
@@ -454,13 +454,13 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                       >
                         <span style={{ display: 'inline-block', writingMode: 'horizontal-tb', textOrientation: 'mixed', whiteSpace: 'nowrap' }}>No.</span>
                       </TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">제품명</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">브랜드</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">카탈로그 번호</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-24">수량</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 단가</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 금액</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">비고</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">제품명</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">브랜드</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">카탈로그 번호</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-24">수량</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-32 text-right">예상 단가</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-32 text-right">예상 금액</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">비고</TableHead>
                       </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -472,7 +472,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 {/* 모바일: 카드 리스트 뷰 */}
                 <div className="block md:hidden p-4 space-y-4">
                   {quoteItems.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-slate-400">
                       <p className="text-sm">품목이 없습니다.</p>
                     </div>
                   ) : (
@@ -484,7 +484,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                         return (
                           <div
                             key={item.id}
-                            className="border border-slate-200 rounded-xl p-4 mb-4 bg-white shadow-sm"
+                            className="border border-slate-800 rounded-xl p-4 mb-4 bg-slate-900 shadow-none"
                           >
                             {/* Header: 체크박스 + 브랜드/Cat.No */}
                             <div className="flex items-start justify-between mb-3">
@@ -493,7 +493,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                                 onCheckedChange={() => toggleSelectQuote(item.id)}
                                 className="h-5 w-5"
                               />
-                              <div className="text-right text-xs text-gray-500 ml-4">
+                              <div className="text-right text-xs text-slate-400 ml-4">
                                 {product?.brand && <div>{product.brand}</div>}
                                 {product?.catalogNumber && (
                                   <div className="font-mono mt-0.5">Cat. {product.catalogNumber}</div>
@@ -503,13 +503,13 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
                             {/* Body: 제품명 */}
                             <div className="mb-4">
-                              <h3 className="font-bold text-lg break-words text-gray-900">
+                              <h3 className="font-bold text-lg break-words text-slate-100">
                                 {item.productName}
                               </h3>
                             </div>
 
                             {/* Footer: 수량 + 합계 금액 */}
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
                               {/* 수량 조절기 */}
                               <div className="flex items-center gap-2">
                                 <Button
@@ -535,7 +535,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                                       quantity: Math.max(1, qty),
                                     });
                                   }}
-                                  className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-300"
+                                  className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-700"
                                 />
                                 <Button
                                   variant="outline"
@@ -553,11 +553,11 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
                               {/* 합계 금액 */}
                               <div className="text-right">
-                                <div className="font-bold text-base text-blue-600 whitespace-nowrap">
+                                <div className="font-bold text-base text-blue-400 whitespace-nowrap">
                                   <PriceDisplay price={item.lineTotal || 0} currency="KRW" />
                                 </div>
                                 {item.unitPrice && item.unitPrice > 0 && (
-                                  <div className="text-xs text-gray-500 mt-1">
+                                  <div className="text-xs text-slate-400 mt-1">
                                     단가: <PriceDisplay price={item.unitPrice} currency="KRW" />
                                   </div>
                                 )}
@@ -574,12 +574,12 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
             {/* 절감 제안 섹션 */}
             {quoteItems.length > 0 && costOptimization && costOptimization.optimizations.length > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+              <div className="mt-4 p-3 bg-blue-950/20 border border-blue-800 rounded-lg space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-blue-600" />
+                    <Sparkles className="h-4 w-4 text-blue-400" />
                     <span className="text-sm font-semibold text-blue-900">절감 제안</span>
-                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                    <Badge variant="secondary" className="text-xs bg-green-900/30 text-green-700">
                       최대 {costOptimization.summary.totalPotentialSavings.toLocaleString("ko-KR")}원 절감 가능
                     </Badge>
                   </div>
@@ -595,15 +595,15 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 </div>
                 <div className="space-y-2">
                   {costOptimization.optimizations.slice(0, 3).map((opt: any, idx: number) => (
-                    <div key={idx} className="p-2 bg-white rounded border border-blue-100">
+                    <div key={idx} className="p-2 bg-slate-900 rounded border border-blue-800">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-slate-900 line-clamp-1">
+                          <div className="text-xs font-medium text-slate-100 line-clamp-1">
                             {opt.currentProductName}
                           </div>
                           <div className="flex items-center gap-1 mt-1">
                             <ArrowRight className="h-3 w-3 text-slate-400" />
-                            <span className="text-xs text-slate-600 line-clamp-1">
+                            <span className="text-xs text-slate-400 line-clamp-1">
                               {opt.alternativeProductName}
                             </span>
                           </div>
@@ -622,7 +622,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                           <div className="text-xs text-slate-500 line-through">
                             {(opt.currentPrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
-                          <div className="text-sm font-semibold text-green-600">
+                          <div className="text-sm font-semibold text-green-400">
                             {(opt.alternativePrice * opt.quantity).toLocaleString("ko-KR")}원
                           </div>
                           <div className="text-xs font-medium text-green-700">
@@ -672,8 +672,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               <div className="hidden md:flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t mt-6">
                 {/* 총 예상 견적가 - 버튼 왼쪽에 배치 */}
                 <div className="flex items-center gap-3 mr-auto">
-                  <span className="text-sm text-gray-500">총 예상 견적가:</span>
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-sm text-slate-400">총 예상 견적가:</span>
+                  <span className="text-2xl font-bold text-slate-100">
                     ₩{totalAmount.toLocaleString()}
                   </span>
                 </div>
@@ -765,10 +765,10 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
       {/* 모바일: 고정 하단 액션 바 */}
       {quoteItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 md:hidden flex flex-col gap-2 shadow-lg">
+        <div className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-slate-800 p-4 z-50 md:hidden flex flex-col gap-2 shadow-none">
           <div className="flex items-center justify-end">
-            <span className="text-sm text-gray-600 mr-2">총 견적가:</span>
-            <span className="text-xl font-bold text-blue-600 whitespace-nowrap">
+            <span className="text-sm text-slate-400 mr-2">총 견적가:</span>
+            <span className="text-xl font-bold text-blue-400 whitespace-nowrap">
               ₩{totalAmount.toLocaleString("ko-KR")}
             </span>
           </div>
@@ -962,7 +962,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
             {/* 최적화 결과 */}
             {optimizationResult && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg space-y-3">
+              <div className="mt-4 p-3 bg-green-900/20 border border-green-800 rounded-lg space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold text-green-900">최적화 결과</div>
@@ -993,7 +993,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                   )}
                 </div>
                 {optimizationResult.constraintViolations.length > 0 && (
-                  <div className="text-xs text-red-600 space-y-1">
+                  <div className="text-xs text-red-400 space-y-1">
                     {optimizationResult.constraintViolations.map((violation: string, idx: number) => (
                       <div key={idx}>• {violation}</div>
                     ))}
@@ -1001,16 +1001,16 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 )}
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {optimizationResult.items.map((item: any, idx: number) => (
-                    <div key={idx} className="p-2 bg-white rounded border border-green-100">
+                    <div key={idx} className="p-2 bg-slate-900 rounded border border-green-800">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-slate-900">
+                          <div className="text-xs font-medium text-slate-100">
                             {item.originalProductName}
                           </div>
                           {item.selectedProductId !== item.originalProductId && (
                             <div className="flex items-center gap-1 mt-1">
                               <ArrowRight className="h-3 w-3 text-slate-400" />
-                              <span className="text-xs text-slate-600">{item.selectedProductName}</span>
+                              <span className="text-xs text-slate-400">{item.selectedProductName}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-2 mt-1">
@@ -1023,7 +1023,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-semibold text-green-600">
+                          <div className="text-sm font-semibold text-green-400">
 {item.totalPrice.toLocaleString("ko-KR")}원
                           </div>
                           {item.selectedProductId !== item.originalProductId && (
@@ -1324,9 +1324,9 @@ export function SharePanel() {
   };
 
   return (
-    <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <Card className="rounded-xl border border-slate-800 bg-slate-900 shadow-none">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold text-slate-900">공유</CardTitle>
+        <CardTitle className="text-sm font-semibold text-slate-100">공유</CardTitle>
         <CardDescription className="text-xs text-slate-500">
           견적/구매 요청용으로 바로 공유·첨부할 수 있는 리스트 형식으로 정리해서 내보낼 수 있습니다.
         </CardDescription>
@@ -1334,15 +1334,15 @@ export function SharePanel() {
       <CardContent className="space-y-4">
         {(localShareLink || providerShareLink) ? (
           <div className="space-y-3">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <Label className="text-xs font-medium text-slate-700 mb-2 block">
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+              <Label className="text-xs font-medium text-slate-300 mb-2 block">
                 공유 링크
               </Label>
               <div className="flex items-center gap-2">
                 <Input
                   value={localShareLink || providerShareLink || ""}
                   readOnly
-                  className="flex-1 text-xs font-mono bg-white"
+                  className="flex-1 text-xs font-mono bg-slate-900"
                 />
                 <Button
                   variant="outline"
@@ -1351,7 +1351,7 @@ export function SharePanel() {
                   className="h-8"
                 >
                   {copied ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-green-400" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -1372,7 +1372,7 @@ export function SharePanel() {
                   variant="outline"
                   size="sm"
                   onClick={handleDeactivateLink}
-                  className="flex-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="flex-1 text-xs text-red-400 hover:text-red-700 hover:bg-red-950/30"
                 >
                   <Ban className="h-3 w-3 mr-1" />
                   링크 비활성화
@@ -1465,8 +1465,8 @@ export function SharePanel() {
         )}
 
         {/* 내보내기 버튼 */}
-        <div className="pt-4 border-t border-slate-200">
-          <Label className="text-xs font-medium text-slate-700 mb-3 block">
+        <div className="pt-4 border-t border-slate-800">
+          <Label className="text-xs font-medium text-slate-300 mb-3 block">
             파일 내보내기
           </Label>
           <div className="space-y-2">
@@ -1983,7 +1983,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
 
   if (isLoadingQuoteList) {
     return (
-      <Card className="rounded-lg border border-slate-200 bg-white">
+      <Card className="rounded-lg border border-slate-800 bg-slate-900">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
           <span className="ml-2 text-xs text-slate-500">견적 요청 리스트 불러오는 중...</span>
@@ -2114,7 +2114,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-lg font-semibold text-slate-900">견적 요청 작성</h2>
+            <h2 className="text-lg font-semibold text-slate-100">견적 요청 작성</h2>
             {quoteId && (
               <Badge variant="secondary" className="text-xs">
                 기존 리스트 불러옴
@@ -2134,7 +2134,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
           <div className="flex items-center gap-3">
           {/* 저장 상태 표시 */}
           <div className={`text-xs whitespace-nowrap ${
-            saveStatus === "unsaved" ? "text-slate-500" : "text-blue-600"
+            saveStatus === "unsaved" ? "text-slate-500" : "text-blue-400"
           }`}>
             {getSaveStatusText()}
           </div>
@@ -2163,7 +2163,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
 
       <form id="quote-request-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Section 1: 기본 정보 */}
-        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+        <Card className="bg-slate-900 p-4 md:p-6 rounded-lg border border-slate-800 shadow-none">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">기본 정보</CardTitle>
           </CardHeader>
@@ -2209,7 +2209,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section 2: 배송 및 일정 (Grid로 압축) */}
-        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+        <Card className="bg-slate-900 p-4 md:p-6 rounded-lg border border-slate-800 shadow-none">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">배송 및 일정</CardTitle>
           </CardHeader>
@@ -2299,7 +2299,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                   </div>
                 )}
                 {deliveryLocation === "saved" && savedDeliveryAddress && (
-                  <div className="text-xs text-slate-500 mt-1 p-2 bg-slate-50 rounded border border-slate-200">
+                  <div className="text-xs text-slate-500 mt-1 p-2 bg-slate-900 rounded border border-slate-800">
                     {savedDeliveryAddress}
                   </div>
                 )}
@@ -2309,7 +2309,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section: 파일 첨부 */}
-        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+        <Card className="bg-slate-900 p-4 md:p-6 rounded-lg border border-slate-800 shadow-none">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold flex items-center justify-between">
               첨부 파일
@@ -2322,7 +2322,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
               tabIndex={0}
               onClick={() => document.getElementById("quote-file-upload")?.click()}
               onKeyDown={(e) => e.key === "Enter" && document.getElementById("quote-file-upload")?.click()}
-              className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 p-8 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-slate-800 rounded-lg bg-slate-900 p-8 flex flex-col items-center justify-center text-center hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <input
                 id="quote-file-upload"
@@ -2333,7 +2333,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                 aria-label="파일 첨부"
               />
               <UploadCloud className="h-8 w-8 text-slate-400 mb-3" />
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-medium text-slate-300">
                 클릭하거나 파일을 이곳으로 드래그하세요
               </p>
               <p className="text-xs text-slate-500 mt-1">
@@ -2344,7 +2344,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section 3: 추가 요청 */}
-        <Card className="bg-white p-4 md:p-6 rounded-lg border border-slate-200 shadow-sm">
+        <Card className="bg-slate-900 p-4 md:p-6 rounded-lg border border-slate-800 shadow-none">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">추가 요청</CardTitle>
           </CardHeader>
@@ -2368,7 +2368,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* 모바일 sticky CTA */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-2.5 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-slate-900/95 backdrop-blur-sm border-t border-slate-800 px-4 py-2.5 safe-area-bottom">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -2428,14 +2428,14 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
             </div>
 
             {!session?.user && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="rounded-lg border border-amber-800 bg-amber-950/30 p-3">
                 <p className="text-xs text-amber-800">
                   공유 링크를 생성하려면 로그인이 필요합니다.
                 </p>
               </div>
             )}
             {session?.user && !quoteId && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="rounded-lg border border-amber-800 bg-amber-950/30 p-3">
                 <p className="text-xs text-amber-800">
                   공유 링크를 생성하려면 먼저 견적 요청 리스트를 저장해주세요.
                 </p>
@@ -2481,7 +2481,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                   <Input
                     value={shareLink}
                     readOnly
-                    className="flex-1 text-xs font-mono bg-slate-50"
+                    className="flex-1 text-xs font-mono bg-slate-900"
                   />
                   <Button
                     variant="outline"
@@ -2490,7 +2490,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                     className="h-9"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4 text-green-400" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
@@ -2564,9 +2564,9 @@ export function QuoteItemsSummaryPanel({
 
   if (quoteItems.length === 0) {
     return (
-      <Card className="rounded-lg border border-slate-200 bg-white">
+      <Card className="rounded-lg border border-slate-800 bg-slate-900">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-900">품목 요약</CardTitle>
+          <CardTitle className="text-sm font-semibold text-slate-100">품목 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">
             요청한 품목을 확인하세요
           </CardDescription>
@@ -2582,9 +2582,9 @@ export function QuoteItemsSummaryPanel({
 
   return (
     <div className="sticky top-24 h-fit">
-      <Card className="rounded-lg border-2 border-blue-100 bg-white shadow-md shadow-[0_4px_14px_0_rgba(147,197,253,0.2)]">
-        <CardHeader className="border-b border-slate-200 bg-slate-50/50">
-          <CardTitle className="text-base font-semibold text-slate-900">견적 요약</CardTitle>
+      <Card className="rounded-lg border-2 border-blue-800 bg-slate-900 shadow-none shadow-[0_4px_14px_0_rgba(147,197,253,0.2)]">
+        <CardHeader className="border-b border-slate-800 bg-slate-900/50">
+          <CardTitle className="text-base font-semibold text-slate-100">견적 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">
             요청할 품목 {quoteItems.length}개
           </CardDescription>
@@ -2598,11 +2598,11 @@ export function QuoteItemsSummaryPanel({
                 return (
                   <div key={vendorId} className="space-y-3">
                     {vendorGroups.size > 1 && (
-                      <div className="flex items-center gap-2 pb-2 border-b-2 border-blue-200">
-                        <span className="text-sm font-bold text-slate-900 whitespace-nowrap truncate" title={vendorName}>
+                      <div className="flex items-center gap-2 pb-2 border-b-2 border-blue-800">
+                        <span className="text-sm font-bold text-slate-100 whitespace-nowrap truncate" title={vendorName}>
                           {vendorIndex + 1}. {vendorName}
                         </span>
-                        <Badge variant="outline" className="text-xs bg-blue-50">
+                        <Badge variant="outline" className="text-xs bg-blue-950/20">
                           {items.length}개 품목
                         </Badge>
                       </div>
@@ -2613,10 +2613,10 @@ export function QuoteItemsSummaryPanel({
                         return (
                           <div
                             key={item.id}
-                            className="flex items-start justify-between gap-2 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                            className="flex items-start justify-between gap-2 p-3 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-900 transition-colors"
                           >
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-slate-900 truncate">
+                              <div className="text-sm font-medium text-slate-100 truncate">
                                 {vendorGroups.size === 1 ? `${itemIndex + 1}. ` : ""}{product?.name || item.productName || "제품"}
                               </div>
                               <div className="text-xs text-slate-500 mt-1">
@@ -2627,7 +2627,7 @@ export function QuoteItemsSummaryPanel({
                                 />
                               </div>
                             </div>
-                            <div className="text-sm font-bold text-slate-900 whitespace-nowrap">
+                            <div className="text-sm font-bold text-slate-100 whitespace-nowrap">
                               <PriceDisplay
                                 price={item.lineTotal || 0}
                                 currency="KRW"
@@ -2639,18 +2639,18 @@ export function QuoteItemsSummaryPanel({
                     </div>
                     {/* 벤더별 개별 메시지 입력창 (접기/열기) */}
                     {vendorGroups.size > 1 && onVendorNoteChange && (
-                      <div className="mt-2 pt-2 border-t border-slate-200">
+                      <div className="mt-2 pt-2 border-t border-slate-800">
                         {expandedVendorNotes[vendorId] ? (
                           <div className="animate-in slide-in-from-top-2 duration-200">
                             <div className="flex items-center justify-between mb-1.5">
-                              <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-700">
+                              <Label htmlFor={`vendor-note-${vendorId}`} className="text-xs font-medium text-slate-300">
                                 이 벤더에게만 보낼 메시지
                               </Label>
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-auto py-0.5 px-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                                className="h-auto py-0.5 px-1.5 text-xs text-blue-400 hover:text-blue-800 hover:bg-blue-950/20"
                                 onClick={() => toggleVendorNote(vendorId)}
                               >
                                 <Minus className="w-3.5 h-3.5 mr-1" />
@@ -2662,7 +2662,7 @@ export function QuoteItemsSummaryPanel({
                               value={vendorNotes[vendorId] || ""}
                               onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
                               placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
-                              className="bg-slate-50 border border-slate-200 rounded p-2 text-sm w-full min-h-[60px]"
+                              className="bg-slate-900 border border-slate-800 rounded p-2 text-sm w-full min-h-[60px]"
                             />
                           </div>
                         ) : (
@@ -2671,7 +2671,7 @@ export function QuoteItemsSummaryPanel({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-auto py-0.5 px-1.5 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              className="h-auto py-0.5 px-1.5 text-xs text-blue-400 hover:text-blue-800 hover:bg-blue-950/20"
                               onClick={() => toggleVendorNote(vendorId)}
                             >
                               <MessageSquarePlus className="w-3.5 h-3.5 mr-1" />
@@ -2682,9 +2682,9 @@ export function QuoteItemsSummaryPanel({
                       </div>
                     )}
                     {vendorGroups.size > 1 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-200 bg-slate-50/50 p-2 rounded">
-                        <span className="text-sm font-semibold text-slate-700">{vendorName} 소계</span>
-                        <span className="text-sm font-bold text-slate-900">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-800 bg-slate-900/50 p-2 rounded">
+                        <span className="text-sm font-semibold text-slate-300">{vendorName} 소계</span>
+                        <span className="text-sm font-bold text-slate-100">
                           ₩{vendorTotal.toLocaleString("ko-KR")}
                         </span>
                       </div>
@@ -2696,18 +2696,18 @@ export function QuoteItemsSummaryPanel({
           </div>
           
           {/* 총계 및 액션 */}
-          <div className="border-t-2 border-slate-200 bg-slate-50/50 p-6 space-y-4">
+          <div className="border-t-2 border-slate-800 bg-slate-900/50 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-slate-700">총 예상 금액</span>
-              <span className="text-3xl font-bold text-blue-600">
+              <span className="text-base font-semibold text-slate-300">총 예상 금액</span>
+              <span className="text-3xl font-bold text-blue-400">
                 ₩{totalAmount.toLocaleString("ko-KR")}
               </span>
             </div>
             
             {vendorGroups.size > 1 && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-3 bg-blue-950/20 border border-blue-800 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-xs font-medium text-blue-900">
                       효율적인 처리를 위해 {vendorGroups.size}개의 견적서로 나뉘어 발송됩니다.
@@ -2730,7 +2730,7 @@ export function QuoteItemsSummaryPanel({
                     setTimeout(() => setIsSubmitting(false), 3000);
                   }
                 }}
-                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
+                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-none hover:shadow-xl transition-all"
                 disabled={isSubmitting || quoteItems.length === 0}
               >
                 {isSubmitting ? (

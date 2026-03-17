@@ -46,7 +46,7 @@ export function CandidateProductsCard({
             return (
               <div
                 key={product.id}
-                className="p-2 border rounded text-xs hover:bg-slate-50"
+                className="p-2 border rounded text-xs hover:bg-slate-900"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">

@@ -186,7 +186,7 @@ export default function AdminRequestsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -203,7 +203,7 @@ export default function AdminRequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -212,7 +212,7 @@ export default function AdminRequestsPage() {
             <div className="max-w-6xl mx-auto space-y-6">
               {/* 페이지 헤더 */}
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">구매 요청 승인</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-100">구매 요청 승인</h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   팀원들의 구매 요청을 검토하고 승인하세요
                 </p>
@@ -223,28 +223,28 @@ export default function AdminRequestsPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">대기 중</CardTitle>
-                    <Clock className="h-4 w-4 text-amber-600" />
+                    <Clock className="h-4 w-4 text-amber-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-amber-600">{pendingRequests.length}</div>
+                    <div className="text-2xl font-bold text-amber-400">{pendingRequests.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">승인됨</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-green-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
+                    <div className="text-2xl font-bold text-green-400">{approvedRequests.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">거절됨</CardTitle>
-                    <XCircle className="h-4 w-4 text-red-600" />
+                    <XCircle className="h-4 w-4 text-red-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
+                    <div className="text-2xl font-bold text-red-400">{rejectedRequests.length}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -254,7 +254,7 @@ export default function AdminRequestsPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <Inbox className="h-5 w-5 text-amber-600" />
+                      <Inbox className="h-5 w-5 text-amber-400" />
                       <CardTitle>대기 중인 요청</CardTitle>
                       <Badge variant="outline" className="ml-auto">
                         {pendingRequests.length}건
@@ -362,7 +362,7 @@ function RequestCard({
   }, 0);
 
   return (
-    <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+    <div className="border rounded-lg p-4 hover:bg-slate-900 transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-3">
           {/* 요청자 정보 */}
@@ -388,7 +388,7 @@ function RequestCard({
                 {format(new Date(request.createdAt), "yyyy.MM.dd HH:mm", { locale: ko })}
               </div>
             </div>
-            <Badge variant="outline" className="bg-amber-100 text-amber-900 border-amber-300">
+            <Badge variant="outline" className="bg-amber-900/40 text-amber-900 border-amber-300">
               <Clock className="h-3 w-3 mr-1" />
               검토 중
             </Badge>

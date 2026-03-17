@@ -24,7 +24,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2.5 px-3 py-2.5 md:px-5 md:py-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+      <div className="flex items-center gap-2.5 px-3 py-2.5 md:px-5 md:py-4 bg-indigo-900/20 border border-indigo-100 rounded-lg">
         <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center animate-pulse shrink-0">
           <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5 text-indigo-300" />
         </div>
@@ -99,7 +99,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
   };
 
   return (
-    <div className="bg-indigo-50 border border-indigo-100 rounded-lg overflow-hidden">
+    <div className="bg-indigo-900/20 border border-indigo-100 rounded-lg overflow-hidden">
       {/* Compact strip (기본 — 모바일 최적화) */}
       <button
         type="button"
@@ -107,14 +107,14 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
         className="w-full flex items-center gap-2.5 px-3 py-2.5 md:px-5 md:py-4 text-left hover:bg-indigo-100/50 transition-colors"
       >
         <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-          <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5 text-indigo-600" />
+          <Sparkles className="h-3.5 w-3.5 md:h-5 md:w-5 text-indigo-400" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs md:text-sm font-medium text-indigo-800 leading-snug line-clamp-1 md:line-clamp-none">
             {getInsightText()}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200 text-[10px] px-1.5 py-0">
+            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-800 text-[10px] px-1.5 py-0">
               {getCategoryLabel(queryAnalysis.category)}
             </Badge>
             {queryAnalysis.target && (
@@ -129,13 +129,13 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
 
       {/* ── 확장 상세 패널 ── */}
       {isExpanded && (
-        <div className="px-3 pb-3 md:px-5 md:pb-4 pt-1 space-y-2.5 border-t border-indigo-200">
+        <div className="px-3 pb-3 md:px-5 md:pb-4 pt-1 space-y-2.5 border-t border-indigo-800">
 
           {/* 비교 기준 */}
           <div className="flex flex-wrap items-center gap-1.5 pt-2">
             <span className="text-[10px] font-semibold text-indigo-500 mr-0.5">비교 기준</span>
             {getComparisonCriteria().slice(0, 4).map((c, i) => (
-              <Badge key={i} variant="outline" className="text-[10px] bg-white/60 text-indigo-700 border-indigo-200 px-2 py-0.5">
+              <Badge key={i} variant="outline" className="text-[10px] bg-slate-900/60 text-indigo-700 border-indigo-800 px-2 py-0.5">
                 {c}
               </Badge>
             ))}
@@ -150,7 +150,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
               <a
                 key={idx}
                 href={`/test/search?q=${encodeURIComponent(sq)}`}
-                className="text-[10px] px-2.5 py-1 rounded-full bg-white/80 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                className="text-[10px] px-2.5 py-1 rounded-full bg-slate-900/80 text-indigo-700 border border-indigo-800 hover:bg-indigo-100 transition-colors"
               >
                 {sq}
               </a>

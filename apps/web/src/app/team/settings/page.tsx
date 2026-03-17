@@ -222,7 +222,7 @@ export default function TeamSettingsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -236,7 +236,7 @@ export default function TeamSettingsPage() {
   // Empty State: 팀이 없을 때
   if (!currentTeam) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
@@ -294,7 +294,7 @@ export default function TeamSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -508,7 +508,7 @@ export default function TeamSettingsPage() {
                                     setSelectedMember(member);
                                     setShowRemoveDialog(true);
                                   }}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="text-red-400 hover:text-red-700 hover:bg-red-950/30"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

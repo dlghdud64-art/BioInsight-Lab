@@ -65,7 +65,7 @@ function BillingSuccessPageContent() {
         <MainHeader />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-400" />
             <p className="text-muted-foreground mt-4">로딩 중...</p>
           </div>
         </div>
@@ -79,11 +79,11 @@ function BillingSuccessPageContent() {
       <MainHeader />
       <div className="container mx-auto px-4 py-8 md:py-16">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-green-200 bg-green-50/50">
+          <Card className="border-green-800 bg-green-900/20/50">
             <CardHeader className="text-center pb-4">
               <div className="flex justify-center mb-4">
-                <div className="rounded-full bg-green-100 p-3">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div className="rounded-full bg-green-900/30 p-3">
+                  <CheckCircle2 className="h-8 w-8 text-green-400" />
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold text-green-900">
@@ -92,7 +92,7 @@ function BillingSuccessPageContent() {
               <CardDescription className="text-base mt-2">
                 {organization ? (
                   <>
-                    <span className="font-semibold text-slate-900">{organization.name}</span> 워크스페이스가 성공적으로 업그레이드되었습니다.
+                    <span className="font-semibold text-slate-100">{organization.name}</span> 워크스페이스가 성공적으로 업그레이드되었습니다.
                   </>
                 ) : (
                   "결제가 완료되었습니다."
@@ -103,7 +103,7 @@ function BillingSuccessPageContent() {
               {/* 구독 상태 확인 중 */}
               {isCheckingStatus ? (
                 <div className="text-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600 mb-3" />
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-400 mb-3" />
                   <p className="text-sm text-muted-foreground">
                     구독 상태를 확인하는 중...
                   </p>
@@ -112,9 +112,9 @@ function BillingSuccessPageContent() {
                 <>
                   {/* TEAM 활성화 안내 */}
                   {isTeamActive && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="bg-blue-950/20 border border-blue-800 rounded-lg p-4">
                       <div className="flex items-start gap-3">
-                        <Users className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <Users className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
                           <h3 className="font-semibold text-blue-900 mb-1">
                             TEAM 플랜이 활성화되었습니다!
@@ -129,7 +129,7 @@ function BillingSuccessPageContent() {
 
                   {/* 다음 액션 카드 */}
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-slate-900">다음 단계</h3>
+                    <h3 className="font-semibold text-slate-100">다음 단계</h3>
                     <div className="grid gap-3">
                       <Link href="/dashboard">
                         <Button className="w-full justify-between" size="lg">
@@ -152,13 +152,13 @@ function BillingSuccessPageContent() {
                   </div>
 
                   {/* 추가 정보 */}
-                  <div className="pt-4 border-t border-slate-200">
+                  <div className="pt-4 border-t border-slate-800">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <Link href="/dashboard/budget" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                      <Link href="/dashboard/budget" className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors">
                         <DollarSign className="h-4 w-4" />
                         <span>구매내역/예산 보기</span>
                       </Link>
-                      <Link href="/dashboard/settings/plans" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                      <Link href="/dashboard/settings/plans" className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors">
                         <FileText className="h-4 w-4" />
                         <span>구독 관리</span>
                       </Link>

@@ -98,7 +98,7 @@ export default function GuidePage() {
           const Icon = item.icon;
           const colors = COLOR_MAP[item.color];
           return (
-            <Card key={item.step} className="border-slate-800 shadow-sm overflow-hidden">
+            <Card key={item.step} className="border-slate-800 shadow-none overflow-hidden">
               <CardContent className="p-4 md:p-5">
                 <div className="flex items-start gap-4">
                   {/* 스텝 번호 + 아이콘 */}

@@ -258,7 +258,7 @@ export default function SharedLinksPage() {
                       const isSelected = selectedLinks.includes(link.publicId);
 
                       return (
-                        <TableRow key={link.id} className={isSelected ? "bg-slate-50" : ""}>
+                        <TableRow key={link.id} className={isSelected ? "bg-slate-900" : ""}>
                           <TableCell>
                             <Checkbox
                               checked={isSelected}
@@ -279,7 +279,7 @@ export default function SharedLinksPage() {
                             {link.expiresAt ? (
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3 text-muted-foreground" />
-                                <span className={isExpired ? "text-red-600 font-medium" : ""}>
+                                <span className={isExpired ? "text-red-400 font-medium" : ""}>
                                   {new Date(link.expiresAt).toLocaleDateString("ko-KR")}
                                 </span>
                                 {isExpired && (

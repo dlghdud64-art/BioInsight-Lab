@@ -450,7 +450,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-800 bg-slate-50/50 border-slate-700 bg-slate-800/30"
+                  : "border-slate-800 bg-slate-900/50 border-slate-700 bg-slate-800/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -553,7 +553,7 @@ function FollowUpDraftSection({
             {bodyPreview}
           </p>
           <button
-            className="text-[11px] text-blue-500 hover:text-blue-600 mt-1 font-medium"
+            className="text-[11px] text-blue-500 hover:text-blue-400 mt-1 font-medium"
             onClick={onShowEmail}
           >
             전문 보기

@@ -11,7 +11,7 @@ export function BOMSkeleton() {
     <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
       <div className="w-full max-w-2xl space-y-4 p-6">
         {/* 테이블 헤더 */}
-        <div className="flex gap-4 pb-2 border-b border-slate-200">
+        <div className="flex gap-4 pb-2 border-b border-slate-800">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-20" />

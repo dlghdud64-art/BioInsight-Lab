@@ -331,16 +331,16 @@ function ScannerContent() {
           <Badge
             className={
               inventoryResult.currentQuantity <= 0
-                ? "bg-red-100 text-red-700 border-red-200"
+                ? "bg-red-900/40 text-red-700 border-red-800"
                 : isLow
-                ? "bg-amber-100 text-amber-700 border-amber-200"
-                : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                ? "bg-amber-900/40 text-amber-700 border-amber-800"
+                : "bg-emerald-900/40 text-emerald-700 border-emerald-800"
             }
           >
             {inventoryResult.currentQuantity <= 0 ? "재고 없음" : isLow ? "재고 부족" : "정상"}
           </Badge>
           {isExpired && (
-            <Badge className="bg-red-100 text-red-700 border-red-200">유효기한 만료</Badge>
+            <Badge className="bg-red-900/40 text-red-700 border-red-800">유효기한 만료</Badge>
           )}
         </div>
 

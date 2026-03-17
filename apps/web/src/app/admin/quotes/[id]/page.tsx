@@ -89,13 +89,13 @@ interface EditedItem {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING: { label: "대기 중", color: "bg-yellow-100 text-yellow-800" },
-  PARSED: { label: "파싱 완료", color: "bg-blue-100 text-blue-800" },
+  PENDING: { label: "대기 중", color: "bg-yellow-900/40 text-yellow-800" },
+  PARSED: { label: "파싱 완료", color: "bg-blue-900/30 text-blue-800" },
   SENT: { label: "발송됨", color: "bg-indigo-100 text-indigo-800" },
-  RESPONDED: { label: "응답 완료", color: "bg-purple-100 text-purple-800" },
-  COMPLETED: { label: "완료", color: "bg-green-100 text-green-800" },
-  PURCHASED: { label: "구매 완료", color: "bg-emerald-100 text-emerald-800" },
-  CANCELLED: { label: "취소됨", color: "bg-red-100 text-red-800" },
+  RESPONDED: { label: "응답 완료", color: "bg-purple-900/30 text-purple-800" },
+  COMPLETED: { label: "완료", color: "bg-green-900/30 text-green-800" },
+  PURCHASED: { label: "구매 완료", color: "bg-emerald-900/40 text-emerald-800" },
+  CANCELLED: { label: "취소됨", color: "bg-red-900/40 text-red-800" },
 };
 
 export default function AdminQuoteDetailPage() {
@@ -257,7 +257,7 @@ export default function AdminQuoteDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-900">
         <AdminSidebar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -268,12 +268,12 @@ export default function AdminQuoteDetailPage() {
 
   if (!quote) {
     return (
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-900">
         <AdminSidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600">견적을 찾을 수 없습니다.</p>
+            <p className="text-slate-400">견적을 찾을 수 없습니다.</p>
             <Link href="/admin/quotes">
               <Button variant="outline" className="mt-4">
                 목록으로 돌아가기
@@ -287,17 +287,17 @@ export default function AdminQuoteDetailPage() {
 
   const statusInfo = STATUS_LABELS[quote.status] || {
     label: quote.status,
-    color: "bg-gray-100 text-gray-800",
+    color: "bg-slate-800 text-slate-200",
   };
   const isEditable = quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-900">
       <AdminSidebar />
 
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="bg-slate-900 border-b border-slate-800 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/admin/quotes">
@@ -308,7 +308,7 @@ export default function AdminQuoteDetailPage() {
               </Link>
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-bold text-slate-900">
+                  <h1 className="text-xl font-bold text-slate-100">
                     {quote.title}
                   </h1>
                   <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
@@ -354,7 +354,7 @@ export default function AdminQuoteDetailPage() {
                       <AlertDialogDescription>
                         수정된 가격으로 견적서가 확정되고, 고객에게 이메일이 발송됩니다.
                         <br />
-                        <strong className="text-slate-900">
+                        <strong className="text-slate-100">
                           최종 금액: ₩{totalAmount.toLocaleString()}
                         </strong>
                       </AlertDialogDescription>
@@ -382,8 +382,8 @@ export default function AdminQuoteDetailPage() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 rounded-lg bg-blue-900/30">
+                    <User className="h-5 w-5 text-blue-400" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">고객</p>
@@ -397,8 +397,8 @@ export default function AdminQuoteDetailPage() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-100">
-                    <Package className="h-5 w-5 text-green-600" />
+                  <div className="p-2 rounded-lg bg-green-900/30">
+                    <Package className="h-5 w-5 text-green-400" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">품목 수</p>
@@ -411,8 +411,8 @@ export default function AdminQuoteDetailPage() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-100">
-                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                  <div className="p-2 rounded-lg bg-purple-900/30">
+                    <TrendingUp className="h-5 w-5 text-purple-400" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">총 금액</p>
@@ -427,8 +427,8 @@ export default function AdminQuoteDetailPage() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-orange-100">
-                    <Calendar className="h-5 w-5 text-orange-600" />
+                  <div className="p-2 rounded-lg bg-orange-900/40">
+                    <Calendar className="h-5 w-5 text-orange-400" />
                   </div>
                   <div>
                     <p className="text-sm text-slate-500">요청일</p>
@@ -443,11 +443,11 @@ export default function AdminQuoteDetailPage() {
 
           {/* 완료 상태 알림 */}
           {quote.status === "COMPLETED" && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <div className="bg-green-900/20 border border-green-800 rounded-lg p-4 flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-400" />
               <div>
                 <p className="font-medium text-green-800">견적서 발행 완료</p>
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-green-400">
                   고객에게 견적 완료 이메일이 발송되었습니다.
                 </p>
               </div>
@@ -468,7 +468,7 @@ export default function AdminQuoteDetailPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-slate-900">
                       <TableHead className="w-[50px]">No.</TableHead>
                       <TableHead>제품명</TableHead>
                       <TableHead>브랜드</TableHead>
@@ -506,10 +506,10 @@ export default function AdminQuoteDetailPage() {
                           <TableCell className="font-medium">
                             {item.name || "-"}
                           </TableCell>
-                          <TableCell className="text-slate-600">
+                          <TableCell className="text-slate-400">
                             {item.brand || "-"}
                           </TableCell>
-                          <TableCell className="font-mono text-sm text-slate-600">
+                          <TableCell className="font-mono text-sm text-slate-400">
                             {item.catalogNumber || "-"}
                           </TableCell>
                           <TableCell className="text-center">
@@ -531,7 +531,7 @@ export default function AdminQuoteDetailPage() {
                                 className="h-8 text-sm"
                               />
                             ) : (
-                              <span className="text-slate-600">
+                              <span className="text-slate-400">
                                 {edited?.costPrice
                                   ? `₩${edited.costPrice.toLocaleString()}`
                                   : "-"}
@@ -564,8 +564,8 @@ export default function AdminQuoteDetailPage() {
                               <div
                                 className={`text-xs ${
                                   profit.isPositive
-                                    ? "text-green-600"
-                                    : "text-red-600"
+                                    ? "text-green-400"
+                                    : "text-red-400"
                                 }`}
                               >
                                 <div className="font-medium">
@@ -596,7 +596,7 @@ export default function AdminQuoteDetailPage() {
                                 className="h-16 text-xs resize-none"
                               />
                             ) : (
-                              <span className="text-sm text-slate-600">
+                              <span className="text-sm text-slate-400">
                                 {edited?.adminNotes || "-"}
                               </span>
                             )}
@@ -609,11 +609,11 @@ export default function AdminQuoteDetailPage() {
               </div>
 
               {/* Total */}
-              <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
+              <div className="border-t border-slate-800 px-6 py-4 bg-slate-900">
                 <div className="flex justify-end">
                   <div className="text-right">
                     <p className="text-sm text-slate-500">총 견적 금액</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-2xl font-bold text-slate-100">
                       ₩{totalAmount.toLocaleString()}
                     </p>
                   </div>
@@ -629,7 +629,7 @@ export default function AdminQuoteDetailPage() {
                 <CardTitle className="text-lg">요청 사항</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-600 whitespace-pre-wrap">
+                <p className="text-slate-400 whitespace-pre-wrap">
                   {quote.description}
                 </p>
               </CardContent>

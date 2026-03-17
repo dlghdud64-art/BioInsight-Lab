@@ -583,7 +583,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-400 hover:text-blue-600 hover:bg-transparent transition-colors hidden lg:flex"
+                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-400 hover:text-blue-400 hover:bg-transparent transition-colors hidden lg:flex"
                 aria-label="도움말"
               >
                 <HelpCircle className="h-5 w-5" />

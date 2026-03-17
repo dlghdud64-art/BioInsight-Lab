@@ -83,7 +83,7 @@ export function BioInsightHeroSection() {
                     <span className="text-[10px] text-slate-500 whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="h-4 w-4 text-slate-700 flex-shrink-0 mx-0.5" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 mx-0.5" />
                   )}
                 </div>
               );

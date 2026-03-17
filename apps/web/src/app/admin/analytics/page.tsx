@@ -117,7 +117,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <TrendingUp className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <TrendingUp className="h-4 w-4 text-blue-400 flex-shrink-0" />
                   <span className="truncate">검색 실행률</span>
                 </CardTitle>
               </CardHeader>
@@ -136,7 +136,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <ShoppingCart className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <ShoppingCart className="h-4 w-4 text-green-400 flex-shrink-0" />
                   <span className="truncate">비교 추가율</span>
                 </CardTitle>
               </CardHeader>
@@ -155,7 +155,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <FileText className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                  <FileText className="h-4 w-4 text-purple-400 flex-shrink-0" />
                   <span className="truncate">내보내기율</span>
                 </CardTitle>
               </CardHeader>
@@ -219,7 +219,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <Share2 className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                  <Share2 className="h-4 w-4 text-orange-400 flex-shrink-0" />
                   <span className="truncate">공유 링크 생성률</span>
                 </CardTitle>
               </CardHeader>
@@ -232,7 +232,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <Target className="h-4 w-4 text-red-600 flex-shrink-0" />
+                  <Target className="h-4 w-4 text-red-400 flex-shrink-0" />
                   <span className="truncate">견적 요청 생성률</span>
                 </CardTitle>
               </CardHeader>
@@ -245,7 +245,7 @@ export default function AdminAnalyticsPage() {
             <Card>
               <CardHeader className="pb-3 min-w-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 min-w-0">
-                  <Wallet className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+                  <Wallet className="h-4 w-4 text-indigo-400 flex-shrink-0" />
                   <span className="truncate">예산 기능 사용률</span>
                 </CardTitle>
               </CardHeader>

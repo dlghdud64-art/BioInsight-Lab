@@ -325,7 +325,7 @@ export function QuoteVersionCompare({ quoteId, onVersionCreated }: QuoteVersionC
                             return (
                               <TableRow
                                 key={item.productId}
-                                className={hasChange ? "bg-yellow-50" : ""}
+                                className={hasChange ? "bg-yellow-900/20" : ""}
                               >
                                 <TableCell>
                                   <div className="font-medium">{item.productName}</div>

@@ -180,12 +180,12 @@ export default function BillingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-900">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -204,7 +204,7 @@ export default function BillingPage() {
                 title="청구 및 구독"
                 description="구독 플랜, 결제 수단, 청구 내역을 관리합니다."
                 icon={CreditCard}
-                iconColor="text-green-600"
+                iconColor="text-green-400"
               />
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -278,7 +278,7 @@ export default function BillingPage() {
                         <h4 className="text-sm font-medium mb-3">포함된 기능</h4>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {currentPlanInfo?.features.map((feature, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
+                            <li key={i} className="flex items-center gap-2 text-sm text-slate-400">
                               <Check className="h-4 w-4 text-green-500" />
                               {feature}
                             </li>
@@ -439,7 +439,7 @@ export default function BillingPage() {
                                   />
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
+                              <div className="flex items-center gap-2 p-3 bg-amber-950/30 rounded-lg text-sm text-amber-700">
                                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                                 <span>데모 모드: 실제 결제가 발생하지 않습니다.</span>
                               </div>
@@ -553,7 +553,7 @@ export default function BillingPage() {
                                   <Badge
                                     variant={invoice.status === "PAID" ? "default" : "secondary"}
                                     className={cn(
-                                      invoice.status === "PAID" && "bg-green-100 text-green-700"
+                                      invoice.status === "PAID" && "bg-green-900/30 text-green-700"
                                     )}
                                   >
                                     {invoice.status === "PAID" ? "결제완료" : invoice.status}

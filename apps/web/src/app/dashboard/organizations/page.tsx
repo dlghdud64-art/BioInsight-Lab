@@ -360,19 +360,19 @@ export default function OrganizationsPage() {
           {organizations.map((org) => {
             const planLabel = org.plan === "ORGANIZATION" ? "Pro" : org.plan === "TEAM" ? "Basic" : "Starter";
             const planColor = org.plan === "ORGANIZATION"
-              ? "border-indigo-200 bg-indigo-50 text-indigo-700 border-indigo-800 bg-indigo-950/40 text-indigo-300"
+              ? "border-indigo-800 bg-indigo-900/20 text-indigo-700 border-indigo-800 bg-indigo-950/40 text-indigo-300"
               : org.plan === "TEAM"
-                ? "border-blue-200 bg-blue-50 text-blue-700 border-blue-800 bg-blue-950/40 text-blue-300"
+                ? "border-blue-800 bg-blue-950/20 text-blue-700 border-blue-800 bg-blue-950/40 text-blue-300"
                 : "border-slate-800 bg-slate-900 text-slate-400 border-slate-700 bg-slate-800 text-slate-400";
             const roleLabel = org.role === "OWNER" ? "소유자" : org.role === "ADMIN" ? "관리자" : org.role === "APPROVER" ? "승인자" : org.role === "REQUESTER" ? "요청자" : "조회자";
             return (
               <Card
                 key={org.id}
-                className="flex flex-col border-slate-800 shadow-none transition-shadow hover:border-blue-200 hover:shadow-md border-slate-800 hover:border-blue-800"
+                className="flex flex-col border-slate-800 shadow-none transition-shadow hover:border-blue-800 hover:shadow-none border-slate-800 hover:border-blue-800"
               >
                 <CardHeader className="pb-2">
                   <div className="mb-2 flex items-start justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-400 bg-blue-900/50 text-blue-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-950/20 font-bold text-blue-400 bg-blue-900/50 text-blue-400">
                       {org.name.substring(0, 1)}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -413,10 +413,10 @@ export default function OrganizationsPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t border-slate-100 pt-0 border-slate-800">
+                <CardFooter className="border-t border-slate-800 pt-0 border-slate-800">
                   <Button
                     variant="ghost"
-                    className="mt-2 w-full text-blue-400 hover:bg-blue-50 hover:text-blue-700 hover:bg-blue-950/30 hover:text-blue-400"
+                    className="mt-2 w-full text-blue-400 hover:bg-blue-950/20 hover:text-blue-700 hover:bg-blue-950/30 hover:text-blue-400"
                     onClick={() => handleGoToOrgDashboard(org.id)}
                     disabled={navigatingToOrgId === org.id}
                   >

@@ -345,10 +345,10 @@ export function BulkImportModal({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={`
-              border-dashed border-2 border-slate-300 bg-slate-50 rounded-lg p-12
+              border-dashed border-2 border-slate-700 bg-slate-900 rounded-lg p-12
               flex flex-col items-center justify-center text-center
               transition-colors cursor-pointer
-              ${isDragging ? "border-blue-400 bg-slate-100" : "hover:border-slate-400 hover:bg-slate-100"}
+              ${isDragging ? "border-blue-400 bg-slate-800" : "hover:border-slate-400 hover:bg-slate-800"}
               ${isUploading ? "pointer-events-none opacity-70" : ""}
             `}
           >
@@ -367,14 +367,14 @@ export function BulkImportModal({
               {isUploading ? (
                 <>
                   <Loader2 className="h-12 w-12 text-slate-500 animate-spin" />
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-slate-300">
                     데이터를 분석하고 저장 중입니다...
                   </p>
                 </>
               ) : (
                 <>
                   <CloudUpload className="h-12 w-12 text-slate-500" />
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-slate-300">
                     여기로 엑셀 파일을 드래그하거나 클릭하여 업로드하세요
                   </p>
                 </>

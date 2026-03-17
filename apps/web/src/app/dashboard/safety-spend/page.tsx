@@ -319,7 +319,7 @@ function SafetySpendPageContent() {
                   title="위험물/규제 구매 예산"
                   description="위험물 구매 현황 및 SDS 관리 상태를 확인합니다."
                   icon={AlertTriangle}
-                  iconColor="text-red-600"
+                  iconColor="text-red-400"
                 />
                 {currentOrg && (
                   <DropdownMenu>
@@ -459,12 +459,12 @@ function SafetySpendPageContent() {
                       <Card>
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                            <AlertTriangle className="h-4 w-4 text-red-400" />
                             위험물 구매액
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold text-red-600">
+                          <div className="text-2xl font-bold text-red-400">
                             {formatCurrency(kpi.hazardousAmount)}
                           </div>
                         </CardContent>
@@ -472,12 +472,12 @@ function SafetySpendPageContent() {
                       <Card>
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-yellow-600" />
+                            <FileText className="h-4 w-4 text-yellow-400" />
                             SDS 없음 구매액
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold text-yellow-600">
+                          <div className="text-2xl font-bold text-yellow-400">
                             {formatCurrency(kpi.missingSdsAmount)}
                           </div>
                         </CardContent>
@@ -498,7 +498,7 @@ function SafetySpendPageContent() {
                   )}
 
                   {/* Unmapped 요약 카드 */}
-                  <Card className="border-blue-200 bg-blue-50">
+                  <Card className="border-blue-800 bg-blue-950/20">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -546,10 +546,10 @@ function SafetySpendPageContent() {
                                   <TableRow key={month.month}>
                                     <TableCell className="font-medium">{month.month}</TableCell>
                                     <TableCell>{formatCurrency(month.total)}</TableCell>
-                                    <TableCell className="text-red-600">
+                                    <TableCell className="text-red-400">
                                       {formatCurrency(month.hazardous)}
                                     </TableCell>
-                                    <TableCell className="text-yellow-600">
+                                    <TableCell className="text-yellow-400">
                                       {formatCurrency(month.missingSds)}
                                     </TableCell>
                                   </TableRow>
@@ -675,7 +675,7 @@ function SafetySpendPageContent() {
                     <Card
                       key={record.id}
                       className={`cursor-pointer transition-colors ${
-                        selectedRecord?.id === record.id ? "border-blue-500 bg-blue-50" : ""
+                        selectedRecord?.id === record.id ? "border-blue-500 bg-blue-950/20" : ""
                       }`}
                       onClick={() => setSelectedRecord(record)}
                     >
@@ -691,7 +691,7 @@ function SafetySpendPageContent() {
                               Cat.No: {record.catalogNumber}
                             </p>
                           )}
-                          <p className="text-sm font-semibold text-blue-600">
+                          <p className="text-sm font-semibold text-blue-400">
                             {formatCurrency(record.amount, record.currency)}
                           </p>
                         </div>
@@ -725,7 +725,7 @@ function SafetySpendPageContent() {
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto">
                         {searchResults?.products?.map((product: any) => (
-                          <Card key={product.id} className="cursor-pointer hover:bg-slate-50">
+                          <Card key={product.id} className="cursor-pointer hover:bg-slate-900">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">

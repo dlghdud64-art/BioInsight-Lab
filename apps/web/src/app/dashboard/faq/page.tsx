@@ -186,7 +186,7 @@ export default function FAQPage() {
               onClick={() => setActiveCategory(cat.value)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-none"
                   : "bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-800/80 hover:border-slate-600"
               }`}
             >
@@ -203,10 +203,10 @@ export default function FAQPage() {
       {/* FAQ 목록 */}
       <div className="space-y-2.5">
         {filteredFaqs.length === 0 ? (
-          <Card className="border-slate-200">
+          <Card className="border-slate-800">
             <CardContent className="py-12 text-center">
               <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-600 mb-1">검색 결과가 없습니다</p>
+              <p className="text-sm font-medium text-slate-400 mb-1">검색 결과가 없습니다</p>
               <p className="text-xs text-slate-400">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
             </CardContent>
           </Card>
@@ -214,19 +214,19 @@ export default function FAQPage() {
           filteredFaqs.map((faq) => {
             const isExpanded = expandedIds.has(faq.id);
             return (
-              <Card key={faq.id} className="border-slate-200 shadow-sm overflow-hidden">
+              <Card key={faq.id} className="border-slate-800 shadow-none overflow-hidden">
                 <button
                   onClick={() => toggleExpand(faq.id)}
-                  className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 hover:bg-slate-50/50 transition-colors"
+                  className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 hover:bg-slate-900/50 transition-colors"
                 >
-                  <HelpCircle className={`h-4.5 w-4.5 mt-0.5 flex-shrink-0 transition-colors ${isExpanded ? "text-blue-600" : "text-slate-400"}`} />
+                  <HelpCircle className={`h-4.5 w-4.5 mt-0.5 flex-shrink-0 transition-colors ${isExpanded ? "text-blue-400" : "text-slate-400"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-medium">
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-800 text-slate-500 font-medium">
                         {getCategoryBadge(faq.category)}
                       </Badge>
                     </div>
-                    <p className={`text-sm font-medium leading-snug ${isExpanded ? "text-blue-900" : "text-slate-800"}`}>
+                    <p className={`text-sm font-medium leading-snug ${isExpanded ? "text-blue-900" : "text-slate-200"}`}>
                       {faq.question}
                     </p>
                   </div>
@@ -237,13 +237,13 @@ export default function FAQPage() {
                   )}
                 </button>
                 {isExpanded && (
-                  <CardContent className="pt-0 pb-4 px-4 md:px-5 ml-7 border-t border-slate-100">
-                    <p className="text-sm text-slate-600 leading-relaxed py-3">
+                  <CardContent className="pt-0 pb-4 px-4 md:px-5 ml-7 border-t border-slate-800">
+                    <p className="text-sm text-slate-400 leading-relaxed py-3">
                       {faq.answer}
                     </p>
                     {faq.cta && (
                       <Link href={faq.cta.href}>
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 mt-1">
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs border-blue-800 text-blue-700 hover:bg-blue-950/20 mt-1">
                           {faq.cta.label}
                           <ArrowRight className="h-3 w-3" />
                         </Button>
@@ -258,13 +258,13 @@ export default function FAQPage() {
       </div>
 
       {/* 하단 지원 연결 */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8">
+      <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <LifeBuoy className="h-4.5 w-4.5 text-blue-600" />
+          <div className="w-9 h-9 rounded-lg bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+            <LifeBuoy className="h-4.5 w-4.5 text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">원하는 답변을 찾지 못하셨나요?</p>
+            <p className="text-sm font-semibold text-slate-100">원하는 답변을 찾지 못하셨나요?</p>
             <p className="text-xs text-slate-500 mt-0.5">운영 지원 센터에서 1:1 문의를 남겨주세요. 담당자가 직접 확인 후 답변드립니다.</p>
           </div>
         </div>

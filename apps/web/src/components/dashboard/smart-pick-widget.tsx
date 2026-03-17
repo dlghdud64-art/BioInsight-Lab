@@ -85,9 +85,9 @@ export function SmartPickWidget() {
 
   if (isLoading) {
     return (
-      <Card className="border-none shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+      <Card className="border-none shadow-none bg-gradient-to-br from-blue-50 to-indigo-50">
         <CardContent className="py-8 text-center">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600 mx-auto mb-2" />
+          <Loader2 className="h-6 w-6 animate-spin text-blue-400 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">추천 상품을 찾고 있어요...</p>
         </CardContent>
       </Card>
@@ -99,15 +99,15 @@ export function SmartPickWidget() {
   }
 
   return (
-    <Card className="border-none shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+    <Card className="border-none shadow-none bg-gradient-to-br from-blue-50 to-indigo-50">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-blue-600" />
-          <CardTitle className="text-lg font-semibold text-gray-900">
+          <Sparkles className="h-5 w-5 text-blue-400" />
+          <CardTitle className="text-lg font-semibold text-slate-100">
             AI 추천: 슬슬 필요하지 않으세요?
           </CardTitle>
         </div>
-        <CardDescription className="text-sm text-gray-600 mt-1">
+        <CardDescription className="text-sm text-slate-400 mt-1">
           {userDisplayName}님, 지난번 주문한 시약이 떨어질 때가 된 것 같아 챙겨봤어요.
         </CardDescription>
       </CardHeader>
@@ -115,12 +115,12 @@ export function SmartPickWidget() {
         {recommendations.map((rec) => (
           <div
             key={rec.inventoryId}
-            className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-slate-900 rounded-lg p-4 border border-blue-800 shadow-none hover:shadow-none transition-shadow"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                  <h4 className="font-semibold text-sm text-slate-100 line-clamp-1">
                     {rec.product.name}
                   </h4>
                   {rec.urgency === "urgent" && (
@@ -130,12 +130,12 @@ export function SmartPickWidget() {
                   )}
                 </div>
                 {rec.product.brand && (
-                  <p className="text-xs text-gray-500 mb-2">{rec.product.brand}</p>
+                  <p className="text-xs text-slate-400 mb-2">{rec.product.brand}</p>
                 )}
                 <p className="text-xs text-blue-700 font-medium mb-2">
                   보통 이맘때 재구매하셨어요
                 </p>
-                <div className="flex items-center gap-3 text-xs text-gray-600">
+                <div className="flex items-center gap-3 text-xs text-slate-400">
                   <span>
                     현재: <span className="font-medium">{rec.currentQuantity} {rec.unit}</span>
                   </span>

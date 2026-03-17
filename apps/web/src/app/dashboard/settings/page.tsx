@@ -366,7 +366,7 @@ function SettingsPageContent() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-blue-50 text-blue-400 bg-blue-950/40 text-blue-400"
+                        ? "bg-blue-950/20 text-blue-400 bg-blue-950/40 text-blue-400"
                         : "text-slate-400 hover:bg-slate-900 hover:text-slate-400 hover:bg-slate-800 hover:text-slate-100"
                     )}
                   >
@@ -396,12 +396,12 @@ function SettingsPageContent() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
-                        <AvatarFallback className="bg-blue-100 text-blue-400 text-lg font-semibold">
+                        <AvatarFallback className="bg-blue-900/30 text-blue-400 text-lg font-semibold">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit border-blue-200 bg-blue-50 text-blue-700 border-blue-800 bg-blue-950/40 text-blue-300">
+                        <Badge variant="secondary" className="w-fit border-blue-800 bg-blue-950/20 text-blue-700 border-blue-800 bg-blue-950/40 text-blue-300">
                           {roleLabel}
                         </Badge>
                         <Button type="button" variant="outline" size="sm">

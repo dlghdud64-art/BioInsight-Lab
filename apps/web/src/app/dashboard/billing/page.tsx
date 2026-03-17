@@ -79,7 +79,7 @@ export default function BillingPage() {
 
         {/* 통합 세금계산서 내역 (메인 카드) */}
         <Card className="shadow-none border-blue-800">
-          <CardHeader className="rounded-t-lg border-b border-blue-800 bg-blue-50/50 border-blue-900 bg-blue-950/30">
+          <CardHeader className="rounded-t-lg border-b border-blue-800 bg-blue-950/20/50 border-blue-900 bg-blue-950/30">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg">2026년 2월 통합 세금계산서</CardTitle>

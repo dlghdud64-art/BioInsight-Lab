@@ -112,7 +112,7 @@ export default function CollaborationPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
           placeholder="필요한 시약명, 제조사, 카탈로그 번호를 검색하세요..."
-          className="pl-10 h-14 text-lg bg-slate-950 border-slate-700 shadow-sm"
+          className="pl-10 h-14 text-lg bg-slate-950 border-slate-700 shadow-none"
         />
       </div>
 

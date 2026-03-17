@@ -65,7 +65,7 @@ export function ReorderRecommendations({
 
   if (isLoading) {
     return (
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-none">
         <CardContent className="py-12 text-center">
           <p className="text-muted-foreground text-sm">재주문 추천을 불러오는 중...</p>
         </CardContent>
@@ -75,7 +75,7 @@ export function ReorderRecommendations({
 
   if (recommendations.length === 0) {
     return (
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-none">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">재주문 추천</CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -102,12 +102,12 @@ export function ReorderRecommendations({
   const highCount = recommendations.filter((r) => r.urgency === "high").length;
 
   return (
-    <Card className="border-none shadow-sm bg-white rounded-2xl">
+    <Card className="border-none shadow-none bg-slate-900 rounded-2xl">
       <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle className="text-base md:text-lg font-semibold text-gray-900">재주문 추천</CardTitle>
-            <CardDescription className="text-xs md:text-sm text-gray-500">
+            <CardTitle className="text-base md:text-lg font-semibold text-slate-100">재주문 추천</CardTitle>
+            <CardDescription className="text-xs md:text-sm text-slate-400">
               자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
             </CardDescription>
           </div>
@@ -134,20 +134,20 @@ export function ReorderRecommendations({
             {recommendations.map((rec) => {
               const vendor = rec.product.vendors?.[0];
               const urgencyColors = {
-                urgent: "border-red-300 bg-red-50",
-                high: "border-orange-300 bg-orange-50",
-                medium: "border-yellow-300 bg-yellow-50",
+                urgent: "border-red-300 bg-red-950/30",
+                high: "border-orange-300 bg-orange-950/20",
+                medium: "border-yellow-300 bg-yellow-900/20",
               };
               const urgencyBadgeColors = {
-                urgent: "bg-red-100 text-red-800 border-red-300",
-                high: "bg-orange-100 text-orange-800 border-orange-300",
-                medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
+                urgent: "bg-red-900/40 text-red-800 border-red-300",
+                high: "bg-orange-900/40 text-orange-800 border-orange-300",
+                medium: "bg-yellow-900/40 text-yellow-800 border-yellow-300",
               };
 
               return (
                 <div
                   key={rec.inventoryId}
-                  className={`w-40 flex-shrink-0 p-4 border rounded-2xl shadow-sm ${urgencyColors[rec.urgency]}`}
+                  className={`w-40 flex-shrink-0 p-4 border rounded-2xl shadow-none ${urgencyColors[rec.urgency]}`}
                 >
                   <div className="flex flex-col h-full">
                     <div className="mb-2">
@@ -156,18 +156,18 @@ export function ReorderRecommendations({
                       </Badge>
                       <h4 className="font-semibold text-sm line-clamp-2 mb-1">{rec.product.name}</h4>
                       {rec.product.brand && (
-                        <p className="text-xs text-gray-600 mb-2">{rec.product.brand}</p>
+                        <p className="text-xs text-slate-400 mb-2">{rec.product.brand}</p>
                       )}
                     </div>
                     <div className="flex-1 space-y-1 text-xs mb-3">
                       <div>
-                        <span className="text-gray-500">추천:</span>
+                        <span className="text-slate-400">추천:</span>
                         <span className="ml-1 font-semibold text-blue-700">
                           {rec.recommendedQuantity} {rec.unit}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500">현재:</span>
+                        <span className="text-slate-400">현재:</span>
                         <span className="ml-1">{rec.currentQuantity} {rec.unit}</span>
                       </div>
                     </div>
@@ -196,15 +196,15 @@ export function ReorderRecommendations({
           {recommendations.map((rec) => {
             const vendor = rec.product.vendors?.[0];
             const urgencyColors = {
-              urgent: "bg-red-100 text-red-800 border-red-300",
-              high: "bg-orange-100 text-orange-800 border-orange-300",
-              medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
+              urgent: "bg-red-900/40 text-red-800 border-red-300",
+              high: "bg-orange-900/40 text-orange-800 border-orange-300",
+              medium: "bg-yellow-900/40 text-yellow-800 border-yellow-300",
             };
 
             return (
               <div
                 key={rec.inventoryId}
-                className={`p-4 border rounded-2xl shadow-sm ${urgencyColors[rec.urgency]}`}
+                className={`p-4 border rounded-2xl shadow-none ${urgencyColors[rec.urgency]}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">

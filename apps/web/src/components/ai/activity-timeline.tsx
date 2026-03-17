@@ -23,12 +23,12 @@ import {
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   AI_TASK_CREATED: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
-  AI_TASK_OPENED: <Eye className="h-3.5 w-3.5 text-gray-500" />,
+  AI_TASK_OPENED: <Eye className="h-3.5 w-3.5 text-slate-400" />,
   QUOTE_DRAFT_GENERATED: <FileText className="h-3.5 w-3.5 text-blue-500" />,
   QUOTE_DRAFT_REVIEWED: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
   EMAIL_DRAFT_GENERATED: <Mail className="h-3.5 w-3.5 text-purple-500" />,
   EMAIL_SENT: <Mail className="h-3.5 w-3.5 text-green-500" />,
-  AI_TASK_COMPLETED: <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />,
+  AI_TASK_COMPLETED: <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />,
   AI_TASK_FAILED: <XCircle className="h-3.5 w-3.5 text-red-500" />,
   INVENTORY_RESTOCK_SUGGESTED: <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />,
   INVENTORY_RESTOCK_REVIEWED: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
@@ -74,9 +74,9 @@ export function ActivityTimeline({
       <div className={`space-y-2 ${className}`}>
         {Array.from({ length: limit }).map((_, i) => (
           <div key={i} className="flex items-center gap-2 animate-pulse">
-            <div className="h-3.5 w-3.5 rounded-full bg-gray-200" />
-            <div className="h-3 w-32 rounded bg-gray-200" />
-            <div className="h-3 w-16 rounded bg-gray-100 ml-auto" />
+            <div className="h-3.5 w-3.5 rounded-full bg-slate-800" />
+            <div className="h-3 w-32 rounded bg-slate-800" />
+            <div className="h-3 w-16 rounded bg-slate-800 ml-auto" />
           </div>
         ))}
       </div>

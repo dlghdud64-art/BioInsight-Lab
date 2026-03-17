@@ -56,14 +56,14 @@ export default function VendorDashboardPage() {
   const requests: VendorRequest[] = requestsData?.requests || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-slate-900 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-900">벤더 포털</h1>
-              <p className="text-sm text-slate-600 mt-1">견적 요청 관리</p>
+              <h1 className="text-xl font-bold text-slate-100">벤더 포털</h1>
+              <p className="text-sm text-slate-400 mt-1">견적 요청 관리</p>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link href="/vendor/logout">
@@ -116,7 +116,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Requests Table */}
-        <div className="bg-white border border-slate-200 shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 shadow-none">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -139,7 +139,7 @@ export default function VendorDashboardPage() {
               </TableHeader>
               <TableBody>
                 {requests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-slate-50">
+                  <TableRow key={request.id} className="hover:bg-slate-900">
                     <TableCell className="font-medium p-3">
                       {request.quoteTitle}
                     </TableCell>
@@ -154,7 +154,7 @@ export default function VendorDashboardPage() {
                     <TableCell className="p-3 text-right text-sm">
                       {request.itemCount}개
                     </TableCell>
-                    <TableCell className="p-3 text-sm text-slate-600">
+                    <TableCell className="p-3 text-sm text-slate-400">
                       {format(new Date(request.updatedAt), "PPp", { locale: ko })}
                     </TableCell>
                     <TableCell className="p-3 text-right">
@@ -174,7 +174,7 @@ export default function VendorDashboardPage() {
 
         {/* Summary */}
         {!isLoading && requests.length > 0 && (
-          <div className="mt-4 text-sm text-slate-600">
+          <div className="mt-4 text-sm text-slate-400">
             총 {requests.length}건의 요청
           </div>
         )}

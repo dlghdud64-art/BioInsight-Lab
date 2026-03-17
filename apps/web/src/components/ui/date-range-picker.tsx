@@ -173,7 +173,7 @@ export function DateRangePicker({
               {triggerLabel}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 shadow-lg" align="start">
+          <PopoverContent className="w-auto p-0 shadow-none" align="start">
             <div className="p-4">
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {PRESETS.map((p) => (

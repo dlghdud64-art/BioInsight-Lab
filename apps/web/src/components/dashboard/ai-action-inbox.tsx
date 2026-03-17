@@ -127,7 +127,7 @@ const DEFAULT_CONFIG: CardConfig = {
   description: "",
   cta: "확인하기",
   badgeLabel: "오늘 처리 권장",
-  badgeClass: "bg-slate-50 text-slate-600 border-slate-200",
+  badgeClass: "bg-slate-900 text-slate-400 border-slate-800",
   approveToast: "작업이 완료되었습니다",
 };
 
@@ -192,7 +192,7 @@ export function AiActionInbox() {
   // 로딩 스켈레톤
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-none overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-800/50">
           <div className="h-4 w-32 rounded bg-slate-800 animate-pulse" />
         </div>
@@ -208,7 +208,7 @@ export function AiActionInbox() {
   // 빈 상태
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-none overflow-hidden">
         <div className="px-4 py-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-300">
@@ -292,7 +292,7 @@ export function AiActionInbox() {
 
   return (
     <>
-      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-slate-800/50 bg-[#161d2f] shadow-none overflow-hidden">
         {/* 헤더 */}
         <div className="px-4 py-2.5 border-b border-slate-800/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -387,7 +387,7 @@ export function AiActionInbox() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-[11px] px-2 text-slate-400 hover:text-slate-600"
+                        className="h-7 text-[11px] px-2 text-slate-400 hover:text-slate-400"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDismiss(item.id);

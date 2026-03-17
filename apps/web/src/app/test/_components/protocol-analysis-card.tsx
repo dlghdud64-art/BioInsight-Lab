@@ -25,7 +25,7 @@ export function ProtocolAnalysisCard({ extractionResult }: ProtocolAnalysisCardP
       {extractionResult ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-600" />
+            <FileText className="h-4 w-4 text-blue-400" />
             <span className="text-xs font-medium">추출 결과</span>
           </div>
           {extractionResult.reagents && extractionResult.reagents.length > 0 && (
@@ -33,7 +33,7 @@ export function ProtocolAnalysisCard({ extractionResult }: ProtocolAnalysisCardP
               <p className="text-xs font-medium mb-2">추출된 시약:</p>
               <div className="space-y-1">
                 {extractionResult.reagents.slice(0, 5).map((r, idx) => (
-                  <div key={idx} className="text-xs p-2 bg-slate-50 rounded">
+                  <div key={idx} className="text-xs p-2 bg-slate-900 rounded">
                     <div className="font-medium">{r.name}</div>
                     {r.quantity && (
                       <div className="text-muted-foreground">
@@ -55,7 +55,7 @@ export function ProtocolAnalysisCard({ extractionResult }: ProtocolAnalysisCardP
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
               Raw JSON 보기
             </summary>
-            <pre className="mt-2 p-2 bg-slate-100 rounded text-[10px] overflow-auto">
+            <pre className="mt-2 p-2 bg-slate-800 rounded text-[10px] overflow-auto">
               {JSON.stringify(extractionResult, null, 2)}
             </pre>
           </details>
