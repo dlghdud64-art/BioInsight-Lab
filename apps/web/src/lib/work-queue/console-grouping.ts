@@ -328,6 +328,11 @@ export interface ConsoleSummary {
   myWorkCount: number;
   unassignedCount: number;
   handedOffCount: number;
+  // ── Accountability counters (optional, enriched via computeConsoleSummaryWithAccountability) ──
+  assignedUntouchedCount?: number;
+  blockedAgingCount?: number;
+  handoffNotAcceptedCount?: number;
+  overdueOwnedCount?: number;
 }
 
 /**
@@ -365,6 +370,30 @@ export function computeConsoleSummary(groups: ConsoleGroup[], userId?: string): 
   }
 
   return { urgentCount, approvalCount, totalActive, totalResolved, myWorkCount, unassignedCount, handedOffCount };
+}
+
+/**
+ * 책임성 메트릭을 포함한 콘솔 요약을 계산합니다.
+ *
+ * computeConsoleSummary() 결과에 computeAccountabilityMetrics() 값을 추가합니다.
+ */
+export function computeConsoleSummaryWithAccountability(
+  groups: ConsoleGroup[],
+  userId: string | undefined,
+  items: WorkQueueItem[],
+  logs: import("./console-accountability").ActivityLogEntry[],
+): ConsoleSummary {
+  const base = computeConsoleSummary(groups, userId);
+  // Lazy import to avoid circular dep at module level
+  const { computeAccountabilityMetrics } = require("./console-accountability");
+  const metrics = computeAccountabilityMetrics(items, logs);
+  return {
+    ...base,
+    assignedUntouchedCount: metrics.assignedUntouchedCount,
+    blockedAgingCount: metrics.blockedAgingCount,
+    handoffNotAcceptedCount: metrics.handoffNotAcceptedCount,
+    overdueOwnedCount: metrics.overdueOwnedCount,
+  };
 }
 
 // ── Owner Role Labels ──

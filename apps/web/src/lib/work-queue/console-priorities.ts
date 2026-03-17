@@ -173,11 +173,40 @@ export function applyPromotionRules(item: WorkQueueItem, baseTier: PriorityTier)
 }
 
 /**
- * 최종 우선순위 티어를 계산합니다 (할당 + 프로모션).
+ * 에스컬레이션 부스트를 기반으로 티어를 승격합니다.
+ *
+ * - boost ≥ 15 → urgent_blocker
+ * - boost ≥ 8 AND tier < action_needed → action_needed
+ * - boost ≥ 5 AND tier = monitoring → action_needed
  */
-export function computeFinalTier(item: WorkQueueItem): PriorityTier {
+export function applyEscalationBoost(baseTier: PriorityTier, escalationBoost: number): PriorityTier {
+  if (escalationBoost <= 0) return baseTier;
+
+  if (escalationBoost >= 15) return "urgent_blocker";
+
+  if (escalationBoost >= 8) {
+    const tierOrder = PRIORITY_TIER_DEFS[baseTier].sortOrder;
+    const actionOrder = PRIORITY_TIER_DEFS.action_needed.sortOrder;
+    if (tierOrder > actionOrder) return "action_needed";
+  }
+
+  if (escalationBoost >= 5 && baseTier === "monitoring") {
+    return "action_needed";
+  }
+
+  return baseTier;
+}
+
+/**
+ * 최종 우선순위 티어를 계산합니다 (할당 + 프로모션 + 에스컬레이션).
+ */
+export function computeFinalTier(item: WorkQueueItem, escalationBoost?: number): PriorityTier {
   const baseTier = assignPriorityTier(item);
-  return applyPromotionRules(item, baseTier);
+  const promoted = applyPromotionRules(item, baseTier);
+  if (escalationBoost && escalationBoost > 0) {
+    return applyEscalationBoost(promoted, escalationBoost);
+  }
+  return promoted;
 }
 
 // ── Helpers ──

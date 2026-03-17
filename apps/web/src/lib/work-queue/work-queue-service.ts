@@ -571,6 +571,69 @@ export async function executeAssignmentAction(params: AssignmentActionParams): P
   });
 }
 
+// ── Accountability Data Query ──
+
+const ASSIGNMENT_ACTIVITY_TYPES = [
+  "ITEM_CLAIMED",
+  "ITEM_ASSIGNED",
+  "ITEM_REASSIGNED",
+  "ITEM_STARTED",
+  "ITEM_BLOCKED",
+  "ITEM_HANDED_OFF",
+  "AI_TASK_COMPLETED",
+  "AI_TASK_FAILED",
+];
+
+/**
+ * 책임성 분석용 데이터 조회 — 활성 항목 + 배정 관련 활동 로그
+ */
+export async function queryAccountabilityData(filters: {
+  organizationId?: string;
+  since?: Date;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const since = filters.since ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: ASSIGNMENT_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
 // ── Helpers ──
 
 /**

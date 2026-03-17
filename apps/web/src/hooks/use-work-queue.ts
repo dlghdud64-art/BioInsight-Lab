@@ -377,6 +377,70 @@ export function useAssignmentAction() {
   });
 }
 
+/**
+ * 책임성 메트릭 + 에스컬레이션 조회
+ *
+ * accountability=true로 API 호출하여 메트릭 + 에스컬레이션 반환.
+ */
+export function useAccountabilityMetrics(organizationId?: string) {
+  return useQuery<{
+    groups: import("@/lib/work-queue/console-grouping").ConsoleGroup[];
+    summary: import("@/lib/work-queue/console-grouping").ConsoleSummary;
+    activeCount: number;
+    completedCount: number;
+    accountability: import("@/lib/work-queue/console-accountability").AccountabilityMetrics;
+    escalations: import("@/lib/work-queue/console-accountability").EscalationResult[];
+  }>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "accountability", organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        grouped: "true",
+        limit: "100",
+        includeCompleted: "true",
+        accountability: "true",
+      });
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch accountability data");
+      return res.json();
+    },
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * 개인 워크로드 뷰 조회
+ *
+ * personalView 파라미터로 API 호출하여 필터링된 항목 반환.
+ */
+export function usePersonalWorkloadView(
+  viewId: import("@/lib/work-queue/console-accountability").PersonalWorkloadViewId | null,
+  organizationId?: string,
+) {
+  return useQuery<{
+    items: WorkQueueItem[];
+    escalations: import("@/lib/work-queue/console-accountability").EscalationResult[];
+  }>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "personal", viewId, organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (viewId) params.set("personalView", viewId);
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch personal workload view");
+      return res.json();
+    },
+    enabled: !!viewId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };

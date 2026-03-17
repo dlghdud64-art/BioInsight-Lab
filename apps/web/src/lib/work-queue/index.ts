@@ -151,8 +151,44 @@ export type {
 
 export {
   executeAssignmentAction,
+  queryAccountabilityData,
 } from "./work-queue-service";
 
 export type {
   AssignmentActionParams,
 } from "./work-queue-service";
+
+export {
+  computeAccountabilityMetrics,
+  evaluateEscalations,
+  getEscalationBoost,
+  filterForPersonalView,
+  computeOwnerReport,
+  buildAssignmentAuditTrail,
+  ACCOUNTABILITY_METRIC_DEFS,
+  ESCALATION_RULE_DEFS,
+  PERSONAL_WORKLOAD_VIEW_DEFS,
+  PERSONAL_WORKLOAD_VIEW_LABELS,
+} from "./console-accountability";
+
+export type {
+  ActivityLogEntry,
+  AccountabilityMetricId,
+  AccountabilityMetricDef,
+  AccountabilityMetrics,
+  EscalationRuleId,
+  EscalationRuleDef,
+  EscalationResult,
+  PersonalWorkloadViewId,
+  PersonalWorkloadViewDef,
+  AssignmentAuditTrail,
+  OwnerReport,
+} from "./console-accountability";
+
+export {
+  applyEscalationBoost,
+} from "./console-priorities";
+
+export {
+  computeConsoleSummaryWithAccountability,
+} from "./console-grouping";

@@ -180,6 +180,35 @@ function ConsoleSummaryBar({ summary }: { summary: ConsoleSummary }) {
         count={summary.unassignedCount}
         color={summary.unassignedCount > 0 ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-500"}
       />
+      {/* Accountability counters */}
+      {summary.assignedUntouchedCount != null && summary.assignedUntouchedCount > 0 && (
+        <SummaryChip
+          label="미착수"
+          count={summary.assignedUntouchedCount}
+          color="bg-amber-100 text-amber-800"
+        />
+      )}
+      {summary.blockedAgingCount != null && summary.blockedAgingCount > 0 && (
+        <SummaryChip
+          label="장기차단"
+          count={summary.blockedAgingCount}
+          color="bg-red-100 text-red-800"
+        />
+      )}
+      {summary.handoffNotAcceptedCount != null && summary.handoffNotAcceptedCount > 0 && (
+        <SummaryChip
+          label="미인수"
+          count={summary.handoffNotAcceptedCount}
+          color="bg-purple-100 text-purple-800"
+        />
+      )}
+      {summary.overdueOwnedCount != null && summary.overdueOwnedCount > 0 && (
+        <SummaryChip
+          label="초과보유"
+          count={summary.overdueOwnedCount}
+          color="bg-rose-100 text-rose-800"
+        />
+      )}
       <SummaryChip
         label="활성"
         count={summary.totalActive}
