@@ -6,39 +6,38 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCTASection() {
   return (
-    <section className="py-16 md:py-20 bg-slate-950 border-t border-slate-800">
+    <section className="py-16 md:py-24 bg-[#070a0e] border-t border-[#1a1e24]">
       <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
-        <div className="space-y-3 mb-8">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        <div className="space-y-4 mb-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563]">
             Get Started
           </p>
-          <h2 className="text-lg md:text-3xl font-bold text-slate-100 tracking-tight leading-tight">
-            구매 운영을 체계화하세요
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight leading-tight break-keep">
+            검색 도구를 넘어서,
+            <br />연구 구매 운영의 기준을 만들고 싶다면
           </h2>
-          <p className="text-sm md:text-base text-slate-400 max-w-md mx-auto leading-relaxed break-keep">
-            비교·견적·발주·입고·재고까지 끊기지 않는 운영 파이프라인.
-            <br />
-            운영 콘솔에서 전 과정을 추적하고 통제합니다.
+          <p className="text-sm md:text-base text-[#9ca3af] max-w-lg mx-auto leading-relaxed break-keep">
+            LabAxis는 시약·장비 검색부터 비교, 견적, 발주, 입고, 재고 운영까지
+            반복되는 연구 구매 흐름을 하나의 운영 체계로 연결합니다.
+          </p>
+          <p className="text-xs text-[#6b7280]">
+            연구팀·바이오팀·구매팀의 반복 구매 운영에 최적화된 플랫폼입니다.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 px-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2">
-              운영 콘솔 시작하기
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/test/search" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto h-11 px-10 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm flex items-center justify-center gap-2">
+              시약·장비 검색 시작하기
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
           <Link href="/support" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto h-11 px-8 border-slate-700 text-slate-400 hover:bg-slate-900 font-medium text-sm">
-              도입 문의
+            <Button variant="ghost" className="w-full sm:w-auto h-11 px-8 border border-[#1e2228] text-[#9ca3af] hover:text-slate-100 hover:border-[#2a2e35] font-medium text-sm">
+              도입 문의하기
             </Button>
           </Link>
         </div>
-
-        <p className="text-[11px] text-slate-500">
-          연구실·바이오팀의 반복 구매 운영에 최적화된 플랫폼입니다.
-        </p>
       </div>
     </section>
   );

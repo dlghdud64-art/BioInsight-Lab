@@ -1,23 +1,32 @@
 import { MainLayout } from "./_components/main-layout";
 import { MainHeader } from "./_components/main-header";
 import { MainFooter } from "./_components/main-footer";
-import { BioInsightHeroSection } from "./_components/bioinsight-hero-section";
-import { BioInsightSocialProofSection } from "./_components/bioinsight-social-proof-section";
+import { LabAxisHeroSection } from "./_components/bioinsight-hero-section";
 import dynamic from "next/dynamic";
 
-const PlatformFlowSection = dynamic(
-  () => import("./_components/platform-flow-section").then((mod) => ({ default: mod.PlatformFlowSection })),
-  { loading: () => <div className="h-96 w-full bg-slate-900" /> }
+const OpsFlowSection = dynamic(
+  () => import("./_components/ops-flow-section").then((mod) => ({ default: mod.OpsFlowSection })),
+  { loading: () => <div className="h-96 w-full bg-[#070a0e]" /> }
 );
 
-const OpsConsolePreviewSection = dynamic(
-  () => import("./_components/ops-console-preview-section").then((mod) => ({ default: mod.OpsConsolePreviewSection })),
-  { loading: () => <div className="h-64 w-full bg-slate-900" /> }
+const OpsEvidenceSection = dynamic(
+  () => import("./_components/ops-evidence-section").then((mod) => ({ default: mod.OpsEvidenceSection })),
+  { loading: () => <div className="h-64 w-full bg-[#0a0d11]" /> }
+);
+
+const RoleValueSection = dynamic(
+  () => import("./_components/role-value-section").then((mod) => ({ default: mod.RoleValueSection })),
+  { loading: () => <div className="h-64 w-full bg-[#070a0e]" /> }
+);
+
+const TrustSection = dynamic(
+  () => import("./_components/trust-section").then((mod) => ({ default: mod.TrustSection })),
+  { loading: () => <div className="h-64 w-full bg-[#0a0d11]" /> }
 );
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-slate-900" /> }
+  { loading: () => <div className="h-64 w-full bg-[#070a0e]" /> }
 );
 
 export default function HomePage() {
@@ -25,19 +34,22 @@ export default function HomePage() {
     <MainLayout>
       <MainHeader />
       <div className="w-full">
-        {/* 1. Hero: 운영 가치 제안 + 6단계 파이프라인 */}
-        <BioInsightHeroSection />
+        {/* A. Hero: 운영 가치 제안 + 운영 패널 조합 + 파이프라인 */}
+        <LabAxisHeroSection />
 
-        {/* 2. Trust Strip: 운영 메트릭 */}
-        <BioInsightSocialProofSection />
+        {/* B. 운영 흐름: 4단계 검색→비교→견적→입고/재고 (입력/판단/액션/결과) */}
+        <OpsFlowSection />
 
-        {/* 3. Platform Flow: 6단계 운영 파이프라인 상세 */}
-        <PlatformFlowSection />
+        {/* C. 운영 증거: 운영이 안정되는 6가지 증거 */}
+        <OpsEvidenceSection />
 
-        {/* 4. Ops Console Preview: 4-mode 콘솔 소개 */}
-        <OpsConsolePreviewSection />
+        {/* D. 역할별 가치: 연구원/구매담당/랩매니저/조직관리자 */}
+        <RoleValueSection />
 
-        {/* 5. Final CTA: Enterprise 톤 */}
+        {/* E. 도입 신뢰: 이력추적/Lot관리/권한/내보내기/팀허브 */}
+        <TrustSection />
+
+        {/* F. 하단 CTA */}
         <FinalCTASection />
       </div>
       <MainFooter />
