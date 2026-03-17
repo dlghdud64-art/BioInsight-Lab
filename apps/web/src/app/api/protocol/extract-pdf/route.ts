@@ -1,7 +1,7 @@
 /**
  * 프로덕션 레벨 PDF 견적서 자동 처리 API
  *
- * 📄 PDF 업로드 → 🤖 AI 분석 → 💾 DB 저장
+ * PDF 업로드 → AI 분석 → DB 저장
  *
  * Flow:
  * 1. PDF 업로드 (Robust Parser)
@@ -9,6 +9,8 @@
  * 3. GPT-4 정밀 분석 (가격/캣넘버/납기 추출)
  * 4. Prisma DB 자동 저장 (status: PARSED)
  * 5. 사용자는 "확인" 버튼만 누르면 끝
+ *
+ * 구조화 진단 로깅: requestId 기반 전체 파이프라인 추적
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,6 +18,11 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { robustParsePDF } from '@/lib/ai/robust-pdf-parser';
 import { parseQuoteWithAI } from '@/lib/ai/quote-ai-parser';
+import {
+  logPipelineStage,
+  createRequestId,
+  type PipelineErrorCode,
+} from '@/lib/ai/pipeline-logger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Vercel Pro: 60초
@@ -27,8 +34,10 @@ interface ExtractPDFResponse {
   itemCount?: number;
   totalAmount?: number;
   error?: string;
+  errorCode?: string;
   extractionMethod?: string;
   confidence?: string;
+  requestId?: string;
 }
 
 /**
@@ -36,6 +45,8 @@ interface ExtractPDFResponse {
  * PDF 견적서 업로드 → AI 분석 → DB 저장
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ExtractPDFResponse>> {
+  const requestId = createRequestId();
+  const pipelineStart = Date.now();
   let session;
 
   try {
@@ -48,15 +59,33 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
     const file = formData.get('file') as File;
 
     if (!file) {
+      logPipelineStage({
+        stage: "final_failure",
+        requestId,
+        timestamp: new Date().toISOString(),
+        errorCode: "UPLOAD_FAILED",
+        errorMessage: "No file provided",
+        durationMs: Date.now() - pipelineStart,
+      });
       return NextResponse.json(
-        { success: false, error: '파일이 없습니다.' },
+        { success: false, error: '파일이 없습니다.', requestId },
         { status: 400 }
       );
     }
 
     if (file.type !== 'application/pdf') {
+      logPipelineStage({
+        stage: "final_failure",
+        requestId,
+        timestamp: new Date().toISOString(),
+        errorCode: "UNSUPPORTED_FORMAT",
+        errorMessage: `Unsupported MIME: ${file.type}`,
+        fileName: file.name,
+        fileSize: file.size,
+        durationMs: Date.now() - pipelineStart,
+      });
       return NextResponse.json(
-        { success: false, error: 'PDF 파일만 업로드 가능합니다.' },
+        { success: false, error: 'PDF 파일만 업로드 가능합니다.', errorCode: 'UNSUPPORTED_FORMAT', requestId },
         { status: 400 }
       );
     }
@@ -64,15 +93,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
     // 파일 크기 제한 (20MB)
     if (file.size > 20 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: '파일 크기는 20MB 이하여야 합니다.' },
+        { success: false, error: '파일 크기는 20MB 이하여야 합니다.', requestId },
         { status: 400 }
       );
     }
 
-    console.log('[Extract PDF] Processing file:', {
-      name: file.name,
-      size: `${(file.size / 1024).toFixed(1)} KB`,
-      userId,
+    logPipelineStage({
+      stage: "upload_received",
+      requestId,
+      timestamp: new Date().toISOString(),
+      fileName: file.name,
+      mimeType: file.type,
+      fileSize: file.size,
     });
 
     // 3. PDF → Buffer 변환
@@ -80,40 +112,79 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
     const buffer = Buffer.from(arrayBuffer);
 
     // 4. Robust PDF Parser (Fail-safe)
-    console.log('[Extract PDF] Step 1: Text extraction...');
-    const pdfResult = await robustParsePDF(buffer);
+    logPipelineStage({
+      stage: "pdf_parse_started",
+      requestId,
+      timestamp: new Date().toISOString(),
+      fileName: file.name,
+    });
+
+    const pdfParseStart = Date.now();
+    const pdfResult = await robustParsePDF(buffer, file.size);
 
     if (!pdfResult.success || !pdfResult.text) {
-      console.error('[Extract PDF] Text extraction failed:', pdfResult.error);
+      logPipelineStage({
+        stage: "pdf_parse_failed",
+        requestId,
+        timestamp: new Date().toISOString(),
+        errorCode: (pdfResult.errorCode as PipelineErrorCode) ?? "PDF_NO_TEXT",
+        errorMessage: pdfResult.error,
+        durationMs: Date.now() - pdfParseStart,
+        fileName: file.name,
+      });
       return NextResponse.json(
         {
           success: false,
           error: pdfResult.error || 'PDF 텍스트 추출 실패',
+          errorCode: pdfResult.errorCode,
           extractionMethod: pdfResult.extractionMethod,
+          requestId,
         },
         { status: 400 }
       );
     }
 
-    console.log('[Extract PDF] Text extracted:', {
-      method: pdfResult.extractionMethod,
-      length: pdfResult.text.length,
-      pages: pdfResult.metadata?.pages,
+    logPipelineStage({
+      stage: "pdf_parse_completed",
+      requestId,
+      timestamp: new Date().toISOString(),
+      extractionMethod: pdfResult.extractionMethod,
+      extractedTextLength: pdfResult.text.length,
+      pageCount: pdfResult.metadata?.pages,
+      hasTextLayer: pdfResult.metadata?.hasTextLayer,
+      durationMs: Date.now() - pdfParseStart,
     });
 
     // 5. GPT-4 AI 분석 (정밀 파싱)
-    console.log('[Extract PDF] Step 2: AI analysis...');
-    const aiResult = await parseQuoteWithAI(pdfResult.text);
+    logPipelineStage({
+      stage: "llm_request_started",
+      requestId,
+      timestamp: new Date().toISOString(),
+      model: "gpt-4o",
+      textLength: pdfResult.text.length,
+    });
 
-    console.log('[Extract PDF] AI analysis complete:', {
+    const llmStart = Date.now();
+    const aiResult = await parseQuoteWithAI(pdfResult.text, requestId);
+
+    logPipelineStage({
+      stage: "llm_response_received",
+      requestId,
+      timestamp: new Date().toISOString(),
       vendor: aiResult.vendor,
       itemCount: aiResult.items.length,
       confidence: aiResult.confidence,
-      totalAmount: aiResult.totalAmount,
+      durationMs: Date.now() - llmStart,
     });
 
     // 6. DB 저장 (Prisma Transaction)
-    console.log('[Extract PDF] Step 3: Saving to database...');
+    logPipelineStage({
+      stage: "db_save_started",
+      requestId,
+      timestamp: new Date().toISOString(),
+    });
+
+    const dbStart = Date.now();
 
     // 사용자의 조직 찾기
     let organizationId: string | null = null;
@@ -159,9 +230,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       },
     });
 
-    if (process.env.NODE_ENV === "development") {
-      console.log('[Extract PDF] ✅ Success! Quote created:', quote.id);
-    }
+    logPipelineStage({
+      stage: "db_save_completed",
+      requestId,
+      timestamp: new Date().toISOString(),
+      quoteId: quote.id,
+      durationMs: Date.now() - dbStart,
+    });
+
+    logPipelineStage({
+      stage: "final_success",
+      requestId,
+      timestamp: new Date().toISOString(),
+      durationMs: Date.now() - pipelineStart,
+      vendor: aiResult.vendor,
+      itemCount: aiResult.items.length,
+      quoteId: quote.id,
+    });
 
     // 7. 성공 응답
     return NextResponse.json({
@@ -172,19 +257,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       totalAmount: aiResult.totalAmount || undefined,
       extractionMethod: pdfResult.extractionMethod,
       confidence: aiResult.confidence,
+      requestId,
     });
   } catch (error) {
-    console.error('[Extract PDF] ❌ Fatal error:', error);
-
     const errorMessage =
       error instanceof Error
         ? error.message
         : 'PDF 처리 중 알 수 없는 오류가 발생했습니다.';
 
+    logPipelineStage({
+      stage: "final_failure",
+      requestId,
+      timestamp: new Date().toISOString(),
+      errorCode: "UNKNOWN",
+      errorMessage,
+      durationMs: Date.now() - pipelineStart,
+    });
+
     return NextResponse.json(
       {
         success: false,
         error: errorMessage,
+        requestId,
       },
       { status: 500 }
     );
