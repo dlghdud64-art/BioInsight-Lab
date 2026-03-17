@@ -26,6 +26,8 @@ export interface WorkQueueItem {
   urgencyScore: number;
   totalScore: number;
   urgencyReason: string | null;
+  // ── Assignment ──
+  assigneeId: string | null;
 }
 
 export interface WorkQueueResponse {
@@ -310,14 +312,17 @@ export function useEntityQueueItems(
  *
  * grouped=true로 API 호출하여 콘솔 그룹 + 요약 반환.
  */
-export function useWorkQueueConsole(organizationId?: string) {
+export function useWorkQueueConsole(
+  organizationId?: string,
+  view?: import("@/lib/work-queue/console-assignment").ConsoleView,
+) {
   return useQuery<{
     groups: import("@/lib/work-queue/console-grouping").ConsoleGroup[];
     summary: import("@/lib/work-queue/console-grouping").ConsoleSummary;
     activeCount: number;
     completedCount: number;
   }>({
-    queryKey: [...WORK_QUEUE_KEYS.all, "console", organizationId] as const,
+    queryKey: [...WORK_QUEUE_KEYS.all, "console", organizationId, view] as const,
     queryFn: async () => {
       const params = new URLSearchParams({
         grouped: "true",
@@ -325,6 +330,7 @@ export function useWorkQueueConsole(organizationId?: string) {
         includeCompleted: "true",
       });
       if (organizationId) params.set("organizationId", organizationId);
+      if (view && view !== "all") params.set("view", view);
 
       const res = await fetch(`/api/work-queue?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch console data");
@@ -333,6 +339,41 @@ export function useWorkQueueConsole(organizationId?: string) {
     staleTime: 2 * 60 * 1000, // 2분
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * 배정 액션 실행 — 낙관적 업데이트
+ *
+ * claim/assign/reassign/mark_in_progress/mark_blocked/hand_off 지원.
+ */
+export function useAssignmentAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      itemId: string;
+      action: string;
+      targetUserId?: string;
+      note?: string;
+      nextAction?: string;
+    }) => {
+      const res = await fetch("/api/work-queue/assignment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Assignment action failed");
+      }
+      return res.json();
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["ai-actions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
   });
 }
 

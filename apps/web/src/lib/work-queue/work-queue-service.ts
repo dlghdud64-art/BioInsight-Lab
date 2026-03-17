@@ -219,6 +219,9 @@ export interface WorkQueueFilters {
   completedSince?: Date; // completed 항목을 이 시각 이후만 포함
   relatedEntityType?: string;
   relatedEntityId?: string;
+  // ── Assignment filters ──
+  assigneeId?: string;
+  unassignedOnly?: boolean;
 }
 
 export interface WorkQueueItem {
@@ -240,6 +243,8 @@ export interface WorkQueueItem {
   urgencyScore: number;
   totalScore: number;
   urgencyReason: string | null;
+  // ── Assignment ──
+  assigneeId: string | null;
 }
 
 /**
@@ -280,6 +285,14 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
     where.relatedEntityId = filters.relatedEntityId;
   }
 
+  // Assignment filters
+  if (filters.assigneeId) {
+    where.assigneeId = filters.assigneeId;
+  }
+  if (filters.unassignedOnly) {
+    where.assigneeId = null;
+  }
+
   if (filters.includeCompleted && filters.completedSince) {
     where.OR = [
       { taskStatus: { not: "COMPLETED" as any } },
@@ -301,6 +314,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
         summary: true,
         relatedEntityType: true,
         relatedEntityId: true,
+        assigneeId: true,
         payload: true,
         createdAt: true,
         updatedAt: true,
@@ -349,6 +363,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
       urgencyScore: scores.urgencyScore,
       totalScore: scores.totalScore,
       urgencyReason: scores.urgencyReason,
+      assigneeId: item.assigneeId ?? null,
     };
   });
 
@@ -376,13 +391,16 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
  *
  * queryWorkQueue 결과를 groupForConsole로 그룹화하여 반환합니다.
  */
-export async function queryWorkQueueGrouped(filters: WorkQueueFilters): Promise<{
+export async function queryWorkQueueGrouped(filters: WorkQueueFilters & {
+  view?: import("./console-assignment").ConsoleView;
+  viewUserId?: string;
+} = {}): Promise<{
   groups: import("./console-grouping").ConsoleGroup[];
   summary: import("./console-grouping").ConsoleSummary;
   activeCount: number;
   completedCount: number;
 }> {
-  const { groupForConsole, computeConsoleSummary } = await import("./console-grouping");
+  const { groupForConsole, groupForConsoleWithView, computeConsoleSummary } = await import("./console-grouping");
 
   const result = await queryWorkQueue({
     ...filters,
@@ -390,8 +408,13 @@ export async function queryWorkQueueGrouped(filters: WorkQueueFilters): Promise<
     limit: filters.limit || 100,
   });
 
-  const groups = groupForConsole(result.items);
-  const summary = computeConsoleSummary(groups);
+  const view = filters.view || "all";
+  const userId = filters.viewUserId;
+
+  const groups = view !== "all" && userId
+    ? groupForConsoleWithView(result.items, view, userId)
+    : groupForConsole(result.items, userId);
+  const summary = computeConsoleSummary(groups, userId);
 
   return {
     groups,
@@ -399,6 +422,153 @@ export async function queryWorkQueueGrouped(filters: WorkQueueFilters): Promise<
     activeCount: result.activeCount,
     completedCount: result.completedCount,
   };
+}
+
+// ── Assignment Action Execution ──
+
+export interface AssignmentActionParams {
+  itemId: string;
+  action: import("./console-assignment").AssignmentAction;
+  actorUserId: string;
+  targetUserId?: string;
+  note?: string;
+  nextAction?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+/**
+ * 배정 액션 실행 — 단일 트랜잭션
+ *
+ * 1. 현재 상태 조회 + canTransition 확인
+ * 2. validateAction 검증
+ * 3. assigneeId + payload 업데이트
+ * 4. ActivityLog 기록
+ */
+export async function executeAssignmentAction(params: AssignmentActionParams): Promise<void> {
+  const {
+    resolveAssignmentState,
+    canTransition,
+    validateAction,
+    buildHandoffPayload,
+    ASSIGNMENT_ACTION_DEFS,
+  } = await import("./console-assignment");
+
+  const { itemId, action, actorUserId, targetUserId, note, nextAction, ipAddress, userAgent } = params;
+
+  // Pre-validate action params
+  const validation = validateAction(action, {
+    actorUserId,
+    targetUserId,
+    note,
+  });
+  if (!validation.valid) {
+    throw new Error(validation.error || "유효하지 않은 액션입니다.");
+  }
+
+  const actionDef = ASSIGNMENT_ACTION_DEFS[action];
+
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    // 1. 현재 상태 조회
+    const current = await tx.aiActionItem.findUniqueOrThrow({
+      where: { id: itemId },
+      select: {
+        assigneeId: true,
+        payload: true,
+        taskStatus: true,
+        organizationId: true,
+        title: true,
+        type: true,
+      },
+    });
+
+    const metadata = (current.payload || {}) as Record<string, unknown>;
+    const currentState = resolveAssignmentState({
+      assigneeId: current.assigneeId,
+      metadata,
+      taskStatus: current.taskStatus,
+    });
+
+    // 2. 전이 가능 여부 확인
+    if (!canTransition(currentState, action)) {
+      throw new Error(
+        `현재 상태(${currentState})에서 ${action} 액션은 수행할 수 없습니다.`
+      );
+    }
+
+    // 3. 업데이트 데이터 구성
+    const newPayload = { ...metadata };
+    newPayload.assignmentState = actionDef.toState;
+
+    let newAssigneeId: string | null = current.assigneeId;
+
+    switch (action) {
+      case "claim":
+        newAssigneeId = actorUserId;
+        break;
+      case "assign":
+      case "reassign":
+        newAssigneeId = targetUserId ?? null;
+        break;
+      case "hand_off": {
+        newAssigneeId = targetUserId ?? null;
+        const handoffPayload = buildHandoffPayload({
+          fromUserId: actorUserId,
+          toUserId: targetUserId!,
+          note: note!,
+          nextAction: nextAction ?? "",
+        });
+        newPayload.handoff = handoffPayload.handoff;
+        // Append to handoff history
+        const history = Array.isArray(metadata.handoffHistory)
+          ? [...(metadata.handoffHistory as unknown[])]
+          : [];
+        history.push(handoffPayload.handoff);
+        newPayload.handoffHistory = history;
+        break;
+      }
+      // mark_in_progress, mark_blocked: assignee stays the same
+    }
+
+    // 4. DB UPDATE
+    await tx.aiActionItem.update({
+      where: { id: itemId },
+      data: {
+        assigneeId: newAssigneeId,
+        payload: newPayload as Prisma.JsonObject,
+      },
+    });
+
+    // 5. ActivityLog
+    const actorRole = await getActorRole(actorUserId, current.organizationId);
+    await createActivityLog(
+      {
+        activityType: actionDef.activityLogEvent as any,
+        entityType: "AI_ACTION",
+        entityId: itemId,
+        taskType: current.type,
+        beforeStatus: current.taskStatus,
+        afterStatus: current.taskStatus,
+        userId: actorUserId,
+        organizationId: current.organizationId,
+        actorRole,
+        metadata: {
+          title: current.title,
+          action,
+          assignmentState_before: currentState,
+          assignmentState_after: actionDef.toState,
+          assigneeId_before: current.assigneeId,
+          assigneeId_after: newAssigneeId,
+          targetUserId,
+          note,
+          nextAction,
+        },
+        ipAddress,
+        userAgent,
+      },
+      tx
+    );
+  });
 }
 
 // ── Helpers ──

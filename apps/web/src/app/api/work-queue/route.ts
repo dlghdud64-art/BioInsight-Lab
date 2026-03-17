@@ -40,10 +40,13 @@ export async function GET(request: NextRequest) {
 
     // Grouped mode — 콘솔용
     if (grouped) {
+      const view = (searchParams.get("view") || "all") as import("@/lib/work-queue/console-assignment").ConsoleView;
       const result = await queryWorkQueueGrouped({
         userId: session.user.id,
         organizationId,
         limit: limit || 100,
+        view,
+        viewUserId: session.user.id,
       });
       return NextResponse.json(result);
     }

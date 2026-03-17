@@ -108,6 +108,7 @@ export type {
 
 export {
   groupForConsole,
+  groupForConsoleWithView,
   resolveOwnerRole,
   resolveConsoleCta,
   computeConsoleSummary,
@@ -120,3 +121,38 @@ export type {
   GroupedItem,
   ConsoleSummary,
 } from "./console-grouping";
+
+export {
+  resolveAssignmentState,
+  canTransition,
+  validateAction,
+  buildHandoffPayload,
+  extractHandoffInfo,
+  isMyWork,
+  isUnassigned,
+  shouldActorAct,
+  filterForView,
+  getAvailableActions,
+  ASSIGNMENT_STATE_DEFS,
+  ASSIGNMENT_ACTION_DEFS,
+  ASSIGNMENT_STATE_LABELS,
+  ASSIGNMENT_ACTION_LABELS,
+  CONSOLE_VIEW_LABELS,
+} from "./console-assignment";
+
+export type {
+  AssignmentState,
+  AssignmentAction,
+  ConsoleView,
+  HandoffInfo,
+  AssignmentStateDef,
+  AssignmentActionDef,
+} from "./console-assignment";
+
+export {
+  executeAssignmentAction,
+} from "./work-queue-service";
+
+export type {
+  AssignmentActionParams,
+} from "./work-queue-service";

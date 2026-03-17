@@ -21,6 +21,18 @@ import {
   PRIORITY_TIER_DEFS,
   type PriorityTier,
 } from "./console-priorities";
+import {
+  resolveAssignmentState,
+  extractHandoffInfo,
+  shouldActorAct as checkShouldActorAct,
+  isMyWork,
+  isUnassigned,
+  filterForView,
+  ASSIGNMENT_STATE_LABELS,
+  type AssignmentState,
+  type ConsoleView,
+  type HandoffInfo,
+} from "./console-assignment";
 
 // ── Types ──
 
@@ -49,6 +61,12 @@ export interface GroupedItem extends WorkQueueItem {
   nextQueueLabel: string | null;
   tierIndicator: string;
   tierColor: string;
+  // ── Assignment fields ──
+  assignmentState: AssignmentState;
+  assigneeId: string | null;
+  handoffInfo: HandoffInfo | null;
+  shouldActorAct: boolean;
+  assignmentStateLabel: string;
 }
 
 // ── Group Definitions ──
@@ -88,7 +106,7 @@ const TERMINAL_TASK_STATUSES = new Set(["COMPLETED", "FAILED"]);
  *
  * 빈 그룹은 제외됩니다.
  */
-export function groupForConsole(items: WorkQueueItem[]): ConsoleGroup[] {
+export function groupForConsole(items: WorkQueueItem[], userId?: string): ConsoleGroup[] {
   const grouped = new Set<string>();
   const buckets: Record<ConsoleGroupId, GroupedItem[]> = {
     urgent_blockers: [],
@@ -101,7 +119,7 @@ export function groupForConsole(items: WorkQueueItem[]): ConsoleGroup[] {
   };
 
   // Enrich all items first
-  const enriched = items.map((item) => enrichItem(item));
+  const enriched = items.map((item) => enrichItem(item, userId));
 
   // Pass 1: urgent_blockers
   for (const item of enriched) {
@@ -199,6 +217,32 @@ export function groupForConsole(items: WorkQueueItem[]): ConsoleGroup[] {
     .filter((g) => g.items.length > 0);
 }
 
+// ── View-Filtered Grouping ──
+
+/**
+ * 뷰 기반 필터 적용 후 콘솔 그룹으로 분류합니다.
+ *
+ * filterForView()로 사전 필터 → groupForConsole()에 위임.
+ */
+export function groupForConsoleWithView(
+  items: WorkQueueItem[],
+  view: ConsoleView,
+  userId: string,
+): ConsoleGroup[] {
+  // WorkQueueItem에 assigneeId가 없을 수 있으므로 filterForView 호환 형태로 변환
+  const viewItems = items.map((item) => ({
+    ...item,
+    assigneeId: (item as any).assigneeId ?? null,
+    taskStatus: item.taskStatus,
+  }));
+
+  const filtered = view === "all"
+    ? viewItems
+    : filterForView(viewItems, view, userId);
+
+  return groupForConsole(filtered as WorkQueueItem[], userId);
+}
+
 // ── Owner Role Resolution ──
 
 /**
@@ -280,16 +324,25 @@ export interface ConsoleSummary {
   approvalCount: number;
   totalActive: number;
   totalResolved: number;
+  // ── Assignment counters ──
+  myWorkCount: number;
+  unassignedCount: number;
+  handedOffCount: number;
 }
 
 /**
  * 콘솔 그룹에서 요약 통계를 계산합니다.
+ *
+ * userId가 제공되면 myWorkCount/unassignedCount/handedOffCount도 계산합니다.
  */
-export function computeConsoleSummary(groups: ConsoleGroup[]): ConsoleSummary {
+export function computeConsoleSummary(groups: ConsoleGroup[], userId?: string): ConsoleSummary {
   let urgentCount = 0;
   let approvalCount = 0;
   let totalActive = 0;
   let totalResolved = 0;
+  let myWorkCount = 0;
+  let unassignedCount = 0;
+  let handedOffCount = 0;
 
   for (const group of groups) {
     if (group.id === "urgent_blockers") {
@@ -301,10 +354,17 @@ export function computeConsoleSummary(groups: ConsoleGroup[]): ConsoleSummary {
     if (group.id === "recently_resolved") {
       totalResolved = group.items.length;
     }
-    totalActive += group.items.filter((i) => !TERMINAL_TASK_STATUSES.has(i.taskStatus)).length;
+    for (const item of group.items) {
+      if (!TERMINAL_TASK_STATUSES.has(item.taskStatus)) {
+        totalActive++;
+        if (userId && item.assigneeId === userId) myWorkCount++;
+        if (!item.assigneeId && !TERMINAL_TASK_STATUSES.has(item.taskStatus)) unassignedCount++;
+        if (item.assignmentState === "handed_off") handedOffCount++;
+      }
+    }
   }
 
-  return { urgentCount, approvalCount, totalActive, totalResolved };
+  return { urgentCount, approvalCount, totalActive, totalResolved, myWorkCount, unassignedCount, handedOffCount };
 }
 
 // ── Owner Role Labels ──
@@ -317,11 +377,21 @@ export const OWNER_ROLE_LABELS: Record<string, string> = {
 
 // ── Helpers ──
 
-function enrichItem(item: WorkQueueItem): GroupedItem {
+function enrichItem(item: WorkQueueItem, userId?: string): GroupedItem {
   const tier = computeFinalTier(item);
   const ownerRole = resolveOwnerRole(item);
   const cta = resolveConsoleCta(item);
   const tierDef = PRIORITY_TIER_DEFS[tier];
+
+  // Assignment fields
+  const assignmentItem = {
+    assigneeId: (item as any).assigneeId ?? null,
+    metadata: item.metadata ?? {},
+    taskStatus: item.taskStatus,
+  };
+  const assignmentState = resolveAssignmentState(assignmentItem);
+  const handoffInfo = extractHandoffInfo(item.metadata ?? {});
+  const actorShouldAct = userId ? checkShouldActorAct(assignmentItem, userId) : false;
 
   return {
     ...item,
@@ -332,6 +402,11 @@ function enrichItem(item: WorkQueueItem): GroupedItem {
     nextQueueLabel: cta.nextLabel,
     tierIndicator: tierDef.label,
     tierColor: tierDef.visualIndicator,
+    assignmentState,
+    assigneeId: assignmentItem.assigneeId,
+    handoffInfo,
+    shouldActorAct: actorShouldAct,
+    assignmentStateLabel: ASSIGNMENT_STATE_LABELS[assignmentState],
   };
 }
 

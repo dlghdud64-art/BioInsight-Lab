@@ -44,6 +44,7 @@ function makeItem(overrides: Partial<WorkQueueItem> = {}): WorkQueueItem {
     urgencyScore: 10,
     totalScore: 60,
     urgencyReason: null,
+    assigneeId: null,
     ...overrides,
   };
 }
