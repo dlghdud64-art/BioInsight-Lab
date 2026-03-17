@@ -29,6 +29,10 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
+  /** Muted semantic tint for default icon state */
+  tint?: string;
+  /** Brighter tint for active icon */
+  activeTint?: string;
 }
 
 interface SidebarGroup {
@@ -36,7 +40,7 @@ interface SidebarGroup {
   items: NavItem[];
 }
 
-// 메뉴 그룹 정의
+// 메뉴 그룹 정의 — 섹션별 muted semantic tint
 const sidebarGroups: SidebarGroup[] = [
   {
     label: "구매 및 예산 (PURCHASE)",
@@ -45,21 +49,29 @@ const sidebarGroups: SidebarGroup[] = [
         title: "견적 관리",
         href: "/dashboard/quotes",
         icon: ClipboardList,
+        tint: "text-blue-400/50",
+        activeTint: "text-blue-400",
       },
       {
         title: "구매 운영",
         href: "/dashboard/purchases",
         icon: ShoppingCart,
+        tint: "text-blue-400/50",
+        activeTint: "text-blue-400",
       },
       {
         title: "구매 리포트",
         href: "/dashboard/reports",
         icon: BarChartBig,
+        tint: "text-violet-400/50",
+        activeTint: "text-violet-400",
       },
       {
         title: "예산 관리",
         href: "/dashboard/budget",
         icon: Wallet,
+        tint: "text-violet-400/50",
+        activeTint: "text-violet-400",
       },
     ],
   },
@@ -70,16 +82,22 @@ const sidebarGroups: SidebarGroup[] = [
         title: "재고 관리",
         href: "/dashboard/inventory",
         icon: Package,
+        tint: "text-teal-400/50",
+        activeTint: "text-teal-400",
       },
       {
         title: "조직 관리",
         href: "/dashboard/organizations",
         icon: Users,
+        tint: "text-purple-400/50",
+        activeTint: "text-purple-400",
       },
       {
         title: "안전 관리",
         href: "/dashboard/safety",
         icon: ShieldAlert,
+        tint: "text-amber-400/50",
+        activeTint: "text-amber-400",
       },
     ],
   },
@@ -90,6 +108,8 @@ const sidebarGroups: SidebarGroup[] = [
         title: "설정",
         href: "/dashboard/settings",
         icon: SlidersHorizontal,
+        tint: "text-slate-500",
+        activeTint: "text-slate-300",
       },
     ],
   },
@@ -101,17 +121,21 @@ const adminMenuItems: NavItem[] = [
   { title: "감사 증적 (Audit Trail)", href: "/dashboard/audit", icon: ShieldCheck },
 ];
 
-// 대시보드 링크 (상단에 별도 배치)
-const dashboardLinks = [
+// 대시보드 링크 (상단에 별도 배치) — blue-cyan tint
+const dashboardLinks: NavItem[] = [
   {
     title: "대시보드",
     href: "/dashboard",
     icon: LayoutGrid,
+    tint: "text-cyan-400/50",
+    activeTint: "text-cyan-400",
   },
   {
     title: "지출 분석",
     href: "/dashboard/analytics",
     icon: TrendingUp,
+    tint: "text-cyan-400/50",
+    activeTint: "text-cyan-400",
   },
 ];
 
@@ -186,10 +210,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
-          <nav className="space-y-1">
+          <nav className="space-y-0.5">
             {dashboardLinks.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href + "/"));
+              const exactDashboard = item.href === "/dashboard" && pathname === "/dashboard";
+              const active = exactDashboard || isActive;
 
               return (
                 <Link
@@ -198,12 +224,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
-                    isActive
+                    active
                       ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
                       : "text-slate-400 hover:bg-[#181c22] hover:text-slate-200"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", active ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -218,7 +244,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
                 {group.label}
               </h3>
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
@@ -235,7 +261,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                           : "text-slate-400 hover:bg-[#181c22] hover:text-slate-200"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-[10px] md:text-xs bg-[#1a1e24] text-slate-400 px-1.5 py-0.5 rounded">

@@ -19,7 +19,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
-  Search, Bell, HelpCircle, ChevronRight,
+  Search, Bell, HelpCircle, ChevronRight, Home,
   AlertTriangle, FileText, Truck, BookOpen, Headphones,
   SlidersHorizontal, CreditCard, LogOut,
   ShieldAlert, Clock, ClipboardCheck, Menu,
@@ -191,7 +191,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#1a1e24] bg-[#070a0e]">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#1a1e24] bg-[#0a0d11]">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -205,12 +205,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
                 {index > 0 && (
-                  <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
                 )}
                 {index === breadcrumbs.length - 1 ? (
-                  <span className="font-normal text-sm text-slate-200 truncate">
+                  <span className="font-medium text-sm text-slate-200 truncate">
                     {crumb.label}
                   </span>
+                ) : index === 0 ? (
+                  <Link
+                    href={crumb.href}
+                    className="flex items-center gap-1 hover:text-slate-100 transition-colors"
+                  >
+                    <Home className="h-3.5 w-3.5 flex-shrink-0" />
+                  </Link>
                 ) : (
                   <Link
                     href={crumb.href}
