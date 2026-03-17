@@ -387,3 +387,26 @@ export type {
   NonBlockerReassessment,
   ScopeDecisionCriteria,
 } from "./console-v1-pilot-observation";
+
+export {
+  TYPOGRAPHY,
+  SPACING,
+  SURFACE,
+  SEVERITY_INDICATORS,
+  CTA_HIERARCHY,
+  QUEUE_COLUMNS,
+  METADATA_ORDER,
+  getSeverityIndicator,
+  getCtaVariant,
+} from "./console-visual-grammar";
+
+export type {
+  SeverityIndicator,
+  QueueColumnDef,
+  CtaRule,
+  CtaLevel,
+  TypographyKey,
+  SpacingKey,
+  SurfaceKey,
+  MetadataField,
+} from "./console-visual-grammar";
