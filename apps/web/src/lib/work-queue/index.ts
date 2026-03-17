@@ -306,3 +306,32 @@ export type {
   RemediationConsoleView,
   RemediationReportSignals,
 } from "./console-bottleneck-remediation";
+
+export {
+  CANONICAL_TERMS,
+  SEVERITY_STYLES,
+  SLA_COMPLIANCE_STYLES,
+  getSLAComplianceStyle,
+  formatRelativeTime,
+  formatDuration,
+  CTA_VARIANTS,
+  EDGE_STATE_MESSAGES,
+  detectEdgeStates,
+  CONSOLE_MODE_DEFS,
+  CONSOLE_MODE_LABELS,
+  CONSOLE_MODE_ORDER,
+  PILOT_SCENARIOS,
+  PILOT_CHECKLIST,
+  PRE_EXISTING_ISSUES,
+  hasBlockerIssues,
+} from "./console-v1-productization";
+
+export type {
+  CanonicalTermKey,
+  EdgeStateId,
+  EdgeStateMessage,
+  ConsoleMode,
+  StabilityClassification,
+  PreExistingIssue,
+  PilotScenario,
+} from "./console-v1-productization";
