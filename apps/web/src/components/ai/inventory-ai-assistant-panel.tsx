@@ -75,13 +75,14 @@ export function InventoryAiAssistantPanel({
 }: InventoryAiAssistantPanelProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
+      {/* Overlay: reduced opacity for clearer drawer separation */}
       <SheetContent
         side="right"
-        className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
+        className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden bg-[#1e2530] border-l border-slate-700/50"
       >
-        {/* ═══ 1. 헤더 ═══ */}
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-800/50 flex-shrink-0">
-          <SheetTitle className="text-base font-bold text-slate-100">
+        {/* 1. Header */}
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-700/60 flex-shrink-0">
+          <SheetTitle className="text-base font-bold text-slate-50">
             {state === "empty" && "재고 운영 도우미"}
             {state === "loading" && "재고 운영 도우미"}
             {state === "success" && "재고 운영 도우미"}
@@ -99,15 +100,15 @@ export function InventoryAiAssistantPanel({
           </SheetDescription>
         </SheetHeader>
 
-        {/* ═══ 스크롤 영역 ═══ */}
+        {/* Scroll area */}
         <div className="flex-1 overflow-y-auto">
           {state === "empty" && <EmptyState />}
           {state === "loading" && <LoadingState />}
           {state === "error" && <ErrorState onRetry={onRetry} />}
 
           {(state === "success" || state === "warning_shortage" || state === "warning_expiry") && (
-            <div className="divide-y divide-slate-800/50">
-              {/* 2. 재고 위험 요약 */}
+            <div className="divide-y divide-slate-700/40">
+              {/* 2. Stock risk summary */}
               {data.stockStatus && (
                 <StockSummarySection
                   stockStatus={data.stockStatus}
@@ -115,7 +116,7 @@ export function InventoryAiAssistantPanel({
                 />
               )}
 
-              {/* 3. 확인 필요한 재고 이슈 */}
+              {/* 3. Issues requiring attention */}
               {data.issues.length > 0 && (
                 <IssueWarningsSection
                   issues={data.issues}
@@ -123,7 +124,7 @@ export function InventoryAiAssistantPanel({
                 />
               )}
 
-              {/* 4. 재발주 우선순위 */}
+              {/* 4. Reorder priority */}
               {data.reorderRecommendation && (
                 <ReorderSection
                   recommendation={data.reorderRecommendation}
@@ -133,7 +134,7 @@ export function InventoryAiAssistantPanel({
                 />
               )}
 
-              {/* 5. Lot 및 유효기간 확인 */}
+              {/* 5. Lot & expiry check */}
               {data.lots.length > 0 && (
                 <LotExpirySection
                   lots={data.lots}
@@ -143,7 +144,7 @@ export function InventoryAiAssistantPanel({
                 />
               )}
 
-              {/* 6. 운영 영향 */}
+              {/* 6. Business impact */}
               {data.impacts.length > 0 && (
                 <BusinessImpactSection
                   impacts={data.impacts}
@@ -154,7 +155,7 @@ export function InventoryAiAssistantPanel({
           )}
         </div>
 
-        {/* ═══ 7. 최종 액션 (Sticky Bottom) ═══ */}
+        {/* 7. Sticky bottom actions */}
         {(state === "success" || state === "warning_shortage" || state === "warning_expiry") && (
           <StickyActions
             data={data}
@@ -176,13 +177,13 @@ export function InventoryAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-slate-800/50 p-4 mb-4">
+      <div className="rounded-full bg-[#252d3a] border border-slate-700/40 p-4 mb-4">
         <Package className="h-8 w-8 text-slate-400" />
       </div>
-      <p className="text-sm font-medium text-slate-400">
+      <p className="text-sm font-medium text-slate-300">
         재고 품목을 선택하면 여기에서 확인할 수 있습니다
       </p>
-      <p className="text-xs text-slate-500 mt-1.5 max-w-[240px]">
+      <p className="text-xs text-slate-400 mt-1.5 max-w-[240px]">
         부족 재고, 유효기간 임박, 재발주 시점 등을 분석하고 필요한 조치를 안내합니다.
       </p>
     </div>
@@ -195,25 +196,25 @@ function LoadingState() {
     <div className="p-5 space-y-5">
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-slate-800/30">
+          <div key={i} className="p-3 rounded-lg bg-[#252d3a] border border-slate-700/40">
             <Skeleton className="h-3 w-16 mb-2" />
             <Skeleton className="h-6 w-10" />
           </div>
         ))}
       </div>
-      <Separator />
+      <Separator className="bg-slate-700/40" />
       <div>
         <Skeleton className="h-3 w-28 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-slate-800">
+            <div key={i} className="p-3 rounded-lg border border-slate-700/40 bg-[#252d3a]">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-3 w-3/4" />
             </div>
           ))}
         </div>
       </div>
-      <Separator />
+      <Separator className="bg-slate-700/40" />
       <div>
         <Skeleton className="h-3 w-24 mb-3" />
         <Skeleton className="h-24 w-full rounded-lg" />
@@ -226,16 +227,16 @@ function LoadingState() {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-red-950/30 p-4 mb-4">
-        <TriangleAlert className="h-8 w-8 text-red-500" />
+      <div className="rounded-full bg-red-950/40 border border-red-800/40 p-4 mb-4">
+        <TriangleAlert className="h-8 w-8 text-red-400" />
       </div>
-      <p className="text-sm font-medium text-slate-300">
+      <p className="text-sm font-medium text-slate-200">
         재고 조치 정보를 준비하지 못했습니다
       </p>
-      <p className="text-xs text-slate-500 mt-1.5 max-w-[260px]">
+      <p className="text-xs text-slate-400 mt-1.5 max-w-[260px]">
         재고 수량, lot, 입고 예정 정보를 확인한 뒤 다시 시도해 주세요.
       </p>
-      <Button variant="outline" size="sm" className="mt-4 h-8 text-xs" onClick={onRetry}>
+      <Button variant="outline" size="sm" className="mt-4 h-8 text-xs border-slate-600/50 text-slate-300" onClick={onRetry}>
         <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
         다시 불러오기
       </Button>
@@ -243,7 +244,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// ── 2. 재고 위험 요약 ──
+// ── 2. Stock Risk Summary ──
 function StockSummarySection({
   stockStatus,
   item,
@@ -253,13 +254,13 @@ function StockSummarySection({
 }) {
   const unit = item?.unit || "ea";
 
-  // 재고 비율에 따른 색상
+  // Color based on stock ratio
   const ratioColor =
     stockStatus.stockRatio <= 0.3
-      ? { text: "text-red-400", bg: "bg-red-950/30" }
+      ? { text: "text-red-400", bg: "bg-red-950/40", border: "border-red-800/30" }
       : stockStatus.stockRatio <= 0.7
-      ? { text: "text-amber-400", bg: "bg-amber-950/30" }
-      : { text: "text-emerald-400", bg: "bg-emerald-950/30" };
+      ? { text: "text-amber-400", bg: "bg-amber-950/40", border: "border-amber-800/30" }
+      : { text: "text-emerald-400", bg: "bg-emerald-950/40", border: "border-emerald-800/30" };
 
   const stats = [
     {
@@ -268,6 +269,7 @@ function StockSummarySection({
       value: `${stockStatus.currentQuantity}${unit}`,
       color: ratioColor.text,
       bg: ratioColor.bg,
+      border: ratioColor.border,
     },
     {
       icon: ShieldAlert,
@@ -277,6 +279,7 @@ function StockSummarySection({
         : "미설정",
       color: ratioColor.text,
       bg: ratioColor.bg,
+      border: ratioColor.border,
     },
     {
       icon: Timer,
@@ -286,10 +289,13 @@ function StockSummarySection({
         : "미정",
       color: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
         ? "text-red-400"
-        : "text-slate-400",
+        : "text-slate-300",
       bg: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
-        ? "bg-red-950/30"
-        : "bg-slate-800/30",
+        ? "bg-red-950/40"
+        : "bg-[#252d3a]",
+      border: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
+        ? "border-red-800/30"
+        : "border-slate-700/40",
     },
     {
       icon: AlertTriangle,
@@ -301,49 +307,52 @@ function StockSummarySection({
         ? "text-amber-400"
         : "text-emerald-400",
       bg: stockStatus.actionNeededCount > 0
-        ? "bg-amber-950/30"
-        : "bg-emerald-950/30",
+        ? "bg-amber-950/40"
+        : "bg-emerald-950/40",
+      border: stockStatus.actionNeededCount > 0
+        ? "border-amber-800/30"
+        : "border-emerald-800/30",
     },
   ];
 
   return (
     <div className="p-5">
-      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+      <h4 className="text-xs font-semibold text-slate-50 uppercase tracking-wider mb-3">
         재고 위험 요약
       </h4>
 
-      {/* 품목명 */}
+      {/* Product name */}
       {item && (
         <div className="flex items-center gap-2 mb-3">
           <Beaker className="h-4 w-4 text-slate-400" />
-          <span className="text-sm font-medium text-slate-200 truncate">
+          <span className="text-sm font-medium text-white truncate">
             {item.productName}
           </span>
           {item.brand && (
-            <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+            <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-slate-600/50 text-slate-300">
               {item.brand}
             </Badge>
           )}
         </div>
       )}
 
-      {/* 스탯 그리드 */}
+      {/* Stats grid */}
       <div className="grid grid-cols-2 gap-2.5">
         {stats.map((stat) => {
           const IconComp = stat.icon;
           return (
-            <div key={stat.label} className={`px-3 py-2.5 rounded-lg ${stat.bg}`}>
+            <div key={stat.label} className={`px-3 py-2.5 rounded-lg border ${stat.bg} ${stat.border}`}>
               <div className="flex items-center gap-1.5 mb-1">
                 <IconComp className={`h-3.5 w-3.5 ${stat.color}`} />
                 <span className="text-[11px] text-slate-400">{stat.label}</span>
               </div>
-              <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+              <p className={`text-lg font-bold tabular-nums ${stat.color}`}>{stat.value}</p>
             </div>
           );
         })}
       </div>
 
-      {/* 추가 정보 */}
+      {/* Additional info */}
       {item && (
         <div className="mt-3 space-y-1.5">
           {item.location && (
@@ -355,7 +364,7 @@ function StockSummarySection({
           {stockStatus.expiringLotCount > 0 && (
             <div className="flex items-center gap-2 text-[11px] text-amber-400">
               <CalendarClock className="h-3.5 w-3.5" />
-              <span>유효기간 임박 Lot: <span className="font-medium">{stockStatus.expiringLotCount}건</span></span>
+              <span>유효기간 임박 Lot: <span className="font-bold tabular-nums">{stockStatus.expiringLotCount}건</span></span>
             </div>
           )}
         </div>
@@ -364,7 +373,7 @@ function StockSummarySection({
   );
 }
 
-// ── 3. 확인 필요한 재고 이슈 ──
+// ── 3. Issue Warnings ──
 function IssueWarningsSection({
   issues,
   isShortage,
@@ -388,18 +397,18 @@ function IssueWarningsSection({
   };
 
   return (
-    <div className={`p-5 ${isShortage ? "bg-red-950/10" : "bg-amber-950/10"}`}>
+    <div className={`p-5 ${isShortage ? "bg-red-950/15" : "bg-amber-950/15"}`}>
       <div className="flex items-center gap-2 mb-3">
-        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-400" : "text-amber-400"}`} />
+        <h4 className="text-xs font-semibold text-slate-50 uppercase tracking-wider">
           확인 필요한 재고 이슈
         </h4>
         <Badge
           variant="outline"
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-950/30 text-red-400"
-              : "bg-amber-950/30 text-amber-400"
+              ? "bg-red-950/50 text-red-400 border-red-700/60"
+              : "bg-amber-950/50 text-amber-400 border-amber-700/60"
           }`}
         >
           {issues.length}건
@@ -417,38 +426,38 @@ function IssueWarningsSection({
               key={idx}
               className={`p-3 rounded-lg border ${
                 isError
-                  ? "border-red-800/50 bg-red-950/20"
+                  ? "border-red-700/50 bg-red-950/30"
                   : isWarning
-                  ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-700 bg-slate-800/30"
+                  ? "border-amber-700/50 bg-amber-950/30"
+                  : "border-slate-700/40 bg-[#252d3a]"
               }`}
             >
               <div className="flex items-start gap-2">
                 <IconComp
                   className={`h-3.5 w-3.5 mt-0.5 flex-shrink-0 ${
-                    isError ? "text-red-500" : isWarning ? "text-amber-500" : "text-blue-500"
+                    isError ? "text-red-400" : isWarning ? "text-amber-400" : "text-blue-400"
                   }`}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-medium text-slate-300">
+                    <p className="text-xs font-medium text-slate-200">
                       {issue.message}
                     </p>
                     <Badge
                       variant="outline"
                       className={`text-[9px] h-3.5 px-1 flex-shrink-0 ${
                         isError
-                          ? "text-red-400 border-red-800"
+                          ? "text-red-400 border-red-700/60"
                           : isWarning
-                          ? "text-amber-400 border-amber-800"
-                          : "text-slate-500 border-slate-800"
+                          ? "text-amber-400 border-amber-700/60"
+                          : "text-slate-400 border-slate-600"
                       }`}
                     >
                       {issue.badgeLabel}
                     </Badge>
                   </div>
                   {issue.detail && (
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-300">
                       {issue.detail}
                     </p>
                   )}
@@ -467,7 +476,7 @@ function IssueWarningsSection({
   );
 }
 
-// ── 4. 재발주 우선순위 ──
+// ── 4. Reorder Priority ──
 function ReorderSection({
   recommendation,
   onReviewReorder,
@@ -482,24 +491,24 @@ function ReorderSection({
   const urgencyConfig = {
     urgent: {
       label: "긴급",
-      color: "bg-red-950/30 text-red-400 border-red-800",
+      color: "bg-red-950/50 text-red-400 border-red-700/60",
     },
     high: {
       label: "높음",
-      color: "bg-amber-950/30 text-amber-400 border-amber-800",
+      color: "bg-amber-950/50 text-amber-400 border-amber-700/60",
     },
     medium: {
       label: "보통",
-      color: "bg-blue-950/30 text-blue-400 border-blue-800",
+      color: "bg-blue-950/50 text-blue-400 border-blue-700/60",
     },
   };
 
   const urg = urgencyConfig[recommendation.urgency];
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-orange-950/10" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-orange-950/15" : ""}`}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-50 uppercase tracking-wider">
           재발주 우선순위
         </h4>
         <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${urg.color}`}>
@@ -507,22 +516,22 @@ function ReorderSection({
         </Badge>
       </div>
 
-      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3.5">
-        {/* 권장 수량 */}
+      <div className="rounded-lg border border-slate-700/40 bg-[#252d3a] p-3.5">
+        {/* Recommended qty */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-slate-400">권장 발주 수량</span>
-          <span className="text-base font-bold text-slate-200">
+          <span className="text-base font-bold text-white tabular-nums">
             {recommendation.recommendedQty}
             <span className="text-xs font-normal text-slate-400 ml-0.5">ea</span>
           </span>
         </div>
 
-        {/* 상세 정보 */}
+        {/* Detail info */}
         <div className="space-y-1.5 text-[11px]">
           {recommendation.estimatedMonthlyUsage != null && (
             <div className="flex justify-between text-slate-400">
               <span>월 예상 사용량</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-300 tabular-nums">
                 {Math.round(recommendation.estimatedMonthlyUsage)}ea
               </span>
             </div>
@@ -530,7 +539,7 @@ function ReorderSection({
           {recommendation.estimatedDepletionDays != null && (
             <div className="flex justify-between text-slate-400">
               <span>예상 소진 시점</span>
-              <span className={`font-medium ${
+              <span className={`font-medium tabular-nums ${
                 recommendation.estimatedDepletionDays <= 7
                   ? "text-red-400"
                   : "text-slate-300"
@@ -542,7 +551,7 @@ function ReorderSection({
           {recommendation.leadTimeDays != null && (
             <div className="flex justify-between text-slate-400">
               <span>예상 리드타임</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-300 tabular-nums">
                 {recommendation.leadTimeDays}일
               </span>
             </div>
@@ -558,7 +567,7 @@ function ReorderSection({
           {recommendation.recentUnitPrice != null && (
             <div className="flex justify-between text-slate-400">
               <span>최근 단가 참고</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-300 tabular-nums">
                 ₩{recommendation.recentUnitPrice.toLocaleString()}
               </span>
             </div>
@@ -566,13 +575,13 @@ function ReorderSection({
         </div>
       </div>
 
-      {/* 액션 버튼 */}
+      {/* Action buttons */}
       <div className="flex items-center gap-2 mt-3">
         {onReviewReorder && (
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-[11px] flex-1"
+            className="h-7 text-[11px] flex-1 bg-slate-700/50 text-slate-300 border-slate-600/50 hover:bg-slate-700 hover:text-slate-200"
             onClick={() => onReviewReorder(recommendation)}
           >
             <ShoppingCart className="h-3 w-3 mr-1" />
@@ -583,7 +592,7 @@ function ReorderSection({
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-[11px] flex-1"
+            className="h-7 text-[11px] flex-1 bg-slate-700/50 text-slate-300 border-slate-600/50 hover:bg-slate-700 hover:text-slate-200"
             onClick={() => onViewVendors(recommendation.productName)}
           >
             <Building2 className="h-3 w-3 mr-1" />
@@ -595,7 +604,7 @@ function ReorderSection({
   );
 }
 
-// ── 5. Lot 및 유효기간 확인 ──
+// ── 5. Lot & Expiry Check ──
 function LotExpirySection({
   lots,
   onViewDetail,
@@ -607,7 +616,7 @@ function LotExpirySection({
   onReviewDisposal?: (lotNumber: string) => void;
   isHighlighted: boolean;
 }) {
-  // 위험도 순서: expired → expiringSoon → normal
+  // Sort by risk: expired > expiringSoon > normal
   const sorted = [...lots].sort((a, b) => {
     if (a.isExpired && !b.isExpired) return -1;
     if (!a.isExpired && b.isExpired) return 1;
@@ -625,10 +634,10 @@ function LotExpirySection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-amber-950/10" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-amber-950/15" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
-        <CalendarClock className="h-4 w-4 text-amber-500" />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <CalendarClock className="h-4 w-4 text-amber-400" />
+        <h4 className="text-xs font-semibold text-slate-50 uppercase tracking-wider">
           Lot 및 유효기간 확인
         </h4>
       </div>
@@ -644,10 +653,10 @@ function LotExpirySection({
               key={lot.lotNumber}
               className={`p-3 rounded-lg border ${
                 isExpired
-                  ? "border-red-800/50 bg-red-950/20"
+                  ? "border-red-700/50 bg-red-950/30"
                   : isSoon
-                  ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-700 bg-slate-900/50"
+                  ? "border-amber-700/50 bg-amber-950/30"
+                  : "border-slate-700/40 bg-[#252d3a]"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -658,17 +667,17 @@ function LotExpirySection({
                   </span>
                 </div>
                 {isExpired && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-red-950/30 text-red-400">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-red-950/50 text-red-400 border-red-700/60">
                     만료됨
                   </Badge>
                 )}
                 {isSoon && !isExpired && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-amber-950/30 text-amber-400">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-amber-950/50 text-amber-400 border-amber-700/60">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
                 {!isExpired && !isSoon && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-slate-800">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-400 border-slate-600">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -676,22 +685,22 @@ function LotExpirySection({
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
                 <span>만료일: {formatDate(lot.expiryDate)}</span>
-                <span>수량: {lot.quantity}</span>
+                <span className="tabular-nums">수량: {lot.quantity}</span>
               </div>
 
               {action && (
                 <p className={`text-[11px] font-medium mt-1 ${
-                  isExpired ? "text-red-500" : "text-amber-400"
+                  isExpired ? "text-red-400" : "text-amber-400"
                 }`}>
                   {action}
                 </p>
               )}
 
-              {/* Lot 액션 */}
+              {/* Lot actions */}
               <div className="flex items-center gap-2 mt-2">
                 {onViewDetail && (
                   <button
-                    className="text-[11px] text-blue-500 hover:text-blue-400 font-medium flex items-center gap-0.5"
+                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-0.5"
                     onClick={() => onViewDetail(lot.lotNumber)}
                   >
                     <Eye className="h-3 w-3" />
@@ -700,8 +709,8 @@ function LotExpirySection({
                 )}
                 {(isExpired || isSoon) && onReviewDisposal && (
                   <button
-                    className={`text-[11px] font-medium flex items-center gap-0.5 ml-auto${
-                      isExpired ? "text-red-500 hover:text-red-400" : "text-amber-400 hover:text-amber-700"
+                    className={`text-[11px] font-medium flex items-center gap-0.5 ml-auto ${
+                      isExpired ? "text-red-400 hover:text-red-300" : "text-amber-400 hover:text-amber-300"
                     }`}
                     onClick={() => onReviewDisposal(lot.lotNumber)}
                   >
@@ -718,7 +727,7 @@ function LotExpirySection({
   );
 }
 
-// ── 6. 운영 영향 ──
+// ── 6. Business Impact ──
 function BusinessImpactSection({
   impacts,
   isHighlighted,
@@ -737,10 +746,10 @@ function BusinessImpactSection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-slate-900/20" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-slate-800/20" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
-        <TrendingDown className="h-4 w-4 text-slate-500" />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <TrendingDown className="h-4 w-4 text-slate-400" />
+        <h4 className="text-xs font-semibold text-slate-50 uppercase tracking-wider">
           운영 영향
         </h4>
       </div>
@@ -751,12 +760,12 @@ function BusinessImpactSection({
           return (
             <div
               key={idx}
-              className="p-3 rounded-lg border border-slate-700 bg-slate-800/30"
+              className="p-3 rounded-lg border border-slate-700/40 bg-[#252d3a]"
             >
               <div className="flex items-start gap-2">
-                <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-500 flex-shrink-0" />
+                <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-300">
+                  <p className="text-xs font-medium text-slate-200">
                     {impact.message}
                   </p>
                   {impact.detail && (
@@ -774,7 +783,7 @@ function BusinessImpactSection({
   );
 }
 
-// ── 7. 최종 액션 (Sticky Bottom) ──
+// ── 7. Sticky Bottom Actions ──
 function StickyActions({
   data,
   onReviewReorder,
@@ -790,11 +799,11 @@ function StickyActions({
   const hasIssues = data.issues.length > 0;
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-800 bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-slate-700 bg-[#1a2230] px-5 py-3">
       <div className="flex gap-2">
         {hasReorder && onReviewReorder ? (
           <Button
-            className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
             onClick={() => onReviewReorder(data.reorderRecommendation!)}
           >
             <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -802,7 +811,7 @@ function StickyActions({
           </Button>
         ) : (
           <Button
-            className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
             disabled={!hasIssues}
             onClick={onViewActions}
           >
@@ -814,7 +823,7 @@ function StickyActions({
         {hasReorder && (
           <Button
             variant="outline"
-            className="flex-1 h-9 text-xs"
+            className="flex-1 h-9 text-xs bg-slate-700/50 text-slate-300 border-slate-600/50 hover:bg-slate-700 hover:text-slate-200"
             onClick={onViewActions}
           >
             <Eye className="h-3.5 w-3.5 mr-1.5" />
@@ -823,12 +832,12 @@ function StickyActions({
         )}
       </div>
 
-      {/* 구매 요청 서브 액션 */}
+      {/* Purchase request sub-action */}
       {hasReorder && onCreatePurchaseRequest && (
         <Button
           variant="ghost"
           size="sm"
-          className="w-full mt-2 h-7 text-[11px] text-slate-500 hover:text-slate-300"
+          className="w-full mt-2 h-7 text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
           onClick={onCreatePurchaseRequest}
         >
           <ArrowRight className="h-3 w-3 mr-1" />
@@ -837,7 +846,7 @@ function StickyActions({
       )}
 
       {!hasIssues && !hasReorder && (
-        <div className="flex items-center justify-center text-xs text-slate-400 mt-1">
+        <div className="flex items-center justify-center text-xs text-slate-300 mt-1">
           <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-400" />
           현재 추가 조치가 필요하지 않습니다
         </div>

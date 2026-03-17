@@ -538,7 +538,7 @@ export function InventoryTable({
       {/* ══ 데스크탑: 테이블 ══ */}
       <div className="hidden md:block w-full overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-slate-900/50">
+          <TableHeader className="bg-slate-900/50 sticky top-0 z-10">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[44px] text-xs font-semibold text-slate-400 whitespace-nowrap"></TableHead>
               <TableHead className="w-[100px] text-xs font-semibold text-slate-400 whitespace-nowrap">상태</TableHead>
@@ -546,13 +546,14 @@ export function InventoryTable({
               <TableHead className="w-[110px] text-right text-xs font-semibold text-slate-400 whitespace-nowrap">총 수량</TableHead>
               <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-400 whitespace-nowrap">Lot</TableHead>
               <TableHead className="w-[130px] text-xs font-semibold text-slate-400 whitespace-nowrap">최단 유효기간</TableHead>
+              <TableHead className="w-[130px] text-xs font-semibold text-slate-400 whitespace-nowrap">권장 조치</TableHead>
               <TableHead className="w-[200px] text-center text-xs font-semibold text-slate-400 whitespace-nowrap">빠른 작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedGroups.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-[400px]">
+                <TableCell colSpan={8} className="h-[400px]">
                   <div className="flex flex-col items-center justify-center h-full">
                     <Package className="h-12 w-12 text-slate-200 text-slate-300 mb-4" />
                     <p className="text-muted-foreground mb-4">{emptyMessage}</p>
@@ -675,6 +676,16 @@ export function InventoryTable({
                         ) : (
                           <span className="text-xs text-slate-400">-</span>
                         )}
+                      </TableCell>
+
+                      {/* 권장 조치 */}
+                      <TableCell>
+                        {(() => {
+                          if (displayStatus === "폐기") return <span className="text-[11px] text-red-400 font-medium">폐기 검토</span>;
+                          if (displayStatus === "임박") return <span className="text-[11px] text-amber-400 font-medium">소진 우선</span>;
+                          if (displayStatus === "부족" || groupStatus === "주의") return <span className="text-[11px] text-orange-400 font-medium">재주문 검토</span>;
+                          return <span className="text-[11px] text-slate-500">-</span>;
+                        })()}
                       </TableCell>
 
                       {/* 빠른 작업 — 상태 기반 우선순위 */}
@@ -811,6 +822,7 @@ export function InventoryTable({
                           <TableCell className="text-right text-[10px] font-bold text-slate-400 text-slate-500 uppercase tracking-wider py-1.5">수량</TableCell>
                           <TableCell className="text-center text-[10px] font-bold text-slate-400 text-slate-500 uppercase tracking-wider py-1.5">위치</TableCell>
                           <TableCell className="text-[10px] font-bold text-slate-400 text-slate-500 uppercase tracking-wider py-1.5">유효기간</TableCell>
+                          <TableCell className="text-[10px] font-bold text-slate-400 text-slate-500 uppercase tracking-wider py-1.5"></TableCell>
                           <TableCell className="text-center text-[10px] font-bold text-slate-400 text-slate-500 uppercase tracking-wider py-1.5">작업</TableCell>
                         </TableRow>
 
@@ -896,6 +908,9 @@ export function InventoryTable({
                                   <span className="text-xs text-slate-400">-</span>
                                 )}
                               </TableCell>
+
+                              {/* 권장 조치 (Lot 수준 — 비움) */}
+                              <TableCell></TableCell>
 
                               {/* Lot 작업 — 출고/라벨/QR은 Lot에서만 */}
                               <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Users, Brain } from "lucide-react";
 
-export function BioInsightFeaturesSection() {
+export function LabAxisFeaturesSection() {
   const features = [
     {
       icon: Zap,

@@ -23,7 +23,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-950">
       <div className="max-w-lg w-full space-y-6 text-center bg-slate-900 p-8 md:p-12 rounded-xl shadow-none border border-slate-800">
         <div className="flex justify-center">
           <div className="rounded-full bg-red-950/30 p-4">

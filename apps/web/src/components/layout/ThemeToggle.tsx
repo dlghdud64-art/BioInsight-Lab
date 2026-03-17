@@ -18,7 +18,7 @@ export function FloatingThemeToggle() {
   // 모바일(768px 미만 또는 모바일 UA)에서는 시스템 설정과 관계없이 라이트 모드 기본 적용
   React.useEffect(() => {
     if (!mounted || !setTheme) return;
-    const stored = typeof window !== "undefined" && localStorage.getItem("bioinsight-theme");
+    const stored = typeof window !== "undefined" && localStorage.getItem("labaxis-theme");
     if (!stored) {
       const isMobile =
         typeof window !== "undefined" &&

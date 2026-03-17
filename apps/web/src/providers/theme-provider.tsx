@@ -15,7 +15,7 @@ export function ThemeProvider({
       enableSystem={false}
       enableColorScheme
       disableTransitionOnChange
-      storageKey="bioinsight-theme"
+      storageKey="labaxis-theme"
       {...props}
     >
       {children}

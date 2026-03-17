@@ -541,7 +541,7 @@ export default function QuoteDetailPage() {
     }).join("\n\n");
     const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice || 0) * item.quantity, 0);
     const shareUrl = `${window.location.origin}/quotes/${quote.id}`;
-    const shareText = `[BioInsight] ${quote.title || `${monthName} ${weekNum}주차 시약 구매 요청`}\n\n${itemLines}\n\n총 예상 금액: ${totalAmount > 0 ? `${totalAmount.toLocaleString()}원` : "미정"}\n리스트 보러가기: ${shareUrl}`;
+    const shareText = `[LabAxis] ${quote.title || `${monthName} ${weekNum}주차 시약 구매 요청`}\n\n${itemLines}\n\n총 예상 금액: ${totalAmount > 0 ? `${totalAmount.toLocaleString()}원` : "미정"}\n리스트 보러가기: ${shareUrl}`;
     try {
       await navigator.clipboard.writeText(shareText);
       setCopied(true);

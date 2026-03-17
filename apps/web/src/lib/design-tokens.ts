@@ -1,5 +1,5 @@
 /**
- * BioInsight Lab — Operational Console Design Tokens
+ * LabAxis — Operational Console Design Tokens
  *
  * Premium / Precise / Operational / High-Trust
  * Dark navy/charcoal base + precise blue accent

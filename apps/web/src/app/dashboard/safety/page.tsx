@@ -34,6 +34,11 @@ import {
   Loader2,
   Upload,
   CheckCircle2,
+  Clock,
+  Trash2,
+  UserPlus,
+  RefreshCw,
+  Wrench,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -257,6 +262,100 @@ const safetyItems: SafetyItem[] = [
   },
 ];
 
+// ─── 우선 조치 큐 (Priority Action Queue) ────────────────────────────────
+type ActionCategory = "msds_renewal" | "training_incomplete" | "disposal_scheduled" | "storage_violation";
+type ActionUrgency = "urgent" | "warning" | "info";
+type ActionQueueStatus = "pending" | "in_progress" | "completed";
+
+type ActionQueueItem = {
+  id: string;
+  category: ActionCategory;
+  materialId: number;
+  materialName: string;
+  description: string;
+  owner: string | null;
+  deadline: string;
+  urgency: ActionUrgency;
+  status: ActionQueueStatus;
+};
+
+const CATEGORY_CONFIG: Record<ActionCategory, { label: string; labelShort: string }> = {
+  msds_renewal: { label: "MSDS 갱신 필요", labelShort: "MSDS" },
+  training_incomplete: { label: "교육 미이수", labelShort: "교육" },
+  disposal_scheduled: { label: "폐기 예정", labelShort: "폐기" },
+  storage_violation: { label: "보관 위반", labelShort: "보관" },
+};
+
+const URGENCY_CONFIG: Record<ActionUrgency, { border: string; badge: string; badgeText: string; label: string }> = {
+  urgent: { border: "border-l-red-500", badge: "bg-red-950/40 text-red-400 border-red-800", badgeText: "긴급", label: "긴급" },
+  warning: { border: "border-l-amber-500", badge: "bg-amber-950/40 text-amber-400 border-amber-800", badgeText: "주의", label: "주의" },
+  info: { border: "border-l-blue-500", badge: "bg-blue-950/40 text-blue-400 border-blue-800", badgeText: "참고", label: "참고" },
+};
+
+const STATUS_LABELS: Record<ActionQueueStatus, { label: string; cls: string }> = {
+  pending: { label: "대기", cls: "bg-slate-800 text-slate-400 border-slate-700" },
+  in_progress: { label: "진행 중", cls: "bg-blue-950/40 text-blue-400 border-blue-800" },
+  completed: { label: "완료", cls: "bg-emerald-950/40 text-emerald-400 border-emerald-800" },
+};
+
+const initialActionQueue: ActionQueueItem[] = [
+  {
+    id: "aq-1",
+    category: "msds_renewal",
+    materialId: 2,
+    materialName: "Acetone (아세톤)",
+    description: "MSDS 미등록 — 법정 기한 초과",
+    owner: null,
+    deadline: "2026-03-20",
+    urgency: "urgent",
+    status: "pending",
+  },
+  {
+    id: "aq-2",
+    category: "msds_renewal",
+    materialId: 3,
+    materialName: "Sodium Hydroxide (수산화나트륨)",
+    description: "MSDS 미등록 — 고위험 물질 우선 등록 필요",
+    owner: "김안전",
+    deadline: "2026-03-22",
+    urgency: "urgent",
+    status: "in_progress",
+  },
+  {
+    id: "aq-3",
+    category: "disposal_scheduled",
+    materialId: 1,
+    materialName: "Sulfuric Acid (황산)",
+    description: "유효기간 만료 로트 폐기 예정",
+    owner: "박관리",
+    deadline: "2026-03-25",
+    urgency: "warning",
+    status: "pending",
+  },
+  {
+    id: "aq-4",
+    category: "storage_violation",
+    materialId: 2,
+    materialName: "Acetone (아세톤)",
+    description: "방폭 캐비닛 온도 기준 초과 감지",
+    owner: null,
+    deadline: "2026-03-18",
+    urgency: "urgent",
+    status: "pending",
+  },
+  {
+    id: "aq-5",
+    category: "training_incomplete",
+    materialId: 0,
+    materialName: "전체 (일반)",
+    description: "분기 안전교육 미이수 인원 2명",
+    owner: null,
+    deadline: "2026-03-31",
+    urgency: "info",
+    status: "pending",
+  },
+];
+
 const LOCATIONS = ["시약장 A (산성)", "시약장 B (염기성)", "방폭 캐비닛 1", "일반 캐비닛"];
 
 export default function SafetyManagerPage() {
@@ -268,6 +367,92 @@ export default function SafetyManagerPage() {
 
   // ─── Mutable item state ───────────────────────────────────────────────
   const [items, setItems] = useState<SafetyItem[]>(safetyItems);
+
+  // ─── 우선 조치 큐 state ─────────────────────────────────────────────
+  const [actionQueue, setActionQueue] = useState<ActionQueueItem[]>(initialActionQueue);
+  const [queueCategoryFilter, setQueueCategoryFilter] = useState<string>("all");
+
+  // 담당자 지정 Dialog
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<ActionQueueItem | null>(null);
+  const [assignName, setAssignName] = useState("");
+
+  // 보관 조건 수정 Dialog
+  const [storageEditDialogOpen, setStorageEditDialogOpen] = useState(false);
+  const [storageEditTarget, setStorageEditTarget] = useState<ActionQueueItem | null>(null);
+  const [storageEditValue, setStorageEditValue] = useState("");
+
+  const openAssignDialog = (aq: ActionQueueItem) => {
+    setAssignTarget(aq);
+    setAssignName(aq.owner || "");
+    setAssignDialogOpen(true);
+  };
+
+  const handleAssignSave = () => {
+    if (!assignTarget || !assignName.trim()) {
+      toast({ title: "담당자 입력 필요", description: "담당자 이름을 입력해 주세요.", variant: "destructive" });
+      return;
+    }
+    setActionQueue((prev) =>
+      prev.map((aq) =>
+        aq.id === assignTarget.id ? { ...aq, owner: assignName.trim(), status: aq.status === "pending" ? "in_progress" : aq.status } : aq
+      )
+    );
+    toast({ title: "담당자 지정 완료", description: `${assignTarget.materialName} — ${assignName.trim()}` });
+    setAssignDialogOpen(false);
+  };
+
+  const openStorageEditDialog = (aq: ActionQueueItem) => {
+    setStorageEditTarget(aq);
+    const material = items.find((i) => i.id === aq.materialId);
+    setStorageEditValue(material?.storageCondition || "");
+    setStorageEditDialogOpen(true);
+  };
+
+  const handleStorageEditSave = () => {
+    if (!storageEditTarget || !storageEditValue.trim()) {
+      toast({ title: "보관 조건 입력 필요", description: "수정할 보관 조건을 입력해 주세요.", variant: "destructive" });
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === storageEditTarget.materialId ? { ...i, storageCondition: storageEditValue.trim() } : i
+      )
+    );
+    setActionQueue((prev) =>
+      prev.map((aq) =>
+        aq.id === storageEditTarget.id ? { ...aq, status: "completed" } : aq
+      )
+    );
+    toast({ title: "보관 조건 수정 완료", description: `${storageEditTarget.materialName}의 보관 조건이 업데이트되었습니다.` });
+    setStorageEditDialogOpen(false);
+  };
+
+  const handleQueueMsdsAction = (aq: ActionQueueItem) => {
+    const material = items.find((i) => i.id === aq.materialId);
+    if (material) openMsdsDialog(material);
+  };
+
+  const handleQueueDisposeAction = (aq: ActionQueueItem) => {
+    const material = items.find((i) => i.id === aq.materialId);
+    if (material) openDisposeDialog(material);
+  };
+
+  const handleQueueComplete = (aqId: string) => {
+    setActionQueue((prev) =>
+      prev.map((aq) => (aq.id === aqId ? { ...aq, status: "completed" as ActionQueueStatus } : aq))
+    );
+    toast({ title: "조치 완료 처리", description: "해당 항목이 완료 상태로 변경되었습니다." });
+  };
+
+  const filteredQueue = actionQueue.filter((aq) => {
+    if (queueCategoryFilter !== "all" && aq.category !== queueCategoryFilter) return false;
+    return true;
+  });
+
+  const queueByCategory = (cat: ActionCategory) => filteredQueue.filter((aq) => aq.category === cat);
+  const pendingQueueCount = actionQueue.filter((aq) => aq.status !== "completed").length;
+  const urgentQueueCount = actionQueue.filter((aq) => aq.urgency === "urgent" && aq.status !== "completed").length;
 
   // ─── MSDS 등록 Dialog ─────────────────────────────────────────────────
   const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
@@ -504,6 +689,152 @@ export default function SafetyManagerPage() {
               <FileWarning className="text-amber-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
+        </div>
+
+        {/* ─── 우선 조치 큐 (Priority Action Queue) ─────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                우선 조치 큐
+              </h2>
+              {pendingQueueCount > 0 && (
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950/40 text-red-400 border border-red-800">
+                  {pendingQueueCount}건 미처리
+                </span>
+              )}
+              {urgentQueueCount > 0 && (
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-700">
+                  긴급 {urgentQueueCount}
+                </span>
+              )}
+            </div>
+            <Select value={queueCategoryFilter} onValueChange={setQueueCategoryFilter}>
+              <SelectTrigger className="w-[140px] h-7 text-[11px] border-slate-700 bg-slate-900">
+                <SelectValue placeholder="유형 필터" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 유형</SelectItem>
+                <SelectItem value="msds_renewal">MSDS 갱신</SelectItem>
+                <SelectItem value="training_incomplete">교육 미이수</SelectItem>
+                <SelectItem value="disposal_scheduled">폐기 예정</SelectItem>
+                <SelectItem value="storage_violation">보관 위반</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 카테고리별 그룹 렌더링 */}
+          {(["msds_renewal", "storage_violation", "disposal_scheduled", "training_incomplete"] as ActionCategory[]).map((cat) => {
+            const catItems = queueByCategory(cat);
+            if (catItems.length === 0) return null;
+            const catConfig = CATEGORY_CONFIG[cat];
+            return (
+              <div key={cat} className="rounded-lg border border-slate-800 bg-slate-900 overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-800 bg-slate-800/50">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                    {catConfig.label}
+                  </span>
+                  <span className="text-[10px] text-slate-500 ml-2">{catItems.length}건</span>
+                </div>
+                <div className="divide-y divide-slate-800/50">
+                  {catItems.map((aq) => {
+                    const urgCfg = URGENCY_CONFIG[aq.urgency];
+                    const stCfg = STATUS_LABELS[aq.status];
+                    const isOverdue = new Date(aq.deadline) < new Date() && aq.status !== "completed";
+                    return (
+                      <div
+                        key={aq.id}
+                        className={`px-3 py-3 border-l-4 ${urgCfg.border} ${aq.status === "completed" ? "opacity-50" : ""}`}
+                      >
+                        {/* 1행: 물질명 + 뱃지 */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-slate-100">{aq.materialName}</span>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${urgCfg.badge}`}>
+                            {urgCfg.badgeText}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${stCfg.cls}`}>
+                            {stCfg.label}
+                          </Badge>
+                        </div>
+                        {/* 2행: 설명 + 메타 */}
+                        <p className="text-[11px] text-slate-400 mt-1">{aq.description}</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <UserPlus className="h-3 w-3" />
+                            담당: {aq.owner ? <span className="text-slate-300">{aq.owner}</span> : <span className="text-amber-400">미지정</span>}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            기한: <span className={isOverdue ? "text-red-400 font-medium" : "text-slate-300"}>{aq.deadline}</span>
+                            {isOverdue && <span className="text-red-400 font-medium">(초과)</span>}
+                          </span>
+                        </div>
+                        {/* 3행: CTA 버튼 */}
+                        {aq.status !== "completed" && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {cat === "msds_renewal" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] text-amber-400 border-amber-800 hover:bg-amber-950/30"
+                                onClick={() => handleQueueMsdsAction(aq)}
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" />MSDS 등록/갱신
+                              </Button>
+                            )}
+                            {cat === "disposal_scheduled" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] text-red-400 border-red-800 hover:bg-red-950/30"
+                                onClick={() => handleQueueDisposeAction(aq)}
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />폐기 처리
+                              </Button>
+                            )}
+                            {cat === "storage_violation" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] text-blue-400 border-blue-800 hover:bg-blue-950/30"
+                                onClick={() => openStorageEditDialog(aq)}
+                              >
+                                <Wrench className="h-3 w-3 mr-1" />보관 조건 수정
+                              </Button>
+                            )}
+                            {!aq.owner && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-[10px] text-slate-300 border-slate-700 hover:bg-slate-800"
+                                onClick={() => openAssignDialog(aq)}
+                              >
+                                <UserPlus className="h-3 w-3 mr-1" />담당자 지정
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-[10px] text-emerald-400 border-emerald-800 hover:bg-emerald-950/30"
+                              onClick={() => handleQueueComplete(aq.id)}
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />완료 처리
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredQueue.length === 0 && (
+            <div className="text-center py-6 text-slate-500 text-xs border border-slate-800 rounded-lg bg-slate-900">
+              조건에 맞는 조치 항목이 없습니다.
+            </div>
+          )}
         </div>
 
         {/* 슬림 필터 바 */}
@@ -835,6 +1166,77 @@ export default function SafetyManagerPage() {
             </Button>
             <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5" onClick={handleInspSave} disabled={inspSaving}>
               {inspSaving ? <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</> : "점검 기록 저장"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── 담당자 지정 Dialog ─────────────────────────────────────────── */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <UserPlus className="h-4 w-4 text-blue-400" />
+              담당자 지정
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {assignTarget?.materialName} — {assignTarget?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="assign-name" className="text-xs font-medium">담당자 이름 *</Label>
+              <Input
+                id="assign-name"
+                value={assignName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignName(e.target.value)}
+                placeholder="이름 입력"
+                className="h-8 text-xs"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setAssignDialogOpen(false)}>
+              취소
+            </Button>
+            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={handleAssignSave}>
+              지정
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── 보관 조건 수정 Dialog ──────────────────────────────────────── */}
+      <Dialog open={storageEditDialogOpen} onOpenChange={setStorageEditDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Wrench className="h-4 w-4 text-blue-400" />
+              보관 조건 수정
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {storageEditTarget?.materialName} — 현재 위반 사항을 해소하기 위해 보관 조건을 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="storage-cond" className="text-xs font-medium">보관 조건 *</Label>
+              <Textarea
+                id="storage-cond"
+                value={storageEditValue}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setStorageEditValue(e.target.value)}
+                placeholder="수정할 보관 조건을 입력하세요."
+                rows={3}
+                className="text-xs"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setStorageEditDialogOpen(false)}>
+              취소
+            </Button>
+            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={handleStorageEditSave}>
+              수정 저장
             </Button>
           </div>
         </DialogContent>

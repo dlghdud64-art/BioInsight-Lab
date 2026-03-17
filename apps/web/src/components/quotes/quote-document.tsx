@@ -52,11 +52,11 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
 
   // 기본 회사 정보
   const company = {
-    name: companyInfo?.name || "BioInsight Lab",
+    name: companyInfo?.name || "LabAxis",
     businessNumber: companyInfo?.businessNumber || "123-45-67890",
     address: companyInfo?.address || "서울특별시 강남구 테헤란로 123",
     phone: companyInfo?.phone || "02-1234-5678",
-    email: companyInfo?.email || "info@bioinsight.com",
+    email: companyInfo?.email || "info@labaxis.io",
   };
 
   return (

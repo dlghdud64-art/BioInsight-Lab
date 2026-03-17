@@ -80,7 +80,7 @@ export default function SupportPage() {
               도입 문의 및 서비스 안내
             </h1>
             <p className="text-slate-400 text-base md:text-lg leading-relaxed">
-              BioInsight Lab 도입을 검토 중이거나, 요금·기능에 대해 궁금한 점이 있으신가요?<br className="hidden sm:block" />
+              LabAxis 도입을 검토 중이거나, 요금·기능에 대해 궁금한 점이 있으신가요?<br className="hidden sm:block" />
               담당팀이 확인 후 빠르게 안내해드립니다.
             </p>
           </div>
@@ -211,11 +211,11 @@ export default function SupportPage() {
               <p className="text-xs text-slate-500">위 양식 대신 이메일로 바로 문의하실 수도 있습니다.</p>
             </div>
             <a
-              href="mailto:support@bioinsightlab.com"
+              href="mailto:support@labaxis.io"
               className="flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-blue-700 transition-colors flex-shrink-0"
             >
               <Mail className="h-4 w-4" />
-              support@bioinsightlab.com
+              support@labaxis.io
             </a>
           </section>
 

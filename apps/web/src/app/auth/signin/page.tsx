@@ -20,11 +20,11 @@ function SignInContent() {
         {/* 1. 브랜드 로고 */}
         <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-none transition-transform group-hover:scale-105">
-            <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={48} height={48} className="w-full h-full object-cover" />
+            <Image src="/brand/Bio-Insight.png" alt="LabAxis" width={48} height={48} className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col justify-center leading-tight">
             <div className="flex items-center gap-1">
-              <span className="text-xl font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+              <span className="text-xl font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">LabAxis</span>
               <span className="text-xl font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
             </div>
             <div className="text-[11px] text-slate-400 tracking-tight">Procurement & Research</div>
@@ -56,11 +56,11 @@ function SignInContent() {
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="group flex items-center gap-3 cursor-pointer">
             <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-none transition-transform group-hover:scale-105">
-              <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={40} height={40} className="w-full h-full object-cover" />
+              <Image src="/brand/Bio-Insight.png" alt="LabAxis" width={40} height={40} className="w-full h-full object-cover" />
             </div>
             <div className="leading-tight">
               <div className="flex items-center gap-1">
-                <span className="text-lg font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+                <span className="text-lg font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">LabAxis</span>
                 <span className="text-lg font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
               </div>
               <div className="text-[10px] text-slate-400 tracking-tight">Procurement & Research</div>
@@ -164,7 +164,7 @@ function SignInContent() {
             </Link>
           </p>
           <p className="text-center text-[11px] text-slate-500 leading-relaxed">
-            BioInsight Lab은 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
+            LabAxis은 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
           </p>
         </div>
       </div>

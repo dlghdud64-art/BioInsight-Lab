@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight, Clock, Tag, Activity, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -747,6 +747,30 @@ function InventoryPageContent() {
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
 
+  // ── 운영 KPI 계산 ──
+  const opsKpi = (() => {
+    const reorderNeeded = lowStockItems.length;
+    const expiringIn7 = displayInventories.filter((inv) => {
+      if (!inv.expiryDate) return false;
+      const expiry = new Date(inv.expiryDate);
+      if (isNaN(expiry.getTime())) return false;
+      const days = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return days > 0 && days <= 7;
+    }).length;
+    const expiredCount = displayInventories.filter((inv) => {
+      if (!inv.expiryDate) return false;
+      const expiry = new Date(inv.expiryDate);
+      return !isNaN(expiry.getTime()) && expiry.getTime() < now.getTime();
+    }).length;
+    const pendingInspection = incomingItems.length;
+    const noLabelEstimate = displayInventories.filter((inv) => !inv.lotNumber).length;
+    const recentChanges = usageRecords.filter((r) => {
+      const d = new Date(r.usageDate);
+      return (now.getTime() - d.getTime()) < 7 * 24 * 60 * 60 * 1000;
+    }).length;
+    return { reorderNeeded, expiringIn7, expiredCount, pendingInspection, noLabelEstimate, recentChanges };
+  })();
+
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
   const issuesCount = displayInventories.filter((inv) => {
     const isOut = inv.currentQuantity === 0;
@@ -1055,6 +1079,29 @@ function InventoryPageContent() {
           </div>
         </div>
 
+        {/* ══ Inventory Operations Header — 6 KPIs ══ */}
+        <div className="bg-slate-900 border border-slate-800 rounded-md px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">운영 현황 요약</p>
+          <div className="flex flex-wrap items-stretch divide-x divide-slate-800">
+            {[
+              { label: "재주문 필요", value: opsKpi.reorderNeeded, icon: ShoppingCart, color: opsKpi.reorderNeeded > 0 ? "text-red-400" : "text-slate-300" },
+              { label: "유효기한 임박", value: opsKpi.expiringIn7, icon: Clock, color: opsKpi.expiringIn7 > 0 ? "text-amber-400" : "text-slate-300" },
+              { label: "폐기 검토", value: opsKpi.expiredCount, icon: XCircle, color: opsKpi.expiredCount > 0 ? "text-red-400" : "text-slate-300" },
+              { label: "검수 대기", value: opsKpi.pendingInspection, icon: Package, color: opsKpi.pendingInspection > 0 ? "text-amber-400" : "text-slate-300" },
+              { label: "라벨 미완료", value: opsKpi.noLabelEstimate, icon: Tag, color: opsKpi.noLabelEstimate > 0 ? "text-orange-400" : "text-slate-300" },
+              { label: "최근 변동", value: opsKpi.recentChanges, icon: Activity, color: "text-blue-400" },
+            ].map((kpi) => (
+              <div key={kpi.label} className="flex items-center gap-2 px-4 first:pl-0 last:pr-0 py-1 min-w-0">
+                <kpi.icon className={`h-4 w-4 shrink-0 ${kpi.color}`} />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-slate-500 whitespace-nowrap">{kpi.label}</p>
+                  <p className={`text-lg font-bold tabular-nums leading-tight ${kpi.color}`}>{kpi.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* 통합 카드: 탭 + 검색/필터/리스트 */}
         <div className="rounded-xl border border-slate-800/50 bg-slate-900 shadow-none overflow-hidden">
           <Tabs defaultValue="manage" className="w-full">
@@ -1066,14 +1113,14 @@ function InventoryPageContent() {
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
-                  <span className="hidden sm:inline">시약 </span>관리
+                  <span className="hidden sm:inline">운영 </span>현황
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  점검 사항
+                  점검 이슈
                   {issuesCount > 0 ? (
                     <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-950/50 text-rose-400 font-medium px-1.5 text-[11px] shadow-none ring-2 ring-slate-900/50 animate-in zoom-in-95 duration-300 ml-2">
                       {issuesCount}
@@ -2149,6 +2196,79 @@ function InventoryPageContent() {
                         )}
                       </div>
                     )}
+                  </div>
+
+                  {/* ── 추천 액션 ── */}
+                  <div className="border-t border-slate-800 pt-4">
+                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">다음 권장 조치</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs gap-1.5 border-slate-700 text-slate-300 hover:bg-slate-800 justify-start"
+                        onClick={() => {
+                          setIsSheetOpen(false);
+                          aiPanel.preparePanel({
+                            id: selectedItem.id,
+                            productId: selectedItem.productId,
+                            productName: selectedItem.product.name,
+                            brand: selectedItem.product.brand || undefined,
+                            catalogNumber: selectedItem.product.catalogNumber || undefined,
+                            currentQuantity: selectedItem.currentQuantity,
+                            unit: selectedItem.unit || undefined,
+                            safetyStock: selectedItem.safetyStock || undefined,
+                            minOrderQty: selectedItem.minOrderQty || undefined,
+                            location: selectedItem.location || undefined,
+                            expiryDate: selectedItem.expiryDate || undefined,
+                            lotNumber: selectedItem.lotNumber || undefined,
+                            autoReorderEnabled: selectedItem.autoReorderEnabled || false,
+                            averageDailyUsage: selectedItem.averageDailyUsage || undefined,
+                            leadTimeDays: selectedItem.leadTimeDays || undefined,
+                            lastInspectedAt: undefined,
+                          });
+                        }}
+                      >
+                        <ShoppingCart className="h-3.5 w-3.5 text-blue-400" />
+                        재주문 검토
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs gap-1.5 border-slate-700 text-slate-300 hover:bg-slate-800 justify-start"
+                        onClick={() => {
+                          toast({
+                            title: "위치 이동",
+                            description: `${selectedItem.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
+                          });
+                        }}
+                      >
+                        <ArrowLeftRight className="h-3.5 w-3.5 text-amber-400" />
+                        위치 이동
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs gap-1.5 border-slate-700 text-slate-300 hover:bg-slate-800 justify-start"
+                        onClick={() => {
+                          toast({
+                            title: "폐기 검토",
+                            description: `${selectedItem.product.name} 폐기 검토 기능은 곧 제공될 예정입니다.`,
+                          });
+                        }}
+                      >
+                        <XCircle className="h-3.5 w-3.5 text-red-400" />
+                        폐기 검토
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs gap-1.5 border-slate-700 text-slate-300 hover:bg-slate-800 justify-start"
+                        onClick={() => handleSingleLabelPrint(selectedItem)}
+                      >
+                        <Printer className="h-3.5 w-3.5 text-indigo-400" />
+                        라벨 재출력
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="flex w-full gap-2 pt-4">

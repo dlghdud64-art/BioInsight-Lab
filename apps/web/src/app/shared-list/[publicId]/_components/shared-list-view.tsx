@@ -76,7 +76,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
               className="text-xs md:text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
               <ExternalLink className="h-3 w-3 md:h-4 md:w-4" />
-              BioInsight Lab
+              LabAxis
             </Link>
           </div>
 
@@ -324,7 +324,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
 
         {/* 푸터 */}
         <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>Powered by BioInsight Lab</p>
+          <p>Powered by LabAxis</p>
         </div>
       </div>
     </div>

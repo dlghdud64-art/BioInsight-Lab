@@ -22,7 +22,7 @@ export default function PrivacyPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                BioInsight Lab(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다:
+                LabAxis(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다:
               </p>
               <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mt-2">
                 <li>서비스 제공 및 계약의 이행</li>
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
                 정보주체의 불만처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.
               </p>
               <div className="mt-4 space-y-1 text-sm text-muted-foreground">
-                <p><strong>이메일:</strong> <a href="mailto:contact@bioinsight.lab" className="text-primary hover:underline">contact@bioinsight.lab</a></p>
+                <p><strong>이메일:</strong> <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a></p>
               </div>
             </CardContent>
           </Card>

@@ -184,9 +184,9 @@ export default function AdminDashboardPage() {
   const pendingUsers: PendingUser[] = [];
   const slaQuotes: SLAQuote[] = [];
   const activityLogs: ActivityLog[] = [
-    { id: "1", action: "조직 승인", actor: "admin@bioinsight.com", target: "서울대 화학과", detail: "신규 조직 승인 완료", time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-    { id: "2", action: "사용자 역할 변경", actor: "admin@bioinsight.com", target: "김연구원", detail: "VIEWER → REQUESTER", time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-    { id: "3", action: "견적 수동 처리", actor: "admin@bioinsight.com", target: "QT-2024-0312", detail: "SLA 초과 건 수동 발송", time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+    { id: "1", action: "조직 승인", actor: "admin@labaxis.io", target: "서울대 화학과", detail: "신규 조직 승인 완료", time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    { id: "2", action: "사용자 역할 변경", actor: "admin@labaxis.io", target: "김연구원", detail: "VIEWER → REQUESTER", time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+    { id: "3", action: "견적 수동 처리", actor: "admin@labaxis.io", target: "QT-2024-0312", detail: "SLA 초과 건 수동 발송", time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
   ];
   const errorCount = 0;
 

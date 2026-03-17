@@ -93,7 +93,7 @@ export function ComparisonSection() {
                   : "text-blue-400 bg-blue-950/20 border border-blue-800 animate-pulse"
               }`}
             >
-              BioInsight
+              LabAxis
             </button>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function ComparisonSection() {
               </span>
               <span className="w-8" />
               <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                BioInsight 도입 후
+                LabAxis 도입 후
               </span>
             </div>
 
@@ -145,7 +145,7 @@ export function ComparisonSection() {
                     <ArrowRight className="w-4 h-4 text-slate-300" />
                   </div>
 
-                  {/* BioInsight 도입 후 */}
+                  {/* LabAxis 도입 후 */}
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-500 mt-0.5" />
                     <p className="text-sm text-slate-200 leading-relaxed font-medium">

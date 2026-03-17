@@ -49,7 +49,7 @@ export default function NotFound() {
           <p className="text-sm text-slate-500">
             문제가 계속되면{" "}
             <a
-              href="mailto:support@bioinsight-lab.com"
+              href="mailto:support@labaxis.io"
               className="text-blue-400 hover:underline"
             >
               지원팀에 문의

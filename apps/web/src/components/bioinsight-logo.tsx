@@ -1,73 +1,68 @@
 import * as React from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-type BioInsightLogoProps = {
+type LabAxisLogoProps = {
   className?: string;
-  showText?: boolean; // 아이콘만 쓰고 싶으면 false로
-  variant?: "light" | "dark"; // dark: 어두운 배경용 (텍스트 흰색 계열)
-  compact?: boolean; // Sheet·모바일 등 작은 공간용 (h-7 w-7, text-sm)
-  size?: "sm" | "md" | "lg"; // sm=compact, md=사이드바(h-9 text-xl), lg=기본 반응형
+  showText?: boolean;
+  variant?: "light" | "dark";
+  compact?: boolean;
+  size?: "sm" | "md" | "lg";
 };
 
-export function BioInsightLogo({
+export function LabAxisLogo({
   className,
   showText = true,
-  variant = "light",
   compact = false,
   size,
-}: BioInsightLogoProps) {
-  const isDark = variant === "dark";
-
-  // size prop 우선, 없으면 compact로 결정
+}: LabAxisLogoProps) {
   const resolvedSize = size ?? (compact ? "sm" : "lg");
 
-  const iconClass =
-    resolvedSize === "sm"
-      ? "h-7 w-7 rounded-lg object-contain -translate-y-[1px]"
-      : resolvedSize === "md"
-      ? "h-12 w-12 rounded-lg object-contain -translate-y-[1px]"
-      : "h-10 w-10 md:h-11 md:w-11 lg:h-12 lg:w-12 rounded-lg object-contain -translate-y-[1px]";
+  const markSize =
+    resolvedSize === "sm" ? "h-5 w-5" :
+    resolvedSize === "md" ? "h-6 w-6" :
+    "h-6 w-6 md:h-7 md:w-7";
 
   const textClass =
-    resolvedSize === "sm"
-      ? "text-sm font-bold tracking-tight"
-      : resolvedSize === "md"
-      ? "text-2xl font-bold tracking-tight"
-      : "text-xl md:text-2xl lg:text-2xl font-extrabold tracking-tight";
+    resolvedSize === "sm" ? "text-sm font-semibold tracking-tight" :
+    resolvedSize === "md" ? "text-lg font-semibold tracking-tight" :
+    "text-base md:text-lg font-semibold tracking-tight";
 
   const showSubtitle = resolvedSize === "lg" && !compact;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      {/* 아이콘: 이미지 파일 사용 */}
-      <Image
-        src="/brand/Bio-Insight.png"
-        alt="BioInsight Lab"
-        width={60}
-        height={60}
-        className={iconClass}
-      />
+      {/* Geometric mark — transparent SVG */}
+      <svg
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={cn(markSize, "flex-shrink-0")}
+      >
+        {/* Abstract axis cross — operational / precision */}
+        <path
+          d="M16 2L16 30M2 16L30 16"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          className="text-slate-500"
+        />
+        <circle cx="16" cy="16" r="6" fill="currentColor" className="text-blue-500" fillOpacity="0.8" />
+        <circle cx="16" cy="16" r="3" fill="currentColor" className="text-slate-100" />
+      </svg>
 
-      {/* 텍스트: BioInsight Lab */}
       {showText && (
         <div className="leading-tight">
-          <div className="flex items-baseline gap-1">
-            <span className={cn(textClass, isDark ? "text-white" : "text-slate-100")}>
-              BioInsight
-            </span>
-            <span className={cn(textClass, isDark ? "text-teal-300" : "text-teal-300")}>
+          <div className="flex items-baseline">
+            <span className={cn(textClass, "text-slate-100")}>
               Lab
+            </span>
+            <span className={cn(textClass, "text-blue-400")}>
+              Axis
             </span>
           </div>
           {showSubtitle && (
-            <div
-              className={cn(
-                "hidden md:block text-[10px] font-normal mt-0.5",
-                isDark ? "text-slate-400" : "text-slate-400"
-              )}
-            >
-              Procurement & Research
+            <div className="hidden md:block text-[9px] font-normal text-slate-500 tracking-wide uppercase">
+              Procurement Operations
             </div>
           )}
         </div>

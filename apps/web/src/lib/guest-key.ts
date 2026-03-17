@@ -1,4 +1,4 @@
-const GUEST_KEY_STORAGE_KEY = "bioinsight_guest_key";
+const GUEST_KEY_STORAGE_KEY = "labaxis_guest_key";
 
 // 개발/데모 환경에서 사용할 고정 키 (seed 데이터와 일치)
 const DEMO_GUEST_KEY = "guest-demo";

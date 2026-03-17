@@ -65,11 +65,11 @@ function generateFallback(
     .map((i) => `  - ${i.fieldLabel}: 기존 ${formatVal(i.sourceValue)} → 대상 ${formatVal(i.targetValue)}`)
     .join("\n");
 
-  const subject = `[BioInsight Lab] 제품 비교 관련 문의 — ${targetProductName}`;
+  const subject = `[LabAxis] 제품 비교 관련 문의 — ${targetProductName}`;
 
   const body = `${vendorName} 담당자님께,
 
-안녕하세요. BioInsight Lab입니다.
+안녕하세요. LabAxis입니다.
 
 현재 사용 중인 "${sourceProductName}"과 "${targetProductName}"을 비교 검토하고 있습니다.
 아래 항목에 대해 추가 정보를 확인 부탁드립니다.
@@ -85,7 +85,7 @@ ${itemLines || "  - 일반 제품 정보 문의"}
 
 감사합니다.
 
-BioInsight Lab 구매팀`;
+LabAxis 구매팀`;
 
   return {
     subject,
@@ -165,7 +165,7 @@ async function generateWithAI(
   const parsed = JSON.parse(data.choices[0].message.content);
 
   return {
-    subject: parsed.subject || `[BioInsight Lab] ${targetProductName} 문의`,
+    subject: parsed.subject || `[LabAxis] ${targetProductName} 문의`,
     body: parsed.body || "",
     inquiryFields,
     vendorName,

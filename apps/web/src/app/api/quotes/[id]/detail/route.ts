@@ -7,13 +7,13 @@ import { db } from "@/lib/db";
 // =====================================================
 
 const SUPPLIER_INFO = {
-  companyName: "BioInsight Lab",
+  companyName: "LabAxis",
   businessNumber: "123-45-67890",
   representative: "대표자명",
   address: "서울특별시 강남구 테헤란로 123",
   phone: "02-1234-5678",
-  email: "sales@bioinsightlab.com",
-  website: "https://bioinsightlab.com",
+  email: "sales@labaxis.io",
+  website: "https://labaxis.io",
 };
 
 // =====================================================

@@ -41,7 +41,7 @@ export function VendorSidebar() {
     <aside className="w-64 bg-slate-900 border-r border-slate-800 min-h-screen">
       <div className="p-4 border-b border-slate-800">
         <h2 className="font-bold text-lg text-slate-100">Vendor Portal</h2>
-        <p className="text-xs text-slate-400 mt-1">BioInsight Lab</p>
+        <p className="text-xs text-slate-400 mt-1">LabAxis</p>
       </div>
 
       <nav className="p-3 space-y-1">
