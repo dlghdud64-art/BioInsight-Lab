@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,14 @@ import { CompareAnalysisDrawer } from "./_components/compare-analysis-drawer";
 import { CompareHistorySection, type CompareSessionSummary } from "./_components/compare-history-section";
 
 export default function ComparePage() {
+  return (
+    <Suspense fallback={null}>
+      <ComparePageContent />
+    </Suspense>
+  );
+}
+
+function ComparePageContent() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
