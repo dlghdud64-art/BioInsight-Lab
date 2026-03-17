@@ -80,8 +80,8 @@ export function InventoryAiAssistantPanel({
         className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
       >
         {/* ═══ 1. 헤더 ═══ */}
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800/50 flex-shrink-0">
-          <SheetTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-800/50 flex-shrink-0">
+          <SheetTitle className="text-base font-bold text-slate-100">
             {state === "empty" && "재고 운영 도우미"}
             {state === "loading" && "재고 운영 도우미"}
             {state === "success" && "재고 운영 도우미"}
@@ -89,7 +89,7 @@ export function InventoryAiAssistantPanel({
             {state === "warning_expiry" && "재고 운영 도우미"}
             {state === "error" && "재고 조치 정보를 준비하지 못했습니다"}
           </SheetTitle>
-          <SheetDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <SheetDescription className="text-xs text-slate-400 mt-0.5">
             {state === "empty" && "재고 품목을 선택하면 부족, 유효기간, 재발주 항목을 정리합니다."}
             {state === "loading" && "현재 재고 상태를 기준으로 조치 항목을 확인하고 있습니다..."}
             {state === "success" && "현재 재고 상태를 기준으로 우선 확인할 부족·유효기간·재발주 항목을 정리했습니다."}
@@ -106,7 +106,7 @@ export function InventoryAiAssistantPanel({
           {state === "error" && <ErrorState onRetry={onRetry} />}
 
           {(state === "success" || state === "warning_shortage" || state === "warning_expiry") && (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+            <div className="divide-y divide-slate-800/50">
               {/* 2. 재고 위험 요약 */}
               {data.stockStatus && (
                 <StockSummarySection
@@ -176,13 +176,13 @@ export function InventoryAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-slate-50 dark:bg-slate-800/50 p-4 mb-4">
-        <Package className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+      <div className="rounded-full bg-slate-800/50 p-4 mb-4">
+        <Package className="h-8 w-8 text-slate-600" />
       </div>
-      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+      <p className="text-sm font-medium text-slate-400">
         재고 품목을 선택하면 여기에서 확인할 수 있습니다
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-[240px]">
+      <p className="text-xs text-slate-500 mt-1.5 max-w-[240px]">
         부족 재고, 유효기간 임박, 재발주 시점 등을 분석하고 필요한 조치를 안내합니다.
       </p>
     </div>
@@ -195,7 +195,7 @@ function LoadingState() {
     <div className="p-5 space-y-5">
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30">
+          <div key={i} className="p-3 rounded-lg bg-slate-800/30">
             <Skeleton className="h-3 w-16 mb-2" />
             <Skeleton className="h-6 w-10" />
           </div>
@@ -206,7 +206,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-28 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+            <div key={i} className="p-3 rounded-lg border border-slate-800">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-3 w-3/4" />
             </div>
@@ -226,13 +226,13 @@ function LoadingState() {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-red-50 dark:bg-red-950/30 p-4 mb-4">
-        <TriangleAlert className="h-8 w-8 text-red-400 dark:text-red-500" />
+      <div className="rounded-full bg-red-950/30 p-4 mb-4">
+        <TriangleAlert className="h-8 w-8 text-red-500" />
       </div>
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+      <p className="text-sm font-medium text-slate-300">
         재고 조치 정보를 준비하지 못했습니다
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-[260px]">
+      <p className="text-xs text-slate-500 mt-1.5 max-w-[260px]">
         재고 수량, lot, 입고 예정 정보를 확인한 뒤 다시 시도해 주세요.
       </p>
       <Button variant="outline" size="sm" className="mt-4 h-8 text-xs" onClick={onRetry}>
@@ -256,10 +256,10 @@ function StockSummarySection({
   // 재고 비율에 따른 색상
   const ratioColor =
     stockStatus.stockRatio <= 0.3
-      ? { text: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30" }
+      ? { text: "text-red-400", bg: "bg-red-950/30" }
       : stockStatus.stockRatio <= 0.7
-      ? { text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30" }
-      : { text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30" };
+      ? { text: "text-amber-400", bg: "bg-amber-950/30" }
+      : { text: "text-emerald-400", bg: "bg-emerald-950/30" };
 
   const stats = [
     {
@@ -285,11 +285,11 @@ function StockSummarySection({
         ? `${stockStatus.estimatedDepletionDays}일`
         : "미정",
       color: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
-        ? "text-red-600 dark:text-red-400"
-        : "text-slate-600 dark:text-slate-400",
+        ? "text-red-400"
+        : "text-slate-400",
       bg: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
-        ? "bg-red-50 dark:bg-red-950/30"
-        : "bg-slate-50 dark:bg-slate-800/30",
+        ? "bg-red-950/30"
+        : "bg-slate-800/30",
     },
     {
       icon: AlertTriangle,
@@ -298,17 +298,17 @@ function StockSummarySection({
         ? `${stockStatus.actionNeededCount}건`
         : "없음",
       color: stockStatus.actionNeededCount > 0
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-emerald-600 dark:text-emerald-400",
+        ? "text-amber-400"
+        : "text-emerald-400",
       bg: stockStatus.actionNeededCount > 0
-        ? "bg-amber-50 dark:bg-amber-950/30"
-        : "bg-emerald-50 dark:bg-emerald-950/30",
+        ? "bg-amber-950/30"
+        : "bg-emerald-950/30",
     },
   ];
 
   return (
     <div className="p-5">
-      <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
         재고 위험 요약
       </h4>
 
@@ -316,7 +316,7 @@ function StockSummarySection({
       {item && (
         <div className="flex items-center gap-2 mb-3">
           <Beaker className="h-4 w-4 text-slate-400" />
-          <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+          <span className="text-sm font-medium text-slate-200 truncate">
             {item.productName}
           </span>
           {item.brand && (
@@ -335,7 +335,7 @@ function StockSummarySection({
             <div key={stat.label} className={`px-3 py-2.5 rounded-lg ${stat.bg}`}>
               <div className="flex items-center gap-1.5 mb-1">
                 <IconComp className={`h-3.5 w-3.5 ${stat.color}`} />
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">{stat.label}</span>
+                <span className="text-[11px] text-slate-400">{stat.label}</span>
               </div>
               <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
             </div>
@@ -347,13 +347,13 @@ function StockSummarySection({
       {item && (
         <div className="mt-3 space-y-1.5">
           {item.location && (
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
               <MapPin className="h-3.5 w-3.5 text-slate-400" />
-              <span>보관 위치: <span className="font-medium text-slate-700 dark:text-slate-300">{item.location}</span></span>
+              <span>보관 위치: <span className="font-medium text-slate-300">{item.location}</span></span>
             </div>
           )}
           {stockStatus.expiringLotCount > 0 && (
-            <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-[11px] text-amber-400">
               <CalendarClock className="h-3.5 w-3.5" />
               <span>유효기간 임박 Lot: <span className="font-medium">{stockStatus.expiringLotCount}건</span></span>
             </div>
@@ -388,18 +388,18 @@ function IssueWarningsSection({
   };
 
   return (
-    <div className={`p-5 ${isShortage ? "bg-red-50/30 dark:bg-red-950/10" : "bg-amber-50/30 dark:bg-amber-950/10"}`}>
+    <div className={`p-5 ${isShortage ? "bg-red-950/10" : "bg-amber-950/10"}`}>
       <div className="flex items-center gap-2 mb-3">
         <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           확인 필요한 재고 이슈
         </h4>
         <Badge
           variant="outline"
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400"
-              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400"
+              ? "bg-red-950/30 text-red-400 border-red-200"
+              : "bg-amber-950/30 text-amber-400 border-amber-200"
           }`}
         >
           {issues.length}건
@@ -417,10 +417,10 @@ function IssueWarningsSection({
               key={idx}
               className={`p-3 rounded-lg border ${
                 isError
-                  ? "border-red-200 bg-red-50/50 dark:border-red-800/50 dark:bg-red-950/20"
+                  ? "border-red-800/50 bg-red-950/20"
                   : isWarning
-                  ? "border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20"
-                  : "border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30"
+                  ? "border-amber-800/50 bg-amber-950/20"
+                  : "border-slate-200 border-slate-700 bg-slate-800/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -431,16 +431,16 @@ function IssueWarningsSection({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <p className="text-xs font-medium text-slate-300">
                       {issue.message}
                     </p>
                     <Badge
                       variant="outline"
                       className={`text-[9px] h-3.5 px-1 flex-shrink-0 ${
                         isError
-                          ? "text-red-600 border-red-200 dark:text-red-400"
+                          ? "text-red-400 border-red-200"
                           : isWarning
-                          ? "text-amber-600 border-amber-200 dark:text-amber-400"
+                          ? "text-amber-400 border-amber-200"
                           : "text-slate-500 border-slate-200"
                       }`}
                     >
@@ -448,12 +448,12 @@ function IssueWarningsSection({
                     </Badge>
                   </div>
                   {issue.detail && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="text-[11px] text-slate-400">
                       {issue.detail}
                     </p>
                   )}
                   {issue.suggestedAction && (
-                    <p className="text-[11px] text-blue-500 dark:text-blue-400 mt-1 font-medium">
+                    <p className="text-[11px] text-blue-400 mt-1 font-medium">
                       권장: {issue.suggestedAction}
                     </p>
                   )}
@@ -482,24 +482,24 @@ function ReorderSection({
   const urgencyConfig = {
     urgent: {
       label: "긴급",
-      color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800",
+      color: "bg-red-950/30 text-red-400 border-red-800",
     },
     high: {
       label: "높음",
-      color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800",
+      color: "bg-amber-950/30 text-amber-400 border-amber-800",
     },
     medium: {
       label: "보통",
-      color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800",
+      color: "bg-blue-950/30 text-blue-400 border-blue-800",
     },
   };
 
   const urg = urgencyConfig[recommendation.urgency];
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-orange-50/30 dark:bg-orange-950/10" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-orange-950/10" : ""}`}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           재발주 우선순위
         </h4>
         <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${urg.color}`}>
@@ -507,11 +507,11 @@ function ReorderSection({
         </Badge>
       </div>
 
-      <div className="rounded-lg border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-3.5">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3.5">
         {/* 권장 수량 */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-slate-500 dark:text-slate-400">권장 발주 수량</span>
-          <span className="text-base font-bold text-slate-800 dark:text-slate-200">
+          <span className="text-xs text-slate-400">권장 발주 수량</span>
+          <span className="text-base font-bold text-slate-200">
             {recommendation.recommendedQty}
             <span className="text-xs font-normal text-slate-400 ml-0.5">ea</span>
           </span>
@@ -520,45 +520,45 @@ function ReorderSection({
         {/* 상세 정보 */}
         <div className="space-y-1.5 text-[11px]">
           {recommendation.estimatedMonthlyUsage != null && (
-            <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-slate-400">
               <span>월 예상 사용량</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-300">
                 {Math.round(recommendation.estimatedMonthlyUsage)}ea
               </span>
             </div>
           )}
           {recommendation.estimatedDepletionDays != null && (
-            <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-slate-400">
               <span>예상 소진 시점</span>
               <span className={`font-medium ${
                 recommendation.estimatedDepletionDays <= 7
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-slate-700 dark:text-slate-300"
+                  ? "text-red-400"
+                  : "text-slate-300"
               }`}>
                 {recommendation.estimatedDepletionDays}일 후
               </span>
             </div>
           )}
           {recommendation.leadTimeDays != null && (
-            <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-slate-400">
               <span>예상 리드타임</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-300">
                 {recommendation.leadTimeDays}일
               </span>
             </div>
           )}
           {recommendation.suggestedVendor && (
-            <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-slate-400">
               <span>추천 벤더</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-300">
                 {recommendation.suggestedVendor}
               </span>
             </div>
           )}
           {recommendation.recentUnitPrice != null && (
-            <div className="flex justify-between text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-slate-400">
               <span>최근 단가 참고</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-300">
                 ₩{recommendation.recentUnitPrice.toLocaleString()}
               </span>
             </div>
@@ -625,10 +625,10 @@ function LotExpirySection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-amber-50/30 dark:bg-amber-950/10" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-amber-950/10" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
         <CalendarClock className="h-4 w-4 text-amber-500" />
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           Lot 및 유효기간 확인
         </h4>
       </div>
@@ -644,26 +644,26 @@ function LotExpirySection({
               key={lot.lotNumber}
               className={`p-3 rounded-lg border ${
                 isExpired
-                  ? "border-red-200 bg-red-50/50 dark:border-red-800/50 dark:bg-red-950/20"
+                  ? "border-red-800/50 bg-red-950/20"
                   : isSoon
-                  ? "border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20"
-                  : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/50"
+                  ? "border-amber-800/50 bg-amber-950/20"
+                  : "border-slate-700 bg-slate-900/50"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-medium text-slate-200">
                     Lot #{lot.lotNumber}
                   </span>
                 </div>
                 {isExpired && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-red-950/30 text-red-400 border-red-200">
                     만료됨
                   </Badge>
                 )}
                 {isSoon && !isExpired && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 bg-amber-950/30 text-amber-400 border-amber-200">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -674,14 +674,14 @@ function LotExpirySection({
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
                 <span>만료일: {formatDate(lot.expiryDate)}</span>
                 <span>수량: {lot.quantity}</span>
               </div>
 
               {action && (
                 <p className={`text-[11px] font-medium mt-1 ${
-                  isExpired ? "text-red-500" : "text-amber-600 dark:text-amber-400"
+                  isExpired ? "text-red-500" : "text-amber-400"
                 }`}>
                   {action}
                 </p>
@@ -737,10 +737,10 @@ function BusinessImpactSection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-slate-50/50 dark:bg-slate-900/20" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-slate-900/20" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
         <TrendingDown className="h-4 w-4 text-slate-500" />
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           운영 영향
         </h4>
       </div>
@@ -751,16 +751,16 @@ function BusinessImpactSection({
           return (
             <div
               key={idx}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30"
+              className="p-3 rounded-lg border border-slate-200 border-slate-700 bg-slate-800/30"
             >
               <div className="flex items-start gap-2">
                 <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <p className="text-xs font-medium text-slate-300">
                     {impact.message}
                   </p>
                   {impact.detail && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-400 mt-0.5">
                       {impact.detail}
                     </p>
                   )}
@@ -790,7 +790,7 @@ function StickyActions({
   const hasIssues = data.issues.length > 0;
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-slate-800 bg-[#161d2f] px-5 py-3">
       <div className="flex gap-2">
         {hasReorder && onReviewReorder ? (
           <Button
