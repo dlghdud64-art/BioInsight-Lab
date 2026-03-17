@@ -7,16 +7,16 @@ import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
-// Theme toggle removed — app is dark-only
+import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 
 export const metadata: Metadata = {
   title: {
-    default: "LabAxis — 연구 구매 운영 플랫폼",
-    template: "%s | LabAxis",
+    default: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
+    template: "%s | BioInsight Lab",
   },
   description:
-    "검색부터 비교, 견적, 발주, 입고, 재고 운영까지. 연구팀의 구매·재고 운영 상태를 한눈에 관리하는 플랫폼.",
+    "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼. 연구실과 조직의 구매 흐름을 통합합니다.",
   keywords: [
     "바이오",
     "제약",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     "구매 관리",
     "재고 관리",
   ],
-  authors: [{ name: "LabAxis" }],
-  creator: "LabAxis",
-  publisher: "LabAxis",
+  authors: [{ name: "BioInsight Lab" }],
+  creator: "BioInsight Lab",
+  publisher: "BioInsight Lab",
   robots: {
     index: true,
     follow: true,
@@ -39,25 +39,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://labaxis.io",
-    siteName: "LabAxis",
-    title: "LabAxis — 연구 구매 운영 플랫폼",
+    url: "https://bioinsight-lab.com",
+    siteName: "BioInsight Lab",
+    title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
     description:
-      "검색부터 비교, 견적, 발주, 입고, 재고 운영까지. 연구팀의 구매·재고 운영을 한눈에 관리.",
+      "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "LabAxis",
+        alt: "BioInsight Lab",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LabAxis — 연구 구매 운영 플랫폼",
+    title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
     description:
-      "검색부터 비교, 견적, 발주, 입고, 재고 운영까지. 연구팀의 구매·재고 운영을 한눈에 관리.",
+      "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: ["/og-image.png"],
   },
 };
@@ -77,11 +77,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased dark:bg-[#0b1120] dark:text-slate-100">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
         >
           <LocaleProvider>
@@ -92,6 +92,7 @@ export default function RootLayout({
                 </QRScannerProviderWrapper>
                 <Toaster />
                 <CompareFlowGuard />
+                <FloatingThemeToggle />
                 <Analytics />
               </QueryProvider>
             </AuthSessionProvider>

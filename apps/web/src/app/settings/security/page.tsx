@@ -147,7 +147,7 @@ function SecuritySettingsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-50">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -160,7 +160,7 @@ function SecuritySettingsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-50">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -182,7 +182,7 @@ function SecuritySettingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -193,7 +193,7 @@ function SecuritySettingsPageContent() {
                 title="보안 설정"
                 description="이메일 도메인 제한 및 보안 정책을 관리합니다."
                 icon={Shield}
-                iconColor="text-purple-400"
+                iconColor="text-purple-600"
               />
 
               {/* 워크스페이스 선택 */}
@@ -214,11 +214,11 @@ function SecuritySettingsPageContent() {
                 <>
                   {/* 권한 안내 */}
                   {!isAdmin && (
-                    <Card className="border-yellow-200 bg-yellow-900/20">
+                    <Card className="border-yellow-200 bg-yellow-50">
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
-                          <div className="rounded-full bg-yellow-900/40 p-2">
-                            <Shield className="h-4 w-4 text-yellow-400" />
+                          <div className="rounded-full bg-yellow-100 p-2">
+                            <Shield className="h-4 w-4 text-yellow-600" />
                           </div>
                           <div className="flex-1">
                             <p className="text-sm text-yellow-900 font-medium">
@@ -243,9 +243,9 @@ function SecuritySettingsPageContent() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="bg-blue-950/20 border border-blue-800 rounded-lg p-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-start gap-3">
-                            <Info className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                            <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
                               <p className="text-sm text-blue-900 font-medium mb-1">
                                 이메일 도메인 제한
@@ -282,7 +282,7 @@ function SecuritySettingsPageContent() {
                             로딩 중...
                           </div>
                         ) : allowedDomains.length === 0 ? (
-                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-slate-800 rounded-lg">
+                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-slate-200 rounded-lg">
                             <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                             <p>허용된 도메인이 없습니다.</p>
                             <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>

@@ -18,7 +18,7 @@ export function TestBoardColumn({
           {step}
         </span>
         <div>
-          <div className="text-sm font-semibold text-slate-200">
+          <div className="text-sm font-semibold text-slate-800">
             Step {step}. {title}
           </div>
           {description && (

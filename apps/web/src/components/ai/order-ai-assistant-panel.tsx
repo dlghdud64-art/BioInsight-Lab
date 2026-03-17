@@ -196,7 +196,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
       <div className="rounded-full bg-slate-800/50 p-4 mb-4">
-        <Truck className="h-8 w-8 text-slate-400" />
+        <Truck className="h-8 w-8 text-slate-600" />
       </div>
       <p className="text-sm font-medium text-slate-400">
         주문을 선택하면 여기에서 확인할 수 있습니다
@@ -428,8 +428,8 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
           variant="outline"
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-950/30 text-red-400 border-red-800"
-              : "bg-amber-950/30 text-amber-400 border-amber-800"
+              ? "bg-red-950/30 text-red-400 border-red-200"
+              : "bg-amber-950/30 text-amber-400 border-amber-200"
           }`}
         >
           {issues.length}건
@@ -450,7 +450,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-800 bg-slate-900/50 border-slate-700 bg-slate-800/30"
+                  : "border-slate-700 bg-slate-800/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -553,7 +553,7 @@ function FollowUpDraftSection({
             {bodyPreview}
           </p>
           <button
-            className="text-[11px] text-blue-500 hover:text-blue-400 mt-1 font-medium"
+            className="text-[11px] text-blue-500 hover:text-blue-600 mt-1 font-medium"
             onClick={onShowEmail}
           >
             전문 보기
@@ -615,7 +615,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
               {resp.respondedAt && (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 bg-emerald-900/20 text-emerald-300 bg-emerald-950/30 text-emerald-400 border-emerald-800"
+                  className="text-[10px] h-4 px-1.5 bg-emerald-950/30 text-emerald-400 border-emerald-800"
                 >
                   회신 완료
                 </Badge>
@@ -639,7 +639,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
                       <span>{item.leadTimeDays}일</span>
                     )}
                     {item.inStock === false && (
-                      <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-red-500 border-red-800">
+                      <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-red-500 border-red-200">
                         재고 없음
                       </Badge>
                     )}
@@ -699,9 +699,9 @@ function StatusTransitionSection({
   };
 
   const confidenceConfig: Record<string, { label: string; color: string }> = {
-    high: { label: "높음", color: "bg-emerald-900/20 text-emerald-300 border-emerald-800 bg-emerald-950/30 text-emerald-400" },
-    medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-800" },
-    low: { label: "낮음", color: "bg-slate-900 border-slate-800 bg-slate-800 text-slate-400" },
+    high: { label: "높음", color: "bg-emerald-950/30 text-emerald-400 border-emerald-200" },
+    medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-200" },
+    low: { label: "낮음", color: "bg-slate-800 text-slate-400 border-slate-200" },
   };
 
   const conf = confidenceConfig[proposal.confidence] || confidenceConfig.medium;
@@ -722,7 +722,7 @@ function StatusTransitionSection({
             {statusLabels[proposal.currentStatus] || proposal.currentStatus}
           </Badge>
           <ChevronRight className="h-3.5 w-3.5 text-blue-400" />
-          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-blue-900/30 border-blue-300 bg-blue-900/50 text-blue-300">
+          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-blue-900/50 text-blue-300 border-blue-300">
             {statusLabels[proposal.proposedStatus] || proposal.proposedStatus}
           </Badge>
           <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ml-auto ${conf.color}`}>

@@ -45,9 +45,9 @@ export function DemoFlowSwitcher() {
   const router = useRouter();
 
   return (
-    <Card className="border-slate-800 bg-slate-900 shadow-none">
+    <Card className="border-slate-200 bg-white shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-slate-100">
+        <CardTitle className="text-base font-semibold text-slate-900">
           3단계 사용 흐름
         </CardTitle>
         <CardDescription className="text-xs text-slate-500">
@@ -58,12 +58,12 @@ export function DemoFlowSwitcher() {
       <CardContent className="pt-0">
         <Tabs value={active} onValueChange={setActive}>
           {/* 탭 버튼 그룹 */}
-          <TabsList className="mb-4 grid grid-cols-3 bg-slate-900">
+          <TabsList className="mb-4 grid grid-cols-3 bg-slate-50">
             {STEPS.map((step) => (
               <TabsTrigger
                 key={step.id}
                 value={step.id}
-                className="text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-slate-100"
+                className="text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900"
                 onMouseEnter={() => setActive(step.id)}
               >
                 {step.label}
@@ -80,14 +80,14 @@ export function DemoFlowSwitcher() {
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-[11px] font-medium text-slate-500">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-500">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-semibold text-white">
                       {step.stepLabel.replace("Step ", "")}
                     </span>
                     <span>{step.stepLabel}</span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-100">
+                    <h3 className="text-sm font-semibold text-slate-900">
                       {step.title}
                     </h3>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">

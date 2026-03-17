@@ -6,97 +6,93 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { LabAxisLogo } from "@/components/bioinsight-logo";
-import { ShieldCheck, ArrowRight, Users, ClipboardList, Lock } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 
 function SignInContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
-
   return (
     <div className="flex min-h-screen">
-      {/* ── LEFT PANEL (desktop only) ── */}
-      <div className="hidden lg:flex w-1/2 bg-[#08090c] relative min-h-screen flex-col overflow-hidden">
-        {/* Brand top-left */}
-        <div className="pt-10 pl-12">
-          <Link href="/" className="inline-block">
-            <LabAxisLogo size="sm" showText />
-          </Link>
-        </div>
+      {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
+      <div className="hidden lg:flex w-1/2 bg-[#0b1120] relative min-h-screen flex-col overflow-hidden">
+        {/* 1. 브랜드 로고 */}
+        <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
+            <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={48} height={48} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex flex-col justify-center leading-tight">
+            <div className="flex items-center gap-1">
+              <span className="text-xl font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+              <span className="text-xl font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
+            </div>
+            <div className="text-[11px] text-slate-400 tracking-tight">Procurement & Research</div>
+          </div>
+        </Link>
 
-        {/* Center copy */}
-        <div className="flex-1 flex flex-col justify-center pl-12 pr-14 space-y-5">
-          <h1 className="text-[2.25rem] font-bold leading-snug text-white tracking-tight antialiased">
-            연구 구매 운영을<br />
-            하나의 흐름으로 연결합니다
+        {/* 2. 슬로건: 수직 중앙 배치 */}
+        <div className="flex-1 flex flex-col justify-center pl-16 pr-14 space-y-6">
+          <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tight antialiased">
+            연구실의 <span className="text-blue-400">검색</span>·<span className="text-blue-400">견적</span>·<span className="text-blue-400">구매</span>·<span className="text-blue-400">재고</span><br />
+            업무를 한곳에서.
           </h1>
-          <p className="text-slate-400 text-[15px] max-w-md leading-relaxed antialiased">
-            검색, 비교, 견적, 발주, 입고, 재고 운영까지<br />
-            LabAxis에서 이어집니다
+          <p className="text-slate-300/90 text-[17px] max-w-sm leading-relaxed antialiased">
+            조직 단위의 구매 운영과 <span className="text-blue-400">협업</span>까지<br />
+            연결하는 플랫폼으로 확장됩니다.
           </p>
         </div>
 
-        {/* Product proof strip */}
-        <div className="pl-12 pr-14 pb-16 space-y-4">
-          {/* Pipeline */}
-          <div className="flex items-center gap-2 text-[13px] text-slate-500 antialiased">
-            {["검색", "비교", "견적", "발주", "재고 운영"].map((step, i, arr) => (
-              <span key={step} className="flex items-center gap-2">
-                <span className="text-slate-300">{step}</span>
-                {i < arr.length - 1 && <ArrowRight className="w-3 h-3 text-slate-600" />}
-              </span>
-            ))}
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2">
-            {["승인", "예산", "Lot", "Expiry", "역할 기반 워크스페이스 운영"].map((tag) => (
-              <span
-                key={tag}
-                className="inline-block text-[11px] text-slate-400 border border-slate-700/60 rounded px-2 py-0.5"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Security line */}
-          <div className="flex items-center gap-2 text-slate-500 text-[12px] pt-2 antialiased">
-            <ShieldCheck className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            256-bit 엔터프라이즈급 데이터 암호화 적용 중
-          </div>
+        {/* 3. 하단 보안 지표 */}
+        <div className="absolute bottom-12 left-16 flex items-center gap-2 text-slate-500 text-sm antialiased">
+          <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
+          256-bit 엔터프라이즈급 데이터 암호화 적용 중
         </div>
       </div>
 
-      {/* ── RIGHT AUTH PANEL ── */}
-      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-[#0c0c0f]">
-        {/* Mobile brand */}
+      {/* 우측 로그인 영역 */}
+      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-slate-950">
+        {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
-          <Link href="/">
-            <LabAxisLogo size="sm" showText />
+          <Link href="/" className="group flex items-center gap-3 cursor-pointer">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
+              <Image src="/brand/Bio-Insight.png" alt="BioInsight Lab" width={40} height={40} className="w-full h-full object-cover" />
+            </div>
+            <div className="leading-tight">
+              <div className="flex items-center gap-1">
+                <span className="text-lg font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">BioInsight</span>
+                <span className="text-lg font-bold tracking-tighter text-teal-300 group-hover:text-blue-400 transition-colors">Lab</span>
+              </div>
+              <div className="text-[10px] text-slate-400 tracking-tight">Procurement & Research</div>
+            </div>
           </Link>
         </div>
-
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-          <div className="max-w-md w-full">
-            {/* Auth form surface */}
-            <div className="bg-[#131316] border border-[#242429] rounded-lg p-6 md:p-8 space-y-6">
-              {/* Title */}
+          <div className="max-w-md w-full space-y-8">
+            <div className="text-center lg:text-left">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-slate-500 hover:text-slate-100 mb-8 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                홈으로 돌아가기
+              </Link>
+            </div>
+
+            <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-slate-100">
                   로그인
                 </h2>
-                <p className="text-slate-400 mt-1.5 text-sm leading-relaxed">
-                  워크스페이스에 접속해 오늘의<br className="sm:hidden" />
-                  구매·재고 운영 상태를 확인하세요
+                <p className="text-slate-400 mt-1 text-sm">
+                  연구실의 검색·견적·구매·재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 
-              {/* Google sign-in */}
+              {/* Google 로그인 버튼 */}
               <Button
                 variant="outline"
-                className="w-full h-12 border-[#242429] bg-[#1a1a1e] hover:bg-[#242429] hover:border-blue-500/40 font-medium text-slate-200"
+                className="w-full h-12 border-slate-700 hover:bg-slate-900/50 hover:border-slate-600 font-medium"
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -120,72 +116,56 @@ function SignInContent() {
                 Google로 로그인
               </Button>
 
-              {/* Divider */}
+              {/* 또는 이메일로 계속하기 구분선 */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#242429]" />
+                  <span className="w-full border-t border-slate-700" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#131316] px-3 text-xs text-slate-500">
+                  <span className="bg-slate-950 px-3 text-xs text-slate-400">
                     또는 이메일로 계속하기
                   </span>
                 </div>
               </div>
 
-              {/* Email fields (disabled) */}
+              {/* 이메일/비밀번호 필드 (Disabled) - 16px로 iOS 자동 확대 방지 */}
               <div className="space-y-3">
                 <Input
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-[#1a1a1e] border-[#242429] cursor-not-allowed text-base placeholder:text-slate-600"
+                  className="bg-slate-900/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-[#1a1a1e] border-[#242429] cursor-not-allowed text-base placeholder:text-slate-600"
+                  className="bg-slate-900/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-500 text-center">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
               </div>
-
-              {/* Trust indicators */}
-              <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                  <Lock className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-[11px] text-slate-500 leading-tight">조직 권한 기반 접근</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                  <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-[11px] text-slate-500 leading-tight">활동 이력 기록</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                  <Users className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-[11px] text-slate-500 leading-tight">팀 워크스페이스 지원</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer below card */}
-            <div className="mt-6 space-y-3">
-              <p className="text-center text-sm text-slate-400">
-                계정이 없으신가요?{" "}
-                <Link
-                  href="/test/search"
-                  className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2"
-                >
-                  무료로 시작하기
-                </Link>
-              </p>
-              <p className="text-center text-[11px] text-slate-500 leading-relaxed">
-                LabAxis은 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
-              </p>
             </div>
           </div>
+        </div>
+
+        {/* 하단 푸터 */}
+        <div className="p-6 sm:p-8 pt-0 space-y-4">
+          <p className="text-center text-sm text-slate-400">
+            계정이 없으신가요?{" "}
+            <Link
+              href="/test/search"
+              className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2"
+            >
+              무료로 시작하기
+            </Link>
+          </p>
+          <p className="text-center text-[11px] text-slate-500 leading-relaxed">
+            BioInsight Lab은 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
+          </p>
         </div>
       </div>
     </div>
@@ -195,7 +175,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-[#0c0c0f]">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>

@@ -73,7 +73,7 @@ export function ProductCard({
   const keySpecs = getKeySpecs();
 
   return (
-    <div className="bg-slate-900 rounded-lg shadow-none hover:shadow-none border border-slate-800 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
+    <div className="bg-slate-900 rounded-lg shadow-sm hover:shadow-md border border-slate-800 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
         {/* 썸네일 + 제품명 */}
@@ -141,7 +141,7 @@ export function ProductCard({
             {product.price && product.price > 0 ? (
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-                  <span className="text-lg font-bold text-blue-400">
+                  <span className="text-lg font-bold text-blue-600">
                     ₩{product.price.toLocaleString("ko-KR")}
                   </span>
                   <span className="text-xs text-slate-500 font-normal">(VAT 별도)</span>
@@ -175,7 +175,7 @@ export function ProductCard({
             <Link href={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-none rounded h-9 py-2 px-4 text-sm font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm font-medium"
               >
                 <ShoppingCart className="h-4 w-4 mr-1.5" />
                 견적 담기

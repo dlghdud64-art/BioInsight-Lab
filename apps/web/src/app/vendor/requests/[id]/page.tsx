@@ -82,7 +82,7 @@ export default function VendorRequestDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-slate-900">
+      <div className="flex min-h-screen bg-slate-50">
         <VendorSidebar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -93,10 +93,10 @@ export default function VendorRequestDetailPage() {
 
   if (!request) {
     return (
-      <div className="flex min-h-screen bg-slate-900">
+      <div className="flex min-h-screen bg-slate-50">
         <VendorSidebar />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-slate-400">요청을 찾을 수 없습니다.</p>
+          <p className="text-slate-600">요청을 찾을 수 없습니다.</p>
         </div>
       </div>
     );
@@ -105,12 +105,12 @@ export default function VendorRequestDetailPage() {
   const isReadOnly = !request.canEdit;
 
   return (
-    <div className="flex min-h-screen bg-slate-900">
+    <div className="flex min-h-screen bg-slate-50">
       <VendorSidebar />
       
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-slate-900 border-b border-slate-800 px-6 py-4">
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
           <div className="flex items-center gap-4 mb-3">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/vendor/dashboard">
@@ -120,13 +120,13 @@ export default function VendorRequestDetailPage() {
             </Button>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">{request.quoteTitle}</h1>
+            <h1 className="text-xl font-bold text-slate-900">{request.quoteTitle}</h1>
             <div className="flex items-center gap-3 mt-2">
               <Badge variant="secondary">{request.status}</Badge>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-600">
                 요청자: {request.organizationName} · {request.requesterName}
               </span>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-600">
                 만료일: {format(new Date(request.expiresAt), "PPP", { locale: ko })}
               </span>
             </div>

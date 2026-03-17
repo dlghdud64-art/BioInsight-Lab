@@ -96,47 +96,47 @@ function KPIActionCard({
 }) {
   const variantStyles = {
     urgent: {
-      border: count > 0 ? "border-red-800" : "border-slate-800",
-      iconBg: "bg-red-950/30",
+      border: count > 0 ? "border-red-100" : "border-slate-200",
+      iconBg: "bg-red-50",
       iconColor: "text-red-500",
-      countColor: count > 0 ? "text-red-400" : "text-slate-100",
+      countColor: count > 0 ? "text-red-600" : "text-slate-900",
       ctaStyle: count > 0
-        ? "text-red-700 bg-red-950/30 border-red-800 hover:bg-red-900/40"
-        : "text-slate-500 border-slate-800 hover:bg-slate-900",
+        ? "text-red-700 bg-red-50 border-red-200 hover:bg-red-100"
+        : "text-slate-500 border-slate-200 hover:bg-slate-50",
     },
     warning: {
-      border: count > 0 ? "border-amber-800" : "border-slate-800",
-      iconBg: "bg-amber-950/30",
+      border: count > 0 ? "border-amber-100" : "border-slate-200",
+      iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
-      countColor: count > 0 ? "text-amber-400" : "text-slate-100",
+      countColor: count > 0 ? "text-amber-600" : "text-slate-900",
       ctaStyle: count > 0
-        ? "text-amber-700 bg-amber-950/30 border-amber-800 hover:bg-amber-900/40"
-        : "text-slate-500 border-slate-800 hover:bg-slate-900",
+        ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
+        : "text-slate-500 border-slate-200 hover:bg-slate-50",
     },
     error: {
-      border: count > 0 ? "border-rose-100" : "border-slate-800",
+      border: count > 0 ? "border-rose-100" : "border-slate-200",
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
-      countColor: count > 0 ? "text-rose-600" : "text-slate-100",
+      countColor: count > 0 ? "text-rose-600" : "text-slate-900",
       ctaStyle: count > 0
         ? "text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100"
-        : "text-slate-500 border-slate-800 hover:bg-slate-900",
+        : "text-slate-500 border-slate-200 hover:bg-slate-50",
     },
     default: {
-      border: "border-slate-800",
-      iconBg: "bg-blue-950/20",
+      border: "border-slate-200",
+      iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
-      countColor: count > 0 ? "text-blue-400" : "text-slate-100",
+      countColor: count > 0 ? "text-blue-600" : "text-slate-900",
       ctaStyle: count > 0
-        ? "text-blue-700 bg-blue-950/20 border-blue-800 hover:bg-blue-900/30"
-        : "text-slate-500 border-slate-800 hover:bg-slate-900",
+        ? "text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+        : "text-slate-500 border-slate-200 hover:bg-slate-50",
     },
   };
 
   const s = variantStyles[variant];
 
   return (
-    <div className={cn("bg-slate-900 border rounded-lg p-4 flex flex-col gap-3", s.border)}>
+    <div className={cn("bg-white border rounded-lg p-4 flex flex-col gap-3", s.border)}>
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-md shrink-0", s.iconBg)}>
           <Icon className={cn("h-4 w-4", s.iconColor)} />
@@ -184,9 +184,9 @@ export default function AdminDashboardPage() {
   const pendingUsers: PendingUser[] = [];
   const slaQuotes: SLAQuote[] = [];
   const activityLogs: ActivityLog[] = [
-    { id: "1", action: "조직 승인", actor: "admin@labaxis.io", target: "서울대 화학과", detail: "신규 조직 승인 완료", time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-    { id: "2", action: "사용자 역할 변경", actor: "admin@labaxis.io", target: "김연구원", detail: "VIEWER → REQUESTER", time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-    { id: "3", action: "견적 수동 처리", actor: "admin@labaxis.io", target: "QT-2024-0312", detail: "SLA 초과 건 수동 발송", time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+    { id: "1", action: "조직 승인", actor: "admin@bioinsight.com", target: "서울대 화학과", detail: "신규 조직 승인 완료", time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    { id: "2", action: "사용자 역할 변경", actor: "admin@bioinsight.com", target: "김연구원", detail: "VIEWER → REQUESTER", time: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+    { id: "3", action: "견적 수동 처리", actor: "admin@bioinsight.com", target: "QT-2024-0312", detail: "SLA 초과 건 수동 발송", time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
   ];
   const errorCount = 0;
 
@@ -199,15 +199,15 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-900">
+    <div className="flex min-h-screen bg-slate-50">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-h-screen">
         {/* 헤더 */}
-        <div className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-white border-b border-slate-200 px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base font-bold text-slate-100">운영 컨트롤타워</h1>
+              <h1 className="text-base font-bold text-slate-900">운영 컨트롤타워</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 {format(new Date(), "yyyy.MM.dd (E) HH:mm 기준", { locale: ko })}
               </p>
@@ -269,40 +269,40 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* ── 탭형 운영 큐 ──────────────────────────────── */}
-          <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="px-4 pt-3 border-b border-slate-800 bg-slate-900/50">
+              <div className="px-4 pt-3 border-b border-slate-100 bg-slate-50/50">
                 <TabsList className="bg-transparent p-0 h-auto gap-0">
                   <TabsTrigger
                     value="orgs"
-                    className="data-[state=active]:bg-slate-900 data-[state=active]:shadow-none rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     조직 승인 대기
                     {kpi.pendingOrgs > 0 && (
-                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-red-950/30 text-red-400 border-0">{kpi.pendingOrgs}</Badge>
+                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-red-50 text-red-600 border-0">{kpi.pendingOrgs}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
                     value="users"
-                    className="data-[state=active]:bg-slate-900 data-[state=active]:shadow-none rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     사용자 승인 대기
                     {kpi.pendingUsers > 0 && (
-                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-amber-950/30 text-amber-400 border-0">{kpi.pendingUsers}</Badge>
+                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-amber-50 text-amber-600 border-0">{kpi.pendingUsers}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
                     value="quotes"
-                    className="data-[state=active]:bg-slate-900 data-[state=active]:shadow-none rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     견적 이슈
                     {kpi.slaOverQuotes > 0 && (
-                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-blue-950/20 text-blue-400 border-0">{kpi.slaOverQuotes}</Badge>
+                      <Badge className="ml-1.5 h-4 px-1 text-[9px] bg-blue-50 text-blue-600 border-0">{kpi.slaOverQuotes}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    className="data-[state=active]:bg-slate-900 data-[state=active]:shadow-none rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     관리자 활동 로그
                   </TabsTrigger>
@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-900/80 hover:bg-transparent">
+                      <TableRow className="bg-slate-50/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">조직명</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">소유자</TableHead>
@@ -336,22 +336,22 @@ export default function AdminDashboardPage() {
                       {pendingOrgs.map((org) => (
                         <TableRow key={org.id} className="text-xs">
                           <TableCell>
-                            <Badge className="bg-amber-950/30 text-amber-700 border-0 text-[10px]">대기</Badge>
+                            <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
-                          <TableCell className="font-medium text-slate-200">{org.name}</TableCell>
+                          <TableCell className="font-medium text-slate-800">{org.name}</TableCell>
                           <TableCell>
-                            <div className="text-slate-300">{org.ownerName}</div>
+                            <div className="text-slate-700">{org.ownerName}</div>
                             <div className="text-[10px] text-slate-400">{org.ownerEmail}</div>
                           </TableCell>
-                          <TableCell className="text-slate-400">{org.plan}</TableCell>
+                          <TableCell className="text-slate-600">{org.plan}</TableCell>
                           <TableCell className="text-slate-500">{format(new Date(org.createdAt), "MM.dd")}</TableCell>
-                          <TableCell className="text-slate-400">{org.memberCount}명</TableCell>
+                          <TableCell className="text-slate-600">{org.memberCount}명</TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
                               <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-500">
                                 <Eye className="h-3 w-3 mr-1" />상세
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-950/30">
+                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50">
                                 <XCircle className="h-3 w-3 mr-1" />반려
                               </Button>
                               <Button size="sm" className="h-6 px-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white">
@@ -379,7 +379,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-900/80 hover:bg-transparent">
+                      <TableRow className="bg-slate-50/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">이름</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">이메일</TableHead>
@@ -393,18 +393,18 @@ export default function AdminDashboardPage() {
                       {pendingUsers.map((user) => (
                         <TableRow key={user.id} className="text-xs">
                           <TableCell>
-                            <Badge className="bg-amber-950/30 text-amber-700 border-0 text-[10px]">대기</Badge>
+                            <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
-                          <TableCell className="font-medium text-slate-200">{user.name}</TableCell>
+                          <TableCell className="font-medium text-slate-800">{user.name}</TableCell>
                           <TableCell className="text-slate-500">{user.email}</TableCell>
-                          <TableCell className="text-slate-400">{user.orgName}</TableCell>
+                          <TableCell className="text-slate-600">{user.orgName}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-[10px]">{user.requestedRole}</Badge>
                           </TableCell>
                           <TableCell className="text-slate-500">{format(new Date(user.createdAt), "MM.dd")}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-950/30">
+                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50">
                                 <XCircle className="h-3 w-3 mr-1" />반려
                               </Button>
                               <Button size="sm" className="h-6 px-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white">
@@ -432,7 +432,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-900/80 hover:bg-transparent">
+                      <TableRow className="bg-slate-50/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">견적 번호</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">요청자</TableHead>
@@ -446,15 +446,15 @@ export default function AdminDashboardPage() {
                       {slaQuotes.map((q) => (
                         <TableRow key={q.id} className="text-xs">
                           <TableCell>
-                            <Badge className="bg-red-950/30 text-red-400 border-0 text-[10px]">SLA 초과</Badge>
+                            <Badge className="bg-red-50 text-red-600 border-0 text-[10px]">SLA 초과</Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-slate-300">{q.title}</TableCell>
-                          <TableCell className="text-slate-300">{q.requesterName}</TableCell>
-                          <TableCell className="text-slate-400">{q.orgName}</TableCell>
+                          <TableCell className="font-mono text-slate-700">{q.title}</TableCell>
+                          <TableCell className="text-slate-700">{q.requesterName}</TableCell>
+                          <TableCell className="text-slate-600">{q.orgName}</TableCell>
                           <TableCell>
-                            <span className="text-red-400 font-semibold">+{q.slaHoursOver}h</span>
+                            <span className="text-red-600 font-semibold">+{q.slaHoursOver}h</span>
                           </TableCell>
-                          <TableCell className="text-right text-slate-300 font-medium">
+                          <TableCell className="text-right text-slate-700 font-medium">
                             {q.totalAmount ? `₩${q.totalAmount.toLocaleString()}` : "—"}
                           </TableCell>
                           <TableCell className="text-right">
@@ -462,7 +462,7 @@ export default function AdminDashboardPage() {
                               <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-500">
                                 <Eye className="h-3 w-3 mr-1" />상세
                               </Button>
-                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-red-800 text-red-400 hover:bg-red-950/30">
+                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] border-red-200 text-red-600 hover:bg-red-50">
                                 <ExternalLink className="h-3 w-3 mr-1" />견적 확인
                               </Button>
                             </div>
@@ -487,14 +487,14 @@ export default function AdminDashboardPage() {
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {activityLogs.map((log) => (
-                      <div key={log.id} className="px-5 py-3 flex items-center gap-3 text-xs hover:bg-slate-900/50">
-                        <div className="p-1.5 rounded-md bg-slate-800 shrink-0">
+                      <div key={log.id} className="px-5 py-3 flex items-center gap-3 text-xs hover:bg-slate-50/50">
+                        <div className="p-1.5 rounded-md bg-slate-100 shrink-0">
                           <Activity className="h-3.5 w-3.5 text-slate-500" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">{log.action}</Badge>
-                            <span className="text-slate-300 font-medium truncate">{log.target}</span>
+                            <span className="text-slate-700 font-medium truncate">{log.target}</span>
                           </div>
                           <div className="text-[11px] text-slate-400 mt-0.5">{log.detail}</div>
                         </div>
@@ -510,7 +510,7 @@ export default function AdminDashboardPage() {
                     <div className="px-5 py-3 text-center">
                       <a
                         href="/admin/activity"
-                        className="text-[11px] text-blue-400 hover:text-blue-700 font-medium inline-flex items-center gap-1"
+                        className="text-[11px] text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
                       >
                         전체 활동 로그 보기
                         <ArrowRight className="h-3 w-3" />
@@ -544,14 +544,14 @@ function EmptyQueue({
 }) {
   return (
     <div className="py-12 px-6 text-center">
-      <div className="inline-flex items-center justify-center p-3 rounded-full bg-slate-800 mb-3">
+      <div className="inline-flex items-center justify-center p-3 rounded-full bg-slate-100 mb-3">
         <Icon className="h-5 w-5 text-slate-400" />
       </div>
-      <p className="text-sm font-medium text-slate-400">{title}</p>
+      <p className="text-sm font-medium text-slate-600">{title}</p>
       <p className="text-xs text-slate-400 mt-1">{description}</p>
       <a
         href={actionHref}
-        className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-700 font-medium mt-3"
+        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium mt-3"
       >
         {actionLabel}
         <ArrowRight className="h-3 w-3" />

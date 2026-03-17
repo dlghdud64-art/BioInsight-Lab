@@ -15,13 +15,39 @@ type OrderStatus = "pending" | "quoted" | "ordered" | "shipping" | "delivered";
 
 const STATUS_CONFIG: Record<
   OrderStatus,
-  { label: string; borderClass: string }
+  { label: string; dot: "amber" | "blue" | "slate" | "emerald"; dotPulse?: boolean; className: string; borderClass: string }
 > = {
-  pending:   { label: "견적 대기",  borderClass: "border-l-amber-400" },
-  quoted:    { label: "견적 도착",  borderClass: "border-l-blue-400" },
-  ordered:   { label: "발주 완료",  borderClass: "border-l-slate-300" },
-  shipping:  { label: "배송 중",    borderClass: "border-l-emerald-400" },
-  delivered: { label: "배송 완료",  borderClass: "border-l-emerald-400" },
+  pending: {
+    label: "견적 대기",
+    dot: "amber",
+    className: "bg-amber-50 text-amber-700 border-amber-200",
+    borderClass: "border-slate-200",
+  },
+  quoted: {
+    label: "견적 도착",
+    dot: "blue",
+    dotPulse: true,
+    className: "bg-blue-50 text-blue-700 border-blue-200",
+    borderClass: "border-blue-100",
+  },
+  ordered: {
+    label: "발주 완료",
+    dot: "slate",
+    className: "bg-slate-100 text-slate-600 border-slate-200",
+    borderClass: "border-slate-200",
+  },
+  shipping: {
+    label: "배송 중",
+    dot: "emerald",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    borderClass: "border-slate-200",
+  },
+  delivered: {
+    label: "배송 완료",
+    dot: "emerald",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    borderClass: "border-slate-200",
+  },
 };
 
 const MOCK_ORDERS = [
@@ -68,8 +94,7 @@ const MOCK_ORDERS = [
   },
 ];
 
-// ── Order Row (replaces OrderCard) ──
-function OrderRow({
+function OrderCard({
   order,
   onTrack,
 }: {
@@ -77,54 +102,82 @@ function OrderRow({
   onTrack?: () => void;
 }) {
   const config = STATUS_CONFIG[order.status];
+  const isQuoted = order.status === "quoted";
   const showTrackButton = order.status === "ordered" || order.status === "shipping";
 
   return (
-    <div className={`flex items-center gap-3 px-3 py-2 border-b border-l-[3px] hover:bg-muted/30 transition-colors ${config.borderClass}`}>
-      {/* Status badge first */}
-      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0 whitespace-nowrap">
-        {config.label}
-      </Badge>
-
-      {/* Title + meta */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-foreground truncate">{order.title}</span>
-          <span className="text-[10px] font-mono text-muted-foreground flex-shrink-0">{order.id}</span>
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all ${config.borderClass}`}
+    >
+      <div className="flex items-center gap-4 min-w-0">
+        <div
+          className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${
+            isQuoted ? "bg-blue-50" : "bg-slate-50"
+          }`}
+        >
+          <FileText
+            className={`h-6 w-6 ${isQuoted ? "text-blue-600" : "text-slate-400"}`}
+          />
         </div>
-        <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-          <span>{order.requestedAt}</span>
-          {order.amount != null && (
-            <span className="font-medium text-foreground tabular-nums">₩{order.amount.toLocaleString("ko-KR")}</span>
-          )}
-          {!!(order as Record<string, unknown>).amountDisplay && (
-            <span className="text-muted-foreground">{String((order as Record<string, unknown>).amountDisplay)}</span>
-          )}
+        <div className="min-w-0">
+          <h3 className="font-bold text-slate-900 text-lg truncate">
+            {order.title}
+          </h3>
+          <p className="text-sm text-slate-500 mt-1">
+            요청일: {order.requestedAt} • 주문번호: {order.id}
+          </p>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {showTrackButton && onTrack && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 text-[11px] px-2"
-            onClick={onTrack}
-          >
-            <Sparkles className="h-3 w-3 mr-0.5" />추적
-          </Button>
-        )}
-        <Button
-          variant={order.actionPrimary ? "default" : "outline"}
-          size="sm"
-          className="h-6 text-[11px] px-2.5"
-          asChild
+      <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+        <Badge
+          variant="outline"
+          dot={config.dot}
+          dotPulse={config.dotPulse}
+          className={`${config.className} shrink-0`}
         >
-          <Link href={`/dashboard/orders/${order.id}`}>
-            {order.actionLabel}
-          </Link>
-        </Button>
+          {config.label}
+        </Badge>
+        <div className="text-right hidden md:block shrink-0">
+          <p className="text-sm text-slate-500">{order.amountLabel}</p>
+          <p
+            className={`font-bold text-lg ${
+              order.amountDisplay ? "text-slate-400" : ""
+            }`}
+          >
+            {order.amountDisplay ??
+              (order.amount != null
+                ? `₩ ${order.amount.toLocaleString("ko-KR")}`
+                : "-")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {showTrackButton && onTrack && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 shrink-0"
+              onClick={onTrack}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              주문 추적 확인
+            </Button>
+          )}
+          <Button
+            variant={order.actionPrimary ? "default" : "outline"}
+            className={
+              order.actionPrimary
+                ? "bg-blue-600 hover:bg-blue-700 shrink-0"
+                : "text-slate-600 border-slate-200 shrink-0"
+            }
+            asChild
+          >
+            <Link href={`/dashboard/orders/${order.id}`}>
+              {order.actionLabel}
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -145,20 +198,28 @@ function OrderHistoryPageContent() {
 
   const aiPanel = useOrderAiPanel();
 
+  // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
     if (aiPanelOpen && !aiPanel.isOpen) {
       aiPanel.setIsOpen(true);
     }
   }, [aiPanelOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 주문 추적 AI 패널 열기
   const handleTrackOrder = (order: (typeof MOCK_ORDERS)[number]) => {
     const statusMap: Record<string, string> = {
-      pending: "ORDERED", quoted: "ORDERED", ordered: "ORDERED",
-      shipping: "SHIPPING", delivered: "DELIVERED",
+      pending: "ORDERED",
+      quoted: "ORDERED",
+      ordered: "ORDERED",
+      shipping: "SHIPPING",
+      delivered: "DELIVERED",
     };
+
     const daysSince = Math.floor(
-      (Date.now() - new Date(order.requestedAt.replace(/\. /g, "-")).getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - new Date(order.requestedAt.replace(/\. /g, "-")).getTime()) /
+        (1000 * 60 * 60 * 24)
     );
+
     aiPanel.preparePanel({
       orderId: order.id,
       orderNumber: order.id,
@@ -170,78 +231,118 @@ function OrderHistoryPageContent() {
       expectedDelivery: undefined,
       createdAt: order.requestedAt,
       daysSinceOrdered: daysSince,
-      items: [{ name: order.title.split(" 외")[0], quantity: 1, unitPrice: order.amount || 0, lineTotal: order.amount || 0 }],
+      items: [
+        {
+          name: order.title.split(" 외")[0],
+          quantity: 1,
+          unitPrice: order.amount || 0,
+          lineTotal: order.amount || 0,
+        },
+      ],
     });
   };
 
-  const renderOrders = (orders: typeof MOCK_ORDERS, showTrack = false) =>
-    orders.length > 0 ? (
-      <div className="bg-card border rounded-md">
-        {orders.map((order) => (
-          <OrderRow
-            key={order.id}
-            order={order}
-            onTrack={showTrack ? () => handleTrackOrder(order) : undefined}
-          />
-        ))}
-      </div>
-    ) : (
-      <div className="py-8 text-center text-sm text-muted-foreground">해당 상태의 주문이 없습니다.</div>
-    );
-
   return (
     <>
-      <div className="flex-1 space-y-5 p-4 md:p-8 pt-4 md:pt-6 max-w-6xl mx-auto w-full">
-        <div className="flex flex-col space-y-0.5">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">견적 및 구매 내역</h2>
-          <p className="text-xs text-muted-foreground">요청하신 견적과 진행 중인 주문을 확인하세요.</p>
-        </div>
-
-        {/* Summary Strip */}
-        <div className="flex flex-wrap items-center gap-4 border rounded-md px-3 py-1.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">전체</span>
-            <span className="text-sm font-semibold tabular-nums text-foreground">{allOrders.length}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">견적 대기</span>
-            <span className={`text-sm font-semibold tabular-nums ${pendingOrders.length > 0 ? "text-amber-400" : "text-foreground"}`}>{pendingOrders.length}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">견적 도착</span>
-            <span className={`text-sm font-semibold tabular-nums ${quotedOrders.length > 0 ? "text-blue-400" : "text-foreground"}`}>{quotedOrders.length}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">배송 중</span>
-            <span className={`text-sm font-semibold tabular-nums ${shippingOrders.length > 0 ? "text-emerald-400" : "text-foreground"}`}>{shippingOrders.length}</span>
-          </div>
+      <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
+        <div className="flex flex-col space-y-2 mb-6">
+          <h2 className="text-3xl font-bold tracking-tight">견적 및 구매 내역</h2>
+          <p className="text-muted-foreground">
+            요청하신 견적과 진행 중인 주문을 확인하세요.
+          </p>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-4 bg-muted/50 p-1 flex flex-wrap h-auto gap-0.5">
-            <TabsTrigger value="all" className="text-xs">전체 ({allOrders.length})</TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs">견적 대기 ({pendingOrders.length})</TabsTrigger>
-            <TabsTrigger value="quoted" className="text-xs">견적 도착 ({quotedOrders.length})</TabsTrigger>
-            <TabsTrigger value="ordered" className="text-xs">발주 완료 ({orderedOrders.length})</TabsTrigger>
-            <TabsTrigger value="shipping" className="text-xs">배송 중 ({shippingOrders.length})</TabsTrigger>
+          <TabsList className="mb-6 bg-slate-100/50 p-1 flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="all">전체</TabsTrigger>
+            <TabsTrigger value="pending">견적 대기</TabsTrigger>
+            <TabsTrigger
+              value="quoted"
+              className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-600 dark:text-slate-300"
+            >
+              <Bell className="mr-2 h-4 w-4 text-slate-500" />
+              견적 도착
+            </TabsTrigger>
+            <TabsTrigger value="ordered">발주 완료</TabsTrigger>
+            <TabsTrigger value="shipping">배송 중</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="mt-0">{renderOrders(allOrders, true)}</TabsContent>
-          <TabsContent value="pending" className="mt-0">{renderOrders(pendingOrders)}</TabsContent>
-          <TabsContent value="quoted" className="mt-0">{renderOrders(quotedOrders)}</TabsContent>
-          <TabsContent value="ordered" className="mt-0">{renderOrders(orderedOrders, true)}</TabsContent>
-          <TabsContent value="shipping" className="mt-0">{renderOrders(shippingOrders, true)}</TabsContent>
+          <TabsContent value="all" className="space-y-4 mt-0">
+            {allOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onTrack={() => handleTrackOrder(order)}
+              />
+            ))}
+          </TabsContent>
+          <TabsContent value="pending" className="space-y-4 mt-0">
+            {pendingOrders.length > 0 ? (
+              pendingOrders.map((order) => (
+                <OrderCard key={order.id} order={order} />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                견적 대기 중인 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="quoted" className="space-y-4 mt-0">
+            {quotedOrders.length > 0 ? (
+              quotedOrders.map((order) => (
+                <OrderCard key={order.id} order={order} />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                도착한 견적이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="ordered" className="space-y-4 mt-0">
+            {orderedOrders.length > 0 ? (
+              orderedOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onTrack={() => handleTrackOrder(order)}
+                />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                발주 완료된 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="shipping" className="space-y-4 mt-0">
+            {shippingOrders.length > 0 ? (
+              shippingOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onTrack={() => handleTrackOrder(order)}
+                />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-8 text-center">
+                배송 중인 건이 없습니다.
+              </p>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* 운영 실행 현황 (deep-link) */}
+      {/* 운영 실행 현황 (deep-link로 진입 시) */}
       {entityIdParam && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 border rounded-md bg-card p-3">
-          <OpsExecutionContext entityType="ORDER" entityId={entityIdParam} compact />
+        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white dark:bg-slate-900 shadow-lg p-4">
+          <OpsExecutionContext
+            entityType="ORDER"
+            entityId={entityIdParam}
+            compact
+          />
         </div>
       )}
 
-      {/* AI Assistant Panel */}
+      {/* 주문 추적 AI 보조 패널 */}
       <OrderAiAssistantPanel
         open={aiPanel.isOpen}
         onOpenChange={aiPanel.setIsOpen}
@@ -255,7 +356,9 @@ function OrderHistoryPageContent() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ payload }),
           });
-          if (res.ok) aiPanel.setIsOpen(false);
+          if (res.ok) {
+            aiPanel.setIsOpen(false);
+          }
         }}
         isGenerating={aiPanel.isGenerating}
         error={aiPanel.error}
@@ -269,7 +372,7 @@ export default function OrderHistoryPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
         </div>
       }
     >

@@ -102,12 +102,12 @@ export default function VendorPremiumPage() {
               <div>
                 <p className="text-lg font-semibold">
                   {isPremium && !isExpired ? (
-                    <span className="text-green-400 flex items-center gap-2">
+                    <span className="text-green-600 flex items-center gap-2">
                       <Check className="h-5 w-5" />
                       프리미엄 활성
                     </span>
                   ) : (
-                    <span className="text-slate-400 flex items-center gap-2">
+                    <span className="text-gray-600 flex items-center gap-2">
                       <X className="h-5 w-5" />
                       프리미엄 비활성
                     </span>

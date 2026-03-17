@@ -85,10 +85,10 @@ export function DataTable<TData, TValue>({
       )}
       <div className="rounded-md border">
         {/* 테이블 헤더 영역: 보기 옵션 */}
-        <div className="flex items-center justify-end px-3 py-2 border-b border-slate-800 bg-slate-900/30">
+        <div className="flex items-center justify-end px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-slate-500 hover:text-slate-300">
+              <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-slate-500 hover:text-slate-700">
                 <Settings2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">보기 옵션</span>
               </Button>
@@ -146,7 +146,7 @@ export function DataTable<TData, TValue>({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     className={`
-                      ${isHighValue ? "bg-blue-950/20 hover:bg-blue-900/30 border-blue-800" : ""}
+                      ${isHighValue ? "bg-blue-50 hover:bg-blue-100 border-blue-200" : ""}
                       ${isWaiting ? "opacity-60" : ""}
                     `}
                   >

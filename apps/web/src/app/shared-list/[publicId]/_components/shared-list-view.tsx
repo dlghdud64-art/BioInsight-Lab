@@ -32,7 +32,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
           <p className="text-sm text-muted-foreground">로딩 중...</p>
@@ -43,7 +43,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>오류</CardTitle>
@@ -60,7 +60,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
   const items = snapshot?.items || [];
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 max-w-6xl">
         {/* 헤더 */}
         <div className="mb-4 md:mb-6 space-y-2">
@@ -76,7 +76,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
               className="text-xs md:text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
               <ExternalLink className="h-3 w-3 md:h-4 md:w-4" />
-              LabAxis
+              BioInsight Lab
             </Link>
           </div>
 
@@ -106,32 +106,32 @@ export function SharedListView({ publicId }: SharedListViewProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-3 bg-slate-900 rounded-lg">
+                <div className="p-3 bg-slate-50 rounded-lg">
                   <div className="text-xs text-slate-500 mb-1">총 품목</div>
-                  <div className="text-lg font-semibold text-slate-100">
+                  <div className="text-lg font-semibold text-slate-900">
                     {snapshot.comparisonSummary.totalItems}개
                   </div>
                 </div>
-                <div className="p-3 bg-slate-900 rounded-lg">
+                <div className="p-3 bg-slate-50 rounded-lg">
                   <div className="text-xs text-slate-500 mb-1">총 금액</div>
-                  <div className="text-lg font-semibold text-slate-100">
+                  <div className="text-lg font-semibold text-slate-900">
                     ₩{snapshot.comparisonSummary.totalAmount?.toLocaleString() || 0}
                   </div>
                 </div>
                 {snapshot.comparisonSummary.vendors && snapshot.comparisonSummary.vendors.length > 0 && (
-                  <div className="p-3 bg-slate-900 rounded-lg">
+                  <div className="p-3 bg-slate-50 rounded-lg">
                     <div className="text-xs text-slate-500 mb-1">포함된 벤더</div>
-                    <div className="text-sm font-medium text-slate-100">
+                    <div className="text-sm font-medium text-slate-900">
                       {snapshot.comparisonSummary.vendors.length}개
                     </div>
-                    <div className="text-xs text-slate-400 mt-1 truncate">
+                    <div className="text-xs text-slate-600 mt-1 truncate">
                       {snapshot.comparisonSummary.vendors.join(", ")}
                     </div>
                   </div>
                 )}
               </div>
               {snapshot.comparisonSummary.hasAlternatives && (
-                <div className="mt-4 p-3 bg-blue-950/20 border border-blue-800 rounded-lg">
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
                     <div className="text-xs text-blue-800">
                       이 리스트에는 대체 후보 제품 및 다른 벤더 가격 정보가 포함되어 있습니다. 아래 "대체 후보 및 비교 정보" 섹션에서 확인하세요.
@@ -294,7 +294,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
                           </div>
                           <div className="space-y-2">
                             {item.alternativeProducts.map((alt: any, idx: number) => (
-                              <div key={idx} className="text-xs p-2 bg-slate-900 rounded">
+                              <div key={idx} className="text-xs p-2 bg-slate-50 rounded">
                                 <div className="font-medium">{alt.productName}</div>
                                 {alt.productBrand && (
                                   <div className="text-muted-foreground">{alt.productBrand}</div>
@@ -324,7 +324,7 @@ export function SharedListView({ publicId }: SharedListViewProps) {
 
         {/* 푸터 */}
         <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>Powered by LabAxis</p>
+          <p>Powered by BioInsight Lab</p>
         </div>
       </div>
     </div>

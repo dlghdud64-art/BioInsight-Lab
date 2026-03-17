@@ -79,7 +79,7 @@ function StepIndicator({
               </div>
               <span
                 className={`text-xs font-medium hidden sm:inline ${
-                  isActive ? "text-slate-100" : "text-slate-400"
+                  isActive ? "text-slate-900" : "text-slate-400"
                 }`}
               >
                 {getStepLabel(step)}
@@ -104,8 +104,8 @@ function OrderSummary({
   billingCycle: "monthly" | "yearly";
 }) {
   return (
-    <div className="bg-slate-900 rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-slate-100">주문 요약</h3>
+    <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-slate-900">주문 요약</h3>
       <Separator />
 
       {/* 플랜 비교 */}
@@ -156,7 +156,7 @@ function OrderSummary({
           <Calendar className="h-3 w-3 text-slate-400" />
           <span className="text-slate-500">적용 시점</span>
         </div>
-        <p className="text-xs font-medium text-slate-300">
+        <p className="text-xs font-medium text-slate-700">
           {preview.pricing.effectiveDescription}
         </p>
       </div>
@@ -167,7 +167,7 @@ function OrderSummary({
           <CreditCard className="h-3 w-3 text-slate-400" />
           <span className="text-slate-500">다음 결제일</span>
         </div>
-        <p className="text-xs font-medium text-slate-300">
+        <p className="text-xs font-medium text-slate-700">
           {preview.pricing.nextBillingDate}
         </p>
       </div>
@@ -178,7 +178,7 @@ function OrderSummary({
           <Users className="h-3 w-3 text-slate-400" />
           <span className="text-slate-500">멤버 한도</span>
         </div>
-        <p className="text-xs font-medium text-slate-300">
+        <p className="text-xs font-medium text-slate-700">
           {formatSeatLimit(preview.seatChanges.current)} →{" "}
           {formatSeatLimit(preview.seatChanges.target)}
         </p>
@@ -199,16 +199,16 @@ function ConfirmStep({
     <div className="space-y-5">
       {/* 플랜 비교 카드 */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 p-3 rounded-lg border border-slate-800 bg-slate-900">
+        <div className="flex-1 p-3 rounded-lg border border-slate-200 bg-white">
           <p className="text-xs text-slate-500 mb-1">현재 플랜</p>
           <p className="text-base font-semibold">{preview.currentPlanDisplay}</p>
-          <p className="text-sm text-slate-400">{formatPrice(preview.currentPrice)}/월</p>
+          <p className="text-sm text-slate-600">{formatPrice(preview.currentPrice)}/월</p>
         </div>
         <ArrowRight className="h-5 w-5 text-slate-400 shrink-0" />
-        <div className="flex-1 p-3 rounded-lg border-2 border-slate-900 bg-slate-900">
+        <div className="flex-1 p-3 rounded-lg border-2 border-slate-900 bg-slate-50">
           <p className="text-xs text-slate-500 mb-1">변경 플랜</p>
           <p className="text-base font-semibold">{preview.targetPlanDisplay}</p>
-          <p className="text-sm text-slate-400">{formatPrice(preview.targetPrice)}/월</p>
+          <p className="text-sm text-slate-600">{formatPrice(preview.targetPrice)}/월</p>
         </div>
       </div>
 
@@ -216,8 +216,8 @@ function ConfirmStep({
       <div
         className={`p-3 rounded-lg text-sm ${
           upgrade
-            ? "bg-blue-950/20 text-blue-800 border border-blue-800"
-            : "bg-amber-950/30 text-amber-800 border border-amber-800"
+            ? "bg-blue-50 text-blue-800 border border-blue-200"
+            : "bg-amber-50 text-amber-800 border border-amber-200"
         }`}
       >
         <div className="flex items-start gap-2">
@@ -239,7 +239,7 @@ function ConfirmStep({
       {(preview.featureChanges.gained.length > 0 ||
         preview.featureChanges.lost.length > 0) && (
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-100">기능 변경 사항</h4>
+          <h4 className="text-sm font-medium text-slate-900">기능 변경 사항</h4>
           {preview.featureChanges.gained.length > 0 && (
             <div className="space-y-1.5">
               {preview.featureChanges.gained.map((feature) => (
@@ -258,7 +258,7 @@ function ConfirmStep({
               {preview.featureChanges.lost.map((feature) => (
                 <div
                   key={feature}
-                  className="flex items-center gap-2 text-sm text-red-400"
+                  className="flex items-center gap-2 text-sm text-red-600"
                 >
                   <X className="h-3.5 w-3.5 shrink-0" />
                   <span>{feature}</span>
@@ -271,10 +271,10 @@ function ConfirmStep({
 
       {/* 좌석 변경 */}
       {preview.seatChanges.current !== preview.seatChanges.target && (
-        <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-slate-500" />
-            <span className="text-slate-400">멤버 한도:</span>
+            <span className="text-slate-600">멤버 한도:</span>
             <span className="font-medium">
               {formatSeatLimit(preview.seatChanges.current)}
             </span>
@@ -301,12 +301,12 @@ function BillingStep({
 }) {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-slate-600">
         세금계산서 발행을 위한 정보를 입력해 주세요.
       </p>
 
       {errors.length > 0 && (
-        <div className="p-3 rounded-lg bg-red-950/30 border border-red-800 text-sm text-red-700">
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>필수 항목을 입력해 주세요: {errors.join(", ")}</span>
@@ -447,8 +447,8 @@ function ReviewStep({
   return (
     <div className="space-y-4">
       {/* 변경 요약 */}
-      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-2">
-        <h4 className="text-sm font-medium text-slate-100">변경 요약</h4>
+      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+        <h4 className="text-sm font-medium text-slate-900">변경 요약</h4>
         <div className="grid grid-cols-2 gap-y-1.5 text-xs">
           <span className="text-slate-500">플랜</span>
           <span className="font-medium text-right">
@@ -476,8 +476,8 @@ function ReviewStep({
       </div>
 
       {/* 청구 정보 요약 */}
-      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-2">
-        <h4 className="text-sm font-medium text-slate-100">청구 정보</h4>
+      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+        <h4 className="text-sm font-medium text-slate-900">청구 정보</h4>
         <div className="grid grid-cols-2 gap-y-1.5 text-xs">
           <span className="text-slate-500">회사명</span>
           <span className="font-medium text-right">{billingInfo.companyName}</span>
@@ -497,14 +497,14 @@ function ReviewStep({
       </div>
 
       {/* 동의 체크박스 */}
-      <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-800">
+      <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200">
         <Checkbox
           id="agree"
           checked={agreed}
           onCheckedChange={(checked) => onAgreeChange(checked === true)}
           className="mt-0.5"
         />
-        <label htmlFor="agree" className="text-xs text-slate-400 leading-relaxed cursor-pointer">
+        <label htmlFor="agree" className="text-xs text-slate-600 leading-relaxed cursor-pointer">
           위 내용을 확인하였으며, 플랜 변경에 동의합니다.
           플랜 변경 후에는 새 요금이 적용됩니다.
         </label>
@@ -523,11 +523,11 @@ function CompleteStep({
 
   return (
     <div className="flex flex-col items-center text-center py-6 space-y-4">
-      <div className="w-12 h-12 rounded-full bg-emerald-900/40 flex items-center justify-center">
-        <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+      <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+        <CheckCircle2 className="h-6 w-6 text-emerald-600" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-slate-100">
+        <h3 className="text-lg font-semibold text-slate-900">
           플랜 변경이 완료되었습니다
         </h3>
         <p className="text-sm text-slate-500 mt-1">
@@ -535,7 +535,7 @@ function CompleteStep({
         </p>
       </div>
 
-      <div className="w-full p-4 rounded-lg bg-slate-900 border border-slate-800 text-left space-y-2">
+      <div className="w-full p-4 rounded-lg bg-slate-50 border border-slate-200 text-left space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-slate-500">현재 플랜</span>
           <span className="font-medium">{completion.newPlanDisplay}</span>

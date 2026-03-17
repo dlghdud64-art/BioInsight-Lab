@@ -323,42 +323,41 @@ export default function TestComparePage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-16 px-4 mt-8">
         {/* 헤더 강화 */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-100 mb-2">Step 2. 제품 비교</h1>
           <p className="text-sm text-slate-400">스펙·가격·납기를 한눈에 비교하세요</p>
         </div>
 
-        {/* Empty State 디자인 */}
-        <div className="relative w-full max-w-2xl mx-auto">
-          {/* 배경: 비교 테이블 실루엣 */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="grid grid-cols-3 gap-4 h-full">
-              {[1, 2, 3].map((col) => (
-                <div key={col} className="border-2 border-slate-700 rounded-lg p-4 space-y-2">
-                  {[1, 2, 3, 4].map((row) => (
-                    <div key={row} className="h-4 bg-slate-700 rounded"></div>
-                  ))}
+        {/* Empty State — workspace placeholder */}
+        <div className="w-full max-w-3xl mx-auto">
+          {/* 비교 슬롯 그리드 */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            {[1, 2, 3].map((slot) => (
+              <div key={slot} className="rounded-xl border border-dashed border-[#252a32] bg-[#181c22] p-6 flex flex-col items-center justify-center min-h-[180px]">
+                <div className="w-10 h-10 rounded-lg bg-[#1e2228] flex items-center justify-center mb-3">
+                  <Plus className="h-5 w-5 text-slate-600" />
                 </div>
-              ))}
-            </div>
+                <span className="text-xs text-slate-600 font-medium">제품 슬롯 {slot}</span>
+              </div>
+            ))}
           </div>
 
-          {/* 저울 아이콘 */}
-          <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-900 to-blue-900 flex items-center justify-center mb-6 shadow-none">
-              <ArrowUpDown className="h-12 w-12 text-indigo-400" strokeWidth={1.5} />
+          {/* 중앙 안내 */}
+          <div className="rounded-xl border border-[#1e2228] bg-[#141820] p-8 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-xl bg-[#181c22] border border-[#252a32] flex items-center justify-center mb-4">
+              <ArrowUpDown className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
             </div>
-            
-            <h3 className="text-xl font-semibold text-slate-100 mb-3">비교할 제품이 없습니다</h3>
-            <p className="text-base text-slate-400 mb-2 max-w-md text-center leading-relaxed">
+
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">비교할 제품이 없습니다</h3>
+            <p className="text-sm text-slate-300 mb-1 max-w-md leading-relaxed">
               Step 1에서 제품을 선택하고 '비교 담기'를 눌러주세요.
             </p>
-            <p className="text-sm text-slate-400 mb-6 max-w-md text-center">
+            <p className="text-xs text-slate-500 mb-6 max-w-md">
               최대 5개까지 제품을 비교할 수 있습니다.
             </p>
-            
+
             <Link href="/test/search">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8">
                 <Search className="h-4 w-4 mr-2" />
                 제품 검색하러 가기
               </Button>
@@ -470,7 +469,7 @@ export default function TestComparePage() {
   return (
       <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-4">
       {/* 헤더 + 주요 액션 */}
-      <div className="border-b border-slate-700 pb-4">
+      <div className="border-b border-[#1e2228] pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 mb-1">Step 2. 제품 비교</h1>
@@ -1395,7 +1394,7 @@ function ProductAlternativesCard({
           const inCompare = compareIds.includes(alt.id);
           
           return (
-            <Card key={alt.id} className="hover:shadow-none transition-shadow">
+            <Card key={alt.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-2">
                   {alt.imageUrl ? (

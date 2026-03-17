@@ -278,7 +278,7 @@ export default function InventoryPage() {
 
   if (status === "loading" || isLoadingAll) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-50">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -295,7 +295,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -305,7 +305,7 @@ export default function InventoryPage() {
               {/* 페이지 헤더 */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-slate-100">자산 관리</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">자산 관리</h1>
                   <p className="text-sm text-muted-foreground mt-1">
                     배송받은 물건을 정리하고 재주문하세요
                   </p>
@@ -314,8 +314,8 @@ export default function InventoryPage() {
 
               {/* Hero Section: 위치 미지정 경고 카드 */}
               {missingLocationItems.length > 0 && (
-                <Alert className="border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 shadow-none">
-                  <AlertCircle className="h-5 w-5 text-amber-400" />
+                <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 shadow-md">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
                   <AlertTitle className="text-base font-semibold text-amber-900">
                     위치 미지정 항목이 {missingLocationItems.length}개 있습니다
                   </AlertTitle>
@@ -327,7 +327,7 @@ export default function InventoryPage() {
                           <Badge
                             key={item.id}
                             variant="outline"
-                            className="bg-slate-900 border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-white border-amber-300 text-amber-900 px-3 py-1"
                           >
                             {item.productName}
                           </Badge>
@@ -335,7 +335,7 @@ export default function InventoryPage() {
                         {missingLocationItems.length > 3 && (
                           <Badge
                             variant="outline"
-                            className="bg-slate-900 border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-white border-amber-300 text-amber-900 px-3 py-1"
                           >
                             +{missingLocationItems.length - 3}개 더
                           </Badge>
@@ -347,7 +347,7 @@ export default function InventoryPage() {
                             handleLocationClick(missingLocationItems[0]);
                           }
                         }}
-                        className="mt-3 bg-amber-600 hover:bg-amber-700 text-white shadow-none"
+                        className="mt-3 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
                         size="sm"
                       >
                         <MapPin className="h-4 w-4 mr-2" />
@@ -545,14 +545,14 @@ function InventoryCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-none ${
+      className={`transition-all duration-200 hover:shadow-md ${
         isOutOfStock
-          ? "border-red-300 bg-red-950/30/50 opacity-75"
+          ? "border-red-300 bg-red-50/50 opacity-75"
           : isLocationMissing
-          ? "border-amber-300 bg-amber-950/30/50 ring-2 ring-amber-200"
+          ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
-          ? "border-orange-800 bg-orange-950/20/30"
-          : "border-slate-800 bg-slate-900"
+          ? "border-orange-200 bg-orange-50/30"
+          : "border-gray-200 bg-white"
       }`}
     >
       <CardHeader className="pb-3">
@@ -575,7 +575,7 @@ function InventoryCard({
             </Badge>
           )}
           {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" className="flex-shrink-0 bg-orange-900/40 text-orange-800 border-orange-300">
+            <Badge variant="outline" className="flex-shrink-0 bg-orange-100 text-orange-800 border-orange-300">
               부족
             </Badge>
           )}
@@ -593,7 +593,7 @@ function InventoryCard({
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 className={`text-lg font-bold bg-transparent border-none p-0 w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded ${
-                  isOutOfStock ? "text-red-400" : "text-slate-100"
+                  isOutOfStock ? "text-red-600" : "text-gray-900"
                 }`}
               />
               <span className="text-sm text-muted-foreground">
@@ -607,21 +607,21 @@ function InventoryCard({
         <div
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
-              ? "bg-amber-900/40 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-slate-900"
+              ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
+              : "hover:bg-gray-50"
           }`}
           onClick={() => onLocationClick(inventory)}
         >
           <MapPin
             className={`h-4 w-4 flex-shrink-0 ${
-              isLocationMissing ? "text-amber-400" : "text-muted-foreground"
+              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
             }`}
           />
           <span
             className={`flex-1 ${
               isLocationMissing
                 ? "text-amber-700 font-semibold"
-                : "text-slate-300"
+                : "text-gray-700"
             }`}
           >
             {inventory.location}
@@ -633,7 +633,7 @@ function InventoryCard({
           )}
           <ArrowRight
             className={`h-4 w-4 flex-shrink-0 ${
-              isLocationMissing ? "text-amber-400" : "text-muted-foreground"
+              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
             }`}
           />
         </div>
@@ -645,13 +645,13 @@ function InventoryCard({
         </div>
 
         {/* 액션 버튼 */}
-        <div className="pt-2 border-t border-slate-800 space-y-2">
+        <div className="pt-2 border-t border-gray-100 space-y-2">
           {isOutOfStock ? (
             <>
               <Button
                 onClick={() => onReorder(inventory)}
                 disabled={isReordering || isAddedToCart}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-none hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
                 size="sm"
               >
                 {isReordering ? (
@@ -761,14 +761,14 @@ function TeamInventoryCard({
 
   return (
     <Card
-      className={`transition-all duration-200 hover:shadow-none ${
+      className={`transition-all duration-200 hover:shadow-md ${
         isOutOfStock
-          ? "border-red-300 bg-red-950/30/50 opacity-75"
+          ? "border-red-300 bg-red-50/50 opacity-75"
           : isLocationMissing
-          ? "border-amber-300 bg-amber-950/30/50 ring-2 ring-amber-200"
+          ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
-          ? "border-orange-800 bg-orange-950/20/30"
-          : "border-slate-800 bg-slate-900"
+          ? "border-orange-200 bg-orange-50/30"
+          : "border-gray-200 bg-white"
       }`}
     >
       <CardHeader className="pb-3">
@@ -807,7 +807,7 @@ function TeamInventoryCard({
             </Badge>
           )}
           {isLowStock && !isOutOfStock && (
-            <Badge variant="outline" className="flex-shrink-0 bg-orange-900/40 text-orange-800 border-orange-300">
+            <Badge variant="outline" className="flex-shrink-0 bg-orange-100 text-orange-800 border-orange-300">
               부족
             </Badge>
           )}
@@ -825,7 +825,7 @@ function TeamInventoryCard({
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 className={`text-lg font-bold bg-transparent border-none p-0 w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded ${
-                  isOutOfStock ? "text-red-400" : "text-slate-100"
+                  isOutOfStock ? "text-red-600" : "text-gray-900"
                 }`}
               />
               <span className="text-sm text-muted-foreground">
@@ -839,21 +839,21 @@ function TeamInventoryCard({
         <div
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
-              ? "bg-amber-900/40 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-slate-900"
+              ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
+              : "hover:bg-gray-50"
           }`}
           onClick={() => onLocationClick(inventory)}
         >
           <MapPin
             className={`h-4 w-4 flex-shrink-0 ${
-              isLocationMissing ? "text-amber-400" : "text-muted-foreground"
+              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
             }`}
           />
           <span
             className={`flex-1 ${
               isLocationMissing
                 ? "text-amber-700 font-semibold"
-                : "text-slate-300"
+                : "text-gray-700"
             }`}
           >
             {inventory.location}
@@ -865,7 +865,7 @@ function TeamInventoryCard({
           )}
           <ArrowRight
             className={`h-4 w-4 flex-shrink-0 ${
-              isLocationMissing ? "text-amber-400" : "text-muted-foreground"
+              isLocationMissing ? "text-amber-600" : "text-muted-foreground"
             }`}
           />
         </div>
@@ -877,13 +877,13 @@ function TeamInventoryCard({
         </div>
 
         {/* 액션 버튼 */}
-        <div className="pt-2 border-t border-slate-800 space-y-2">
+        <div className="pt-2 border-t border-gray-100 space-y-2">
           {isOutOfStock ? (
             <>
               <Button
                 onClick={() => onReorder(inventory)}
                 disabled={isReordering || isAddedToCart}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-none hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all font-semibold ring-2 ring-blue-400 ring-offset-2 disabled:opacity-75"
                 size="sm"
               >
                 {isReordering ? (

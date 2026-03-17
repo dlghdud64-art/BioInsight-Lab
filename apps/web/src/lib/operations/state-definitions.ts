@@ -32,10 +32,10 @@ export const QUOTE_PHASE_LABELS: Record<QuotePhase, string> = {
 };
 
 export const QUOTE_PHASE_BADGE_COLORS: Record<QuotePhase, string> = {
-  REQUEST: "bg-blue-900/30 text-blue-800",
-  AWAITING_REPLY: "bg-yellow-900/40 text-yellow-800",
-  CONFIRMED: "bg-green-900/30 text-green-800",
-  CANCELLED: "bg-slate-800 text-slate-400",
+  REQUEST: "bg-blue-100 text-blue-800",
+  AWAITING_REPLY: "bg-yellow-100 text-yellow-800",
+  CONFIRMED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-gray-100 text-gray-500",
 };
 
 const QUOTE_STATUS_TO_PHASE: Record<QuoteStatus, QuotePhase> = {
@@ -74,12 +74,12 @@ export const PURCHASE_PHASE_LABELS: Record<PurchasePhase, string> = {
 };
 
 export const PURCHASE_PHASE_BADGE_COLORS: Record<PurchasePhase, string> = {
-  REQUEST: "bg-blue-900/30 text-blue-800",
-  PENDING_APPROVAL: "bg-amber-900/40 text-amber-800",
+  REQUEST: "bg-blue-100 text-blue-800",
+  PENDING_APPROVAL: "bg-amber-100 text-amber-800",
   ORDERED: "bg-indigo-100 text-indigo-800",
-  RECEIVING: "bg-purple-900/30 text-purple-800",
-  COMPLETED: "bg-green-900/30 text-green-800",
-  CANCELLED: "bg-slate-800 text-slate-400",
+  RECEIVING: "bg-purple-100 text-purple-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-gray-100 text-gray-500",
 };
 
 /**
@@ -128,10 +128,10 @@ export const RECEIVING_STATUS_LABELS: Record<ReceivingStatus, string> = {
 };
 
 export const RECEIVING_STATUS_BADGE_COLORS: Record<ReceivingStatus, string> = {
-  PENDING: "bg-slate-800 text-slate-300",
-  PARTIAL: "bg-orange-900/40 text-orange-800",
-  COMPLETED: "bg-green-900/30 text-green-800",
-  ISSUE: "bg-red-900/40 text-red-800",
+  PENDING: "bg-slate-100 text-slate-700",
+  PARTIAL: "bg-orange-100 text-orange-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  ISSUE: "bg-red-100 text-red-800",
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -154,11 +154,11 @@ export const INVENTORY_CONDITION_LABELS: Record<InventoryCondition, string> = {
 };
 
 export const INVENTORY_CONDITION_BADGE_COLORS: Record<InventoryCondition, string> = {
-  NORMAL: "bg-green-900/30 text-green-800",
-  LOW: "bg-yellow-900/40 text-yellow-800",
-  EXPIRING: "bg-orange-900/40 text-orange-800",
-  EXPIRED: "bg-red-900/40 text-red-800",
-  DISPOSAL_SCHEDULED: "bg-slate-800 text-slate-400",
+  NORMAL: "bg-green-100 text-green-800",
+  LOW: "bg-yellow-100 text-yellow-800",
+  EXPIRING: "bg-orange-100 text-orange-800",
+  EXPIRED: "bg-red-100 text-red-800",
+  DISPOSAL_SCHEDULED: "bg-gray-100 text-gray-600",
 };
 
 /** Days before expiry that triggers EXPIRING condition */

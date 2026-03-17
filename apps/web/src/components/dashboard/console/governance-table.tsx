@@ -138,7 +138,7 @@ export function GovernanceView() {
       {/* Lead Intervention */}
       {hasInterventions && (
         <section>
-          <h3 className={cn(TYPOGRAPHY.sectionTitle, "mb-3 text-red-400")}>리드 개입 필요</h3>
+          <h3 className={cn(TYPOGRAPHY.sectionTitle, "mb-3 text-red-600")}>리드 개입 필요</h3>
           <div className={SURFACE.primary}>
             <Table>
               <TableHeader>
@@ -155,7 +155,7 @@ export function GovernanceView() {
                     <TableRow key={t.caseId} className="border-l-[3px] border-l-red-500">
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                          <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
                           <span className={cn(TYPOGRAPHY.rowTitle, "text-red-800")}>
                             {LEAD_INTERVENTION_LABELS[t.caseId]}
                           </span>
@@ -192,7 +192,7 @@ export function GovernanceView() {
               </span>
               <span className={cn(
                 "text-base font-bold tabular-nums",
-                sig.thresholdExceeded ? "text-orange-400" : "text-foreground",
+                sig.thresholdExceeded ? "text-orange-600" : "text-foreground",
               )}>
                 {typeof sig.value === "number" && sig.value % 1 !== 0 ? sig.value.toFixed(1) : sig.value}
               </span>

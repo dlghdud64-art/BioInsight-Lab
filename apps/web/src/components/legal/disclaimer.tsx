@@ -21,13 +21,13 @@ const disclaimerTexts: Record<DisclaimerType, string> = {
   price:
     "가격/납기/재고 정보는 제공 시점/벤더 정책에 따라 달라질 수 있습니다.",
   rfq:
-    "LabAxis은 견적요청 준비 및 회신 정리를 돕는 도구입니다. 계약/거래는 사용자와 벤더 간에 이루어집니다.",
+    "BioInsight Lab은 견적요청 준비 및 회신 정리를 돕는 도구입니다. 계약/거래는 사용자와 벤더 간에 이루어집니다.",
 };
 
 export function Disclaimer({ type, className }: DisclaimerProps) {
   return (
-    <Alert variant="default" className={`bg-amber-950/30 border-amber-800 ${className || ""}`}>
-      <AlertTriangle className="h-4 w-4 text-amber-400" />
+    <Alert variant="default" className={`bg-amber-50 border-amber-200 ${className || ""}`}>
+      <AlertTriangle className="h-4 w-4 text-amber-600" />
       <AlertDescription className="text-xs text-amber-800">
         {disclaimerTexts[type]}
       </AlertDescription>

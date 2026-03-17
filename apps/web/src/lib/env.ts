@@ -27,7 +27,7 @@ export function getAppUrl(): string {
   console.warn(
     "⚠️  NEXTAUTH_URL 또는 VERCEL_URL이 설정되지 않았습니다. 기본값을 사용합니다."
   );
-  return "https://labaxis-demo.vercel.app";
+  return "https://bioinsight-demo.vercel.app";
 }
 
 /**

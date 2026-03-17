@@ -8,7 +8,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   return {
     title: "품목 리스트 공유",
-    description: "LabAxis 품목 리스트 공유 페이지",
+    description: "BioInsight Lab 품목 리스트 공유 페이지",
     robots: "noindex, nofollow", // 검색엔진 차단
   };
 }

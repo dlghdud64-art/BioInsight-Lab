@@ -297,16 +297,16 @@ export default function BudgetPage() {
         {isFetching ? (
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
             {Array.from({ length: 3 }).map((_, idx) => (
-              <Card key={idx} className="shadow-none border-slate-800 animate-pulse">
+              <Card key={idx} className="shadow-sm border-slate-200 animate-pulse">
                 <CardHeader className="pb-2">
-                  <div className="h-5 w-36 rounded bg-slate-700 mb-2" />
-                  <div className="h-4 w-48 rounded bg-slate-700" />
+                  <div className="h-5 w-36 rounded bg-slate-200 dark:bg-slate-700 mb-2" />
+                  <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="h-3 rounded bg-slate-800" />
+                  <div className="h-3 rounded bg-slate-100 dark:bg-slate-800" />
                   <div className="flex justify-end gap-2">
-                    <div className="h-8 w-20 rounded bg-slate-800" />
-                    <div className="h-8 w-14 rounded bg-slate-800" />
+                    <div className="h-8 w-20 rounded bg-slate-100 dark:bg-slate-800" />
+                    <div className="h-8 w-14 rounded bg-slate-100 dark:bg-slate-800" />
                   </div>
                 </CardContent>
               </Card>
@@ -339,7 +339,7 @@ export default function BudgetPage() {
                 return (
                   <Card
                     key={budget.id}
-                    className="shadow-none border-slate-800"
+                    className="shadow-sm border-slate-200"
                   >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg flex justify-between items-center gap-2">
@@ -348,11 +348,11 @@ export default function BudgetPage() {
                           const now = new Date();
                           const start = new Date(budget.periodStart);
                           const end = new Date(budget.periodEnd);
-                          if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-950/30 text-red-700 border-red-800">초과</Badge>;
-                          if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-950/20 text-orange-700 border-orange-800">경고</Badge>;
-                          if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-800 text-slate-400 border-slate-800">예정</Badge>;
-                          if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-800 text-slate-500 border-slate-800">종료</Badge>;
-                          return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-900/20 text-emerald-700 border-emerald-800">운영 중</Badge>;
+                          if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-50 text-red-700 border-red-200">초과</Badge>;
+                          if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-50 text-orange-700 border-orange-200">경고</Badge>;
+                          if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-100 text-slate-600 border-slate-200">예정</Badge>;
+                          if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-slate-100 text-slate-500 border-slate-200">종료</Badge>;
+                          return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200">운영 중</Badge>;
                         })()}
                       </CardTitle>
                       <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
@@ -677,7 +677,7 @@ function BudgetForm({
       </div>
 
       {periodStart && periodEnd && (
-        <div className="p-3 bg-slate-900 rounded-lg text-xs text-muted-foreground">
+        <div className="p-3 bg-slate-50 rounded-lg text-xs text-muted-foreground">
           <Calendar className="h-3 w-3 inline mr-1" />
           예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")}
           {" "}
@@ -735,8 +735,8 @@ function BudgetForm({
       </div>
 
       {submitError && (
-        <div className="rounded-md border border-red-800 bg-slate-900 px-3 py-2">
-          <p className="text-xs text-red-400">
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-slate-900 px-3 py-2">
+          <p className="text-xs text-red-600 dark:text-red-400">
             {submitError}
           </p>
         </div>

@@ -56,7 +56,7 @@ export function AdminSidebar() {
           <Shield className="h-5 w-5 text-blue-400" />
           <h2 className="font-bold text-lg">Admin Portal</h2>
         </div>
-        <p className="text-xs text-slate-400 mt-1">LabAxis</p>
+        <p className="text-xs text-slate-400 mt-1">BioInsight Lab</p>
       </div>
 
       <nav className="p-3 space-y-1">

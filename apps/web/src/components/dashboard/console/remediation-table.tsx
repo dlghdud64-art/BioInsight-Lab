@@ -88,9 +88,9 @@ export function RemediationView() {
                     <TableCell className={TYPOGRAPHY.metadata}>{b.detail}</TableCell>
                     <TableCell className={cn("text-center", TYPOGRAPHY.metadata)}>
                       {b.existingRemediationId ? (
-                        <span className="text-blue-400">진행 중</span>
+                        <span className="text-blue-600">진행 중</span>
                       ) : b.remediationRequired ? (
-                        <span className="text-red-400">필요</span>
+                        <span className="text-red-600">필요</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -174,7 +174,7 @@ function StatCell({ label, value, warn }: { label: string; value: number; warn: 
   return (
     <div className="flex flex-col items-center">
       <span className={TYPOGRAPHY.metadata}>{label}</span>
-      <span className={cn("text-lg font-bold tabular-nums", warn ? "text-red-400" : "text-foreground")}>{value}</span>
+      <span className={cn("text-lg font-bold tabular-nums", warn ? "text-red-600" : "text-foreground")}>{value}</span>
     </div>
   );
 }

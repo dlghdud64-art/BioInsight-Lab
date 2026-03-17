@@ -315,17 +315,25 @@ export default function QuotePage() {
         <SearchStepNav />
         <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center py-16 md:py-20">
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mb-6">
-                  <ShoppingCart className="h-10 w-10 text-slate-500" strokeWidth={1.5} />
+            {/* 헤더 */}
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-100">견적 요청</h1>
+              <p className="text-sm text-slate-400 mt-1">선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.</p>
+            </div>
+
+            {/* Empty state — workspace placeholder */}
+            <div className="rounded-xl border border-[#1e2228] bg-[#141820] p-6 md:p-8">
+              {/* 견적 항목 드롭 영역 */}
+              <div className="rounded-lg border border-dashed border-[#252a32] bg-[#181c22] px-6 py-12 flex flex-col items-center text-center mb-6">
+                <div className="w-14 h-14 rounded-xl bg-[#1e2228] border border-[#252a32] flex items-center justify-center mb-4">
+                  <ShoppingCart className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3">견적 바구니가 비어있습니다.</h2>
+                <h2 className="text-lg font-semibold text-slate-100 mb-2">견적 바구니가 비어있습니다</h2>
                 <p className="text-sm text-slate-400 mb-6 max-w-md">
                   제품을 검색하고 비교 목록에 추가한 후 견적을 요청할 수 있습니다.
                 </p>
                 <Link href="/search">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8">
                     <Search className="h-5 w-5 mr-2" />
                     제품 검색하러 가기
                   </Button>
@@ -518,8 +526,8 @@ export default function QuotePage() {
             </Card>
 
             {/* 제품 테이블 */}
-            <div className="border border-slate-700 rounded-xl overflow-hidden shadow-none bg-slate-900">
-              <div className="bg-slate-900 px-6 py-4 border-b border-slate-700">
+            <div className="border border-[#1e2228] rounded-xl overflow-hidden shadow-none bg-[#141820]">
+              <div className="bg-[#141820] px-6 py-4 border-b border-[#1e2228]">
                 <h2 className="text-lg font-semibold text-slate-100">요청 제품 ({products.length}개)</h2>
               </div>
               
@@ -530,7 +538,7 @@ export default function QuotePage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-900 hover:bg-slate-900">
+                    <TableRow className="bg-[#141820] hover:bg-[#141820]">
                       <TableHead className="text-xs font-bold text-slate-400 uppercase w-16">No.</TableHead>
                       <TableHead className="text-xs font-bold text-slate-400 uppercase">제품명</TableHead>
                       <TableHead className="text-xs font-bold text-slate-400 uppercase">브랜드</TableHead>
@@ -600,7 +608,7 @@ export default function QuotePage() {
 
             {/* 하단 액션 버튼 그룹 */}
             {products.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t border-[#1e2228]">
                 {/* 총 예상 견적가 - 버튼 왼쪽에 배치 */}
                 <div className="flex items-center gap-3 mr-auto">
                   <span className="text-sm text-slate-400">총 예상 견적가:</span>

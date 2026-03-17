@@ -74,20 +74,20 @@ export function DemoFlowSwitcherSection() {
   return (
     <section
       id="demo-flow-section"
-      className="border-y border-slate-800 bg-slate-900/60 py-10"
+      className="border-y border-slate-100 bg-slate-50/60 py-10"
     >
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4">
         <header className="text-center space-y-1">
           <p className="text-xs font-medium text-slate-500">
             3단계 사용 흐름
           </p>
-          <h2 className="text-lg font-semibold text-slate-100">
+          <h2 className="text-lg font-semibold text-slate-900">
             검색부터 비교까지 그룹웨어까지의 전체 프로세스를 단계별로 확인할 수 있습니다.
           </h2>
         </header>
 
         <div className="w-full max-w-xl space-y-4">
-          <div className="inline-flex w-full rounded-full border border-slate-800 bg-slate-900/80 p-1 text-xs shadow-none">
+          <div className="inline-flex w-full rounded-full border border-slate-200 bg-white/80 p-1 text-xs shadow-sm">
             {STEPS.map((step) => {
               const selected = step.id === active;
               return (
@@ -100,7 +100,7 @@ export function DemoFlowSwitcherSection() {
                     "flex-1 rounded-full px-3 py-1.5 inline-flex items-center justify-center gap-1 transition",
                     selected
                       ? "bg-slate-900 text-slate-50"
-                      : "text-slate-500 hover:text-slate-100"
+                      : "text-slate-500 hover:text-slate-900"
                   )}
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-wide">
@@ -112,9 +112,9 @@ export function DemoFlowSwitcherSection() {
             })}
           </div>
 
-          <Card className="border-slate-800 bg-slate-900 shadow-none">
+          <Card className="border-slate-200 bg-white shadow-sm">
             <CardHeader className="flex flex-row items-start gap-3">
-              <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-slate-800">
+              <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
                 {active === "search" && <Search className="h-4 w-4" />}
                 {active === "compare" && <ListChecks className="h-4 w-4" />}
                 {active === "groupware" && (
@@ -122,7 +122,7 @@ export function DemoFlowSwitcherSection() {
                 )}
               </div>
               <div>
-                <CardTitle className="text-base font-semibold text-slate-100">
+                <CardTitle className="text-base font-semibold text-slate-900">
                   {current.title}
                 </CardTitle>
                 <CardDescription className="mt-1 text-xs text-slate-500">
@@ -131,7 +131,7 @@ export function DemoFlowSwitcherSection() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 px-6 pb-5">
-              <ul className="space-y-1.5 text-xs text-slate-400">
+              <ul className="space-y-1.5 text-xs text-slate-600">
                 {current.bullets.map((b) => (
                   <li key={b} className="flex gap-2">
                     <span className="mt-[6px] h-1 w-1 rounded-full bg-slate-400" />

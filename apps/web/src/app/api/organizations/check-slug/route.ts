@@ -46,8 +46,8 @@ const RESERVED_SLUGS = new Set([
   "undefined",
   "true",
   "false",
-  "labaxis",
-  "labaxis",
+  "bioinsight",
+  "bioinsightlab",
 ]);
 
 // 슬러그 유효성 검사 정규식: 소문자 영문, 숫자, 하이픈만 허용, 3-32자

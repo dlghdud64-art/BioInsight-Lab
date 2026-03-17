@@ -38,7 +38,7 @@ interface SendQuoteCompletedEmailParams {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // SendGrid 또는 다른 이메일 서비스 사용
   const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@labaxis.io";
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@bioinsightlab.com";
 
   if (!apiKey) {
     console.warn("SENDGRID_API_KEY가 설정되지 않았습니다. 이메일 발송을 건너뜁니다.");

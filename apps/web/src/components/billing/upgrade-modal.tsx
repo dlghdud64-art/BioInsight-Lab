@@ -72,7 +72,7 @@ export function UpgradeModal({
           <ul className="space-y-2">
             {features.map((item, index) => (
               <li key={index} className="flex items-start gap-2 text-sm">
-                <Check className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                 <span>{item}</span>
               </li>
             ))}

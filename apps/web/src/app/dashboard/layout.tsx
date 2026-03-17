@@ -13,7 +13,7 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b1120]">
       {/* 왼쪽 고정: Sidebar */}
       <DashboardSidebar />
 
@@ -24,8 +24,8 @@ export default function DashboardLayout({
           onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
         />
 
-        {/* 메인 콘텐츠 영역 — 한 단계 밝은 work area */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 pb-20 lg:pb-8 bg-[#0e0e12]">
+        {/* 메인 콘텐츠 영역 */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 pb-20 lg:pb-8">
           {children}
         </main>
       </div>

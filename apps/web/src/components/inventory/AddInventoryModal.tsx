@@ -206,19 +206,19 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
           <form onSubmit={handleSubmit} className="grid gap-6 py-4">
             {/* 1. 기본 식별 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-400 border-b border-slate-700 pb-2">
+              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-slate-700 pb-2">
                 기본 식별 정보
               </h4>
 
               <div className="grid gap-2">
-                <Label htmlFor="productName" className="font-semibold text-slate-300">
+                <Label htmlFor="productName" className="font-semibold text-slate-700 dark:text-slate-300">
                   품목명 <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="productName"
                   value={formProductName}
                   readOnly
-                  className="border-slate-600 bg-slate-900/50"
+                  className="border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50"
                   placeholder="예: Gibco FBS, 50ml Conical Tube"
                 />
               </div>
@@ -230,7 +230,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="manufacturer"
                     value={formBrand}
                     readOnly
-                    className="bg-slate-900/50"
+                    className="bg-slate-50 dark:bg-slate-900/50"
                     placeholder="예: Thermo Fisher"
                   />
                 </div>
@@ -240,7 +240,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="catNo"
                     value={formCatNo}
                     readOnly
-                    className="bg-slate-900/50 font-mono"
+                    className="bg-slate-50 dark:bg-slate-900/50 font-mono"
                     placeholder="예: 16000-044"
                   />
                 </div>
@@ -248,7 +248,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="lotNo" className="font-semibold text-slate-300">
+                  <Label htmlFor="lotNo" className="font-semibold text-slate-700 dark:text-slate-300">
                     Lot 번호
                   </Label>
                   <Input
@@ -281,7 +281,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="-ml-2 text-slate-500 hover:text-slate-300"
+                  className="-ml-2 text-slate-500 hover:text-slate-700"
                   onClick={() => {
                     setSelectedProduct(null);
                     setIsManualEntry(false);
@@ -295,13 +295,13 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
             {/* 2. 수량 및 관리 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-400 border-b border-slate-700 pb-2 mt-2">
+              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-slate-700 pb-2 mt-2">
                 수량 및 관리 정보
               </h4>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="currentQuantity" className="font-semibold text-slate-300">
+                  <Label htmlFor="currentQuantity" className="font-semibold text-slate-700 dark:text-slate-300">
                     현재 재고량 <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -410,7 +410,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="testPurpose" className="font-semibold text-slate-300">
+                <Label htmlFor="testPurpose" className="font-semibold text-slate-700 dark:text-slate-300">
                   시험항목 (용도)
                 </Label>
                 <Input
@@ -458,7 +458,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               variant="ghost"
               size="sm"
               onClick={() => setIsManualEntry(false)}
-              className="-ml-2 text-slate-500 hover:text-slate-300"
+              className="-ml-2 text-slate-500 hover:text-slate-700"
             >
               ← 다시 검색하기
             </Button>
@@ -538,7 +538,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                         variant="outline"
                         size="sm"
                         onClick={() => setIsManualEntry(true)}
-                        className="text-blue-400 border-blue-800 hover:bg-blue-950/20"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
                       >
                         + 직접 제품 정보 입력하기
                       </Button>
@@ -554,12 +554,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                       key={product.id}
                       type="button"
                       onClick={() => handleProductSelect(product)}
-                      className="w-full p-4 text-left hover:bg-slate-900 transition-colors"
+                      className="w-full p-4 text-left hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 rounded-lg border">
                           <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
-                          <AvatarFallback className="bg-slate-800 text-slate-400">
+                          <AvatarFallback className="bg-slate-100 text-slate-600">
                             {product.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>

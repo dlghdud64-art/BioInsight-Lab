@@ -196,7 +196,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
           <CardDescription>
             실험 프로토콜 PDF를 업로드하거나 텍스트를 붙여넣어 필요한 시약을 자동으로 추출합니다.
             {!pdfUploadEnabled && (
-              <span className="block mt-1 text-xs text-amber-400">
+              <span className="block mt-1 text-xs text-amber-600">
                 보안 환경: 텍스트 붙여넣기 모드만 사용 가능합니다.
               </span>
             )}
@@ -257,7 +257,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
                 </Button>
 
                 {extractFromFileMutation.isError && (
-                  <div className="p-3 bg-red-950/30 border border-red-800 rounded text-sm text-red-800">
+                  <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
                     {extractFromFileMutation.error instanceof Error
                       ? extractFromFileMutation.error.message
                       : "분석 중 오류가 발생했습니다."}
@@ -308,7 +308,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
               </Button>
 
               {extractFromTextMutation.isError && (
-                <div className="p-3 bg-red-950/30 border border-red-800 rounded text-sm text-red-800">
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
                   {extractFromTextMutation.error instanceof Error
                     ? extractFromTextMutation.error.message
                     : "분석 중 오류가 발생했습니다."}
@@ -337,7 +337,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 실험 회차 입력 */}
-            <div className="p-4 bg-slate-900 rounded-lg border">
+            <div className="p-4 bg-slate-50 rounded-lg border">
               <div className="flex items-center gap-4">
                 <Label htmlFor="experiment-rounds" className="whitespace-nowrap">
                   실험 회차:
@@ -374,7 +374,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
                 {extractedData.reagents.map((reagent, index) => (
                   <div
                     key={index}
-                    className="p-4 border rounded-lg hover:bg-slate-900 transition-colors"
+                    className="p-4 border rounded-lg hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -398,7 +398,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
                             </span>
                           )}
                           {reagent.estimatedUsage && (
-                            <span className="font-medium text-slate-100">
+                            <span className="font-medium text-slate-900">
                               추천 주문량: {Math.ceil(reagent.estimatedUsage * experimentRounds)} {reagent.unit || "개"} ({experimentRounds}회 기준)
                             </span>
                           )}

@@ -140,8 +140,8 @@ function BillingPageContent() {
 
   const getPlanBadge = (planType: SubscriptionPlan) => {
     const config = {
-      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-slate-800 text-slate-200" },
-      [SubscriptionPlan.TEAM]: { label: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName, color: "bg-blue-900/30 text-blue-800" },
+      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-gray-100 text-gray-800" },
+      [SubscriptionPlan.TEAM]: { label: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName, color: "bg-blue-100 text-blue-800" },
       [SubscriptionPlan.ORGANIZATION]: { label: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName, color: "bg-indigo-100 text-indigo-800" },
     };
     const { label, color } = config[planType];
@@ -165,7 +165,7 @@ function BillingPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -189,10 +189,10 @@ function BillingPageContent() {
             )}
 
             {/* 현재 플랜 - 리스트 스타일 */}
-            <div className="bg-slate-900 border border-slate-800 shadow-none">
-              <div className="border-b border-slate-800 px-4 py-3">
-                <h2 className="font-semibold text-slate-100">현재 플랜</h2>
-                <p className="text-sm text-slate-400 mt-1">{currentOrg.name}</p>
+            <div className="bg-white border border-slate-200 shadow-sm">
+              <div className="border-b border-slate-200 px-4 py-3">
+                <h2 className="font-semibold text-slate-900">현재 플랜</h2>
+                <p className="text-sm text-slate-600 mt-1">{currentOrg.name}</p>
               </div>
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -239,7 +239,7 @@ function BillingPageContent() {
                 </div>
 
                 {/* 플랜 제한 - 테이블 스타일 */}
-                <div className="border-t border-slate-800 pt-4">
+                <div className="border-t border-slate-200 pt-4">
                   <Table>
                     <TableBody>
                       <TableRow>
@@ -261,10 +261,10 @@ function BillingPageContent() {
             </div>
 
             {/* 기능 비교 */}
-            <div className="bg-slate-900 border border-slate-800 shadow-none">
-              <div className="border-b border-slate-800 px-4 py-3">
-                <h2 className="font-semibold text-slate-100">플랜별 기능</h2>
-                <p className="text-sm text-slate-400 mt-1">각 플랜에서 사용할 수 있는 기능을 확인하세요.</p>
+            <div className="bg-white border border-slate-200 shadow-sm">
+              <div className="border-b border-slate-200 px-4 py-3">
+                <h2 className="font-semibold text-slate-900">플랜별 기능</h2>
+                <p className="text-sm text-slate-600 mt-1">각 플랜에서 사용할 수 있는 기능을 확인하세요.</p>
               </div>
               <div className="p-4">
                 <Table>
@@ -281,21 +281,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">Export Pack (구매팀 제출용)</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.exportPack ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -305,21 +305,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">인바운드 이메일</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.inboundEmail ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -329,21 +329,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">고급 리포트</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.advancedReports ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -353,21 +353,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">예산 관리</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.budgetManagement ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -377,21 +377,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">자동 재주문</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.autoReorder ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -401,21 +401,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">벤더 포털</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.vendorPortal ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -425,21 +425,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">SSO 인증</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.sso ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.sso ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.sso ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -449,21 +449,21 @@ function BillingPageContent() {
                       <TableCell className="font-medium p-3">우선 지원</TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.FREE.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.TEAM.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
                       </TableCell>
                       <TableCell className="text-center p-3">
                         {PLAN_LIMITS.ORGANIZATION.features.prioritySupport ? (
-                          <Check className="h-5 w-5 text-green-400 mx-auto" />
+                          <Check className="h-5 w-5 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-5 w-5 text-gray-300 mx-auto" />
                         )}
@@ -476,13 +476,13 @@ function BillingPageContent() {
 
             {/* 업그레이드 안내 */}
             {plan !== SubscriptionPlan.ORGANIZATION && (
-              <div className="bg-blue-950/20 border border-blue-800 shadow-none p-4">
+              <div className="bg-blue-50 border border-blue-200 shadow-sm p-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-base mb-1">
                       {plan === SubscriptionPlan.FREE ? "Team 플랜으로 업그레이드" : "Business 플랜으로 업그레이드"}
                     </h3>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600">
                       {plan === SubscriptionPlan.FREE
                         ? "팀원 공유 재고, 구매 요청 워크플로우 등 협업 기능을 사용하세요."
                         : "무제한 멤버, 전자결재 승인 라인, 예산 통합 관리 등 조직 운영 기능을 사용하세요."}

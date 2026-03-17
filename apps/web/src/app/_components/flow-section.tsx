@@ -33,10 +33,10 @@ export function FlowSection() {
   ];
 
   return (
-    <section id="flow-section" className="py-10 md:py-20 border-b border-slate-800 bg-slate-900 scroll-mt-14">
+    <section id="flow-section" className="py-10 md:py-20 border-b border-slate-200 bg-white scroll-mt-14">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-6 md:mb-14">
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mb-1 md:mb-2">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-1 md:mb-2">
             검색에서 견적까지, 3단계로
           </h2>
           <p className="text-xs md:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
@@ -50,9 +50,9 @@ export function FlowSection() {
             const Icon = step.icon;
             const isLast = idx === steps.length - 1;
             const colorClasses = {
-              indigo: "bg-indigo-900/20 text-indigo-400",
-              emerald: "bg-emerald-900/20 text-emerald-400",
-              blue: "bg-blue-950/20 text-blue-400",
+              indigo: "bg-indigo-50 text-indigo-600",
+              emerald: "bg-emerald-50 text-emerald-600",
+              blue: "bg-blue-50 text-blue-600",
             };
 
             return (
@@ -60,13 +60,13 @@ export function FlowSection() {
                 {/* 모바일: 압축형 리스트 */}
                 <Link
                   href={step.href}
-                  className="group md:hidden flex items-center gap-3 px-3.5 py-2.5 bg-slate-900 rounded-lg border border-slate-800 hover:bg-slate-900 transition-colors w-full"
+                  className="group md:hidden flex items-center gap-3 px-3.5 py-2.5 bg-white rounded-lg border border-gray-100 hover:bg-slate-50 transition-colors w-full"
                 >
                   <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${colorClasses[step.color as keyof typeof colorClasses]}`}>
                     <Icon className="h-4 w-4" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-100">{step.number}. {step.title}</h3>
+                    <h3 className="font-semibold text-sm text-slate-900">{step.number}. {step.title}</h3>
                     <p className="text-xs text-slate-500 leading-tight line-clamp-1">
                       {step.description}
                     </p>
@@ -77,13 +77,13 @@ export function FlowSection() {
                 {/* 데스크탑: 카드 형태 */}
                 <Link
                   href={step.href}
-                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-none bg-slate-900 border border-slate-800 hover:border-slate-700 w-auto"
+                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-white border border-gray-200 hover:border-gray-300 w-auto"
                 >
                   <div className={`relative w-16 h-16 rounded-xl ${
                     step.color === 'indigo' ? 'bg-indigo-500' :
                     step.color === 'emerald' ? 'bg-emerald-500' :
                     'bg-blue-500'
-                  } flex items-center justify-center shadow-none group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
+                  } flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 flex-shrink-0`}>
                     <Icon className="h-8 w-8 text-white" strokeWidth={2} />
                     <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full ${
                       step.color === 'indigo' ? 'bg-indigo-500' :
@@ -94,7 +94,7 @@ export function FlowSection() {
                     </div>
                   </div>
                   <div className="text-center break-keep">
-                    <h3 className="text-base font-semibold text-slate-100 mb-1.5 whitespace-nowrap">{step.title}</h3>
+                    <h3 className="text-base font-semibold text-slate-900 mb-1.5 whitespace-nowrap">{step.title}</h3>
                     <p className="text-xs text-slate-500 max-w-[200px] mx-auto leading-relaxed">
                       {step.description}
                     </p>

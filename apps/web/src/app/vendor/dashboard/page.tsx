@@ -68,21 +68,21 @@ function StatCard({
   trend?: string;
 }) {
   return (
-    <div className="bg-slate-900 border border-slate-800 shadow-none p-4">
+    <div className="bg-white border border-slate-200 shadow-sm p-4">
       <div className="flex items-start justify-between mb-3">
-        <div className="bg-blue-950/20 p-2 rounded">
-          <Icon className="h-5 w-5 text-blue-400" />
+        <div className="bg-blue-50 p-2 rounded">
+          <Icon className="h-5 w-5 text-blue-600" />
         </div>
         {trend && (
-          <div className="flex items-center gap-1 text-xs text-green-400">
+          <div className="flex items-center gap-1 text-xs text-green-600">
             <TrendingUp className="h-3 w-3" />
             {trend}
           </div>
         )}
       </div>
       <div>
-        <div className="text-2xl font-bold text-slate-100">{value}</div>
-        <div className="text-sm font-medium text-slate-300 mt-1">{title}</div>
+        <div className="text-2xl font-bold text-slate-900">{value}</div>
+        <div className="text-sm font-medium text-slate-700 mt-1">{title}</div>
         {subtitle && (
           <div className="text-xs text-slate-500 mt-1">{subtitle}</div>
         )}
@@ -128,14 +128,14 @@ export default function VendorDashboardPage() {
   const requests: VendorRequest[] = requestsData?.requests || [];
 
   return (
-    <div className="flex min-h-screen bg-slate-900">
+    <div className="flex min-h-screen bg-slate-50">
       <VendorSidebar />
       
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-slate-900 border-b border-slate-800 px-6 py-4">
-          <h1 className="text-xl font-bold text-slate-100">Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-1">
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-sm text-slate-600 mt-1">
             견적 요청 현황을 한눈에 확인하세요
           </p>
         </div>
@@ -173,16 +173,16 @@ export default function VendorDashboardPage() {
           </div>
 
           {/* RFQ List Table */}
-          <div className="bg-slate-900 border border-slate-800 shadow-none">
-            <div className="border-b border-slate-800 px-4 py-3">
-              <h2 className="font-semibold text-slate-100">견적 요청 목록 (RFQ)</h2>
-              <p className="text-sm text-slate-400 mt-1">
+          <div className="bg-white border border-slate-200 shadow-sm">
+            <div className="border-b border-slate-200 px-4 py-3">
+              <h2 className="font-semibold text-slate-900">견적 요청 목록 (RFQ)</h2>
+              <p className="text-sm text-slate-600 mt-1">
                 받은 견적 요청에 빠르게 응답하세요
               </p>
             </div>
 
             {/* Status Filters */}
-            <div className="border-b border-slate-800 px-4 py-3 flex gap-2">
+            <div className="border-b border-slate-200 px-4 py-3 flex gap-2">
               <Button
                 variant={statusFilter === "ALL" ? "default" : "outline"}
                 size="sm"
@@ -214,7 +214,7 @@ export default function VendorDashboardPage() {
             ) : requests.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-                <p className="text-sm font-medium text-slate-100 mb-1">
+                <p className="text-sm font-medium text-slate-900 mb-1">
                   {statusFilter === "PENDING" ? "대기 중인 요청이 없습니다" : "요청이 없습니다"}
                 </p>
                 <p className="text-xs text-slate-500">
@@ -234,13 +234,13 @@ export default function VendorDashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {requests.map((request) => (
-                    <TableRow key={request.id} className="hover:bg-slate-900">
+                    <TableRow key={request.id} className="hover:bg-slate-50">
                       <TableCell className="p-3 text-sm">
                         {format(new Date(request.requestedAt), "PPP", { locale: ko })}
                       </TableCell>
                       <TableCell className="p-3">
                         <div className="text-sm font-medium">{request.organizationName}</div>
-                        <div className="text-xs text-slate-400">{request.requesterName}</div>
+                        <div className="text-xs text-slate-600">{request.requesterName}</div>
                       </TableCell>
                       <TableCell className="p-3 text-right text-sm">
                         {request.itemCount}개

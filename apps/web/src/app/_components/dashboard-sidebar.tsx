@@ -6,22 +6,22 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LabAxisLogo } from "@/components/bioinsight-logo";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
 import {
-  LayoutGrid,
-  TrendingUp,
+  LayoutDashboard,
   ShoppingCart,
-  Users,
+  Building2,
   Package,
-  ClipboardList,
-  BarChartBig,
-  SlidersHorizontal,
+  FileText,
+  BarChart3,
+  Settings,
   Activity,
-  ShieldAlert,
+  Shield,
   ShieldCheck,
   X,
-  Wallet,
-  ArrowLeft,
+  CreditCard,
+  PieChart,
+  Home,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,10 +29,6 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
-  /** Muted semantic tint for default icon state */
-  tint?: string;
-  /** Brighter tint for active icon */
-  activeTint?: string;
 }
 
 interface SidebarGroup {
@@ -40,7 +36,7 @@ interface SidebarGroup {
   items: NavItem[];
 }
 
-// 메뉴 그룹 정의 — 섹션별 muted semantic tint
+// 메뉴 그룹 정의
 const sidebarGroups: SidebarGroup[] = [
   {
     label: "구매 및 예산 (PURCHASE)",
@@ -48,30 +44,22 @@ const sidebarGroups: SidebarGroup[] = [
       {
         title: "견적 관리",
         href: "/dashboard/quotes",
-        icon: ClipboardList,
-        tint: "text-blue-400/50",
-        activeTint: "text-blue-400",
+        icon: FileText,
       },
       {
         title: "구매 운영",
         href: "/dashboard/purchases",
         icon: ShoppingCart,
-        tint: "text-blue-400/50",
-        activeTint: "text-blue-400",
       },
       {
         title: "구매 리포트",
         href: "/dashboard/reports",
-        icon: BarChartBig,
-        tint: "text-violet-400/50",
-        activeTint: "text-violet-400",
+        icon: BarChart3,
       },
       {
         title: "예산 관리",
         href: "/dashboard/budget",
-        icon: Wallet,
-        tint: "text-violet-400/50",
-        activeTint: "text-violet-400",
+        icon: CreditCard,
       },
     ],
   },
@@ -82,22 +70,16 @@ const sidebarGroups: SidebarGroup[] = [
         title: "재고 관리",
         href: "/dashboard/inventory",
         icon: Package,
-        tint: "text-teal-400/50",
-        activeTint: "text-teal-400",
       },
       {
         title: "조직 관리",
         href: "/dashboard/organizations",
-        icon: Users,
-        tint: "text-purple-400/50",
-        activeTint: "text-purple-400",
+        icon: Building2,
       },
       {
         title: "안전 관리",
         href: "/dashboard/safety",
-        icon: ShieldAlert,
-        tint: "text-amber-400/50",
-        activeTint: "text-amber-400",
+        icon: Shield,
       },
     ],
   },
@@ -107,9 +89,7 @@ const sidebarGroups: SidebarGroup[] = [
       {
         title: "설정",
         href: "/dashboard/settings",
-        icon: SlidersHorizontal,
-        tint: "text-slate-500",
-        activeTint: "text-slate-300",
+        icon: Settings,
       },
     ],
   },
@@ -121,21 +101,17 @@ const adminMenuItems: NavItem[] = [
   { title: "감사 증적 (Audit Trail)", href: "/dashboard/audit", icon: ShieldCheck },
 ];
 
-// 대시보드 링크 (상단에 별도 배치) — blue-cyan tint
-const dashboardLinks: NavItem[] = [
+// 대시보드 링크 (상단에 별도 배치)
+const dashboardLinks = [
   {
     title: "대시보드",
     href: "/dashboard",
-    icon: LayoutGrid,
-    tint: "text-cyan-400/50",
-    activeTint: "text-cyan-400",
+    icon: LayoutDashboard,
   },
   {
     title: "지출 분석",
     href: "/dashboard/analytics",
-    icon: TrendingUp,
-    tint: "text-cyan-400/50",
-    activeTint: "text-cyan-400",
+    icon: PieChart,
   },
 ];
 
@@ -184,38 +160,39 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-[#1e1e23] flex-shrink-0">
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
         <Link
           href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
-          <LabAxisLogo showText={true} size="md" />
+          <BioInsightLogo showText={true} size="md" />
         </Link>
       </div>
 
       {/* 메뉴 영역 (스크롤 가능) */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-16 lg:pt-8">
         {/* 모바일/태블릿 헤더 */}
-        <div className="flex items-center justify-between mb-4 lg:hidden">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">내비게이션</span>
+        <div className="flex items-center justify-between mb-6 lg:hidden">
+          <h2 className="text-xs font-semibold text-slate-900 dark:text-slate-100">메뉴</h2>
             <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileOpen(false)}
-            className="h-7 w-7 text-slate-500 hover:text-slate-300"
+            className="h-7 w-7 text-slate-600 dark:text-slate-400"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
+        
+        {/* 데스크톱 헤더 */}
+        <h2 className="hidden lg:block text-xs lg:text-sm font-semibold text-slate-900 dark:text-slate-100 mb-6">메뉴</h2>
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
-          <nav className="space-y-0.5">
+          <nav className="space-y-1">
             {dashboardLinks.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href + "/"));
-              const exactDashboard = item.href === "/dashboard" && pathname === "/dashboard";
-              const active = exactDashboard || isActive;
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
 
               return (
                 <Link
@@ -223,13 +200,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
-                    active
-                      ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                      : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
+                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", active ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
+                  <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -241,13 +218,15 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <div className="space-y-6">
           {sidebarGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
+              <h3 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
                 {group.label}
               </h3>
-              <nav className="space-y-0.5">
+              <nav className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                  // 인벤토리는 핵심 메뉴이므로 강조
+                  const isInventory = item.href === "/dashboard/inventory";
 
                   return (
                     <Link
@@ -255,16 +234,17 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
+                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                          : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
+                          ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
+                        isInventory && !isActive && "font-semibold"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
+                      <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : isInventory ? "text-blue-500 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs bg-[#1e1e23] text-slate-400 px-1.5 py-0.5 rounded">
+                        <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
                           {item.badge}
                         </span>
                       )}
@@ -278,8 +258,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-[#1e1e23]">
-            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               시스템 관리
             </p>
             <nav className="space-y-1">
@@ -292,13 +272,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                        : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
+                        ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                    <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")} />
                     <span className="truncate whitespace-nowrap">{item.title}</span>
                   </Link>
                 );
@@ -308,9 +288,9 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         )}
 
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-[#1e1e23]">
-          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-            LabAxis
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            BioInsight Lab
           </p>
           <nav className="space-y-1">
             {[
@@ -322,7 +302,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-[#1a1a1e] hover:text-white transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -331,16 +311,18 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         </div>
       </div>
 
-      {/* 하단 고정 영역 */}
-      <div className="mt-auto p-4 border-t border-[#1e1e23] flex-shrink-0">
+      {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
+      <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded text-slate-500 hover:text-slate-300 hover:bg-[#1a1a1e] transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100/10 dark:bg-slate-800/50 border border-slate-200/10 dark:border-slate-700/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all duration-300 group"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-xs font-medium truncate whitespace-nowrap">
-            서비스 홈
+          <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+            <Home className="w-4 h-4 text-blue-500" />
+          </div>
+          <span className="text-xs font-bold tracking-wider text-slate-600 dark:text-slate-400 group-hover:text-blue-400 truncate whitespace-nowrap">
+            서비스 홈으로
           </span>
         </Link>
       </div>
@@ -350,7 +332,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   return (
     <>
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[#09090b] border-r border-[#1e1e23] z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-30">
         <SidebarContent />
       </aside>
 
@@ -363,7 +345,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-[#09090b] border-r border-[#1e1e23] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

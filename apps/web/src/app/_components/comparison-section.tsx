@@ -60,11 +60,11 @@ export function ComparisonSection() {
   const [activeView, setActiveView] = useState<"before" | "after">("before");
 
   return (
-    <section className="py-6 md:py-10 border-b border-slate-800 bg-gradient-to-b from-white via-slate-50/30 to-white">
+    <section className="py-6 md:py-10 border-b border-slate-200 bg-gradient-to-b from-white via-slate-50/30 to-white">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         {/* 헤더 */}
         <div className="text-center mb-4 md:mb-8">
-          <h2 className="text-base md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mb-1 md:mb-2">
+          <h2 className="text-base md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-1 md:mb-2">
             업무 흐름 비교
           </h2>
           <p className="text-[11px] md:text-sm text-slate-500 max-w-2xl mx-auto">
@@ -74,12 +74,12 @@ export function ComparisonSection() {
 
         {/* 모바일 토글 */}
         <div className="flex items-center justify-center mb-4 md:hidden">
-          <div className="flex items-center bg-slate-800 rounded-full p-1 w-full max-w-sm">
+          <div className="flex items-center bg-slate-100 rounded-full p-1 w-full max-w-sm">
             <button
               onClick={() => setActiveView("before")}
               className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "before"
-                  ? "bg-slate-900 text-slate-100 shadow-none"
+                  ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-400"
               }`}
             >
@@ -89,20 +89,20 @@ export function ComparisonSection() {
               onClick={() => setActiveView("after")}
               className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "after"
-                  ? "bg-blue-600 text-white shadow-none"
-                  : "text-blue-400 bg-blue-950/20 border border-blue-800 animate-pulse"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-blue-600 bg-blue-50 border border-blue-200 animate-pulse"
               }`}
             >
-              LabAxis
+              BioInsight
             </button>
           </div>
         </div>
 
         {/* 데스크탑: 단계별 비교 테이블 */}
         <div className="hidden md:block mb-6 md:mb-8">
-          <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900 shadow-none">
+          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
             {/* 테이블 헤더 */}
-            <div className="grid grid-cols-[180px_1fr_auto_1fr] items-center bg-slate-900 border-b border-slate-800 px-5 py-3.5">
+            <div className="grid grid-cols-[180px_1fr_auto_1fr] items-center bg-slate-50 border-b border-slate-200 px-5 py-3.5">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 업무 단계
               </span>
@@ -110,8 +110,8 @@ export function ComparisonSection() {
                 기존 방식
               </span>
               <span className="w-8" />
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                LabAxis 도입 후
+              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                BioInsight 도입 후
               </span>
             </div>
 
@@ -120,14 +120,14 @@ export function ComparisonSection() {
               {WORKFLOW_STEPS.map((step, idx) => (
                 <div
                   key={idx}
-                  className="grid grid-cols-[180px_1fr_auto_1fr] items-start px-5 py-4 hover:bg-slate-900/50 transition-colors"
+                  className="grid grid-cols-[180px_1fr_auto_1fr] items-start px-5 py-4 hover:bg-slate-50/50 transition-colors"
                 >
                   {/* 단계 라벨 */}
                   <div className="flex items-center gap-2 pr-4">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-400">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600">
                       {idx + 1}
                     </span>
-                    <span className="text-sm font-semibold text-slate-200 leading-tight">
+                    <span className="text-sm font-semibold text-slate-800 leading-tight">
                       {step.stage}
                     </span>
                   </div>
@@ -135,7 +135,7 @@ export function ComparisonSection() {
                   {/* 기존 방식 */}
                   <div className="flex items-start gap-2 pr-4">
                     <CircleDot className="flex-shrink-0 w-4 h-4 text-slate-400 mt-0.5" />
-                    <p className="text-sm text-slate-400 leading-relaxed">
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       {step.before}
                     </p>
                   </div>
@@ -145,10 +145,10 @@ export function ComparisonSection() {
                     <ArrowRight className="w-4 h-4 text-slate-300" />
                   </div>
 
-                  {/* LabAxis 도입 후 */}
+                  {/* BioInsight 도입 후 */}
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-500 mt-0.5" />
-                    <p className="text-sm text-slate-200 leading-relaxed font-medium">
+                    <p className="text-sm text-slate-800 leading-relaxed font-medium">
                       {step.after}
                     </p>
                   </div>
@@ -166,29 +166,29 @@ export function ComparisonSection() {
                 key={idx}
                 className={`border rounded-lg p-3 transition-all ${
                   activeView === "after"
-                    ? "border-blue-800 bg-blue-950/20/30"
-                    : "border-slate-800 bg-slate-900"
+                    ? "border-blue-200 bg-blue-50/30"
+                    : "border-slate-200 bg-white"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <span
                     className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
                       activeView === "after"
-                        ? "bg-blue-900/30 text-blue-700"
-                        : "bg-slate-200 text-slate-400"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-slate-200 text-slate-600"
                     }`}
                   >
                     {idx + 1}
                   </span>
-                  <span className="text-xs font-semibold text-slate-200">
+                  <span className="text-xs font-semibold text-slate-800">
                     {step.stage}
                   </span>
                 </div>
                 <p
                   className={`text-xs leading-relaxed pl-7 ${
                     activeView === "after"
-                      ? "text-slate-200 font-medium"
-                      : "text-slate-400"
+                      ? "text-slate-800 font-medium"
+                      : "text-slate-600"
                   }`}
                 >
                   {activeView === "after" ? step.after : step.before}
@@ -203,9 +203,9 @@ export function ComparisonSection() {
           {VALUE_SUMMARIES.map((item, idx) => (
             <div
               key={idx}
-              className="text-center p-3 md:p-4 bg-slate-900 rounded-lg border border-slate-800 shadow-none"
+              className="text-center p-3 md:p-4 bg-white rounded-lg border border-slate-200 shadow-sm"
             >
-              <div className="text-sm md:text-base font-semibold text-slate-100 mb-0.5">
+              <div className="text-sm md:text-base font-semibold text-slate-900 mb-0.5">
                 {item.title}
               </div>
               <div className="text-[10px] md:text-xs text-slate-500 leading-snug">

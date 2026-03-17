@@ -240,7 +240,7 @@ export function QuoteListTable({
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b bg-slate-900">
+              <tr className="border-b bg-slate-50">
                 <th className="px-3 py-2 text-left font-medium">Line No.</th>
                 <th className="px-3 py-2 text-left font-medium">제품명</th>
                 <th className="px-3 py-2 text-left font-medium">벤더</th>
@@ -262,7 +262,7 @@ export function QuoteListTable({
                 const lineTotal = item.lineTotal || unitPrice * item.quantity;
 
                 return (
-                  <tr key={item.id} className="border-b hover:bg-slate-900">
+                  <tr key={item.id} className="border-b hover:bg-slate-50">
                     <td className="px-3 py-2">{index + 1}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium">{item.product.name}</div>
@@ -332,7 +332,7 @@ export function QuoteListTable({
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 bg-slate-900 font-semibold">
+              <tr className="border-t-2 bg-slate-50 font-semibold">
                 <td colSpan={9} className="px-3 py-2 text-right">
                   총액
                 </td>

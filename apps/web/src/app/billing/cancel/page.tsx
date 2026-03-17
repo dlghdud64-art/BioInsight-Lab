@@ -14,11 +14,11 @@ export default function BillingCancelPage() {
       <MainHeader />
       <div className="container mx-auto px-4 pt-14 py-8 md:py-16">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-red-800 bg-red-950/30/50">
+          <Card className="border-red-200 bg-red-50/50">
             <CardHeader className="text-center pb-4">
               <div className="flex justify-center mb-4">
-                <div className="rounded-full bg-red-900/40 p-3">
-                  <XCircle className="h-8 w-8 text-red-400" />
+                <div className="rounded-full bg-red-100 p-3">
+                  <XCircle className="h-8 w-8 text-red-600" />
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold text-red-900">
@@ -30,7 +30,7 @@ export default function BillingCancelPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <p className="text-sm text-slate-400 mb-6">
+                <p className="text-sm text-slate-600 mb-6">
                   결제 과정에서 문제가 발생했거나 취소하셨습니다.
                   <br />
                   필요하시면 다시 시도해주세요.

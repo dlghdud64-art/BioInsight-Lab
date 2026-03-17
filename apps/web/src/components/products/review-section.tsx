@@ -115,7 +115,7 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
                   return (
                     <div key={star} className="flex items-center gap-2 text-sm">
                       <span className="w-8">{star}점</span>
-                      <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-yellow-400"
                           style={{ width: `${percentage}%` }}
@@ -264,7 +264,7 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                         {review.user?.image ? (
                           <img
                             src={review.user.image}
@@ -315,13 +315,13 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       {review.pros && (
                         <div>
-                          <div className="font-medium text-green-400 mb-1">장점</div>
+                          <div className="font-medium text-green-600 mb-1">장점</div>
                           <p className="text-muted-foreground">{review.pros}</p>
                         </div>
                       )}
                       {review.cons && (
                         <div>
-                          <div className="font-medium text-red-400 mb-1">단점</div>
+                          <div className="font-medium text-red-600 mb-1">단점</div>
                           <p className="text-muted-foreground">{review.cons}</p>
                         </div>
                       )}
@@ -333,7 +333,7 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(review.id)}
-                      className="text-red-400 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700"
                     >
                       삭제
                     </Button>

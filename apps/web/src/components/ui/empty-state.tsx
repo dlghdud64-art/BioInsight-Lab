@@ -21,7 +21,7 @@ export function EmptyState({
       {Icon && (
         <Icon className="h-12 w-12 mx-auto text-slate-300 mb-3" />
       )}
-      <p className="text-sm font-medium text-slate-100 mb-1">
+      <p className="text-sm font-medium text-slate-900 mb-1">
         {title}
       </p>
       {description && (

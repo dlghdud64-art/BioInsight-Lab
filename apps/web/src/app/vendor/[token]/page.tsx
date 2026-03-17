@@ -231,7 +231,7 @@ export default function VendorResponsePage() {
         <Card>
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
-              <CheckCircle2 className="h-16 w-16 text-green-400" />
+              <CheckCircle2 className="h-16 w-16 text-green-600" />
             </div>
             <CardTitle className="text-2xl">견적 회신 제출 완료</CardTitle>
           </CardHeader>
@@ -299,7 +299,7 @@ export default function VendorResponsePage() {
               <p className="font-medium flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 {expiresAt.toLocaleString("ko-KR")}
-                {isExpired && <span className="text-red-400 text-sm">(만료됨)</span>}
+                {isExpired && <span className="text-red-600 text-sm">(만료됨)</span>}
               </p>
             </div>
           </div>

@@ -104,7 +104,7 @@ export function PlatformFlowSection() {
                   <p className="text-[11px] text-slate-400 leading-tight">{stage.desc}</p>
                 </div>
                 {idx < FLOW_STAGES.length - 1 && (
-                  <ChevronRight className="h-3 w-3 text-slate-300 flex-shrink-0" />
+                  <ChevronRight className="h-3 w-3 text-slate-700 flex-shrink-0" />
                 )}
               </div>
             );

@@ -27,7 +27,7 @@ const metrics = [
   },
 ];
 
-export function LabAxisSocialProofSection() {
+export function BioInsightSocialProofSection() {
   return (
     <section className="py-0 bg-slate-900/80 border-y border-slate-800">
       <div className="container mx-auto px-4">

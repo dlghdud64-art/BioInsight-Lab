@@ -48,7 +48,7 @@ export default function ChangelogPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">변경 로그</h1>
             <p className="text-muted-foreground text-lg">
-              LabAxis의 주요 업데이트 내역입니다.
+              BioInsight Lab의 주요 업데이트 내역입니다.
             </p>
           </div>
 

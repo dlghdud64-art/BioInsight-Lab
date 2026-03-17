@@ -10,10 +10,10 @@ export default function QuotePage() {
   return (
     <div className="space-y-2 md:space-y-4 mt-2 md:mt-8">
       {/* 헤더 */}
-      <div className="pt-3 md:pt-16 border-b border-slate-800 pb-2.5 md:pb-6 px-4">
+      <div className="pt-3 md:pt-16 border-b border-slate-200 pb-2.5 md:pb-6 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-lg md:text-3xl font-bold text-slate-100 mb-0.5 md:mb-2">견적 요청 리스트</h1>
-          <p className="text-xs md:text-base text-slate-400 leading-relaxed">
+          <h1 className="text-lg md:text-3xl font-bold text-slate-900 mb-0.5 md:mb-2">견적 요청 리스트</h1>
+          <p className="text-xs md:text-base text-slate-600 leading-relaxed">
             선택한 품목의 수량과 구성을 확인하세요. 편집이 끝나면 요청서 작성으로 넘어갑니다.
           </p>
         </div>

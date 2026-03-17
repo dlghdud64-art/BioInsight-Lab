@@ -17,9 +17,9 @@ export function SecurityIndicator() {
         <TooltipTrigger asChild>
           <Badge
             variant="secondary"
-            className="bg-green-900/20 text-green-700 border-green-300 hover:bg-green-900/30 transition-colors cursor-help font-semibold px-3 py-1.5"
+            className="bg-green-50 text-green-700 border-green-300 hover:bg-green-100 transition-colors cursor-help font-semibold px-3 py-1.5"
           >
-            <ShieldCheck className="h-4 w-4 mr-1.5 text-green-400" />
+            <ShieldCheck className="h-4 w-4 mr-1.5 text-green-600" />
             Zero Data Retention Mode
           </Badge>
         </TooltipTrigger>
@@ -36,8 +36,8 @@ export function SecurityIndicator() {
 
 export function SecurityAlert() {
   return (
-    <Alert className="border-green-800 bg-green-900/20/50">
-      <Lock className="h-4 w-4 text-green-400" />
+    <Alert className="border-green-200 bg-green-50/50">
+      <Lock className="h-4 w-4 text-green-600" />
       <AlertDescription className="text-sm text-green-800">
         <span className="font-semibold">보안 모드 작동 중:</span> 데이터는 로컬에서 처리되며 분석 후 즉시 파기됩니다.
       </AlertDescription>

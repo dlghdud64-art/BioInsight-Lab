@@ -167,17 +167,17 @@ export function ExecutiveDashboard() {
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 {useMockData ? (
                   <>
-                    <TrendingDown className="h-3 w-3 text-green-400" />
-                    <span className="text-green-400">전월 대비 -7.2%</span>
+                    <TrendingDown className="h-3 w-3 text-green-600" />
+                    <span className="text-green-600">전월 대비 -7.2%</span>
                   </>
                 ) : monthOverMonthChange !== 0 ? (
                   <>
                     {isIncrease ? (
-                      <TrendingUp className="h-3 w-3 text-red-400" />
+                      <TrendingUp className="h-3 w-3 text-red-600" />
                     ) : (
-                      <TrendingDown className="h-3 w-3 text-green-400" />
+                      <TrendingDown className="h-3 w-3 text-green-600" />
                     )}
-                    <span className={isIncrease ? "text-red-400" : "text-green-400"}>
+                    <span className={isIncrease ? "text-red-600" : "text-green-600"}>
                       전월 대비 {Math.abs(monthOverMonthChange).toFixed(1)}%
                       {isIncrease ? " 증가" : " 감소"}
                     </span>

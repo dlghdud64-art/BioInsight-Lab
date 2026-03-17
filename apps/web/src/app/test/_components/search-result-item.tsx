@@ -21,7 +21,7 @@ function LeadTimeDisplay({ leadTime }: { leadTime?: number | string }) {
   // 확실하지 않은 정보는 표시하지 않음
   // 납기일은 항상 "견적 시 안내"로 표시
   return (
-    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+    <div className="flex items-center gap-1.5 text-xs text-gray-600">
       <Calendar className="h-3.5 w-3.5 text-gray-400" />
       <span>견적 시 안내</span>
     </div>
@@ -62,14 +62,14 @@ export function SearchResultItem({
 
   return (
     <div
-      className="bg-slate-900 rounded-lg shadow-none hover:shadow-none border border-slate-800 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer"
+      className="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer"
       onClick={onClick}
     >
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
         {/* 썸네일 + 제품명 행 */}
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-800 bg-slate-900 overflow-hidden flex items-center justify-center">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-white overflow-hidden flex items-center justify-center">
             {!showFallback ? (
               <img
                 src={imageSrc}
@@ -82,11 +82,11 @@ export function SearchResultItem({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-slate-100 leading-tight line-clamp-2 group-hover:text-blue-400 transition-colors">
+            <h3 className="text-base font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
               {product.name}
             </h3>
             {/* 브랜드/캣넘버 */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
           {product.vendors?.[0]?.vendor?.name && (
             <>
               <span>{product.vendors[0].vendor.name}</span>
@@ -106,7 +106,7 @@ export function SearchResultItem({
             <Badge
               key={idx}
               variant="outline"
-              className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded border-0 font-normal"
+              className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
             >
               {spec.value}
             </Badge>
@@ -119,20 +119,20 @@ export function SearchResultItem({
         </div>
 
         {/* 가격 & 액션 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-2 border-t border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-2 border-t border-gray-100">
           {/* 가격 */}
           <div className="flex-shrink-0">
             {unitPrice && unitPrice > 0 ? (
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-                  <span className="text-lg font-bold text-blue-400 whitespace-nowrap">
+                  <span className="text-lg font-bold text-blue-600 whitespace-nowrap">
                     <PriceDisplay price={unitPrice} currency="KRW" />
                   </span>
                   <span className="text-xs text-gray-400 font-normal whitespace-nowrap">(VAT 별도)</span>
                 </div>
               </div>
             ) : (
-              <div className="text-sm font-semibold text-slate-400">가격 문의</div>
+              <div className="text-sm font-semibold text-gray-500">가격 문의</div>
             )}
           </div>
 
@@ -140,14 +140,14 @@ export function SearchResultItem({
           <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-1.5">
               {compareSessionCount != null && compareSessionCount > 0 && (
-                <span className="text-[10px] text-purple-400 font-medium whitespace-nowrap">
+                <span className="text-[10px] text-purple-600 font-medium whitespace-nowrap">
                   비교 {compareSessionCount}건 진행 중
                 </span>
               )}
               <Button
                 variant="ghost"
                 size="sm"
-                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-950/20 text-blue-400 hover:bg-blue-900/30 border border-blue-800" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"}`}
                 onClick={onToggleCompare}
               >
                 <GitCompare className="h-4 w-4 md:mr-1.5" />
@@ -157,7 +157,7 @@ export function SearchResultItem({
             </div>
             <Button
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-none rounded h-9 py-2 px-4 text-sm w-full md:w-auto font-medium"
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm w-full md:w-auto font-medium"
               onClick={onAddToQuote}
             >
               <ShoppingCart className="h-4 w-4 mr-1.5" />

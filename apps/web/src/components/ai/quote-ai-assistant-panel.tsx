@@ -189,7 +189,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
       <div className="rounded-full bg-slate-800/50 p-4 mb-4">
-        <FileText className="h-8 w-8 text-slate-400" />
+        <FileText className="h-8 w-8 text-slate-600" />
       </div>
       <p className="text-sm font-medium text-slate-400">
         품목을 선택하면 여기에서 확인할 수 있습니다
@@ -375,14 +375,14 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               {vendor.contactAvailable ? (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 bg-emerald-900/20 text-emerald-300 bg-emerald-950/30 text-emerald-400 border-emerald-800"
+                  className="text-[10px] h-4 px-1.5 bg-emerald-950/30 text-emerald-400 border-emerald-800"
                 >
                   연락 가능
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 text-slate-400 border-slate-800"
+                  className="text-[10px] h-4 px-1.5 text-slate-400 border-slate-200"
                 >
                   미확인
                 </Badge>
@@ -491,7 +491,7 @@ function DraftSection({
             {bodyPreview}
           </p>
           <button
-            className="text-[11px] text-blue-500 hover:text-blue-400 mt-1 font-medium"
+            className="text-[11px] text-blue-500 hover:text-blue-600 mt-1 font-medium"
             onClick={onShowEmail}
           >
             전문 보기
@@ -563,10 +563,10 @@ function ValidationSection({
         </h4>
         <Badge
           variant="outline"
-          className={`text-[10px] h-4 px-1.5${
+          className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-950/30 text-red-700 border-red-800 bg-red-950/30 text-red-400"
-              : "bg-amber-950/30 text-amber-700 border-amber-800 bg-amber-950/30 text-amber-400"
+              ? "bg-red-950/30 text-red-400 border-red-200"
+              : "bg-amber-950/30 text-amber-400 border-amber-200"
           }`}
         >
           {issues.length}건
@@ -599,8 +599,8 @@ function IssueCard({
     <div
       className={`flex items-center justify-between p-2.5 rounded-lg border ${
         isError
-          ? "border-red-800 bg-red-950/30/50 border-red-800/50 bg-red-950/20"
-          : "border-amber-800 bg-amber-950/30/50 border-amber-800/50 bg-amber-950/20"
+          ? "border-red-800/50 bg-red-950/20"
+          : "border-amber-800/50 bg-amber-950/20"
       }`}
     >
       <div className="flex items-center gap-2">
@@ -615,10 +615,10 @@ function IssueCard({
       </div>
       {onFix && (
         <button
-          className={`text-[11px] font-medium flex-shrink-0 ml-2${
+          className={`text-[11px] font-medium flex-shrink-0 ml-2 ${
             isError
-              ? "text-red-400 hover:text-red-700"
-              : "text-amber-400 hover:text-amber-700"
+              ? "text-red-600 hover:text-red-700"
+              : "text-amber-600 hover:text-amber-700"
           }`}
           onClick={() => onFix(issue.field)}
         >
@@ -656,7 +656,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-800 bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161d2f] px-5 py-3">
       <div className="flex gap-2">
         <Button
           className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"

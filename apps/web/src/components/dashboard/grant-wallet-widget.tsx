@@ -99,11 +99,11 @@ export function GrantWalletWidget() {
 
         {/* 신용카드 형태의 예산 카드 */}
         <div className="relative">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-6 shadow-none">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-6 shadow-lg">
             {/* 배경 패턴 */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-slate-900 rounded-full -mr-32 -mt-32 blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-slate-900 rounded-full -ml-24 -mb-24 blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -mr-32 -mt-32 blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full -ml-24 -mb-24 blur-3xl" />
             </div>
 
             <div className="relative z-10 space-y-4">
@@ -151,7 +151,7 @@ export function GrantWalletWidget() {
             value={usageRate} 
             className={cn(
               "h-3",
-              usageRate > 90 ? "bg-red-900/40" : usageRate > 70 ? "bg-yellow-900/40" : "bg-green-900/30"
+              usageRate > 90 ? "bg-red-100" : usageRate > 70 ? "bg-yellow-100" : "bg-green-100"
             )}
           />
           <div className="flex items-center justify-between text-xs text-muted-foreground">

@@ -220,10 +220,10 @@ export function ExportModal({
 
           {/* Tab 1: Basic Export */}
           <TabsContent value="basic" className="space-y-4">
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-slate-600">
               기본 형식으로 모든 데이터를 내보냅니다.
             </div>
-            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
               <div className="text-sm font-medium mb-2">포함될 컬럼:</div>
               <div className="flex flex-wrap gap-2">
                 {AVAILABLE_FIELDS.slice(0, 6).map((field) => (
@@ -289,7 +289,7 @@ export function ExportModal({
                 </div>
 
                 {/* Save Preset */}
-                <div className="space-y-3 pt-4 border-t border-slate-800">
+                <div className="space-y-3 pt-4 border-t border-slate-200">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="save-preset"

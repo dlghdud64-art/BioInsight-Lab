@@ -35,7 +35,7 @@ function QuoteRequestPageContent() {
 
       {/* 헤더 */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-slate-100 mb-1">견적 요청서 작성</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-1">견적 요청서 작성</h1>
         <p className="text-sm text-slate-500">요청 메시지와 배송 정보를 입력한 뒤 발송하세요.</p>
       </div>
 

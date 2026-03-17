@@ -11,7 +11,7 @@ export default function AboutPage() {
         <div className="space-y-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              시약·장비 검색부터<br /><span className="text-blue-400">구매 운영</span>까지 한곳에서
+              시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서
             </h1>
             <p className="text-muted-foreground text-lg">
               연구실의 반복 구매와 재고 운영 흐름을 한곳에서 관리하세요.
@@ -55,7 +55,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                문의사항이 있으시면 <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a>으로 연락주세요.
+                문의사항이 있으시면 <a href="mailto:contact@bioinsight.lab" className="text-primary hover:underline">contact@bioinsight.lab</a>으로 연락주세요.
               </p>
             </CardContent>
           </Card>

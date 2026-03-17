@@ -16,7 +16,7 @@ export function LoadingSkeleton({
     return (
       <div className={cn("space-y-4", className)}>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="border border-slate-800 rounded-lg p-4">
+          <div key={i} className="border border-slate-200 rounded-lg p-4">
             <Skeleton className="h-5 w-3/4 mb-3" />
             <Skeleton className="h-4 w-1/2 mb-2" />
             <Skeleton className="h-4 w-2/3" />

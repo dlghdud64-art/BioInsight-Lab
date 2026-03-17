@@ -4,7 +4,7 @@ import { FlaskConical, Home, Search } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Icon */}
         <div className="mb-6 flex justify-center">
@@ -17,12 +17,12 @@ export default function NotFound() {
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl font-bold text-slate-100 mb-3">
+        <h1 className="text-3xl font-bold text-slate-900 mb-3">
           실험실 길을 잃으셨나요?
         </h1>
 
         {/* Description */}
-        <p className="text-slate-400 mb-8">
+        <p className="text-slate-600 mb-8">
           요청하신 페이지를 찾을 수 없습니다.
           <br />
           URL을 확인하시거나 홈으로 돌아가세요.
@@ -45,12 +45,12 @@ export default function NotFound() {
         </div>
 
         {/* Help Text */}
-        <div className="mt-8 pt-8 border-t border-slate-800">
+        <div className="mt-8 pt-8 border-t border-slate-200">
           <p className="text-sm text-slate-500">
             문제가 계속되면{" "}
             <a
-              href="mailto:support@labaxis.io"
-              className="text-blue-400 hover:underline"
+              href="mailto:support@bioinsight-lab.com"
+              className="text-blue-600 hover:underline"
             >
               지원팀에 문의
             </a>

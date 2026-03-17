@@ -219,13 +219,13 @@ function SafetyAdminPageContent() {
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "queued":
-        return <Badge variant="outline" className="bg-yellow-900/20 text-yellow-700">대기 중</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">대기 중</Badge>;
       case "processing":
-        return <Badge variant="outline" className="bg-blue-950/20 text-blue-700">처리 중</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">처리 중</Badge>;
       case "done":
-        return <Badge variant="outline" className="bg-green-900/20 text-green-700">완료</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700">완료</Badge>;
       case "failed":
-        return <Badge variant="outline" className="bg-red-950/30 text-red-700">실패</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700">실패</Badge>;
       default:
         return <Badge variant="outline">미추출</Badge>;
     }
@@ -233,7 +233,7 @@ function SafetyAdminPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-50">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -246,7 +246,7 @@ function SafetyAdminPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-50">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -268,7 +268,7 @@ function SafetyAdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -279,7 +279,7 @@ function SafetyAdminPageContent() {
                 title="안전 관리"
                 description="SDS 문서의 AI 추출 결과를 검토하고 제품에 적용합니다."
                 icon={FileText}
-                iconColor="text-red-400"
+                iconColor="text-red-600"
               />
 
               {/* 워크스페이스 선택 */}
@@ -299,10 +299,10 @@ function SafetyAdminPageContent() {
               {currentOrg && (
                 <>
                   {!isSafetyAdmin ? (
-                    <Card className="border-yellow-200 bg-yellow-900/20">
+                    <Card className="border-yellow-200 bg-yellow-50">
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
-                          <AlertCircle className="h-4 w-4 text-yellow-400 mt-0.5" />
+                          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
                           <div className="flex-1">
                             <p className="text-sm text-yellow-900 font-medium">
                               안전관리자 권한이 필요합니다
@@ -366,7 +366,7 @@ function SafetyAdminPageContent() {
                                       <div className="flex items-center gap-2">
                                         {getStatusBadge(doc.extractionStatus)}
                                         {(doc.extractionStatus === "processing" || doc.extractionStatus === "queued") && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-blue-400" />
+                                          <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
                                         )}
                                       </div>
                                     </TableCell>
@@ -505,7 +505,7 @@ function ExtractionResultSheet({
             <h3 className="text-sm font-semibold mb-2">GHS 피크토그램</h3>
             <div className="flex flex-wrap gap-2">
               {extractionResult.pictograms.map((picto: string) => (
-                <Badge key={picto} variant="outline" className="bg-orange-950/20">
+                <Badge key={picto} variant="outline" className="bg-orange-50">
                   {picto}
                 </Badge>
               ))}

@@ -90,17 +90,17 @@ export function UpgradeModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="rounded-full bg-yellow-900/40 p-2">
-              <AlertCircle className="h-5 w-5 text-yellow-400" />
+            <div className="rounded-full bg-yellow-100 p-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
             </div>
             <DialogTitle className="text-lg font-semibold">
               {message.title}
             </DialogTitle>
           </div>
-          <DialogDescription className="text-sm text-slate-400">
+          <DialogDescription className="text-sm text-slate-600">
             {message.description}
             {currentCount !== undefined && (
-              <span className="block mt-2 font-medium text-slate-100">
+              <span className="block mt-2 font-medium text-slate-900">
                 현재 사용량: {currentCount} / {limit}
               </span>
             )}
@@ -110,9 +110,9 @@ export function UpgradeModal({
         <div className="space-y-4 mt-4">
           {isAdmin ? (
             <>
-              <div className="bg-blue-950/20 border border-blue-800 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <CreditCard className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                  <CreditCard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-blue-900 mb-1">
                       Team 플랜으로 업그레이드
@@ -134,14 +134,14 @@ export function UpgradeModal({
             </>
           ) : isMember ? (
             <>
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <Users className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-100 mb-1">
+                    <p className="text-sm font-medium text-slate-900 mb-1">
                       관리자에게 업그레이드 요청
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       플랜 업그레이드는 워크스페이스 관리자만 가능합니다.
                       관리자에게 업그레이드를 요청해주세요.
                     </p>
@@ -159,14 +159,14 @@ export function UpgradeModal({
             </>
           ) : (
             <>
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <LogIn className="h-5 w-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <LogIn className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-100 mb-1">
+                    <p className="text-sm font-medium text-slate-900 mb-1">
                       로그인 또는 팀 만들기
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       이 기능을 사용하려면 로그인하고 워크스페이스를 만들어야 합니다.
                     </p>
                   </div>

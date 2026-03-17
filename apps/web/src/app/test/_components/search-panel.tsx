@@ -32,9 +32,9 @@ export function SearchPanel() {
 
   return (
     <div className="space-y-3">
-      <Card className="bg-slate-900 rounded-xl shadow-none p-4 border border-slate-800">
+      <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-100">
+          <CardTitle className="text-sm font-semibold text-slate-900">
             <span>검색 필터</span>
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -45,20 +45,20 @@ export function SearchPanel() {
           {/* 현재 검색어 표시 (읽기 전용) */}
           {searchQuery ? (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-300">
+              <Label className="text-xs font-medium text-slate-700">
                 🔍 현재 검색어
               </Label>
               <div className="flex items-center gap-2">
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-blue-950/20 text-blue-700 border-blue-800 px-3 py-1.5 font-medium break-all"
+                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-3 py-1.5 font-medium break-all"
                 >
                   {searchQuery}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 text-slate-400 hover:text-slate-400"
+                  className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
                   onClick={() => {
                     setSearchQuery("");
                   }}
@@ -70,7 +70,7 @@ export function SearchPanel() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-300">
+              <Label className="text-xs font-medium text-slate-700">
                 검색어
               </Label>
               <p className="text-xs text-slate-500">
@@ -85,7 +85,7 @@ export function SearchPanel() {
                 카테고리
               </Label>
               <Select value={searchCategory || "all"} onValueChange={(v) => setSearchCategory(v === "all" ? "" : v)}>
-                <SelectTrigger id="category" className="h-8 text-xs bg-slate-900 border-slate-800 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="category" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -107,7 +107,7 @@ export function SearchPanel() {
                 value={sortBy}
                 onValueChange={(v: any) => setSortBy(v)}
               >
-                <SelectTrigger id="sort" className="h-8 text-xs bg-slate-900 border-slate-800 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="sort" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,13 +121,13 @@ export function SearchPanel() {
           </div>
 
           {/* 고급 필터 */}
-          <div className="pt-2 border-t border-slate-800">
+          <div className="pt-2 border-t border-slate-200">
             <button
               type="button"
               onClick={() => setIsAdvancedFilterOpen(!isAdvancedFilterOpen)}
               className="flex items-center justify-between w-full text-left"
             >
-              <Label className="text-xs font-medium text-slate-300 cursor-pointer">고급 필터</Label>
+              <Label className="text-xs font-medium text-slate-700 cursor-pointer">고급 필터</Label>
               <div className="flex items-center gap-2">
                 {(minPrice !== undefined || maxPrice !== undefined || grade || searchBrand) && (
                   <Button
@@ -157,7 +157,7 @@ export function SearchPanel() {
               <div className="mt-3 space-y-3">
                 {/* 브랜드/벤더 */}
                 <div className="space-y-1">
-                  <Label htmlFor="brand" className="text-[10px] text-slate-400">
+                  <Label htmlFor="brand" className="text-[10px] text-slate-600">
                     브랜드/벤더
                   </Label>
                   <Input
@@ -172,7 +172,7 @@ export function SearchPanel() {
                 {/* 가격 범위 */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label htmlFor="min-price" className="text-[10px] text-slate-400">
+                    <Label htmlFor="min-price" className="text-[10px] text-slate-600">
                       최소 가격 ()
                     </Label>
                     <Input
@@ -185,7 +185,7 @@ export function SearchPanel() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="max-price" className="text-[10px] text-slate-400">
+                    <Label htmlFor="max-price" className="text-[10px] text-slate-600">
                       최대 가격 ()
                     </Label>
                     <Input
@@ -201,7 +201,7 @@ export function SearchPanel() {
 
                 {/* Grade */}
                 <div className="space-y-1">
-                  <Label htmlFor="grade" className="text-[10px] text-slate-400">
+                  <Label htmlFor="grade" className="text-[10px] text-slate-600">
                     Grade
                   </Label>
                   <Select value={grade || "all"} onValueChange={(v) => setGrade(v === "all" ? undefined : v)}>

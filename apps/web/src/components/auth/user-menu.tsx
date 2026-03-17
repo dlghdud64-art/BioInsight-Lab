@@ -106,7 +106,7 @@ export function UserMenu() {
             청구 및 구독
           </DropdownMenuItem>
         </Link>
-        <a href="mailto:support@labaxis.io">
+        <a href="mailto:support@bioinsight.com">
           <DropdownMenuItem>
             <HelpCircle className="mr-2 h-4 w-4" />
             고객센터

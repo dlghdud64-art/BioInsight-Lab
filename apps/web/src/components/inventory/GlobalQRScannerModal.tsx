@@ -254,7 +254,7 @@ function ScannerContent() {
             {inventoryResult.product.name}
           </p>
           <p className="text-xs text-slate-500 mt-0.5">
-            현재 재고: <span className="font-bold text-blue-400">{inventoryResult.currentQuantity}</span>{" "}
+            현재 재고: <span className="font-bold text-blue-600">{inventoryResult.currentQuantity}</span>{" "}
             {inventoryResult.unit || "개"}
           </p>
         </div>
@@ -331,16 +331,16 @@ function ScannerContent() {
           <Badge
             className={
               inventoryResult.currentQuantity <= 0
-                ? "bg-red-900/40 text-red-700 border-red-800"
+                ? "bg-red-100 text-red-700 border-red-200"
                 : isLow
-                ? "bg-amber-900/40 text-amber-700 border-amber-800"
-                : "bg-emerald-900/40 text-emerald-700 border-emerald-800"
+                ? "bg-amber-100 text-amber-700 border-amber-200"
+                : "bg-emerald-100 text-emerald-700 border-emerald-200"
             }
           >
             {inventoryResult.currentQuantity <= 0 ? "재고 없음" : isLow ? "재고 부족" : "정상"}
           </Badge>
           {isExpired && (
-            <Badge className="bg-red-900/40 text-red-700 border-red-800">유효기한 만료</Badge>
+            <Badge className="bg-red-100 text-red-700 border-red-200">유효기한 만료</Badge>
           )}
         </div>
 
@@ -388,7 +388,7 @@ function ScannerContent() {
             </div>
           )}
           {inventoryResult.expiryDate && (
-            <div className={`flex items-center gap-2 ${isExpired ? "text-red-400" : "text-slate-400"}`}>
+            <div className={`flex items-center gap-2 ${isExpired ? "text-red-600" : "text-slate-400"}`}>
               <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
               <span>
                 유효기한: {new Date(inventoryResult.expiryDate).toLocaleDateString("ko-KR")}
@@ -407,7 +407,7 @@ function ScannerContent() {
               href={inventoryResult.product.msdsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
             >
               <ExternalLink className="h-3 w-3" />
               MSDS/SDS 문서 보기
@@ -473,7 +473,7 @@ export function GlobalQRScannerModal() {
         <SheetContent side="bottom" className="rounded-t-2xl max-h-[92dvh] overflow-y-auto pb-safe">
           <SheetHeader className="pb-2">
             <SheetTitle className="flex items-center gap-2 text-base">
-              <QrCode className="h-4 w-4 text-blue-400" />
+              <QrCode className="h-4 w-4 text-blue-600" />
               재고 QR 스캔
             </SheetTitle>
           </SheetHeader>
@@ -488,7 +488,7 @@ export function GlobalQRScannerModal() {
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <QrCode className="h-4 w-4 text-blue-400" />
+            <QrCode className="h-4 w-4 text-blue-600" />
             재고 QR 스캔
           </DialogTitle>
         </DialogHeader>

@@ -129,8 +129,8 @@ export function QuoteForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-100">견적 입력</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-lg font-semibold text-slate-900">견적 입력</h2>
+          <p className="text-sm text-slate-600 mt-1">
             각 품목의 단가와 납기를 입력해주세요
           </p>
         </div>
@@ -141,8 +141,8 @@ export function QuoteForm({
 
       {/* Warning for missing prices */}
       {!readOnly && items.length > 0 && (
-        <div className="bg-blue-950/20 border border-blue-800 p-3 flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+        <div className="bg-blue-50 border border-blue-200 p-3 flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
             <strong>단가(Unit Price)</strong>는 필수 입력 항목입니다.
             공급 불가능한 품목은 대체품을 제안하거나 비고란에 사유를 입력해주세요.
@@ -151,7 +151,7 @@ export function QuoteForm({
       )}
 
       {/* Items Table */}
-      <div className="bg-slate-900 border border-slate-800 shadow-none overflow-hidden">
+      <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -168,10 +168,10 @@ export function QuoteForm({
               const response = responses[item.id] || {};
               
               return (
-                <TableRow key={item.id} className="hover:bg-slate-900">
+                <TableRow key={item.id} className="hover:bg-slate-50">
                   <TableCell className="p-3">
                     <div className="font-medium text-sm">{item.productName}</div>
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-xs text-slate-600 mt-1">
                       수량: {item.quantity} {item.unit}
                     </div>
                     {item.catalogNumber && (

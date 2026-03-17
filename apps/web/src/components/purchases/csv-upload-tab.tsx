@@ -294,8 +294,8 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             onDrop={handleDrop}
             onClick={() => !loading && document.getElementById("file-upload")?.click()}
             className={`
-              border-2 border-dashed rounded-lg bg-slate-900 h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
-              ${isDragging ? "border-blue-500 bg-blue-950/20" : "border-slate-700 hover:border-gray-400"}
+              border-2 border-dashed rounded-lg bg-gray-50 h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
+              ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
               ${loading ? "opacity-50 pointer-events-none" : ""}
             `}
           >
@@ -310,21 +310,21 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             
             {selectedFile ? (
               <>
-                <FileText className="w-12 h-12 mx-auto mb-4 text-blue-400" />
-                <h3 className="text-lg font-semibold mb-2 text-slate-100">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">
                   {selectedFile.name}
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-gray-600 mb-4">
                   파일이 선택되었습니다. 처리 중...
                 </p>
               </>
             ) : (
               <>
                 <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-2 text-slate-100">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">
                   여기를 클릭하거나 파일을 드래그하세요
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-gray-500 mb-4">
                   CSV, Excel 파일 지원
                 </p>
               </>
@@ -338,7 +338,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
                 e.stopPropagation();
                 downloadSampleTemplate();
               }}
-              className="text-xs text-slate-400 hover:text-slate-300 underline"
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
             >
               양식이 필요하신가요? 샘플 파일 다운로드
             </button>
@@ -470,14 +470,14 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
               <div className="text-2xl font-bold">{importResult.totalRows}</div>
               <div className="text-sm text-muted-foreground">총 행 수</div>
             </div>
-            <div className="border rounded-lg p-4 text-center bg-green-950">
-              <div className="text-2xl font-bold text-green-400">
+            <div className="border rounded-lg p-4 text-center bg-green-50 dark:bg-green-950">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {importResult.successRows}
               </div>
               <div className="text-sm text-muted-foreground">성공</div>
             </div>
-            <div className="border rounded-lg p-4 text-center bg-red-950">
-              <div className="text-2xl font-bold text-red-400">
+            <div className="border rounded-lg p-4 text-center bg-red-50 dark:bg-red-950">
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                 {importResult.errorRows}
               </div>
               <div className="text-sm text-muted-foreground">실패</div>

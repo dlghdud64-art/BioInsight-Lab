@@ -8,8 +8,8 @@ const personas = [
     id: "rnd",
     title: "R&D 연구자",
     icon: FlaskConical,
-    iconBg: "bg-purple-900/30",
-    iconColor: "text-purple-400",
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600",
     items: [
       "실험 프로토콜에서 필요한 시약을 자동으로 추출",
       "스펙 중심으로 제품 비교 및 대체품 검토",
@@ -21,8 +21,8 @@ const personas = [
     id: "qc",
     title: "QC/QA 실무자",
     icon: CheckCircle2,
-    iconBg: "bg-emerald-900/40",
-    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-100",
+    iconColor: "text-emerald-600",
     items: [
       "동일 Grade/규격 유지가 중요한 대체품 검토",
       "GMP, 분석용 등급 정보 중심 비교",
@@ -34,8 +34,8 @@ const personas = [
     id: "production",
     title: "생산 엔지니어",
     icon: Factory,
-    iconBg: "bg-blue-900/30",
-    iconColor: "text-blue-400",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
     items: [
       "대량 구매 시 가격·납기 중심 비교",
       "재고 관리 및 자동 재주문 추천",
@@ -48,7 +48,7 @@ const personas = [
     title: "구매 담당자",
     icon: ShoppingCart,
     iconBg: "bg-indigo-100",
-    iconColor: "text-indigo-400",
+    iconColor: "text-indigo-600",
     items: [
       "팀에서 요청한 견적 요청 리스트를 한 번에 확인",
       "벤더별 가격·납기 비교 및 견적 요청",
@@ -60,26 +60,26 @@ const personas = [
 
 export function PersonaSection() {
   return (
-    <section id="personas" className="py-6 md:py-8 border-b border-slate-800 bg-slate-900 scroll-mt-14">
+    <section id="personas" className="py-6 md:py-8 border-b border-slate-200 bg-white scroll-mt-14">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
+        <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 mb-3">
           누가 쓰나요?
         </h2>
         <Accordion type="single" collapsible defaultValue="rnd" className="w-full">
           {personas.map((persona) => {
             const Icon = persona.icon;
             return (
-              <AccordionItem key={persona.id} value={persona.id} className="mb-4 border border-slate-800 rounded-lg bg-slate-900 px-4 data-[state=open]:bg-blue-950/20 data-[state=open]:border-blue-800">
+              <AccordionItem key={persona.id} value={persona.id} className="mb-4 border border-slate-200 rounded-lg bg-white px-4 data-[state=open]:bg-blue-50 data-[state=open]:border-blue-200">
                 <AccordionTrigger className="hover:no-underline py-3">
                   <div className="flex items-center gap-2">
                     <div className={`flex h-6 w-6 items-center justify-center rounded-md ${persona.iconBg} flex-shrink-0`}>
                       <Icon className={`h-3 w-3 ${persona.iconColor} flex-shrink-0`} strokeWidth={1.5} />
                     </div>
-                    <span className="text-sm font-medium text-slate-100">{persona.title}</span>
+                    <span className="text-sm font-medium text-slate-900">{persona.title}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-3">
-                  <ul className="space-y-1.5 list-disc list-inside text-xs text-slate-400 leading-relaxed">
+                  <ul className="space-y-1.5 list-disc list-inside text-xs text-slate-600 leading-relaxed">
                     {persona.items.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}

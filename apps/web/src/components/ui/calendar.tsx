@@ -31,11 +31,11 @@ function Calendar({
         nav: "space-x-1 flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-slate-800 rounded-full absolute left-1 transition-colors"
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-gray-100 rounded-full absolute left-1 transition-colors"
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-slate-800 rounded-full absolute right-1 transition-colors"
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-gray-100 rounded-full absolute right-1 transition-colors"
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex",

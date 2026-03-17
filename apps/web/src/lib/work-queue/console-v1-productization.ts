@@ -157,17 +157,17 @@ export type CanonicalTermKey = keyof typeof CANONICAL_TERMS;
 
 /** Severity color mapping — consistent across all surfaces */
 export const SEVERITY_STYLES = {
-  critical: { bg: "bg-red-950/30", border: "border-red-800", text: "text-red-700", badge: "destructive" as const },
-  high: { bg: "bg-orange-950/20", border: "border-orange-800", text: "text-orange-700", badge: "destructive" as const },
-  medium: { bg: "bg-yellow-900/20", border: "border-yellow-200", text: "text-yellow-700", badge: "outline" as const },
-  low: { bg: "bg-slate-900", border: "border-slate-800", text: "text-slate-400", badge: "secondary" as const },
+  critical: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "destructive" as const },
+  high: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "destructive" as const },
+  medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", badge: "outline" as const },
+  low: { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-500", badge: "secondary" as const },
 } as const;
 
 /** SLA compliance color thresholds */
 export const SLA_COMPLIANCE_STYLES = {
-  good: { bg: "bg-green-900/20", border: "border-green-800", text: "text-green-700", minRate: 0.8 },
-  warning: { bg: "bg-yellow-900/20", border: "border-yellow-200", text: "text-yellow-700", minRate: 0.5 },
-  bad: { bg: "bg-red-950/30", border: "border-red-800", text: "text-red-700", minRate: 0 },
+  good: { bg: "bg-green-50", border: "border-green-200", text: "text-green-700", minRate: 0.8 },
+  warning: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", minRate: 0.5 },
+  bad: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", minRate: 0 },
 } as const;
 
 /** Get SLA compliance style based on rate */

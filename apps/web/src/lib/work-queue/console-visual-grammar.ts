@@ -121,7 +121,7 @@ export const SEVERITY_INDICATORS: Record<PriorityTier, SeverityIndicator> = {
     borderColor: "border-l-blue-300",
     dotColor: "blue",
     dotPulse: false,
-    textColor: "text-blue-400",
+    textColor: "text-blue-600",
   },
   informational: {
     borderColor: "border-l-gray-200",
