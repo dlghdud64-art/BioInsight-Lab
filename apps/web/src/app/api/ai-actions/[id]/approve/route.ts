@@ -68,10 +68,15 @@ export async function POST(
       }
     }
 
-    if (item.status !== "PENDING") {
+    if (
+      item.status !== "PENDING" ||
+      item.taskStatus === "COMPLETED" ||
+      item.taskStatus === "FAILED" ||
+      item.taskStatus === "IN_PROGRESS"
+    ) {
       return NextResponse.json(
-        { error: `Cannot approve action with status: ${item.status}` },
-        { status: 400 }
+        { error: "DUPLICATE_ACTION", message: "이미 처리 중이거나 완료된 작업입니다." },
+        { status: 409 }
       );
     }
 

@@ -14,6 +14,7 @@ import {
   useWorkQueue,
   useApproveWorkItem,
   useDismissWorkItem,
+  useExecuteOpsAction,
   useSyncOpsQueue,
   TASK_STATUS_BADGE,
   APPROVAL_STATUS_BADGE,
@@ -22,7 +23,7 @@ import {
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
 import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, computeInquiryAgingDays, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
-import { OPS_ACTIVITY_LABELS, OPS_QUEUE_CTA_MAP, OPS_SUBSTATUS_DEFS } from "@/lib/work-queue/ops-queue-semantics";
+import { OPS_ACTIVITY_LABELS, OPS_QUEUE_CTA_MAP, OPS_SUBSTATUS_DEFS, OPS_QUEUE_ITEM_TYPES, findCompletionDef } from "@/lib/work-queue/ops-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -104,6 +105,7 @@ export function WorkQueueInbox() {
   });
   const approveMutation = useApproveWorkItem();
   const dismissMutation = useDismissWorkItem();
+  const executeOpsMutation = useExecuteOpsAction();
 
   const activeItems = useMemo(
     () => (data?.items || []).filter((i) => i.taskStatus !== "COMPLETED"),
@@ -183,7 +185,11 @@ export function WorkQueueInbox() {
               onNavigate={() => router.push(getDeepLinkPath(item))}
               onApprove={() => approveMutation.mutate({ id: item.id })}
               onDismiss={() => dismissMutation.mutate(item.id)}
+              onExecuteOps={(actionId: string) =>
+                executeOpsMutation.mutate({ actionId, itemId: item.id })
+              }
               isApproving={approveMutation.isPending}
+              isExecutingOps={executeOpsMutation.isPending}
             />
           ))
         )}
@@ -230,13 +236,17 @@ function WorkQueueCard({
   onNavigate,
   onApprove,
   onDismiss,
+  onExecuteOps,
   isApproving,
+  isExecutingOps,
 }: {
   item: WorkQueueItem;
   onNavigate: () => void;
   onApprove: () => void;
   onDismiss: () => void;
+  onExecuteOps: (actionId: string) => void;
   isApproving: boolean;
+  isExecutingOps: boolean;
 }) {
   const config = DOMAIN_CONFIG[item.type] || DOMAIN_CONFIG.QUOTE_DRAFT;
   const Icon = config.icon;
@@ -248,6 +258,20 @@ function WorkQueueCard({
       ? OPS_QUEUE_CTA_MAP[item.substatus]
       : CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
   const activityLabel = ACTIVITY_LABEL[item.substatus || ""] || item.summary || "";
+
+  // Resolve actionId for ops CTA execution
+  const opsCtaActionId = (() => {
+    if (item.type === "COMPARE_DECISION") return null;
+    for (const queueType of Object.values(OPS_QUEUE_ITEM_TYPES)) {
+      if (queueType.sourceSubstatuses?.includes(item.substatus || "")) {
+        const actionId = queueType.primaryCta?.actionId;
+        if (actionId && !actionId.startsWith("navigate_") && findCompletionDef(actionId)) {
+          return actionId;
+        }
+      }
+    }
+    return null;
+  })();
 
   return (
     <div className={cn(
@@ -352,16 +376,17 @@ function WorkQueueCard({
                 size="sm"
                 variant={cta.variant}
                 className="h-6 text-[11px] px-2.5"
+                disabled={isExecutingOps}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (item.approvalStatus === "PENDING") {
-                    onNavigate(); // 검토 화면으로 이동
+                  if (opsCtaActionId) {
+                    onExecuteOps(opsCtaActionId);
                   } else {
                     onNavigate();
                   }
                 }}
               >
-                {cta.label} <ChevronRight className="h-3 w-3 ml-0.5" />
+                {isExecutingOps ? "처리 중..." : cta.label} <ChevronRight className="h-3 w-3 ml-0.5" />
               </Button>
 
               {item.approvalStatus === "PENDING" && (

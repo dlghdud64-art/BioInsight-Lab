@@ -206,6 +206,72 @@ export function useSyncOpsQueue() {
   }, [queryClient]);
 }
 
+/**
+ * Ops CTA 실행 — 낙관적 업데이트
+ *
+ * ops-execute 엔드포인트를 호출하여 CTA 완료 정의에 따라
+ * 상태 전이 + 소유권 이전 + 다음 큐 생성을 수행합니다.
+ */
+export function useExecuteOpsAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      actionId,
+      itemId,
+      payload,
+    }: {
+      actionId: string;
+      itemId: string;
+      payload?: Record<string, unknown>;
+    }) => {
+      const res = await fetch("/api/work-queue/ops-execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionId, itemId, payload }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.message || err.error || "Failed to execute action");
+      }
+      return res.json();
+    },
+    onMutate: async ({ itemId }) => {
+      await queryClient.cancelQueries({ queryKey: WORK_QUEUE_KEYS.all });
+
+      const queryCache = queryClient.getQueryCache();
+      const listQueries = queryCache.findAll({ queryKey: ["work-queue", "list"] });
+      const snapshots: Array<{ key: readonly unknown[]; data: unknown }> = [];
+
+      for (const query of listQueries) {
+        const prev = query.state.data as WorkQueueResponse | undefined;
+        if (prev) {
+          snapshots.push({ key: query.queryKey, data: prev });
+          queryClient.setQueryData(query.queryKey, {
+            ...prev,
+            items: prev.items.filter((item: WorkQueueItem) => item.id !== itemId),
+            activeCount: Math.max(0, prev.activeCount - 1),
+          });
+        }
+      }
+
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["ai-actions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };

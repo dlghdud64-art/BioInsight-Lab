@@ -763,3 +763,128 @@ export function determineOpsQueueItemType(input: OpsQueueItemTypeInput): string 
       return null;
   }
 }
+
+// ── CTA Completion Definitions ──
+
+/** CTA 실행 시 발생하는 상태 전이·소유권 이전·다음 큐 생성을 정의합니다. */
+export interface OpsCTACompletionDef {
+  ctaId: string;
+  label: string;
+  sourceQueueItemType: string;
+  sourceSubstatuses: string[];
+  successTransition: string;
+  failureTransition: string;
+  ownershipTransferId: string | null;
+  nextQueueItemType: string | null;
+  activityLogEvent: string;
+  duplicateProtection: "taskStatus";
+}
+
+export const OPS_CTA_COMPLETION_DEFS: Record<string, OpsCTACompletionDef> = {
+  review_quote: {
+    ctaId: "review_quote",
+    label: "견적 확인 완료",
+    sourceQueueItemType: "ops_quote_followup",
+    sourceSubstatuses: ["email_sent", "vendor_reply_received"],
+    successTransition: "quote_completed",
+    failureTransition: "execution_failed",
+    ownershipTransferId: null,
+    nextQueueItemType: null,
+    activityLogEvent: "QUOTE_DRAFT_REVIEWED",
+    duplicateProtection: "taskStatus",
+  },
+  approve_purchase: {
+    ctaId: "approve_purchase",
+    label: "구매 승인",
+    sourceQueueItemType: "ops_purchase_approval",
+    sourceSubstatuses: ["purchase_request_created"],
+    successTransition: "status_change_approved",
+    failureTransition: "execution_failed",
+    ownershipTransferId: "quote_to_purchase",
+    nextQueueItemType: "ops_order_tracking",
+    activityLogEvent: "ORDER_STATUS_CHANGE_APPROVED",
+    duplicateProtection: "taskStatus",
+  },
+  reject_purchase: {
+    ctaId: "reject_purchase",
+    label: "구매 반려",
+    sourceQueueItemType: "ops_purchase_approval",
+    sourceSubstatuses: ["purchase_request_created"],
+    successTransition: "execution_failed",
+    failureTransition: "execution_failed",
+    ownershipTransferId: null,
+    nextQueueItemType: null,
+    activityLogEvent: "AI_TASK_FAILED",
+    duplicateProtection: "taskStatus",
+  },
+  complete_order: {
+    ctaId: "complete_order",
+    label: "발주 완료 확인",
+    sourceQueueItemType: "ops_order_tracking",
+    sourceSubstatuses: ["followup_sent", "status_change_proposed", "vendor_response_parsed"],
+    successTransition: "status_change_approved",
+    failureTransition: "execution_failed",
+    ownershipTransferId: "order_to_receiving",
+    nextQueueItemType: "ops_receiving_pending",
+    activityLogEvent: "ORDER_STATUS_CHANGE_APPROVED",
+    duplicateProtection: "taskStatus",
+  },
+  confirm_receiving: {
+    ctaId: "confirm_receiving",
+    label: "입고 완료 확인",
+    sourceQueueItemType: "ops_receiving_pending",
+    sourceSubstatuses: ["restock_ordered"],
+    successTransition: "restock_completed",
+    failureTransition: "execution_failed",
+    ownershipTransferId: "receiving_to_inventory",
+    nextQueueItemType: "ops_restock_confirm",
+    activityLogEvent: "AI_TASK_COMPLETED",
+    duplicateProtection: "taskStatus",
+  },
+  resolve_receiving_issue: {
+    ctaId: "resolve_receiving_issue",
+    label: "입고 이슈 해결",
+    sourceQueueItemType: "ops_receiving_issue",
+    sourceSubstatuses: ["restock_suggested"],
+    successTransition: "restock_ordered",
+    failureTransition: "execution_failed",
+    ownershipTransferId: null,
+    nextQueueItemType: null,
+    activityLogEvent: "INVENTORY_RESTOCK_REVIEWED",
+    duplicateProtection: "taskStatus",
+  },
+  confirm_restock: {
+    ctaId: "confirm_restock",
+    label: "재고 반영 확인",
+    sourceQueueItemType: "ops_restock_confirm",
+    sourceSubstatuses: ["restock_completed"],
+    successTransition: "restock_completed",
+    failureTransition: "execution_failed",
+    ownershipTransferId: null,
+    nextQueueItemType: null,
+    activityLogEvent: "AI_TASK_COMPLETED",
+    duplicateProtection: "taskStatus",
+  },
+  resolve_stall: {
+    ctaId: "resolve_stall",
+    label: "정체 해소",
+    sourceQueueItemType: "ops_stalled_handoff",
+    sourceSubstatuses: [],
+    successTransition: "execution_failed",
+    failureTransition: "execution_failed",
+    ownershipTransferId: null,
+    nextQueueItemType: null,
+    activityLogEvent: "AI_TASK_FAILED",
+    duplicateProtection: "taskStatus",
+  },
+};
+
+/** ctaId로 CTA 완료 정의를 찾습니다. */
+export function findCompletionDef(ctaId: string): OpsCTACompletionDef | null {
+  return OPS_CTA_COMPLETION_DEFS[ctaId] ?? null;
+}
+
+/** transferId로 소유권 이전 규칙을 찾습니다. */
+export function resolveOwnershipTransfer(transferId: string): OpsOwnershipTransfer | null {
+  return OPS_OWNERSHIP_TRANSFERS.find((t) => t.id === transferId) ?? null;
+}

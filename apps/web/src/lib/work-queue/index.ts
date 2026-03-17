@@ -49,6 +49,7 @@ export {
   OPS_QUEUE_ITEM_TYPES,
   OPS_QUEUE_CTA_MAP,
   OPS_OWNERSHIP_TRANSFERS,
+  OPS_CTA_COMPLETION_DEFS,
   getOpsStage,
   isOpsTerminal,
   isOpsSubstatus,
@@ -56,6 +57,8 @@ export {
   isOpsStale,
   determineOpsStallPoint,
   determineOpsQueueItemType,
+  findCompletionDef,
+  resolveOwnershipTransfer,
 } from "./ops-queue-semantics";
 
 export type {
@@ -66,4 +69,5 @@ export type {
   OpsQueueItemType,
   OpsOwnershipTransfer,
   OpsQueueItemTypeInput,
+  OpsCTACompletionDef,
 } from "./ops-queue-semantics";
