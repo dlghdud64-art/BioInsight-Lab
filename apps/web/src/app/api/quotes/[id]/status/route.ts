@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 import { QuoteStatus, ActivityType } from "@prisma/client";
 import { sendQuoteCompletedEmail, sendQuoteRejectedEmail } from "@/lib/email";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { validateTransition } from "@/lib/operations/state-machine";
+import { logStateTransition } from "@/lib/operations/state-transition-logger";
 
-// 허용되는 상태 전환
+// 허용되는 상태 전환 (P7-1: 정규화된 state-machine.ts가 정의의 원천)
 const ALLOWED_STATUS_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   [QuoteStatus.PENDING]: [QuoteStatus.PARSED, QuoteStatus.SENT, QuoteStatus.COMPLETED, QuoteStatus.CANCELLED],
   [QuoteStatus.PARSED]: [QuoteStatus.SENT, QuoteStatus.COMPLETED, QuoteStatus.CANCELLED],
@@ -138,6 +140,19 @@ export async function PATCH(
       userAgent,
     }).catch((error) => {
       console.error("Failed to create activity log:", error);
+    });
+
+    // P7-1: 중앙화된 상태 전이 로그
+    logStateTransition({
+      domain: "QUOTE",
+      entityId: id,
+      fromStatus: previousStatus,
+      toStatus: status,
+      actorId: session.user.id,
+      organizationId: quote.organizationId,
+      reason,
+    }).catch((error) => {
+      console.error("Failed to log state transition:", error);
     });
 
     // 이메일 알림 발송 (비동기)

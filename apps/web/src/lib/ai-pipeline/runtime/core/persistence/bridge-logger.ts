@@ -36,10 +36,11 @@ export function logBridgeFailure(moduleName: string, operation: string, error: u
  * Used for operational awareness and future migration planning.
  */
 export const TRUTH_SOURCE_CONTRACT = {
-  baseline:           { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
-  snapshot:           { write: "DUAL_CHECKSUM_ONLY", read: "LEGACY_PRIMARY" },
-  authority:          { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
-  incident:           { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
-  stabilizationAudit: { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
-  canonicalAudit:     { write: "DUAL", read: "REPO_FIRST_LEGACY_FALLBACK" },
+  baseline:           { write: "DUAL", read: "REPO_ONLY" },
+  snapshot:           { write: "DUAL", read: "REPO_ONLY" },
+  authority:          { write: "DUAL", read: "REPO_ONLY" },
+  incident:           { write: "DUAL", read: "REPO_ONLY" },
+  stabilizationAudit: { write: "DUAL", read: "REPO_ONLY" },
+  canonicalAudit:     { write: "DUAL", read: "REPO_ONLY" },
+  recoveryRecord:     { write: "REPO_FIRST_MEMORY_SHIM", read: "REPO_FIRST_MEMORY_FALLBACK" },
 } as const;

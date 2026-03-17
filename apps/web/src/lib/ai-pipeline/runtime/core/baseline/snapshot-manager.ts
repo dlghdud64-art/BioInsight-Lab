@@ -1,10 +1,11 @@
 /**
- * S0 — Snapshot Manager
+ * S0+P3-3B — Snapshot Manager
  *
  * - activeSnapshotId / rollbackSnapshotId pair 동시 생성
  * - scope별 checksum 저장
  * - restore dry-run 검증
  * - snapshot pair 없으면 active runtime 진입 차단
+ * - repository-first read with legacy fallback (P3-3B)
  */
 
 import { createHash } from "crypto";
@@ -15,8 +16,9 @@ import type {
   ALL_SNAPSHOT_SCOPES,
 } from "../../types/stabilization";
 import { getPersistenceAdapters } from "../persistence";
-import { baselineSnapshotToCreateInput } from "../persistence/snapshot-adapter";
 import { logBridgeFailure } from "../persistence/bridge-logger";
+import { SnapshotOntologyAdapter } from "../ontology/snapshot-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── In-memory store ──
 
@@ -92,12 +94,16 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
   _snapshots.set(activeId, active);
   _snapshots.set(rollbackId, rollback);
 
-  // Dual-write: persist checksums to repository (fire-and-forget)
+  // Dual-write: persist via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(active))
+    const canonicalActive = SnapshotOntologyAdapter.fromLegacy(active);
+    const inputActive = SnapshotOntologyAdapter.toRepositoryInput(canonicalActive);
+    adapters.snapshot.saveSnapshot(inputActive)
       .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(active)", err));
-    adapters.snapshot.saveSnapshot(baselineSnapshotToCreateInput(rollback))
+    const canonicalRollback = SnapshotOntologyAdapter.fromLegacy(rollback);
+    const inputRollback = SnapshotOntologyAdapter.toRepositoryInput(canonicalRollback);
+    adapters.snapshot.saveSnapshot(inputRollback)
       .catch((err: unknown) => logBridgeFailure("snapshot-manager", "saveSnapshot(rollback)", err));
   } catch (err) {
     logBridgeFailure("snapshot-manager", "createSnapshotPair-bridge", err);
@@ -108,7 +114,14 @@ export function createSnapshotPair(input: CreateSnapshotPairInput): SnapshotPair
 
 // ── Snapshot Lookup ──
 
+/** @deprecated REMOVED in P5-2 — use getSnapshotFromRepo. Soft removal: impl kept for test compat */
 export function getSnapshot(snapshotId: string): BaselineSnapshot | null {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "getSnapshot:removed",
+    { entityId: snapshotId, retentionReason: "soft removal — production callers migrated to getSnapshotFromRepo", shutdownPhase: "P5" }
+  );
   return _snapshots.get(snapshotId) ?? null;
 }
 
@@ -150,8 +163,71 @@ export interface RestoreDryRunResult {
   reason: string;
 }
 
+/** @deprecated REMOVED in P4-4 — use restoreDryRunFromRepo */
 export function restoreDryRun(snapshotId: string): RestoreDryRunResult {
-  const snapshot = _snapshots.get(snapshotId);
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "restoreDryRun:removed",
+    { entityId: snapshotId, removalStatus: "REMOVED", shutdownPhase: "P4-4" }
+  );
+  throw new Error("SYNC_COMPAT_REMOVED: restoreDryRun — use restoreDryRunFromRepo");
+}
+
+/** @deprecated REMOVED in P4-4 — use canEnterActiveRuntimeFromRepo */
+export function canEnterActiveRuntime(
+  activeSnapshotId: string,
+  rollbackSnapshotId: string
+): { allowed: boolean; reason: string } {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "canEnterActiveRuntime:removed",
+    { entityId: activeSnapshotId, removalStatus: "REMOVED", shutdownPhase: "P4-4" }
+  );
+  throw new Error("SYNC_COMPAT_REMOVED: canEnterActiveRuntime — use canEnterActiveRuntimeFromRepo");
+}
+
+// ── Repository-First Async Read (P3-3B) ──
+
+/**
+ * Repository-first snapshot read with legacy fallback.
+ * When repo has full-fidelity payload, that is the truth source.
+ */
+export async function getSnapshotFromRepo(snapshotId: string): Promise<BaselineSnapshot | null> {
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.snapshot.findSnapshotBySnapshotId(snapshotId);
+    if (result.ok) {
+      const canonical = SnapshotOntologyAdapter.fromPersisted(result.data);
+      const legacy = SnapshotOntologyAdapter.toLegacy(canonical);
+      emitDiagnostic(
+        "SNAPSHOT_REPO_FIRST_READ_USED",
+        "snapshot-manager", "snapshot-adapter", "snapshot",
+        "repository_to_canonical", "getSnapshotFromRepo:hit",
+        { entityId: snapshotId }
+      );
+      return legacy;
+    }
+  } catch (err) {
+    logBridgeFailure("snapshot-manager", "getSnapshotFromRepo", err);
+  }
+  // P4-3: snapshot full-fidelity confirmed — REPO_ONLY, no memory fallback
+  emitDiagnostic(
+    "REPO_ONLY_PATH_ENFORCED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "repository_to_canonical", "getSnapshotFromRepo:repo-only-null",
+    { entityId: snapshotId, fallbackUsed: false }
+  );
+  return null;
+}
+
+/**
+ * Repository-first restore dry-run.
+ * Same logic as restoreDryRun but uses repo-first read.
+ */
+export async function restoreDryRunFromRepo(snapshotId: string): Promise<RestoreDryRunResult> {
+  const snapshot = await getSnapshotFromRepo(snapshotId);
   if (!snapshot) {
     return {
       success: false,
@@ -183,22 +259,60 @@ export function restoreDryRun(snapshotId: string): RestoreDryRunResult {
   };
 }
 
-/** active runtime 진입 가능 여부 (snapshot pair 필수) */
-export function canEnterActiveRuntime(
+/**
+ * Repository-first active runtime entry check.
+ * Same logic as canEnterActiveRuntime but uses repo-first reads.
+ */
+export async function canEnterActiveRuntimeFromRepo(
   activeSnapshotId: string,
   rollbackSnapshotId: string
-): { allowed: boolean; reason: string } {
-  const pairCheck = verifySnapshotPairExists(activeSnapshotId, rollbackSnapshotId);
-  if (!pairCheck.exists) {
-    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ${pairCheck.reason}` };
+): Promise<{ allowed: boolean; reason: string }> {
+  // Pair verification via repo-first reads
+  const active = await getSnapshotFromRepo(activeSnapshotId);
+  const rollback = await getSnapshotFromRepo(rollbackSnapshotId);
+
+  if (!active && !rollback) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — BOTH_MISSING: active(${activeSnapshotId}), rollback(${rollbackSnapshotId})` };
+  }
+  if (!active) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ACTIVE_MISSING: ${activeSnapshotId}` };
+  }
+  if (!rollback) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ROLLBACK_MISSING: ${rollbackSnapshotId}` };
+  }
+  if (active.tag !== "ACTIVE") {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ACTIVE_TAG_MISMATCH: expected ACTIVE, got ${active.tag}` };
+  }
+  if (rollback.tag !== "ROLLBACK") {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — ROLLBACK_TAG_MISMATCH: expected ROLLBACK, got ${rollback.tag}` };
+  }
+  if (active.baselineId !== rollback.baselineId) {
+    return { allowed: false, reason: `BLOCKED: snapshot pair missing — BASELINE_ID_MISMATCH: active=${active.baselineId}, rollback=${rollback.baselineId}` };
   }
 
-  const dryRun = restoreDryRun(rollbackSnapshotId);
+  // Dry-run the rollback using repo-first snapshot
+  const dryRun = await restoreDryRunFromRepo(rollbackSnapshotId);
   if (!dryRun.success) {
     return { allowed: false, reason: `BLOCKED: rollback restore dry-run failed — ${dryRun.reason}` };
   }
 
-  return { allowed: true, reason: "snapshot pair valid + rollback restorable" };
+  return { allowed: true, reason: "snapshot pair valid + rollback restorable (repo-first)" };
+}
+
+// ── Direct Access Shutdown Guardrail (P3-4) ──
+
+/**
+ * Sentinel guard — blocks direct store access from new consumers.
+ * Not wired into existing paths; used by tests to enforce repo-first policy.
+ */
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "snapshot-manager", "snapshot-adapter", "snapshot",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 — 상태 리셋 */

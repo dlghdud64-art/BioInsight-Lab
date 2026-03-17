@@ -13,6 +13,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
+import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
+import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -70,10 +72,33 @@ export default function DashboardPage() {
       amount: number | null; purchasedAt: string; category: string | null;
       qty: number | null; unit: string | null;
     }>,
+    undecidedCompareCount: rawStats.undecidedCompareCount ?? 0,
+    compareStats: {
+      slaBreachedCount: rawStats.compareStats?.slaBreachedCount ?? 0,
+      inquiryFollowupCount: rawStats.compareStats?.inquiryFollowupCount ?? 0,
+      substatusBreakdown: (rawStats.compareStats?.substatusBreakdown ?? {}) as Record<string, number>,
+      conversionRate: rawStats.compareStats?.conversionRate ?? 0,
+      avgTurnaroundDays: rawStats.compareStats?.avgTurnaroundDays ?? 0,
+      resolutionPathDistribution: (rawStats.compareStats?.resolutionPathDistribution ?? {}) as Record<string, number>,
+      noMovementCount: rawStats.compareStats?.noMovementCount ?? 0,
+      inquiryFollowupRate: rawStats.compareStats?.inquiryFollowupRate ?? 0,
+      compareToQuoteCount: rawStats.compareStats?.compareToQuoteCount ?? 0,
+      quoteToPurchaseCount: rawStats.compareStats?.quoteToPurchaseCount ?? 0,
+      purchaseToReceivingCount: rawStats.compareStats?.purchaseToReceivingCount ?? 0,
+      receivingToInventoryCount: rawStats.compareStats?.receivingToInventoryCount ?? 0,
+      handoffStallPoint: (rawStats.compareStats?.handoffStallPoint ?? "none") as string,
+    },
+    opsFunnel: {
+      totalQuotes: rawStats.opsFunnel?.totalQuotes ?? 0,
+      purchasedQuotes: rawStats.opsFunnel?.purchasedQuotes ?? 0,
+      confirmedOrders: rawStats.opsFunnel?.confirmedOrders ?? 0,
+      completedReceiving: rawStats.opsFunnel?.completedReceiving ?? 0,
+      stallPoint: (rawStats.opsFunnel?.stallPoint ?? "none") as string,
+    },
   };
 
-  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0;
-  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0);
+  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0 || stats.undecidedCompareCount > 0;
+  const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0) + (stats.undecidedCompareCount > 0 ? 1 : 0);
 
   // ── 알림 (심각도순 정렬) ──
   const notifications = [
@@ -85,6 +110,21 @@ export default function DashboardPage() {
       : []),
     ...(stats.expiringCount > 0
       ? [{ id: "n-exp", type: "alert" as const, title: `유통기한 임박 ${stats.expiringCount}건`, content: "30일 이내 만료 예정 품목이 있습니다.", time: "최근", unread: true, href: "/dashboard/inventory" }]
+      : []),
+    ...(stats.undecidedCompareCount > 0
+      ? [{
+          id: "n-compare",
+          type: stats.compareStats.slaBreachedCount > 0 ? "alert" as const : "quote" as const,
+          title: stats.compareStats.slaBreachedCount > 0
+            ? `비교 판정 대기 ${stats.undecidedCompareCount}건 (SLA 초과 ${stats.compareStats.slaBreachedCount}건)`
+            : `비교 판정 대기 ${stats.undecidedCompareCount}건`,
+          content: stats.compareStats.inquiryFollowupCount > 0
+            ? `문의 후속 ${stats.compareStats.inquiryFollowupCount}건 포함`
+            : "비교 결과를 검토하고 판정을 내려주세요.",
+          time: "최근",
+          unread: stats.compareStats.slaBreachedCount > 0,
+          href: "/compare",
+        }]
       : []),
     { id: "n-delivery", type: "delivery" as const, title: "최근 입고 처리 완료", content: "등록된 입고 내역을 확인할 수 있습니다.", time: "최근", unread: false, href: "/dashboard/purchases" },
   ].slice(0, 4);
@@ -225,6 +265,63 @@ export default function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.expiringCount}건 유통기한 임박</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">30일 이내 만료 예정</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
+              </Link>
+            )}
+            {stats.undecidedCompareCount > 0 && (
+              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                <div className={`rounded-md p-2 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "bg-red-100 dark:bg-red-950/40" : "bg-purple-100 dark:bg-purple-950/40"}`}>
+                  <GitCompare className={`h-4 w-4 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-600 dark:text-red-400" : "text-purple-600 dark:text-purple-400"}`} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{stats.undecidedCompareCount}건 비교 판정 대기</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {stats.compareStats.slaBreachedCount > 0
+                      ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 — 즉시 처리 필요`
+                      : "비교 결과를 검토하고 판정하세요"}
+                  </p>
+                  {Object.keys(stats.compareStats.substatusBreakdown).length > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {Object.entries(stats.compareStats.substatusBreakdown)
+                        .filter(([, count]) => count > 0)
+                        .map(([key, count]) => `${COMPARE_SUBSTATUS_DEFS[key]?.label ?? key} ${count}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {(stats.compareStats.avgTurnaroundDays > 0 || stats.compareStats.conversionRate > 0) && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {stats.compareStats.avgTurnaroundDays > 0 ? `평균 ${stats.compareStats.avgTurnaroundDays}일` : ""}
+                      {stats.compareStats.avgTurnaroundDays > 0 && stats.compareStats.conversionRate > 0 ? " · " : ""}
+                      {stats.compareStats.conversionRate > 0 ? `견적 전환 ${stats.compareStats.conversionRate}%` : ""}
+                    </p>
+                  )}
+                  {Object.keys(stats.compareStats.resolutionPathDistribution).length > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {Object.entries(stats.compareStats.resolutionPathDistribution)
+                        .filter(([, count]) => count > 0)
+                        .map(([key, count]) => `${RESOLUTION_PATH_LABELS[key as keyof typeof RESOLUTION_PATH_LABELS] ?? key} ${count}`)
+                        .join(" · ")}
+                    </p>
+                  )}
+                  {stats.compareStats.noMovementCount > 0 && (
+                    <p className="text-[10px] text-orange-500 font-medium mt-0.5">
+                      다음 단계 없음 {stats.compareStats.noMovementCount}건
+                    </p>
+                  )}
+                  {stats.compareStats.compareToQuoteCount > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {"견적 "}{stats.compareStats.compareToQuoteCount}
+                      {" → 발주 "}{stats.compareStats.quoteToPurchaseCount}
+                      {" → 입고 "}{stats.compareStats.purchaseToReceivingCount}
+                      {" → 완료 "}{stats.compareStats.receivingToInventoryCount}
+                      {stats.compareStats.handoffStallPoint !== "none" && (
+                        <span className="text-orange-500 ml-1">
+                          ({HANDOFF_STALL_LABELS[stats.compareStats.handoffStallPoint as keyof typeof HANDOFF_STALL_LABELS]})
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 group-hover:text-slate-500 transition-colors" />
               </Link>
@@ -445,6 +542,19 @@ export default function DashboardPage() {
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold text-slate-900 dark:text-slate-200">{stats.activeQuotes}</div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{getQuoteInsight()}</p>
+                  {stats.opsFunnel.totalQuotes > 0 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {"견적 "}{stats.opsFunnel.totalQuotes}
+                      {" → 발주 "}{stats.opsFunnel.purchasedQuotes}
+                      {" → 입고 "}{stats.opsFunnel.confirmedOrders}
+                      {" → 완료 "}{stats.opsFunnel.completedReceiving}
+                      {stats.opsFunnel.stallPoint !== "none" && (
+                        <span className="text-orange-500 ml-1">
+                          ({OPS_STALL_LABELS[stats.opsFunnel.stallPoint as keyof typeof OPS_STALL_LABELS]})
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </Link>

@@ -19,7 +19,9 @@ import type {
   IncidentRepository,
   StabilizationAuditRepository,
   CanonicalAuditRepository,
+  RecoveryRecordRepository,
 } from "./repositories";
+import type { LockRepository } from "./lock-repository";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Persistence Adapters Bundle
@@ -37,6 +39,8 @@ export interface PersistenceAdapters {
   readonly incident: IncidentRepository;
   readonly stabilizationAudit: StabilizationAuditRepository;
   readonly canonicalAudit: CanonicalAuditRepository;
+  readonly lock: LockRepository;
+  readonly recoveryRecord: RecoveryRecordRepository;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -67,6 +67,9 @@ const PRIVILEGED_ACTIONS: ReadonlySet<string> = new Set([
   "FINAL_CONTAINMENT_FINALIZE",
   "AUDIT_FLUSH",
   "INCIDENT_ESCALATE",
+  "RECOVERY_START",
+  "RECOVERY_EXECUTE",
+  "RECOVERY_VERIFY",
 ]);
 
 /** action permission 검사 */
@@ -127,6 +130,9 @@ export function checkActionPermission(
       "EMERGENCY_ROLLBACK_START",
       "EMERGENCY_ROLLBACK_EXECUTE",
       "EMERGENCY_ROLLBACK_FINALIZE",
+      "RECOVERY_START",
+      "RECOVERY_EXECUTE",
+      "RECOVERY_VERIFY",
     ]);
     if (lockdownAllowed.has(action)) {
       return {

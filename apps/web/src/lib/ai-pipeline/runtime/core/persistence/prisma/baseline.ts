@@ -14,6 +14,7 @@ import type {
 } from "../types";
 import { ok, fail } from "../types";
 import { mapDbToBaseline } from "./mappers";
+import { isUniqueConstraintError } from "./query-helpers";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PrismaClient = any;
@@ -66,10 +67,14 @@ export class PrismaBaselineRepository implements BaselineRepository {
           containmentPriorityEnabled: input.containmentPriorityEnabled,
           auditStrictMode: input.auditStrictMode,
           mergeGateStrictMode: input.mergeGateStrictMode,
+          canonicalSlot: input.canonicalSlot,
         },
       });
       return ok(mapDbToBaseline(row));
     } catch (e) {
+      if (isUniqueConstraintError(e)) {
+        return fail("DUPLICATE", "Canonical baseline already exists (concurrent create detected).", "StabilizationBaseline");
+      }
       return fail("STORAGE_UNAVAILABLE", "Failed to save baseline", "StabilizationBaseline", e);
     }
   }

@@ -6,7 +6,7 @@
  */
 
 import type { ResidueScanResult, ResidueEntry, RollbackScope, ResidueSeverity } from "../../types/stabilization";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 
 // ── Critical key patterns ──
@@ -84,13 +84,13 @@ function deepDiff(expected: unknown, actual: unknown, basePath: string): DeepDif
 }
 
 /** scope별 deep residue scan */
-export function runResidueScan(
+export async function runResidueScan(
   snapshotId: string,
   currentState: Record<string, Record<string, unknown>>,
   correlationId?: string,
   actor?: string
-): ResidueScanResult {
-  const snap = getSnapshot(snapshotId);
+): Promise<ResidueScanResult> {
+  const snap = await getSnapshotFromRepo(snapshotId);
   const residues: ResidueEntry[] = [];
 
   if (!snap) {

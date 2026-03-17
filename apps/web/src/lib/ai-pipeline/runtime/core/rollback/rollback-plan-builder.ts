@@ -7,7 +7,7 @@
 
 import { randomUUID } from "crypto";
 import type { RollbackPlan, RollbackStep, RollbackScope } from "../../types/stabilization";
-import { getSnapshot } from "../baseline/snapshot-manager";
+import { getSnapshotFromRepo } from "../baseline/snapshot-manager";
 
 const ROLLBACK_SCOPE_ORDER: readonly RollbackScope[] = [
   "ACTIVE_RUNTIME_STATE",
@@ -19,12 +19,12 @@ const ROLLBACK_SCOPE_ORDER: readonly RollbackScope[] = [
   "CONFIG",
 ] as const;
 
-export function buildRollbackPlan(
+export async function buildRollbackPlan(
   baselineId: string,
   snapshotId: string,
   reasonCode: string
-): RollbackPlan {
-  const snap = getSnapshot(snapshotId);
+): Promise<RollbackPlan> {
+  const snap = await getSnapshotFromRepo(snapshotId);
   const snapshotScopes = snap ? snap.scopes.map((s) => s.scope as RollbackScope) : [];
 
   const affectedScopes: RollbackScope[] = ROLLBACK_SCOPE_ORDER.filter(

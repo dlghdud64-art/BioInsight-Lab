@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useQuery } from "@tanstack/react-query";
-import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2, Download, Settings } from "lucide-react";
+import { X, ShoppingCart, BarChart3, TrendingUp, TrendingDown, Eye, EyeOff, Search, Plus, Loader2, Download, Settings, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -29,6 +30,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { CompareAnalysisDrawer } from "./_components/compare-analysis-drawer";
+import { CompareHistorySection, type CompareSessionSummary } from "./_components/compare-history-section";
 
 export default function ComparePage() {
   const { productIds, addProduct, removeProduct, clearProducts, hasProduct } = useCompareStore();
@@ -37,10 +40,22 @@ export default function ComparePage() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showFieldSettings, setShowFieldSettings] = useState(false);
+  const [showAnalysisDrawer, setShowAnalysisDrawer] = useState(false);
+  const [existingSessionId, setExistingSessionId] = useState<string | undefined>(undefined);
   const [selectedFields, setSelectedFields] = useState<string[]>([
     "name", "brand", "category", "price", "leadTime", "stockStatus", "minOrderQty", "vendorCount"
   ]);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Auto-open session from URL query param (e.g., from work queue)
+  useEffect(() => {
+    const sid = searchParams.get("sessionId");
+    if (sid && sid !== existingSessionId) {
+      setExistingSessionId(sid);
+      setShowAnalysisDrawer(true);
+    }
+  }, [searchParams]);
 
   // 제품 검색
   const { data: searchData, isLoading: isSearching } = useQuery({
@@ -55,6 +70,16 @@ export default function ComparePage() {
   });
 
   const searchResults = searchData?.products || [];
+
+  const handleOpenSession = (session: CompareSessionSummary) => {
+    // Load productIds into store for the drawer
+    clearProducts();
+    for (const pid of session.productIds) {
+      addProduct(pid);
+    }
+    setExistingSessionId(session.id);
+    setShowAnalysisDrawer(true);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,7 +210,7 @@ export default function ComparePage() {
       <MainLayout>
         <MainHeader />
         <SearchStepNav />
-        <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="pt-[calc(3.5rem+6rem)] md:pt-[calc(3.5rem+7rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
             <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">제품 비교</h1>
           
@@ -304,6 +329,9 @@ export default function ComparePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 비교 이력 */}
+          <CompareHistorySection onOpenSession={handleOpenSession} />
           </div>
         </div>
       </MainLayout>
@@ -397,7 +425,7 @@ export default function ComparePage() {
     <MainLayout>
       <MainHeader />
       <SearchStepNav />
-      <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="pt-[calc(3.5rem+6rem)] md:pt-[calc(3.5rem+7rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* 비교 제품 관리 리스트 - 위로 이동 */}
         <Card id="compare-list-section">
@@ -660,6 +688,16 @@ export default function ComparePage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            {products.length >= 2 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowAnalysisDrawer(true)}
+                className="gap-2"
+              >
+                <GitCompareArrows className="h-4 w-4" />
+                구조적 비교 분석
+              </Button>
+            )}
             <Link href="/compare/quote">
               <Button>
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -928,6 +966,16 @@ export default function ComparePage() {
         </Card>
       </div>
     </div>
+
+    <CompareAnalysisDrawer
+      open={showAnalysisDrawer}
+      onOpenChange={(open) => {
+        setShowAnalysisDrawer(open);
+        if (!open) setExistingSessionId(undefined);
+      }}
+      productIds={productIds}
+      existingSessionId={existingSessionId}
+    />
     </MainLayout>
   );
 }

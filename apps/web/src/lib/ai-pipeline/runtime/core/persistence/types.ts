@@ -180,6 +180,8 @@ export interface PersistedBaseline {
   containmentPriorityEnabled: boolean;
   auditStrictMode: boolean;
   mergeGateStrictMode: boolean;
+  /** P1-2: "CANONICAL" when active canonical, null otherwise. DB-enforced unique. */
+  canonicalSlot: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -196,6 +198,14 @@ export interface PersistedSnapshot {
   queueTopologyChecksum: string | null;
   includedScopes: string[];
   restoreVerificationStatus: string | null;
+  /** P3-3B: full scopes array [{scope, data, checksum}] */
+  scopePayload: unknown;
+  /** P3-3B: full config object */
+  configPayload: unknown;
+  /** P3-3B: operator identifier */
+  capturedBy: string | null;
+  /** P3-3B: legacy snapshotId for repo-first lookup */
+  snapshotId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -293,6 +303,32 @@ export interface PersistedCanonicalAuditEvent {
   parentEventId: string | null;
 }
 
+export interface PersistedRecoveryRecord {
+  id: string;
+  recoveryId: string;
+  correlationId: string;
+  incidentId: string | null;
+  baselineId: string;
+  lifecycleState: string;
+  releaseMode: string;
+  recoveryState: string;
+  recoveryStage: string | null;
+  lockKey: string | null;
+  lockToken: string | null;
+  operatorId: string;
+  overrideUsed: boolean;
+  overrideReason: string | null;
+  signOffMetadata: unknown;
+  startedAt: Date;
+  completedAt: Date | null;
+  lastHeartbeatAt: Date | null;
+  failureReasonCode: string | null;
+  stageResults: unknown;
+  preconditionResults: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // 7. Create Input Types (omit auto-generated fields)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -303,3 +339,4 @@ export type CreateAuthorityLineInput = Omit<PersistedAuthorityLine, "id" | "crea
 export type CreateIncidentInput = Omit<PersistedIncident, "id" | "createdAt" | "updatedAt" | "acknowledgedBy" | "acknowledgedAt">;
 export type CreateStabilizationAuditEventInput = Omit<PersistedStabilizationAuditEvent, "id" | "recordedAt">;
 export type CreateCanonicalAuditEventInput = Omit<PersistedCanonicalAuditEvent, "id" | "recordedAt">;
+export type CreateRecoveryRecordInput = Omit<PersistedRecoveryRecord, "id" | "createdAt" | "updatedAt">;

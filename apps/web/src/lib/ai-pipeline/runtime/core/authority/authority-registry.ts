@@ -10,7 +10,13 @@ import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { AuthorityOntologyAdapter } from "../ontology/authority-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
+import {
+  acquireLock,
+  releaseLock,
+  authorityLineLockKey,
+} from "../persistence/lock-manager";
 
 // ── Types ──
 
@@ -103,21 +109,12 @@ export function createAuthorityLine(
 
   _registry.set(authorityLineId, line);
 
-  // Dual-write: persist to repository (fire-and-forget)
+  // Dual-write: persist to repository via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.authority.saveAuthorityLine({
-      authorityLineId: line.authorityLineId,
-      currentAuthorityId: line.currentAuthorityId,
-      authorityState: line.authorityState,
-      transferState: line.transferState,
-      pendingSuccessorId: line.pendingSuccessorId,
-      revokedAuthorityIds: line.revokedAuthorityIds,
-      registryVersion: String(line.registryVersion),
-      baselineId: line.baselineId || null,
-      correlationId: line.correlationId || null,
-      updatedBy: line.updatedBy || null,
-    }).catch(function (err: unknown) {
+    const canonical = AuthorityOntologyAdapter.fromLegacy(line);
+    const input = AuthorityOntologyAdapter.toRepositoryInput(canonical);
+    adapters.authority.saveAuthorityLine(input).catch(function (err: unknown) {
       logBridgeFailure("authority-registry", "saveAuthorityLine", err);
     });
   } catch (err) {
@@ -218,7 +215,7 @@ export function requestTransfer(req: TransferRequest): TransferResult {
   const s2 = advanceTransferState(line, "TRANSFER_VALIDATED", req.actor, req.correlationId);
   if (!s2.success) return s2;
 
-  // TRANSFER_LOCKED
+  // TRANSFER_LOCKED (in-memory fallback — async distributed lock in requestTransferAsync)
   if (_transferLocks.has(req.authorityLineId)) {
     return { success: false, reasonCode: "CONCURRENT_TRANSFER_DETECTED", detail: "lock already held", transferState: line.transferState };
   }
@@ -271,6 +268,60 @@ export function requestTransfer(req: TransferRequest): TransferResult {
   });
 
   return s8;
+}
+
+// ── P1-2: Async Transfer with Distributed Lock ──
+
+/** Lock token storage for distributed lock cleanup on finalize/rollback */
+const _distributedLockTokens = new Map<string, string>();
+
+/**
+ * Async version of requestTransfer that uses distributed lock.
+ * Multi-instance safe — acquires DB-backed lock before proceeding.
+ */
+export async function requestTransferAsync(req: TransferRequest): Promise<TransferResult> {
+  // Acquire distributed lock first
+  const lockResult = await acquireLock({
+    lockKey: authorityLineLockKey(req.authorityLineId),
+    lockOwner: req.actor,
+    targetType: "AUTHORITY_LINE",
+    reason: req.reason,
+    correlationId: req.correlationId,
+    ttlMs: 30_000, // 30s TTL
+  });
+
+  if (!lockResult.acquired) {
+    return {
+      success: false,
+      reasonCode: "CONCURRENT_TRANSFER_DETECTED",
+      detail: `distributed lock conflict: ${lockResult.message}`,
+      transferState: "TRANSFER_IDLE",
+    };
+  }
+
+  // Store token for cleanup
+  _distributedLockTokens.set(req.authorityLineId, lockResult.data.lockToken);
+
+  // Execute sync transfer logic
+  const result = requestTransfer(req);
+
+  // If failed, release distributed lock
+  if (!result.success) {
+    const token = _distributedLockTokens.get(req.authorityLineId);
+    if (token) {
+      await releaseLock(authorityLineLockKey(req.authorityLineId), token, req.correlationId);
+      _distributedLockTokens.delete(req.authorityLineId);
+    }
+  } else if (result.transferState === "TRANSFER_FINALIZED") {
+    // Transfer succeeded — release lock
+    const token = _distributedLockTokens.get(req.authorityLineId);
+    if (token) {
+      await releaseLock(authorityLineLockKey(req.authorityLineId), token, req.correlationId);
+      _distributedLockTokens.delete(req.authorityLineId);
+    }
+  }
+
+  return result;
 }
 
 // ── Continuity Validation ──
@@ -356,7 +407,14 @@ export interface IntegrityReport {
   detail: string;
 }
 
+/** @deprecated REMOVED in P5-1 — use checkAuthorityIntegrityFromRepo. Soft removal: impl kept for test compat */
 export function checkAuthorityIntegrity(): IntegrityReport {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "checkAuthorityIntegrity:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-1" }
+  );
   const lines = Array.from(_registry.values());
   const activeByEntity = new Map<string, number>();
 
@@ -404,30 +462,133 @@ export async function getAuthorityLineFromRepo(authorityLineId: string): Promise
     const adapters = getPersistenceAdapters();
     const result = await adapters.authority.findAuthorityLineByLineId(authorityLineId);
     if (result.ok) {
-      const d = result.data;
-      return {
-        authorityLineId: d.authorityLineId,
-        currentAuthorityId: d.currentAuthorityId,
-        authorityState: d.authorityState as AuthorityState,
-        transferState: d.transferState as TransferState,
-        pendingSuccessorId: d.pendingSuccessorId,
-        revokedAuthorityIds: d.revokedAuthorityIds,
-        registryVersion: Number(d.registryVersion),
-        baselineId: d.baselineId || "",
-        updatedAt: normalizeDate(d.updatedAt),
-        updatedBy: d.updatedBy || "",
-        correlationId: d.correlationId || "",
-      };
+      const canonical = AuthorityOntologyAdapter.fromPersisted(result.data);
+      return AuthorityOntologyAdapter.toLegacy(canonical);
     }
   } catch (err) {
     logBridgeFailure("authority-registry", "getAuthorityLineFromRepo", err);
   }
   // Fallback to legacy store
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_FALLBACK_USED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "getAuthorityLineFromRepo:fallback",
+    { entityId: authorityLineId, fallbackUsed: true }
+  );
   return _registry.get(authorityLineId) ?? null;
+}
+
+// ── Repository-First Async Integrity Check (P3-5) ──
+
+/**
+ * Repository-first authority integrity check.
+ * Reads authority lines from repo, performs same split-brain/orphan analysis.
+ * Falls back to sync checkAuthorityIntegrity on repo failure.
+ */
+export async function checkAuthorityIntegrityFromRepo(): Promise<IntegrityReport> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "authority-registry", "authority-adapter", "authority",
+    "repository_to_canonical", "checkAuthorityIntegrityFromRepo:entry",
+    {}
+  );
+
+  try {
+    const adapters = getPersistenceAdapters();
+    const result = await adapters.authority.listAllAuthorityLines({ limit: 1000 });
+    if (!result.ok) {
+      emitDiagnostic(
+        "REPO_ONLY_PATH_ENFORCED",
+        "authority-registry", "authority-adapter", "authority",
+        "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-only-error",
+        { fallbackUsed: false }
+      );
+      return {
+        splitBrain: false,
+        orphanCount: 0,
+        revokedStillEffective: false,
+        pendingResidue: false,
+        detail: "REPO_UNAVAILABLE",
+      };
+    }
+
+    emitDiagnostic(
+      "AUTHORITY_REPO_QUERY_ENABLED",
+      "authority-registry", "authority-adapter", "authority",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:bulk-query",
+      {}
+    );
+
+    const lines: AuthorityLine[] = [];
+    for (const persisted of result.data.items) {
+      const canonical = AuthorityOntologyAdapter.fromPersisted(persisted);
+      lines.push(AuthorityOntologyAdapter.toLegacy(canonical));
+    }
+
+    // Same integrity analysis as sync version
+    const activeByEntity = new Map<string, number>();
+    let orphanCount = 0;
+    let revokedStillEffective = false;
+    let pendingResidue = false;
+
+    for (const line of lines) {
+      if (line.authorityState === "ACTIVE") {
+        activeByEntity.set(line.authorityLineId, (activeByEntity.get(line.authorityLineId) || 0) + 1);
+      }
+      if (!line.currentAuthorityId && line.authorityState === "ACTIVE") {
+        orphanCount++;
+      }
+      if (line.revokedAuthorityIds.includes(line.currentAuthorityId)) {
+        revokedStillEffective = true;
+      }
+      if (line.pendingSuccessorId !== null && line.transferState === "TRANSFER_FINALIZED") {
+        pendingResidue = true;
+      }
+    }
+
+    const splitBrain = Array.from(activeByEntity.values()).some((count: number) => count > 1);
+
+    return {
+      splitBrain,
+      orphanCount,
+      revokedStillEffective,
+      pendingResidue,
+      detail: splitBrain ? "SPLIT_BRAIN_DETECTED" : orphanCount > 0 ? "ORPHAN_DETECTED" : "INTEGRITY_OK",
+    };
+  } catch (err) {
+    logBridgeFailure("authority-registry", "checkAuthorityIntegrityFromRepo", err);
+    // P4-3: REPO_ONLY — no fallback to sync checkAuthorityIntegrity()
+    emitDiagnostic(
+      "REPO_ONLY_PATH_ENFORCED",
+      "authority-registry", "authority-adapter", "authority",
+      "repository_to_canonical", "checkAuthorityIntegrityFromRepo:repo-only-error",
+      { fallbackUsed: false }
+    );
+    return {
+      splitBrain: false,
+      orphanCount: 0,
+      revokedStillEffective: false,
+      pendingResidue: false,
+      detail: "REPO_UNAVAILABLE",
+    };
+  }
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "authority-registry", "authority-adapter", "authority",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */
 export function _resetAuthorityRegistry(): void {
   _registry.clear();
   _transferLocks.clear();
+  _distributedLockTokens.clear();
 }

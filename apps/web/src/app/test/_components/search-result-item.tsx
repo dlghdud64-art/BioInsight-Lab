@@ -13,6 +13,7 @@ interface SearchResultItemProps {
   onToggleCompare: () => void;
   onAddToQuote: () => void;
   onClick?: () => void;
+  compareSessionCount?: number;
 }
 
 // 납기 표시 (확실하지 않은 정보는 표시하지 않음)
@@ -50,6 +51,7 @@ export function SearchResultItem({
   onToggleCompare,
   onAddToQuote,
   onClick,
+  compareSessionCount,
 }: SearchResultItemProps) {
   const [imgError, setImgError] = useState(false);
   const vendor = product.vendors?.[0];
@@ -136,16 +138,23 @@ export function SearchResultItem({
 
           {/* 버튼 그룹: 견적 담기(Primary) / 비교(Secondary) */}
           <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 md:gap-2" onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"}`}
-              onClick={onToggleCompare}
-            >
-              <GitCompare className="h-4 w-4 md:mr-1.5" />
-              <span className="hidden md:inline">{isInCompare ? "비교 담김" : "비교 담기"}</span>
-              <span className="md:hidden">{isInCompare ? "담김" : "비교"}</span>
-            </Button>
+            <div className="flex items-center gap-1.5">
+              {compareSessionCount != null && compareSessionCount > 0 && (
+                <span className="text-[10px] text-purple-600 font-medium whitespace-nowrap">
+                  비교 {compareSessionCount}건 진행 중
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"}`}
+                onClick={onToggleCompare}
+              >
+                <GitCompare className="h-4 w-4 md:mr-1.5" />
+                <span className="hidden md:inline">{isInCompare ? "비교 담김" : "비교 담기"}</span>
+                <span className="md:hidden">{isInCompare ? "담김" : "비교"}</span>
+              </Button>
+            </div>
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm w-full md:w-auto font-medium"

@@ -652,6 +652,7 @@ model ProductInventory {
   user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   product      Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  disposalScheduledAt DateTime?         // P7-1: 폐기 예정일
   lastInspectedAt  DateTime?           // 마지막 점검일
   usageRecords     InventoryUsage[]
   restockRecords   InventoryRestock[]
@@ -689,26 +690,41 @@ model InventoryUsage {
   @@index([type])
 }
 
+// 입고 상태
+enum ReceivingStatus {
+  PENDING   // 대기
+  PARTIAL   // 일부입고
+  COMPLETED // 완료
+  ISSUE     // 이슈
+}
+
 // 재고 입고 이력
 model InventoryRestock {
-  id           String    @id @default(cuid())
-  inventoryId  String
-  userId       String
-  quantity     Float     // 입고 수량
-  unit         String?   // 단위
-  lotNumber    String?   // Lot 번호
-  expiryDate   DateTime? // 유효기간
-  notes        String?   @db.Text
-  restockedAt  DateTime  @default(now())
-  createdAt    DateTime  @default(now())
+  id               String          @id @default(cuid())
+  inventoryId      String
+  userId           String
+  quantity         Float           // 입고 수량
+  expectedQuantity Float?          // 예상 입고 수량
+  unit             String?         // 단위
+  lotNumber        String?         // Lot 번호
+  expiryDate       DateTime?       // 유효기간
+  receivingStatus  ReceivingStatus @default(COMPLETED) // P7-1: 입고 상태
+  orderId          String?         // P7-1: 연결된 주문
+  issueNote        String?         @db.Text // P7-1: 이슈 사유
+  notes            String?         @db.Text
+  restockedAt      DateTime        @default(now())
+  createdAt        DateTime        @default(now())
 
   // 관계
   inventory ProductInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@index([inventoryId])
   @@index([userId])
   @@index([restockedAt])
+  @@index([orderId])
+  @@index([receivingStatus])
 }
 
 // 점검 결과
@@ -1094,6 +1110,12 @@ enum ActivityType {
   PURCHASE_REQUEST_CREATED      // 구매 요청 생성
   AI_TASK_COMPLETED          // AI 작업 최종 완료 (승인 후 실행 성공)
   AI_TASK_FAILED             // AI 작업 실패 (실행 에러)
+
+  // ── Compare Workspace 확장 (V1-RC) ──
+  QUOTE_DRAFT_STARTED_FROM_COMPARE  // 비교 세션에서 견적 초안 생성 시작
+  COMPARE_INQUIRY_DRAFT_STATUS_CHANGED // 문의 초안 상태 변경
+  COMPARE_RESULT_VIEWED              // 비교 결과 조회
+  COMPARE_SESSION_REOPENED           // 비교 세션 재개 (판정 취소)
 }
 
 model ActivityLog {
@@ -1124,6 +1146,53 @@ model ActivityLog {
   @@index([entityType, entityId]) // 특정 엔티티 이력 조회
   @@index([createdAt])
   @@index([taskType])
+}
+
+// ── Compare & Decision Workspace ──
+model CompareSession {
+  id             String   @id @default(cuid())
+  productIds     Json     // string[] — 비교 대상 제품 ID
+  diffResult     Json?    // DiffResult 구조 (structured diff)
+  aiInsight      Json?    // AI 해석 결과
+  userId         String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Decision record (V1-RC)
+  decisionState  String?    // UNDECIDED | APPROVED | HELD | REJECTED
+  decisionNote   String?    @db.Text
+  decidedBy      String?
+  decidedAt      DateTime?
+
+  inquiryDrafts  CompareInquiryDraft[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model CompareInquiryDraft {
+  id               String   @id @default(cuid())
+  compareSessionId String
+  vendorName       String
+  vendorEmail      String?
+  productName      String
+  subject          String
+  body             String   @db.Text
+  inquiryFields    Json     // string[]
+  status           String   @default("GENERATED") // GENERATED | COPIED | SENT
+  diffIndex        Int      @default(0)
+  userId           String?
+  organizationId   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  compareSession   CompareSession @relation(fields: [compareSessionId], references: [id], onDelete: Cascade)
+
+  @@index([compareSessionId])
+  @@index([userId])
+  @@index([status])
 }
 
 // 감사 로그 (Enterprise - 액티비티 로그 확장)
@@ -1399,6 +1468,7 @@ model Order {
   organization    Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   purchaseRequest PurchaseRequest?    @relation("PurchaseRequestOrder") // 역방향 relation (PurchaseRequest.orderId -> Order.id)
   items           OrderItem[]
+  restocks        InventoryRestock[]  // P7-1: 입고 기록
   budgetTransaction UserBudgetTransaction?
 
   @@index([userId])
@@ -1859,6 +1929,7 @@ enum AiActionType {
   FOLLOWUP_DRAFT         // 후속 이메일 초안
   VENDOR_RESPONSE_PARSED // 벤더 회신 파싱 결과
   STATUS_CHANGE_SUGGEST  // 상태 변경 제안
+  COMPARE_DECISION       // 비교 세션 판정 대기
 }
 
 // ── Legacy 상태 (하위 호환) ──
@@ -2068,6 +2139,7 @@ model StabilizationBaseline {
   containmentPriorityEnabled  Boolean  @default(true)
   auditStrictMode             Boolean  @default(true)
   mergeGateStrictMode         Boolean  @default(true)
+  canonicalSlot               String?  @unique // "CANONICAL" when active; null when invalidated — DB-enforced singleton
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
 
@@ -2096,6 +2168,10 @@ model StabilizationSnapshot {
   queueTopologyChecksum     String?
   includedScopes            Json     // string[] — scope names
   restoreVerificationStatus String?  // PENDING | VERIFIED | FAILED
+  scopePayload              Json?    // full scopes array: [{scope, data, checksum}]
+  configPayload             Json?    // full config object
+  capturedBy                String?  // operator identifier
+  snapshotId                String?  @unique // legacy snapshotId for lookup
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
@@ -2227,4 +2303,59 @@ model CanonicalAuditEvent {
   @@index([occurredAt])
   @@index([recordedAt])
   @@index([parentEventId])
+}
+
+// ── P1-2: Distributed Lock ──
+
+enum StabilizationLockTarget {
+  CANONICAL_BASELINE
+  AUTHORITY_LINE
+  INCIDENT_STREAM
+  SNAPSHOT_RESTORE
+}
+
+model StabilizationLock {
+  id            String                   @id @default(cuid())
+  lockKey       String                   @unique
+  lockOwner     String
+  lockToken     String
+  targetType    StabilizationLockTarget
+  reason        String
+  correlationId String
+  acquiredAt    DateTime                 @default(now())
+  expiresAt     DateTime
+
+  @@index([targetType])
+  @@index([expiresAt])
+}
+
+// ── P2-1: Recovery State Persistence ──
+
+model StabilizationRecoveryRecord {
+  id                  String    @id @default(cuid())
+  recoveryId          String    @unique
+  correlationId       String
+  incidentId          String?
+  baselineId          String
+  lifecycleState      String
+  releaseMode         String
+  recoveryState       String
+  recoveryStage       String?
+  lockKey             String?
+  lockToken           String?
+  operatorId          String
+  overrideUsed        Boolean   @default(false)
+  overrideReason      String?
+  signOffMetadata     Json?
+  startedAt           DateTime
+  completedAt         DateTime?
+  lastHeartbeatAt     DateTime?
+  failureReasonCode   String?
+  stageResults        Json?
+  preconditionResults Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([correlationId])
+  @@index([recoveryState])
 }

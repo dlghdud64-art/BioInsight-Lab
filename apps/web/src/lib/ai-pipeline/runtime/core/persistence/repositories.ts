@@ -21,12 +21,14 @@ import type {
   PersistedIncident,
   PersistedStabilizationAuditEvent,
   PersistedCanonicalAuditEvent,
+  PersistedRecoveryRecord,
   CreateBaselineInput,
   CreateSnapshotInput,
   CreateAuthorityLineInput,
   CreateIncidentInput,
   CreateStabilizationAuditEventInput,
   CreateCanonicalAuditEventInput,
+  CreateRecoveryRecordInput,
   IncidentStatus,
 } from "./types";
 
@@ -86,6 +88,11 @@ export interface SnapshotRepository {
   findSnapshotsByBaselineId(baselineId: string, query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedSnapshot>>>;
 
   /**
+   * Find a snapshot by its legacy snapshotId (not the internal cuid).
+   */
+  findSnapshotBySnapshotId(snapshotId: string): Promise<RepositoryResult<PersistedSnapshot>>;
+
+  /**
    * Update only the restoreVerificationStatus field.
    * This is the only mutable field on a snapshot.
    */
@@ -131,6 +138,11 @@ export interface AuthorityRepository {
    * List all authority lines for a baseline.
    */
   findByBaselineId(baselineId: string, query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>>;
+
+  /**
+   * List all authority lines (no filter). Used by integrity check.
+   */
+  listAllAuthorityLines(query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedAuthorityLine>>>;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -278,4 +290,38 @@ export interface CanonicalAuditRepository {
    * List child events of a parent event (for reconstruction chain).
    */
   listCanonicalEventsByParentEventId(parentEventId: string, query?: ListQuery): Promise<RepositoryResult<ListResult<PersistedCanonicalAuditEvent>>>;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 7. RecoveryRecordRepository (P2-1)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface RecoveryRecordRepository {
+  /**
+   * Save a new recovery record.
+   * Fails with DUPLICATE if recoveryId already exists.
+   */
+  saveRecoveryRecord(input: CreateRecoveryRecordInput): Promise<RepositoryResult<PersistedRecoveryRecord>>;
+
+  /**
+   * Update an existing recovery record with optimistic locking.
+   * Fails with OPTIMISTIC_LOCK_CONFLICT if updatedAt doesn't match.
+   */
+  updateRecoveryRecord(update: OptimisticUpdate<PersistedRecoveryRecord>): Promise<RepositoryResult<PersistedRecoveryRecord>>;
+
+  /**
+   * Find by business key (recoveryId — unique).
+   */
+  findByRecoveryId(recoveryId: string): Promise<RepositoryResult<PersistedRecoveryRecord>>;
+
+  /**
+   * Find any non-terminal recovery (state not in RESTORED, FAILED, ESCALATED)
+   * with no completedAt. Returns null if none found.
+   */
+  findActiveRecovery(): Promise<PersistedRecoveryRecord | null>;
+
+  /**
+   * Find by correlationId.
+   */
+  findByCorrelationId(correlationId: string): Promise<RepositoryResult<PersistedRecoveryRecord>>;
 }

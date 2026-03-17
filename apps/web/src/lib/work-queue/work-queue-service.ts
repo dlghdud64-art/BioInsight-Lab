@@ -217,6 +217,11 @@ export interface WorkQueueFilters {
   limit?: number;
   includeCompleted?: boolean;
   completedSince?: Date; // completed 항목을 이 시각 이후만 포함
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  // ── Assignment filters ──
+  assigneeId?: string;
+  unassignedOnly?: boolean;
 }
 
 export interface WorkQueueItem {
@@ -238,6 +243,8 @@ export interface WorkQueueItem {
   urgencyScore: number;
   totalScore: number;
   urgencyReason: string | null;
+  // ── Assignment ──
+  assigneeId: string | null;
 }
 
 /**
@@ -271,6 +278,21 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
     where.approvalStatus = filters.approvalStatus as any;
   }
 
+  if (filters.relatedEntityType) {
+    where.relatedEntityType = filters.relatedEntityType;
+  }
+  if (filters.relatedEntityId) {
+    where.relatedEntityId = filters.relatedEntityId;
+  }
+
+  // Assignment filters
+  if (filters.assigneeId) {
+    where.assigneeId = filters.assigneeId;
+  }
+  if (filters.unassignedOnly) {
+    where.assigneeId = null;
+  }
+
   if (filters.includeCompleted && filters.completedSince) {
     where.OR = [
       { taskStatus: { not: "COMPLETED" as any } },
@@ -292,6 +314,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
         summary: true,
         relatedEntityType: true,
         relatedEntityId: true,
+        assigneeId: true,
         payload: true,
         createdAt: true,
         updatedAt: true,
@@ -340,6 +363,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
       urgencyScore: scores.urgencyScore,
       totalScore: scores.totalScore,
       urgencyReason: scores.urgencyReason,
+      assigneeId: item.assigneeId ?? null,
     };
   });
 
@@ -358,6 +382,635 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
   });
 
   return { items: sorted, activeCount, completedCount };
+}
+
+// ── Grouped Query (Console) ──
+
+/**
+ * 콘솔용 그룹화된 Work Queue 조회
+ *
+ * queryWorkQueue 결과를 groupForConsole로 그룹화하여 반환합니다.
+ */
+export async function queryWorkQueueGrouped(filters: WorkQueueFilters & {
+  view?: import("./console-assignment").ConsoleView;
+  viewUserId?: string;
+} = {}): Promise<{
+  groups: import("./console-grouping").ConsoleGroup[];
+  summary: import("./console-grouping").ConsoleSummary;
+  activeCount: number;
+  completedCount: number;
+}> {
+  const { groupForConsole, groupForConsoleWithView, computeConsoleSummary } = await import("./console-grouping");
+
+  const result = await queryWorkQueue({
+    ...filters,
+    includeCompleted: true,
+    limit: filters.limit || 100,
+  });
+
+  const view = filters.view || "all";
+  const userId = filters.viewUserId;
+
+  const groups = view !== "all" && userId
+    ? groupForConsoleWithView(result.items, view, userId)
+    : groupForConsole(result.items, userId);
+  const summary = computeConsoleSummary(groups, userId);
+
+  return {
+    groups,
+    summary,
+    activeCount: result.activeCount,
+    completedCount: result.completedCount,
+  };
+}
+
+// ── Assignment Action Execution ──
+
+export interface AssignmentActionParams {
+  itemId: string;
+  action: import("./console-assignment").AssignmentAction;
+  actorUserId: string;
+  targetUserId?: string;
+  note?: string;
+  nextAction?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+/**
+ * 배정 액션 실행 — 단일 트랜잭션
+ *
+ * 1. 현재 상태 조회 + canTransition 확인
+ * 2. validateAction 검증
+ * 3. assigneeId + payload 업데이트
+ * 4. ActivityLog 기록
+ */
+export async function executeAssignmentAction(params: AssignmentActionParams): Promise<void> {
+  const {
+    resolveAssignmentState,
+    canTransition,
+    validateAction,
+    buildHandoffPayload,
+    ASSIGNMENT_ACTION_DEFS,
+  } = await import("./console-assignment");
+
+  const { itemId, action, actorUserId, targetUserId, note, nextAction, ipAddress, userAgent } = params;
+
+  // Pre-validate action params
+  const validation = validateAction(action, {
+    actorUserId,
+    targetUserId,
+    note,
+  });
+  if (!validation.valid) {
+    throw new Error(validation.error || "유효하지 않은 액션입니다.");
+  }
+
+  const actionDef = ASSIGNMENT_ACTION_DEFS[action];
+
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    // 1. 현재 상태 조회
+    const current = await tx.aiActionItem.findUniqueOrThrow({
+      where: { id: itemId },
+      select: {
+        assigneeId: true,
+        payload: true,
+        taskStatus: true,
+        organizationId: true,
+        title: true,
+        type: true,
+      },
+    });
+
+    const metadata = (current.payload || {}) as Record<string, unknown>;
+    const currentState = resolveAssignmentState({
+      assigneeId: current.assigneeId,
+      metadata,
+      taskStatus: current.taskStatus,
+    });
+
+    // 2. 전이 가능 여부 확인
+    if (!canTransition(currentState, action)) {
+      throw new Error(
+        `현재 상태(${currentState})에서 ${action} 액션은 수행할 수 없습니다.`
+      );
+    }
+
+    // 3. 업데이트 데이터 구성
+    const newPayload = { ...metadata };
+    newPayload.assignmentState = actionDef.toState;
+
+    let newAssigneeId: string | null = current.assigneeId;
+
+    switch (action) {
+      case "claim":
+        newAssigneeId = actorUserId;
+        break;
+      case "assign":
+      case "reassign":
+        newAssigneeId = targetUserId ?? null;
+        break;
+      case "hand_off": {
+        newAssigneeId = targetUserId ?? null;
+        const handoffPayload = buildHandoffPayload({
+          fromUserId: actorUserId,
+          toUserId: targetUserId!,
+          note: note!,
+          nextAction: nextAction ?? "",
+        });
+        newPayload.handoff = handoffPayload.handoff;
+        // Append to handoff history
+        const history = Array.isArray(metadata.handoffHistory)
+          ? [...(metadata.handoffHistory as unknown[])]
+          : [];
+        history.push(handoffPayload.handoff);
+        newPayload.handoffHistory = history;
+        break;
+      }
+      // mark_in_progress, mark_blocked: assignee stays the same
+    }
+
+    // 4. DB UPDATE
+    await tx.aiActionItem.update({
+      where: { id: itemId },
+      data: {
+        assigneeId: newAssigneeId,
+        payload: newPayload as Prisma.JsonObject,
+      },
+    });
+
+    // 5. ActivityLog
+    const actorRole = await getActorRole(actorUserId, current.organizationId);
+    await createActivityLog(
+      {
+        activityType: actionDef.activityLogEvent as any,
+        entityType: "AI_ACTION",
+        entityId: itemId,
+        taskType: current.type,
+        beforeStatus: current.taskStatus,
+        afterStatus: current.taskStatus,
+        userId: actorUserId,
+        organizationId: current.organizationId,
+        actorRole,
+        metadata: {
+          title: current.title,
+          action,
+          assignmentState_before: currentState,
+          assignmentState_after: actionDef.toState,
+          assigneeId_before: current.assigneeId,
+          assigneeId_after: newAssigneeId,
+          targetUserId,
+          note,
+          nextAction,
+        },
+        ipAddress,
+        userAgent,
+      },
+      tx
+    );
+  });
+}
+
+// ── Accountability Data Query ──
+
+const ASSIGNMENT_ACTIVITY_TYPES = [
+  "ITEM_CLAIMED",
+  "ITEM_ASSIGNED",
+  "ITEM_REASSIGNED",
+  "ITEM_STARTED",
+  "ITEM_BLOCKED",
+  "ITEM_HANDED_OFF",
+  "AI_TASK_COMPLETED",
+  "AI_TASK_FAILED",
+];
+
+/**
+ * 책임성 분석용 데이터 조회 — 활성 항목 + 배정 관련 활동 로그
+ */
+export async function queryAccountabilityData(filters: {
+  organizationId?: string;
+  since?: Date;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const since = filters.since ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: ASSIGNMENT_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
+// ── Daily Review Action Execution ──
+
+export interface DailyReviewActionParams {
+  itemId: string;
+  actionType: "escalation" | "review_outcome";
+  actionId: string;
+  actorUserId: string;
+  targetUserId?: string;
+  note?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+/**
+ * 일일 검토 액션 실행 — 단일 트랜잭션
+ *
+ * 에스컬레이션 또는 검토 결과를 적용하고 ActivityLog에 기록합니다.
+ */
+export async function executeDailyReviewAction(params: DailyReviewActionParams): Promise<void> {
+  const {
+    applyReviewOutcome,
+    applyEscalationAction,
+    ESCALATION_ACTION_DEFS,
+    REVIEW_OUTCOME_DEFS,
+  } = await import("./console-daily-review");
+
+  const { itemId, actionType, actionId, actorUserId, targetUserId, note, ipAddress, userAgent } = params;
+
+  // Validate actionId
+  if (actionType === "escalation" && !(actionId in ESCALATION_ACTION_DEFS)) {
+    throw new Error(`유효하지 않은 에스컬레이션 액션: ${actionId}`);
+  }
+  if (actionType === "review_outcome" && !(actionId in REVIEW_OUTCOME_DEFS)) {
+    throw new Error(`유효하지 않은 검토 결과: ${actionId}`);
+  }
+
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const current = await tx.aiActionItem.findUniqueOrThrow({
+      where: { id: itemId },
+      select: {
+        id: true,
+        type: true,
+        taskStatus: true,
+        approvalStatus: true,
+        substatus: true,
+        priority: true,
+        title: true,
+        summary: true,
+        relatedEntityType: true,
+        relatedEntityId: true,
+        assigneeId: true,
+        payload: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
+      },
+    });
+
+    const metadata = (current.payload || {}) as Record<string, unknown>;
+    const item: WorkQueueItem = {
+      id: current.id,
+      type: current.type,
+      taskStatus: current.taskStatus,
+      approvalStatus: current.approvalStatus,
+      substatus: current.substatus,
+      priority: current.priority,
+      title: current.title,
+      summary: current.summary,
+      relatedEntityType: current.relatedEntityType,
+      relatedEntityId: current.relatedEntityId,
+      metadata,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+      impactScore: 0,
+      urgencyScore: 0,
+      totalScore: 0,
+      urgencyReason: null,
+      assigneeId: current.assigneeId ?? null,
+    };
+
+    let result: {
+      newPayload: Record<string, unknown>;
+      newAssigneeId: string | null;
+      logEvent: string;
+      logMetadata: Record<string, unknown>;
+    };
+
+    if (actionType === "escalation") {
+      result = applyEscalationAction(item, actionId as any, {
+        actorUserId,
+        targetUserId,
+        note,
+        now: new Date(),
+      });
+    } else {
+      result = applyReviewOutcome(item, actionId as any, {
+        actorUserId,
+        targetUserId,
+        note: note ?? "",
+        now: new Date(),
+      });
+    }
+
+    // Update item
+    await tx.aiActionItem.update({
+      where: { id: itemId },
+      data: {
+        assigneeId: result.newAssigneeId,
+        payload: result.newPayload as Prisma.JsonObject,
+      },
+    });
+
+    // ActivityLog
+    const actorRole = await getActorRole(actorUserId, current.organizationId);
+    await createActivityLog(
+      {
+        activityType: result.logEvent as any,
+        entityType: "AI_ACTION",
+        entityId: itemId,
+        taskType: current.type,
+        beforeStatus: current.taskStatus,
+        afterStatus: current.taskStatus,
+        userId: actorUserId,
+        organizationId: current.organizationId,
+        actorRole,
+        metadata: {
+          title: current.title,
+          ...result.logMetadata,
+        },
+        ipAddress,
+        userAgent,
+      },
+      tx
+    );
+  });
+}
+
+/**
+ * 일일 검토 데이터 조회 — 활성 항목 + 에스컬레이션/검토 관련 로그
+ */
+export async function queryDailyReviewData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const DAILY_REVIEW_ACTIVITY_TYPES = [
+    ...ASSIGNMENT_ACTIVITY_TYPES,
+    "ITEM_ESCALATED",
+    "ITEM_REVIEW_COMPLETED",
+  ];
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: DAILY_REVIEW_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
+// ── Cadence Governance ──
+
+/**
+ * 케이던스 거버넌스 데이터 조회 — 활성 항목 + 전체 관련 로그
+ */
+export async function queryCadenceGovernanceData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const GOVERNANCE_ACTIVITY_TYPES = [
+    ...ASSIGNMENT_ACTIVITY_TYPES,
+    "ITEM_ESCALATED",
+    "ITEM_REVIEW_COMPLETED",
+    "CADENCE_START_OF_DAY",
+    "CADENCE_MIDDAY_CHECK",
+    "CADENCE_END_OF_DAY",
+    "CADENCE_WEEKLY_REVIEW",
+  ];
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: GOVERNANCE_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
+/**
+ * 케이던스 단계 완료 기록
+ */
+export async function logCadenceStepCompletion(params: {
+  stepId: string;
+  actorUserId: string;
+  organizationId?: string;
+  note?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  const eventMap: Record<string, string> = {
+    start_of_day_review: "CADENCE_START_OF_DAY",
+    midday_escalation_check: "CADENCE_MIDDAY_CHECK",
+    end_of_day_carryover: "CADENCE_END_OF_DAY",
+    weekly_bottleneck_review: "CADENCE_WEEKLY_REVIEW",
+  };
+
+  const activityType = eventMap[params.stepId];
+  if (!activityType) {
+    throw new Error(`Invalid cadence step: ${params.stepId}`);
+  }
+
+  await createActivityLog({
+    activityType: activityType as any,
+    userId: params.actorUserId,
+    metadata: {
+      stepId: params.stepId,
+      note: params.note ?? "",
+      completedAt: new Date().toISOString(),
+    },
+    organizationId: params.organizationId ?? null,
+    ipAddress: params.ipAddress ?? null,
+    userAgent: params.userAgent ?? null,
+  } as any);
+}
+
+// ── Bottleneck Remediation ──
+
+/**
+ * 병목 개선 데이터 조회 — 활성 항목 + 로그 + 기존 개선 항목
+ *
+ * 개선 항목은 payload.remediations에 JSON 배열로 저장됩니다 (별도 테이블 없음).
+ * 이 함수는 queryCadenceGovernanceData를 재사용하고 개선 항목을 별도 조회합니다.
+ */
+export async function queryBottleneckRemediationData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+  remediations: import("./console-bottleneck-remediation").RemediationItem[];
+}> {
+  const { items, logs } = await queryCadenceGovernanceData(filters);
+
+  // Remediation items are stored as a global org-level JSON blob
+  // in a special sentinel AiActionItem with type REMEDIATION_REGISTRY
+  const registry = await db.aiActionItem.findFirst({
+    where: {
+      type: "REMEDIATION_REGISTRY" as any,
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: { payload: true },
+  });
+
+  const remediations = Array.isArray((registry?.payload as any)?.remediations)
+    ? (registry.payload as any).remediations
+    : [];
+
+  return { items, logs, remediations };
+}
+
+/**
+ * 개선 항목 저장 (생성 또는 업데이트)
+ */
+export async function saveRemediationItems(params: {
+  remediations: import("./console-bottleneck-remediation").RemediationItem[];
+  organizationId?: string;
+  actorUserId: string;
+  logEvent?: string;
+  logMetadata?: Record<string, unknown>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Upsert the registry sentinel
+    const existing = await tx.aiActionItem.findFirst({
+      where: {
+        type: "REMEDIATION_REGISTRY" as any,
+        ...(params.organizationId ? { organizationId: params.organizationId } : {}),
+      },
+    });
+
+    if (existing) {
+      await tx.aiActionItem.update({
+        where: { id: existing.id },
+        data: {
+          payload: { remediations: params.remediations } as any,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      await tx.aiActionItem.create({
+        data: {
+          type: "REMEDIATION_REGISTRY" as any,
+          status: "PENDING" as any,
+          title: "Remediation Registry",
+          payload: { remediations: params.remediations } as any,
+          ...(params.organizationId ? { organizationId: params.organizationId } : {}),
+        } as any,
+      });
+    }
+
+    // Log if event specified
+    if (params.logEvent) {
+      await createActivityLog({
+        activityType: params.logEvent as any,
+        userId: params.actorUserId,
+        metadata: params.logMetadata ?? {},
+        organizationId: params.organizationId ?? null,
+        ipAddress: params.ipAddress ?? null,
+        userAgent: params.userAgent ?? null,
+      } as any);
+    }
+  });
 }
 
 // ── Helpers ──
@@ -391,6 +1044,12 @@ function mapSubstatusToActivityType(substatus: string): string {
     execution_failed: "AI_TASK_FAILED",
     budget_insufficient: "AI_TASK_FAILED",
     permission_denied: "AI_TASK_FAILED",
+    // ═══ 비교 도메인 ═══
+    compare_decision_pending: "AI_TASK_CREATED",
+    compare_inquiry_followup: "COMPARE_INQUIRY_DRAFT_STATUS_CHANGED",
+    compare_quote_in_progress: "QUOTE_DRAFT_STARTED_FROM_COMPARE",
+    compare_decided: "AI_TASK_COMPLETED",
+    compare_reopened: "COMPARE_SESSION_REOPENED",
   };
 
   return map[substatus] || "AI_TASK_CREATED";

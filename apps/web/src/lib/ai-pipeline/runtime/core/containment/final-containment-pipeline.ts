@@ -42,7 +42,7 @@ export interface ContainmentPipelineInput {
 }
 
 /** 단일 final containment pipeline 실행 */
-export function executeFinalContainment(input: ContainmentPipelineInput): ContainmentResult {
+export async function executeFinalContainment(input: ContainmentPipelineInput): Promise<ContainmentResult> {
   const stagesCompleted: ContainmentStage[] = [];
   const { breach, baselineId, activeSnapshotId, rollbackSnapshotId, actor, currentRuntimeState } = input;
   const correlationId = breach.correlationId;
@@ -76,7 +76,7 @@ export function executeFinalContainment(input: ContainmentPipelineInput): Contai
   stagesCompleted.push("SIDE_EFFECT_EMISSION_STOP");
 
   // ─ STAGE 4: ROLLBACK_PRECHECK ─
-  const precheck = runRollbackPrecheck(rollbackSnapshotId, activeSnapshotId);
+  const precheck = await runRollbackPrecheck(rollbackSnapshotId, activeSnapshotId);
   if (!precheck.passed) {
     emitStabilizationAuditEvent({ ...auditBase, eventType: "ROLLBACK_PRECHECK_FAILED", detail: precheck.reasonCode });
     escalateIncident("ROLLBACK_PRECHECK_FAILED", correlationId, actor, precheck.reasonCode);
@@ -96,10 +96,10 @@ export function executeFinalContainment(input: ContainmentPipelineInput): Contai
   stagesCompleted.push("ROLLBACK_PRECHECK");
 
   // ─ STAGE 5: ROLLBACK_EXECUTE (with actual scope restore) ─
-  rollbackPlan = buildRollbackPlan(baselineId, rollbackSnapshotId, breach.breachType);
+  rollbackPlan = await buildRollbackPlan(baselineId, rollbackSnapshotId, breach.breachType);
   emitStabilizationAuditEvent({ ...auditBase, eventType: "ROLLBACK_PLAN_BUILT", detail: `plan=${rollbackPlan.planId}, scopes=${rollbackPlan.affectedScopes.length}` });
 
-  const execResult = executeRollbackPlan(rollbackPlan, correlationId, actor);
+  const execResult = await executeRollbackPlan(rollbackPlan, correlationId, actor);
   if (!execResult.success) {
     escalateIncident("ROLLBACK_PARTIAL_COMMIT_DETECTED", correlationId, actor, execResult.reason);
     deactivateMutationFreeze();
@@ -135,7 +135,7 @@ export function executeFinalContainment(input: ContainmentPipelineInput): Contai
 
   // ─ STAGE 6: POST_ROLLBACK_RESIDUE_SCAN (against actual runtime state) ─
   const postRollbackState = getAllRuntimeState();
-  residueScan = runResidueScan(rollbackSnapshotId, postRollbackState, correlationId, actor);
+  residueScan = await runResidueScan(rollbackSnapshotId, postRollbackState, correlationId, actor);
   emitStabilizationAuditEvent({ ...auditBase, eventType: "RESIDUE_SCAN_COMPLETED", detail: `clean=${residueScan.clean}, critical=${residueScan.hasCritical}` });
   stagesCompleted.push("POST_ROLLBACK_RESIDUE_SCAN");
 
@@ -155,7 +155,7 @@ export function executeFinalContainment(input: ContainmentPipelineInput): Contai
   }
 
   // ─ STAGE 7: STATE_RECONCILIATION (against actual runtime state) ─
-  reconciliation = reconcileState(rollbackSnapshotId, postRollbackState, correlationId, actor);
+  reconciliation = await reconcileState(rollbackSnapshotId, postRollbackState, correlationId, actor);
   emitStabilizationAuditEvent({ ...auditBase, eventType: "RECONCILIATION_COMPLETED", detail: `success=${reconciliation.success}, unresolved=${reconciliation.unresolvedCount}` });
   stagesCompleted.push("STATE_RECONCILIATION");
 

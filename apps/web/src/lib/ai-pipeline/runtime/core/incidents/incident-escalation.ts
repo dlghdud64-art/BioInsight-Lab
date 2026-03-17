@@ -9,7 +9,9 @@ import { randomUUID } from "crypto";
 import { emitStabilizationAuditEvent } from "../audit/audit-events";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { withLock, incidentStreamLockKey } from "../persistence/lock-manager";
+import { IncidentOntologyAdapter } from "../ontology/incident-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 export interface IncidentRecord {
   incidentId: string;
@@ -41,18 +43,12 @@ export function escalateIncident(
 
   _incidents.push(record);
 
-  // Dual-write: persist to repository (fire-and-forget)
+  // Dual-write: persist to repository via ontology adapter (fire-and-forget)
   try {
     const adapters = getPersistenceAdapters();
-    adapters.incident.createIncident({
-      incidentId: record.incidentId,
-      reasonCode: record.reasonCode,
-      severity: "WARNING",
-      status: "OPEN",
-      correlationId: record.correlationId,
-      baselineId: null,
-      snapshotId: null,
-    }).catch(function (err: unknown) {
+    const canonical = IncidentOntologyAdapter.fromLegacy(record);
+    const input = IncidentOntologyAdapter.toRepositoryInput(canonical);
+    adapters.incident.createIncident(input).catch(function (err: unknown) {
       logBridgeFailure("incident-escalation", "createIncident", err);
     });
   } catch (err) {
@@ -74,15 +70,69 @@ export function escalateIncident(
   return record;
 }
 
+/**
+ * P1-2: Async version with distributed lock on incident stream.
+ * Prevents concurrent escalation on the same correlationId.
+ */
+export async function escalateIncidentAsync(
+  reasonCode: string,
+  correlationId: string,
+  actor: string,
+  detail: string
+): Promise<{ record: IncidentRecord | null; lockBlocked: boolean; reason?: string }> {
+  const lockResult = await withLock(
+    incidentStreamLockKey(correlationId),
+    actor,
+    "INCIDENT_STREAM",
+    "incident-escalation",
+    correlationId,
+    15_000, // 15s TTL
+    async function () {
+      return escalateIncident(reasonCode, correlationId, actor, detail);
+    }
+  );
+
+  if (!lockResult.acquired) {
+    return {
+      record: null,
+      lockBlocked: true,
+      reason: `INCIDENT_STREAM_LOCK_REQUIRED: ${lockResult.message}`,
+    };
+  }
+
+  return { record: lockResult.data, lockBlocked: false };
+}
+
+/** @deprecated REMOVED in P4-5 — use getIncidentsFromRepo. Soft removal: impl kept for test compat */
 export function getIncidents(): IncidentRecord[] {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "getIncidents:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P4-5" }
+  );
   return [..._incidents];
 }
 
+/** @deprecated REMOVED in P5-3 — use hasUnacknowledgedIncidentsFromRepo. Soft removal: impl kept for test compat */
 export function hasUnacknowledgedIncidents(): boolean {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "hasUnacknowledgedIncidents:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-3" }
+  );
   return _incidents.some((i: IncidentRecord) => !i.acknowledged);
 }
 
+/** @deprecated Prefer acknowledgeIncidentAsync for repo-first deterministic ack */
 export function acknowledgeIncident(incidentId: string): boolean {
+  emitDiagnostic(
+    "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "acknowledgeIncident:fire-and-forget",
+    { entityId: incidentId, fallbackUsed: false, reasonCode: "FIRE_AND_FORGET_ACK" }
+  );
   const incident = _incidents.find((i: IncidentRecord) => i.incidentId === incidentId);
   if (incident) {
     incident.acknowledged = true;
@@ -92,10 +142,13 @@ export function acknowledgeIncident(incidentId: string): boolean {
       const adapters = getPersistenceAdapters();
       adapters.incident.findIncidentByIncidentId(incidentId).then(function (result) {
         if (result.ok) {
+          const updatedAt = result.data.updatedAt instanceof Date
+            ? result.data.updatedAt
+            : new Date(result.data.updatedAt as unknown as string);
           adapters.incident.acknowledgeIncident(
             incidentId,
             "system",
-            result.data.updatedAt
+            updatedAt
           ).catch(function (err: unknown) {
             logBridgeFailure("incident-escalation", "acknowledgeIncident", err);
           });
@@ -112,6 +165,67 @@ export function acknowledgeIncident(incidentId: string): boolean {
   return false;
 }
 
+// ── Repository-First Async Ack (P4-4) ──
+
+/**
+ * Repo-first deterministic acknowledgement.
+ * Awaits repo write before memory update — no fire-and-forget gap.
+ */
+export async function acknowledgeIncidentAsync(incidentId: string): Promise<{
+  success: boolean;
+  repoWriteMs: number;
+  diagnostic: string;
+}> {
+  const start = Date.now();
+  try {
+    const adapters = getPersistenceAdapters();
+    const findResult = await adapters.incident.findIncidentByIncidentId(incidentId);
+    if (!findResult.ok) {
+      emitDiagnostic(
+        "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+        "incident-escalation", "incident-adapter", "incident",
+        "repository_to_canonical", "acknowledgeIncidentAsync:not-found",
+        { entityId: incidentId, fallbackUsed: false, reasonCode: "INCIDENT_NOT_FOUND_IN_REPO" }
+      );
+      return { success: false, repoWriteMs: Date.now() - start, diagnostic: "INCIDENT_NOT_FOUND_IN_REPO" };
+    }
+    const updatedAt = findResult.data.updatedAt instanceof Date
+      ? findResult.data.updatedAt
+      : new Date(findResult.data.updatedAt as unknown as string);
+    const ackResult = await adapters.incident.acknowledgeIncident(incidentId, "system", updatedAt);
+    if (!ackResult.ok) {
+      emitDiagnostic(
+        "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+        "incident-escalation", "incident-adapter", "incident",
+        "repository_to_canonical", "acknowledgeIncidentAsync:repo-ack-failed",
+        { entityId: incidentId, fallbackUsed: false, reasonCode: "REPO_ACK_FAILED" }
+      );
+      return { success: false, repoWriteMs: Date.now() - start, diagnostic: "REPO_ACK_FAILED" };
+    }
+    // Memory update AFTER repo success (repo-first)
+    const incident = _incidents.find((i: IncidentRecord) => i.incidentId === incidentId);
+    if (incident) {
+      incident.acknowledged = true;
+    }
+    emitDiagnostic(
+      "INCIDENT_ACK_TIMING_GAP_REDUCED",
+      "incident-escalation", "incident-adapter", "incident",
+      "repository_to_canonical", "acknowledgeIncidentAsync:success",
+      { entityId: incidentId, fallbackUsed: false, reasonCode: "ACK_REPO_FIRST" }
+    );
+    return { success: true, repoWriteMs: Date.now() - start, diagnostic: "ACK_REPO_FIRST" };
+  } catch (err) {
+    logBridgeFailure("incident-escalation", "acknowledgeIncidentAsync", err);
+    emitDiagnostic(
+      "INCIDENT_ACK_DELAY_DIAGNOSTIC",
+      "incident-escalation", "incident-adapter", "incident",
+      "repository_to_canonical", "acknowledgeIncidentAsync:error",
+      { entityId: incidentId, fallbackUsed: false, reasonCode: "ACK_ERROR" }
+    );
+    return { success: false, repoWriteMs: Date.now() - start, diagnostic: "ACK_ERROR" };
+  }
+}
+
 // ── Repository-First Async Read ──
 
 /**
@@ -124,22 +238,46 @@ export async function getIncidentsFromRepo(): Promise<IncidentRecord[]> {
     const result = await adapters.incident.listOpenIncidents({ limit: 1000 });
     if (result.ok) {
       return result.data.items.map(function (d) {
-        return {
-          incidentId: d.incidentId,
-          reasonCode: d.reasonCode,
-          correlationId: d.correlationId,
-          actor: d.acknowledgedBy || "system",
-          detail: "",
-          escalatedAt: normalizeDate(d.createdAt),
-          acknowledged: d.status !== "OPEN",
-        };
+        const canonical = IncidentOntologyAdapter.fromPersisted(d);
+        return IncidentOntologyAdapter.toLegacy(canonical);
       });
     }
   } catch (err) {
     logBridgeFailure("incident-escalation", "getIncidentsFromRepo", err);
   }
-  // Fallback to legacy store
-  return [..._incidents];
+  // REPO_ONLY (P4-2): no fallback — deterministic empty with diagnostic
+  emitDiagnostic(
+    "REPO_ONLY_PATH_ENFORCED",
+    "incident-escalation", "incident-adapter", "incident",
+    "repository_to_canonical", "getIncidentsFromRepo:repo-only-empty",
+    { fallbackUsed: false }
+  );
+  return [];
+}
+
+// ── Repository-First Async Unacknowledged Check (P3-5) ──
+
+export async function hasUnacknowledgedIncidentsFromRepo(): Promise<boolean> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "incident-escalation", "incident-adapter", "incident",
+    "repository_to_canonical", "hasUnacknowledgedIncidentsFromRepo:entry",
+    {}
+  );
+  const incidents = await getIncidentsFromRepo();
+  return incidents.some(function (i) { return !i.acknowledged; });
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "incident-escalation", "incident-adapter", "incident",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */

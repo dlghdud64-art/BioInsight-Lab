@@ -74,6 +74,8 @@ const REQUIRED_REPOS: readonly string[] = [
   "incident",
   "stabilizationAudit",
   "canonicalAudit",
+  "lock",
+  "recoveryRecord",
 ];
 
 function validateBundle(adapters: PersistenceAdapters): void {

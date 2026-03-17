@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { createWorkItem } from "@/lib/work-queue/work-queue-service";
+import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-queue/compare-queue-semantics";
+import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -85,6 +88,14 @@ export async function GET(request: NextRequest) {
       expiringInventories,
       userInventories,
       fallbackBudget,
+      undecidedCompareCount,
+      activeCompareItems,
+      decidedCompareSessions,
+      compareLinkedQuoteSessions,
+      completedCompareItems,
+      sessionsWithInquiry,
+      followThroughData,
+      opsFunnelData,
     ] = await Promise.all([
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -136,6 +147,90 @@ export async function GET(request: NextRequest) {
               yearMonth: currentYearMonth,
             },
           }),
+      // 비교 판정 대기 건수
+      db.compareSession.count({
+        where: { userId, decisionState: "UNDECIDED" },
+      }).catch(() => 0),
+      // 활성 비교 큐 아이템 (SLA/substatus 분석용)
+      db.aiActionItem.findMany({
+        where: { userId, type: "COMPARE_DECISION" as any, taskStatus: { notIn: ["COMPLETED", "FAILED"] as any[] } },
+        select: { substatus: true, createdAt: true, relatedEntityId: true },
+      }).catch(() => [] as { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[]),
+      // 판정 완료 세션 (평균 소요일 계산용)
+      db.compareSession.findMany({
+        where: { userId, decisionState: { in: ["APPROVED", "HELD", "REJECTED"] }, decidedAt: { not: null } },
+        select: { createdAt: true, decidedAt: true },
+        take: 100,
+        orderBy: { decidedAt: "desc" },
+      }).catch(() => [] as { createdAt: Date; decidedAt: Date | null }[]),
+      // 견적 연결된 비교 세션 수
+      db.quote.findMany({
+        where: { comparisonId: { not: null }, userId },
+        select: { comparisonId: true },
+        distinct: ["comparisonId" as any],
+      }).catch(() => [] as { comparisonId: string | null }[]),
+      // 완료된 비교 큐 아이템 (해결 경로 분포 계산용)
+      db.aiActionItem.findMany({
+        where: { userId, type: "COMPARE_DECISION" as any, taskStatus: "COMPLETED" as any },
+        select: { payload: true },
+        take: 100,
+        orderBy: { completedAt: "desc" },
+      }).catch(() => [] as { payload: unknown }[]),
+      // 문의 초안이 있는 세션 (no-movement 감지용)
+      db.compareSession.findMany({
+        where: { userId, inquiryDrafts: { some: {} } },
+        select: { id: true },
+      }).catch(() => [] as { id: string }[]),
+      // Follow-through: compare-origin quotes → orders → restocks
+      db.quote.findMany({
+        where: { comparisonId: { not: null }, userId },
+        select: { id: true },
+      }).then(async (cQuotes: { id: string }[]) => {
+        if (cQuotes.length === 0) return { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+        const qIds = cQuotes.map((q) => q.id);
+        const orders = await db.order.findMany({
+          where: { quoteId: { in: qIds } },
+          select: { id: true },
+        });
+        if (orders.length === 0) return { quoteCount: cQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+        const oIds = orders.map((o: { id: string }) => o.id);
+        const restocks = await db.inventoryRestock.findMany({
+          where: { orderId: { in: oIds } },
+          select: { receivingStatus: true },
+        });
+        return {
+          quoteCount: cQuotes.length,
+          orderCount: orders.length,
+          receivingCount: restocks.length,
+          inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+        };
+      }).catch(() => ({ quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 })),
+      // Ops funnel: all user quotes → purchased → orders confirmed → receiving completed
+      db.quote.findMany({
+        where: quoteOwnerWhere,
+        select: { id: true, status: true },
+      }).then(async (allQuotes: { id: string; status: string }[]) => {
+        const purchased = allQuotes.filter((q) => q.status === "PURCHASED");
+        if (purchased.length === 0) return { totalQuotes: allQuotes.length, purchasedQuotes: 0, confirmedOrders: 0, completedReceiving: 0 };
+        const purchasedIds = purchased.map((q) => q.id);
+        const ords = await db.order.findMany({
+          where: { quoteId: { in: purchasedIds } },
+          select: { id: true, status: true },
+        });
+        const confirmed = ords.filter((o: { status: string }) => ["CONFIRMED", "SHIPPING", "DELIVERED"].includes(o.status));
+        if (confirmed.length === 0) return { totalQuotes: allQuotes.length, purchasedQuotes: purchased.length, confirmedOrders: 0, completedReceiving: 0 };
+        const oIds = confirmed.map((o: { id: string }) => o.id);
+        const restocks = await db.inventoryRestock.findMany({
+          where: { orderId: { in: oIds } },
+          select: { receivingStatus: true },
+        });
+        return {
+          totalQuotes: allQuotes.length,
+          purchasedQuotes: purchased.length,
+          confirmedOrders: confirmed.length,
+          completedReceiving: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+        };
+      }).catch(() => ({ totalQuotes: 0, purchasedQuotes: 0, confirmedOrders: 0, completedReceiving: 0 })),
     ]);
 
     // ── Phase 3: 구매 기록 쿼리 4개 동시 실행 ─────────────────────────
@@ -376,7 +471,7 @@ export async function GET(request: NextRequest) {
         unit: inv.unit || "ea",
       }));
 
-    return NextResponse.json({
+    const resp = NextResponse.json({
       // 예산 정보
       budget: activeBudget
         ? {
@@ -429,7 +524,31 @@ export async function GET(request: NextRequest) {
       monthlySpending,
       recentOrders,
       recentPurchases,
+      undecidedCompareCount,
+      compareStats: computeCompareStats(
+        undecidedCompareCount as number,
+        activeCompareItems as { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[],
+        decidedCompareSessions as { createdAt: Date; decidedAt: Date | null }[],
+        compareLinkedQuoteSessions as { comparisonId: string | null }[],
+        completedCompareItems as { payload: unknown }[],
+        sessionsWithInquiry as { id: string }[],
+        followThroughData as { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
+      ),
+      opsFunnel: (() => {
+        const data = opsFunnelData as { totalQuotes: number; purchasedQuotes: number; confirmedOrders: number; completedReceiving: number };
+        return {
+          ...data,
+          stallPoint: determineOpsStallPoint(data),
+        };
+      })(),
     });
+
+    // Non-blocking: sync compare sessions into work queue
+    if (undecidedCompareCount > 0) {
+      syncCompareToWorkQueue(userId).catch(() => {});
+    }
+
+    return resp;
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     return NextResponse.json(
@@ -437,4 +556,148 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Non-blocking: ensure undecided compare sessions have work queue items.
+ * Lightweight create-only pass — full reconciliation handled by POST /api/work-queue/compare-sync.
+ * Includes duplicate guard: checks both active AND completed items before creating.
+ */
+async function syncCompareToWorkQueue(userId: string) {
+  const sessions = await db.compareSession.findMany({
+    where: { userId, OR: [{ decisionState: null }, { decisionState: "UNDECIDED" }] },
+    select: { id: true, productIds: true, createdAt: true, diffResult: true },
+    take: 50,
+  });
+  if (sessions.length === 0) return;
+
+  const sessionIds = sessions.map((s: { id: string }) => s.id);
+
+  // Check ALL items (including completed) to prevent duplicates
+  const existing = await db.aiActionItem.findMany({
+    where: { relatedEntityType: "COMPARE_SESSION", relatedEntityId: { in: sessionIds } },
+    select: { relatedEntityId: true },
+  });
+  const existingSet = new Set(existing.map((e: { relatedEntityId: string | null }) => e.relatedEntityId));
+
+  const allPids = [...new Set(sessions.flatMap((s: { productIds: unknown }) => Array.isArray(s.productIds) ? s.productIds as string[] : []))];
+  const products = await db.product.findMany({
+    where: { id: { in: allPids } },
+    select: { id: true, name: true },
+  });
+  const nameMap = new Map(products.map((p: { id: string; name: string }) => [p.id, p.name]));
+
+  for (const cs of sessions) {
+    if (existingSet.has(cs.id)) continue;
+    const pids = Array.isArray(cs.productIds) ? (cs.productIds as string[]) : [];
+    const names = pids.map((id: string) => nameMap.get(id) || "제품").slice(0, 2);
+    const title = names.length >= 2 ? `${names[0]} vs ${names[1]} 비교 판정` : "비교 세션 판정 대기";
+    const diffResult = cs.diffResult as Record<string, unknown>[] | null;
+    const verdict = Array.isArray(diffResult) && (diffResult[0] as any)?.summary?.overallVerdict || null;
+
+    await createWorkItem({
+      type: "COMPARE_DECISION",
+      userId,
+      title,
+      summary: "비교 분석 완료 — 판정을 내려주세요",
+      payload: { productIds: pids, productNames: names, verdict, sessionCreatedAt: cs.createdAt.toISOString() },
+      relatedEntityType: "COMPARE_SESSION",
+      relatedEntityId: cs.id,
+      priority: "MEDIUM",
+    });
+  }
+}
+
+/**
+ * 비교 큐 운영 메트릭 계산
+ */
+function computeCompareStats(
+  undecidedCount: number,
+  activeItems: { substatus: string | null; createdAt: Date; relatedEntityId: string | null }[],
+  decidedSessions: { createdAt: Date; decidedAt: Date | null }[],
+  linkedQuoteSessions: { comparisonId: string | null }[],
+  completedItems: { payload: unknown }[],
+  sessionsWithInquiry: { id: string }[],
+  followThrough: { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
+) {
+  const now = Date.now();
+  const MS_PER_DAY = 86400000;
+
+  let slaBreachedCount = 0;
+  let inquiryFollowupCount = 0;
+  const substatusBreakdown: Record<string, number> = {};
+
+  for (const item of activeItems) {
+    const key = item.substatus || "unknown";
+    substatusBreakdown[key] = (substatusBreakdown[key] || 0) + 1;
+
+    const def = COMPARE_SUBSTATUS_DEFS[item.substatus || ""];
+    if (def && !def.isTerminal) {
+      const ageDays = Math.floor((now - new Date(item.createdAt).getTime()) / MS_PER_DAY);
+      if (def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+        slaBreachedCount++;
+      }
+    }
+    if (item.substatus === "compare_inquiry_followup") {
+      inquiryFollowupCount++;
+    }
+  }
+
+  const avgTurnaroundMs = decidedSessions.length > 0
+    ? decidedSessions.reduce((sum, s) =>
+        sum + (new Date(s.decidedAt!).getTime() - new Date(s.createdAt).getTime()), 0
+      ) / decidedSessions.length
+    : 0;
+  const avgTurnaroundDays = Math.round((avgTurnaroundMs / MS_PER_DAY) * 10) / 10;
+
+  const linkedQuoteCount = linkedQuoteSessions.length;
+  const conversionRate = decidedSessions.length > 0
+    ? Math.round((linkedQuoteCount / decidedSessions.length) * 1000) / 10
+    : 0;
+
+  const resolutionPathDistribution: Record<string, number> = {};
+  for (const item of completedItems) {
+    const path = (item.payload as Record<string, unknown>)?.resolutionPath as string || "unknown";
+    resolutionPathDistribution[path] = (resolutionPathDistribution[path] || 0) + 1;
+  }
+
+  // no-movement: decision_pending 아이템 중 문의/견적 없이 3일+ 경과
+  const inquirySessionIds = new Set(sessionsWithInquiry.map((s) => s.id));
+  const quoteSessionIds = new Set(linkedQuoteSessions.map((q) => q.comparisonId).filter(Boolean));
+  let noMovementCount = 0;
+  for (const item of activeItems) {
+    if (item.substatus !== "compare_decision_pending") continue;
+    const hasInquiry = item.relatedEntityId ? inquirySessionIds.has(item.relatedEntityId) : false;
+    const hasQuote = item.relatedEntityId ? quoteSessionIds.has(item.relatedEntityId) : false;
+    if (hasInquiry || hasQuote) continue;
+    const ageDays = Math.floor((now - new Date(item.createdAt).getTime()) / MS_PER_DAY);
+    if (ageDays >= 3) noMovementCount++;
+  }
+
+  const inquiryFollowupRate = undecidedCount > 0
+    ? Math.round((inquiryFollowupCount / undecidedCount) * 1000) / 10
+    : 0;
+
+  return {
+    undecidedCount,
+    slaBreachedCount,
+    inquiryFollowupCount,
+    linkedQuoteCount,
+    avgTurnaroundDays,
+    substatusBreakdown,
+    conversionRate,
+    resolutionPathDistribution,
+    noMovementCount,
+    inquiryFollowupRate,
+    compareToQuoteCount: followThrough.quoteCount,
+    quoteToPurchaseCount: followThrough.orderCount,
+    purchaseToReceivingCount: followThrough.receivingCount,
+    receivingToInventoryCount: followThrough.inventoryCount,
+    handoffStallPoint: determineHandoffStallPoint({
+      compareToQuoteCount: followThrough.quoteCount,
+      quoteToPurchaseCount: followThrough.orderCount,
+      purchaseToReceivingCount: followThrough.receivingCount,
+      receivingToInventoryCount: followThrough.inventoryCount,
+    }),
+  };
 }

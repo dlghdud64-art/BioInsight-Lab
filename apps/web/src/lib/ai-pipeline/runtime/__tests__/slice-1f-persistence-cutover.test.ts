@@ -403,12 +403,16 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
       expect(TRUTH_SOURCE_CONTRACT.stabilizationAudit).toBeDefined();
       expect(TRUTH_SOURCE_CONTRACT.canonicalAudit).toBeDefined();
 
-      // Snapshot is special — LEGACY_PRIMARY for read
-      expect(TRUTH_SOURCE_CONTRACT.snapshot.read).toBe("LEGACY_PRIMARY");
-      expect(TRUTH_SOURCE_CONTRACT.snapshot.write).toBe("DUAL_CHECKSUM_ONLY");
+      // Snapshot is REPO_ONLY (P4-3: full-fidelity confirmed)
+      expect(TRUTH_SOURCE_CONTRACT.snapshot.read).toBe("REPO_ONLY");
+      expect(TRUTH_SOURCE_CONTRACT.snapshot.write).toBe("DUAL");
 
-      // Others are REPO_FIRST_LEGACY_FALLBACK
-      expect(TRUTH_SOURCE_CONTRACT.baseline.read).toBe("REPO_FIRST_LEGACY_FALLBACK");
+      // Authority is REPO_ONLY (P4-3: bulk query enabled)
+      expect(TRUTH_SOURCE_CONTRACT.authority.read).toBe("REPO_ONLY");
+      expect(TRUTH_SOURCE_CONTRACT.authority.write).toBe("DUAL");
+
+      // Baseline is REPO_ONLY (P4-2)
+      expect(TRUTH_SOURCE_CONTRACT.baseline.read).toBe("REPO_ONLY");
       expect(TRUTH_SOURCE_CONTRACT.baseline.write).toBe("DUAL");
     });
   });

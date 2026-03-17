@@ -6,7 +6,7 @@
  */
 
 import type { RollbackScope } from "../../types/stabilization";
-import { getSnapshot, verifySnapshotPairExists, computeScopeChecksum } from "../baseline/snapshot-manager";
+import { getSnapshotFromRepo, verifySnapshotPairExists, computeScopeChecksum } from "../baseline/snapshot-manager";
 import { isMutationFrozen } from "../containment/mutation-freeze";
 
 export interface PrecheckResult {
@@ -15,14 +15,14 @@ export interface PrecheckResult {
   reasonCode: string;
 }
 
-export function runRollbackPrecheck(
+export async function runRollbackPrecheck(
   rollbackSnapshotId: string,
   activeSnapshotId: string
-): PrecheckResult {
+): Promise<PrecheckResult> {
   const checks: { name: string; passed: boolean; detail: string }[] = [];
 
   // 1. rollback snapshot exists
-  const snap = getSnapshot(rollbackSnapshotId);
+  const snap = await getSnapshotFromRepo(rollbackSnapshotId);
   checks.push({
     name: "rollback_snapshot_exists",
     passed: snap !== null,

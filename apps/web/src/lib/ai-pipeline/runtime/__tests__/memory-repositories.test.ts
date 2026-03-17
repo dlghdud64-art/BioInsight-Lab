@@ -493,7 +493,7 @@ describe("P1-1 Slice-1D: Memory Repositories", function() {
       var memAdapters = createMemoryAdapters();
       var memKeys = Object.keys(memAdapters).sort();
       // Expected keys from PersistenceAdapters interface
-      var expected = ["mode", "baseline", "snapshot", "authority", "incident", "stabilizationAudit", "canonicalAudit"].sort();
+      var expected = ["mode", "baseline", "snapshot", "authority", "incident", "stabilizationAudit", "canonicalAudit", "lock", "recoveryRecord"].sort();
       expect(memKeys).toEqual(expected);
     });
 

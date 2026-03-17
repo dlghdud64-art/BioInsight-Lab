@@ -14,11 +14,14 @@ import {
 import {
   createSnapshotPair,
   verifySnapshotPairExists,
-  restoreDryRun,
-  canEnterActiveRuntime,
+  canEnterActiveRuntimeFromRepo,
+  restoreDryRunFromRepo,
   _resetSnapshotStore,
 } from "../core/baseline/snapshot-manager";
 import { validateBaselineAtBoot } from "../core/baseline/baseline-validator";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap } from "../core/persistence/bootstrap";
 import { evaluateFreezeGate } from "../core/governance/stabilization-policy";
 import { evaluateMergeGate } from "../core/governance/merge-gate";
 import { isCanonicalActiveRuntime, getActiveRuntimeBlockReason } from "../core/runtime/lifecycle";
@@ -57,6 +60,10 @@ describe("S0: Baseline Freeze", () => {
   beforeEach(() => {
     _resetBaselineRegistry();
     _resetSnapshotStore();
+    _resetAdapterRegistry();
+    _resetPersistenceBootstrap();
+    registerAdapterFactory(createMemoryAdapters);
+    bootstrapPersistence();
   });
 
   // 1. canonical baseline uniqueness test
@@ -105,9 +112,10 @@ describe("S0: Baseline Freeze", () => {
   });
 
   // 3. freeze flag enforcement test
-  it("should enforce freeze flags during boot validation", () => {
+  it("should enforce freeze flags during boot validation", async () => {
     const baseline = createTestBaseline();
-    const result = validateBaselineAtBoot(
+    await new Promise((r) => setTimeout(r, 50));
+    const result = await validateBaselineAtBoot(
       {
         lifecycleState: "ACTIVE_100",
         releaseMode: "FULL_ACTIVE_STABILIZATION",
@@ -120,7 +128,7 @@ describe("S0: Baseline Freeze", () => {
     expect(freezeCheck?.passed).toBe(true);
 
     // violated flags
-    const result2 = validateBaselineAtBoot(
+    const result2 = await validateBaselineAtBoot(
       {
         lifecycleState: "ACTIVE_100",
         releaseMode: "FULL_ACTIVE_STABILIZATION",
@@ -150,23 +158,25 @@ describe("S0: Baseline Freeze", () => {
     expect(result.reason).toContain("BLOCKED_CHANGE_CLASS");
   });
 
-  // 5. snapshot restore dry-run test
-  it("should pass restore dry-run for valid snapshots", () => {
+  // 5. snapshot restore dry-run test (P4-4: uses repo-first path)
+  it("should pass restore dry-run for valid snapshots", async () => {
     const pair = createSnapshotPair({
       baselineId: "bl-test",
       capturedBy: "test",
       scopeData: SCOPE_DATA,
     });
-    const dryRun = restoreDryRun(pair.rollback.snapshotId);
+    await new Promise((r) => setTimeout(r, 50));
+    const dryRun = await restoreDryRunFromRepo(pair.rollback.snapshotId);
     expect(dryRun.success).toBe(true);
     expect(dryRun.scopeResults).toHaveLength(6);
-    expect(dryRun.scopeResults.every((s) => s.checksumMatch && s.restorable)).toBe(true);
+    expect(dryRun.scopeResults.every((s: { checksumMatch: boolean; restorable: boolean }) => s.checksumMatch && s.restorable)).toBe(true);
   });
 
   // 6. boot mismatch reject test
-  it("should reject boot validation on hash mismatch", () => {
+  it("should reject boot validation on hash mismatch", async () => {
     const baseline = createTestBaseline();
-    const result = validateBaselineAtBoot(
+    await new Promise((r) => setTimeout(r, 50));
+    const result = await validateBaselineAtBoot(
       {
         lifecycleState: "ACTIVE_100",
         releaseMode: "FULL_ACTIVE_STABILIZATION",
@@ -198,9 +208,9 @@ describe("S0: Baseline Freeze", () => {
     expect(result.missingFields).toContain("stabilizationTag");
   });
 
-  // Extra: snapshot pair blocks active runtime when missing
-  it("should block active runtime when snapshot pair is missing", () => {
-    const check = canEnterActiveRuntime("nonexistent-active", "nonexistent-rollback");
+  // Extra: snapshot pair blocks active runtime when missing (P4-4: async repo-first)
+  it("should block active runtime when snapshot pair is missing", async () => {
+    const check = await canEnterActiveRuntimeFromRepo("nonexistent-active", "nonexistent-rollback");
     expect(check.allowed).toBe(false);
     expect(check.reason).toContain("BLOCKED");
   });

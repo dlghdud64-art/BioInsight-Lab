@@ -39,6 +39,7 @@ import { Info, FileText, BellRing, Save, Sparkles } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
+import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 
 interface ProductInventory {
   id: string;
@@ -152,6 +153,18 @@ function InventoryPageContent() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
+
+  // Deep-link: entity_id → 해당 아이템 시트 열기
+  const entityIdParam = searchParams.get("entity_id");
+  useEffect(() => {
+    if (entityIdParam && data?.inventories) {
+      const target = data.inventories.find((item: ProductInventory) => item.id === entityIdParam);
+      if (target) {
+        setSelectedItem(target);
+        setIsSheetOpen(true);
+      }
+    }
+  }, [entityIdParam, data?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
@@ -2221,6 +2234,14 @@ function InventoryPageContent() {
                     </Button>
                   </div>
                 </div>
+
+                {/* 운영 실행 현황 */}
+                <OpsExecutionContext
+                  entityType="INVENTORY_RESTOCK"
+                  entityId={selectedItem.id}
+                  compact
+                  className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800"
+                />
               </>
             )}
           </SheetContent>

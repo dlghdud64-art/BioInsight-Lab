@@ -5,6 +5,7 @@ import { QuoteStatus, OrderStatus, ActivityType, Prisma, TeamRole } from "@prism
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
+import { logStateTransition } from "@/lib/operations/state-transition-logger";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -229,6 +230,19 @@ export async function POST(request: NextRequest) {
       userAgent,
     }).catch((error) => {
       console.error("Failed to create activity log:", error);
+    });
+
+    // P7-1: 중앙화된 상태 전이 로그
+    logStateTransition({
+      domain: "ORDER",
+      entityId: result.order.id,
+      fromStatus: "CREATED",
+      toStatus: "ORDERED",
+      actorId: session.user.id,
+      organizationId: result.order.organizationId,
+      metadata: { orderNumber: result.order.orderNumber, quoteId },
+    }).catch((error) => {
+      console.error("Failed to log state transition:", error);
     });
 
     // Closed-loop 활동 로그: 주문 상태 전이

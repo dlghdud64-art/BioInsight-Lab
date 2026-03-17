@@ -6,7 +6,8 @@
 import { randomUUID } from "crypto";
 import { getPersistenceAdapters } from "../persistence";
 import { logBridgeFailure } from "../persistence/bridge-logger";
-import { normalizeDate } from "../persistence/date-normalizer";
+import { CanonicalAuditOntologyAdapter } from "../ontology/canonical-audit-adapter";
+import { emitDiagnostic } from "../ontology/diagnostics";
 
 // ── Canonical Event Schema ──
 
@@ -107,34 +108,12 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   _writtenIds.add(event.eventId);
   event.recordedAt = new Date();
 
-  // Dual-write: repository first (fire-and-forget), then legacy store
+  // Dual-write: repository first via ontology adapter (fire-and-forget), then legacy store
   try {
     const adapters = getPersistenceAdapters();
-    adapters.canonicalAudit.appendCanonicalEvent({
-      eventId: event.eventId,
-      eventType: event.eventType,
-      eventStage: event.eventStage || null,
-      correlationId: event.correlationId,
-      incidentId: event.incidentId || null,
-      timelineId: event.timelineId,
-      baselineId: event.baselineId || null,
-      baselineVersion: event.baselineVersion || null,
-      baselineHash: event.baselineHash || null,
-      lifecycleState: event.lifecycleState || null,
-      releaseMode: event.releaseMode || null,
-      actor: event.actor || null,
-      sourceModule: event.sourceModule,
-      entityType: event.entityType,
-      entityId: event.entityId,
-      reasonCode: event.reasonCode,
-      severity: event.severity,
-      occurredAt: event.occurredAt,
-      snapshotBeforeId: event.snapshotBeforeId || null,
-      snapshotAfterId: event.snapshotAfterId || null,
-      affectedScopes: event.affectedScopes || [],
-      resultStatus: event.resultStatus,
-      parentEventId: event.parentEventId || null,
-    }).catch(function (err: unknown) {
+    const canonicalRecord = CanonicalAuditOntologyAdapter.fromLegacy(event);
+    const input = CanonicalAuditOntologyAdapter.toRepositoryInput(canonicalRecord);
+    adapters.canonicalAudit.appendCanonicalEvent(input).catch(function (err: unknown) {
       logBridgeFailure("canonical-event-schema", "appendCanonicalEvent", err);
     });
   } catch (err) {
@@ -146,7 +125,14 @@ export function writeCanonicalAudit(event: CanonicalEvent): AuditWriteResult {
   return { written: true, reasonCode: "AUDIT_WRITE_SUCCESS", eventId: event.eventId };
 }
 
+/** @deprecated REMOVED in P4-5 — use getCanonicalAuditLogFromRepo. Soft removal: impl kept for test compat */
 export function getCanonicalAuditLog(filter?: { correlationId?: string; timelineId?: string; eventType?: string }): CanonicalEvent[] {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "getCanonicalAuditLog:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P4-5" }
+  );
   if (!filter) return [..._auditLog];
   return _auditLog.filter((e: CanonicalEvent) => {
     if (filter.correlationId && e.correlationId !== filter.correlationId) return false;
@@ -188,6 +174,14 @@ const AUTHORITY_TRANSFER_FLOW_HOPS: readonly string[] = [
   "AUTHORITY_CONTINUITY_VALIDATED",
 ];
 
+export const RECOVERY_FLOW_HOPS: readonly string[] = [
+  "INCIDENT_LOCKDOWN_RECOVERY_REQUESTED",
+  "INCIDENT_LOCKDOWN_RECOVERY_VALIDATED",
+  "INCIDENT_LOCKDOWN_RECOVERY_EXECUTING",
+  "INCIDENT_LOCKDOWN_RECOVERY_VERIFIED",
+  "INCIDENT_LOCKDOWN_RECOVERY_RESTORED",
+];
+
 export interface HopValidationResult {
   flowName: string;
   complete: boolean;
@@ -201,6 +195,7 @@ export function validateHops(flowName: string, correlationId: string): HopValida
     case "containment": requiredHops = CONTAINMENT_FLOW_HOPS; break;
     case "routing": requiredHops = ROUTING_FLOW_HOPS; break;
     case "authority_transfer": requiredHops = AUTHORITY_TRANSFER_FLOW_HOPS; break;
+    case "recovery": requiredHops = RECOVERY_FLOW_HOPS; break;
     default: return { flowName, complete: false, missingHops: ["UNKNOWN_FLOW"], presentHops: [] };
   }
 
@@ -231,7 +226,14 @@ export interface Timeline {
   reconstructionStatus: ReconstructionStatus;
 }
 
+/** @deprecated REMOVED in P5-4 — use buildTimelineFromRepo. Soft removal: impl kept for test compat */
 export function buildTimeline(correlationId: string): Timeline {
+  emitDiagnostic(
+    "LEGACY_SYNC_COMPAT_REMOVED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "buildTimeline:removed",
+    { removalStatus: "REMOVED", shutdownPhase: "P5-4" }
+  );
   const events = _auditLog
     .filter((e: CanonicalEvent) => e.correlationId === correlationId)
     .sort((a: CanonicalEvent, b: CanonicalEvent) => a.occurredAt.getTime() - b.occurredAt.getTime());
@@ -254,7 +256,7 @@ export function buildTimeline(correlationId: string): Timeline {
 
   // check hops for relevant flows
   const allMissing: string[] = [];
-  for (const flow of ["containment", "routing", "authority_transfer"]) {
+  for (const flow of ["containment", "routing", "authority_transfer", "recovery"]) {
     const hop = validateHops(flow, correlationId);
     if (hop.presentHops.length > 0 && !hop.complete) {
       allMissing.push(...hop.missingHops.map((m: string) => `${flow}:${m}`));
@@ -297,11 +299,11 @@ export interface ReconstructionView {
   eventCount: number;
 }
 
-export function buildReconstructionView(
+export async function buildReconstructionView(
   viewType: "incident" | "containment" | "routing" | "authority_succession",
   correlationId: string
-): ReconstructionView {
-  const timeline = buildTimeline(correlationId);
+): Promise<ReconstructionView> {
+  const timeline = await buildTimelineFromRepo(correlationId);
   const lastEvent = timeline.orderedEvents[timeline.orderedEvents.length - 1];
 
   return {
@@ -338,40 +340,111 @@ export async function getCanonicalAuditLogFromRepo(
     }
     if (result.ok) {
       return result.data.items.map(function (d) {
-        return {
-          eventId: d.eventId,
-          eventType: d.eventType,
-          eventStage: d.eventStage || undefined,
-          correlationId: d.correlationId,
-          incidentId: d.incidentId || undefined,
-          timelineId: d.timelineId,
-          baselineId: d.baselineId || "",
-          baselineVersion: d.baselineVersion || "",
-          baselineHash: d.baselineHash || "",
-          lifecycleState: d.lifecycleState || "",
-          releaseMode: d.releaseMode || "",
-          actor: d.actor || "",
-          sourceModule: d.sourceModule,
-          entityType: d.entityType,
-          entityId: d.entityId,
-          reasonCode: d.reasonCode,
-          severity: d.severity as EventSeverity,
-          occurredAt: normalizeDate(d.occurredAt),
-          recordedAt: normalizeDate(d.recordedAt),
-          snapshotBeforeId: d.snapshotBeforeId || undefined,
-          snapshotAfterId: d.snapshotAfterId || undefined,
-          affectedScopes: d.affectedScopes || [],
-          resultStatus: d.resultStatus as EventResultStatus,
-          parentEventId: d.parentEventId || undefined,
-          schemaVersion: SCHEMA_VERSION,
-        };
+        const canonicalRecord = CanonicalAuditOntologyAdapter.fromPersisted(d);
+        return CanonicalAuditOntologyAdapter.toLegacy(canonicalRecord);
       });
     }
   } catch (err) {
     logBridgeFailure("canonical-event-schema", "getCanonicalAuditLogFromRepo", err);
   }
-  // Fallback to legacy store
-  return getCanonicalAuditLog(filter);
+  // REPO_ONLY (P4-2): no fallback — deterministic empty with diagnostic
+  emitDiagnostic(
+    "REPO_ONLY_PATH_ENFORCED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "repository_to_canonical", "getCanonicalAuditLogFromRepo:repo-only-empty",
+    { fallbackUsed: false }
+  );
+  return [];
+}
+
+// ── Repository-First Async Timeline Builder (P3-5) ──
+
+/**
+ * Repository-first timeline builder.
+ * Uses getCanonicalAuditLogFromRepo to fetch events, then applies same
+ * sorting + hop validation + reconstruction logic.
+ */
+export async function buildTimelineFromRepo(correlationId: string): Promise<Timeline> {
+  emitDiagnostic(
+    "CONSUMER_CUTOVER_APPLIED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "repository_to_canonical", "buildTimelineFromRepo:entry",
+    { entityId: correlationId }
+  );
+
+  const repoEvents = await getCanonicalAuditLogFromRepo({ correlationId });
+
+  const events = repoEvents
+    .filter(function (e) { return e.correlationId === correlationId; })
+    .sort(function (a, b) { return a.occurredAt.getTime() - b.occurredAt.getTime(); });
+
+  if (events.length === 0) {
+    return {
+      timelineId: `tl-empty-${correlationId}`,
+      correlationId,
+      rootEventId: "",
+      orderedEvents: [],
+      missingHops: [],
+      finalOutcome: "NO_EVENTS",
+      reconstructionStatus: "BROKEN_CHAIN",
+    };
+  }
+
+  const rootEvent = events[0]!;
+  const lastEvent = events[events.length - 1]!;
+  const incidentId = events.find(function (e) { return e.incidentId; })?.incidentId;
+
+  // Hop validation using repo events (inline to avoid calling sync validateHops which reads _auditLog)
+  const allMissing: string[] = [];
+  const flowHopMap: Record<string, readonly string[]> = {
+    containment: CONTAINMENT_FLOW_HOPS,
+    routing: ROUTING_FLOW_HOPS,
+    authority_transfer: AUTHORITY_TRANSFER_FLOW_HOPS,
+    recovery: RECOVERY_FLOW_HOPS,
+  };
+
+  const eventTypes = new Set(events.map(function (e) { return e.eventType; }));
+  for (const flow of ["containment", "routing", "authority_transfer", "recovery"]) {
+    const requiredHops = flowHopMap[flow] || [];
+    const present = requiredHops.filter(function (h) { return eventTypes.has(h); });
+    const missing = requiredHops.filter(function (h) { return !eventTypes.has(h); });
+    if (present.length > 0 && missing.length > 0) {
+      allMissing.push(...missing.map(function (m) { return flow + ":" + m; }));
+    }
+  }
+
+  let status: ReconstructionStatus;
+  if (allMissing.length === 0) {
+    status = "RECONSTRUCTABLE";
+  } else if (allMissing.length <= 2) {
+    status = "PARTIALLY_RECONSTRUCTABLE";
+  } else {
+    status = "BROKEN_CHAIN";
+  }
+
+  return {
+    timelineId: rootEvent.timelineId,
+    correlationId,
+    incidentId,
+    rootEventId: rootEvent.eventId,
+    orderedEvents: events,
+    missingHops: allMissing,
+    finalOutcome: lastEvent.resultStatus,
+    residualRisk: allMissing.length > 0 ? `${allMissing.length} missing hops` : undefined,
+    reconstructionStatus: status,
+  };
+}
+
+// ── Direct Access Shutdown Guardrail (P3-5) ──
+
+export function _assertNoDirectStoreAccess(caller: string): void {
+  emitDiagnostic(
+    "LEGACY_DIRECT_ACCESS_BLOCKED",
+    "canonical-event-schema", "canonical-audit-adapter", "canonical-audit",
+    "legacy_to_canonical", "_assertNoDirectStoreAccess:" + caller,
+    { entityId: caller }
+  );
+  throw new Error(`DIRECT_STORE_ACCESS_BLOCKED: ${caller} must use repo-first API`);
 }
 
 /** 테스트용 */

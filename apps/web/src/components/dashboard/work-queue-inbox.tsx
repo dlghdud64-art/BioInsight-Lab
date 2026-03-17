@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   FileText, Package, ShoppingCart, AlertTriangle, Clock,
   CheckCircle2, XCircle, Ban, ChevronRight, ChevronDown,
-  Zap, Eye, RotateCcw, Bell,
+  Zap, Eye, RotateCcw, Bell, GitCompare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,16 @@ import {
   useWorkQueue,
   useApproveWorkItem,
   useDismissWorkItem,
+  useExecuteOpsAction,
+  useSyncOpsQueue,
   TASK_STATUS_BADGE,
   APPROVAL_STATUS_BADGE,
   type WorkQueueItem,
   type TaskStatus,
   type ApprovalStatus,
 } from "@/hooks/use-work-queue";
+import { COMPARE_CTA_MAP, COMPARE_SUBSTATUS_DEFS, COMPARE_ACTIVITY_LABELS, RESOLUTION_PATH_LABELS, computeInquiryAgingDays, type CompareResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
+import { OPS_ACTIVITY_LABELS, OPS_QUEUE_CTA_MAP, OPS_SUBSTATUS_DEFS, OPS_QUEUE_ITEM_TYPES, findCompletionDef } from "@/lib/work-queue/ops-queue-semantics";
 
 // ── 도메인별 아이콘·색상·CTA 매핑 ──
 
@@ -35,6 +39,7 @@ const DOMAIN_CONFIG: Record<string, {
   REORDER_SUGGESTION: { icon: Package, color: "text-emerald-600", bgColor: "bg-emerald-50" },
   EXPIRY_ALERT: { icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50" },
   VENDOR_RESPONSE_PARSED: { icon: ShoppingCart, color: "text-teal-600", bgColor: "bg-teal-50" },
+  COMPARE_DECISION: { icon: GitCompare, color: "text-purple-600", bgColor: "bg-purple-50" },
 };
 
 const CTA_MAP: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {
@@ -49,24 +54,18 @@ const CTA_MAP: Record<string, { label: string; variant: "default" | "destructive
 // ── Humanized Activity 변환 ──
 
 const ACTIVITY_LABEL: Record<string, string> = {
-  quote_draft_generated: "견적 초안이 생성되었습니다",
-  vendor_email_generated: "벤더 이메일 초안이 준비되었습니다",
-  followup_draft_generated: "Follow-up 이메일 초안이 생성되었습니다",
-  status_change_proposed: "상태 변경이 제안되었습니다",
-  restock_suggested: "재발주가 제안되었습니다",
-  expiry_alert_created: "유효기한 임박 알림",
-  vendor_response_parsed: "벤더 회신이 파싱되었습니다",
-  email_sent: "이메일이 발송되었습니다",
-  followup_sent: "Follow-up이 발송되었습니다, 회신 대기 중",
-  restock_ordered: "재발주가 접수되었습니다",
-  execution_failed: "실행 중 오류가 발생했습니다",
-  budget_insufficient: "예산이 부족합니다",
-  permission_denied: "권한이 부족합니다",
+  ...OPS_ACTIVITY_LABELS,
+  ...COMPARE_ACTIVITY_LABELS,
 };
 
 // ── Deep-Link 경로 매핑 ──
 
 function getDeepLinkPath(item: WorkQueueItem): string {
+  // 비교 세션 → 비교 페이지로 직접 라우팅
+  if (item.type === "COMPARE_DECISION" && item.relatedEntityId) {
+    return `/compare?sessionId=${item.relatedEntityId}`;
+  }
+
   // 도메인별 목록 페이지로 라우팅 (상세 페이지가 존재하지 않으므로 목록 + query param)
   const base = (() => {
     switch (item.relatedEntityType) {
@@ -77,8 +76,8 @@ function getDeepLinkPath(item: WorkQueueItem): string {
     }
   })();
 
-  // AI 보조 패널 자동 오픈을 위한 query param
-  return `${base}?ai_panel=open&work_item=${item.id}&entity_id=${item.relatedEntityId || ""}`;
+  // AI 보조 패널 자동 오픈 + ops context 스크롤을 위한 query param
+  return `${base}?ai_panel=open&work_item=${item.id}&entity_id=${item.relatedEntityId || ""}&scroll_to=ops_context`;
 }
 
 // ── 시간 표시 ──
@@ -99,12 +98,14 @@ function timeAgo(dateStr: string): string {
 export function WorkQueueInbox() {
   const router = useRouter();
   const [showCompleted, setShowCompleted] = useState(false);
+  useSyncOpsQueue(); // Sync ops + compare queue on mount
   const { data, isLoading, error } = useWorkQueue({
     includeCompleted: showCompleted,
     limit: 20,
   });
   const approveMutation = useApproveWorkItem();
   const dismissMutation = useDismissWorkItem();
+  const executeOpsMutation = useExecuteOpsAction();
 
   const activeItems = useMemo(
     () => (data?.items || []).filter((i) => i.taskStatus !== "COMPLETED"),
@@ -184,7 +185,11 @@ export function WorkQueueInbox() {
               onNavigate={() => router.push(getDeepLinkPath(item))}
               onApprove={() => approveMutation.mutate({ id: item.id })}
               onDismiss={() => dismissMutation.mutate(item.id)}
+              onExecuteOps={(actionId: string) =>
+                executeOpsMutation.mutate({ actionId, itemId: item.id })
+              }
               isApproving={approveMutation.isPending}
+              isExecutingOps={executeOpsMutation.isPending}
             />
           ))
         )}
@@ -231,20 +236,42 @@ function WorkQueueCard({
   onNavigate,
   onApprove,
   onDismiss,
+  onExecuteOps,
   isApproving,
+  isExecutingOps,
 }: {
   item: WorkQueueItem;
   onNavigate: () => void;
   onApprove: () => void;
   onDismiss: () => void;
+  onExecuteOps: (actionId: string) => void;
   isApproving: boolean;
+  isExecutingOps: boolean;
 }) {
   const config = DOMAIN_CONFIG[item.type] || DOMAIN_CONFIG.QUOTE_DRAFT;
   const Icon = config.icon;
   const statusBadge = TASK_STATUS_BADGE[item.taskStatus];
   const approvalBadge = APPROVAL_STATUS_BADGE[item.approvalStatus];
-  const cta = CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
+  const cta = item.type === "COMPARE_DECISION" && item.substatus && COMPARE_CTA_MAP[item.substatus]
+    ? COMPARE_CTA_MAP[item.substatus]
+    : (item.substatus && OPS_QUEUE_CTA_MAP[item.substatus])
+      ? OPS_QUEUE_CTA_MAP[item.substatus]
+      : CTA_MAP[item.taskStatus] || { label: "확인", variant: "outline" as const };
   const activityLabel = ACTIVITY_LABEL[item.substatus || ""] || item.summary || "";
+
+  // Resolve actionId for ops CTA execution
+  const opsCtaActionId = (() => {
+    if (item.type === "COMPARE_DECISION") return null;
+    for (const queueType of Object.values(OPS_QUEUE_ITEM_TYPES)) {
+      if (queueType.sourceSubstatuses?.includes(item.substatus || "")) {
+        const actionId = queueType.primaryCta?.actionId;
+        if (actionId && !actionId.startsWith("navigate_") && findCompletionDef(actionId)) {
+          return actionId;
+        }
+      }
+    }
+    return null;
+  })();
 
   return (
     <div className={cn(
@@ -284,6 +311,64 @@ function WorkQueueCard({
                 {item.urgencyReason}
               </p>
             )}
+            {/* SLA aging indicator for compare items */}
+            {item.type === "COMPARE_DECISION" && item.substatus && COMPARE_SUBSTATUS_DEFS[item.substatus] && (() => {
+              const def = COMPARE_SUBSTATUS_DEFS[item.substatus];
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+                return (
+                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{ageDays}일 경과
+                  </span>
+                );
+              }
+              return null;
+            })()}
+            {/* SLA aging indicator for ops items */}
+            {item.type !== "COMPARE_DECISION" && item.substatus && OPS_SUBSTATUS_DEFS[item.substatus] && (() => {
+              const def = OPS_SUBSTATUS_DEFS[item.substatus!];
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+                return (
+                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{ageDays}일 경과 — {def.escalationMeaning}
+                  </span>
+                );
+              }
+              return null;
+            })()}
+            {/* Inquiry count for compare_inquiry_followup */}
+            {item.substatus === "compare_inquiry_followup" && item.metadata?.inquiryCount && (
+              <span className="text-[10px] text-slate-500 mt-0.5">
+                문의 {String(item.metadata.inquiryCount)}건
+              </span>
+            )}
+            {/* Inquiry aging indicator */}
+            {item.substatus === "compare_inquiry_followup" && (() => {
+              const drafts = item.metadata?.inquiryDrafts as { status: string; createdAt: string }[] | undefined;
+              if (!drafts) return null;
+              const agingDays = computeInquiryAgingDays({ inquiryDrafts: drafts });
+              if (agingDays === null) return null;
+              return (
+                <span className="text-[10px] text-red-500 font-medium mt-0.5">
+                  문의 미발송 {agingDays}일
+                </span>
+              );
+            })()}
+            {/* No-movement hint for stale decision_pending items */}
+            {item.substatus === "compare_decision_pending" && (() => {
+              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+              const hasInquiry = Number(item.metadata?.inquiryCount || 0) > 0;
+              const hasQuote = Number(item.metadata?.linkedQuoteCount || 0) > 0;
+              if (ageDays >= 3 && !hasInquiry && !hasQuote) {
+                return (
+                  <span className="text-[10px] text-orange-500 font-medium mt-0.5">
+                    다음 단계 없음 — 판정 또는 문의/견적 전환 필요
+                  </span>
+                );
+              }
+              return null;
+            })()}
 
             {/* Row 3: CTA + Dismiss + Time */}
             <div className="flex items-center gap-2 mt-2">
@@ -291,16 +376,17 @@ function WorkQueueCard({
                 size="sm"
                 variant={cta.variant}
                 className="h-6 text-[11px] px-2.5"
+                disabled={isExecutingOps}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (item.approvalStatus === "PENDING") {
-                    onNavigate(); // 검토 화면으로 이동
+                  if (opsCtaActionId) {
+                    onExecuteOps(opsCtaActionId);
                   } else {
                     onNavigate();
                   }
                 }}
               >
-                {cta.label} <ChevronRight className="h-3 w-3 ml-0.5" />
+                {isExecutingOps ? "처리 중..." : cta.label} <ChevronRight className="h-3 w-3 ml-0.5" />
               </Button>
 
               {item.approvalStatus === "PENDING" && (
@@ -343,6 +429,11 @@ function CompletedCard({ item }: { item: WorkQueueItem }) {
     <div className="flex items-center gap-2 py-1.5 px-1">
       <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
       <span className="text-xs text-slate-500 truncate flex-1">{item.title}</span>
+      {item.type === "COMPARE_DECISION" && item.metadata?.resolutionPath && (
+        <span className="text-[10px] text-slate-400 flex-shrink-0">
+          {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
+        </span>
+      )}
       <span className="text-[10px] text-slate-400 flex-shrink-0">{timeAgo(item.updatedAt)}</span>
     </div>
   );
