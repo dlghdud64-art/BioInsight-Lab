@@ -369,6 +369,38 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
   return { items: sorted, activeCount, completedCount };
 }
 
+// ── Grouped Query (Console) ──
+
+/**
+ * 콘솔용 그룹화된 Work Queue 조회
+ *
+ * queryWorkQueue 결과를 groupForConsole로 그룹화하여 반환합니다.
+ */
+export async function queryWorkQueueGrouped(filters: WorkQueueFilters): Promise<{
+  groups: import("./console-grouping").ConsoleGroup[];
+  summary: import("./console-grouping").ConsoleSummary;
+  activeCount: number;
+  completedCount: number;
+}> {
+  const { groupForConsole, computeConsoleSummary } = await import("./console-grouping");
+
+  const result = await queryWorkQueue({
+    ...filters,
+    includeCompleted: true,
+    limit: filters.limit || 100,
+  });
+
+  const groups = groupForConsole(result.items);
+  const summary = computeConsoleSummary(groups);
+
+  return {
+    groups,
+    summary,
+    activeCount: result.activeCount,
+    completedCount: result.completedCount,
+  };
+}
+
 // ── Helpers ──
 
 /**

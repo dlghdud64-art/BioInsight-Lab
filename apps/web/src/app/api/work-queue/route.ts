@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { queryWorkQueue } from "@/lib/work-queue";
+import { queryWorkQueueGrouped } from "@/lib/work-queue/work-queue-service";
 import type { TaskStatus } from "@/lib/work-queue";
 
 /**
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
     const organizationId = searchParams.get("organizationId") || undefined;
     const entityType = searchParams.get("entityType") || undefined;
     const entityId = searchParams.get("entityId") || undefined;
+    const grouped = searchParams.get("grouped") === "true";
 
     // 최근 24시간 완료 항목만 포함
     const completedSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -35,6 +37,16 @@ export async function GET(request: NextRequest) {
     const taskStatus = taskStatusParam
       ? (taskStatusParam.split(",") as TaskStatus[])
       : undefined;
+
+    // Grouped mode — 콘솔용
+    if (grouped) {
+      const result = await queryWorkQueueGrouped({
+        userId: session.user.id,
+        organizationId,
+        limit: limit || 100,
+      });
+      return NextResponse.json(result);
+    }
 
     const result = await queryWorkQueue({
       userId: session.user.id,

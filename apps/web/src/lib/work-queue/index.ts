@@ -93,3 +93,30 @@ export type {
   RetryPolicy,
   RecoveryAction,
 } from "./ops-retry-semantics";
+
+export {
+  assignPriorityTier,
+  applyPromotionRules,
+  computeFinalTier,
+  PRIORITY_TIER_DEFS,
+} from "./console-priorities";
+
+export type {
+  PriorityTier,
+  PriorityTierDef,
+} from "./console-priorities";
+
+export {
+  groupForConsole,
+  resolveOwnerRole,
+  resolveConsoleCta,
+  computeConsoleSummary,
+  OWNER_ROLE_LABELS,
+} from "./console-grouping";
+
+export type {
+  ConsoleGroupId,
+  ConsoleGroup,
+  GroupedItem,
+  ConsoleSummary,
+} from "./console-grouping";

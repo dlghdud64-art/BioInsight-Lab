@@ -305,6 +305,37 @@ export function useEntityQueueItems(
   });
 }
 
+/**
+ * 운영 콘솔용 그룹화된 Work Queue 조회
+ *
+ * grouped=true로 API 호출하여 콘솔 그룹 + 요약 반환.
+ */
+export function useWorkQueueConsole(organizationId?: string) {
+  return useQuery<{
+    groups: import("@/lib/work-queue/console-grouping").ConsoleGroup[];
+    summary: import("@/lib/work-queue/console-grouping").ConsoleSummary;
+    activeCount: number;
+    completedCount: number;
+  }>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "console", organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        grouped: "true",
+        limit: "100",
+        includeCompleted: "true",
+      });
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch console data");
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000, // 2분
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };
