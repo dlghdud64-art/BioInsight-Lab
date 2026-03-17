@@ -359,7 +359,7 @@ export default function OrganizationsPage() {
 
               {/* Organization rows */}
               {organizations.map((org) => (
-                <OrgRow
+                <OrgRowItem
                   key={org.id}
                   org={org}
                   expanded={expandedIds.has(org.id)}
@@ -425,7 +425,7 @@ export default function OrganizationsPage() {
 /*  Sub-components                                                     */
 /* ================================================================== */
 
-function OrgRow({
+function OrgRowItem({
   org,
   expanded,
   onToggle,
@@ -436,7 +436,7 @@ function OrgRow({
   onToggle: () => void;
   onNavigate: () => void;
 }) {
-  const approverCount = org.adminCount; // adminCount doubles as approver-level count from API
+  const approverCount = org.adminCount;
   const router = useRouter();
 
   return (
