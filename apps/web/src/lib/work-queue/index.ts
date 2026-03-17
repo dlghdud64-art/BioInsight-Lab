@@ -335,3 +335,30 @@ export type {
   PreExistingIssue,
   PilotScenario,
 } from "./console-v1-productization";
+
+export {
+  MERGE_GATE_ISSUES,
+  RUNTIME_VALIDATION_CHECKLIST,
+  PILOT_WALKTHROUGH_RESULTS,
+  RUNTIME_DEFECTS,
+  V1_MERGE_RECOMMENDATION,
+  getMergeGateBlockers,
+  getMergeGateNonBlockers,
+  getMergeGateDeferred,
+  getRuntimeValidationFailures,
+  getPilotFailures,
+  isMergeApproved,
+  isPilotReady,
+} from "./console-v1-merge-gate";
+
+export type {
+  MergeSeverity,
+  MergeGateIssue,
+  ValidationStatus,
+  RuntimeValidationItem,
+  PilotResult,
+  PilotWalkthroughResult,
+  DefectSeverity,
+  RuntimeDefect,
+  MergeRecommendation,
+} from "./console-v1-merge-gate";
