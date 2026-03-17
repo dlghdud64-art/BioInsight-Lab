@@ -23,6 +23,8 @@ import {
   useSyncOpsQueue,
   useExecuteOpsAction,
   useAssignmentAction,
+  useDailyReview,
+  useDailyReviewAction,
   TASK_STATUS_BADGE,
   type TaskStatus,
 } from "@/hooks/use-work-queue";
@@ -37,6 +39,17 @@ import {
   ASSIGNMENT_STATE_LABELS,
   type ConsoleView,
 } from "@/lib/work-queue/console-assignment";
+import {
+  DAILY_REVIEW_CATEGORY_DEFS,
+  DAILY_REVIEW_CATEGORY_LABELS,
+  ESCALATION_ACTION_LABELS,
+  REVIEW_OUTCOME_LABELS,
+} from "@/lib/work-queue/console-daily-review";
+import type {
+  DailyReviewItem,
+  DailyReviewCategoryId,
+  DailyReviewSurface,
+} from "@/lib/work-queue/console-daily-review";
 
 // ── Tier Visual Config ──
 
@@ -95,7 +108,10 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
 
 // ── Main Console Component ──
 
+type ConsoleMode = "queue" | "daily_review";
+
 export function WorkQueueConsole() {
+  const [mode, setMode] = useState<ConsoleMode>("queue");
   const [view, setView] = useState<ConsoleView>("all");
 
   useSyncOpsQueue();
@@ -133,24 +149,53 @@ export function WorkQueueConsole() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      <h1 className="text-xl font-semibold">운영 콘솔</h1>
-
-      {/* View Tabs */}
-      <ConsoleViewTabs view={view} onViewChange={setView} summary={summary} />
-
-      {/* Summary Bar */}
-      <ConsoleSummaryBar summary={summary} />
-
-      {/* Group Sections */}
-      {groups.length === 0 && (
-        <div className="text-sm text-muted-foreground py-8 text-center">
-          {view === "all" ? "처리할 운영 항목이 없습니다." : `${CONSOLE_VIEW_LABELS[view]}에 해당하는 항목이 없습니다.`}
+      <div className="flex items-center gap-4">
+        <h1 className="text-xl font-semibold">운영 콘솔</h1>
+        {/* Mode Toggle */}
+        <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5">
+          <button
+            onClick={() => setMode("queue")}
+            className={cn(
+              "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+              mode === "queue" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            운영 큐
+          </button>
+          <button
+            onClick={() => setMode("daily_review")}
+            className={cn(
+              "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+              mode === "daily_review" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            일일 검토
+          </button>
         </div>
-      )}
+      </div>
 
-      {groups.map((group) => (
-        <ConsoleGroupSection key={group.id} group={group} />
-      ))}
+      {mode === "daily_review" ? (
+        <DailyReviewView />
+      ) : (
+        <>
+          {/* View Tabs */}
+          <ConsoleViewTabs view={view} onViewChange={setView} summary={summary} />
+
+          {/* Summary Bar */}
+          <ConsoleSummaryBar summary={summary} />
+
+          {/* Group Sections */}
+          {groups.length === 0 && (
+            <div className="text-sm text-muted-foreground py-8 text-center">
+              {view === "all" ? "처리할 운영 항목이 없습니다." : `${CONSOLE_VIEW_LABELS[view]}에 해당하는 항목이 없습니다.`}
+            </div>
+          )}
+
+          {groups.map((group) => (
+            <ConsoleGroupSection key={group.id} group={group} />
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -420,6 +465,244 @@ function ConsoleQueueCard({ item }: { item: GroupedItem }) {
         {item.nextQueueLabel && (
           <span className="text-[10px] text-muted-foreground">
             다음: {item.nextQueueLabel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Daily Review View ──
+
+const REVIEW_CATEGORY_ORDER: DailyReviewCategoryId[] = [
+  "urgent_now", "overdue_owned", "blocked_too_long",
+  "handoff_not_accepted", "urgent_unassigned",
+  "recently_resolved", "needs_lead_intervention",
+];
+
+const CATEGORY_STYLES: Record<DailyReviewCategoryId, { bg: string; border: string }> = {
+  urgent_now: { bg: "bg-red-50", border: "border-red-200" },
+  overdue_owned: { bg: "bg-orange-50", border: "border-orange-200" },
+  blocked_too_long: { bg: "bg-amber-50", border: "border-amber-200" },
+  handoff_not_accepted: { bg: "bg-purple-50", border: "border-purple-200" },
+  urgent_unassigned: { bg: "bg-yellow-50", border: "border-yellow-200" },
+  recently_resolved: { bg: "bg-green-50", border: "border-green-200" },
+  needs_lead_intervention: { bg: "bg-rose-50", border: "border-rose-200" },
+};
+
+function DailyReviewView() {
+  const [roleView, setRoleView] = useState<"operator" | "lead">("operator");
+  const { data, isLoading, error } = useDailyReview();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>일일 검토 로딩 중...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-red-600">
+        <XCircle className="h-4 w-4" />
+        <span>일일 검토 로딩 실패</span>
+      </div>
+    );
+  }
+
+  const surface = data as DailyReviewSurface | undefined;
+  if (!surface) return null;
+
+  const visibleItems = roleView === "lead" ? surface.leadItems : surface.operatorItems;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary chips */}
+      <div className="flex flex-wrap gap-3">
+        <SummaryChip label="검토 항목" count={surface.totalCount} color="bg-blue-100 text-blue-800" />
+        <SummaryChip label="이월 항목" count={surface.carryOverCount} color={surface.carryOverCount > 0 ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-500"} />
+        <SummaryChip label="날짜" count={0} color="bg-gray-100 text-gray-600" />
+        <span className="text-xs text-muted-foreground self-center">{surface.date}</span>
+      </div>
+
+      {/* Role toggle */}
+      <div className="flex gap-1 bg-muted/50 rounded-lg p-0.5 w-fit">
+        <button
+          onClick={() => setRoleView("operator")}
+          className={cn(
+            "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+            roleView === "operator" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          운영자 뷰 ({surface.operatorItems.length})
+        </button>
+        <button
+          onClick={() => setRoleView("lead")}
+          className={cn(
+            "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+            roleView === "lead" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          리드 뷰 ({surface.leadItems.length})
+        </button>
+      </div>
+
+      {/* Categories */}
+      {visibleItems.length === 0 && (
+        <div className="text-sm text-muted-foreground py-8 text-center">
+          {roleView === "operator" ? "검토할 운영 항목이 없습니다." : "리드 개입이 필요한 항목이 없습니다."}
+        </div>
+      )}
+
+      {REVIEW_CATEGORY_ORDER.map((catId) => {
+        const categoryItems = visibleItems.filter((ri) => ri.category === catId);
+        if (categoryItems.length === 0) return null;
+        const catDef = DAILY_REVIEW_CATEGORY_DEFS[catId];
+        const style = CATEGORY_STYLES[catId];
+        return (
+          <DailyReviewCategorySection
+            key={catId}
+            catId={catId}
+            label={catDef.label}
+            description={catDef.description}
+            items={categoryItems}
+            style={style}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function DailyReviewCategorySection({ catId, label, description, items, style }: {
+  catId: DailyReviewCategoryId;
+  label: string;
+  description: string;
+  items: DailyReviewItem[];
+  style: { bg: string; border: string };
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex items-center gap-2 w-full text-left cursor-pointer hover:opacity-80"
+      >
+        {collapsed
+          ? <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        }
+        <h2 className="text-sm font-semibold text-foreground">{label}</h2>
+        <Badge variant="secondary" className="text-[10px]">{items.length}</Badge>
+        <span className="text-xs text-muted-foreground ml-1">{description}</span>
+      </button>
+
+      {!collapsed && (
+        <div className="space-y-2 pl-1">
+          {items.map((ri) => (
+            <DailyReviewCard key={ri.item.id} reviewItem={ri} style={style} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DailyReviewCard({ reviewItem, style }: { reviewItem: DailyReviewItem; style: { bg: string; border: string } }) {
+  const reviewAction = useDailyReviewAction();
+  const isPending = reviewAction.isPending;
+
+  const handleEscalation = (actionId: string) => {
+    reviewAction.mutate({
+      itemId: reviewItem.item.id,
+      actionType: "escalation",
+      actionId,
+    });
+  };
+
+  const handleReviewOutcome = (outcomeId: string) => {
+    reviewAction.mutate({
+      itemId: reviewItem.item.id,
+      actionType: "review_outcome",
+      actionId: outcomeId,
+    });
+  };
+
+  return (
+    <div className={cn("rounded-md border p-3 space-y-2", style.bg, style.border)}>
+      {/* Title */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium truncate flex-1">{reviewItem.item.title}</span>
+        <span className="text-[10px] text-muted-foreground">
+          점수 {reviewItem.item.totalScore}
+        </span>
+      </div>
+
+      {/* Carry-over badge */}
+      {reviewItem.carryOver && (
+        <div className={cn(
+          "text-[10px] px-2 py-0.5 rounded-sm font-medium inline-block",
+          reviewItem.carryOver.severityPromoted
+            ? "bg-red-100 text-red-700"
+            : "bg-amber-100 text-amber-700"
+        )}>
+          이월 {reviewItem.carryOver.dayCount}일
+          {reviewItem.carryOver.severityPromoted && " (심화)"}
+        </div>
+      )}
+
+      {/* Escalation badges */}
+      {reviewItem.escalations.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {reviewItem.escalations.map((esc, i) => (
+            <span
+              key={i}
+              className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded-sm font-medium",
+                esc.severity === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+              )}
+            >
+              {esc.message || esc.ruleId}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Escalation actions */}
+        {reviewItem.availableEscalationActions.map((actionId) => (
+          <Button
+            key={actionId}
+            size="sm"
+            variant="destructive"
+            className="text-xs h-7"
+            disabled={isPending}
+            onClick={() => handleEscalation(actionId)}
+          >
+            {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : ESCALATION_ACTION_LABELS[actionId]}
+          </Button>
+        ))}
+
+        {/* Review outcome actions */}
+        {reviewItem.availableReviewOutcomes.slice(0, 3).map((outcomeId) => (
+          <Button
+            key={outcomeId}
+            size="sm"
+            variant="outline"
+            className="text-xs h-7"
+            disabled={isPending}
+            onClick={() => handleReviewOutcome(outcomeId)}
+          >
+            {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : REVIEW_OUTCOME_LABELS[outcomeId]}
+          </Button>
+        ))}
+        {reviewItem.availableReviewOutcomes.length > 3 && (
+          <span className="text-[10px] text-muted-foreground">
+            +{reviewItem.availableReviewOutcomes.length - 3}
           </span>
         )}
       </div>

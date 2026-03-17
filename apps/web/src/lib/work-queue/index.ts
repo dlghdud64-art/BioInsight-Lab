@@ -192,3 +192,45 @@ export {
 export {
   computeConsoleSummaryWithAccountability,
 } from "./console-grouping";
+
+export {
+  selectDailyReviewItems,
+  getAvailableEscalationActions,
+  getAvailableReviewOutcomes,
+  buildReviewRecord,
+  applyReviewOutcome,
+  applyEscalationAction,
+  computeCarryOver,
+  splitByVisibility,
+  DAILY_REVIEW_CATEGORY_DEFS,
+  DAILY_REVIEW_CATEGORY_LABELS,
+  ESCALATION_ACTION_DEFS as DAILY_REVIEW_ESCALATION_ACTION_DEFS,
+  ESCALATION_ACTION_LABELS,
+  REVIEW_OUTCOME_DEFS,
+  REVIEW_OUTCOME_LABELS,
+  CARRY_OVER_DEFS,
+} from "./console-daily-review";
+
+export type {
+  DailyReviewCategoryId,
+  DailyReviewCategoryDef,
+  EscalationActionId,
+  EscalationActionDef,
+  ReviewOutcomeId,
+  ReviewOutcomeDef,
+  ReviewRecord,
+  CarryOverReason,
+  CarryOverEntry,
+  CarryOverDef,
+  DailyReviewItem,
+  DailyReviewSurface,
+} from "./console-daily-review";
+
+export {
+  executeDailyReviewAction,
+  queryDailyReviewData,
+} from "./work-queue-service";
+
+export type {
+  DailyReviewActionParams,
+} from "./work-queue-service";

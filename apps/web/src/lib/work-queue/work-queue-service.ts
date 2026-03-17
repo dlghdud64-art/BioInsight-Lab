@@ -634,6 +634,198 @@ export async function queryAccountabilityData(filters: {
   };
 }
 
+// ── Daily Review Action Execution ──
+
+export interface DailyReviewActionParams {
+  itemId: string;
+  actionType: "escalation" | "review_outcome";
+  actionId: string;
+  actorUserId: string;
+  targetUserId?: string;
+  note?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+/**
+ * 일일 검토 액션 실행 — 단일 트랜잭션
+ *
+ * 에스컬레이션 또는 검토 결과를 적용하고 ActivityLog에 기록합니다.
+ */
+export async function executeDailyReviewAction(params: DailyReviewActionParams): Promise<void> {
+  const {
+    applyReviewOutcome,
+    applyEscalationAction,
+    ESCALATION_ACTION_DEFS,
+    REVIEW_OUTCOME_DEFS,
+  } = await import("./console-daily-review");
+
+  const { itemId, actionType, actionId, actorUserId, targetUserId, note, ipAddress, userAgent } = params;
+
+  // Validate actionId
+  if (actionType === "escalation" && !(actionId in ESCALATION_ACTION_DEFS)) {
+    throw new Error(`유효하지 않은 에스컬레이션 액션: ${actionId}`);
+  }
+  if (actionType === "review_outcome" && !(actionId in REVIEW_OUTCOME_DEFS)) {
+    throw new Error(`유효하지 않은 검토 결과: ${actionId}`);
+  }
+
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const current = await tx.aiActionItem.findUniqueOrThrow({
+      where: { id: itemId },
+      select: {
+        id: true,
+        type: true,
+        taskStatus: true,
+        approvalStatus: true,
+        substatus: true,
+        priority: true,
+        title: true,
+        summary: true,
+        relatedEntityType: true,
+        relatedEntityId: true,
+        assigneeId: true,
+        payload: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
+      },
+    });
+
+    const metadata = (current.payload || {}) as Record<string, unknown>;
+    const item: WorkQueueItem = {
+      id: current.id,
+      type: current.type,
+      taskStatus: current.taskStatus,
+      approvalStatus: current.approvalStatus,
+      substatus: current.substatus,
+      priority: current.priority,
+      title: current.title,
+      summary: current.summary,
+      relatedEntityType: current.relatedEntityType,
+      relatedEntityId: current.relatedEntityId,
+      metadata,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+      impactScore: 0,
+      urgencyScore: 0,
+      totalScore: 0,
+      urgencyReason: null,
+      assigneeId: current.assigneeId ?? null,
+    };
+
+    let result: {
+      newPayload: Record<string, unknown>;
+      newAssigneeId: string | null;
+      logEvent: string;
+      logMetadata: Record<string, unknown>;
+    };
+
+    if (actionType === "escalation") {
+      result = applyEscalationAction(item, actionId as any, {
+        actorUserId,
+        targetUserId,
+        note,
+        now: new Date(),
+      });
+    } else {
+      result = applyReviewOutcome(item, actionId as any, {
+        actorUserId,
+        targetUserId,
+        note: note ?? "",
+        now: new Date(),
+      });
+    }
+
+    // Update item
+    await tx.aiActionItem.update({
+      where: { id: itemId },
+      data: {
+        assigneeId: result.newAssigneeId,
+        payload: result.newPayload as Prisma.JsonObject,
+      },
+    });
+
+    // ActivityLog
+    const actorRole = await getActorRole(actorUserId, current.organizationId);
+    await createActivityLog(
+      {
+        activityType: result.logEvent as any,
+        entityType: "AI_ACTION",
+        entityId: itemId,
+        taskType: current.type,
+        beforeStatus: current.taskStatus,
+        afterStatus: current.taskStatus,
+        userId: actorUserId,
+        organizationId: current.organizationId,
+        actorRole,
+        metadata: {
+          title: current.title,
+          ...result.logMetadata,
+        },
+        ipAddress,
+        userAgent,
+      },
+      tx
+    );
+  });
+}
+
+/**
+ * 일일 검토 데이터 조회 — 활성 항목 + 에스컬레이션/검토 관련 로그
+ */
+export async function queryDailyReviewData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+}> {
+  const DAILY_REVIEW_ACTIVITY_TYPES = [
+    ...ASSIGNMENT_ACTIVITY_TYPES,
+    "ITEM_ESCALATED",
+    "ITEM_REVIEW_COMPLETED",
+  ];
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const result = await queryWorkQueue({
+    organizationId: filters.organizationId,
+    includeCompleted: true,
+    completedSince: since,
+    limit: 200,
+  });
+
+  const logs = await db.activityLog.findMany({
+    where: {
+      activityType: { in: DAILY_REVIEW_ACTIVITY_TYPES as any[] },
+      createdAt: { gte: since },
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: {
+      id: true,
+      activityType: true,
+      entityId: true,
+      userId: true,
+      metadata: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 1000,
+  });
+
+  return {
+    items: result.items,
+    logs: logs.map((l: { id: string; activityType: string; entityId: string | null; userId: string | null; metadata: unknown; createdAt: Date }) => ({
+      id: l.id,
+      activityType: l.activityType,
+      entityId: l.entityId,
+      userId: l.userId,
+      metadata: (l.metadata ?? {}) as Record<string, unknown>,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
 // ── Helpers ──
 
 /**

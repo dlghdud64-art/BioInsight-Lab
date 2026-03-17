@@ -441,6 +441,59 @@ export function usePersonalWorkloadView(
   });
 }
 
+/**
+ * 일일 검토 서피스 조회
+ */
+export function useDailyReview(organizationId?: string) {
+  return useQuery<import("@/lib/work-queue/console-daily-review").DailyReviewSurface>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "daily-review", organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue/daily-review?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch daily review data");
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * 일일 검토 액션 실행 (에스컬레이션 / 검토 결과)
+ */
+export function useDailyReviewAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      itemId: string;
+      actionType: "escalation" | "review_outcome";
+      actionId: string;
+      targetUserId?: string;
+      note?: string;
+    }) => {
+      const res = await fetch("/api/work-queue/daily-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Daily review action failed");
+      }
+      return res.json();
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["ai-actions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };
