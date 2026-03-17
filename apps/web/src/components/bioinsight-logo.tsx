@@ -1,4 +1,5 @@
 import * as React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type LabAxisLogoProps = {
@@ -17,10 +18,10 @@ export function LabAxisLogo({
 }: LabAxisLogoProps) {
   const resolvedSize = size ?? (compact ? "sm" : "lg");
 
-  const markSize =
-    resolvedSize === "sm" ? "h-5 w-5" :
-    resolvedSize === "md" ? "h-6 w-6" :
-    "h-6 w-6 md:h-7 md:w-7";
+  const imgSize =
+    resolvedSize === "sm" ? { w: 22, h: 22 } :
+    resolvedSize === "md" ? { w: 26, h: 26 } :
+    { w: 28, h: 28 };
 
   const textClass =
     resolvedSize === "sm" ? "text-sm font-semibold tracking-tight" :
@@ -31,24 +32,14 @@ export function LabAxisLogo({
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      {/* Geometric mark — transparent SVG */}
-      <svg
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={cn(markSize, "flex-shrink-0")}
-      >
-        {/* Abstract axis cross — operational / precision */}
-        <path
-          d="M16 2L16 30M2 16L30 16"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          className="text-slate-500"
-        />
-        <circle cx="16" cy="16" r="6" fill="currentColor" className="text-blue-500" fillOpacity="0.8" />
-        <circle cx="16" cy="16" r="3" fill="currentColor" className="text-slate-100" />
-      </svg>
+      <Image
+        src="/brand/Bio-Insight.png"
+        alt="BioInsight Lab"
+        width={imgSize.w}
+        height={imgSize.h}
+        className="flex-shrink-0"
+        priority
+      />
 
       {showText && (
         <div className="leading-tight">
