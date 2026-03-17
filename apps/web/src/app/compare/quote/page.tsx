@@ -315,17 +315,25 @@ export default function QuotePage() {
         <SearchStepNav />
         <div className="pt-[calc(3.5rem+4rem)] md:pt-[calc(3.5rem+5rem)] container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center py-16 md:py-20">
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-6">
-                  <ShoppingCart className="h-10 w-10 text-gray-400" strokeWidth={1.5} />
+            {/* 헤더 */}
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-100">견적 요청</h1>
+              <p className="text-sm text-slate-400 mt-1">선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.</p>
+            </div>
+
+            {/* Empty state — workspace placeholder */}
+            <div className="rounded-xl border border-[#1e2228] bg-[#141820] p-6 md:p-8">
+              {/* 견적 항목 드롭 영역 */}
+              <div className="rounded-lg border border-dashed border-[#252a32] bg-[#181c22] px-6 py-12 flex flex-col items-center text-center mb-6">
+                <div className="w-14 h-14 rounded-xl bg-[#1e2228] border border-[#252a32] flex items-center justify-center mb-4">
+                  <ShoppingCart className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">견적 바구니가 비어있습니다.</h2>
-                <p className="text-sm text-gray-500 mb-6 max-w-md">
+                <h2 className="text-lg font-semibold text-slate-100 mb-2">견적 바구니가 비어있습니다</h2>
+                <p className="text-sm text-slate-400 mb-6 max-w-md">
                   제품을 검색하고 비교 목록에 추가한 후 견적을 요청할 수 있습니다.
                 </p>
                 <Link href="/search">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8">
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8">
                     <Search className="h-5 w-5 mr-2" />
                     제품 검색하러 가기
                   </Button>
@@ -348,8 +356,8 @@ export default function QuotePage() {
           {/* 헤더 영역 */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">견적 요청</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-100">견적 요청</h1>
+              <p className="text-sm text-slate-400 mt-1">
                 선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.
               </p>
             </div>
@@ -358,7 +366,7 @@ export default function QuotePage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-9 text-sm gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
+                className="h-9 text-sm gap-1.5 border-blue-700 text-blue-400 hover:bg-blue-600/10"
                 onClick={() => {
                   const panelItems = products.map((product: any) => ({
                     productId: product.id,
@@ -482,7 +490,7 @@ export default function QuotePage() {
                 </div>
 
                 {englishText && (
-                  <div className="mt-4 p-4 bg-slate-50 rounded-lg space-y-3">
+                  <div className="mt-4 p-4 bg-slate-900 rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-semibold">생성된 영문 텍스트</h4>
                       <Button
@@ -509,7 +517,7 @@ export default function QuotePage() {
                         <strong>Subject:</strong> {englishSubject}
                       </div>
                     )}
-                    <div className="text-sm whitespace-pre-wrap border rounded p-3 bg-white max-h-96 overflow-y-auto">
+                    <div className="text-sm whitespace-pre-wrap border rounded p-3 bg-slate-900 max-h-96 overflow-y-auto">
                       {englishText}
                     </div>
                   </div>
@@ -518,27 +526,27 @@ export default function QuotePage() {
             </Card>
 
             {/* 제품 테이블 */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">요청 제품 ({products.length}개)</h2>
+            <div className="border border-[#1e2228] rounded-xl overflow-hidden shadow-none bg-[#141820]">
+              <div className="bg-[#141820] px-6 py-4 border-b border-[#1e2228]">
+                <h2 className="text-lg font-semibold text-slate-100">요청 제품 ({products.length}개)</h2>
               </div>
               
               {isLoading ? (
-                <div className="p-8 text-center text-gray-500">로딩 중...</div>
+                <div className="p-8 text-center text-slate-400">로딩 중...</div>
               ) : products.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">제품이 없습니다.</div>
+                <div className="p-8 text-center text-slate-400">제품이 없습니다.</div>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 hover:bg-gray-50">
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-16">No.</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">제품명</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">브랜드</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">카탈로그 번호</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-24">수량</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 단가</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase w-32 text-right">예상 금액</TableHead>
-                      <TableHead className="text-xs font-bold text-gray-500 uppercase">비고</TableHead>
+                    <TableRow className="bg-[#141820] hover:bg-[#141820]">
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-16">No.</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">제품명</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">브랜드</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">카탈로그 번호</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-24">수량</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-32 text-right">예상 단가</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase w-32 text-right">예상 금액</TableHead>
+                      <TableHead className="text-xs font-bold text-slate-400 uppercase">비고</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -551,11 +559,11 @@ export default function QuotePage() {
                       const lineTotal = minPrice * qty;
                       
                       return (
-                        <TableRow key={product.id} className="h-14 hover:bg-gray-50">
-                          <TableCell className="font-medium text-gray-900">{index + 1}</TableCell>
-                          <TableCell className="font-medium text-gray-900">{product.name}</TableCell>
-                          <TableCell className="text-gray-600">{product.brand || "-"}</TableCell>
-                          <TableCell className="text-gray-600">{product.catalogNumber || "-"}</TableCell>
+                        <TableRow key={product.id} className="h-14 hover:bg-slate-800">
+                          <TableCell className="font-medium text-slate-100">{index + 1}</TableCell>
+                          <TableCell className="font-medium text-slate-100">{product.name}</TableCell>
+                          <TableCell className="text-slate-400">{product.brand || "-"}</TableCell>
+                          <TableCell className="text-slate-400">{product.catalogNumber || "-"}</TableCell>
                           <TableCell>
                             <Input
                               type="number"
@@ -570,10 +578,10 @@ export default function QuotePage() {
                               className="w-20 h-8"
                             />
                           </TableCell>
-                          <TableCell className="text-right font-medium text-gray-900">
+                          <TableCell className="text-right font-medium text-slate-100">
                             {minPrice > 0 ? `₩${minPrice.toLocaleString()}` : "-"}
                           </TableCell>
-                          <TableCell className="text-right font-semibold text-gray-900">
+                          <TableCell className="text-right font-semibold text-slate-100">
                             {lineTotal > 0 ? `₩${lineTotal.toLocaleString()}` : "-"}
                           </TableCell>
                           <TableCell>
@@ -600,11 +608,11 @@ export default function QuotePage() {
 
             {/* 하단 액션 버튼 그룹 */}
             {products.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 justify-end items-center pt-4 border-t border-[#1e2228]">
                 {/* 총 예상 견적가 - 버튼 왼쪽에 배치 */}
                 <div className="flex items-center gap-3 mr-auto">
-                  <span className="text-sm text-gray-500">총 예상 견적가:</span>
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-sm text-slate-400">총 예상 견적가:</span>
+                  <span className="text-2xl font-bold text-slate-100">
                     ₩{totalAmount.toLocaleString()}
                   </span>
                 </div>

@@ -23,13 +23,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
   const { data: session } = useSession();
 
   return (
-    <header className="fixed top-0 left-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 h-14">
+    <header className="fixed top-0 left-0 w-full z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 h-14">
       <Sheet>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
           {/* ── LEFT: 로고 → 항상 홈 ── */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <BioInsightLogo showText={true} />
+            <BioInsightLogo showText={true} variant="dark" />
           </Link>
 
           {/* ── Sheet 드로어 내용 ────────────────────────── */}
@@ -39,46 +39,46 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               /* ── 로그인: 프로필 + 제품 + 도입 + 지원 ── */
               <div className="flex flex-col flex-1 overflow-y-auto">
                 {/* 프로필 카드 */}
-                <div className="px-5 pt-16 pb-5 border-b border-slate-100">
+                <div className="px-5 pt-16 pb-5 border-b border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-base font-bold text-blue-600">
+                    <div className="h-11 w-11 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-base font-bold text-blue-400">
                         {session.user.name
                           ? session.user.name.charAt(0).toUpperCase()
                           : session.user.email?.charAt(0).toUpperCase() ?? "U"}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{session.user.name || "사용자"}</p>
-                      <p className="text-xs text-slate-500 truncate">{session.user.email}</p>
+                      <p className="text-sm font-semibold text-slate-100 truncate">{session.user.name || "사용자"}</p>
+                      <p className="text-xs text-slate-400 truncate">{session.user.email}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* ── 앱으로 이동 ── */}
                 <nav className="px-4 pt-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">앱으로 이동</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">앱으로 이동</div>
                   <SheetClose asChild>
-                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
+                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
                       <LayoutDashboard className="h-4 w-4 text-blue-500" />
                       대시보드
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/dashboard/quotes" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <ClipboardList className="h-4 w-4 text-slate-400" />
+                    <Link href="/dashboard/quotes" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <ClipboardList className="h-4 w-4 text-slate-500" />
                       견적 관리
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/dashboard/purchases" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <ShoppingCart className="h-4 w-4 text-slate-400" />
+                    <Link href="/dashboard/purchases" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <ShoppingCart className="h-4 w-4 text-slate-500" />
                       구매 운영
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/dashboard/inventory" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Package className="h-4 w-4 text-slate-400" />
+                    <Link href="/dashboard/inventory" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <Package className="h-4 w-4 text-slate-500" />
                       재고 관리
                     </Link>
                   </SheetClose>
@@ -86,16 +86,16 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
                 {/* ── 제품 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Search className="h-4 w-4 text-slate-400" />
+                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <Search className="h-4 w-4 text-slate-500" />
                       AI 검색 및 견적
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <FileText className="h-4 w-4 text-slate-400" />
+                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <FileText className="h-4 w-4 text-slate-500" />
                       프로토콜 맞춤 견적
                     </Link>
                   </SheetClose>
@@ -103,10 +103,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
                 {/* ── 지원 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">지원</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">지원</div>
                   <SheetClose asChild>
-                    <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
-                      <Headset className="h-4 w-4 text-slate-400" />
+                    <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
+                      <Headset className="h-4 w-4 text-slate-500" />
                       고객 지원 및 문의
                     </Link>
                   </SheetClose>
@@ -117,22 +117,22 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               <div className="flex flex-col flex-1 overflow-y-auto">
                 {/* ── 제품 ── */}
                 <nav className="px-4 pt-16 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">제품</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
-                    <Link href="/intro" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Info className="h-4 w-4 text-slate-400" />
+                    <Link href="/intro" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <Info className="h-4 w-4 text-slate-500" />
                       제품 소개
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Search className="h-4 w-4 text-slate-400" />
+                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <Search className="h-4 w-4 text-slate-500" />
                       AI 검색 및 견적
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <FileText className="h-4 w-4 text-slate-400" />
+                    <Link href="/protocol/bom" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <FileText className="h-4 w-4 text-slate-500" />
                       프로토콜 맞춤 견적
                     </Link>
                   </SheetClose>
@@ -140,10 +140,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
                 {/* ── 도입 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">도입</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">도입</div>
                   <SheetClose asChild>
-                    <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg mb-0.5 transition-colors">
-                      <Phone className="h-4 w-4 text-slate-400" />
+                    <Link href="/pricing" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 rounded-lg mb-0.5 transition-colors">
+                      <Phone className="h-4 w-4 text-slate-500" />
                       요금 &amp; 도입
                     </Link>
                   </SheetClose>
@@ -151,10 +151,10 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
                 {/* ── 지원 ── */}
                 <nav className="px-4 pb-2">
-                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">지원</div>
+                  <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">지원</div>
                   <SheetClose asChild>
-                    <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
-                      <Headset className="h-4 w-4 text-slate-400" />
+                    <Link href="/support" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800 rounded-lg transition-colors">
+                      <Headset className="h-4 w-4 text-slate-500" />
                       고객 지원 및 문의
                     </Link>
                   </SheetClose>
@@ -163,11 +163,11 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             )}
 
             {/* 하단 CTA */}
-            <div className="mt-auto border-t border-slate-200 px-4 py-4">
+            <div className="mt-auto border-t border-slate-800 px-4 py-4">
               {session?.user ? (
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="w-full text-left px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  className="w-full text-left px-3 py-3 text-sm font-medium text-red-400 hover:bg-red-950/30 rounded-md transition-colors"
                 >
                   로그아웃
                 </button>
@@ -192,7 +192,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <>
                   <Link
                     href="/test/search"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     검색
                   </Link>
@@ -209,13 +209,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <>
                   <Link
                     href="/pricing"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     요금 &amp; 도입
                   </Link>
                   <Link
                     href="/auth/signin?callbackUrl=/dashboard"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     로그인
                   </Link>
@@ -237,7 +237,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 햄버거 버튼 */}
             <SheetTrigger asChild>
               <button
-                className="p-2 -mr-1 text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0 touch-manipulation"
+                className="p-2 -mr-1 text-slate-300 hover:text-slate-100 transition-colors flex-shrink-0 touch-manipulation"
                 aria-label="전체 메뉴 열기"
                 type="button"
               >

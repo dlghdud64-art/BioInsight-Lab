@@ -161,7 +161,7 @@ export function ExecutiveDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-1">
-              <div className="text-2xl xl:text-3xl font-bold tracking-tight text-slate-900 dark:text-white break-words">
+              <div className="text-2xl xl:text-3xl font-bold tracking-tight text-white break-words">
                 ₩{(useMockData ? 2900000 : thisMonthSpending).toLocaleString()}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">

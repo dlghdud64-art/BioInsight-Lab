@@ -57,12 +57,12 @@ function StepNavContent() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-[#141820] border-b border-[#1e2228] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 재고에서 온 경우 안내 메시지 */}
           {fromInventory && currentStep === 1 && (
-            <div className="py-2 flex items-center justify-center gap-2 text-xs text-blue-700 bg-blue-50 border-b border-blue-100">
+            <div className="py-2 flex items-center justify-center gap-2 text-xs text-blue-400 bg-blue-950/20 border-b border-blue-900/30">
               <Package className="h-3.5 w-3.5" />
               <span className="font-medium">재고 관리에서 시작된 구매 프로세스입니다</span>
             </div>
@@ -80,21 +80,21 @@ function StepNavContent() {
                     className={cn(
                       "flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-all",
                       isActive && "bg-blue-600 text-white",
-                      isCompleted && "text-blue-500",
-                      !isActive && !isCompleted && "text-slate-400"
+                      isCompleted && "text-blue-400",
+                      !isActive && !isCompleted && "text-slate-500"
                     )}
                   >
                     {isCompleted ? (
                       <CheckCircle2 className="h-3 w-3" />
                     ) : (
                       <span className="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-current text-white text-[9px] font-bold shrink-0">
-                        <span className={cn(isActive ? "text-white" : "text-slate-400")}>{step.step}</span>
+                        <span className={cn(isActive ? "text-white" : "text-slate-500")}>{step.step}</span>
                       </span>
                     )}
                     <span className={cn(isActive ? "" : "hidden")}>{step.label}</span>
                   </Link>
                   {index < steps.length - 1 && (
-                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-slate-200")} />
+                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-[#252a32]")} />
                   )}
                 </div>
               );
@@ -117,16 +117,16 @@ function StepNavContent() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all relative",
                       isActive &&
-                        "bg-blue-600 text-white shadow-md shadow-blue-600/25",
+                        "bg-blue-600 text-white",
                       isCompleted &&
-                        "bg-transparent text-slate-400 hover:text-slate-600 cursor-pointer",
-                      isPending && "bg-transparent text-slate-400 cursor-pointer"
+                        "bg-transparent text-slate-400 hover:text-slate-300 cursor-pointer",
+                      isPending && "bg-transparent text-slate-500 cursor-pointer hover:text-slate-400"
                     )}
                   >
                     {isCompleted ? (
                       <>
                         <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
-                        <span className="line-through decoration-slate-300">
+                        <span className="text-slate-400">
                           Step {step.step} {step.label}
                         </span>
                       </>
@@ -137,8 +137,8 @@ function StepNavContent() {
                       </>
                     ) : (
                       <>
-                        <span className="font-medium opacity-70">Step {step.step}</span>
-                        <span>{step.label}</span>
+                        <span className="font-medium text-slate-500">Step {step.step}</span>
+                        <span className="text-slate-500">{step.label}</span>
                       </>
                     )}
                   </Link>
@@ -146,7 +146,7 @@ function StepNavContent() {
                     <div
                       className={cn(
                         "h-[2px] w-10 mx-1 transition-colors",
-                        lineCompleted ? "bg-blue-500" : "bg-slate-200"
+                        lineCompleted ? "bg-blue-500" : "bg-[#252a32]"
                       )}
                     />
                   )}
@@ -170,15 +170,15 @@ export function StepNav() {
 
 function StepNavFallback() {
   return (
-    <nav className="w-full bg-white border-b border-gray-200 fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-[#141820] border-b border-[#1e2228] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-1 py-2">
-            <div className="h-5 w-12 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-gray-200" />
-            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-gray-200" />
-            <div className="h-5 w-5 rounded-full bg-gray-200 animate-pulse" />
+            <div className="h-5 w-12 rounded-full bg-[#1e2228] animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-[#252a32]" />
+            <div className="h-5 w-5 rounded-full bg-[#1e2228] animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-[#252a32]" />
+            <div className="h-5 w-5 rounded-full bg-[#1e2228] animate-pulse" />
           </div>
         </div>
       </div>

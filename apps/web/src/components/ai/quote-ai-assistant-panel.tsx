@@ -74,15 +74,15 @@ export function QuoteAiAssistantPanel({
           className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
         >
           {/* ═══ 1. 헤더 ═══ */}
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800/50 flex-shrink-0">
-            <SheetTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-800/50 flex-shrink-0">
+            <SheetTitle className="text-base font-bold text-slate-100">
               {state === "empty" && "AI 요청 준비"}
               {state === "loading" && "견적 요청 도우미"}
               {state === "success" && "견적 요청 도우미"}
               {state === "warning" && "견적 요청 도우미"}
               {state === "error" && "초안을 준비하지 못했습니다"}
             </SheetTitle>
-            <SheetDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <SheetDescription className="text-xs text-slate-400 mt-0.5">
               {state === "empty" && "품목을 선택하면 견적 요청 초안을 준비합니다."}
               {state === "loading" && "선택한 품목 기준으로 견적 요청 초안을 정리하고 있습니다..."}
               {state === "success" && "선택한 품목 기준으로 견적 요청 초안을 정리했습니다."}
@@ -106,7 +106,7 @@ export function QuoteAiAssistantPanel({
 
             {/* ── Success / Warning State ── */}
             {(state === "success" || state === "warning") && (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              <div className="divide-y divide-slate-800/50">
                 {/* 2. 요약 섹션 */}
                 <SummarySection data={data} />
 
@@ -188,13 +188,13 @@ export function QuoteAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-slate-50 dark:bg-slate-800/50 p-4 mb-4">
-        <FileText className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+      <div className="rounded-full bg-slate-800/50 p-4 mb-4">
+        <FileText className="h-8 w-8 text-slate-600" />
       </div>
-      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+      <p className="text-sm font-medium text-slate-400">
         품목을 선택하면 여기에서 확인할 수 있습니다
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-[240px]">
+      <p className="text-xs text-slate-500 mt-1.5 max-w-[240px]">
         비교 화면에서 품목을 선택하고 수량을 입력하면 견적 초안이 자동으로 준비됩니다.
       </p>
     </div>
@@ -208,7 +208,7 @@ function LoadingState() {
       {/* 요약 스켈레톤 */}
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/30">
+          <div key={i} className="p-3 rounded-lg bg-slate-800/30">
             <Skeleton className="h-3 w-16 mb-2" />
             <Skeleton className="h-6 w-10" />
           </div>
@@ -222,7 +222,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-24 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+            <div key={i} className="p-3 rounded-lg border border-slate-800">
               <Skeleton className="h-4 w-32 mb-2" />
               <Skeleton className="h-3 w-full mb-1" />
               <Skeleton className="h-3 w-3/4" />
@@ -252,13 +252,13 @@ function ErrorState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-red-50 dark:bg-red-950/30 p-4 mb-4">
-        <TriangleAlert className="h-8 w-8 text-red-400 dark:text-red-500" />
+      <div className="rounded-full bg-red-950/30 p-4 mb-4">
+        <TriangleAlert className="h-8 w-8 text-red-500" />
       </div>
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+      <p className="text-sm font-medium text-slate-300">
         초안 생성에 실패했습니다
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5 max-w-[260px]">
+      <p className="text-xs text-slate-500 mt-1.5 max-w-[260px]">
         {error || "품목 정보와 벤더 정보를 확인한 뒤 다시 시도해 주세요."}
       </p>
       <Button
@@ -289,26 +289,26 @@ function SummarySection({ data }: { data: QuoteAiPanelData }) {
       icon: Package,
       label: "선택 품목",
       value: `${data.items.length}건`,
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-50 dark:bg-blue-950/30",
+      color: "text-blue-400",
+      bg: "bg-blue-950/30",
     },
     {
       icon: Users,
       label: "추천 벤더",
       value: `${data.vendors.length}곳`,
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
+      color: "text-emerald-400",
+      bg: "bg-emerald-950/30",
     },
     {
       icon: issueCount > 0 ? AlertTriangle : CheckCircle2,
       label: "누락 항목",
       value: issueCount > 0 ? `${issueCount}건` : "없음",
       color: issueCount > 0
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-emerald-600 dark:text-emerald-400",
+        ? "text-amber-400"
+        : "text-emerald-400",
       bg: issueCount > 0
-        ? "bg-amber-50 dark:bg-amber-950/30"
-        : "bg-emerald-50 dark:bg-emerald-950/30",
+        ? "bg-amber-950/30"
+        : "bg-emerald-950/30",
     },
     {
       icon: Clock,
@@ -316,8 +316,8 @@ function SummarySection({ data }: { data: QuoteAiPanelData }) {
       value: data.estimatedLeadTime
         ? `${data.estimatedLeadTime.min}~${data.estimatedLeadTime.max}일`
         : "미정",
-      color: "text-slate-600 dark:text-slate-400",
-      bg: "bg-slate-50 dark:bg-slate-800/30",
+      color: "text-slate-400",
+      bg: "bg-slate-800/30",
     },
   ];
 
@@ -333,7 +333,7 @@ function SummarySection({ data }: { data: QuoteAiPanelData }) {
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <IconComp className={`h-3.5 w-3.5 ${stat.color}`} />
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] text-slate-400">
                   {stat.label}
                 </span>
               </div>
@@ -351,11 +351,11 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
   return (
     <div className="p-5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           추천 벤더
         </h4>
       </div>
-      <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
+      <p className="text-[11px] text-slate-500 mb-3">
         최근 주문 이력과 응답 가능성을 기준으로 정리했습니다
       </p>
 
@@ -363,19 +363,19 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
         {vendors.map((vendor, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-lg border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
+            className="p-3 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-blue-800 transition-colors"
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <span className="text-sm font-medium text-slate-200">
                   {vendor.vendorName}
                 </span>
               </div>
               {vendor.contactAvailable ? (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+                  className="text-[10px] h-4 px-1.5 bg-emerald-950/30 text-emerald-400 border-emerald-800"
                 >
                   연락 가능
                 </Badge>
@@ -389,15 +389,15 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               )}
             </div>
 
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+            <p className="text-[11px] text-slate-400 mb-2">
               {vendor.reason}
             </p>
 
-            <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
               {vendor.recentPrice != null && (
                 <span>
                   최근 단가{" "}
-                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                  <span className="font-medium text-slate-300">
                     {vendor.recentPrice.toLocaleString()}원
                   </span>
                 </span>
@@ -405,7 +405,7 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               {vendor.leadTimeDays != null && (
                 <span>
                   납기{" "}
-                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                  <span className="font-medium text-slate-300">
                     {vendor.leadTimeDays}일
                   </span>
                 </span>
@@ -413,7 +413,7 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               {vendor.moq != null && (
                 <span>
                   MOQ{" "}
-                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                  <span className="font-medium text-slate-300">
                     {vendor.moq}
                   </span>
                 </span>
@@ -450,17 +450,17 @@ function DraftSection({
   return (
     <div className="p-5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           요청 초안
         </h4>
       </div>
 
       {/* 초안 미리보기 */}
-      <div className="rounded-lg border border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-3.5 mb-3">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3.5 mb-3">
         {/* 제목 */}
         <div className="flex items-center gap-2 mb-2">
           <Mail className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+          <span className="text-xs font-medium text-slate-300 truncate">
             {draft.emailSubject}
           </span>
         </div>
@@ -468,7 +468,7 @@ function DraftSection({
         {/* 품목 요약 */}
         <div className="flex items-center gap-2 mb-2">
           <Package className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="text-[11px] text-slate-400">
             {draft.items.length}개 품목 · 수량{" "}
             {draft.items.reduce((sum, item) => sum + item.quantity, 0)}
             {draft.items[0]?.unit || "ea"}
@@ -479,15 +479,15 @@ function DraftSection({
         {draft.suggestedDeliveryDate && (
           <div className="flex items-center gap-2 mb-2">
             <Truck className="h-3.5 w-3.5 text-slate-400" />
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] text-slate-400">
               희망 납기 {draft.suggestedDeliveryDate}
             </span>
           </div>
         )}
 
         {/* 본문 미리보기 */}
-        <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-pre-wrap line-clamp-4 font-mono leading-relaxed">
+        <div className="mt-2 pt-2 border-t border-slate-700/50">
+          <p className="text-[11px] text-slate-500 whitespace-pre-wrap line-clamp-4 font-mono leading-relaxed">
             {bodyPreview}
           </p>
           <button
@@ -546,7 +546,7 @@ function ValidationSection({
     <div
       className={`p-5 ${
         isWarningState
-          ? "bg-amber-50/50 dark:bg-amber-950/10"
+          ? "bg-amber-950/10"
           : ""
       }`}
     >
@@ -558,15 +558,15 @@ function ValidationSection({
               : "text-amber-500"
           }`}
         />
-        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
           확인 필요한 항목
         </h4>
         <Badge
           variant="outline"
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400"
-              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400"
+              ? "bg-red-950/30 text-red-400 border-red-200"
+              : "bg-amber-950/30 text-amber-400 border-amber-200"
           }`}
         >
           {issues.length}건
@@ -599,8 +599,8 @@ function IssueCard({
     <div
       className={`flex items-center justify-between p-2.5 rounded-lg border ${
         isError
-          ? "border-red-200 bg-red-50/50 dark:border-red-800/50 dark:bg-red-950/20"
-          : "border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20"
+          ? "border-red-800/50 bg-red-950/20"
+          : "border-amber-800/50 bg-amber-950/20"
       }`}
     >
       <div className="flex items-center gap-2">
@@ -609,7 +609,7 @@ function IssueCard({
             isError ? "text-red-500" : "text-amber-500"
           }`}
         />
-        <span className="text-xs text-slate-600 dark:text-slate-300">
+        <span className="text-xs text-slate-300">
           {issue.message}
         </span>
       </div>

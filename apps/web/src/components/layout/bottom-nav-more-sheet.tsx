@@ -83,8 +83,8 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         className={cn(
           "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation",
           active
-            ? "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-            : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            ? "bg-blue-950/30 text-blue-400"
+            : "text-slate-300 hover:bg-slate-800/50"
         )}
       >
         <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -97,7 +97,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 safe-area-bottom">
         <SheetHeader className="pb-2">
-          <SheetTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+          <SheetTitle className="text-base font-bold text-slate-100">
             전체 메뉴
           </SheetTitle>
         </SheetHeader>
@@ -105,7 +105,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         <div className="space-y-4 mt-2">
           {menuGroups.map((group) => (
             <div key={group.title}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 mb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-3 mb-1">
                 {group.title}
               </p>
               <div className="space-y-0.5">
@@ -116,7 +116,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
           {isAdminOrOwner && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 mb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-3 mb-1">
                 관리자
               </p>
               <div className="space-y-0.5">

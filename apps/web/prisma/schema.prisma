@@ -2359,3 +2359,53 @@ model StabilizationRecoveryRecord {
   @@index([correlationId])
   @@index([recoveryState])
 }
+
+// =====================================================
+// 알림 오케스트레이션 (Notification Orchestration)
+// =====================================================
+
+// 알림 이벤트 — 비즈니스 이벤트 발생 기록
+model NotificationEvent {
+  id            String   @id @default(cuid())
+  eventType     String   // e.g. "QUOTE_RECEIVED", "ORDER_SHIPPED"
+  entityType    String   // e.g. "QUOTE", "ORDER", "INVENTORY"
+  entityId      String
+  triggeredBy   String?  // userId who triggered, null for system
+  metadata      Json?    // extra context
+  createdAt     DateTime @default(now())
+
+  actions       NotificationAction[]
+
+  @@index([entityType, entityId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// 알림 액션 — 이벤트에서 파생된 개별 알림/작업
+model NotificationAction {
+  id             String   @id @default(cuid())
+  eventId        String
+  event          NotificationEvent @relation(fields: [eventId], references: [id])
+
+  actionType     String   // "IN_APP", "EMAIL_DRAFT", "QUEUE_ITEM", "ESCALATION"
+  recipientId    String?  // userId
+  recipientEmail String?
+
+  status         String   @default("PENDING") // PENDING, GENERATED, REVIEWED, APPROVED, SENT, READ, FAILED
+  payload        Json?    // notification content
+
+  entityType     String   // denormalized for query
+  entityId       String   // denormalized for query
+
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  sentAt         DateTime?
+  readAt         DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([recipientId, status])
+  @@index([status])
+  @@index([entityType, entityId])
+}

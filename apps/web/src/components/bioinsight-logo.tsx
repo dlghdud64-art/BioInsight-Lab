@@ -53,10 +53,10 @@ export function BioInsightLogo({
       {showText && (
         <div className="leading-tight">
           <div className="flex items-baseline gap-1">
-            <span className={cn(textClass, isDark ? "text-white" : "text-blue-900")}>
+            <span className={cn(textClass, isDark ? "text-white" : "text-slate-100")}>
               BioInsight
             </span>
-            <span className={cn(textClass, isDark ? "text-teal-300" : "text-teal-500")}>
+            <span className={cn(textClass, isDark ? "text-teal-300" : "text-teal-300")}>
               Lab
             </span>
           </div>
@@ -64,7 +64,7 @@ export function BioInsightLogo({
             <div
               className={cn(
                 "hidden md:block text-[10px] font-normal mt-0.5",
-                isDark ? "text-slate-400" : "text-gray-600"
+                isDark ? "text-slate-400" : "text-slate-400"
               )}
             >
               Procurement & Research

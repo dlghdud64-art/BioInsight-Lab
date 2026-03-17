@@ -218,9 +218,9 @@ function ScannerContent() {
         {modalState === "scanner" && (
           <>
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <div className="flex-1 h-px bg-slate-700" />
               <span className="text-xs text-slate-400">또는 직접 검색</span>
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <div className="flex-1 h-px bg-slate-700" />
             </div>
             <form
               className="flex gap-2"
@@ -249,8 +249,8 @@ function ScannerContent() {
   if (modalState === "use-confirm" && inventoryResult) {
     return (
       <div className="flex flex-col gap-5 py-2 px-2">
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">
-          <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+        <div className="bg-slate-800 rounded-xl p-4">
+          <p className="font-semibold text-slate-200 text-sm">
             {inventoryResult.product.name}
           </p>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -261,7 +261,7 @@ function ScannerContent() {
 
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+            <label className="text-sm font-medium text-slate-300 mb-1 block">
               사용 수량 *
             </label>
             <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ function ScannerContent() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+            <label className="text-sm font-medium text-slate-300 mb-1 block">
               메모 (선택)
             </label>
             <Input
@@ -346,7 +346,7 @@ function ScannerContent() {
 
         {/* 제품 기본 정보 */}
         <div>
-          <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">
+          <h3 className="font-bold text-slate-100 text-base leading-snug">
             {inventoryResult.product.name}
           </h3>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -357,16 +357,16 @@ function ScannerContent() {
 
         {/* 수치 하이라이트 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+          <div className="bg-blue-900/20 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-blue-400">
               {inventoryResult.currentQuantity}
             </p>
-            <p className="text-xs text-blue-600 dark:text-blue-500">
+            <p className="text-xs text-blue-500">
               {inventoryResult.unit || "개"} 남음
             </p>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-slate-600 dark:text-slate-300">
+          <div className="bg-slate-800 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-slate-300">
               {inventoryResult.safetyStock ?? "—"}
             </p>
             <p className="text-xs text-slate-500">안전 재고</p>
@@ -376,19 +376,19 @@ function ScannerContent() {
         {/* 메타 정보 */}
         <div className="space-y-2 text-sm">
           {inventoryResult.location && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-slate-400">
               <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
               <span>{inventoryResult.location}</span>
             </div>
           )}
           {inventoryResult.lotNumber && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-slate-400">
               <Package className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
               <span className="font-mono">Lot: {inventoryResult.lotNumber}</span>
             </div>
           )}
           {inventoryResult.expiryDate && (
-            <div className={`flex items-center gap-2 ${isExpired ? "text-red-600" : "text-slate-600 dark:text-slate-400"}`}>
+            <div className={`flex items-center gap-2 ${isExpired ? "text-red-600" : "text-slate-400"}`}>
               <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
               <span>
                 유효기한: {new Date(inventoryResult.expiryDate).toLocaleDateString("ko-KR")}
@@ -397,7 +397,7 @@ function ScannerContent() {
             </div>
           )}
           {inventoryResult.product.storageCondition && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-slate-400">
               <Thermometer className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
               <span>{getStorageConditionLabel(inventoryResult.product.storageCondition)}</span>
             </div>

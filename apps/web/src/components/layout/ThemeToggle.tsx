@@ -15,26 +15,23 @@ export function FloatingThemeToggle() {
   }, []);
 
   // next-themes: 첫 방문 시 localStorage에 theme이 없으면 명시적 설정 (setTheme 첫 호출 이슈 회피)
-  // 모바일(768px 미만 또는 모바일 UA)에서는 시스템 설정과 관계없이 라이트 모드 기본 적용
+  // 다크 모드 전용이므로 항상 dark로 설정
   React.useEffect(() => {
     if (!mounted || !setTheme) return;
     const stored = typeof window !== "undefined" && localStorage.getItem("bioinsight-theme");
     if (!stored) {
-      const isMobile =
-        typeof window !== "undefined" &&
-        (window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent));
-      setTheme(isMobile ? "light" : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+      setTheme("dark");
     }
   }, [mounted, setTheme]);
 
   const handleToggle = () => {
-    const current = resolvedTheme ?? theme ?? "light";
+    const current = resolvedTheme ?? theme ?? "dark";
     const nextTheme = current === "dark" ? "light" : "dark";
     setTheme(nextTheme);
   };
 
   const buttonClass =
-    "fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full shadow-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:scale-110 transition-transform hidden md:flex";
+    "fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full shadow-2xl border-slate-700 bg-slate-900 hover:scale-110 transition-transform hidden md:flex";
 
   if (!mounted) {
     return (
@@ -45,7 +42,7 @@ export function FloatingThemeToggle() {
         disabled
         aria-label="테마 로딩 중"
       >
-        <Sun className="h-6 w-6" />
+        <Moon className="h-6 w-6 text-blue-400" />
       </Button>
     );
   }
@@ -58,8 +55,11 @@ export function FloatingThemeToggle() {
       aria-label={(resolvedTheme ?? theme) === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
       className={buttonClass}
     >
-      <Sun className="h-6 w-6 dark:hidden text-amber-500" />
-      <Moon className="hidden dark:block h-6 w-6 text-blue-400" />
+      {(resolvedTheme ?? theme) === "dark" ? (
+        <Sun className="h-6 w-6 text-amber-500" />
+      ) : (
+        <Moon className="h-6 w-6 text-blue-400" />
+      )}
     </Button>
   );
 }

@@ -10,112 +10,279 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  ShoppingCart,
-  Package,
-  BarChart3,
-  Users,
-  CreditCard,
   ArrowRight,
-  LifeBuoy,
   HelpCircle,
-  FileText,
   MessageSquare,
+  LogIn,
+  GitCompareArrows,
+  ShoppingCart,
+  Users,
+  Bell,
+  CreditCard,
+  Brain,
+  AlertTriangle,
+  BookOpen,
+  ExternalLink,
 } from "lucide-react";
 
+/* ─────────────────────────── 카테고리 ─────────────────────────── */
+const FAQ_CATEGORIES = [
+  { value: "all", label: "전체", icon: HelpCircle },
+  { value: "account", label: "계정/로그인", icon: LogIn },
+  { value: "search-compare", label: "검색/비교/견적", icon: GitCompareArrows },
+  { value: "purchase-inventory", label: "구매/재고", icon: ShoppingCart },
+  { value: "org-role", label: "조직/권한", icon: Users },
+  { value: "notification", label: "알림/이메일", icon: Bell },
+  { value: "billing", label: "구독/결제", icon: CreditCard },
+  { value: "ai-pdf", label: "PDF/BOM/AI 분석", icon: Brain },
+  { value: "error", label: "오류/실패 해결", icon: AlertTriangle },
+];
+
+/* ─────────────────────────── FAQ 항목 ─────────────────────────── */
 interface FaqItem {
   id: string;
   category: string;
   question: string;
   answer: string;
+  guideLink?: { label: string; href: string };
   cta?: { label: string; href: string };
 }
 
-const FAQ_CATEGORIES = [
-  { value: "all", label: "전체", icon: HelpCircle },
-  { value: "quote", label: "견적", icon: FileText },
-  { value: "purchase", label: "구매", icon: ShoppingCart },
-  { value: "inventory", label: "재고", icon: Package },
-  { value: "team", label: "계정/조직", icon: Users },
-  { value: "billing", label: "결제/증빙", icon: CreditCard },
-];
-
 const FAQ_ITEMS: FaqItem[] = [
-  // 견적
+  // ── 계정/로그인 ──
   {
-    id: "q1",
-    category: "quote",
+    id: "acc-1",
+    category: "account",
+    question: "비밀번호를 잊어버렸는데 어떻게 재설정하나요?",
+    answer: "로그인 화면에서 '비밀번호 찾기'를 클릭하면 등록된 이메일로 재설정 링크가 발송됩니다. 링크는 24시간 유효하며, 만료 시 다시 요청할 수 있습니다.",
+    cta: { label: "로그인 페이지로 이동", href: "/auth/signin" },
+  },
+  {
+    id: "acc-2",
+    category: "account",
+    question: "소셜 로그인(Google/GitHub)으로 가입하면 이메일 로그인도 되나요?",
+    answer: "소셜 로그인으로 가입하면 해당 소셜 계정으로만 로그인됩니다. 이메일/비밀번호 로그인을 추가로 사용하려면 설정 > 계정에서 비밀번호를 설정할 수 있습니다.",
+    cta: { label: "계정 설정으로 이동", href: "/dashboard/settings" },
+  },
+  {
+    id: "acc-3",
+    category: "account",
+    question: "계정을 완전히 삭제하고 싶은데 어떻게 하나요?",
+    answer: "설정 > 계정 > 계정 삭제에서 요청할 수 있습니다. 삭제를 요청하면 30일 유예 기간이 주어지며, 이 기간 내에는 로그인하면 삭제가 취소됩니다. 조직 Owner인 경우 먼저 소유권을 이전해야 합니다.",
+    cta: { label: "계정 설정으로 이동", href: "/dashboard/settings" },
+  },
+
+  // ── 검색/비교/견적 ──
+  {
+    id: "sc-1",
+    category: "search-compare",
+    question: "비교 품목은 어디에서 추가하나요?",
+    answer: "통합 검색 결과에서 품목 카드의 '비교에 추가' 버튼을 클릭하면 비교 워크스페이스에 추가됩니다. 비교 워크스페이스에서 직접 품목 이름을 검색하여 추가할 수도 있습니다.",
+    guideLink: { label: "비교 워크스페이스 가이드", href: "/dashboard/guide" },
+    cta: { label: "비교 워크스페이스 열기", href: "/compare" },
+  },
+  {
+    id: "sc-2",
+    category: "search-compare",
+    question: "검색 결과가 너무 많아서 원하는 품목을 찾기 어렵습니다.",
+    answer: "검색어를 더 구체적으로 입력하면 결과를 좁힐 수 있습니다. CAS 번호나 카탈로그 번호로 검색하면 가장 정확합니다. 또한 필터(브랜드, 용량, 규격)를 조합하여 결과를 좁힐 수 있습니다.",
+    cta: { label: "검색 시작하기", href: "/dashboard/search" },
+  },
+  {
+    id: "sc-3",
+    category: "search-compare",
+    question: "견적 요청은 공급사에 자동 발송되나요?",
+    answer: "아닙니다. LabAxis에서 견적을 '요청'하면 시스템 내에서 견적 리스트가 생성되며, 실제 공급사에 대한 발송은 구매 담당자가 별도로 처리합니다. 향후 직접 발송 기능이 추가될 예정입니다.",
+    guideLink: { label: "견적 요청 가이드", href: "/dashboard/guide" },
+  },
+  {
+    id: "sc-4",
+    category: "search-compare",
     question: "견적 요청 후 현재 상태를 어디서 확인하나요?",
-    answer: "대시보드 > 견적 관리 페이지에서 요청한 견적의 진행 상태(요청됨, 회신 도착, 확정됨 등)를 실시간으로 확인할 수 있습니다. 벤더 회신이 도착하면 이메일과 대시보드에서 동시에 알림을 받습니다.",
+    answer: "견적 관리 페이지에서 요청한 견적의 진행 상태(요청됨, 회신 도착, 확정됨 등)를 실시간으로 확인할 수 있습니다. 벤더 회신이 도착하면 이메일과 인앱 알림으로 동시에 통지됩니다.",
     cta: { label: "견적 관리로 이동", href: "/dashboard/quotes" },
   },
   {
-    id: "q2",
-    category: "quote",
+    id: "sc-5",
+    category: "search-compare",
     question: "견적 요청을 여러 벤더에 동시에 보낼 수 있나요?",
-    answer: "네, 견적 리스트에서 품목을 선택한 후 복수 벤더를 지정하여 한 번에 견적 요청을 보낼 수 있습니다. 회신이 도착하면 비교 테이블에서 가격·납기·MOQ를 한눈에 비교할 수 있습니다.",
-    cta: { label: "견적 요청하기", href: "/test/quote" },
+    answer: "네, 견적 리스트에서 품목을 선택한 후 복수 벤더를 지정하여 한 번에 견적 요청을 보낼 수 있습니다. 회신이 도착하면 비교 테이블에서 가격, 납기, MOQ를 나란히 비교할 수 있습니다.",
+    cta: { label: "견적 관리로 이동", href: "/dashboard/quotes" },
   },
-  // 구매
+
+  // ── 구매/재고 ──
   {
-    id: "q3",
-    category: "purchase",
+    id: "pi-1",
+    category: "purchase-inventory",
+    question: "입고 후 Lot 번호를 변경할 수 있나요?",
+    answer: "네, 재고 관리에서 해당 품목을 클릭하면 상세 정보 패널이 열립니다. Lot 번호, 유효기간, 보관 위치 등을 수정할 수 있습니다. 변경 이력은 활동 로그에 자동 기록됩니다.",
+    cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
+  },
+  {
+    id: "pi-2",
+    category: "purchase-inventory",
+    question: "안전재고 알림은 어떻게 설정하나요?",
+    answer: "재고 목록에서 품목을 클릭 후 '안전재고 기준' 항목에 최소 유지 수량을 설정합니다. 재고가 이 수량 이하로 떨어지면 대시보드 경고와 이메일 알림이 발송됩니다. 알림 설정에서 채널을 선택할 수 있습니다.",
+    guideLink: { label: "안전재고 관리 가이드", href: "/dashboard/guide" },
+    cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
+  },
+  {
+    id: "pi-3",
+    category: "purchase-inventory",
     question: "구매 후 증빙 자료(세금계산서, 거래명세서)를 어디서 확인하나요?",
-    answer: "구매 운영 페이지에서 각 구매 건의 상세 정보를 확인할 수 있습니다. 고액 구매 건은 증빙 업로드 영역이 표시되며, 세금계산서·거래명세서 파일을 직접 첨부하거나 다운로드할 수 있습니다.",
+    answer: "구매 운영 페이지에서 각 구매 건의 상세 정보를 확인할 수 있습니다. 증빙 섹션에서 세금계산서, 거래명세서 파일을 직접 첨부하거나 다운로드할 수 있습니다.",
     cta: { label: "구매 운영 보기", href: "/dashboard/purchases" },
   },
   {
-    id: "q4",
-    category: "purchase",
-    question: "보유 중인 엑셀 양식으로 구매 이력을 등록할 수 있나요?",
-    answer: "네, 구매 운영 페이지에서 CSV/엑셀 파일을 업로드하면 시스템이 자동으로 파싱하여 구매 이력에 반영합니다. 업로드 전 미리보기에서 매핑 결과를 확인할 수 있습니다.",
+    id: "pi-4",
+    category: "purchase-inventory",
+    question: "엑셀 양식으로 구매 이력을 일괄 등록할 수 있나요?",
+    answer: "네, 구매 운영 페이지에서 CSV/엑셀 파일을 업로드하면 시스템이 자동으로 파싱하여 구매 이력에 반영합니다. 업로드 전 미리보기에서 필드 매핑 결과를 확인할 수 있습니다.",
     cta: { label: "구매 운영 보기", href: "/dashboard/purchases" },
   },
-  // 재고
+
+  // ── 조직/권한 ──
   {
-    id: "q5",
-    category: "inventory",
-    question: "구매한 품목을 재고에 반영하는 방법은?",
-    answer: "구매 운영 페이지에서 입고 반영이 필요한 건을 선택하면 재고 관리 드로어가 '입고 반영' 모드로 열립니다. 실제 입고 수량, Lot 번호, 유효기간을 입력하고 '입고 반영 완료'를 누르면 재고에 자동 반영됩니다.",
-    cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
+    id: "org-1",
+    category: "org-role",
+    question: "조직에서 소유자와 관리자의 차이는 무엇인가요?",
+    answer: "Owner(소유자)는 조직당 1명으로, 조직 삭제, 결제 관리, Owner 이전 등 최고 권한을 가집니다. Admin(관리자)은 멤버 초대, 역할 변경, 설정 관리가 가능하지만 Owner 변경이나 조직 삭제는 할 수 없습니다.",
+    guideLink: { label: "역할별 가이드", href: "/dashboard/guide" },
   },
   {
-    id: "q6",
-    category: "inventory",
-    question: "재고 부족 알림은 어떻게 설정하나요?",
-    answer: "재고 목록에서 품목을 클릭하면 상세 드로어가 열립니다. '안전 재고 기준' 항목에서 최소 유지 수량을 설정하면, 해당 수량 이하로 떨어질 때 대시보드에서 경고 알림이 표시됩니다.",
-    cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
+    id: "org-2",
+    category: "org-role",
+    question: "역할별 접근 권한은 어떻게 다른가요?",
+    answer: "Viewer는 조회만 가능하고, Requester는 견적 요청과 검색을 할 수 있습니다. Approver는 여기에 승인 권한이 추가되고, Admin은 조직 설정과 멤버 관리가 가능합니다. Owner는 모든 권한을 가지며 결제와 조직 삭제를 포함합니다.",
+    guideLink: { label: "멤버 역할 가이드", href: "/dashboard/guide" },
+    cta: { label: "조직 설정으로 이동", href: "/dashboard/organizations" },
   },
-  // 계정/조직
   {
-    id: "q7",
-    category: "team",
+    id: "org-3",
+    category: "org-role",
     question: "팀원을 초대하려면 어떻게 하나요?",
-    answer: "조직 설정 > 멤버 관리에서 이메일 주소로 팀원을 초대할 수 있습니다. 초대받은 팀원은 이메일의 링크를 통해 가입하면 자동으로 팀에 합류됩니다. 역할(Viewer, Requester, Approver, Admin)별 권한을 설정할 수 있습니다.",
-    cta: { label: "조직 설정으로 이동", href: "/dashboard/organization" },
+    answer: "조직 설정 > 멤버 관리에서 이메일 주소로 팀원을 초대할 수 있습니다. 초대받은 팀원은 이메일의 링크를 통해 가입하면 자동으로 팀에 합류됩니다. 초대 시 역할을 지정할 수 있습니다.",
+    cta: { label: "조직 설정으로 이동", href: "/dashboard/organizations" },
   },
   {
-    id: "q8",
-    category: "team",
+    id: "org-4",
+    category: "org-role",
     question: "팀 재고와 개인 재고는 어떻게 구분되나요?",
-    answer: "재고 관리 페이지 상단의 '내 재고 / 팀 재고' 탭으로 전환할 수 있습니다. 팀 재고는 같은 조직에 소속된 모든 멤버가 조회할 수 있으며, 개인 재고는 본인만 관리합니다.",
+    answer: "재고 관리 페이지 상단의 '내 재고 / 팀 재고' 탭으로 전환할 수 있습니다. 팀 재고는 같은 조직의 모든 멤버가 조회 가능하며, 개인 재고는 본인만 관리합니다. 개인 재고 품목을 팀 재고로 이전할 수도 있습니다.",
     cta: { label: "재고 관리 열기", href: "/dashboard/inventory" },
   },
-  // 결제/증빙
+
+  // ── 알림/이메일 ──
   {
-    id: "q9",
-    category: "billing",
-    question: "전자세금계산서는 어떻게 발행받나요?",
-    answer: "결제 완료 후 구매 운영 페이지에서 해당 건의 증빙 섹션에서 세금계산서 발행을 요청할 수 있습니다. 사업자등록번호와 담당자 정보를 등록해두면 자동 발행됩니다.",
-    cta: { label: "구매 운영 보기", href: "/dashboard/purchases" },
+    id: "noti-1",
+    category: "notification",
+    question: "일일요약은 무엇을 뜻하나요?",
+    answer: "일일요약은 하루 동안의 핵심 활동(새 견적 회신, 재고 알림, 팀원 활동 등)을 하나의 이메일로 정리하여 매일 지정된 시간에 발송하는 기능입니다. 설정 > 알림에서 수신 시간과 포함 항목을 설정할 수 있습니다.",
+    guideLink: { label: "일일요약 가이드", href: "/dashboard/guide" },
+    cta: { label: "알림 설정으로 이동", href: "/dashboard/settings" },
   },
   {
-    id: "q10",
+    id: "noti-2",
+    category: "notification",
+    question: "특정 알림만 끄고 싶은데 가능한가요?",
+    answer: "네, 설정 > 알림에서 알림 유형별로 이메일, 인앱, 푸시 채널을 개별 ON/OFF 할 수 있습니다. 예를 들어 견적 회신은 이메일로만, 재고 알림은 인앱으로만 받도록 설정할 수 있습니다.",
+    cta: { label: "알림 설정으로 이동", href: "/dashboard/settings" },
+  },
+  {
+    id: "noti-3",
+    category: "notification",
+    question: "이메일 알림이 오지 않는데 어떻게 하나요?",
+    answer: "먼저 스팸/정크 폴더를 확인해주세요. 설정 > 알림에서 이메일 알림이 활성화되어 있는지, 등록된 이메일 주소가 정확한지 확인하세요. 그래도 문제가 계속되면 1:1 문의를 남겨주세요.",
+    cta: { label: "알림 설정 확인", href: "/dashboard/settings" },
+  },
+
+  // ── 구독/결제 ──
+  {
+    id: "bill-1",
+    category: "billing",
+    question: "해지하면 데이터는 어떻게 되나요?",
+    answer: "구독 해지 시 현재 결제 주기가 끝날 때까지 서비스가 유지됩니다. 이후 90일간 데이터가 보관되며, 이 기간 내에 재구독하면 데이터가 복원됩니다. 90일이 지나면 데이터가 영구 삭제됩니다.",
+    guideLink: { label: "구독 관리 가이드", href: "/dashboard/guide" },
+  },
+  {
+    id: "bill-2",
+    category: "billing",
+    question: "플랜을 중간에 업그레이드하면 요금은 어떻게 계산되나요?",
+    answer: "남은 기간에 대해 일할 계산됩니다. 예를 들어 월 구독 중간에 상위 플랜으로 변경하면, 남은 일수에 대한 차액만 결제됩니다. 다운그레이드는 다음 결제 주기부터 적용됩니다.",
+    cta: { label: "플랜 비교하기", href: "/dashboard/settings/plans" },
+  },
+  {
+    id: "bill-3",
     category: "billing",
     question: "연구비 카드로 결제할 수 있나요?",
     answer: "네, 대학교 산학협력단 및 기업 연구소의 규정에 맞춰 연구비 카드 결제를 지원합니다. 결제 시 카드 종류를 선택하면 관련 증빙 서류가 자동으로 생성됩니다.",
+    cta: { label: "결제 관리로 이동", href: "/dashboard/billing" },
+  },
+  {
+    id: "bill-4",
+    category: "billing",
+    question: "세금계산서를 발행받을 수 있나요?",
+    answer: "네, 사업자등록번호를 등록하면 결제 시 전자세금계산서가 자동 발행됩니다. 결제 관리 페이지에서 사업자 정보를 미리 등록해두면 편리합니다. 이전 거래에 대한 세금계산서도 요청할 수 있습니다.",
+    cta: { label: "결제 관리로 이동", href: "/dashboard/billing" },
+  },
+
+  // ── PDF/BOM/AI 분석 ──
+  {
+    id: "ai-1",
+    category: "ai-pdf",
+    question: "PDF 분석이 실패하면 어떻게 하나요?",
+    answer: "PDF 분석 실패의 주요 원인은 이미지 기반 스캔 PDF, 암호화된 파일, 손상된 파일입니다. 텍스트 선택이 가능한 PDF를 사용해주세요. 파일 크기 제한(50MB)도 확인해주세요. 문제가 지속되면 1:1 문의에 해당 파일 정보를 남겨주세요.",
+    guideLink: { label: "PDF 분석 가이드", href: "/dashboard/guide" },
+  },
+  {
+    id: "ai-2",
+    category: "ai-pdf",
+    question: "스캔본 PDF도 분석할 수 있나요?",
+    answer: "현재는 텍스트 기반 PDF만 지원합니다. 스캔본(이미지) PDF의 경우 OCR 처리가 필요하며, 이 기능은 향후 업데이트에서 지원 예정입니다. 스캔본을 텍스트 PDF로 변환한 후 업로드하면 분석이 가능합니다.",
+  },
+  {
+    id: "ai-3",
+    category: "ai-pdf",
+    question: "BOM 추출 결과가 정확하지 않은데 어떻게 수정하나요?",
+    answer: "BOM 추출 결과 화면에서 각 항목을 직접 편집할 수 있습니다. 품목명, 수량, 단위 등을 수정하고 불필요한 항목은 삭제할 수 있습니다. 수정 후 '확정'을 누르면 수정된 목록이 견적 요청에 사용됩니다.",
+    guideLink: { label: "BOM 추출 가이드", href: "/dashboard/guide" },
+  },
+  {
+    id: "ai-4",
+    category: "ai-pdf",
+    question: "AI 텍스트 대체는 어떤 경우에 유용한가요?",
+    answer: "약어('FBS' → 'Fetal Bovine Serum'), 구어체 표현, 불완전한 품목명을 정식 명칭으로 변환할 때 유용합니다. 검색 결과가 부정확하거나 원하는 품목이 나오지 않을 때 AI 대체 기능을 활용하면 정확도가 높아집니다.",
+    cta: { label: "검색에서 사용하기", href: "/dashboard/search" },
+  },
+
+  // ── 오류/실패 해결 ──
+  {
+    id: "err-1",
+    category: "error",
+    question: "페이지가 로딩되지 않거나 빈 화면이 나타납니다.",
+    answer: "브라우저 캐시를 삭제하고 새로고침(Ctrl+Shift+R)해주세요. 브라우저를 최신 버전으로 업데이트하는 것도 도움이 됩니다. Chrome, Edge, Safari 최신 버전을 권장합니다. 문제가 지속되면 브라우저 콘솔 스크린샷과 함께 1:1 문의해주세요.",
+  },
+  {
+    id: "err-2",
+    category: "error",
+    question: "파일 업로드가 계속 실패합니다.",
+    answer: "파일 크기(최대 50MB), 형식(PDF, CSV, XLSX), 네트워크 연결을 확인해주세요. VPN을 사용 중이라면 일시적으로 끄고 시도해보세요. 대용량 파일의 경우 안정적인 네트워크 환경에서 업로드하는 것을 권장합니다.",
+  },
+  {
+    id: "err-3",
+    category: "error",
+    question: "견적 요청 제출 시 오류가 발생합니다.",
+    answer: "필수 항목(품목명, 수량)이 모두 입력되었는지 확인해주세요. 특수문자가 포함된 경우 오류가 발생할 수 있으니 제거 후 다시 시도해주세요. 네트워크 상태를 확인하고, 문제가 지속되면 오류 메시지와 함께 1:1 문의를 남겨주세요.",
+  },
+  {
+    id: "err-4",
+    category: "error",
+    question: "초대 이메일이 도착하지 않습니다.",
+    answer: "스팸/정크 폴더를 확인해주세요. 조직 관리자에게 입력한 이메일 주소가 정확한지 재확인을 요청하세요. 회사 이메일 보안 정책으로 외부 메일이 차단될 수 있으니, IT 부서에 noreply@labaxis.io 도메인을 허용 목록에 추가해달라고 요청해보세요.",
   },
 ];
 
+/* ─────────────────────────── 컴포넌트 ─────────────────────────── */
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -130,6 +297,14 @@ export default function FAQPage() {
     });
   };
 
+  const expandAll = () => {
+    setExpandedIds(new Set(filteredFaqs.map((f) => f.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+  };
+
   const filteredFaqs = useMemo(() => {
     let items = FAQ_ITEMS;
     if (activeCategory !== "all") {
@@ -138,7 +313,9 @@ export default function FAQPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       items = items.filter(
-        (f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q)
+        (f) =>
+          f.question.toLowerCase().includes(q) ||
+          f.answer.toLowerCase().includes(q)
       );
     }
     return items;
@@ -149,50 +326,69 @@ export default function FAQPage() {
     return found?.label || cat;
   };
 
+  const getCategoryColor = (cat: string) => {
+    const colorMap: Record<string, string> = {
+      account: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+      "search-compare": "bg-blue-500/15 text-blue-400 border-blue-500/20",
+      "purchase-inventory": "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+      "org-role": "bg-amber-500/15 text-amber-400 border-amber-500/20",
+      notification: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
+      billing: "bg-pink-500/15 text-pink-400 border-pink-500/20",
+      "ai-pdf": "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
+      error: "bg-red-500/15 text-red-400 border-red-500/20",
+    };
+    return colorMap[cat] || "bg-slate-500/15 text-slate-400 border-slate-500/20";
+  };
+
   return (
-    <div className="flex-1 space-y-4 sm:space-y-6 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
-      {/* 페이지 헤더 */}
-      <div className="space-y-1 mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-          도움말 센터
+    <div className="flex-1 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
+      {/* ── 헤더 ── */}
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight mb-1">
+          자주 묻는 질문
         </h1>
-        <p className="text-sm text-slate-500 leading-relaxed hidden sm:block">
-          사용 중 자주 묻는 질문과 기능별 안내를 확인하세요.
+        <p className="text-sm text-slate-400 leading-relaxed">
+          사용 중 궁금한 점을 검색하거나 카테고리별로 찾아보세요. 원하는 답을 찾지 못하면 1:1 문의를 이용해주세요.
         </p>
       </div>
 
-      {/* 검색바 */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      {/* ── 검색바 ── */}
+      <div className="relative mb-5">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <Input
-          placeholder="질문 키워드로 검색 (예: 견적, 재고, 세금계산서)"
+          placeholder="질문 검색 (예: PDF 분석, 안전재고, 해지)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 border-slate-200 text-sm bg-white"
+          className="pl-10 h-11 bg-[#232329] border-[#2a2a31] text-slate-100 placeholder:text-slate-500 focus:border-[#323239] focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
-      {/* 카테고리 탭 */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+      {/* ── 카테고리 탭 ── */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide mb-5">
         {FAQ_CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const isActive = activeCategory === cat.value;
-          const count = cat.value === "all"
-            ? FAQ_ITEMS.length
-            : FAQ_ITEMS.filter((f) => f.category === cat.value).length;
+          const count =
+            cat.value === "all"
+              ? FAQ_ITEMS.length
+              : FAQ_ITEMS.filter((f) => f.category === cat.value).length;
           return (
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-[#1f1f25] border border-[#2a2a31] text-slate-400 hover:text-slate-200 hover:border-[#323239]"
               }`}
             >
-              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-400"}`} />
+              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
               {cat.label}
-              <span className={`text-[10px] ml-0.5 ${isActive ? "text-blue-200" : "text-slate-400"}`}>
+              <span
+                className={`text-[10px] ml-0.5 ${
+                  isActive ? "text-blue-200" : "text-slate-600"
+                }`}
+              >
                 {count}
               </span>
             </button>
@@ -200,80 +396,185 @@ export default function FAQPage() {
         })}
       </div>
 
-      {/* FAQ 목록 */}
-      <div className="space-y-2.5">
+      {/* ── 결과 헤더 ── */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-slate-500">
+          {searchQuery
+            ? `"${searchQuery}" 검색 결과 ${filteredFaqs.length}건`
+            : `${filteredFaqs.length}개의 질문`}
+        </p>
+        {filteredFaqs.length > 0 && (
+          <div className="flex gap-2">
+            <button
+              onClick={expandAll}
+              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              모두 펼치기
+            </button>
+            <span className="text-slate-600">|</span>
+            <button
+              onClick={collapseAll}
+              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              모두 접기
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── FAQ 목록 ── */}
+      <div className="space-y-2">
         {filteredFaqs.length === 0 ? (
-          <Card className="border-slate-200">
-            <CardContent className="py-12 text-center">
-              <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-600 mb-1">검색 결과가 없습니다</p>
-              <p className="text-xs text-slate-400">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
-            </CardContent>
-          </Card>
+          <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] py-16 text-center">
+            <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
+            <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
+            <p className="text-xs text-slate-500 mb-4">
+              다른 키워드로 검색하거나 카테고리를 변경해보세요.
+            </p>
+            <Link href="/dashboard/support">
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                1:1 문의하기
+              </Button>
+            </Link>
+          </div>
         ) : (
           filteredFaqs.map((faq) => {
             const isExpanded = expandedIds.has(faq.id);
             return (
-              <Card key={faq.id} className="border-slate-200 shadow-sm overflow-hidden">
+              <div
+                key={faq.id}
+                className={`rounded-xl border transition-all overflow-hidden ${
+                  isExpanded
+                    ? "bg-[#1f1f25] border-[#323239]"
+                    : "bg-[#1c1c21] border-[#2a2a31] hover:border-[#323239]"
+                }`}
+              >
+                {/* 질문 헤더 */}
                 <button
                   onClick={() => toggleExpand(faq.id)}
-                  className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 hover:bg-slate-50/50 transition-colors"
+                  className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 group"
                 >
-                  <HelpCircle className={`h-4.5 w-4.5 mt-0.5 flex-shrink-0 transition-colors ${isExpanded ? "text-blue-600" : "text-slate-400"}`} />
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      isExpanded
+                        ? "bg-blue-500/20"
+                        : "bg-[#232329]"
+                    }`}
+                  >
+                    <HelpCircle
+                      className={`h-3 w-3 transition-colors ${
+                        isExpanded ? "text-blue-400" : "text-slate-500"
+                      }`}
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-medium">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge
+                        className={`text-[10px] px-1.5 py-0 border font-medium ${getCategoryColor(
+                          faq.category
+                        )}`}
+                      >
                         {getCategoryBadge(faq.category)}
                       </Badge>
                     </div>
-                    <p className={`text-sm font-medium leading-snug ${isExpanded ? "text-blue-900" : "text-slate-800"}`}>
+                    <p
+                      className={`text-sm font-medium leading-snug transition-colors ${
+                        isExpanded
+                          ? "text-slate-100"
+                          : "text-slate-300 group-hover:text-slate-100"
+                      }`}
+                    >
                       {faq.question}
                     </p>
                   </div>
                   {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
+                    <ChevronUp className="h-4 w-4 text-slate-500 flex-shrink-0 mt-1" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
+                    <ChevronDown className="h-4 w-4 text-slate-600 flex-shrink-0 mt-1 group-hover:text-slate-400" />
                   )}
                 </button>
+
+                {/* 답변 */}
                 {isExpanded && (
-                  <CardContent className="pt-0 pb-4 px-4 md:px-5 ml-7 border-t border-slate-100">
-                    <p className="text-sm text-slate-600 leading-relaxed py-3">
+                  <div className="px-4 md:px-5 pb-4 ml-8 border-t border-[#2a2a31]">
+                    <p className="text-sm text-slate-400 leading-relaxed py-3">
                       {faq.answer}
                     </p>
-                    {faq.cta && (
-                      <Link href={faq.cta.href}>
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 mt-1">
-                          {faq.cta.label}
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                    )}
-                  </CardContent>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      {faq.guideLink && (
+                        <Link href={faq.guideLink.href}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs border-[#323239] text-slate-400 bg-transparent hover:bg-[#232329] hover:text-slate-200"
+                          >
+                            <BookOpen className="h-3 w-3" />
+                            {faq.guideLink.label}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </Button>
+                        </Link>
+                      )}
+                      {faq.cta && (
+                        <Link href={faq.cta.href}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs border-blue-500/30 text-blue-400 bg-transparent hover:bg-blue-500/10 hover:text-blue-300"
+                          >
+                            {faq.cta.label}
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </Card>
+              </div>
             );
           })
         )}
       </div>
 
-      {/* 하단 지원 연결 */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8">
+      {/* ── 하단 지원 ── */}
+      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-5 py-5 mt-8 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <LifeBuoy className="h-4.5 w-4.5 text-blue-600" />
+          <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+            <MessageSquare className="h-4 w-4 text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">원하는 답변을 찾지 못하셨나요?</p>
-            <p className="text-xs text-slate-500 mt-0.5">운영 지원 센터에서 1:1 문의를 남겨주세요. 담당자가 직접 확인 후 답변드립니다.</p>
+            <p className="text-sm font-semibold text-slate-200">
+              원하는 답변을 찾지 못하셨나요?
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              1:1 문의를 남겨주시면 담당자가 직접 확인 후 답변드립니다.
+            </p>
           </div>
         </div>
-        <Link href="/dashboard/support" className="flex-shrink-0">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-1.5 h-9">
-            <MessageSquare className="h-3.5 w-3.5" />
-            1:1 문의하기
-          </Button>
-        </Link>
+        <div className="flex gap-2.5 flex-shrink-0">
+          <Link href="/dashboard/guide">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] hover:text-slate-100"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              이용 가이드
+            </Button>
+          </Link>
+          <Link href="/dashboard/support">
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              1:1 문의하기
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

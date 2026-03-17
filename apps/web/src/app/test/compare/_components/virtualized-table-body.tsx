@@ -65,7 +65,7 @@ export function VirtualizedTableBody({
               transform: `translateY(${virtualRow.start}px)`,
             }}
           >
-                <TableCell className="sticky left-0 bg-white font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4 z-10">
+                <TableCell className="sticky left-0 bg-slate-900 font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4 z-10">
                   {field.label}
                 </TableCell>
                 {products.map((product: any) => {
@@ -153,12 +153,12 @@ export function VirtualizedTableBody({
                           </div>
                         ) : (
                           <div
-                            className="cursor-pointer hover:bg-slate-50 p-1 rounded"
+                            className="cursor-pointer hover:bg-slate-800 p-1 rounded"
                             onClick={() => onLeadTimeEdit(product.id, 0)}
                           >
                             {displayLeadTime && displayLeadTime > 0 ? `${displayLeadTime}일` : "-"}
                             {!manualLeadTime && averageLeadTime && (
-                              <span className="text-[9px] text-slate-500 ml-1">(평균)</span>
+                              <span className="text-[9px] text-slate-400 ml-1">(평균)</span>
                             )}
                           </div>
                         )}

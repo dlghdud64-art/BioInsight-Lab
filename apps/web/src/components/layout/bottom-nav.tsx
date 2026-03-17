@@ -44,7 +44,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 lg:hidden safe-area-bottom">
+      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-slate-800 bg-slate-950 lg:hidden safe-area-bottom">
         <div className="flex items-center justify-around h-14">
           {tabs.map((tab) => {
             const active = isActive(tab.href, tab.exact);
@@ -54,11 +54,11 @@ export function BottomNav() {
                 href={tab.href}
                 className={cn(
                   "relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-colors touch-manipulation",
-                  active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                  active ? "text-blue-400" : "text-slate-500"
                 )}
               >
                 {active && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-blue-400" />
                 )}
                 <tab.icon className="h-5 w-5" />
                 <span className="text-[10px] font-medium leading-none">{tab.label}</span>
@@ -73,12 +73,12 @@ export function BottomNav() {
             className={cn(
               "relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-colors touch-manipulation",
               isMoreActive || moreOpen
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-400 dark:text-slate-500"
+                ? "text-blue-400"
+                : "text-slate-500"
             )}
           >
             {isMoreActive && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-blue-400" />
             )}
             <MoreHorizontal className="h-5 w-5" />
             <span className="text-[10px] font-medium leading-none">더보기</span>

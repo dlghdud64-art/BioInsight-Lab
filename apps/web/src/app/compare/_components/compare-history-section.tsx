@@ -88,7 +88,7 @@ function CompareSubstatusBadge({ session }: { session: CompareSessionSummary }) 
   if (!def || def.isTerminal) return null;
 
   return (
-    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">
+    <Badge variant="outline" className="text-xs bg-purple-600/10 text-purple-400">
       {def.label}
     </Badge>
   );
@@ -97,16 +97,16 @@ function CompareSubstatusBadge({ session }: { session: CompareSessionSummary }) 
 function DownstreamProgressBadge({ progress }: { progress?: CompareSessionSummary["downstreamProgress"] }) {
   if (!progress || !progress.hasOrder) return null;
   if (progress.receivingComplete) {
-    return <Badge variant="outline" className="text-xs bg-green-50 text-green-700">입고 완료</Badge>;
+    return <Badge variant="outline" className="text-xs bg-green-600/10 text-green-400">입고 완료</Badge>;
   }
   if (progress.hasReceiving) {
-    return <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">입고 진행</Badge>;
+    return <Badge variant="outline" className="text-xs bg-blue-600/10 text-blue-400">입고 진행</Badge>;
   }
   const label = progress.orderStatus === "DELIVERED" ? "배송 완료"
     : progress.orderStatus === "SHIPPING" ? "배송 중"
     : progress.orderStatus === "CONFIRMED" ? "발주 확인"
     : "발주 진행";
-  return <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700">{label}</Badge>;
+  return <Badge variant="outline" className="text-xs bg-indigo-600/10 text-indigo-400">{label}</Badge>;
 }
 
 function relativeTime(dateStr: string | null): string {
@@ -153,7 +153,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
         {isLoading && (
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />
+              <div key={i} className="h-16 bg-slate-800 rounded-lg animate-pulse" />
             ))}
           </div>
         )}
@@ -170,7 +170,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
             {sessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group"
+                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-800 transition-colors cursor-pointer group"
                 onClick={() => onOpenSession(session)}
               >
                 <div className="flex-1 min-w-0">
@@ -191,7 +191,7 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                         isReopened: false,
                       });
                       return (
-                        <Badge variant="outline" className="text-xs text-slate-500">
+                        <Badge variant="outline" className="text-xs text-slate-400">
                           {RESOLUTION_PATH_LABELS[path]}
                         </Badge>
                       );
@@ -226,14 +226,14 @@ export function CompareHistorySection({ onOpenSession }: CompareHistorySectionPr
                         ? Math.floor((Date.now() - new Date(session.createdAt).getTime()) / 86400000)
                         : 0;
                       if (ageDays >= 7) {
-                        return <span className="text-[10px] text-orange-500 font-medium ml-1">{ageDays}일 대기</span>;
+                        return <span className="text-[10px] text-orange-400 font-medium ml-1">{ageDays}일 대기</span>;
                       }
                       return null;
                     })()}
                   </p>
                 </div>
 
-                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 shrink-0" />
+                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-400 shrink-0" />
               </div>
             ))}
           </div>
