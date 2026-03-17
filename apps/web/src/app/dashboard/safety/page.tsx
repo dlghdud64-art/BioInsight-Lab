@@ -56,23 +56,23 @@ import {
 const GHS_CONFIG: Record<string, { label: string; iconBg: string; iconColor: string }> = {
   corrosive: {
     label: "부식성 물질 (Corrosive)",
-    iconBg: "bg-red-100 dark:bg-red-900/40",
-    iconColor: "text-red-600 dark:text-red-400",
+    iconBg: "bg-red-900/40",
+    iconColor: "text-red-400",
   },
   toxic: {
     label: "독성 물질 (Toxic)",
-    iconBg: "bg-yellow-100 dark:bg-yellow-900/50",
-    iconColor: "text-slate-900 dark:text-yellow-300",
+    iconBg: "bg-yellow-900/50",
+    iconColor: "text-yellow-300",
   },
   flammable: {
     label: "인화성 물질 (Flammable)",
-    iconBg: "bg-red-100 dark:bg-red-900/40",
-    iconColor: "text-red-600 dark:text-red-400",
+    iconBg: "bg-red-900/40",
+    iconColor: "text-red-400",
   },
   oxidizer: {
     label: "산화성 물질 (Oxidizer)",
-    iconBg: "bg-yellow-100 dark:bg-yellow-900/40",
-    iconColor: "text-yellow-600 dark:text-yellow-500",
+    iconBg: "bg-yellow-900/40",
+    iconColor: "text-yellow-500",
   },
 };
 
@@ -80,8 +80,8 @@ const GHS_CONFIG: Record<string, { label: string; iconBg: string; iconColor: str
 function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
   const config = GHS_CONFIG[type] || {
     label: "경고 (Warning)",
-    iconBg: "bg-amber-100 dark:bg-amber-900/40",
-    iconColor: "text-amber-500 dark:text-amber-400",
+    iconBg: "bg-amber-900/40",
+    iconColor: "text-amber-400",
   };
   const base = `w-8 h-8 rounded-md flex-shrink-0 flex items-center justify-center ${config.iconBg} ${config.iconColor}`;
 
@@ -115,8 +115,8 @@ function GHSPictogram({ type }: { type: string; isHighRisk?: boolean }) {
 function PPEIcon({ type, required }: { type: string; required?: boolean }) {
   const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
   const active = required
-    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50"
-    : "text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800";
+    ? "text-blue-400 bg-blue-950/50"
+    : "text-slate-600 bg-slate-800";
   const label =
     type === "gloves"
       ? "보호장갑"
@@ -403,9 +403,9 @@ export default function SafetyManagerPage() {
   const msdsMissingCount = items.filter((i) => !i.hasMsds).length;
 
   const getBorderColor = (level: string) => {
-    if (level === "HIGH") return "!border-l-red-500 dark:!border-l-red-400";
-    if (level === "MEDIUM") return "!border-l-orange-500 dark:!border-l-orange-400";
-    return "!border-l-yellow-500 dark:!border-l-yellow-500";
+    if (level === "HIGH") return "!border-l-red-400";
+    if (level === "MEDIUM") return "!border-l-orange-400";
+    return "!border-l-yellow-500";
   };
 
   const handleExport = () => {
@@ -454,16 +454,16 @@ export default function SafetyManagerPage() {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className="p-1.5 sm:p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex-shrink-0">
-                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
+              <div className="p-1.5 sm:p-2 bg-amber-900/40 rounded-lg flex-shrink-0">
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-amber-400" />
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white truncate">안전 관리</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">안전 관리</h1>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+            <p className="text-xs text-slate-400 hidden sm:block">
               GMP/KOSHA 규격 대응. 고위험 물질, MSDS, 필수 보호구를 한눈에 관리합니다.
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs shrink-0 border-slate-200 dark:border-slate-700">
+          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs shrink-0 border-slate-700">
             <Download className="h-3.5 w-3.5 mr-1.5" />
             <span className="hidden sm:inline">CSV </span>내보내기
           </Button>
@@ -471,46 +471,46 @@ export default function SafetyManagerPage() {
 
         {/* 1. 상단 안전 요약 KPI */}
         <div className="grid gap-3 sm:gap-4 grid-cols-3">
-          <Card className="border-slate-200 dark:border-slate-800/50 shadow-sm bg-white dark:bg-slate-900">
+          <Card className="border-slate-800/50 shadow-sm bg-slate-900">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
-                <p className="text-[11px] sm:text-sm font-medium text-slate-600 dark:text-slate-400">전체 관리</p>
-                <p className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white">
-                  {totalCount}<span className="text-[10px] sm:text-sm font-normal text-slate-500 dark:text-slate-400 ml-0.5">종</span>
+                <p className="text-[11px] sm:text-sm font-medium text-slate-400">전체 관리</p>
+                <p className="text-xl sm:text-3xl font-bold text-white">
+                  {totalCount}<span className="text-[10px] sm:text-sm font-normal text-slate-400 ml-0.5">종</span>
                 </p>
               </div>
-              <ShieldAlert className="text-slate-400 dark:text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+              <ShieldAlert className="text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-red-100 dark:border-red-900/50 bg-red-50/20 dark:bg-red-950/30 shadow-sm">
+          <Card className="border-red-900/50 bg-red-950/30 shadow-sm">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
-                <p className="text-[11px] sm:text-sm font-medium text-red-600 dark:text-red-400">고위험</p>
-                <p className="text-xl sm:text-3xl font-bold text-red-700 dark:text-red-300">
-                  {highRiskCount}<span className="text-[10px] sm:text-sm font-normal text-red-500 dark:text-red-400 ml-0.5">종</span>
+                <p className="text-[11px] sm:text-sm font-medium text-red-400">고위험</p>
+                <p className="text-xl sm:text-3xl font-bold text-red-300">
+                  {highRiskCount}<span className="text-[10px] sm:text-sm font-normal text-red-400 ml-0.5">종</span>
                 </p>
               </div>
-              <Biohazard className="text-red-400 dark:text-red-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+              <Biohazard className="text-red-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/30 shadow-sm">
+          <Card className="border-amber-900/50 bg-amber-950/30 shadow-sm">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
-                <p className="text-[11px] sm:text-sm font-medium text-amber-600 dark:text-amber-400">MSDS 누락</p>
-                <p className="text-xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300">
-                  {msdsMissingCount}<span className="text-[10px] sm:text-sm font-normal text-amber-500 dark:text-amber-400 ml-0.5">종</span>
+                <p className="text-[11px] sm:text-sm font-medium text-amber-400">MSDS 누락</p>
+                <p className="text-xl sm:text-3xl font-bold text-amber-300">
+                  {msdsMissingCount}<span className="text-[10px] sm:text-sm font-normal text-amber-400 ml-0.5">종</span>
                 </p>
               </div>
-              <FileWarning className="text-amber-400 dark:text-amber-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+              <FileWarning className="text-amber-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
         </div>
 
         {/* 슬림 필터 바 */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 py-3 px-3 sm:px-4 border rounded-lg border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 py-3 px-3 sm:px-4 border rounded-lg border-slate-800/50 bg-slate-900">
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select value={riskFilter} onValueChange={setRiskFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
                 <SelectValue placeholder="위험 등급" />
               </SelectTrigger>
               <SelectContent>
@@ -521,7 +521,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={msdsFilter} onValueChange={setMsdsFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
                 <SelectValue placeholder="MSDS 상태" />
               </SelectTrigger>
               <SelectContent>
@@ -531,7 +531,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
                 <SelectValue placeholder="보관 장소" />
               </SelectTrigger>
               <SelectContent>
@@ -545,35 +545,35 @@ export default function SafetyManagerPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              className="pl-9 h-9 text-xs border-slate-200 dark:border-slate-700"
+              className="pl-9 h-9 text-xs border-slate-700"
               placeholder="물질명 또는 CAS 번호 검색..."
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+        <p className="text-xs text-slate-400 -mt-2">
           총 {filteredItems.length}개 제품이 검색되었습니다.
         </p>
 
         {/* 2. 고도화된 제품 리스트 (antialiased 텍스트, 선명한 아이콘) */}
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-900 antialiased">
+        <Card className="shadow-sm border-slate-800/50 bg-slate-900 antialiased">
           <CardHeader>
-            <CardTitle className="text-lg dark:text-white">관리 대상 물질 리스트</CardTitle>
-            <CardDescription className="dark:text-slate-400">
+            <CardTitle className="text-lg text-white">관리 대상 물질 리스트</CardTitle>
+            <CardDescription className="text-slate-400">
               위험 등급별 컬러 바, GHS 픽토그램, 필수 보호구(PPE)를 확인하세요.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {filteredItems.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
+              <div className="text-center py-12 text-slate-400 text-sm">
                 조건에 맞는 데이터가 없습니다.
               </div>
             ) : (
               <div className="space-y-2 antialiased">
                 {filteredItems.map((item) => {
                   const riskBadge = item.level === "HIGH"
-                    ? { label: "고위험", cls: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800" }
+                    ? { label: "고위험", cls: "bg-red-900/40 text-red-300 border-red-800" }
                     : item.level === "MEDIUM"
                       ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800" }
                       : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" };
@@ -599,7 +599,7 @@ export default function SafetyManagerPage() {
                           ))}
                         </div>
                         <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 font-mono">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-700 font-mono">
                           {item.cas}
                         </Badge>
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
@@ -611,7 +611,7 @@ export default function SafetyManagerPage() {
                       </div>
 
                       {/* 2행: 운영 메타 정보 */}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-400">
                         <span>보관: {item.loc}</span>
                         <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
                         <span className="hidden sm:inline">조건: {item.storageCondition}</span>
@@ -619,7 +619,7 @@ export default function SafetyManagerPage() {
                         <span>MSDS: {item.hasMsds ? (
                           <span className="text-emerald-600 dark:text-emerald-400">등록</span>
                         ) : (
-                          <span className="text-amber-600 dark:text-amber-400">미등록</span>
+                          <span className="text-amber-400">미등록</span>
                         )}</span>
                         <span className="text-slate-300 dark:text-slate-600">·</span>
                         <span>점검: {item.lastInspection || <span className="text-amber-500">미점검</span>}</span>
@@ -856,10 +856,10 @@ export default function SafetyManagerPage() {
             <div className="space-y-3 py-2">
               <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
                 <p className="text-sm font-medium text-red-800 dark:text-red-300">{disposeTarget.name}</p>
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">CAS: {disposeTarget.cas}</p>
-                <p className="text-xs text-red-600 dark:text-red-400">보관: {disposeTarget.storageCondition} · 위치: {disposeTarget.loc}</p>
+                <p className="text-xs text-red-400 mt-1">CAS: {disposeTarget.cas}</p>
+                <p className="text-xs text-red-400">보관: {disposeTarget.storageCondition} · 위치: {disposeTarget.loc}</p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-slate-400">
                 폐기 전 MSDS에 명시된 폐기 절차를 반드시 확인하세요. 폐기 후 관련 법규에 따라 폐기 기록을 별도 보관해야 합니다.
               </p>
             </div>
