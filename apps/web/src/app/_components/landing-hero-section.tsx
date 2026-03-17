@@ -22,27 +22,27 @@ export function LandingHeroSection() {
   return (
     <section className="relative w-full pt-28 md:pt-36 pb-14 md:pb-20 bg-[#070a0e] border-b border-[#1a1e24]">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
-        <div className="max-w-3xl mx-auto text-center space-y-5">
+        <div className="max-w-3xl mx-auto text-center">
           {/* Eyebrow */}
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400 mb-5">
             연구 구매 운영 플랫폼
           </p>
 
           {/* Headline */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-100 leading-[1.25] break-keep">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-slate-100 leading-[1.3] break-keep mb-6 md:mb-8">
             시약·장비 구매 운영을
             <br />
             <span className="text-blue-400">하나의 흐름</span>으로 연결합니다
           </h1>
 
           {/* Sub */}
-          <p className="text-sm md:text-base text-[#9ca3af] max-w-xl mx-auto leading-relaxed break-keep">
+          <p className="text-sm md:text-base text-[#9ca3af] max-w-xl mx-auto leading-relaxed break-keep mb-8 md:mb-10">
             검색, 비교, 견적, 발주, 입고, 재고 운영까지 — 분절된 연구 구매 업무를
             하나의 플랫폼에서 이어지는 운영 체계로 정리하세요.
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
             <Link href="/test/search">
               <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm">
                 시약·장비 검색 시작하기
@@ -57,7 +57,7 @@ export function LandingHeroSection() {
           </div>
 
           {/* Compact Search */}
-          <form onSubmit={handleSearch} className="flex items-center h-10 max-w-md mx-auto border border-[#1e2228] rounded-md bg-[#121619] px-3 focus-within:ring-1 focus-within:ring-blue-600/40 focus-within:border-blue-600/40 transition-all">
+          <form onSubmit={handleSearch} className="flex items-center h-10 max-w-md mx-auto border border-[#1e2228] rounded-md bg-[#121619] px-3 focus-within:ring-1 focus-within:ring-blue-600/40 focus-within:border-blue-600/40 transition-all mt-0">
             <Search className="h-4 w-4 text-[#4b5563] flex-shrink-0" />
             <input
               type="text"

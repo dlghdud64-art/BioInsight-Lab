@@ -23,10 +23,10 @@ export function LandingProblemSolution() {
     <section className="py-14 md:py-20 bg-[#070a0e]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-4">
             Why LabAxis
           </p>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight leading-tight break-keep">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight leading-[1.4] break-keep">
             반복되는 구매 업무의 병목,
             <br />LabAxis가 운영 체계로 연결합니다
           </h2>

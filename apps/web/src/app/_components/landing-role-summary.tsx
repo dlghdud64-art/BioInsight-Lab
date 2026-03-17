@@ -32,10 +32,10 @@ export function LandingRoleSummary() {
     <section className="py-14 md:py-20 bg-[#0a0d11] border-t border-[#1a1e24]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-4">
             Value by Role
           </p>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight leading-tight break-keep">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight leading-[1.4] break-keep">
             역할마다 빠르게 시작하고,
             <br />역할마다 확실하게 통제합니다
           </h2>
