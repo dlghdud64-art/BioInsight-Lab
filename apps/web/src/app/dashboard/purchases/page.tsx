@@ -17,8 +17,16 @@ import {
   ShoppingCart, TrendingUp, TrendingDown, AlertTriangle, BarChart2,
   RefreshCw, Store, ArrowUpRight, CreditCard, Building2,
   Repeat, AlertCircle, CheckCircle2, PackageCheck, ClipboardList,
-  ListFilter, Eye,
+  ListFilter, Eye, Clock, MoreHorizontal,
+  GitCompareArrows, Truck, CircleCheck,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/app/_components/page-header";
 import { CsvUploadTab } from "@/components/purchases/csv-upload-tab";
@@ -82,6 +90,7 @@ export default function PurchasesPage() {
   const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null);
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [queueTab, setQueueTab] = useState<string>("all");
 
   // 구매 내역 등록 폼 상태
   const [vendorName, setVendorName] = useState("");
@@ -569,6 +578,60 @@ export default function PurchasesPage() {
     };
   }, [purchasesData?.items, repeatPurchaseMap, evidenceChecklist]);
 
+  // ── 운영 현황 큐 통계 ──
+  const queueStats = useMemo(() => {
+    const items = purchasesData?.items || [];
+    const now = Date.now();
+    const msStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+
+    let pendingApproval = 0;
+    let processingDelay = 0;
+    let followUpNeeded = 0;
+    let thisMonthSpend = 0;
+    let processingCount = 0;
+    let receivingWait = 0;
+    let completedCount = 0;
+
+    for (const p of items) {
+      const days = Math.floor((now - new Date(p.purchasedAt).getTime()) / 86400000);
+      const amt = p.amount || 0;
+
+      if (new Date(p.purchasedAt).getTime() >= msStart) {
+        thisMonthSpend += amt;
+      }
+
+      // 승인 대기: 고액 & 7일 이내 & 증빙 미완
+      if (amt >= 2000000 && days <= 7) {
+        const done = getEvidenceCompletionCount(p.id);
+        if (done < EVIDENCE_ITEMS.length) pendingApproval++;
+      }
+
+      // 처리 지연: 14일 초과 & 고액 & 증빙 미완
+      if (days > 14 && amt >= 2000000) {
+        const done = getEvidenceCompletionCount(p.id);
+        if (done < EVIDENCE_ITEMS.length) processingDelay++;
+      }
+
+      const { purchaseStatus, followUpStatus } = getDualStatus(p);
+
+      // 후속 처리 필요
+      if (followUpStatus && followUpStatus.label !== "정산 완료") {
+        followUpNeeded++;
+      }
+
+      // 큐 분류
+      if (purchaseStatus.label === "입고 대기") {
+        receivingWait++;
+      } else if (followUpStatus && followUpStatus.label !== "정산 완료") {
+        processingCount++;
+      } else {
+        completedCount++;
+      }
+    }
+
+    return { pendingApproval, processingDelay, followUpNeeded, thisMonthSpend, processingCount, receivingWait, completedCount };
+  }, [purchasesData?.items, evidenceChecklist]);
+
   // ── 고유 카테고리 목록 ──
   const uniqueCategories = useMemo(() => {
     if (!purchasesData?.items) return [];
@@ -598,6 +661,29 @@ export default function PurchasesPage() {
 
     return filtered;
   }, [filteredPurchases, selectedCategory, selectedStatus, evidenceChecklist]);
+
+  // ── 큐 탭 필터링 ──
+  const queueFilteredPurchases = useMemo(() => {
+    if (queueTab === "all") return enhancedFilteredPurchases;
+
+    return enhancedFilteredPurchases.filter((p: any) => {
+      const { purchaseStatus, followUpStatus } = getDualStatus(p);
+      const amt = p.amount || 0;
+
+      switch (queueTab) {
+        case "pending":
+          return amt >= 2000000 && getEvidenceCompletionCount(p.id) < EVIDENCE_ITEMS.length;
+        case "processing":
+          return followUpStatus && followUpStatus.label !== "정산 완료" && purchaseStatus.label !== "입고 대기";
+        case "receiving":
+          return purchaseStatus.label === "입고 대기";
+        case "completed":
+          return purchaseStatus.label === "구매 완료" && (!followUpStatus || followUpStatus.label === "정산 완료");
+        default:
+          return true;
+      }
+    });
+  }, [enhancedFilteredPurchases, queueTab, evidenceChecklist]);
 
   // 활성 필터 개수 (모바일 필터 바 표시용)
   const activeFilterCount = useMemo(() => {
@@ -709,15 +795,32 @@ export default function PurchasesPage() {
       header: "",
       cell: ({ row }) => {
         const purchase = row.original;
-        const { followUpStatus } = getDualStatus(purchase);
-        if (!followUpStatus?.action) return null;
+        const { purchaseStatus, followUpStatus } = getDualStatus(purchase);
+        const isPending = purchaseStatus.label === "입고 대기";
+        const needsEvidence = followUpStatus?.action === "증빙 파일 등록" || followUpStatus?.action === "회계팀 전달";
+        const needsInventory = followUpStatus?.action === "재고로 반영";
+
         return (
           <div className="flex items-center gap-1">
-            {followUpStatus.action === "재고로 반영" && (
+            {isPending && needsEvidence && (
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30 gap-1 whitespace-nowrap"
+                className="h-7 text-[11px] text-amber-400 hover:bg-amber-950/30 gap-1 whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id);
+                }}
+              >
+                <CircleCheck className="h-3 w-3" />
+                승인 확인
+              </Button>
+            )}
+            {needsInventory && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px] text-violet-400 hover:bg-violet-950/30 gap-1 whitespace-nowrap"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`);
@@ -727,20 +830,66 @@ export default function PurchasesPage() {
                 재고 반영
               </Button>
             )}
-            {(followUpStatus.action === "증빙 파일 등록" || followUpStatus.action === "회계팀 전달") && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 gap-1 whitespace-nowrap"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id);
-                }}
-              >
-                <ClipboardList className="h-3 w-3" />
-                증빙 확인
-              </Button>
-            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-slate-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 bg-slate-900 border-slate-800">
+                {isPending && !needsEvidence && (
+                  <DropdownMenuItem
+                    className="text-xs gap-2 text-slate-300 focus:bg-slate-800 focus:text-slate-100"
+                    onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                  >
+                    <CircleCheck className="h-3.5 w-3.5" />
+                    승인 확인
+                  </DropdownMenuItem>
+                )}
+                {purchase.vendorName && (
+                  <DropdownMenuItem
+                    className="text-xs gap-2 text-slate-300 focus:bg-slate-800 focus:text-slate-100"
+                    onClick={() => router.push(`/dashboard/analytics?vendor=${encodeURIComponent(purchase.vendorName)}`)}
+                  >
+                    <Building2 className="h-3.5 w-3.5" />
+                    공급사 확인
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuItem
+                  className="text-xs gap-2 text-slate-300 focus:bg-slate-800 focus:text-slate-100"
+                  onClick={() => router.push("/test/compare")}
+                >
+                  <GitCompareArrows className="h-3.5 w-3.5" />
+                  비교 재진입
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-xs gap-2 text-slate-300 focus:bg-slate-800 focus:text-slate-100"
+                  onClick={() => router.push(`/dashboard/purchases/order?item=${encodeURIComponent(purchase.itemName || "")}&vendor=${encodeURIComponent(purchase.vendorName || "")}`)}
+                >
+                  <Truck className="h-3.5 w-3.5" />
+                  발주 진행
+                </DropdownMenuItem>
+                {needsEvidence && (
+                  <>
+                    <DropdownMenuSeparator className="bg-slate-800" />
+                    <DropdownMenuItem
+                      className="text-xs gap-2 text-amber-400 focus:bg-amber-950/30 focus:text-amber-300"
+                      onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                    >
+                      <ClipboardList className="h-3.5 w-3.5" />
+                      증빙 확인
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },
@@ -781,6 +930,105 @@ export default function PurchasesPage() {
       {/* Purchase Summary - 로그인 유저 또는 guestKey 보유 시 표시 */}
       {(!!session || !!guestKey) && (
         <>
+          {/* ══ 1.5 운영 현황 (Operations Status) ══ */}
+          <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
+              운영 현황
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button
+                type="button"
+                onClick={() => { setQueueTab("pending"); setSelectedStatus("all"); }}
+                className="flex items-start gap-3 rounded-md border border-slate-800 bg-slate-800/50 p-3 text-left hover:bg-slate-800 transition-colors"
+              >
+                <Clock className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500 font-medium">승인 대기</p>
+                  <p className="text-lg font-bold text-slate-100 mt-0.5">
+                    {summaryLoading ? "..." : `${queueStats.pendingApproval}건`}
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setQueueTab("processing"); setSelectedStatus("all"); }}
+                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-slate-800 transition-colors ${
+                  queueStats.processingDelay > 0
+                    ? "border-red-900/50 bg-red-950/20"
+                    : "border-slate-800 bg-slate-800/50"
+                }`}
+              >
+                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500 font-medium">처리 지연</p>
+                  <p className={`text-lg font-bold mt-0.5 ${queueStats.processingDelay > 0 ? "text-red-400" : "text-slate-100"}`}>
+                    {summaryLoading ? "..." : `${queueStats.processingDelay}건`}
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setQueueTab("processing"); setSelectedStatus("all"); }}
+                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-slate-800 transition-colors ${
+                  queueStats.followUpNeeded > 0
+                    ? "border-amber-900/50 bg-amber-950/10"
+                    : "border-slate-800 bg-slate-800/50"
+                }`}
+              >
+                <ClipboardList className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500 font-medium">후속 처리 필요</p>
+                  <p className={`text-lg font-bold mt-0.5 ${queueStats.followUpNeeded > 0 ? "text-amber-400" : "text-slate-100"}`}>
+                    {summaryLoading ? "..." : `${queueStats.followUpNeeded}건`}
+                  </p>
+                </div>
+              </button>
+
+              <div className="flex items-start gap-3 rounded-md border border-slate-800 bg-slate-800/50 p-3">
+                <DollarSign className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500 font-medium">이번 달 구매</p>
+                  <p className="text-lg font-bold text-slate-100 mt-0.5">
+                    {summaryLoading ? "..." : formatCurrency(queueStats.thisMonthSpend)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ 1.6 큐 세분화 탭 ══ */}
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {[
+              { key: "all", label: "전체", count: enhancedFilteredPurchases.length },
+              { key: "pending", label: "승인 대기", count: queueStats.pendingApproval },
+              { key: "processing", label: "처리 중", count: queueStats.processingCount },
+              { key: "receiving", label: "입고 대기", count: queueStats.receivingWait },
+              { key: "completed", label: "완료", count: queueStats.completedCount },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setQueueTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                  queueTab === tab.key
+                    ? "bg-slate-800 text-slate-100 border border-slate-700"
+                    : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent"
+                }`}
+              >
+                {tab.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                  queueTab === tab.key
+                    ? "bg-slate-700 text-slate-300"
+                    : "bg-slate-800/50 text-slate-500"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* ══ 2. 운영 KPI 카드 ══ */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* 이번 달 발주 */}
@@ -1064,16 +1312,17 @@ export default function PurchasesPage() {
                 <p className="text-sm text-slate-400">구매 내역을 불러오는 중...</p>
               </CardContent>
             </Card>
-          ) : enhancedFilteredPurchases.length > 0 ? (
+          ) : queueFilteredPurchases.length > 0 ? (
             <>
               {/* Desktop: DataTable */}
-              <Card className="hidden md:block rounded-xl border-slate-200/60 dark:border-slate-800/50 shadow-sm bg-white dark:bg-[#161d2f] overflow-hidden">
+              <Card className="hidden md:block rounded-xl border-slate-800/50 shadow-none bg-[#161d2f] overflow-hidden">
                 <CardHeader className="p-4 pb-0">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">구매 내역</CardTitle>
-                      <CardDescription className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                        총 {enhancedFilteredPurchases.length}건
+                      <CardTitle className="text-sm font-semibold text-slate-200">구매 내역</CardTitle>
+                      <CardDescription className="text-[11px] text-slate-500 mt-0.5">
+                        총 {queueFilteredPurchases.length}건
+                        {queueTab !== "all" && ` · ${({ pending: "승인 대기", processing: "처리 중", receiving: "입고 대기", completed: "완료" } as Record<string, string>)[queueTab] || ""}`}
                         {selectedVendor !== "all" && ` · ${selectedVendor}`}
                         {selectedStatus !== "all" && ` · ${selectedStatus}`}
                       </CardDescription>
@@ -1083,7 +1332,7 @@ export default function PurchasesPage() {
                 <CardContent className="p-4 pt-3">
                   <DataTable
                     columns={columns}
-                    data={enhancedFilteredPurchases}
+                    data={queueFilteredPurchases}
                     searchKey="itemName"
                     searchPlaceholder="품명 검색"
                   />
@@ -1093,13 +1342,14 @@ export default function PurchasesPage() {
               {/* Mobile: Card list */}
               <div className="md:hidden space-y-2">
                 <div className="flex items-center justify-between px-1">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    총 {enhancedFilteredPurchases.length}건
+                  <p className="text-xs text-slate-400">
+                    총 {queueFilteredPurchases.length}건
+                    {queueTab !== "all" && ` · ${({ pending: "승인 대기", processing: "처리 중", receiving: "입고 대기", completed: "완료" } as Record<string, string>)[queueTab] || ""}`}
                     {selectedVendor !== "all" && ` · ${selectedVendor}`}
                     {selectedStatus !== "all" && ` · ${selectedStatus}`}
                   </p>
                 </div>
-                {enhancedFilteredPurchases.map((purchase: any) => {
+                {queueFilteredPurchases.map((purchase: any) => {
                   const { purchaseStatus, followUpStatus } = getDualStatus(purchase);
                   const repeatKey = (purchase.itemName || "").toLowerCase();
                   const repeatCount = repeatPurchaseMap.get(repeatKey) || 0;
@@ -1148,38 +1398,58 @@ export default function PurchasesPage() {
                         )}
                       </div>
 
-                      {/* Row 6: 상세 보기 / 액션 */}
-                      <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                      {/* Row 6: 액션 버튼 */}
+                      <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-800 flex-wrap">
+                        {purchaseStatus.label === "입고 대기" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-[11px] text-amber-400 hover:bg-amber-950/30 gap-1"
+                            onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                          >
+                            <CircleCheck className="h-3 w-3" />
+                            승인 확인
+                          </Button>
+                        )}
                         {followUpStatus?.action === "재고로 반영" && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30 gap-1"
+                            className="h-7 text-[11px] text-violet-400 hover:bg-violet-950/30 gap-1"
                             onClick={() => router.push(`/dashboard/inventory?purchase-receiving=${purchase.id}`)}
                           >
                             <PackageCheck className="h-3 w-3" />
                             재고 반영
                           </Button>
                         )}
-                        {(followUpStatus?.action === "증빙 파일 등록" || followUpStatus?.action === "회계팀 전달") && (
+                        {purchase.vendorName && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-[11px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 gap-1"
-                            onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
+                            className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-slate-800 gap-1"
+                            onClick={() => router.push(`/dashboard/analytics?vendor=${encodeURIComponent(purchase.vendorName)}`)}
                           >
-                            <ClipboardList className="h-3 w-3" />
-                            증빙 확인
+                            <Building2 className="h-3 w-3" />
+                            공급사
                           </Button>
                         )}
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 text-[11px] text-slate-500 hover:text-slate-700 gap-1 ml-auto"
+                          className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-slate-800 gap-1"
+                          onClick={() => router.push("/test/compare")}
+                        >
+                          <GitCompareArrows className="h-3 w-3" />
+                          비교
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-[11px] text-slate-500 hover:text-slate-300 gap-1 ml-auto"
                           onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
                         >
                           <Eye className="h-3 w-3" />
-                          상세 보기
+                          상세
                         </Button>
                       </div>
                     </div>
