@@ -30,7 +30,7 @@ const TRUST_ITEMS = [
 
 export function TrustSection() {
   return (
-    <section className="py-16 md:py-24 bg-[#0a0d11] border-t border-[#1a1e24]">
+    <section className="py-16 md:py-24 bg-[#0c0c0f] border-t border-[#1e1e23]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-3">
@@ -43,17 +43,17 @@ export function TrustSection() {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border border-[#1e2228] rounded-md overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border border-[#242429] rounded-md overflow-hidden">
             {TRUST_ITEMS.map((item, idx) => {
               const Icon = item.icon;
               const isLast = idx === TRUST_ITEMS.length - 1;
               return (
                 <div
                   key={item.title}
-                  className={`p-4 md:p-5 bg-[#121619] ${!isLast ? "border-b md:border-b lg:border-b-0 lg:border-r border-[#1e2228]" : ""} ${idx === 3 ? "lg:border-b lg:border-r" : ""} ${idx === 4 ? "lg:col-span-1" : ""}`}
+                  className={`p-4 md:p-5 bg-[#131316] ${!isLast ? "border-b md:border-b lg:border-b-0 lg:border-r border-[#242429]" : ""} ${idx === 3 ? "lg:border-b lg:border-r" : ""} ${idx === 4 ? "lg:col-span-1" : ""}`}
                 >
                   <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className="w-7 h-7 rounded-md bg-[#181c22] border border-[#1e2228] flex items-center justify-center flex-shrink-0">
+                    <div className="w-7 h-7 rounded-md bg-[#1a1a1e] border border-[#242429] flex items-center justify-center flex-shrink-0">
                       <Icon className="h-3.5 w-3.5 text-[#9ca3af]" />
                     </div>
                     <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>

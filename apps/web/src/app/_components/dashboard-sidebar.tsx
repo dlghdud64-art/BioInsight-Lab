@@ -184,7 +184,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-[#1a1e24] flex-shrink-0">
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-[#1e1e23] flex-shrink-0">
         <Link
           href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
@@ -226,7 +226,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
                     active
                       ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                      : "text-slate-400 hover:bg-[#181c22] hover:text-slate-200"
+                      : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
                   )}
                 >
                   <Icon className={cn("h-4 w-4 flex-shrink-0", active ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
@@ -258,13 +258,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
                         isActive
                           ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                          : "text-slate-400 hover:bg-[#181c22] hover:text-slate-200"
+                          : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
                       )}
                     >
                       <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? (item.activeTint || "text-blue-400") : (item.tint || "text-slate-500"))} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs bg-[#1a1e24] text-slate-400 px-1.5 py-0.5 rounded">
+                        <span className="ml-auto text-[10px] md:text-xs bg-[#1e1e23] text-slate-400 px-1.5 py-0.5 rounded">
                           {item.badge}
                         </span>
                       )}
@@ -278,7 +278,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-[#1a1e24]">
+          <div className="mt-8 pt-6 border-t border-[#1e1e23]">
             <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               시스템 관리
             </p>
@@ -295,7 +295,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded text-xs md:text-sm font-medium transition-colors",
                       isActive
                         ? "bg-blue-600/10 text-slate-100 border-l-2 border-l-blue-500"
-                        : "text-slate-400 hover:bg-[#181c22] hover:text-slate-200"
+                        : "text-slate-400 hover:bg-[#1a1a1e] hover:text-slate-200"
                     )}
                   >
                     <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
@@ -308,7 +308,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         )}
 
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-[#1a1e24]">
+        <div className="mt-8 pt-6 border-t border-[#1e1e23]">
           <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
             LabAxis
           </p>
@@ -322,7 +322,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-[#181c22] hover:text-white transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-[#1a1a1e] hover:text-white transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -332,11 +332,11 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       </div>
 
       {/* 하단 고정 영역 */}
-      <div className="mt-auto p-4 border-t border-[#1a1e24] flex-shrink-0">
+      <div className="mt-auto p-4 border-t border-[#1e1e23] flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded text-slate-500 hover:text-slate-300 hover:bg-[#181c22] transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded text-slate-500 hover:text-slate-300 hover:bg-[#1a1a1e] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-xs font-medium truncate whitespace-nowrap">
@@ -350,7 +350,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   return (
     <>
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[#070a0e] border-r border-[#1a1e24] z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[#09090b] border-r border-[#1e1e23] z-30">
         <SidebarContent />
       </aside>
 
@@ -363,7 +363,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-[#070a0e] border-r border-[#1a1e24] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-[#09090b] border-r border-[#1e1e23] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

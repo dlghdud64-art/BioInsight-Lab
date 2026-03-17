@@ -10,7 +10,7 @@ const TRUST_POINTS = [
 
 export function LandingTrustBar() {
   return (
-    <section className="py-5 md:py-6 bg-[#0a0d11] border-b border-[#1a1e24]">
+    <section className="py-5 md:py-6 bg-[#0c0c0f] border-b border-[#1e1e23]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           {TRUST_POINTS.map((item) => {

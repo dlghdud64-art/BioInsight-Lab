@@ -5,27 +5,27 @@ import dynamic from "next/dynamic";
 
 const OpsFlowSection = dynamic(
   () => import("../_components/ops-flow-section").then((mod) => ({ default: mod.OpsFlowSection })),
-  { loading: () => <div className="h-96 w-full bg-[#070a0e]" /> }
+  { loading: () => <div className="h-96 w-full bg-[#09090b]" /> }
 );
 
 const OpsEvidenceSection = dynamic(
   () => import("../_components/ops-evidence-section").then((mod) => ({ default: mod.OpsEvidenceSection })),
-  { loading: () => <div className="h-64 w-full bg-[#0a0d11]" /> }
+  { loading: () => <div className="h-64 w-full bg-[#0c0c0f]" /> }
 );
 
 const RoleValueSection = dynamic(
   () => import("../_components/role-value-section").then((mod) => ({ default: mod.RoleValueSection })),
-  { loading: () => <div className="h-64 w-full bg-[#070a0e]" /> }
+  { loading: () => <div className="h-64 w-full bg-[#09090b]" /> }
 );
 
 const TrustSection = dynamic(
   () => import("../_components/trust-section").then((mod) => ({ default: mod.TrustSection })),
-  { loading: () => <div className="h-64 w-full bg-[#0a0d11]" /> }
+  { loading: () => <div className="h-64 w-full bg-[#0c0c0f]" /> }
 );
 
 const FinalCTASection = dynamic(
   () => import("../_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-[#070a0e]" /> }
+  { loading: () => <div className="h-64 w-full bg-[#09090b]" /> }
 );
 
 export default function IntroPage() {
@@ -34,7 +34,7 @@ export default function IntroPage() {
       <MainHeader />
       <div className="w-full">
         {/* Intro Hero — 간결한 도입 */}
-        <section className="pt-28 md:pt-36 pb-10 md:pb-14 bg-[#070a0e] border-b border-[#1a1e24]">
+        <section className="pt-28 md:pt-36 pb-10 md:pb-14 bg-[#09090b] border-b border-[#1e1e23]">
           <div className="container px-4 md:px-6 mx-auto text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-400 mb-3">
               제품 소개

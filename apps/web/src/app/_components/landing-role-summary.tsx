@@ -29,7 +29,7 @@ const ROLES = [
 
 export function LandingRoleSummary() {
   return (
-    <section className="py-14 md:py-20 bg-[#0a0d11] border-t border-[#1a1e24]">
+    <section className="py-14 md:py-20 bg-[#0c0c0f] border-t border-[#1e1e23]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-4">
@@ -47,9 +47,9 @@ export function LandingRoleSummary() {
             return (
               <div
                 key={r.role}
-                className="bg-[#121619] border border-[#1e2228] rounded-md p-4 flex items-start gap-3 hover:border-[#2a2e35] transition-colors"
+                className="bg-[#131316] border border-[#242429] rounded-md p-4 flex items-start gap-3 hover:border-[#2a2e35] transition-colors"
               >
-                <div className="w-8 h-8 rounded-md bg-[#181c22] border border-[#1e2228] flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-md bg-[#1a1a1e] border border-[#242429] flex items-center justify-center flex-shrink-0">
                   <Icon className={`h-4 w-4 ${r.color}`} />
                 </div>
                 <div className="min-w-0">

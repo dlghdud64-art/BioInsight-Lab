@@ -20,7 +20,7 @@ const PROBLEMS = [
 
 export function LandingProblemSolution() {
   return (
-    <section className="py-14 md:py-20 bg-[#070a0e]">
+    <section className="py-14 md:py-20 bg-[#09090b]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-4">
@@ -36,16 +36,16 @@ export function LandingProblemSolution() {
           {PROBLEMS.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.problem} className="bg-[#121619] border border-[#1e2228] rounded-md p-4 md:p-5">
+              <div key={item.problem} className="bg-[#131316] border border-[#242429] rounded-md p-4 md:p-5">
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-7 h-7 rounded-md bg-[#181c22] border border-[#1e2228] flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-[#1a1a1e] border border-[#242429] flex items-center justify-center flex-shrink-0">
                     <Icon className="h-3.5 w-3.5 text-red-400" />
                   </div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-[#4b5563]">기존 문제</p>
                 </div>
                 <p className="text-xs text-[#9ca3af] leading-relaxed mb-4 break-keep">{item.problem}</p>
 
-                <div className="border-t border-[#1e2228] pt-3">
+                <div className="border-t border-[#242429] pt-3">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-slate-200 font-medium leading-relaxed break-keep">{item.solution}</p>

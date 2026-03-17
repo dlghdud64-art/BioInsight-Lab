@@ -17,7 +17,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen">
       {/* ── LEFT PANEL (desktop only) ── */}
-      <div className="hidden lg:flex w-1/2 bg-[#060a12] relative min-h-screen flex-col overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-[#08090c] relative min-h-screen flex-col overflow-hidden">
         {/* Brand top-left */}
         <div className="pt-10 pl-12">
           <Link href="/" className="inline-block">
@@ -70,7 +70,7 @@ function SignInContent() {
       </div>
 
       {/* ── RIGHT AUTH PANEL ── */}
-      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-[#0a0d11]">
+      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-[#0c0c0f]">
         {/* Mobile brand */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/">
@@ -81,7 +81,7 @@ function SignInContent() {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="max-w-md w-full">
             {/* Auth form surface */}
-            <div className="bg-[#121619] border border-[#1e2228] rounded-lg p-6 md:p-8 space-y-6">
+            <div className="bg-[#131316] border border-[#242429] rounded-lg p-6 md:p-8 space-y-6">
               {/* Title */}
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-slate-100">
@@ -96,7 +96,7 @@ function SignInContent() {
               {/* Google sign-in */}
               <Button
                 variant="outline"
-                className="w-full h-12 border-[#1e2228] bg-[#181c22] hover:bg-[#1e2228] hover:border-blue-500/40 font-medium text-slate-200"
+                className="w-full h-12 border-[#242429] bg-[#1a1a1e] hover:bg-[#242429] hover:border-blue-500/40 font-medium text-slate-200"
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -123,10 +123,10 @@ function SignInContent() {
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#1e2228]" />
+                  <span className="w-full border-t border-[#242429]" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#121619] px-3 text-xs text-slate-500">
+                  <span className="bg-[#131316] px-3 text-xs text-slate-500">
                     또는 이메일로 계속하기
                   </span>
                 </div>
@@ -138,14 +138,14 @@ function SignInContent() {
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-[#181c22] border-[#1e2228] cursor-not-allowed text-base placeholder:text-slate-600"
+                  className="bg-[#1a1a1e] border-[#242429] cursor-not-allowed text-base placeholder:text-slate-600"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-[#181c22] border-[#1e2228] cursor-not-allowed text-base placeholder:text-slate-600"
+                  className="bg-[#1a1a1e] border-[#242429] cursor-not-allowed text-base placeholder:text-slate-600"
                   style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-500 text-center">
@@ -195,7 +195,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0d11]">
+      <div className="flex min-h-screen items-center justify-center bg-[#0c0c0f]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>

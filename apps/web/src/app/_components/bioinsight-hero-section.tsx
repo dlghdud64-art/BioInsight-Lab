@@ -14,7 +14,7 @@ function OpsVisual() {
   return (
     <div className="hidden lg:flex flex-col gap-2.5 w-full max-w-sm">
       {/* 검색 결과 축약 */}
-      <div className="bg-[#121619] border border-[#1e2228] rounded-md p-3">
+      <div className="bg-[#131316] border border-[#242429] rounded-md p-3">
         <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b7280] mb-2">검색 결과</p>
         <div className="space-y-1.5">
           {["FBS (Fetal Bovine Serum)", "DMEM High Glucose"].map((item) => (
@@ -27,7 +27,7 @@ function OpsVisual() {
       </div>
 
       {/* 비교 판단 축약 */}
-      <div className="bg-[#121619] border border-[#1e2228] rounded-md p-3">
+      <div className="bg-[#131316] border border-[#242429] rounded-md p-3">
         <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b7280] mb-2">비교 판단</p>
         <div className="flex items-center gap-2">
           <GitCompare className="h-3.5 w-3.5 text-blue-400" />
@@ -37,7 +37,7 @@ function OpsVisual() {
       </div>
 
       {/* 재주문 제안 */}
-      <div className="bg-[#121619] border border-[#1e2228] rounded-md p-3">
+      <div className="bg-[#131316] border border-[#242429] rounded-md p-3">
         <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b7280] mb-2">재주문 제안</p>
         <div className="flex items-center gap-2">
           <RefreshCw className="h-3.5 w-3.5 text-amber-400" />
@@ -47,7 +47,7 @@ function OpsVisual() {
       </div>
 
       {/* Lot-Expiry 리스크 */}
-      <div className="bg-[#121619] border border-[#1e2228] rounded-md p-3">
+      <div className="bg-[#131316] border border-[#242429] rounded-md p-3">
         <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b7280] mb-2">Lot·유효기한 리스크</p>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export function LabAxisHeroSection() {
   };
 
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-[#070a0e] border-b border-[#1a1e24]">
+    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-[#09090b] border-b border-[#1e1e23]">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
         <div className="flex items-start gap-12 lg:gap-16">
           {/* 좌측: Value proposition */}
@@ -106,14 +106,14 @@ export function LabAxisHeroSection() {
                 </Button>
               </Link>
               <Link href="/support">
-                <Button variant="ghost" className="h-11 px-6 text-[#9ca3af] hover:text-slate-100 font-medium text-sm border border-[#1e2228] hover:border-[#2a2e35]">
+                <Button variant="ghost" className="h-11 px-6 text-[#9ca3af] hover:text-slate-100 font-medium text-sm border border-[#242429] hover:border-[#2a2e35]">
                   도입 문의하기
                 </Button>
               </Link>
             </div>
 
             {/* Compact Search */}
-            <form onSubmit={handleSearch} className="flex items-center h-10 max-w-md border border-[#1e2228] rounded-md bg-[#121619] px-3 focus-within:ring-1 focus-within:ring-blue-600/40 focus-within:border-blue-600/40 transition-all mt-4">
+            <form onSubmit={handleSearch} className="flex items-center h-10 max-w-md border border-[#242429] rounded-md bg-[#131316] px-3 focus-within:ring-1 focus-within:ring-blue-600/40 focus-within:border-blue-600/40 transition-all mt-4">
               <Search className="h-4 w-4 text-[#4b5563] flex-shrink-0" />
               <input
                 type="text"
@@ -151,15 +151,15 @@ export function LabAxisHeroSection() {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-[#121619] transition-colors">
-                    <div className="w-10 h-10 rounded-md border border-[#1e2228] bg-[#121619] flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-[#131316] transition-colors">
+                    <div className="w-10 h-10 rounded-md border border-[#242429] bg-[#131316] flex items-center justify-center">
                       <Icon className="h-5 w-5 text-[#9ca3af]" strokeWidth={1.8} />
                     </div>
                     <span className="text-xs font-semibold text-slate-200">{step.label}</span>
                     <span className="text-[10px] text-[#4b5563] whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < 5 && (
-                    <div className="w-6 h-px bg-[#1e2228] flex-shrink-0" />
+                    <div className="w-6 h-px bg-[#242429] flex-shrink-0" />
                   )}
                 </div>
               );
@@ -178,7 +178,7 @@ export function LabAxisHeroSection() {
             ].map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-[#1e2228] bg-[#121619]">
+                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-[#242429] bg-[#131316]">
                   <Icon className="h-4 w-4 text-[#9ca3af]" strokeWidth={1.8} />
                   <span className="text-[11px] font-semibold text-slate-300">{step.label}</span>
                 </div>

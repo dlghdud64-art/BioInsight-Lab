@@ -191,7 +191,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#1a1e24] bg-[#0a0d11]">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#1e1e23] bg-[#0c0c0f]">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -242,7 +242,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-[#121619] border-[#1e2228] focus:bg-[#181c22] w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-[#131316] border-[#242429] focus:bg-[#1a1a1e] w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -277,7 +277,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[340px] min-w-[300px] p-0 shadow-xl">
               {/* 상단 */}
-              <div className="px-3 py-2.5 border-b border-[#1a1e24]">
+              <div className="px-3 py-2.5 border-b border-[#1e1e23]">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-slate-100">알림</span>
                   {unreadCount > 0 && (
@@ -308,7 +308,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                           key={n.id}
                           type="button"
                           onClick={() => handleEventClick(n)}
-                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#181c22]/50 transition-colors ${
+                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#1a1a1e]/50 transition-colors ${
                             n.read ? "opacity-50" : ""
                           }`}
                         >
@@ -326,7 +326,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </div>
 
               {/* 하단 */}
-              <div className="border-t border-[#1a1e24] px-3 py-2">
+              <div className="border-t border-[#1e1e23] px-3 py-2">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
@@ -376,10 +376,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-[#1e2228] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#181c22] transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-[#1e2228]">
+              <button className="flex items-center gap-2 pl-3 border-l border-[#242429] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#1a1a1e] transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-[#242429]">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
-                  <AvatarFallback className="bg-[#1a2030] text-blue-400 text-xs font-semibold">
+                  <AvatarFallback className="bg-[#1a1a1e] text-blue-400 text-xs font-semibold">
                     {user?.name
                       ? user.name
                           .split(" ")
@@ -443,7 +443,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#181c22] mobile-menu-button lg:hidden -mr-1"
+              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#1a1a1e] mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
