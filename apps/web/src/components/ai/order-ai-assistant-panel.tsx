@@ -196,7 +196,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
       <div className="rounded-full bg-slate-800/50 p-4 mb-4">
-        <Truck className="h-8 w-8 text-slate-600" />
+        <Truck className="h-8 w-8 text-slate-400" />
       </div>
       <p className="text-sm font-medium text-slate-400">
         주문을 선택하면 여기에서 확인할 수 있습니다
@@ -428,8 +428,8 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
           variant="outline"
           className={`text-[10px] h-4 px-1.5 ${
             errors.length > 0
-              ? "bg-red-950/30 text-red-400 border-red-200"
-              : "bg-amber-950/30 text-amber-400 border-amber-200"
+              ? "bg-red-950/30 text-red-400 border-red-800"
+              : "bg-amber-950/30 text-amber-400 border-amber-800"
           }`}
         >
           {issues.length}건
@@ -450,7 +450,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30"
+                  : "border-slate-800 bg-slate-50/50 border-slate-700 bg-slate-800/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -469,7 +469,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                     </p>
                   )}
                   {issue.suggestedAction && (
-                    <p className="text-[11px] text-blue-500 dark:text-blue-400 mt-1 font-medium">
+                    <p className="text-[11px] text-blue-400 mt-1 font-medium">
                       권장: {issue.suggestedAction}
                     </p>
                   )}
@@ -515,8 +515,8 @@ function FollowUpDraftSection({
 
       {/* 확인 필요 항목 */}
       {draft.pendingChecks && draft.pendingChecks.length > 0 && (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20 p-3 mb-3">
-          <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
+        <div className="rounded-lg border border-amber-800/50 bg-amber-950/20 p-3 mb-3">
+          <p className="text-[11px] font-semibold text-amber-400 mb-1.5">
             확인 필요 항목
           </p>
           <div className="space-y-1">
@@ -531,7 +531,7 @@ function FollowUpDraftSection({
       )}
 
       {/* 초안 카드 */}
-      <div className="rounded-lg border border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-3.5 mb-3">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3.5 mb-3">
         <div className="flex items-center gap-2 mb-2">
           <Mail className="h-3.5 w-3.5 text-slate-400" />
           <span className="text-xs font-medium text-slate-300 truncate">
@@ -548,7 +548,7 @@ function FollowUpDraftSection({
           </div>
         )}
 
-        <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+        <div className="mt-2 pt-2 border-t border-slate-700/50">
           <p className="text-[11px] text-slate-500 whitespace-pre-wrap line-clamp-4 font-mono leading-relaxed">
             {bodyPreview}
           </p>
@@ -603,7 +603,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
         {responses.map((resp, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-lg border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900/50"
+            className="p-3 rounded-lg border border-slate-800 bg-slate-900/50"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -615,7 +615,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
               {resp.respondedAt && (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+                  className="text-[10px] h-4 px-1.5 bg-emerald-900/20 text-emerald-300 bg-emerald-950/30 text-emerald-400 border-emerald-800"
                 >
                   회신 완료
                 </Badge>
@@ -639,7 +639,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
                       <span>{item.leadTimeDays}일</span>
                     )}
                     {item.inStock === false && (
-                      <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-red-500 border-red-200">
+                      <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-red-500 border-red-800">
                         재고 없음
                       </Badge>
                     )}
@@ -699,9 +699,9 @@ function StatusTransitionSection({
   };
 
   const confidenceConfig: Record<string, { label: string; color: string }> = {
-    high: { label: "높음", color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400" },
-    medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-200" },
-    low: { label: "낮음", color: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400" },
+    high: { label: "높음", color: "bg-emerald-900/20 text-emerald-300 border-emerald-800 bg-emerald-950/30 text-emerald-400" },
+    medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-800" },
+    low: { label: "낮음", color: "bg-slate-900 border-slate-800 bg-slate-800 text-slate-400" },
   };
 
   const conf = confidenceConfig[proposal.confidence] || confidenceConfig.medium;
@@ -715,14 +715,14 @@ function StatusTransitionSection({
         </h4>
       </div>
 
-      <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 p-3.5">
+      <div className="rounded-lg border border-blue-800 bg-blue-950/20 p-3.5">
         {/* 상태 전환 표시 */}
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-slate-800 text-slate-400">
             {statusLabels[proposal.currentStatus] || proposal.currentStatus}
           </Badge>
           <ChevronRight className="h-3.5 w-3.5 text-blue-400" />
-          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300">
+          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-blue-900/30 border-blue-300 bg-blue-900/50 text-blue-300">
             {statusLabels[proposal.proposedStatus] || proposal.proposedStatus}
           </Badge>
           <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ml-auto ${conf.color}`}>
@@ -792,7 +792,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-slate-800 bg-[#161d2f] px-5 py-3">
       <div className="flex gap-2">
         {hasFollowUp && (
           <Button

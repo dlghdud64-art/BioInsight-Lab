@@ -212,11 +212,11 @@ export default function OrganizationsPage() {
       {/* 상단 헤더 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="flex flex-col space-y-1 sm:space-y-2">
-          <div className="flex items-center gap-2 text-blue-600 mb-0.5 sm:mb-1">
+          <div className="flex items-center gap-2 text-blue-400 mb-0.5 sm:mb-1">
             <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="text-sm sm:text-base font-semibold tracking-tight">조직 관리</span>
           </div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">조직 관리</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-100">조직 관리</h2>
           <p className="text-muted-foreground text-sm hidden sm:block">
             조직을 생성하고 팀원들을 초대하여 함께 견적을 관리합니다.
           </p>
@@ -318,34 +318,34 @@ export default function OrganizationsPage() {
           {Array.from({ length: 3 }).map((_, idx) => (
             <Card
               key={idx}
-              className="shadow-sm border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 animate-pulse"
+              className="shadow-none border-slate-800 bg-slate-900 animate-pulse"
             >
               <CardHeader className="pb-3">
                 <div className="mb-2 flex items-start justify-between">
-                  <div className="h-10 w-10 rounded-lg bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-10 w-10 rounded-lg bg-slate-800" />
+                  <div className="h-5 w-16 rounded-full bg-slate-800" />
                 </div>
-                <div className="h-5 w-32 rounded bg-slate-200 dark:bg-slate-800 mb-2" />
-                <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-800" />
+                <div className="h-5 w-32 rounded bg-slate-800 mb-2" />
+                <div className="h-4 w-48 rounded bg-slate-800" />
               </CardHeader>
               <CardContent>
-                <div className="h-8 rounded-md bg-slate-100 dark:bg-slate-800" />
+                <div className="h-8 rounded-md bg-slate-800" />
               </CardContent>
-              <CardFooter className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
-                <div className="h-8 w-full rounded-md bg-slate-100 dark:bg-slate-800" />
+              <CardFooter className="mt-4 border-t border-slate-800 pt-3">
+                <div className="h-8 w-full rounded-md bg-slate-800" />
               </CardFooter>
             </Card>
           ))}
         </div>
       ) : organizations.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-24 shadow-sm border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+        <Card className="flex flex-col items-center justify-center py-24 shadow-none border-slate-800 bg-slate-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-800">
             <Building2 className="h-8 w-8 text-slate-400" />
           </div>
-          <h3 className="mb-2 text-lg font-medium text-slate-700 dark:text-slate-300">
+          <h3 className="mb-2 text-lg font-medium text-slate-300">
             소속된 조직이 없습니다
           </h3>
-          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mb-4 text-sm text-slate-400">
             첫 조직을 생성하고 팀원들과 함께 워크스페이스를 시작해 보세요.
           </p>
           <Button
@@ -360,19 +360,19 @@ export default function OrganizationsPage() {
           {organizations.map((org) => {
             const planLabel = org.plan === "ORGANIZATION" ? "Pro" : org.plan === "TEAM" ? "Basic" : "Starter";
             const planColor = org.plan === "ORGANIZATION"
-              ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+              ? "border-indigo-200 bg-indigo-50 text-indigo-700 border-indigo-800 bg-indigo-950/40 text-indigo-300"
               : org.plan === "TEAM"
-                ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
-                : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
+                ? "border-blue-200 bg-blue-50 text-blue-700 border-blue-800 bg-blue-950/40 text-blue-300"
+                : "border-slate-800 bg-slate-900 text-slate-400 border-slate-700 bg-slate-800 text-slate-400";
             const roleLabel = org.role === "OWNER" ? "소유자" : org.role === "ADMIN" ? "관리자" : org.role === "APPROVER" ? "승인자" : org.role === "REQUESTER" ? "요청자" : "조회자";
             return (
               <Card
                 key={org.id}
-                className="flex flex-col border-slate-200 shadow-sm transition-shadow hover:border-blue-200 hover:shadow-md dark:border-slate-800 dark:hover:border-blue-800"
+                className="flex flex-col border-slate-800 shadow-none transition-shadow hover:border-blue-200 hover:shadow-md border-slate-800 hover:border-blue-800"
               >
                 <CardHeader className="pb-2">
                   <div className="mb-2 flex items-start justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 font-bold text-blue-400 bg-blue-900/50 text-blue-400">
                       {org.name.substring(0, 1)}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -381,7 +381,7 @@ export default function OrganizationsPage() {
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                        className="border-slate-800 bg-slate-900 text-slate-500 border-slate-700 bg-slate-800 text-slate-400"
                       >
                         {roleLabel}
                       </Badge>
@@ -396,27 +396,27 @@ export default function OrganizationsPage() {
                 </CardHeader>
                 <CardContent className="flex-1 pb-3">
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                    <div className="flex flex-col items-center rounded-md bg-slate-900 px-2 py-2 bg-slate-800">
                       <Users className="mb-1 h-3.5 w-3.5 text-blue-500" />
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.memberCount}</span>
+                      <span className="text-sm font-bold text-slate-200">{org.memberCount}</span>
                       <span className="text-[10px] text-slate-400">멤버</span>
                     </div>
-                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                    <div className="flex flex-col items-center rounded-md bg-slate-900 px-2 py-2 bg-slate-800">
                       <ShieldCheck className="mb-1 h-3.5 w-3.5 text-purple-500" />
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.adminCount}</span>
+                      <span className="text-sm font-bold text-slate-200">{org.adminCount}</span>
                       <span className="text-[10px] text-slate-400">관리자</span>
                     </div>
-                    <div className="flex flex-col items-center rounded-md bg-slate-50 px-2 py-2 dark:bg-slate-800">
+                    <div className="flex flex-col items-center rounded-md bg-slate-900 px-2 py-2 bg-slate-800">
                       <Mail className="mb-1 h-3.5 w-3.5 text-orange-500" />
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{org.pendingCount}</span>
+                      <span className="text-sm font-bold text-slate-200">{org.pendingCount}</span>
                       <span className="text-[10px] text-slate-400">대기</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t border-slate-100 pt-0 dark:border-slate-800">
+                <CardFooter className="border-t border-slate-100 pt-0 border-slate-800">
                   <Button
                     variant="ghost"
-                    className="mt-2 w-full text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                    className="mt-2 w-full text-blue-400 hover:bg-blue-50 hover:text-blue-700 hover:bg-blue-950/30 hover:text-blue-400"
                     onClick={() => handleGoToOrgDashboard(org.id)}
                     disabled={navigatingToOrgId === org.id}
                   >

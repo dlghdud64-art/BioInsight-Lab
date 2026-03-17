@@ -437,13 +437,13 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 템플릿 다운로드 */}
-            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="bg-blue-950 border border-blue-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  <h4 className="font-medium text-blue-100 mb-1">
                     이 양식을 사용하면 가장 정확합니다
                   </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="text-sm text-blue-300">
                     샘플 양식을 다운로드하여 형식에 맞춰 작성하세요.
                   </p>
                 </div>
@@ -516,7 +516,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
             <div className="bg-muted rounded-lg p-4">
               <p className="text-sm font-medium">
                 총 <span className="font-bold">{previewData.totalRows}개</span> 중{" "}
-                <span className="font-bold text-green-600">{validRows}개</span>를 등록할 수
+                <span className="font-bold text-green-400">{validRows}개</span>를 등록할 수
                 있습니다.
               </p>
               {Object.keys(validationErrors).length > 0 && (
@@ -563,7 +563,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                       <TableRow
                         key={idx}
                         className={`
-                          ${hasError && !isExcluded ? "bg-red-50 dark:bg-red-950" : ""}
+                          ${hasError && !isExcluded ? "bg-red-950" : ""}
                           ${isExcluded ? "opacity-50" : ""}
                         `}
                       >
@@ -639,7 +639,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                   {Object.values(validationErrors).map((error) => (
                     <div
                       key={error.row}
-                      className="text-sm bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-2"
+                      className="text-sm bg-red-950 border border-red-800 rounded p-2"
                     >
                       <span className="font-medium">행 {error.row}:</span>{" "}
                       {error.errors.join(", ")}
@@ -693,14 +693,14 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
                 <div className="text-2xl font-bold">{importResult.totalRows}</div>
                 <div className="text-sm text-muted-foreground">총 행 수</div>
               </div>
-              <div className="border rounded-lg p-4 text-center bg-green-50 dark:bg-green-950">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="border rounded-lg p-4 text-center bg-green-950">
+                <div className="text-2xl font-bold text-green-400">
                   {importResult.successRows}
                 </div>
                 <div className="text-sm text-muted-foreground">성공</div>
               </div>
-              <div className="border rounded-lg p-4 text-center bg-red-50 dark:bg-red-950">
-                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <div className="border rounded-lg p-4 text-center bg-red-950">
+                <div className="text-2xl font-bold text-red-400">
                   {importResult.errorRows}
                 </div>
                 <div className="text-sm text-muted-foreground">실패</div>

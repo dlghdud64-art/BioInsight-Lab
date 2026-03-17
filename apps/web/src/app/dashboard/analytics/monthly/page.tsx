@@ -58,13 +58,13 @@ export default function MonthlyAnalyticsPage() {
         </Button>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">월별 지출 상세 분석</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-100">월별 지출 상세 분석</h2>
             <p className="text-muted-foreground mt-1">
               12개월간의 예산 소진 흐름을 상세하게 확인하세요.
             </p>
           </div>
           <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-[140px] h-10 border-slate-200">
+            <SelectTrigger className="w-[140px] h-10 border-slate-800">
               <SelectValue placeholder="연도 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -75,7 +75,7 @@ export default function MonthlyAnalyticsPage() {
         </div>
       </div>
 
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-none border-slate-800">
         <CardHeader>
           <CardTitle>월별 지출 추이 (단위: 만원)</CardTitle>
           <p className="text-sm text-muted-foreground">연도별 월간 지출액을 막대 그래프로 확인할 수 있습니다.</p>
@@ -117,7 +117,7 @@ export default function MonthlyAnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm border-slate-200">
+      <Card className="shadow-none border-slate-800">
         <CardHeader>
           <CardTitle>월별 지출액 상세</CardTitle>
           <p className="text-sm text-muted-foreground">월별 지출 금액을 표로 확인합니다.</p>

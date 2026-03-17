@@ -177,7 +177,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
       <div className="rounded-full bg-slate-800/50 p-4 mb-4">
-        <Package className="h-8 w-8 text-slate-600" />
+        <Package className="h-8 w-8 text-slate-400" />
       </div>
       <p className="text-sm font-medium text-slate-400">
         재고 품목을 선택하면 여기에서 확인할 수 있습니다
@@ -441,7 +441,7 @@ function IssueWarningsSection({
                           ? "text-red-400 border-red-800"
                           : isWarning
                           ? "text-amber-400 border-amber-800"
-                          : "text-slate-500 border-slate-200"
+                          : "text-slate-500 border-slate-800"
                       }`}
                     >
                       {issue.badgeLabel}
@@ -482,11 +482,11 @@ function ReorderSection({
   const urgencyConfig = {
     urgent: {
       label: "긴급",
-      color: "bg-red-950/30 text-red-400 dark:border-red-800",
+      color: "bg-red-950/30 text-red-400 border-red-800",
     },
     high: {
       label: "높음",
-      color: "bg-amber-950/30 text-amber-400 dark:border-amber-800",
+      color: "bg-amber-950/30 text-amber-400 border-amber-800",
     },
     medium: {
       label: "보통",
@@ -700,7 +700,7 @@ function LotExpirySection({
                 )}
                 {(isExpired || isSoon) && onReviewDisposal && (
                   <button
-                    className={`text-[11px] font-medium flex items-center gap-0.5 ml-auto ${
+                    className={`text-[11px] font-medium flex items-center gap-0.5 ml-auto${
                       isExpired ? "text-red-500 hover:text-red-600" : "text-amber-600 hover:text-amber-700"
                     }`}
                     onClick={() => onReviewDisposal(lot.lotNumber)}

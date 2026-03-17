@@ -186,17 +186,17 @@ export default function ReportsPage() {
   const hasData = reportData != null;
 
   return (
-    <div className="flex-1 space-y-4 sm:space-y-6 bg-slate-50 min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+    <div className="flex-1 space-y-4 sm:space-y-6 bg-slate-900 min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
       {/* 1. 헤더 영역 */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
         <div className="space-y-1 sm:space-y-2">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-normal text-slate-900 dark:text-slate-100 leading-tight">구매 리포트</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-normal text-slate-100 leading-tight">구매 리포트</h2>
           <p className="text-muted-foreground text-sm leading-relaxed tracking-normal hidden sm:block">월별 지출 현황과 예산 사용량을 상세히 분석합니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50">
+              <Button variant="outline" size="sm" className="border-slate-800 hover:bg-slate-900">
                 <CloudUpload className="h-4 w-4 mr-1.5" />
                 <span className="hidden sm:inline">데이터 </span>가져오기
               </Button>
@@ -213,12 +213,12 @@ export default function ReportsPage() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-12 text-center h-64 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                    className={`border-2 border-dashed rounded-lg p-12 text-center h-64 flex flex-col items-center justify-center cursor-pointer transition-colors${
                       isDragging
                         ? "border-blue-500 bg-blue-50"
                         : selectedFile
                         ? "border-blue-300 bg-blue-50/50"
-                        : "border-gray-300 bg-gray-50 hover:border-gray-400"
+                        : "border-slate-700 bg-slate-900 hover:border-gray-400"
                     }`}
                     onClick={() => document.getElementById("file-input")?.click()}
                   >
@@ -231,21 +231,21 @@ export default function ReportsPage() {
                     />
                     {selectedFile ? (
                       <>
-                        <FileText className="h-12 w-12 text-blue-600 mb-4" />
-                        <p className="text-lg font-semibold text-gray-900 mb-2">
+                        <FileText className="h-12 w-12 text-blue-400 mb-4" />
+                        <p className="text-lg font-semibold text-slate-100 mb-2">
                           {selectedFile.name}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-400">
                           파일이 선택되었습니다. 아래 버튼을 클릭하여 업로드하세요.
                         </p>
                       </>
                     ) : (
                       <>
                         <CloudUpload className="h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-lg font-semibold text-gray-900 mb-2">
+                        <p className="text-lg font-semibold text-slate-100 mb-2">
                           여기를 클릭하거나 파일을 드래그하세요
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-slate-400">
                           CSV, Excel 파일 지원
                         </p>
                       </>
@@ -255,7 +255,7 @@ export default function ReportsPage() {
                     <button
                       type="button"
                       onClick={downloadSampleTemplate}
-                      className="text-sm text-blue-600 hover:text-blue-700 underline"
+                      className="text-sm text-blue-400 hover:text-blue-700 underline"
                     >
                       양식이 필요하신가요? 샘플 파일 다운로드
                     </button>
@@ -280,7 +280,7 @@ export default function ReportsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-          <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50" onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}>
+          <Button variant="outline" size="sm" className="border-slate-800 hover:bg-slate-900" onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}>
             <RefreshCcw className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">데이터 갱신</span>
           </Button>
@@ -295,77 +295,77 @@ export default function ReportsPage() {
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse border border-gray-100 dark:border-slate-800 shadow-sm">
+            <Card key={i} className="animate-pulse border border-slate-800 shadow-none">
               <CardContent className="p-3 sm:p-4 md:p-6">
-                <div className="h-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-16 bg-slate-700 rounded" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 총 구매액
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+              <DollarSign className="h-4 w-4 text-blue-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
               <div
-                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
-                  totalAmount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight${
+                  totalAmount === 0 ? "text-slate-400" : "text-slate-100"
                 }`}
               >
                 {formatCurrency(totalAmount, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 총 건수
               </CardTitle>
-              <Package className="h-4 w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
+              <Package className="h-4 w-4 text-slate-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
               <div
-                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
-                  itemCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight${
+                  itemCount === 0 ? "text-slate-400" : "text-slate-100"
                 }`}
               >
                 {itemCount}건
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 평균가
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+              <TrendingUp className="h-4 w-4 text-emerald-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
               <div
-                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
-                  avgPrice === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight${
+                  avgPrice === 0 ? "text-slate-400" : "text-slate-100"
                 }`}
               >
                 {formatCurrency(avgPrice, "KRW")}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 md:p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap truncate min-w-0">
+              <CardTitle className="text-xs md:text-sm font-medium text-slate-300 whitespace-nowrap truncate min-w-0">
                 거래처
               </CardTitle>
-              <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+              <Building2 className="h-4 w-4 text-violet-400 flex-shrink-0" />
             </CardHeader>
             <CardContent className="px-0 pb-0 pt-3">
               <div
-                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight ${
-                  vendorCount === 0 ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100"
+                className={`text-xl md:text-2xl lg:text-3xl font-bold whitespace-nowrap tracking-normal leading-tight${
+                  vendorCount === 0 ? "text-slate-400" : "text-slate-100"
                 }`}
               >
                 {vendorCount}개
@@ -376,11 +376,11 @@ export default function ReportsPage() {
       )}
 
       {/* 3. 압축된 한 줄 필터 바 */}
-      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-3 sm:p-6">
+      <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-3 sm:p-6">
         <CardContent className="p-2 sm:p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">기간 선택</label>
+              <label className="text-xs font-semibold text-slate-400 ml-1">기간 선택</label>
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
@@ -391,7 +391,7 @@ export default function ReportsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="category" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">카테고리</label>
+              <label htmlFor="category" className="text-xs font-semibold text-slate-400 ml-1">카테고리</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="전체" />
@@ -407,7 +407,7 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="team" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">팀 / 조직</label>
+              <label htmlFor="team" className="text-xs font-semibold text-slate-400 ml-1">팀 / 조직</label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger id="team">
                   <SelectValue placeholder="전체" />
@@ -420,7 +420,7 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="vendor" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">벤더</label>
+              <label htmlFor="vendor" className="text-xs font-semibold text-slate-400 ml-1">벤더</label>
               <Select value={selectedVendor} onValueChange={setSelectedVendor}>
                 <SelectTrigger id="vendor">
                   <SelectValue placeholder="전체" />
@@ -434,7 +434,7 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="budget" className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">예산</label>
+              <label htmlFor="budget" className="text-xs font-semibold text-slate-400 ml-1">예산</label>
               <Select value={selectedBudget} onValueChange={setSelectedBudget}>
                 <SelectTrigger id="budget">
                   <SelectValue placeholder="전체" />
@@ -455,21 +455,21 @@ export default function ReportsPage() {
 
       {/* 4. 메인 분석 영역 */}
       {!hasData && !isLoading ? (
-        <Card className="min-h-[400px] border-dashed border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
+        <Card className="min-h-[400px] border-dashed border-2 border-slate-700 flex items-center justify-center">
           <CardContent className="py-16 text-center">
             <div className="flex flex-col items-center gap-4">
-              <FileSpreadsheet className="h-16 w-16 text-slate-400 dark:text-slate-500" />
+              <FileSpreadsheet className="h-16 w-16 text-slate-400 text-slate-500" />
               <div>
-                <p className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                <p className="text-base font-semibold text-slate-100 mb-2">
                   데이터가 없습니다
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-slate-400 mb-4">
                   필터를 설정하여 상세 구매 분석 데이터를 조회하거나, CSV 파일을 업로드하여 리포트를 생성해보세요.
                 </p>
                 <Button
                   variant="outline"
                   onClick={() => setIsImportDialogOpen(true)}
-                  className="border-slate-200 hover:bg-slate-50"
+                  className="border-slate-800 hover:bg-slate-900"
                 >
                   <CloudUpload className="h-4 w-4 mr-2" />
                   데이터 가져오기
@@ -521,7 +521,7 @@ export default function ReportsPage() {
           {/* 차트 영역: 3단 Grid (기간별 / 벤더별 / 카테고리별 균등 배치) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* 월별 구매 추이 차트 */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">기간별 구매 추이</CardTitle>
             </CardHeader>
@@ -564,7 +564,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* 벤더별 구매 현황 */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">벤더별 구매 현황</CardTitle>
             </CardHeader>
@@ -607,7 +607,7 @@ export default function ReportsPage() {
           </Card>
 
           {/* 카테고리별 구매 현황 (파이 차트) */}
-          <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
+          <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-4 col-span-1 h-[280px] flex flex-col">
             <CardHeader className="flex-shrink-0">
               <CardTitle className="tracking-normal leading-relaxed">카테고리별 구매 현황</CardTitle>
             </CardHeader>
@@ -646,7 +646,7 @@ export default function ReportsPage() {
 
           {/* 상세 테이블 (Detailed Logs) */}
           {details && details.length > 0 && (
-            <Card className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <Card className="bg-slate-900 rounded-xl shadow-none border border-slate-100 p-6">
               <CardHeader className="space-y-1">
                 <CardTitle className="tracking-normal leading-relaxed">상세 내역</CardTitle>
                 <CardDescription className="text-sm leading-relaxed tracking-normal text-muted-foreground">
@@ -657,13 +657,13 @@ export default function ReportsPage() {
                 <div className="overflow-x-auto">
                 <Table className="min-w-[600px]">
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-800/50 border-b border-gray-100 dark:border-slate-700">
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">날짜</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">제품명</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">벤더</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">수량</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">단가</TableHead>
-                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300 text-right">총액</TableHead>
+                    <TableRow className="bg-slate-800/50 hover:bg-slate-800/50 border-b border-slate-700">
+                      <TableHead className="font-semibold text-slate-300">날짜</TableHead>
+                      <TableHead className="font-semibold text-slate-300">제품명</TableHead>
+                      <TableHead className="font-semibold text-slate-300">벤더</TableHead>
+                      <TableHead className="font-semibold text-slate-300 text-right">수량</TableHead>
+                      <TableHead className="font-semibold text-slate-300 text-right">단가</TableHead>
+                      <TableHead className="font-semibold text-slate-300 text-right">총액</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -688,9 +688,9 @@ export default function ReportsPage() {
 
           {/* 데이터 없음 시 안내 (hasData이지만 차트/테이블 데이터 없음) */}
           {hasData && !monthlyData?.length && !vendorData?.length && !categoryData?.length && !details?.length && (
-            <Card className="min-h-[300px] border-dashed border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
+            <Card className="min-h-[300px] border-dashed border-2 border-slate-700 flex items-center justify-center">
               <CardContent className="py-12 text-center">
-                <p className="text-slate-500 dark:text-slate-400 font-medium">
+                <p className="text-slate-400 font-medium">
                   필터를 설정하여 상세 구매 분석 데이터를 조회하세요.
                 </p>
               </CardContent>

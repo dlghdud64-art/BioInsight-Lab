@@ -215,7 +215,7 @@ export function InventoryQRCode({
       <Button
         size="sm"
         variant="ghost"
-        className="h-7 w-7 p-0 text-slate-500 hover:text-blue-600"
+        className="h-7 w-7 p-0 text-slate-500 hover:text-blue-400"
         onClick={() => setOpen(true)}
         title="QR 코드"
       >
@@ -226,20 +226,20 @@ export function InventoryQRCode({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
-              <QrCode className="h-4 w-4 text-blue-600" />
+              <QrCode className="h-4 w-4 text-blue-400" />
               재고 QR 코드
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col items-center gap-3 py-2">
             {/* QR 캔버스 */}
-            <div className="border border-slate-200 rounded-xl p-3 bg-white shadow-sm">
+            <div className="border border-slate-800 rounded-xl p-3 bg-slate-900 shadow-none">
               <canvas ref={canvasRef} />
             </div>
 
             {/* Lot 정보 */}
-            <div className="w-full bg-slate-50 rounded-lg p-3 space-y-1 text-sm">
-              <p className="font-semibold text-slate-800 leading-tight">{productName}</p>
+            <div className="w-full bg-slate-900 rounded-lg p-3 space-y-1 text-sm">
+              <p className="font-semibold text-slate-200 leading-tight">{productName}</p>
               {lotNumber && <p className="text-slate-500 text-xs">Lot: {lotNumber}</p>}
               {catalogNumber && <p className="text-slate-500 text-xs">Cat#: {catalogNumber}</p>}
               {location && <p className="text-slate-500 text-xs">위치: {location}</p>}
