@@ -154,6 +154,17 @@ function InventoryPageContent() {
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
 
+  // 내 인벤토리 조회 (deep-link에서 참조하므로 먼저 선언)
+  const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
+    queryKey: ["inventories"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory");
+      if (!response.ok) throw new Error("Failed to fetch inventories");
+      return response.json();
+    },
+    enabled: status === "authenticated" && inventoryView === "my",
+  });
+
   // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
   useEffect(() => {
@@ -211,17 +222,6 @@ function InventoryPageContent() {
   });
 
   const selectedTeam = teamsData?.teams?.[0];
-
-  // 내 인벤토리 조회
-  const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
-    queryKey: ["inventories"],
-    queryFn: async () => {
-      const response = await fetch("/api/inventory");
-      if (!response.ok) throw new Error("Failed to fetch inventories");
-      return response.json();
-    },
-    enabled: status === "authenticated" && inventoryView === "my",
-  });
 
   // 팀 인벤토리 조회
   const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{ inventories: any[] }>({
