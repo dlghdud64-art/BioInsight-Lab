@@ -140,22 +140,18 @@ export default function PricingPage() {
   ];
 
   // ── 비교 테이블 데이터 ─────────────────────────────────────────────
-  // 카테고리 구조: Team = 검색·협업·요청, Business = 운영·문서, Enterprise = 보안/연동
   const comparisonFeatures: ComparisonItem[] = [
-    // ── 검색 및 비교
     { isCategoryHeader: true, label: "검색 및 비교" },
     { feature: "기본 검색 및 비교", starter: true, team: true, business: true, enterprise: true },
     { feature: "확장 검색 (제조사·CAS No.·프로토콜)", starter: false, team: true, business: true, enterprise: true },
     { feature: "대체품 추천", starter: false, team: true, business: true, enterprise: true },
 
-    // ── 협업
     { isCategoryHeader: true, label: "협업" },
     { feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한" },
     { feature: "팀원 공유 재고", starter: false, team: true, business: true, enterprise: true },
     { feature: "후보 품목 공유", starter: false, team: true, business: true, enterprise: true },
     { feature: "품목 등록 수", starter: "10개", team: "50개", business: "무제한", enterprise: "무제한" },
 
-    // ── 요청 및 공유
     { isCategoryHeader: true, label: "요청 및 공유" },
     { feature: "기본 견적 요청", starter: true, team: true, business: true, enterprise: true },
     { feature: "구매 요청 워크플로우", starter: false, team: true, business: true, enterprise: true },
@@ -163,7 +159,6 @@ export default function PricingPage() {
     { feature: "엑셀 업로드", starter: false, team: true, business: true, enterprise: true },
     { feature: "CSV 내보내기", starter: false, team: true, business: true, enterprise: true },
 
-    // ── 운영 및 통제 (Business+)
     { isCategoryHeader: true, label: "운영 및 통제", tier: "business" },
     { feature: "전자결재 승인 라인", starter: false, team: false, business: true, enterprise: true },
     { feature: "예산 통합 관리", starter: false, team: false, business: true, enterprise: true },
@@ -171,14 +166,12 @@ export default function PricingPage() {
     { feature: "관리자 운영 대시보드", starter: false, team: false, business: true, enterprise: true },
     { feature: "팀원 권한 관리 (RBAC)", starter: false, team: false, business: true, enterprise: true },
 
-    // ── 문서 및 이력 관리 (Business+)
     { isCategoryHeader: true, label: "문서 및 이력 관리", tier: "business" },
     { feature: "Audit Trail", starter: false, team: false, business: true, enterprise: true },
     { feature: "MSDS 자동 연동", starter: false, team: false, business: true, enterprise: true },
     { feature: "Lot 관리", starter: false, team: false, business: true, enterprise: true },
     { feature: "구매 이력 추적", starter: false, team: false, business: true, enterprise: true },
 
-    // ── 보안 / 연동 (Enterprise)
     { isCategoryHeader: true, label: "보안 / 연동", tier: "enterprise" },
     { feature: "데이터 암호화 (저장/전송)", starter: true, team: true, business: true, enterprise: true },
     { feature: "ERP API 연동", starter: false, team: false, business: false, enterprise: true },
@@ -221,12 +214,12 @@ export default function PricingPage() {
           key="annual"
           className="flex flex-col items-center gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-300"
         >
-          <span className="text-slate-400 line-through text-xs md:text-lg font-normal">{plan.price}</span>
-          <span className="text-lg md:text-3xl font-bold text-slate-900">
+          <span className="text-slate-500 line-through text-xs md:text-lg font-normal">{plan.price}</span>
+          <span className="text-lg md:text-3xl font-bold text-slate-100">
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
-            <span className="text-[10px] md:text-sm font-normal text-slate-600">/월</span>
+            <span className="text-[10px] md:text-sm font-normal text-slate-400">/월</span>
           </span>
-          <span className="inline-flex items-center rounded-md bg-green-50 px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold text-green-700 ring-1 ring-green-600/10">
+          <span className="inline-flex items-center rounded-md bg-green-500/10 px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold text-green-400 ring-1 ring-green-500/20">
             10% 할인
           </span>
         </span>
@@ -243,32 +236,32 @@ export default function PricingPage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="w-full">
+      <div className="w-full bg-[#0c0f13]">
         <div className="pt-14 md:pt-20 min-h-screen">
           <div className="container mx-auto px-4 py-6 md:py-16">
             <div className="max-w-7xl mx-auto">
 
               {/* ── 페이지 헤드라인 ── */}
               <div className="text-center mb-4 md:mb-12">
-                <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-slate-900 mb-1 md:mb-3">
+                <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-slate-100 mb-1 md:mb-3">
                   맞는 플랜으로 시작하세요
                 </h1>
-                <p className="text-slate-600 text-xs md:text-lg max-w-xl mx-auto leading-relaxed">
+                <p className="text-slate-400 text-xs md:text-lg max-w-xl mx-auto leading-relaxed">
                   개인 탐색부터 조직 운영까지, 단계별 플랜
                 </p>
               </div>
 
               {/* ── 결제 주기 토글 ── */}
               <div className="flex items-center justify-center mb-4 md:mb-12">
-                <div className="bg-slate-100 rounded-full p-0.5 md:p-1 inline-flex">
+                <div className="bg-[#1a1e24] rounded-full p-0.5 md:p-1 inline-flex border border-[#2a2e36]">
                   <button
                     type="button"
                     onClick={() => setIsAnnual(false)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0f13]",
                       !isAnnual
-                        ? "bg-white shadow-sm text-slate-900"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "bg-[#252a32] shadow-sm text-slate-100"
+                        : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     월간
@@ -277,14 +270,14 @@ export default function PricingPage() {
                     type="button"
                     onClick={() => setIsAnnual(true)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 flex items-center gap-1 md:gap-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0f13] flex items-center gap-1 md:gap-2",
                       isAnnual
-                        ? "bg-white shadow-sm text-slate-900"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "bg-[#252a32] shadow-sm text-slate-100"
+                        : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     연간
-                    <span className="bg-slate-200 text-slate-600 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium">
+                    <span className="bg-blue-500/10 text-blue-400 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium">
                       -10%
                     </span>
                   </button>
@@ -316,13 +309,13 @@ export default function PricingPage() {
                         }
                       }}
                       className={cn(
-                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none",
+                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-[#252a32] bg-[#141820]",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isSelected && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 border-blue-300",
-                        !isSelected && "hover:border-slate-300 hover:bg-slate-50/50",
-                        isRecommended && !isSelected && "border-2 border-blue-200 shadow-2xl md:scale-105 z-10",
-                        isRecommended && isSelected && "border-2 border-blue-500 shadow-2xl ring-2 ring-blue-500 ring-offset-2 md:scale-105 z-10"
+                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0c0f13] bg-blue-500/5 border-blue-500/40",
+                        !isSelected && "hover:border-[#3a3e46] hover:bg-[#181c24]",
+                        isRecommended && !isSelected && "border-2 border-blue-500/30 shadow-2xl shadow-blue-500/5 md:scale-105 z-10",
+                        isRecommended && isSelected && "border-2 border-blue-500 shadow-2xl shadow-blue-500/10 ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0c0f13] md:scale-105 z-10"
                       )}
                     >
                       {/* 뱃지 */}
@@ -340,27 +333,27 @@ export default function PricingPage() {
                           <div
                             className={cn(
                               "p-3 rounded-full transition-colors",
-                              isSelected || isRecommended ? "bg-blue-100" : "bg-slate-100"
+                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-[#1a1e24]"
                             )}
                           >
                             <Icon
                               className={cn(
                                 "h-6 w-6",
-                                isSelected || isRecommended ? "text-blue-600" : "text-slate-500"
+                                isSelected || isRecommended ? "text-blue-400" : "text-slate-500"
                               )}
                             />
                           </div>
                         </div>
 
                         {/* 플랜명 + 티어 레이블 */}
-                        <CardTitle className="text-lg md:text-2xl font-bold mb-0.5">{plan.name}</CardTitle>
-                        <p className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-2 md:mb-3">
+                        <CardTitle className="text-lg md:text-2xl font-bold mb-0.5 text-slate-100">{plan.name}</CardTitle>
+                        <p className="text-[10px] md:text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">
                           {plan.tagline}
                         </p>
 
                         {/* 가격 */}
                         <div className="flex flex-col items-center gap-0.5 mb-1 md:mb-3 min-h-[4rem] md:min-h-[5rem] overflow-hidden justify-center">
-                          <span className="text-xl md:text-3xl font-bold text-slate-900 text-center">
+                          <span className="text-xl md:text-3xl font-bold text-slate-100 text-center">
                             {renderPrice(plan)}
                           </span>
                           {plan.pricePeriod && !isAnnual && (
@@ -369,40 +362,38 @@ export default function PricingPage() {
                         </div>
 
                         {/* 모바일: 핵심 전환 이유 1줄 / 데스크톱: 풀 설명 */}
-                        <p className="md:hidden text-[10px] font-medium text-blue-600/80">{plan.mobileHook}</p>
-                        <CardDescription className="hidden md:block text-sm text-slate-600 leading-relaxed">
+                        <p className="md:hidden text-[10px] font-medium text-blue-400/80">{plan.mobileHook}</p>
+                        <CardDescription className="hidden md:block text-sm text-slate-400 leading-relaxed">
                           {plan.description}
                         </CardDescription>
                       </CardHeader>
 
                       <CardContent className="flex-1 flex flex-col pt-0 px-2.5 md:px-6 pb-3 md:pb-6" onClick={(e) => e.stopPropagation()}>
-                        {/* 기능 목록 — 모바일: 4개까지 + 더보기 */}
+                        {/* 기능 목록 */}
                         <ul className="space-y-2 md:space-y-3 mb-3 md:mb-6 flex-1">
                           {plan.features.slice(0, isExpanded ? undefined : MOBILE_FEATURE_LIMIT).map((feature, index) => (
                             <li key={index} className={cn(
                               "flex items-start gap-2 md:gap-2.5 leading-relaxed",
-                              // 모바일에서 LIMIT 이후는 md에서만 보이게 하지 않고, isExpanded로 제어
                               !isExpanded && index >= MOBILE_FEATURE_LIMIT && "hidden md:flex"
                             )}>
                               <Check
                                 className={cn(
                                   "h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5",
-                                  isRecommended ? "text-blue-600" : "text-green-600"
+                                  isRecommended ? "text-blue-400" : "text-green-400"
                                 )}
                               />
-                              <span className="text-xs md:text-sm text-slate-700">{feature}</span>
+                              <span className="text-xs md:text-sm text-slate-300">{feature}</span>
                             </li>
                           ))}
-                          {/* 데스크톱에서만 보이는 나머지 (expand 안 돼도) */}
                           {!isExpanded && plan.features.slice(MOBILE_FEATURE_LIMIT).map((feature, index) => (
                             <li key={`desktop-${index}`} className="hidden md:flex items-start gap-2.5 leading-relaxed">
                               <Check
                                 className={cn(
                                   "h-4 w-4 flex-shrink-0 mt-0.5",
-                                  isRecommended ? "text-blue-600" : "text-green-600"
+                                  isRecommended ? "text-blue-400" : "text-green-400"
                                 )}
                               />
-                              <span className="text-sm text-slate-700">{feature}</span>
+                              <span className="text-sm text-slate-300">{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -411,7 +402,7 @@ export default function PricingPage() {
                         {hasMore && (
                           <button
                             type="button"
-                            className="md:hidden flex items-center justify-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 mb-3 transition-colors"
+                            className="md:hidden flex items-center justify-center gap-1 text-[11px] text-slate-500 hover:text-slate-300 mb-3 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedCards((prev) => {
@@ -433,8 +424,8 @@ export default function PricingPage() {
                             className={cn(
                               "w-full font-semibold h-9 md:h-10 text-sm",
                               plan.id === "business"
-                                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                                : "bg-slate-800 hover:bg-slate-700 text-white"
+                                ? "bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
+                                : "bg-slate-200 hover:bg-slate-100 text-slate-900"
                             )}
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
                           >
@@ -444,7 +435,7 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 h-9 md:h-10 text-sm"
+                            className="w-full border-[#2a2e36] hover:bg-[#1a1e24] text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -462,7 +453,7 @@ export default function PricingPage() {
               {/* ── 플랜별 기능 비교 ── */}
               <div className="mb-8">
                 <div className="text-center mb-4 md:mb-6">
-                  <h2 className="text-base md:text-3xl font-bold text-slate-900 mb-1 md:mb-2">
+                  <h2 className="text-base md:text-3xl font-bold text-slate-100 mb-1 md:mb-2">
                     플랜별 기능 비교
                   </h2>
                   <p className="text-[11px] md:text-sm text-slate-500">
@@ -470,15 +461,15 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                {/* ── 모바일: 컴팩트 테이블 (축약 헤더 고정) ── */}
+                {/* ── 모바일: 컴팩트 테이블 ── */}
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="border-b border-slate-200 sticky top-0 bg-white">
-                        <th className="text-left py-2 pr-2 font-semibold text-slate-600 w-[40%]">기능</th>
+                      <tr className="border-b border-[#252a32] sticky top-0 bg-[#0c0f13]">
+                        <th className="text-left py-2 pr-2 font-semibold text-slate-400 w-[40%]">기능</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
-                        <th className="text-center py-2 px-1 font-semibold text-blue-700 bg-blue-50/50 w-[15%]">Biz</th>
+                        <th className="text-center py-2 px-1 font-semibold text-blue-400 bg-blue-500/5 w-[15%]">Biz</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Ent.</th>
                       </tr>
                     </thead>
@@ -487,17 +478,17 @@ export default function PricingPage() {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
                             <tr key={`mcat-${index}`} className={cn(
-                              "border-t",
-                              item.tier === "business" ? "bg-blue-50/30" : item.tier === "enterprise" ? "bg-slate-50" : "bg-slate-50/50"
+                              "border-t border-[#252a32]",
+                              item.tier === "business" ? "bg-blue-500/5" : item.tier === "enterprise" ? "bg-[#181c24]" : "bg-[#141820]"
                             )}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
                                   <span className={cn(
                                     "text-[10px] font-bold uppercase tracking-wider",
-                                    item.tier === "business" ? "text-blue-600" : item.tier === "enterprise" ? "text-slate-500" : "text-slate-400"
+                                    item.tier === "business" ? "text-blue-400" : item.tier === "enterprise" ? "text-slate-500" : "text-slate-500"
                                   )}>{item.label}</span>
-                                  {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-600 bg-blue-100 px-1 rounded">Biz+</span>}
-                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-slate-200 px-1 rounded">Ent.</span>}
+                                  {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-400 bg-blue-500/10 px-1 rounded">Biz+</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-[#252a32] px-1 rounded">Ent.</span>}
                                 </div>
                               </td>
                             </tr>
@@ -505,13 +496,13 @@ export default function PricingPage() {
                         }
                         const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                         const mCell = (val: boolean | string, highlight?: boolean) => (
-                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-50/20")}>
-                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-600" /> : <span className="text-slate-300">—</span>) : <span className="font-medium text-slate-700">{val}</span>}
+                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-500/5")}>
+                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-400" /> : <span className="text-slate-600">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
                           </td>
                         );
                         return (
-                          <tr key={`mrow-${index}`} className="border-b border-slate-100">
-                            <td className="py-1.5 pr-2 text-slate-700 font-medium">{d.feature}</td>
+                          <tr key={`mrow-${index}`} className="border-b border-[#1a1e24]">
+                            <td className="py-1.5 pr-2 text-slate-300 font-medium">{d.feature}</td>
                             {mCell(d.starter)}
                             {mCell(d.team)}
                             {mCell(d.business, true)}
@@ -524,17 +515,17 @@ export default function PricingPage() {
                 </div>
 
                 {/* ── 데스크톱: 기존 테이블 ── */}
-                <Card className="overflow-hidden hidden md:block">
+                <Card className="overflow-hidden hidden md:block border-[#252a32] bg-[#141820]">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-slate-50 border-b border-slate-200">
-                            <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-700">기능</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-700">Starter</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-700">Team</TableHead>
-                            <TableHead className="text-center font-semibold py-3 bg-blue-50 text-blue-800">Business</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-700">Enterprise</TableHead>
+                          <TableRow className="bg-[#181c24] border-b border-[#252a32]">
+                            <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-300">기능</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
+                            <TableHead className="text-center font-semibold py-3 bg-blue-500/5 text-blue-400">Business</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-400">Enterprise</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -546,17 +537,17 @@ export default function PricingPage() {
                                 <TableRow
                                   key={`cat-${index}`}
                                   className={cn(
-                                    "border-t border-slate-200",
-                                    isBusinessTier ? "bg-blue-50/50" : isEnterpriseTier ? "bg-slate-100/70" : "bg-slate-50/50"
+                                    "border-t border-[#252a32]",
+                                    isBusinessTier ? "bg-blue-500/5" : isEnterpriseTier ? "bg-[#181c24]" : "bg-[#141820]"
                                   )}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
-                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-600" : isEnterpriseTier ? "text-slate-500" : "text-slate-400")}>
+                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : isEnterpriseTier ? "text-slate-500" : "text-slate-500")}>
                                         {item.label}
                                       </span>
-                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-slate-300 px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-[#252a32] border border-[#2a2e36] px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -564,13 +555,13 @@ export default function PricingPage() {
                             }
                             const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <span className="text-slate-300 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-700">{value}</span>;
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-600 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
                             return (
-                              <TableRow key={index} className="hover:bg-slate-50/40 transition-colors">
-                                <TableCell className="py-2.5 pl-5 text-sm text-slate-700 font-medium">{dataItem.feature}</TableCell>
+                              <TableRow key={index} className="hover:bg-[#1a1e24] transition-colors border-b border-[#1a1e24]">
+                                <TableCell className="py-2.5 pl-5 text-sm text-slate-300 font-medium">{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
-                                <TableCell className="text-center py-2.5 bg-blue-50/20">{renderCell(dataItem.business)}</TableCell>
+                                <TableCell className="text-center py-2.5 bg-blue-500/5">{renderCell(dataItem.business)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.enterprise)}</TableCell>
                               </TableRow>
                             );
@@ -588,12 +579,11 @@ export default function PricingPage() {
       </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
-      {/* 모바일: 1줄 컴팩트 / 데스크톱: 풀 레이아웃 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 border-t border-slate-200 shadow-[0_-4px_12px_rgba(15,23,42,0.08)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0c0f13]/95 backdrop-blur-sm border-t border-[#252a32] shadow-[0_-4px_12px_rgba(0,0,0,0.3)]">
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs font-semibold text-slate-900 truncate">
+            <span className="text-xs font-semibold text-slate-100 truncate">
               {selectedPlan === "starter"
                 ? "Starter · 무료"
                 : selectedPlan === "team"
@@ -602,12 +592,12 @@ export default function PricingPage() {
                 ? `Business · ₩${(isAnnual ? businessAnnualPerMonth : BUSINESS_MONTHLY).toLocaleString()}/월`
                 : "Enterprise · 별도 문의"}
             </span>
-            {isAnnual && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 shrink-0">연간</Badge>}
+            {isAnnual && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-green-500/10 text-green-400 shrink-0">연간</Badge>}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Button
               size="sm"
-              className="h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700"
+              className="h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-500"
               onClick={() => selectedPlan && handlePrimaryAction({ stopPropagation: () => {} } as React.MouseEvent, selectedPlan)}
             >
               시작하기
@@ -615,7 +605,7 @@ export default function PricingPage() {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 text-xs border-slate-200"
+              className="h-8 px-3 text-xs border-[#2a2e36] text-slate-400 hover:text-slate-200 bg-transparent"
               onClick={() => (window.location.href = "/support")}
             >
               문의
@@ -625,7 +615,7 @@ export default function PricingPage() {
         {/* ── 데스크톱 바 ── */}
         <div className="hidden md:flex mx-auto max-w-[90rem] px-8 py-4 items-center justify-between gap-x-12">
           <div className="space-y-0.5">
-            <p className="text-base font-semibold text-slate-900">
+            <p className="text-base font-semibold text-slate-100">
               현재 선택된 플랜
             </p>
             <p className="text-sm text-slate-500">
@@ -635,7 +625,7 @@ export default function PricingPage() {
           <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
             <div className="flex flex-col">
               <span className="text-xs text-slate-500 font-medium">요금제</span>
-              <span className="text-base font-semibold text-slate-900">
+              <span className="text-base font-semibold text-slate-100">
                 {selectedPlan === "starter"
                   ? "Starter — 무료"
                   : selectedPlan === "team"
@@ -647,14 +637,14 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-slate-500 font-medium">결제 주기</span>
-              <span className="text-base font-semibold text-slate-900">
+              <span className="text-base font-semibold text-slate-100">
                 {isAnnual ? "연간 결제 (10% 할인)" : "월간 결제"}
               </span>
             </div>
           </div>
           <div className="flex items-center shrink-0">
             <Button
-              className="px-8 h-11 text-base font-semibold bg-blue-600 hover:bg-blue-700 whitespace-nowrap shadow-sm"
+              className="px-8 h-11 text-base font-semibold bg-blue-600 hover:bg-blue-500 whitespace-nowrap shadow-sm"
               onClick={() => (window.location.href = "/support")}
             >
               요금 & 도입 문의
