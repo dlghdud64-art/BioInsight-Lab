@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+
+export const dynamic = "force-dynamic";
 import { queryWorkQueue } from "@/lib/work-queue";
 import { queryWorkQueueGrouped, queryAccountabilityData } from "@/lib/work-queue/work-queue-service";
 import { computeAccountabilityMetrics, evaluateEscalations, filterForPersonalView } from "@/lib/work-queue/console-accountability";
