@@ -34,11 +34,6 @@ import {
   Loader2,
   Upload,
   CheckCircle2,
-  Clock,
-  Trash2,
-  UserPlus,
-  RefreshCw,
-  Wrench,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -121,7 +116,7 @@ function PPEIcon({ type, required }: { type: string; required?: boolean }) {
   const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
   const active = required
     ? "text-blue-400 bg-blue-950/50"
-    : "text-slate-400 bg-slate-800";
+    : "text-slate-600 bg-slate-800";
   const label =
     type === "gloves"
       ? "보호장갑"
@@ -262,100 +257,6 @@ const safetyItems: SafetyItem[] = [
   },
 ];
 
-// ─── 우선 조치 큐 (Priority Action Queue) ────────────────────────────────
-type ActionCategory = "msds_renewal" | "training_incomplete" | "disposal_scheduled" | "storage_violation";
-type ActionUrgency = "urgent" | "warning" | "info";
-type ActionQueueStatus = "pending" | "in_progress" | "completed";
-
-type ActionQueueItem = {
-  id: string;
-  category: ActionCategory;
-  materialId: number;
-  materialName: string;
-  description: string;
-  owner: string | null;
-  deadline: string;
-  urgency: ActionUrgency;
-  status: ActionQueueStatus;
-};
-
-const CATEGORY_CONFIG: Record<ActionCategory, { label: string; labelShort: string }> = {
-  msds_renewal: { label: "MSDS 갱신 필요", labelShort: "MSDS" },
-  training_incomplete: { label: "교육 미이수", labelShort: "교육" },
-  disposal_scheduled: { label: "폐기 예정", labelShort: "폐기" },
-  storage_violation: { label: "보관 위반", labelShort: "보관" },
-};
-
-const URGENCY_CONFIG: Record<ActionUrgency, { border: string; badge: string; badgeText: string; label: string }> = {
-  urgent: { border: "border-l-red-500", badge: "bg-red-950/40 text-red-400 border-red-800", badgeText: "긴급", label: "긴급" },
-  warning: { border: "border-l-amber-500", badge: "bg-amber-950/40 text-amber-400 border-amber-800", badgeText: "주의", label: "주의" },
-  info: { border: "border-l-blue-500", badge: "bg-blue-950/40 text-blue-400 border-blue-800", badgeText: "참고", label: "참고" },
-};
-
-const STATUS_LABELS: Record<ActionQueueStatus, { label: string; cls: string }> = {
-  pending: { label: "대기", cls: "bg-slate-800 text-slate-400 border-slate-700" },
-  in_progress: { label: "진행 중", cls: "bg-blue-950/40 text-blue-400 border-blue-800" },
-  completed: { label: "완료", cls: "bg-emerald-950/40 text-emerald-400 border-emerald-800" },
-};
-
-const initialActionQueue: ActionQueueItem[] = [
-  {
-    id: "aq-1",
-    category: "msds_renewal",
-    materialId: 2,
-    materialName: "Acetone (아세톤)",
-    description: "MSDS 미등록 — 법정 기한 초과",
-    owner: null,
-    deadline: "2026-03-20",
-    urgency: "urgent",
-    status: "pending",
-  },
-  {
-    id: "aq-2",
-    category: "msds_renewal",
-    materialId: 3,
-    materialName: "Sodium Hydroxide (수산화나트륨)",
-    description: "MSDS 미등록 — 고위험 물질 우선 등록 필요",
-    owner: "김안전",
-    deadline: "2026-03-22",
-    urgency: "urgent",
-    status: "in_progress",
-  },
-  {
-    id: "aq-3",
-    category: "disposal_scheduled",
-    materialId: 1,
-    materialName: "Sulfuric Acid (황산)",
-    description: "유효기간 만료 로트 폐기 예정",
-    owner: "박관리",
-    deadline: "2026-03-25",
-    urgency: "warning",
-    status: "pending",
-  },
-  {
-    id: "aq-4",
-    category: "storage_violation",
-    materialId: 2,
-    materialName: "Acetone (아세톤)",
-    description: "방폭 캐비닛 온도 기준 초과 감지",
-    owner: null,
-    deadline: "2026-03-18",
-    urgency: "urgent",
-    status: "pending",
-  },
-  {
-    id: "aq-5",
-    category: "training_incomplete",
-    materialId: 0,
-    materialName: "전체 (일반)",
-    description: "분기 안전교육 미이수 인원 2명",
-    owner: null,
-    deadline: "2026-03-31",
-    urgency: "info",
-    status: "pending",
-  },
-];
-
 const LOCATIONS = ["시약장 A (산성)", "시약장 B (염기성)", "방폭 캐비닛 1", "일반 캐비닛"];
 
 export default function SafetyManagerPage() {
@@ -367,92 +268,6 @@ export default function SafetyManagerPage() {
 
   // ─── Mutable item state ───────────────────────────────────────────────
   const [items, setItems] = useState<SafetyItem[]>(safetyItems);
-
-  // ─── 우선 조치 큐 state ─────────────────────────────────────────────
-  const [actionQueue, setActionQueue] = useState<ActionQueueItem[]>(initialActionQueue);
-  const [queueCategoryFilter, setQueueCategoryFilter] = useState<string>("all");
-
-  // 담당자 지정 Dialog
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [assignTarget, setAssignTarget] = useState<ActionQueueItem | null>(null);
-  const [assignName, setAssignName] = useState("");
-
-  // 보관 조건 수정 Dialog
-  const [storageEditDialogOpen, setStorageEditDialogOpen] = useState(false);
-  const [storageEditTarget, setStorageEditTarget] = useState<ActionQueueItem | null>(null);
-  const [storageEditValue, setStorageEditValue] = useState("");
-
-  const openAssignDialog = (aq: ActionQueueItem) => {
-    setAssignTarget(aq);
-    setAssignName(aq.owner || "");
-    setAssignDialogOpen(true);
-  };
-
-  const handleAssignSave = () => {
-    if (!assignTarget || !assignName.trim()) {
-      toast({ title: "담당자 입력 필요", description: "담당자 이름을 입력해 주세요.", variant: "destructive" });
-      return;
-    }
-    setActionQueue((prev) =>
-      prev.map((aq) =>
-        aq.id === assignTarget.id ? { ...aq, owner: assignName.trim(), status: aq.status === "pending" ? "in_progress" : aq.status } : aq
-      )
-    );
-    toast({ title: "담당자 지정 완료", description: `${assignTarget.materialName} — ${assignName.trim()}` });
-    setAssignDialogOpen(false);
-  };
-
-  const openStorageEditDialog = (aq: ActionQueueItem) => {
-    setStorageEditTarget(aq);
-    const material = items.find((i) => i.id === aq.materialId);
-    setStorageEditValue(material?.storageCondition || "");
-    setStorageEditDialogOpen(true);
-  };
-
-  const handleStorageEditSave = () => {
-    if (!storageEditTarget || !storageEditValue.trim()) {
-      toast({ title: "보관 조건 입력 필요", description: "수정할 보관 조건을 입력해 주세요.", variant: "destructive" });
-      return;
-    }
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === storageEditTarget.materialId ? { ...i, storageCondition: storageEditValue.trim() } : i
-      )
-    );
-    setActionQueue((prev) =>
-      prev.map((aq) =>
-        aq.id === storageEditTarget.id ? { ...aq, status: "completed" } : aq
-      )
-    );
-    toast({ title: "보관 조건 수정 완료", description: `${storageEditTarget.materialName}의 보관 조건이 업데이트되었습니다.` });
-    setStorageEditDialogOpen(false);
-  };
-
-  const handleQueueMsdsAction = (aq: ActionQueueItem) => {
-    const material = items.find((i) => i.id === aq.materialId);
-    if (material) openMsdsDialog(material);
-  };
-
-  const handleQueueDisposeAction = (aq: ActionQueueItem) => {
-    const material = items.find((i) => i.id === aq.materialId);
-    if (material) openDisposeDialog(material);
-  };
-
-  const handleQueueComplete = (aqId: string) => {
-    setActionQueue((prev) =>
-      prev.map((aq) => (aq.id === aqId ? { ...aq, status: "completed" as ActionQueueStatus } : aq))
-    );
-    toast({ title: "조치 완료 처리", description: "해당 항목이 완료 상태로 변경되었습니다." });
-  };
-
-  const filteredQueue = actionQueue.filter((aq) => {
-    if (queueCategoryFilter !== "all" && aq.category !== queueCategoryFilter) return false;
-    return true;
-  });
-
-  const queueByCategory = (cat: ActionCategory) => filteredQueue.filter((aq) => aq.category === cat);
-  const pendingQueueCount = actionQueue.filter((aq) => aq.status !== "completed").length;
-  const urgentQueueCount = actionQueue.filter((aq) => aq.urgency === "urgent" && aq.status !== "completed").length;
 
   // ─── MSDS 등록 Dialog ─────────────────────────────────────────────────
   const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
@@ -588,9 +403,9 @@ export default function SafetyManagerPage() {
   const msdsMissingCount = items.filter((i) => !i.hasMsds).length;
 
   const getBorderColor = (level: string) => {
-    if (level === "HIGH") return "!border-l-red-500 !border-l-red-400";
-    if (level === "MEDIUM") return "!border-l-orange-500 !border-l-orange-400";
-    return "!border-l-yellow-500 !border-l-yellow-500";
+    if (level === "HIGH") return "!border-l-red-400";
+    if (level === "MEDIUM") return "!border-l-orange-400";
+    return "!border-l-yellow-500";
   };
 
   const handleExport = () => {
@@ -656,7 +471,7 @@ export default function SafetyManagerPage() {
 
         {/* 1. 상단 안전 요약 KPI */}
         <div className="grid gap-3 sm:gap-4 grid-cols-3">
-          <Card className="border-slate-800/50 shadow-none bg-slate-900">
+          <Card className="border-slate-800/50 shadow-sm bg-slate-900">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-slate-400">전체 관리</p>
@@ -664,10 +479,10 @@ export default function SafetyManagerPage() {
                   {totalCount}<span className="text-[10px] sm:text-sm font-normal text-slate-400 ml-0.5">종</span>
                 </p>
               </div>
-              <ShieldAlert className="text-slate-400 text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+              <ShieldAlert className="text-slate-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-red-900/50 bg-red-950/30/20 bg-red-950/30 shadow-none">
+          <Card className="border-red-900/50 bg-red-950/30 shadow-sm">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-red-400">고위험</p>
@@ -678,7 +493,7 @@ export default function SafetyManagerPage() {
               <Biohazard className="text-red-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-          <Card className="border-amber-900/50 bg-amber-950/30/20 bg-amber-950/30 shadow-none">
+          <Card className="border-amber-900/50 bg-amber-950/30 shadow-sm">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-amber-400">MSDS 누락</p>
@@ -689,152 +504,6 @@ export default function SafetyManagerPage() {
               <FileWarning className="text-amber-500 w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
             </CardContent>
           </Card>
-        </div>
-
-        {/* ─── 우선 조치 큐 (Priority Action Queue) ─────────────────────── */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                우선 조치 큐
-              </h2>
-              {pendingQueueCount > 0 && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950/40 text-red-400 border border-red-800">
-                  {pendingQueueCount}건 미처리
-                </span>
-              )}
-              {urgentQueueCount > 0 && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-700">
-                  긴급 {urgentQueueCount}
-                </span>
-              )}
-            </div>
-            <Select value={queueCategoryFilter} onValueChange={setQueueCategoryFilter}>
-              <SelectTrigger className="w-[140px] h-7 text-[11px] border-slate-700 bg-slate-900">
-                <SelectValue placeholder="유형 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 유형</SelectItem>
-                <SelectItem value="msds_renewal">MSDS 갱신</SelectItem>
-                <SelectItem value="training_incomplete">교육 미이수</SelectItem>
-                <SelectItem value="disposal_scheduled">폐기 예정</SelectItem>
-                <SelectItem value="storage_violation">보관 위반</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 카테고리별 그룹 렌더링 */}
-          {(["msds_renewal", "storage_violation", "disposal_scheduled", "training_incomplete"] as ActionCategory[]).map((cat) => {
-            const catItems = queueByCategory(cat);
-            if (catItems.length === 0) return null;
-            const catConfig = CATEGORY_CONFIG[cat];
-            return (
-              <div key={cat} className="rounded-lg border border-slate-800 bg-slate-900 overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-800 bg-slate-800/50">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                    {catConfig.label}
-                  </span>
-                  <span className="text-[10px] text-slate-500 ml-2">{catItems.length}건</span>
-                </div>
-                <div className="divide-y divide-slate-800/50">
-                  {catItems.map((aq) => {
-                    const urgCfg = URGENCY_CONFIG[aq.urgency];
-                    const stCfg = STATUS_LABELS[aq.status];
-                    const isOverdue = new Date(aq.deadline) < new Date() && aq.status !== "completed";
-                    return (
-                      <div
-                        key={aq.id}
-                        className={`px-3 py-3 border-l-4 ${urgCfg.border} ${aq.status === "completed" ? "opacity-50" : ""}`}
-                      >
-                        {/* 1행: 물질명 + 뱃지 */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-slate-100">{aq.materialName}</span>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${urgCfg.badge}`}>
-                            {urgCfg.badgeText}
-                          </Badge>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${stCfg.cls}`}>
-                            {stCfg.label}
-                          </Badge>
-                        </div>
-                        {/* 2행: 설명 + 메타 */}
-                        <p className="text-[11px] text-slate-400 mt-1">{aq.description}</p>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <UserPlus className="h-3 w-3" />
-                            담당: {aq.owner ? <span className="text-slate-300">{aq.owner}</span> : <span className="text-amber-400">미지정</span>}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            기한: <span className={isOverdue ? "text-red-400 font-medium" : "text-slate-300"}>{aq.deadline}</span>
-                            {isOverdue && <span className="text-red-400 font-medium">(초과)</span>}
-                          </span>
-                        </div>
-                        {/* 3행: CTA 버튼 */}
-                        {aq.status !== "completed" && (
-                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                            {cat === "msds_renewal" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 px-2 text-[10px] text-amber-400 border-amber-800 hover:bg-amber-950/30"
-                                onClick={() => handleQueueMsdsAction(aq)}
-                              >
-                                <RefreshCw className="h-3 w-3 mr-1" />MSDS 등록/갱신
-                              </Button>
-                            )}
-                            {cat === "disposal_scheduled" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 px-2 text-[10px] text-red-400 border-red-800 hover:bg-red-950/30"
-                                onClick={() => handleQueueDisposeAction(aq)}
-                              >
-                                <Trash2 className="h-3 w-3 mr-1" />폐기 처리
-                              </Button>
-                            )}
-                            {cat === "storage_violation" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 px-2 text-[10px] text-blue-400 border-blue-800 hover:bg-blue-950/30"
-                                onClick={() => openStorageEditDialog(aq)}
-                              >
-                                <Wrench className="h-3 w-3 mr-1" />보관 조건 수정
-                              </Button>
-                            )}
-                            {!aq.owner && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-6 px-2 text-[10px] text-slate-300 border-slate-700 hover:bg-slate-800"
-                                onClick={() => openAssignDialog(aq)}
-                              >
-                                <UserPlus className="h-3 w-3 mr-1" />담당자 지정
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 px-2 text-[10px] text-emerald-400 border-emerald-800 hover:bg-emerald-950/30"
-                              onClick={() => handleQueueComplete(aq.id)}
-                            >
-                              <CheckCircle2 className="h-3 w-3 mr-1" />완료 처리
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-
-          {filteredQueue.length === 0 && (
-            <div className="text-center py-6 text-slate-500 text-xs border border-slate-800 rounded-lg bg-slate-900">
-              조건에 맞는 조치 항목이 없습니다.
-            </div>
-          )}
         </div>
 
         {/* 슬림 필터 바 */}
@@ -888,7 +557,7 @@ export default function SafetyManagerPage() {
         </p>
 
         {/* 2. 고도화된 제품 리스트 (antialiased 텍스트, 선명한 아이콘) */}
-        <Card className="shadow-none border-slate-800/50 bg-slate-900 antialiased">
+        <Card className="shadow-sm border-slate-800/50 bg-slate-900 antialiased">
           <CardHeader>
             <CardTitle className="text-lg text-white">관리 대상 물질 리스트</CardTitle>
             <CardDescription className="text-slate-400">
@@ -904,15 +573,15 @@ export default function SafetyManagerPage() {
               <div className="space-y-2 antialiased">
                 {filteredItems.map((item) => {
                   const riskBadge = item.level === "HIGH"
-                    ? { label: "고위험", cls: "bg-red-900/40 text-red-700 border-red-800 bg-red-900/40 text-red-300 border-red-800" }
+                    ? { label: "고위험", cls: "bg-red-900/40 text-red-300 border-red-800" }
                     : item.level === "MEDIUM"
-                      ? { label: "중위험", cls: "bg-orange-900/40 text-orange-700 border-orange-800 bg-orange-900/40 text-orange-300 border-orange-800" }
-                      : { label: "일반", cls: "bg-slate-800 text-slate-400 border-slate-800 bg-slate-800 text-slate-400 border-slate-700" };
+                      ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800" }
+                      : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" };
                   const actionBadge = item.actionStatus === "action_required"
-                    ? { label: "조치 필요", cls: "bg-red-950/30 text-red-400 border-red-800 bg-red-950/40 text-red-400 border-red-800" }
+                    ? { label: "조치 필요", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800" }
                     : item.actionStatus === "caution"
-                      ? { label: "주의", cls: "bg-amber-950/30 text-amber-400 border-amber-800 bg-amber-950/40 text-amber-400 border-amber-800" }
-                      : { label: "정상", cls: "bg-emerald-900/20 text-emerald-400 border-emerald-800 bg-emerald-950/40 text-emerald-400 border-emerald-800" };
+                      ? { label: "주의", cls: "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800" }
+                      : { label: "정상", cls: "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800" };
                   const requiredPpe = item.ppe.filter((p) => p.required).map((p) =>
                     p.type === "gloves" ? "보호장갑" : p.type === "goggles" ? "보안경" : p.type === "coat" ? "실험복" : p.type === "mask" ? "마스크" : ""
                   ).filter(Boolean);
@@ -920,7 +589,7 @@ export default function SafetyManagerPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 border rounded-lg hover:bg-slate-800/50 transition-colors border-l-4 border-slate-800/50${getBorderColor(item.level)}`}
+                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
                     >
                       {/* 1행: 핵심 식별 정보 */}
                       <div className="flex items-center gap-2 flex-wrap">
@@ -929,8 +598,8 @@ export default function SafetyManagerPage() {
                             <GHSPictogram key={icon} type={icon} />
                           ))}
                         </div>
-                        <span className="text-sm font-bold text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-800 text-slate-400 border-slate-700 font-mono">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-700 font-mono">
                           {item.cas}
                         </Badge>
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
@@ -944,22 +613,22 @@ export default function SafetyManagerPage() {
                       {/* 2행: 운영 메타 정보 */}
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-slate-400">
                         <span>보관: {item.loc}</span>
-                        <span className="text-slate-300 text-slate-400 hidden sm:inline">·</span>
+                        <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
                         <span className="hidden sm:inline">조건: {item.storageCondition}</span>
-                        <span className="text-slate-300 text-slate-400">·</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
                         <span>MSDS: {item.hasMsds ? (
-                          <span className="text-emerald-400">등록</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">등록</span>
                         ) : (
                           <span className="text-amber-400">미등록</span>
                         )}</span>
-                        <span className="text-slate-300 text-slate-400">·</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
                         <span>점검: {item.lastInspection || <span className="text-amber-500">미점검</span>}</span>
                       </div>
 
                       {/* 보호구(PPE) 아이콘 */}
                       {item.ppe.length > 0 && (
                         <div className="flex items-center gap-1.5 mt-2">
-                          <span className="text-[11px] text-slate-400 text-slate-500 mr-0.5">보호구</span>
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 mr-0.5">보호구</span>
                           {item.ppe.map((p) => (
                             <PPEIcon key={p.type} type={p.type} required={p.required} />
                           ))}
@@ -969,28 +638,28 @@ export default function SafetyManagerPage() {
                       {/* 3행: 후속 조치 CTA */}
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                         {!item.hasMsds && (
-                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-amber-400 border-amber-800 hover:bg-amber-950/30"
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                             onClick={() => openMsdsDialog(item)}
                           >
                             <FileWarning className="h-3 w-3 mr-1" />MSDS 등록
                           </Button>
                         )}
                         {!item.lastInspection && (
-                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-blue-400 border-blue-800 hover:bg-blue-950/30"
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                             onClick={() => openInspDialog(item)}
                           >
                             <ShieldCheck className="h-3 w-3 mr-1" />점검 기록
                           </Button>
                         )}
                         {item.level === "HIGH" && (
-                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-400 border-red-800 hover:bg-red-950/30"
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30"
                             onClick={() => openDisposeDialog(item)}
                           >
                             <AlertTriangle className="h-3 w-3 mr-1" />폐기 처리
                           </Button>
                         )}
                         {item.actionStatus === "normal" && item.hasMsds && item.lastInspection && (
-                          <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                             <ShieldCheck className="h-3 w-3" />관리 정상
                           </span>
                         )}
@@ -1009,7 +678,7 @@ export default function SafetyManagerPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <FileWarning className="h-4 w-4 text-amber-400" />
+              <FileWarning className="h-4 w-4 text-amber-600" />
               MSDS 등록
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -1020,11 +689,11 @@ export default function SafetyManagerPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="msds-substance" className="text-xs font-medium">물질명</Label>
-                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-900" />
+                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="msds-cas" className="text-xs font-medium">CAS No.</Label>
-                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-900" />
+                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -1039,7 +708,7 @@ export default function SafetyManagerPage() {
                 />
               </div>
               {msdsForm.fileName && (
-                <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <p className="text-[11px] text-emerald-600 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />{msdsForm.fileName}
                 </p>
               )}
@@ -1093,7 +762,7 @@ export default function SafetyManagerPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-blue-400" />
+              <ShieldCheck className="h-4 w-4 text-blue-600" />
               점검 기록
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -1140,7 +809,7 @@ export default function SafetyManagerPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-xs font-medium text-amber-400">이상 여부</Label>
+                  <Label className="text-xs font-medium text-amber-700 dark:text-amber-400">이상 여부</Label>
                   <p className="text-[11px] text-slate-500">점검 중 이상이 발견되었습니다.</p>
                 </div>
                 <Switch checked={inspForm.hasIssue} onCheckedChange={(v: boolean) => setInspForm((f) => ({ ...f, hasIssue: v }))} />
@@ -1171,82 +840,11 @@ export default function SafetyManagerPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── 담당자 지정 Dialog ─────────────────────────────────────────── */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <UserPlus className="h-4 w-4 text-blue-400" />
-              담당자 지정
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {assignTarget?.materialName} — {assignTarget?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="assign-name" className="text-xs font-medium">담당자 이름 *</Label>
-              <Input
-                id="assign-name"
-                value={assignName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignName(e.target.value)}
-                placeholder="이름 입력"
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setAssignDialogOpen(false)}>
-              취소
-            </Button>
-            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={handleAssignSave}>
-              지정
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ─── 보관 조건 수정 Dialog ──────────────────────────────────────── */}
-      <Dialog open={storageEditDialogOpen} onOpenChange={setStorageEditDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Wrench className="h-4 w-4 text-blue-400" />
-              보관 조건 수정
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {storageEditTarget?.materialName} — 현재 위반 사항을 해소하기 위해 보관 조건을 수정합니다.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="storage-cond" className="text-xs font-medium">보관 조건 *</Label>
-              <Textarea
-                id="storage-cond"
-                value={storageEditValue}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setStorageEditValue(e.target.value)}
-                placeholder="수정할 보관 조건을 입력하세요."
-                rows={3}
-                className="text-xs"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" className="text-xs" onClick={() => setStorageEditDialogOpen(false)}>
-              취소
-            </Button>
-            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white" onClick={handleStorageEditSave}>
-              수정 저장
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* ─── 폐기 처리 확인 Dialog ────────────────────────────────────── */}
       <Dialog open={disposeDialogOpen} onOpenChange={setDisposeDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-base flex items-center gap-2 text-red-400">
+            <DialogTitle className="text-base flex items-center gap-2 text-red-700 dark:text-red-400">
               <AlertTriangle className="h-5 w-5" />
               폐기 처리 확인
             </DialogTitle>
@@ -1256,8 +854,8 @@ export default function SafetyManagerPage() {
           </DialogHeader>
           {disposeTarget && (
             <div className="space-y-3 py-2">
-              <div className="p-3 rounded-lg bg-red-950/20 border border-red-800">
-                <p className="text-sm font-medium text-red-300">{disposeTarget.name}</p>
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">{disposeTarget.name}</p>
                 <p className="text-xs text-red-400 mt-1">CAS: {disposeTarget.cas}</p>
                 <p className="text-xs text-red-400">보관: {disposeTarget.storageCondition} · 위치: {disposeTarget.loc}</p>
               </div>
