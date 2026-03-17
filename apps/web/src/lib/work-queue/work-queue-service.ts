@@ -924,6 +924,95 @@ export async function logCadenceStepCompletion(params: {
   } as any);
 }
 
+// ── Bottleneck Remediation ──
+
+/**
+ * 병목 개선 데이터 조회 — 활성 항목 + 로그 + 기존 개선 항목
+ *
+ * 개선 항목은 payload.remediations에 JSON 배열로 저장됩니다 (별도 테이블 없음).
+ * 이 함수는 queryCadenceGovernanceData를 재사용하고 개선 항목을 별도 조회합니다.
+ */
+export async function queryBottleneckRemediationData(filters: {
+  organizationId?: string;
+} = {}): Promise<{
+  items: WorkQueueItem[];
+  logs: import("./console-accountability").ActivityLogEntry[];
+  remediations: import("./console-bottleneck-remediation").RemediationItem[];
+}> {
+  const { items, logs } = await queryCadenceGovernanceData(filters);
+
+  // Remediation items are stored as a global org-level JSON blob
+  // in a special sentinel AiActionItem with type REMEDIATION_REGISTRY
+  const registry = await db.aiActionItem.findFirst({
+    where: {
+      type: "REMEDIATION_REGISTRY" as any,
+      ...(filters.organizationId ? { organizationId: filters.organizationId } : {}),
+    },
+    select: { payload: true },
+  });
+
+  const remediations = Array.isArray((registry?.payload as any)?.remediations)
+    ? (registry.payload as any).remediations
+    : [];
+
+  return { items, logs, remediations };
+}
+
+/**
+ * 개선 항목 저장 (생성 또는 업데이트)
+ */
+export async function saveRemediationItems(params: {
+  remediations: import("./console-bottleneck-remediation").RemediationItem[];
+  organizationId?: string;
+  actorUserId: string;
+  logEvent?: string;
+  logMetadata?: Record<string, unknown>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<void> {
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Upsert the registry sentinel
+    const existing = await tx.aiActionItem.findFirst({
+      where: {
+        type: "REMEDIATION_REGISTRY" as any,
+        ...(params.organizationId ? { organizationId: params.organizationId } : {}),
+      },
+    });
+
+    if (existing) {
+      await tx.aiActionItem.update({
+        where: { id: existing.id },
+        data: {
+          payload: { remediations: params.remediations } as any,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      await tx.aiActionItem.create({
+        data: {
+          type: "REMEDIATION_REGISTRY" as any,
+          status: "PENDING" as any,
+          title: "Remediation Registry",
+          payload: { remediations: params.remediations } as any,
+          ...(params.organizationId ? { organizationId: params.organizationId } : {}),
+        } as any,
+      });
+    }
+
+    // Log if event specified
+    if (params.logEvent) {
+      await createActivityLog({
+        activityType: params.logEvent as any,
+        userId: params.actorUserId,
+        metadata: params.logMetadata ?? {},
+        organizationId: params.organizationId ?? null,
+        ipAddress: params.ipAddress ?? null,
+        userAgent: params.userAgent ?? null,
+      } as any);
+    }
+  });
+}
+
 // ── Helpers ──
 
 /**

@@ -544,6 +544,64 @@ export function useCadenceStepComplete() {
   });
 }
 
+/**
+ * 병목 개선 데이터 조회
+ */
+export function useBottleneckRemediation(organizationId?: string) {
+  return useQuery<{
+    bottlenecks: import("@/lib/work-queue/console-bottleneck-remediation").DetectedBottleneck[];
+    remediations: import("@/lib/work-queue/console-bottleneck-remediation").RemediationItem[];
+    consoleView: import("@/lib/work-queue/console-bottleneck-remediation").RemediationConsoleView;
+    reportSignals: import("@/lib/work-queue/console-bottleneck-remediation").RemediationReportSignals;
+  }>({
+    queryKey: [...WORK_QUEUE_KEYS.all, "bottleneck-remediation", organizationId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (organizationId) params.set("organizationId", organizationId);
+
+      const res = await fetch(`/api/work-queue/bottleneck-remediation?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch bottleneck remediation data");
+      return res.json();
+    },
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * 개선 항목 생성/상태 변경
+ */
+export function useRemediationAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      action: "create" | "transition";
+      remediation?: import("@/lib/work-queue/console-bottleneck-remediation").RemediationItem;
+      remediationId?: string;
+      newStatus?: string;
+      note?: string;
+      organizationId?: string;
+    }) => {
+      const res = await fetch("/api/work-queue/bottleneck-remediation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Remediation action failed");
+      }
+      return res.json();
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+}
+
 // ── Re-exports for UI convenience ──
 
 export { TASK_STATUS_SORT_ORDER, TASK_STATUS_BADGE, APPROVAL_STATUS_BADGE };

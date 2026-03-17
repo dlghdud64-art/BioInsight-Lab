@@ -272,3 +272,37 @@ export type {
   GovernanceReport,
   ReviewOutcomeGovernanceDef,
 } from "./console-cadence-governance";
+
+export {
+  queryBottleneckRemediationData,
+  saveRemediationItems,
+} from "./work-queue-service";
+
+export {
+  detectBottlenecks,
+  canTransitionRemediation,
+  applyRemediationTransition,
+  buildRemediationItem,
+  buildWeeklyReviewOutcome,
+  buildRemediationConsoleView,
+  computeRemediationReportSignals,
+  BOTTLENECK_CLASS_DEFS,
+  BOTTLENECK_CLASS_LABELS,
+  REMEDIATION_STATUS_DEFS,
+  REMEDIATION_STATUS_LABELS,
+  GOVERNANCE_REMEDIATION_LINKS,
+} from "./console-bottleneck-remediation";
+
+export type {
+  BottleneckClassId,
+  BottleneckClassDef,
+  BottleneckSeverity,
+  RemediationStatus,
+  RemediationItem,
+  RemediationCreationMode,
+  GovernanceRemediationLinkDef,
+  DetectedBottleneck,
+  WeeklyReviewOutcome,
+  RemediationConsoleView,
+  RemediationReportSignals,
+} from "./console-bottleneck-remediation";

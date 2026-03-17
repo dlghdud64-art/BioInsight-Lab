@@ -27,6 +27,8 @@ import {
   useDailyReviewAction,
   useCadenceGovernance,
   useCadenceStepComplete,
+  useBottleneckRemediation,
+  useRemediationAction,
   TASK_STATUS_BADGE,
   type TaskStatus,
 } from "@/hooks/use-work-queue";
@@ -66,6 +68,16 @@ import type {
   LeadInterventionTrigger,
   GovernanceSignalValue,
 } from "@/lib/work-queue/console-cadence-governance";
+import {
+  BOTTLENECK_CLASS_LABELS,
+  REMEDIATION_STATUS_LABELS,
+} from "@/lib/work-queue/console-bottleneck-remediation";
+import type {
+  DetectedBottleneck,
+  RemediationItem,
+  RemediationConsoleView as RemediationConsoleViewType,
+  RemediationReportSignals,
+} from "@/lib/work-queue/console-bottleneck-remediation";
 
 // ── Tier Visual Config ──
 
@@ -124,7 +136,7 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
 
 // ── Main Console Component ──
 
-type ConsoleMode = "queue" | "daily_review" | "governance";
+type ConsoleMode = "queue" | "daily_review" | "governance" | "remediation";
 
 export function WorkQueueConsole() {
   const [mode, setMode] = useState<ConsoleMode>("queue");
@@ -196,10 +208,21 @@ export function WorkQueueConsole() {
           >
             거버넌스
           </button>
+          <button
+            onClick={() => setMode("remediation")}
+            className={cn(
+              "text-xs px-3 py-1 rounded-md font-medium transition-colors",
+              mode === "remediation" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            개선
+          </button>
         </div>
       </div>
 
-      {mode === "governance" ? (
+      {mode === "remediation" ? (
+        <RemediationView />
+      ) : mode === "governance" ? (
         <GovernanceView />
       ) : mode === "daily_review" ? (
         <DailyReviewView />
@@ -731,6 +754,180 @@ function DailyReviewCard({ reviewItem, style }: { reviewItem: DailyReviewItem; s
           <span className="text-[10px] text-muted-foreground">
             +{reviewItem.availableReviewOutcomes.length - 3}
           </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Remediation View ──
+
+function RemediationView() {
+  const { data, isLoading } = useBottleneckRemediation();
+  const remAction = useRemediationAction();
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>개선 데이터 로딩 중...</span>
+      </div>
+    );
+  }
+
+  const { bottlenecks, consoleView, reportSignals } = data;
+  const activeBottlenecks = bottlenecks.filter(
+    (b: DetectedBottleneck) => b.metricValue > 0 && b.severity !== "low",
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Bar */}
+      <div className="grid gap-2 sm:grid-cols-4">
+        <div className={cn("rounded-lg border px-4 py-3", consoleView.openCount > 0 ? "border-yellow-200 bg-yellow-50" : "border-gray-200 bg-gray-50")}>
+          <div className="text-xs text-muted-foreground">열린 개선</div>
+          <div className="text-lg font-bold">{consoleView.openCount}</div>
+        </div>
+        <div className={cn("rounded-lg border px-4 py-3", consoleView.highSeverityCount > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50")}>
+          <div className="text-xs text-muted-foreground">고심각도</div>
+          <div className="text-lg font-bold">{consoleView.highSeverityCount}</div>
+        </div>
+        <div className={cn("rounded-lg border px-4 py-3", consoleView.overdueCount > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50")}>
+          <div className="text-xs text-muted-foreground">기한 초과</div>
+          <div className="text-lg font-bold">{consoleView.overdueCount}</div>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="text-xs text-muted-foreground">임박</div>
+          <div className="text-lg font-bold">{consoleView.dueSoonCount}</div>
+        </div>
+      </div>
+
+      {/* Active Bottlenecks */}
+      {activeBottlenecks.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">탐지된 병목</h3>
+          <div className="grid gap-2">
+            {activeBottlenecks.map((b: DetectedBottleneck, i: number) => (
+              <div
+                key={`${b.bottleneckType}-${i}`}
+                className={cn(
+                  "rounded-lg border px-4 py-3",
+                  b.severity === "critical" ? "border-red-300 bg-red-50"
+                    : b.severity === "high" ? "border-orange-200 bg-orange-50"
+                    : "border-yellow-200 bg-yellow-50",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    {BOTTLENECK_CLASS_LABELS[b.bottleneckType]}
+                  </div>
+                  <Badge variant={b.remediationRequired ? "destructive" : "outline"} className="text-xs">
+                    {b.severity}
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{b.detail}</div>
+                {b.existingRemediationId && (
+                  <div className="text-xs text-blue-600 mt-1">개선 진행 중: {b.existingRemediationId}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Linked Remediations */}
+      {consoleView.linkedToCurrentHotspots.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">현재 핫스팟 연결 개선</h3>
+          <div className="grid gap-2">
+            {consoleView.linkedToCurrentHotspots.map((r: RemediationItem) => (
+              <RemediationItemCard key={r.remediationId} item={r} onTransition={remAction.mutate} isPending={remAction.isPending} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recently Resolved */}
+      {consoleView.recentlyResolved.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">최근 해결</h3>
+          <div className="grid gap-2">
+            {consoleView.recentlyResolved.map((r: RemediationItem) => (
+              <div key={r.remediationId} className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">{r.summary}</div>
+                  <Badge variant="secondary" className="text-xs">해결</Badge>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {BOTTLENECK_CLASS_LABELS[r.bottleneckType]}
+                  {r.resolutionNote && ` — ${r.resolutionNote}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Report Signals */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">개선 루프 신호</h3>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="text-xs text-muted-foreground">반복 핫스팟</div>
+            <div className="text-lg font-bold">{reportSignals.recurringHotspotCount}</div>
+          </div>
+          <div className={cn("rounded-lg border px-4 py-3", reportSignals.hotspotWithoutRemediationCount > 0 ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-gray-50")}>
+            <div className="text-xs text-muted-foreground">개선 없는 핫스팟</div>
+            <div className="text-lg font-bold">{reportSignals.hotspotWithoutRemediationCount}</div>
+          </div>
+          <div className={cn("rounded-lg border px-4 py-3", reportSignals.hotspotRecurrenceAfterRemediationCount > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50")}>
+            <div className="text-xs text-muted-foreground">개선 후 재발</div>
+            <div className="text-lg font-bold">{reportSignals.hotspotRecurrenceAfterRemediationCount}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RemediationItemCard({ item, onTransition, isPending }: {
+  item: RemediationItem;
+  onTransition: (params: { action: "transition"; remediationId: string; newStatus: string }) => void;
+  isPending: boolean;
+}) {
+  const severityColor = item.severity === "critical" ? "border-red-200 bg-red-50"
+    : item.severity === "high" ? "border-orange-200 bg-orange-50"
+    : "border-yellow-200 bg-yellow-50";
+
+  return (
+    <div className={cn("rounded-lg border px-4 py-3", severityColor)}>
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">{item.summary}</div>
+        <Badge variant="outline" className="text-xs">
+          {REMEDIATION_STATUS_LABELS[item.status]}
+        </Badge>
+      </div>
+      <div className="text-xs text-muted-foreground mt-1">
+        {BOTTLENECK_CLASS_LABELS[item.bottleneckType]} · 담당: {item.owner}
+      </div>
+      <div className="flex gap-1 mt-2">
+        {item.status === "open" && (
+          <Button size="sm" variant="outline" className="text-xs h-6" disabled={isPending}
+            onClick={() => onTransition({ action: "transition", remediationId: item.remediationId, newStatus: "in_progress" })}>
+            착수
+          </Button>
+        )}
+        {(item.status === "open" || item.status === "in_progress") && (
+          <Button size="sm" variant="outline" className="text-xs h-6" disabled={isPending}
+            onClick={() => onTransition({ action: "transition", remediationId: item.remediationId, newStatus: "resolved" })}>
+            해결
+          </Button>
+        )}
+        {(item.status === "open" || item.status === "in_progress") && (
+          <Button size="sm" variant="ghost" className="text-xs h-6" disabled={isPending}
+            onClick={() => onTransition({ action: "transition", remediationId: item.remediationId, newStatus: "deferred" })}>
+            연기
+          </Button>
         )}
       </div>
     </div>
