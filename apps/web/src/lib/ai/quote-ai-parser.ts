@@ -3,7 +3,14 @@
  * - 깨진 텍스트도 찰떡같이 이해
  * - 가격, 캣넘버, 납기일 자동 추출
  * - 순수 숫자로 변환 (기호 제거)
+ * - 구조화 진단 로깅 (requestId 기반)
  */
+
+import {
+  logPipelineStage,
+  createRequestId,
+  type PipelineErrorCode,
+} from "./pipeline-logger";
 
 // GPT-4가 반환하는 원본 타입 (문자열 가능)
 interface RawQuoteItem {
@@ -45,14 +52,48 @@ interface QuoteParseResult {
 }
 
 /**
+ * LLM 에러 분류
+ */
+function classifyLlmError(
+  error: unknown,
+  statusCode?: number
+): { errorCode: PipelineErrorCode; message: string } {
+  const msg =
+    error instanceof Error ? error.message : String(error ?? "unknown");
+
+  if (!process.env.OPENAI_API_KEY) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "OPENAI_API_KEY not configured" };
+  }
+  if (statusCode === 401 || statusCode === 403) {
+    return { errorCode: "LLM_AUTH_FAILED", message: msg };
+  }
+  if (statusCode === 404 || /model.*not found/i.test(msg)) {
+    return { errorCode: "LLM_MODEL_ERROR", message: msg };
+  }
+  if (/timeout|ETIMEDOUT|ECONNABORTED/i.test(msg)) {
+    return { errorCode: "LLM_TIMEOUT", message: msg };
+  }
+  return { errorCode: "LLM_PARSE_ERROR", message: msg };
+}
+
+/**
  * OpenAI GPT-4로 견적서 분석
  */
 export async function parseQuoteWithAI(
-  extractedText: string
+  extractedText: string,
+  requestId?: string
 ): Promise<QuoteParseResult> {
+  const reqId = requestId ?? createRequestId();
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
+    logPipelineStage({
+      stage: "llm_request_failed",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      errorCode: "LLM_AUTH_MISSING",
+      errorMessage: "OPENAI_API_KEY is not configured",
+    });
     throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
   }
 
@@ -103,6 +144,16 @@ ${extractedText}
 }
 \`\`\``;
 
+  logPipelineStage({
+    stage: "llm_request_started",
+    requestId: reqId,
+    timestamp: new Date().toISOString(),
+    model: "gpt-4o",
+    textLength: extractedText.length,
+  });
+
+  const llmStart = Date.now();
+
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -130,6 +181,21 @@ ${extractedText}
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const { errorCode, message } = classifyLlmError(
+        new Error(errorData.error?.message || `HTTP ${response.status}`),
+        response.status
+      );
+
+      logPipelineStage({
+        stage: "llm_request_failed",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode,
+        errorMessage: `HTTP ${response.status}: ${message}`,
+        model: "gpt-4o",
+        durationMs: Date.now() - llmStart,
+      });
+
       throw new Error(
         `OpenAI API 오류: ${response.status} - ${JSON.stringify(errorData)}`
       );
@@ -138,7 +204,23 @@ ${extractedText}
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
+    logPipelineStage({
+      stage: "llm_response_received",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      model: "gpt-4o",
+      durationMs: Date.now() - llmStart,
+    });
+
     if (!content) {
+      logPipelineStage({
+        stage: "llm_request_failed",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode: "LLM_PARSE_ERROR",
+        errorMessage: "OpenAI response content is empty",
+        model: "gpt-4o",
+      });
       throw new Error('OpenAI 응답이 비어 있습니다.');
     }
 
@@ -150,7 +232,28 @@ ${extractedText}
       jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
 
-    const rawParsed: RawQuoteParseResult = JSON.parse(jsonText);
+    let rawParsed: RawQuoteParseResult;
+    try {
+      rawParsed = JSON.parse(jsonText);
+    } catch (parseErr) {
+      logPipelineStage({
+        stage: "schema_validation",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode: "LLM_PARSE_ERROR",
+        errorMessage: `JSON parse failed: ${parseErr instanceof Error ? parseErr.message : "unknown"}`,
+      });
+      throw new Error("AI 응답 JSON 파싱 실패");
+    }
+
+    logPipelineStage({
+      stage: "schema_validation",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      vendor: rawParsed.vendor,
+      itemCount: rawParsed.items?.length ?? 0,
+      confidence: rawParsed.confidence,
+    });
 
     // 가격 숫자 변환 (문자열 → 숫자)
     const normalizedItems: QuoteItem[] = rawParsed.items.map((item) => ({
@@ -189,6 +292,18 @@ ${extractedText}
       rawText: extractedText.slice(0, 500), // 디버깅용 (처음 500자만)
     };
   } catch (error) {
+    const { errorCode, message } = classifyLlmError(error);
+
+    logPipelineStage({
+      stage: "llm_request_failed",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      errorCode,
+      errorMessage: message,
+      model: "gpt-4o",
+      durationMs: Date.now() - llmStart,
+    });
+
     console.error('[AI Parser] Error:', error);
     throw new Error(
       `AI 분석 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`

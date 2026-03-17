@@ -248,10 +248,25 @@ export default function ProtocolBOMPage() {
       matchProductsForReagents(reagentsWithId);
     },
     onError: (error: Error) => {
-      const isNoText = error.message === "PDF_NO_TEXT";
-      const userMessage = isNoText
-        ? "PDF에서 텍스트를 읽지 못했습니다. 스캔본이거나 형식이 맞지 않을 수 있습니다."
-        : "PDF 분석에 실패했습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다.";
+      const msg = error.message;
+      let userMessage: string;
+
+      if (msg === "PDF_NO_TEXT" || msg.includes("텍스트를 읽지 못") || msg.includes("텍스트를 추출할 수 없") || msg.includes("텍스트 레이어가 없")) {
+        userMessage = "PDF에서 텍스트를 읽지 못했습니다. 스캔본 문서일 수 있습니다.";
+      } else if (msg.includes("암호") || msg.includes("encrypted") || msg.includes("password")) {
+        userMessage = "암호로 보호된 PDF입니다. 암호를 해제한 후 다시 시도해 주세요.";
+      } else if (msg.includes("손상") || msg.includes("corrupt") || msg.includes("invalid") || msg.includes("지원하지 않는 형식")) {
+        userMessage = "PDF 파일이 손상되었거나 지원하지 않는 형식입니다.";
+      } else if (msg.includes("OPENAI_API_KEY") || msg.includes("401") || msg.includes("403") || msg.includes("AI 분석")) {
+        userMessage = "AI 분석 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+      } else if (msg.includes("timeout") || msg.includes("Timeout") || msg.includes("시간이 초과")) {
+        userMessage = "분석 시간이 초과되었습니다. 파일이 너무 크거나 복잡할 수 있습니다.";
+      } else if (msg.includes("모듈") || msg.includes("MODULE") || msg.includes("환경에서 바로 읽을 수 없")) {
+        userMessage = "PDF 분석 모듈에 일시적 문제가 발생했습니다. 다시 시도하거나 텍스트 붙여넣기로 진행해 주세요.";
+      } else {
+        userMessage = "PDF 분석에 실패했습니다. 파일을 확인하거나 텍스트 붙여넣기로 진행해 주세요.";
+      }
+
       setPdfParseError(userMessage);
       toast({
         title: "PDF 분석 실패",
@@ -531,9 +546,20 @@ export default function ProtocolBOMPage() {
                             <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
                             <p className="text-xs text-amber-800 leading-relaxed">{pdfParseError}</p>
                           </div>
-                          <p className="text-xs text-amber-700 leading-relaxed pl-6">
-                            텍스트 붙여넣기로 계속 진행해 주세요.
-                          </p>
+                          {pdfParseError.includes("스캔본") && (
+                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                              스캔본 문서일 수 있어 OCR이 필요합니다. 텍스트 붙여넣기로 계속 진행해 주세요.
+                            </p>
+                          )}
+                          {pdfParseError.includes("암호") ? (
+                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                              PDF 암호를 해제한 후 다시 업로드해 주세요.
+                            </p>
+                          ) : (
+                            <p className="text-xs text-amber-700 leading-relaxed pl-6">
+                              텍스트 붙여넣기로 계속 진행해 주세요.
+                            </p>
+                          )}
                           <div className="flex gap-2 pl-6">
                             <Button
                               variant="outline"

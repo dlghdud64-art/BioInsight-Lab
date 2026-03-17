@@ -1,5 +1,10 @@
 import { extractTextFromPDF } from "./pdf-parser";
 import { parseAiJsonResponse } from "./json-cleaner";
+import {
+  logPipelineStage,
+  createRequestId,
+  type PipelineErrorCode,
+} from "./pipeline-logger";
 
 // 중복 정의 제거 - OpenAI API 직접 호출 (openai 패키지 대신 fetch 사용)
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -50,6 +55,31 @@ export interface ProtocolExtractionResult {
 }
 
 /**
+ * LLM 에러 분류
+ */
+function classifyLlmError(
+  error: unknown,
+  statusCode?: number
+): { errorCode: PipelineErrorCode; message: string } {
+  const msg =
+    error instanceof Error ? error.message : String(error ?? "unknown");
+
+  if (!OPENAI_API_KEY) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "OPENAI_API_KEY not configured" };
+  }
+  if (statusCode === 401 || statusCode === 403) {
+    return { errorCode: "LLM_AUTH_FAILED", message: msg };
+  }
+  if (statusCode === 404 || /model.*not found/i.test(msg)) {
+    return { errorCode: "LLM_MODEL_ERROR", message: msg };
+  }
+  if (/timeout|ETIMEDOUT|ECONNABORTED/i.test(msg)) {
+    return { errorCode: "LLM_TIMEOUT", message: msg };
+  }
+  return { errorCode: "LLM_PARSE_ERROR", message: msg };
+}
+
+/**
  * PDF에서 실험 프로토콜을 추출하고 필요한 시약을 GPT로 분석
  *
  * ZDR (Zero Data Retention) 준수:
@@ -57,8 +87,11 @@ export interface ProtocolExtractionResult {
  * - 에러 로깅 시 민감 데이터 제외
  */
 export async function extractReagentsFromProtocol(
-  pdfBuffer: Buffer
+  pdfBuffer: Buffer,
+  requestId?: string
 ): Promise<ProtocolExtractionResult> {
+  const reqId = requestId ?? createRequestId();
+
   // ZDR: 민감 데이터를 담는 변수들 (함수 종료 시 null 처리)
   let pdfText: string | null = null;
   let cleanedText: string | null = null;
@@ -188,8 +221,25 @@ ${truncatedText}
 - 농도 비율 표현 (예: "1:1000")은 value에 분자값, unit에 "ratio" 저장`;
 
     if (!OPENAI_API_KEY) {
+      logPipelineStage({
+        stage: "llm_request_failed",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode: "LLM_AUTH_MISSING",
+        errorMessage: "OPENAI_API_KEY is not configured",
+      });
       throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
     }
+
+    logPipelineStage({
+      stage: "llm_request_started",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      model: "gpt-4o-mini",
+      textLength: truncatedText.length,
+    });
+
+    const llmStart = Date.now();
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -217,13 +267,45 @@ ${truncatedText}
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || "GPT API 호출 실패");
+      const errorData = await response.json().catch(() => ({}));
+      const { errorCode } = classifyLlmError(
+        new Error(errorData.error?.message || `HTTP ${response.status}`),
+        response.status
+      );
+
+      logPipelineStage({
+        stage: "llm_request_failed",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode,
+        errorMessage: `HTTP ${response.status}: ${errorData.error?.message || "unknown"}`,
+        model: "gpt-4o-mini",
+        durationMs: Date.now() - llmStart,
+      });
+
+      throw new Error(errorData.error?.message || "GPT API 호출 실패");
     }
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content;
+
+    logPipelineStage({
+      stage: "llm_response_received",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      model: "gpt-4o-mini",
+      durationMs: Date.now() - llmStart,
+    });
+
     if (!content) {
+      logPipelineStage({
+        stage: "llm_request_failed",
+        requestId: reqId,
+        timestamp: new Date().toISOString(),
+        errorCode: "LLM_PARSE_ERROR",
+        errorMessage: "GPT response content is empty",
+        model: "gpt-4o-mini",
+      });
       throw new Error("GPT 응답이 비어있습니다.");
     }
 
@@ -232,6 +314,13 @@ ${truncatedText}
       content,
       "Protocol Extractor"
     );
+
+    logPipelineStage({
+      stage: "schema_validation",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      itemCount: result.reagents?.length ?? 0,
+    });
 
     // 소비량 기반 예상 주문량 계산
     result.reagents = result.reagents.map((reagent) => {
@@ -247,6 +336,16 @@ ${truncatedText}
   } catch (error) {
     // ZDR: 에러 로깅 시 민감 데이터 제외 (타임스탬프만 기록)
     console.error("[Protocol Extractor] Extraction failed at:", new Date().toISOString());
+
+    const { errorCode, message } = classifyLlmError(error);
+    logPipelineStage({
+      stage: "final_failure",
+      requestId: reqId,
+      timestamp: new Date().toISOString(),
+      errorCode,
+      errorMessage: message,
+    });
+
     throw new Error("프로토콜 분석에 실패했습니다.");
   } finally {
     // ZDR: 민감 데이터 명시적 null 처리 (메모리 휘발성 보장)
