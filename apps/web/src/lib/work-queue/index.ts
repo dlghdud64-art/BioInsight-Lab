@@ -362,3 +362,28 @@ export type {
   RuntimeDefect,
   MergeRecommendation,
 } from "./console-v1-merge-gate";
+
+export {
+  OBSERVATION_POINTS,
+  classifyPilotIssue,
+  buildObservationSummary,
+  NON_BLOCKER_REASSESSMENTS,
+  SCOPE_DECISION_CRITERIA,
+  getV11Fixes,
+  getV2Defers,
+  getMonitorItems,
+  isPilotObservationComplete,
+  canClosePilot,
+} from "./console-v1-pilot-observation";
+
+export type {
+  ObservationPointId,
+  ObservationPoint,
+  PilotIssueClass,
+  PilotIssue,
+  ObservationLogEntry,
+  PilotObservationSummary,
+  PriorityAction,
+  NonBlockerReassessment,
+  ScopeDecisionCriteria,
+} from "./console-v1-pilot-observation";
