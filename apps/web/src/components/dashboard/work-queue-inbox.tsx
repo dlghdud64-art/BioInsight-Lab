@@ -269,20 +269,29 @@ function InboxRow({
       "flex items-center gap-3 px-3 py-2 border-b border-l-[3px] hover:bg-muted/30 transition-colors",
       borderClass
     )}>
-      {/* Title + status + urgency */}
+      {/* Title + owner + status + urgency */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-foreground truncate">{item.title}</span>
+          {item.metadata?.ownerName && (
+            <span className="text-[10px] text-blue-600 font-medium flex-shrink-0">@{String(item.metadata.ownerName)}</span>
+          )}
           <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 leading-4 flex-shrink-0", statusBadge.color)}>
             {statusBadge.label}
           </Badge>
+          {slaWarning && (
+            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 leading-4 flex-shrink-0">SLA</Badge>
+          )}
         </div>
-        {/* Row 2: urgency reason or activity */}
-        {item.urgencyReason ? (
-          <p className="text-xs text-orange-600 font-medium mt-0.5 truncate">{item.urgencyReason}</p>
-        ) : activityLabel ? (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">{activityLabel}</p>
-        ) : null}
+        {/* Row 2: latest action + urgency reason */}
+        <div className="flex items-center gap-2 mt-0.5">
+          {activityLabel && (
+            <span className="text-xs text-muted-foreground truncate">{activityLabel}</span>
+          )}
+          {item.urgencyReason && (
+            <span className="text-xs text-orange-600 font-medium truncate">{item.urgencyReason}</span>
+          )}
+        </div>
       </div>
 
       {/* Age */}
@@ -318,13 +327,13 @@ function InboxRow({
 
 function CompletedRow({ item }: { item: WorkQueueItem }) {
   return (
-    <div className="flex items-center gap-2 py-1.5">
+    <div className="flex items-center gap-2 py-1.5 border-b border-dashed last:border-b-0">
       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
       <span className="text-xs text-muted-foreground truncate flex-1">{item.title}</span>
       {item.type === "COMPARE_DECISION" && !!item.metadata?.resolutionPath && (
-        <span className="text-[10px] text-muted-foreground flex-shrink-0">
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 flex-shrink-0">
           {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
-        </span>
+        </Badge>
       )}
       <span className="text-[10px] text-muted-foreground tabular-nums flex-shrink-0">{timeAgo(item.updatedAt)}</span>
     </div>

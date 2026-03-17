@@ -81,17 +81,19 @@ function OrderRow({
 
   return (
     <div className={`flex items-center gap-3 px-3 py-2 border-b border-l-[3px] hover:bg-muted/30 transition-colors ${config.borderClass}`}>
+      {/* Status badge first */}
+      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0 whitespace-nowrap">
+        {config.label}
+      </Badge>
+
       {/* Title + meta */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-foreground truncate">{order.title}</span>
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 flex-shrink-0">
-            {config.label}
-          </Badge>
+          <span className="text-[10px] font-mono text-muted-foreground flex-shrink-0">{order.id}</span>
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-          <span>요청일 {order.requestedAt}</span>
-          <span className="font-mono">{order.id}</span>
+          <span>{order.requestedAt}</span>
           {order.amount != null && (
             <span className="font-medium text-foreground tabular-nums">₩{order.amount.toLocaleString("ko-KR")}</span>
           )}
@@ -195,13 +197,33 @@ function OrderHistoryPageContent() {
           <p className="text-xs text-muted-foreground">요청하신 견적과 진행 중인 주문을 확인하세요.</p>
         </div>
 
+        {/* Summary Strip */}
+        <div className="flex flex-wrap items-center gap-4 border rounded-md px-3 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">전체</span>
+            <span className="text-sm font-semibold tabular-nums text-foreground">{allOrders.length}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">견적 대기</span>
+            <span className={`text-sm font-semibold tabular-nums ${pendingOrders.length > 0 ? "text-amber-600" : "text-foreground"}`}>{pendingOrders.length}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">견적 도착</span>
+            <span className={`text-sm font-semibold tabular-nums ${quotedOrders.length > 0 ? "text-blue-600" : "text-foreground"}`}>{quotedOrders.length}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">배송 중</span>
+            <span className={`text-sm font-semibold tabular-nums ${shippingOrders.length > 0 ? "text-emerald-600" : "text-foreground"}`}>{shippingOrders.length}</span>
+          </div>
+        </div>
+
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="mb-4 bg-muted/50 p-1 flex flex-wrap h-auto gap-0.5">
-            <TabsTrigger value="all" className="text-xs">전체</TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs">견적 대기</TabsTrigger>
-            <TabsTrigger value="quoted" className="text-xs">견적 도착</TabsTrigger>
-            <TabsTrigger value="ordered" className="text-xs">발주 완료</TabsTrigger>
-            <TabsTrigger value="shipping" className="text-xs">배송 중</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs">전체 ({allOrders.length})</TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs">견적 대기 ({pendingOrders.length})</TabsTrigger>
+            <TabsTrigger value="quoted" className="text-xs">견적 도착 ({quotedOrders.length})</TabsTrigger>
+            <TabsTrigger value="ordered" className="text-xs">발주 완료 ({orderedOrders.length})</TabsTrigger>
+            <TabsTrigger value="shipping" className="text-xs">배송 중 ({shippingOrders.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-0">{renderOrders(allOrders, true)}</TabsContent>

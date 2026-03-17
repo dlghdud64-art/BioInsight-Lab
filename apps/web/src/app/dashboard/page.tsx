@@ -226,16 +226,24 @@ export default function DashboardPage() {
     <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 md:space-y-5 overflow-x-hidden">
 
       {/* ═══ Page Header ═══ */}
-      <div className="flex flex-col space-y-0.5 min-w-0">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">대시보드</h2>
-        <p className="text-xs text-muted-foreground">
-          {session?.user?.name ? `${session.user.name}님, ` : ""}
-          {hasActionItems ? `처리가 필요한 항목 ${actionItems.length}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
-        </p>
+      <div className="flex items-center justify-between min-w-0">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">대시보드</h2>
+          <p className="text-xs text-muted-foreground">
+            {session?.user?.name ? `${session.user.name}님` : ""}
+          </p>
+        </div>
+        {hasActionItems && (
+          <Link href="/dashboard/work-queue">
+            <Badge variant="destructive" className="text-xs px-2.5 py-0.5">
+              처리 필요 {actionItems.length}건
+            </Badge>
+          </Link>
+        )}
       </div>
 
-      {/* ═══ Summary Strip ═══ */}
-      <div className="flex flex-wrap items-center gap-4 border rounded-md px-3 py-1.5">
+      {/* ═══ Context Strip ═══ */}
+      <div className={`flex flex-wrap items-center gap-4 border rounded-md px-3 py-2 ${hasActionItems ? "border-l-[3px] border-l-red-500" : "border-l-[3px] border-l-emerald-500"}`}>
         <StripStat label="등록 품목" count={stats.totalInventory} href="/dashboard/inventory" />
         <StripStat label="재고 부족" count={stats.lowStockAlerts} warn={stats.lowStockAlerts > 0} href="/dashboard/inventory?filter=low" />
         <StripStat label="이번 달 지출" count={stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—"} href="/dashboard/purchases" />

@@ -51,7 +51,7 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
   };
 
   return (
-    <div className="flex flex-wrap gap-1 bg-muted/50 rounded-md p-1">
+    <div className="flex flex-wrap gap-1 border rounded-md p-1">
       {VIEW_ORDER.map((v) => (
         <button
           key={v}
@@ -59,13 +59,13 @@ function ConsoleViewTabs({ view, onViewChange, summary }: {
           className={cn(
             "text-xs px-3 py-1.5 rounded-sm font-medium transition-colors",
             view === v
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >
           {CONSOLE_VIEW_LABELS[v]}
           {viewCounts[v] != null && viewCounts[v]! > 0 && (
-            <span className="ml-1 text-[10px] opacity-70">({viewCounts[v]})</span>
+            <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0 h-4">{viewCounts[v]}</Badge>
           )}
         </button>
       ))}
@@ -167,16 +167,18 @@ export function WorkQueueConsole() {
   return (
     <div className="p-6 space-y-4 max-w-5xl">
       {/* Header + Mode Toggle */}
-      <div className="flex items-center gap-4">
+      <div className="space-y-3">
         <h1 className={TYPOGRAPHY.pageTitle}>운영 콘솔</h1>
-        <div className="flex gap-0.5 bg-muted/50 rounded-md p-0.5">
+        <div className="flex border-b">
           {CONSOLE_MODE_ORDER.map((m: ConsoleMode) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={cn(
-                "text-xs px-3 py-1 rounded-sm font-medium transition-colors",
-                mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                "text-xs px-4 py-2 font-medium transition-colors relative",
+                mode === m
+                  ? "text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-blue-600"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {CONSOLE_MODE_DEFS[m].label}
@@ -198,7 +200,10 @@ export function WorkQueueConsole() {
           <ConsoleSummaryStrip summary={summary} />
 
           {groups.length === 0 ? (
-            <ConsoleEmptyState stateId="empty_queue" />
+            <div className="border rounded-md px-4 py-8 text-center space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">현재 대기 중인 작업 항목이 없습니다</p>
+              <p className="text-xs text-muted-foreground">새로운 견적 요청, 발주, 입고 작업이 생성되면 여기에 표시됩니다.</p>
+            </div>
           ) : (
             <div className={SPACING.sectionGap}>
               {groups.map((group: ConsoleGroup) => (

@@ -1244,14 +1244,11 @@ function InventoryPageContent() {
               </Sheet>
 
             {isLoading ? (
-              <Card>
-                <CardContent className="py-12 text-center">
+              <div className="border rounded-md py-12 text-center">
                   <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
-                </CardContent>
-              </Card>
+              </div>
             ) : (
-              <Card>
-                <CardContent className="p-0">
+              <div className="border rounded-md overflow-hidden">
                   <InventoryTable
                     inventories={filteredInventories}
                     onEdit={(inventory) => {
@@ -1324,77 +1321,38 @@ function InventoryPageContent() {
                     emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
                     emptyActionLabel={debouncedSearchQuery.trim() ? "모든 재고 보기" : "첫 재고 등록하기"}
                   />
-                </CardContent>
-              </Card>
+              </div>
             )}
           </TabsContent>
 
             {/* 2. 점검 사항 (대시보드 전용 뷰) */}
             <TabsContent value="overview" className="m-0 p-6 space-y-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                    전체 재고
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40">
-                    <Package className="h-4 w-4 -translate-y-[1px] text-blue-600 dark:text-blue-400" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    {totalInventoryCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
-                    부족/품절
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
-                    <AlertTriangle className="h-4 w-4 -translate-y-[1px] text-red-600 dark:text-red-400" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
-                    {lowOrOutOfStockCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 border-orange-100 bg-orange-50/10 dark:border-orange-900/50 dark:bg-orange-950/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                    폐기 임박
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40">
-                    <Calendar className="h-4 w-4 -translate-y-[1px] text-orange-600 dark:text-orange-400" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    {expiringSoonCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Summary Strip */}
+            <div className="flex flex-wrap items-center gap-6 border rounded-md px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-blue-600" />
+                <span className="text-xs text-muted-foreground">전체 재고</span>
+                <span className="text-lg font-bold tabular-nums text-foreground">{totalInventoryCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <span className="text-xs text-muted-foreground">부족/품절</span>
+                <span className={`text-lg font-bold tabular-nums ${lowOrOutOfStockCount > 0 ? "text-red-600" : "text-foreground"}`}>{lowOrOutOfStockCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-orange-600" />
+                <span className="text-xs text-muted-foreground">폐기 임박</span>
+                <span className={`text-lg font-bold tabular-nums ${expiringSoonCount > 0 ? "text-orange-600" : "text-foreground"}`}>{expiringSoonCount}</span>
+              </div>
             </div>
 
-            <Card className="shadow-sm border-slate-100 dark:border-slate-800">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
-                  <Zap className="mr-2 h-5 w-5" />
-                  조치 필요 항목
-                </CardTitle>
-                <CardDescription>
-                  재고 부족, 유효기간 임박, 위치 미지정 항목입니다. 아래 조치 버튼으로 바로 처리하세요.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <div className="border rounded-md">
+              <div className="flex items-center gap-2 border-b px-4 py-3">
+                <Zap className="h-4 w-4 text-red-600" />
+                <h3 className="text-sm font-semibold text-red-600">조치 필요 항목</h3>
+                <span className="text-xs text-muted-foreground">재고 부족, 유효기간 임박, 위치 미지정</span>
+              </div>
+              <div className="px-4 py-3">
                 {(() => {
                   const urgent = displayInventories
                     .filter((inv) => {
@@ -1751,8 +1709,8 @@ function InventoryPageContent() {
                     </div>
                   );
                 })()}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             </TabsContent>
           </Tabs>
         </div>
