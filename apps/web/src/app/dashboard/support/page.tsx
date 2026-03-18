@@ -181,7 +181,7 @@ export default function DashboardSupportPage() {
                           className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                              : "border-bd bg-pn hover:border-slate-300 hover:bg-pg/50"
+                              : "border-bd bg-pn hover:border-bs hover:bg-pg/50"
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
@@ -288,7 +288,7 @@ export default function DashboardSupportPage() {
                       </div>
                     ))}
                     {attachments.length < 5 && (
-                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-pn px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
+                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-bs bg-pn px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
                         <Paperclip className="h-3 w-3" />
                         파일 추가
                         <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
@@ -346,7 +346,7 @@ export default function DashboardSupportPage() {
                       <span className="text-[10px] font-mono text-slate-400">{ticket.id}</span>
                       {getStatusBadge(ticket.status)}
                     </div>
-                    <p className="text-xs font-medium text-slate-800 leading-snug mb-1.5">{ticket.title}</p>
+                    <p className="text-xs font-medium text-slate-200 leading-snug mb-1.5">{ticket.title}</p>
                     <div className="flex items-center gap-3 text-[10px] text-slate-400">
                       <span className="flex items-center gap-1">
                         <Clock className="h-2.5 w-2.5" />

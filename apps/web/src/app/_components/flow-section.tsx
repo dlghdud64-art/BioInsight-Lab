@@ -77,7 +77,7 @@ export function FlowSection() {
                 {/* 데스크탑: 카드 형태 */}
                 <Link
                   href={step.href}
-                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-pn border border-bd hover:border-gray-300 w-auto"
+                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-pn border border-bd hover:border-bs w-auto"
                 >
                   <div className={`relative w-16 h-16 rounded-xl ${
                     step.color === 'indigo' ? 'bg-indigo-500' :

@@ -283,7 +283,7 @@ export default function ExtractPage() {
                       ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20 scale-[1.02]" 
                       : pdfFile 
                       ? "border-green-500 bg-green-50/50" 
-                      : "border-slate-300 bg-pg/50 hover:border-slate-400 hover:bg-el/50"
+                      : "border-bs bg-pg/50 hover:border-slate-400 hover:bg-el/50"
                     }
                   `}
                 >

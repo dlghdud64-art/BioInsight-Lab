@@ -25,7 +25,7 @@ export function AnalysisPanel() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800">검색어/쿼리</CardTitle>
+          <CardTitle className="text-sm font-semibold text-slate-200">검색어/쿼리</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="p-3 bg-pg rounded-lg text-sm text-slate-700">
@@ -42,7 +42,7 @@ export function AnalysisPanel() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-800">
+          <CardTitle className="text-sm font-semibold text-slate-200">
             프로토콜 / 데이터시트 텍스트
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">

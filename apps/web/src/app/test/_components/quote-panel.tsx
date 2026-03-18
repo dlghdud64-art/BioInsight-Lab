@@ -371,7 +371,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
             {/* 테이블 - 항상 헤더 표시 */}
             {quoteItems.length === 0 ? (
               <div className="text-center py-10 md:py-20">
-                <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 md:p-12 max-w-md mx-auto">
+                <div className="border-2 border-dashed border-bs rounded-xl p-6 md:p-12 max-w-md mx-auto">
                   <div className="w-14 h-14 rounded-full bg-pg flex items-center justify-center mx-auto mb-4">
                     <ShoppingCart className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
                   </div>
@@ -535,7 +535,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                                       quantity: Math.max(1, qty),
                                     });
                                   }}
-                                  className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-300"
+                                  className="h-9 w-16 text-center text-sm font-medium p-0 border-bs"
                                 />
                                 <Button
                                   variant="outline"

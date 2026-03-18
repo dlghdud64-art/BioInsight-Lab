@@ -412,7 +412,7 @@ export default function DashboardPage() {
               </Button>
             </Link>
             <Link href="/dashboard/inventory" className="block">
-              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pg border-slate-300 text-slate-700 hover:bg-el">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pg border-bs text-slate-700 hover:bg-el">
                 <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" />
                 재고 차감
               </Button>

@@ -176,7 +176,7 @@ export default function TemplatesPage() {
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="bg-pn border border-bd rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all"
+                className="bg-pn border border-bd rounded-lg p-4 hover:border-bs hover:shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">

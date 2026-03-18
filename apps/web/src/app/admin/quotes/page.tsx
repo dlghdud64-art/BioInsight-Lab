@@ -381,7 +381,7 @@ export default function AdminQuotesPage() {
                             <div className="text-[10px] text-slate-400">{quote.user?.email || ""}</div>
                           </TableCell>
                           <TableCell className="text-center text-slate-600 font-medium">{itemCount}</TableCell>
-                          <TableCell className="text-right font-medium text-slate-800">
+                          <TableCell className="text-right font-medium text-slate-200">
                             {quote.totalAmount ? `₩${quote.totalAmount.toLocaleString()}` : "—"}
                           </TableCell>
                           <TableCell className="text-slate-500">{format(new Date(quote.createdAt), "MM.dd HH:mm")}</TableCell>
@@ -469,7 +469,7 @@ export default function AdminQuotesPage() {
                         {selectedQuote.items.map((item: any) => (
                           <TableRow key={item.id}>
                             <TableCell className="py-1.5">
-                              <div className="text-xs font-medium text-slate-800">{item.name || "—"}</div>
+                              <div className="text-xs font-medium text-slate-200">{item.name || "—"}</div>
                               {item.brand && <div className="text-[10px] text-slate-400">{item.brand}</div>}
                               {item.catalogNumber && <div className="text-[10px] text-slate-400">Cat# {item.catalogNumber}</div>}
                             </TableCell>
@@ -477,7 +477,7 @@ export default function AdminQuotesPage() {
                             <TableCell className="py-1.5 text-right text-xs text-slate-600">
                               {item.unitPrice ? `₩${Number(item.unitPrice).toLocaleString()}` : "—"}
                             </TableCell>
-                            <TableCell className="py-1.5 text-right text-xs font-medium text-slate-800">
+                            <TableCell className="py-1.5 text-right text-xs font-medium text-slate-200">
                               {item.lineTotal ? `₩${Number(item.lineTotal).toLocaleString()}` : "—"}
                             </TableCell>
                           </TableRow>
@@ -606,7 +606,7 @@ function InfoCell({
       <div className="text-[10px] text-slate-400 font-medium">{label}</div>
       {children || (
         <>
-          <div className={cn("text-xs text-slate-800", mono && "font-mono", bold && "font-bold text-sm")}>{value}</div>
+          <div className={cn("text-xs text-slate-200", mono && "font-mono", bold && "font-bold text-sm")}>{value}</div>
           {sub && <div className="text-[10px] text-slate-400">{sub}</div>}
         </>
       )}

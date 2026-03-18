@@ -287,7 +287,7 @@ export default function AdminQuoteDetailPage() {
 
   const statusInfo = STATUS_LABELS[quote.status] || {
     label: quote.status,
-    color: "bg-el text-gray-800",
+    color: "bg-el text-slate-200",
   };
   const isEditable = quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
 

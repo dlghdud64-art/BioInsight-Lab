@@ -27,7 +27,7 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
@@ -53,7 +53,7 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
@@ -94,7 +94,7 @@ export function SearchAnalysisCard() {
                 <div className="space-y-2.5 text-xs">
                   <div className="bg-pn rounded border border-blue-100 p-2.5">
                     <div className="text-[10px] font-medium text-slate-500 mb-1.5">검색어</div>
-                    <div className="text-xs font-medium text-slate-800">"Human IL-6 Sandwich ELISA kit"</div>
+                    <div className="text-xs font-medium text-slate-200">"Human IL-6 Sandwich ELISA kit"</div>
                   </div>
                   <div className="space-y-1.5 pt-1.5">
                     <div className="flex items-start gap-2">
@@ -136,7 +136,7 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
@@ -169,7 +169,7 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
@@ -209,7 +209,7 @@ export function SearchAnalysisCard() {
       <Card>
         <CardHeader className="flex items-center justify-between pb-3">
           <div className="flex-1">
-            <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+            <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               검색어 분석 결과 (GPT)
             </CardTitle>
@@ -305,7 +305,7 @@ export function SearchAnalysisCard() {
     <Card>
       <CardHeader className="flex items-center justify-between pb-3">
         <div className="flex-1">
-          <CardTitle className="text-xs font-semibold text-slate-800 flex items-center gap-2 whitespace-nowrap">
+          <CardTitle className="text-xs font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
             <Brain className="h-4 w-4" />
             검색어 분석 결과 (GPT)
           </CardTitle>

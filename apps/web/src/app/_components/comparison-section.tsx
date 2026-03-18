@@ -127,7 +127,7 @@ export function ComparisonSection() {
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600">
                       {idx + 1}
                     </span>
-                    <span className="text-sm font-semibold text-slate-800 leading-tight">
+                    <span className="text-sm font-semibold text-slate-200 leading-tight">
                       {step.stage}
                     </span>
                   </div>
@@ -148,7 +148,7 @@ export function ComparisonSection() {
                   {/* BioInsight 도입 후 */}
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-500 mt-0.5" />
-                    <p className="text-sm text-slate-800 leading-relaxed font-medium">
+                    <p className="text-sm text-slate-200 leading-relaxed font-medium">
                       {step.after}
                     </p>
                   </div>
@@ -180,14 +180,14 @@ export function ComparisonSection() {
                   >
                     {idx + 1}
                   </span>
-                  <span className="text-xs font-semibold text-slate-800">
+                  <span className="text-xs font-semibold text-slate-200">
                     {step.stage}
                   </span>
                 </div>
                 <p
                   className={`text-xs leading-relaxed pl-7 ${
                     activeView === "after"
-                      ? "text-slate-800 font-medium"
+                      ? "text-slate-200 font-medium"
                       : "text-slate-600"
                   }`}
                 >

@@ -1522,7 +1522,7 @@ export default function PurchasesPage() {
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                             checks[item.key]
                               ? "bg-emerald-500 border-emerald-500 text-white"
-                              : "border-slate-300 border-bs"
+                              : "border-bs border-bs"
                           }`}
                         >
                           {checks[item.key] && <CheckCircle2 className="h-3 w-3" />}

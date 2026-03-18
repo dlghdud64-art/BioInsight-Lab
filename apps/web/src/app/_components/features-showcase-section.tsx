@@ -228,7 +228,7 @@ export function FeaturesShowcaseSection() {
                     <div className="text-[11px] text-gray-700">익일</div>
                   </div>
                   <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                    <div className="w-4 h-4 rounded-full border-2 border-bs" />
                   </div>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export function FeaturesShowcaseSection() {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 text-xs h-9 border-gray-300 text-gray-600">
+              <Button variant="outline" className="flex-1 text-xs h-9 border-bs text-gray-600">
                 엑셀로 내려받기
               </Button>
               <Button className="flex-1 text-xs h-9 bg-violet-600 hover:bg-violet-700 text-white font-semibold flex items-center justify-center gap-1.5">

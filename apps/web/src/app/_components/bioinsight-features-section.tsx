@@ -53,7 +53,7 @@ export function BioInsightFeaturesSection() {
             return (
               <Card
                 key={index}
-                className={`${feature.bgColor} border-2 border-transparent hover:border-slate-300 transition-all duration-300 hover:shadow-xl p-6`}
+                className={`${feature.bgColor} border-2 border-transparent hover:border-bs transition-all duration-300 hover:shadow-xl p-6`}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
                   <Icon className="h-6 w-6 text-white" />

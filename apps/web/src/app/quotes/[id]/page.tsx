@@ -717,7 +717,7 @@ export default function QuoteDetailPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">현재 단계</span>
-                <span className="text-sm font-bold text-slate-800">{sc.label}</span>
+                <span className="text-sm font-bold text-slate-200">{sc.label}</span>
               </div>
               <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">다음 액션</span>
@@ -770,15 +770,15 @@ export default function QuoteDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">요청자</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.user?.name || quote.user?.email || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.user?.name || quote.user?.email || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">조직</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.organization?.name || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.organization?.name || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">납기 희망일</p>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-200">
                     {quote.deliveryDate
                       ? new Date(quote.deliveryDate).toLocaleDateString("ko-KR")
                       : quote.validUntil
@@ -788,11 +788,11 @@ export default function QuoteDetailPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">납품 장소</p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">{quote.deliveryLocation || "-"}</p>
+                  <p className="text-sm font-semibold text-slate-200 truncate">{quote.deliveryLocation || "-"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">총 예상 금액</p>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-slate-200">
                     {quote.totalAmount != null ? `${quote.totalAmount.toLocaleString()} ${quote.currency || "KRW"}` : "-"}
                   </p>
                 </div>
@@ -804,7 +804,7 @@ export default function QuoteDetailPage() {
                   <button
                     type="button"
                     onClick={() => setMessageExpanded(!messageExpanded)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-800 transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-slate-500 font-medium hover:text-slate-200 transition-colors"
                   >
                     {messageExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     요청 메시지 {messageExpanded ? "접기" : "펼치기"}
@@ -862,7 +862,7 @@ export default function QuoteDetailPage() {
                     <>
                     {/* 벤더 가격 회신 입력 */}
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800 mb-1">벤더 견적 입력</h3>
+                      <h3 className="text-sm font-bold text-slate-200 mb-1">벤더 견적 입력</h3>
                       <p className="text-xs text-slate-500 mb-4">벤더명을 입력하고 각 품목의 단가를 기록하세요. 저장 후 비교/추천 탭에 자동 반영됩니다.</p>
 
                       {/* 벤더 기본 입력 */}
@@ -928,7 +928,7 @@ export default function QuoteDetailPage() {
                               return (
                                 <tr key={item.id} className="border-b border-slate-100 hover:bg-pg/50">
                                   <td className="p-2 md:p-3">
-                                    <div className="text-xs md:text-sm font-medium text-slate-800">{item.name || item.product?.name || "제품 정보 없음"}</div>
+                                    <div className="text-xs md:text-sm font-medium text-slate-200">{item.name || item.product?.name || "제품 정보 없음"}</div>
                                     {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
                                   </td>
                                   <td className="p-2 md:p-3">
@@ -996,7 +996,7 @@ export default function QuoteDetailPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <GitCompare className="h-4 w-4 text-blue-600" />
-                          <h3 className="text-sm font-bold text-slate-800">벤더 가격 비교</h3>
+                          <h3 className="text-sm font-bold text-slate-200">벤더 가격 비교</h3>
                           <span className="text-xs text-slate-500">{respondedVendors.length}개 벤더 · 최저가 강조</span>
                           {isAdmin && <button onClick={() => refetchVendorRequests()} className="ml-auto text-xs text-blue-600 hover:underline">새로고침</button>}
                         </div>
@@ -1025,7 +1025,7 @@ export default function QuoteDetailPage() {
                                 return (
                                   <tr key={item.id} className="border-b border-slate-100 hover:bg-pg/50">
                                     <td className="py-3 px-3">
-                                      <div className="font-medium text-slate-800">{item.name || item.product?.name}</div>
+                                      <div className="font-medium text-slate-200">{item.name || item.product?.name}</div>
                                       {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
                                     </td>
                                     {respondedVendors.map((vr: any) => {
@@ -1114,13 +1114,13 @@ export default function QuoteDetailPage() {
                   {quoteStatus === "COMPLETED" && quote.order ? (
                     <div className="text-center py-10">
                       <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-                      <p className="text-sm font-bold text-slate-800 mb-1">구매 처리가 완료되었습니다</p>
+                      <p className="text-sm font-bold text-slate-200 mb-1">구매 처리가 완료되었습니다</p>
                       <p className="text-xs text-slate-500">주문 내역에서 상세 정보를 확인할 수 있습니다.</p>
                     </div>
                   ) : quoteStatus === "CANCELLED" ? (
                     <div className="text-center py-10">
                       <XCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
-                      <p className="text-sm font-bold text-slate-800 mb-1">취소된 견적입니다</p>
+                      <p className="text-sm font-bold text-slate-200 mb-1">취소된 견적입니다</p>
                       <p className="text-xs text-slate-500">구매 처리를 진행할 수 없습니다.</p>
                     </div>
                   ) : respondedVendors.length === 0 ? (
@@ -1131,7 +1131,7 @@ export default function QuoteDetailPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800">구매 진행 처리</h3>
+                      <h3 className="text-sm font-bold text-slate-200">구매 진행 처리</h3>
 
                       {/* 벤더 선택 (다중 회신 시) */}
                       {respondedVendors.length > 1 && (
@@ -1205,7 +1205,7 @@ export default function QuoteDetailPage() {
                       <label className="flex items-center gap-2 p-3 bg-pg rounded-lg border border-bd cursor-pointer">
                         <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
                         <div>
-                          <span className="text-sm font-medium text-slate-800">입고 시 재고에 자동 반영</span>
+                          <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>
                           <p className="text-xs text-slate-500">구매 완료 처리 후 재고 관리에 자동으로 반영됩니다.</p>
                         </div>
                       </label>
@@ -1594,7 +1594,7 @@ export default function QuoteDetailPage() {
             <label className="flex items-center gap-2 p-3 bg-pg rounded-lg border border-bd cursor-pointer">
               <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
               <div>
-                <span className="text-sm font-medium text-slate-800">입고 시 재고에 자동 반영</span>
+                <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>
                 <p className="text-xs text-slate-500">구매 완료 처리 후 재고 관리에 자동 반영</p>
               </div>
             </label>

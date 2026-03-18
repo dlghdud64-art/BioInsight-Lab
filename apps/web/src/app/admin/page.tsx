@@ -338,7 +338,7 @@ export default function AdminDashboardPage() {
                           <TableCell>
                             <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
-                          <TableCell className="font-medium text-slate-800">{org.name}</TableCell>
+                          <TableCell className="font-medium text-slate-200">{org.name}</TableCell>
                           <TableCell>
                             <div className="text-slate-700">{org.ownerName}</div>
                             <div className="text-[10px] text-slate-400">{org.ownerEmail}</div>
@@ -395,7 +395,7 @@ export default function AdminDashboardPage() {
                           <TableCell>
                             <Badge className="bg-amber-50 text-amber-700 border-0 text-[10px]">대기</Badge>
                           </TableCell>
-                          <TableCell className="font-medium text-slate-800">{user.name}</TableCell>
+                          <TableCell className="font-medium text-slate-200">{user.name}</TableCell>
                           <TableCell className="text-slate-500">{user.email}</TableCell>
                           <TableCell className="text-slate-600">{user.orgName}</TableCell>
                           <TableCell>

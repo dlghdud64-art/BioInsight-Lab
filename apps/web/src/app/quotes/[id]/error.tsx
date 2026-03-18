@@ -38,7 +38,7 @@ export default function QuoteDetailError({
               <AlertTriangle className="h-8 w-8 text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800 mb-1">
+              <p className="text-sm font-semibold text-slate-200 mb-1">
                 견적 상세를 불러오는 중 오류가 발생했습니다
               </p>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">

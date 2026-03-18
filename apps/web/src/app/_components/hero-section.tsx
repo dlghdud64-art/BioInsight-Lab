@@ -35,7 +35,7 @@ export function HeroSection() {
             <Link href="/test/quote" className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-slate-300 bg-pn text-slate-700 hover:bg-pg hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
+                className="w-full sm:w-auto border-2 border-bs bg-pn text-slate-700 hover:bg-pg hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
               >
                 견적 요청 리스트
               </Button>

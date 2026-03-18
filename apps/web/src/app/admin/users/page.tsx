@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
                       const statusCfg = STATUS_BADGE[user.status] || { label: user.status, className: "bg-el text-slate-500 border-0" };
                       return (
                         <TableRow key={user.id} className="text-xs hover:bg-pg/50">
-                          <TableCell className="font-medium text-slate-800">{user.name}</TableCell>
+                          <TableCell className="font-medium text-slate-200">{user.name}</TableCell>
                           <TableCell className="text-slate-500">{user.email}</TableCell>
                           <TableCell className="text-slate-600">{user.orgName}</TableCell>
                           <TableCell>

@@ -78,7 +78,7 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100",  text: "text-purple-800",  border: "border-purple-300" },
   일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
   회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",   text: "text-amber-800",   border: "border-amber-300" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",   text: "text-slate-700",   border: "border-slate-300" },
+  요청_접수:      { label: "요청 접수",       bg: "bg-el",   text: "text-slate-700",   border: "border-bs" },
   발주_완료:      { label: "발주 완료",       bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
   취소됨:         { label: "취소됨",          bg: "bg-red-50",      text: "text-red-600",     border: "border-red-200" },
 };

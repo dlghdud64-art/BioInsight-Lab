@@ -52,7 +52,7 @@ export function QuoteListPreviewCard() {
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-slate-300 px-2 py-0.5 text-xs font-medium text-slate-600 bg-pg">
+              <span className="inline-flex items-center rounded-full border border-bs px-2 py-0.5 text-xs font-medium text-slate-600 bg-pg">
                 Step 3
               </span>
               <span>견적 요청 리스트 정리</span>

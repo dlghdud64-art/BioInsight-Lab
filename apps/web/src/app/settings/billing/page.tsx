@@ -140,7 +140,7 @@ function BillingPageContent() {
 
   const getPlanBadge = (planType: SubscriptionPlan) => {
     const config = {
-      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-el text-gray-800" },
+      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-el text-slate-200" },
       [SubscriptionPlan.TEAM]: { label: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName, color: "bg-blue-100 text-blue-800" },
       [SubscriptionPlan.ORGANIZATION]: { label: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName, color: "bg-indigo-100 text-indigo-800" },
     };

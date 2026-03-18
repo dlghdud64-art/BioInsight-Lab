@@ -147,7 +147,7 @@ export function SearchResultItem({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-800 hover:bg-el"}`}
+                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-200 hover:bg-el"}`}
                 onClick={onToggleCompare}
               >
                 <GitCompare className="h-4 w-4 md:mr-1.5" />

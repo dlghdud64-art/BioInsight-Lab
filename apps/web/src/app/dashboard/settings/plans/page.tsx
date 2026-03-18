@@ -1070,7 +1070,7 @@ function PlansPageContent() {
                 <div className="pt-4 mt-auto">
                   <Button
                     variant="outline"
-                    className="w-full border-slate-300 border-bs hover:bg-pg hover:bg-el"
+                    className="w-full border-bs border-bs hover:bg-pg hover:bg-el"
                     onClick={() => {
                       window.location.href = "/support";
                     }}

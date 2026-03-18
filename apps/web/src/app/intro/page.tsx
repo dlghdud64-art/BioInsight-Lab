@@ -92,7 +92,7 @@ export default function IntroPage() {
                       <span className="text-[10px] font-bold text-slate-400">{item.brand.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-800 truncate">{item.name}</p>
+                      <p className="text-xs font-medium text-slate-200 truncate">{item.name}</p>
                       <p className="text-[10px] text-slate-400">{item.brand} · 납기 {item.lead}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
