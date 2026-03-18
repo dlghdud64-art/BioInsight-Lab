@@ -115,20 +115,20 @@ const dashboardLinks = [
   },
 ];
 
-// 사이드바 아이콘 active tint 색상 매핑
-const ACTIVE_TINT: Record<string, string> = {
-  "/dashboard": "text-cyan-400",
-  "/dashboard/analytics": "text-cyan-400",
-  "/dashboard/quotes": "text-blue-400",
-  "/dashboard/purchases": "text-blue-400",
-  "/dashboard/reports": "text-blue-400",
-  "/dashboard/budget": "text-blue-400",
-  "/dashboard/inventory": "text-teal-400",
-  "/dashboard/organizations": "text-violet-400",
-  "/dashboard/safety": "text-amber-400",
-  "/dashboard/settings": "text-slate-400",
-  "/dashboard/activity-logs": "text-slate-400",
-  "/dashboard/audit": "text-slate-400",
+// 사이드바 아이콘 색상 매핑 (active = 밝은 tint, inactive = 약한 tint)
+const ICON_TINT: Record<string, { active: string; inactive: string }> = {
+  "/dashboard":              { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
+  "/dashboard/analytics":    { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
+  "/dashboard/quotes":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/inventory":    { active: "text-teal-400",   inactive: "text-teal-500/60" },
+  "/dashboard/organizations":{ active: "text-violet-400", inactive: "text-violet-500/60" },
+  "/dashboard/safety":       { active: "text-amber-400",  inactive: "text-amber-500/60" },
+  "/dashboard/settings":     { active: "text-slate-300",  inactive: "text-slate-500" },
+  "/dashboard/activity-logs":{ active: "text-slate-300",  inactive: "text-slate-500" },
+  "/dashboard/audit":        { active: "text-slate-300",  inactive: "text-slate-500" },
 };
 
 interface DashboardSidebarProps {
@@ -241,7 +241,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
-                  const activeTint = ACTIVE_TINT[item.href] || "text-blue-400";
+                  const tint = ICON_TINT[item.href] || { active: "text-blue-400", inactive: "text-slate-500" };
 
                   return (
                     <Link
@@ -252,10 +252,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
                           ? "bg-el text-white"
-                          : "text-slate-400 hover:bg-el hover:text-slate-300"
+                          : "text-slate-400 hover:bg-el hover:text-slate-200"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? activeTint : "text-slate-400")} />
+                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
@@ -280,7 +280,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
               {adminMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
-                const activeTint = ACTIVE_TINT[item.href] || "text-slate-400";
+                const tint = ICON_TINT[item.href] || { active: "text-slate-300", inactive: "text-slate-500" };
                 return (
                   <Link
                     key={item.href}
@@ -290,10 +290,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
                         ? "bg-el text-white"
-                        : "text-slate-400 hover:bg-el hover:text-slate-300"
+                        : "text-slate-400 hover:bg-el hover:text-slate-200"
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? activeTint : "text-slate-400")} />
+                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
                     <span className="truncate whitespace-nowrap">{item.title}</span>
                   </Link>
                 );
