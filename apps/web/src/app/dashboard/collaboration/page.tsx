@@ -112,7 +112,7 @@ export default function CollaborationPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
           placeholder="필요한 시약명, 제조사, 카탈로그 번호를 검색하세요..."
-          className="pl-10 h-14 text-lg bg-white bg-[#09090b] border-slate-200 border-[#333338] shadow-sm"
+          className="pl-10 h-14 text-lg bg-[#1a1a1e] bg-[#09090b] border-[#2a2a2e] border-[#333338] shadow-sm"
         />
       </div>
 
@@ -127,14 +127,14 @@ export default function CollaborationPage() {
           {sharedReagents.map((item) => (
             <Card
               key={item.id}
-              className="border-slate-200 border-[#333338] hover:border-blue-300  hover:border-blue-700 transition-colors"
+              className="border-[#2a2a2e] border-[#333338] hover:border-blue-300  hover:border-blue-700 transition-colors"
             >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge
                       variant="secondary"
-                      className="bg-slate-100 bg-[#222226] text-slate-400 font-normal"
+                      className="bg-[#222226] bg-[#222226] text-slate-400 font-normal"
                     >
                       <Building2 className="w-3 h-3 mr-1" />
                       {item.lab}

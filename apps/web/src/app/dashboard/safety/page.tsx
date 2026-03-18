@@ -576,7 +576,7 @@ export default function SafetyManagerPage() {
                     ? { label: "고위험", cls: "bg-red-900/40 text-red-300 border-red-800" }
                     : item.level === "MEDIUM"
                       ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200  bg-orange-900/40  text-orange-300  border-orange-800" }
-                      : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 bg-[#222226] text-slate-400 border-[#333338]" };
+                      : { label: "일반", cls: "bg-[#222226] text-slate-600 border-[#2a2a2e] bg-[#222226] text-slate-400 border-[#333338]" };
                   const actionBadge = item.actionStatus === "action_required"
                     ? { label: "조치 필요", cls: "bg-red-50 text-red-600 border-red-200  bg-red-950/40 text-red-400  border-red-800" }
                     : item.actionStatus === "caution"
@@ -589,7 +589,7 @@ export default function SafetyManagerPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 border rounded-lg hover:bg-slate-50 hover:bg-[#222226]/50 transition-colors border-l-4 border-slate-100 border-[#2a2a2e]/50 ${getBorderColor(item.level)}`}
+                      className={`p-4 border rounded-lg hover:bg-[#111114] hover:bg-[#222226]/50 transition-colors border-l-4 border-slate-100 border-[#2a2a2e]/50 ${getBorderColor(item.level)}`}
                     >
                       {/* 1행: 핵심 식별 정보 */}
                       <div className="flex items-center gap-2 flex-wrap">
@@ -599,7 +599,7 @@ export default function SafetyManagerPage() {
                           ))}
                         </div>
                         <span className="text-sm font-bold text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 bg-[#222226] text-slate-400 border-[#333338] font-mono">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#111114] bg-[#222226] text-slate-400 border-[#333338] font-mono">
                           {item.cas}
                         </Badge>
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
@@ -689,11 +689,11 @@ export default function SafetyManagerPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="msds-substance" className="text-xs font-medium">물질명</Label>
-                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-50 bg-[#1a1a1e]" />
+                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-[#111114] bg-[#1a1a1e]" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="msds-cas" className="text-xs font-medium">CAS No.</Label>
-                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-50 bg-[#1a1a1e]" />
+                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-[#111114] bg-[#1a1a1e]" />
               </div>
             </div>
             <div className="space-y-1.5">

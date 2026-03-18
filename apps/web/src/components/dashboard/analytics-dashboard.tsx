@@ -307,7 +307,7 @@ export function AnalyticsDashboard() {
               {insights.map((insight, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100"
+                  className="flex items-start gap-3 p-3 bg-[#1a1a1e] rounded-lg border border-blue-100"
                 >
                   <div
                     className={cn(
@@ -322,7 +322,7 @@ export function AnalyticsDashboard() {
                     {index + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-900">{insight.message}</p>
+                    <p className="text-sm text-slate-100">{insight.message}</p>
                     {insight.badge && (
                       <Badge variant="outline" className="mt-2 text-xs">
                         {insight.badge}

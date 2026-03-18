@@ -382,7 +382,7 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               ) : (
                 <Badge
                   variant="outline"
-                  className="text-[10px] h-4 px-1.5 text-slate-400 border-slate-200"
+                  className="text-[10px] h-4 px-1.5 text-slate-400 border-[#2a2a2e]"
                 >
                   미확인
                 </Badge>
@@ -656,7 +656,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-[#2a2a2e] bg-white bg-[#1a1a1e] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-[#2a2a2e] bg-[#1a1a1e] bg-[#1a1a1e] px-5 py-3">
       <div className="flex gap-2">
         <Button
           className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"

@@ -288,14 +288,14 @@ const SEVERITY_STYLE: Record<string, string> = {
   critical: "bg-red-500/15 text-red-400 border-red-500/30",
   high: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   medium: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  low: "bg-slate-500/15 text-slate-400 border-slate-500/30",
+  low: "bg-[#111114]0/15 text-slate-400 border-slate-500/30",
 };
 
 const LOT_STATUS_STYLE: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-400",
   expiring: "bg-amber-500/15 text-amber-400",
   expired: "bg-red-500/15 text-red-400",
-  depleted: "bg-slate-500/15 text-slate-400",
+  depleted: "bg-[#111114]0/15 text-slate-400",
 };
 
 const LOT_STATUS_LABEL: Record<string, string> = {

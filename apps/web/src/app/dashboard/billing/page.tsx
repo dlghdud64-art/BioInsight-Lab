@@ -66,7 +66,7 @@ export default function BillingPage() {
               <CardTitle className="text-sm font-semibold text-muted-foreground">
                 발행된 세금계산서
               </CardTitle>
-              <div className="rounded-full bg-slate-100 p-2 bg-[#222226]">
+              <div className="rounded-full bg-[#222226] p-2 bg-[#222226]">
                 <FileText className="h-4 w-4 text-slate-400" />
               </div>
             </CardHeader>
@@ -102,7 +102,7 @@ export default function BillingPage() {
                 <p className="text-sm text-muted-foreground">결제 기한: 2026.03.10</p>
                 <p className="mt-1 text-2xl font-bold">₩ 12,450,000</p>
               </div>
-              <Button className="w-fit bg-[#1a1a1e] text-white hover:bg-[#222226]  bg-slate-100  text-slate-900  hover:bg-slate-200">
+              <Button className="w-fit bg-[#1a1a1e] text-white hover:bg-[#222226]  bg-[#222226]  text-slate-100  hover:bg-slate-200">
                 <Download className="mr-2 h-4 w-4" />
                 계산서 다운로드
               </Button>

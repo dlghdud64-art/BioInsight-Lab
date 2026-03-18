@@ -700,7 +700,7 @@ function SettingsPageContent() {
                             </Button>
                             <Button
                               type="submit"
-                              className="bg-slate-100 text-slate-900 hover:bg-slate-200"
+                              className="bg-[#222226] text-slate-100 hover:bg-slate-200"
                               disabled={profileMutation.isPending || !newPassword || newPassword !== confirmPassword || !currentPassword}
                             >
                               {profileMutation.isPending ? (
@@ -785,7 +785,7 @@ function SettingsPageContent() {
                             : "border-[#3a3f4a]"
                         )}>
                           {notificationFrequency === "immediate" && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                            <div className="h-1.5 w-1.5 rounded-full bg-[#1a1a1e]" />
                           )}
                         </div>
                       </button>
@@ -835,7 +835,7 @@ function SettingsPageContent() {
                             : "border-[#3a3f4a]"
                         )}>
                           {notificationFrequency === "daily" && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                            <div className="h-1.5 w-1.5 rounded-full bg-[#1a1a1e]" />
                           )}
                         </div>
                       </button>
@@ -847,7 +847,7 @@ function SettingsPageContent() {
                 <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl overflow-hidden">
                   <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-500/10">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#111114]0/10">
                         <Mail className="h-4 w-4 text-slate-400" />
                       </div>
                       <div>
@@ -1178,7 +1178,7 @@ function SettingsPageContent() {
                         {/* Action row */}
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Button
-                            className="bg-slate-100 text-slate-900 hover:bg-slate-200 font-medium"
+                            className="bg-[#222226] text-slate-100 hover:bg-slate-200 font-medium"
                             onClick={() => router.push("/dashboard/settings/plans")}
                           >
                             플랜 변경
@@ -1247,7 +1247,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2 pt-4">
                             <Button variant="ghost" className="text-slate-400" onClick={resetCancelFlow}>취소</Button>
                             <Button
-                              className="bg-slate-100 text-slate-900 hover:bg-slate-200"
+                              className="bg-[#222226] text-slate-100 hover:bg-slate-200"
                               disabled={!cancelReason}
                               onClick={() => setCancelStep(2)}
                             >
@@ -1270,7 +1270,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(1)}>이전</Button>
                             <Button
-                              className="bg-slate-100 text-slate-900 hover:bg-slate-200"
+                              className="bg-[#222226] text-slate-100 hover:bg-slate-200"
                               onClick={() => setCancelStep(3)}
                             >
                               다음
@@ -1407,7 +1407,7 @@ function SettingsPageContent() {
                           ? "bg-emerald-700 hover:bg-emerald-800 text-white"
                           : saveError
                             ? "bg-red-700 hover:bg-red-800 text-white"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-900"
+                            : "bg-[#222226] hover:bg-slate-200 text-slate-100"
                       )}
                       onClick={() => {
                         setSaveSuccess(false);

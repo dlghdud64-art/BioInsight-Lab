@@ -6,7 +6,7 @@ type TestCardProps = {
 
 export function TestCard({ title, subtitle, children }: TestCardProps) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] p-4">
       <div className="mb-3 space-y-1">
         <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
         {subtitle && (

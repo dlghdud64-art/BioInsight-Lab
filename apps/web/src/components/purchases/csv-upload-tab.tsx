@@ -294,8 +294,8 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             onDrop={handleDrop}
             onClick={() => !loading && document.getElementById("file-upload")?.click()}
             className={`
-              border-2 border-dashed rounded-lg bg-gray-50 h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
-              ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
+              border-2 border-dashed rounded-lg bg-[#111114] h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
+              ${isDragging ? "border-blue-500 bg-blue-50" : "border-[#333338] hover:border-gray-400"}
               ${loading ? "opacity-50 pointer-events-none" : ""}
             `}
           >
@@ -311,7 +311,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             {selectedFile ? (
               <>
                 <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">
+                <h3 className="text-lg font-semibold mb-2 text-slate-100">
                   {selectedFile.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -321,7 +321,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             ) : (
               <>
                 <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-900">
+                <h3 className="text-lg font-semibold mb-2 text-slate-100">
                   여기를 클릭하거나 파일을 드래그하세요
                 </h3>
                 <p className="text-sm text-gray-500 mb-4">
@@ -338,7 +338,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
                 e.stopPropagation();
                 downloadSampleTemplate();
               }}
-              className="text-xs text-gray-500 hover:text-gray-700 underline"
+              className="text-xs text-gray-500 hover:text-slate-300 underline"
             >
               양식이 필요하신가요? 샘플 파일 다운로드
             </button>

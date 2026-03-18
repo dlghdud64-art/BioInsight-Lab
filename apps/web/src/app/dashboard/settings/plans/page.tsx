@@ -107,7 +107,7 @@ class PlansErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
                   </p>
                 </div>
                 {process.env.NODE_ENV === "development" && this.state.error && (
-                  <div className="text-left bg-slate-50 bg-[#222226] rounded-lg p-3 mt-4">
+                  <div className="text-left bg-[#111114] bg-[#222226] rounded-lg p-3 mt-4">
                     <p className="text-xs font-mono text-red-600 text-red-400 break-all">
                       {this.state.error.message}
                     </p>
@@ -230,7 +230,7 @@ function PlansSkeleton() {
             <div className="h-4 w-72 bg-slate-200 bg-[#2a2a2e] rounded animate-pulse mt-2" />
           </div>
           {/* 현재 구독 skeleton */}
-          <Card className="bg-white bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
+          <Card className="bg-[#1a1a1e] bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 bg-slate-200 bg-[#2a2a2e] rounded-xl animate-pulse" />
@@ -243,7 +243,7 @@ function PlansSkeleton() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div key={i} className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="h-3 w-16 bg-slate-200 bg-[#2a2a2e] rounded animate-pulse mb-2" />
                     <div className="h-4 w-20 bg-slate-200 bg-[#2a2a2e] rounded animate-pulse" />
                   </div>
@@ -254,7 +254,7 @@ function PlansSkeleton() {
           {/* 플랜 카드 skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="bg-white bg-[#1a1a1e] border border-[#2a2a2e]">
+              <Card key={i} className="bg-[#1a1a1e] bg-[#1a1a1e] border border-[#2a2a2e]">
                 <CardHeader>
                   <div className="h-6 w-24 bg-slate-200 bg-[#2a2a2e] rounded animate-pulse" />
                   <div className="h-8 w-32 bg-slate-200 bg-[#2a2a2e] rounded animate-pulse mt-4" />
@@ -597,7 +597,7 @@ function PlansPageContent() {
 
           {/* ── 조직 선택 ── */}
           {organizations.length > 1 && (
-            <Card className="bg-white/80 bg-[#1a1a1e]/80 backdrop-blur-sm border border-slate-200/50 border-[#2a2a2e] shadow-sm">
+            <Card className="bg-[#1a1a1e]/80 bg-[#1a1a1e]/80 backdrop-blur-sm border border-[#2a2a2e]/50 border-[#2a2a2e] shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <Label
@@ -634,13 +634,13 @@ function PlansPageContent() {
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           <Card
             className={cn(
-              "bg-white bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm relative",
+              "bg-[#1a1a1e] bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm relative",
               subFetching && "opacity-60"
             )}
           >
             {/* 조직 전환 중 로딩 오버레이 */}
             {subFetching && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/50 bg-[#1a1a1e]/50 z-10 rounded-lg">
+              <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1e]/50 bg-[#1a1a1e]/50 z-10 rounded-lg">
                 <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
               </div>
             )}
@@ -655,7 +655,7 @@ function PlansPageContent() {
                         ? "bg-indigo-100  bg-indigo-900/30"
                         : currentPlan === SubscriptionPlan.TEAM
                           ? "bg-blue-100  bg-blue-900/30"
-                          : "bg-slate-100 bg-[#222226]"
+                          : "bg-[#222226] bg-[#222226]"
                     )}
                   >
                     <Crown
@@ -679,7 +679,7 @@ function PlansPageContent() {
                             ? "bg-indigo-100 text-indigo-700 border-indigo-200  bg-indigo-900/30  text-indigo-400  border-indigo-800"
                             : currentPlan === SubscriptionPlan.TEAM
                               ? "bg-blue-100 text-blue-700 border-blue-200  bg-blue-900/30 text-blue-400  border-blue-800"
-                              : "bg-slate-100 text-slate-600 border-slate-200 bg-[#222226] text-slate-400 border-[#333338]"
+                              : "bg-[#222226] text-slate-600 border-[#2a2a2e] bg-[#222226] text-slate-400 border-[#333338]"
                         )}
                       >
                         {currentDisplay.displayName}
@@ -732,7 +732,7 @@ function PlansPageContent() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <div className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Package className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-xs text-slate-400">
@@ -743,7 +743,7 @@ function PlansPageContent() {
                       {currentDisplay.displayName}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <CreditCard className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-xs text-slate-400">
@@ -758,7 +758,7 @@ function PlansPageContent() {
                           : "월간"}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-xs text-slate-400">
@@ -771,7 +771,7 @@ function PlansPageContent() {
                         : nextPaymentDate ?? "-"}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Users className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-xs text-slate-400">
@@ -783,7 +783,7 @@ function PlansPageContent() {
                       {maxSeats === null ? "무제한" : `${maxSeats}명`}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 bg-[#222226]/50 p-3">
+                  <div className="rounded-lg bg-[#111114] bg-[#222226]/50 p-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-xs text-slate-400">
@@ -805,14 +805,14 @@ function PlansPageContent() {
               ② 결제 주기 토글
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           <div className="flex items-center justify-center">
-            <div className="bg-white bg-[#1a1a1e] rounded-full p-1 inline-flex border border-slate-200 border-[#333338] shadow-sm">
+            <div className="bg-[#1a1a1e] bg-[#1a1a1e] rounded-full p-1 inline-flex border border-[#2a2a2e] border-[#333338] shadow-sm">
               <button
                 type="button"
                 onClick={() => setIsAnnual(false)}
                 className={cn(
                   "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200",
                   !isAnnual
-                    ? "bg-[#1a1a1e] text-white  bg-white  text-slate-900 shadow-sm"
+                    ? "bg-[#1a1a1e] text-white  bg-[#1a1a1e]  text-slate-100 shadow-sm"
                     : "text-slate-500 hover:text-slate-700  hover:text-slate-300"
                 )}
               >
@@ -824,7 +824,7 @@ function PlansPageContent() {
                 className={cn(
                   "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-2",
                   isAnnual
-                    ? "bg-[#1a1a1e] text-white  bg-white  text-slate-900 shadow-sm"
+                    ? "bg-[#1a1a1e] text-white  bg-[#1a1a1e]  text-slate-100 shadow-sm"
                     : "text-slate-500 hover:text-slate-700  hover:text-slate-300"
                 )}
               >
@@ -895,7 +895,7 @@ function PlansPageContent() {
                             ? "bg-emerald-100  bg-emerald-900/30"
                             : isBusiness
                               ? "bg-blue-100  bg-blue-900/30"
-                              : "bg-slate-100 bg-[#222226]"
+                              : "bg-[#222226] bg-[#222226]"
                         )}
                       >
                         <Icon
@@ -984,7 +984,7 @@ function PlansPageContent() {
                     <div className="pt-4 mt-auto">
                       {btnInfo.disabled ? (
                         <Button
-                          className="w-full bg-slate-100 bg-[#222226] text-slate-400 hover:bg-slate-100 hover:bg-[#222226] cursor-not-allowed"
+                          className="w-full bg-[#222226] bg-[#222226] text-slate-400 hover:bg-[#222226] hover:bg-[#222226] cursor-not-allowed"
                           disabled
                         >
                           현재 사용 중인 플랜
@@ -1030,7 +1030,7 @@ function PlansPageContent() {
             <Card className="relative flex flex-col border-[#2a2a2e] bg-[#1a1a1e] hover:shadow-lg transition-all duration-300">
               <CardHeader className="pb-3 pt-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-slate-100 bg-[#222226]">
+                  <div className="p-2 rounded-lg bg-[#222226] bg-[#222226]">
                     <Building2 className="h-5 w-5 text-slate-400" />
                   </div>
                   <div>
@@ -1070,7 +1070,7 @@ function PlansPageContent() {
                 <div className="pt-4 mt-auto">
                   <Button
                     variant="outline"
-                    className="w-full border-slate-300 border-[#333338] hover:bg-slate-50 hover:bg-[#222226]"
+                    className="w-full border-slate-300 border-[#333338] hover:bg-[#111114] hover:bg-[#222226]"
                     onClick={() => {
                       window.location.href = "/support";
                     }}
@@ -1086,7 +1086,7 @@ function PlansPageContent() {
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
               ④ 기능 비교 테이블
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          <Card className="bg-white bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm overflow-hidden">
+          <Card className="bg-[#1a1a1e] bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg text-white">
                 운영 기능 비교
@@ -1099,7 +1099,7 @@ function PlansPageContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 border-[#333338] bg-slate-50 bg-[#222226]/50">
+                    <tr className="border-b border-[#2a2a2e] border-[#333338] bg-[#111114] bg-[#222226]/50">
                       <th className="text-left py-3 px-4 font-semibold text-slate-300 w-[220px]">
                         기능
                       </th>
@@ -1118,14 +1118,14 @@ function PlansPageContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-slate-100 border-[#2a2a2e] bg-slate-50/50 bg-[#222226]/30">
+                    <tr className="border-b border-slate-100 border-[#2a2a2e] bg-[#111114]/50 bg-[#222226]/30">
                       <td className="py-2.5 px-4 font-medium text-slate-400">팀원 수</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">1명</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">5명</td>
                       <td className="text-center py-2.5 px-3 bg-blue-50/30  bg-blue-900/5 text-blue-700 text-blue-400 font-semibold">무제한</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">무제한</td>
                     </tr>
-                    <tr className="border-b border-slate-100 border-[#2a2a2e] bg-slate-50/50 bg-[#222226]/30">
+                    <tr className="border-b border-slate-100 border-[#2a2a2e] bg-[#111114]/50 bg-[#222226]/30">
                       <td className="py-2.5 px-4 font-medium text-slate-400">품목 등록 수</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">10개</td>
                       <td className="text-center py-2.5 px-3 text-slate-400 font-medium">50개</td>
@@ -1160,7 +1160,7 @@ function PlansPageContent() {
                       return (
                         <tr
                           key={feat.key}
-                          className="border-b border-slate-100 border-[#2a2a2e] hover:bg-slate-50/50 hover:bg-[#222226]/30 transition-colors"
+                          className="border-b border-slate-100 border-[#2a2a2e] hover:bg-[#111114]/50 hover:bg-[#222226]/30 transition-colors"
                         >
                           <td className="py-2.5 px-4">
                             <div>
@@ -1188,7 +1188,7 @@ function PlansPageContent() {
           </Card>
 
           {/* ── 문의 안내 ── */}
-          <Card className="bg-slate-50 bg-[#1a1a1e]/50 border border-[#2a2a2e]">
+          <Card className="bg-[#111114] bg-[#1a1a1e]/50 border border-[#2a2a2e]">
             <CardContent className="py-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>

@@ -92,7 +92,7 @@ function BillingSuccessPageContent() {
               <CardDescription className="text-base mt-2">
                 {organization ? (
                   <>
-                    <span className="font-semibold text-slate-900">{organization.name}</span> 워크스페이스가 성공적으로 업그레이드되었습니다.
+                    <span className="font-semibold text-slate-100">{organization.name}</span> 워크스페이스가 성공적으로 업그레이드되었습니다.
                   </>
                 ) : (
                   "결제가 완료되었습니다."
@@ -129,7 +129,7 @@ function BillingSuccessPageContent() {
 
                   {/* 다음 액션 카드 */}
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-slate-900">다음 단계</h3>
+                    <h3 className="font-semibold text-slate-100">다음 단계</h3>
                     <div className="grid gap-3">
                       <Link href="/dashboard">
                         <Button className="w-full justify-between" size="lg">
@@ -152,13 +152,13 @@ function BillingSuccessPageContent() {
                   </div>
 
                   {/* 추가 정보 */}
-                  <div className="pt-4 border-t border-slate-200">
+                  <div className="pt-4 border-t border-[#2a2a2e]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <Link href="/dashboard/budget" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                      <Link href="/dashboard/budget" className="flex items-center gap-2 text-slate-600 hover:text-slate-100 transition-colors">
                         <DollarSign className="h-4 w-4" />
                         <span>구매내역/예산 보기</span>
                       </Link>
-                      <Link href="/dashboard/settings/plans" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
+                      <Link href="/dashboard/settings/plans" className="flex items-center gap-2 text-slate-600 hover:text-slate-100 transition-colors">
                         <FileText className="h-4 w-4" />
                         <span>구독 관리</span>
                       </Link>

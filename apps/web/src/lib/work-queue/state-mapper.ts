@@ -282,7 +282,7 @@ export const TASK_STATUS_SORT_ORDER: Record<TaskStatus, number> = {
  * 대시보드 상태 배지 색상 매핑
  */
 export const TASK_STATUS_BADGE: Record<TaskStatus, { label: string; color: string }> = {
-  READY: { label: "준비", color: "bg-slate-100 text-slate-700" },
+  READY: { label: "준비", color: "bg-[#222226] text-slate-700" },
   REVIEW_NEEDED: { label: "검토 필요", color: "bg-amber-100 text-amber-800" },
   IN_PROGRESS: { label: "진행 중", color: "bg-blue-100 text-blue-800" },
   WAITING_RESPONSE: { label: "응답 대기", color: "bg-purple-100 text-purple-800" },

@@ -160,7 +160,7 @@ export const SEVERITY_STYLES = {
   critical: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "destructive" as const },
   high: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "destructive" as const },
   medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", badge: "outline" as const },
-  low: { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-500", badge: "secondary" as const },
+  low: { bg: "bg-[#111114]", border: "border-[#2a2a2e]", text: "text-gray-500", badge: "secondary" as const },
 } as const;
 
 /** SLA compliance color thresholds */

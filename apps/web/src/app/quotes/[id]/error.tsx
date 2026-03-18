@@ -18,14 +18,14 @@ export default function QuoteDetailError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6">
-          <Link href="/dashboard" className="hover:text-slate-900">
+          <Link href="/dashboard" className="hover:text-slate-100">
             <Home className="h-4 w-4" />
           </Link>
           <span>/</span>
-          <Link href="/dashboard/quotes" className="hover:text-slate-900">
+          <Link href="/dashboard/quotes" className="hover:text-slate-100">
             견적 관리
           </Link>
           <span>/</span>
@@ -47,7 +47,7 @@ export default function QuoteDetailError({
               </p>
             </div>
             {error.digest && (
-              <p className="text-[10px] text-slate-400 font-mono bg-slate-50 px-3 py-1.5 rounded inline-block">
+              <p className="text-[10px] text-slate-400 font-mono bg-[#111114] px-3 py-1.5 rounded inline-block">
                 오류 ID: {error.digest}
               </p>
             )}

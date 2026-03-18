@@ -701,7 +701,7 @@ function StatusTransitionSection({
   const confidenceConfig: Record<string, { label: string; color: string }> = {
     high: { label: "높음", color: "bg-emerald-950/30 text-emerald-400 border-emerald-200" },
     medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-200" },
-    low: { label: "낮음", color: "bg-[#222226] text-slate-400 border-slate-200" },
+    low: { label: "낮음", color: "bg-[#222226] text-slate-400 border-[#2a2a2e]" },
   };
 
   const conf = confidenceConfig[proposal.confidence] || confidenceConfig.medium;

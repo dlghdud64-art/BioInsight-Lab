@@ -203,7 +203,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                     isActive
                       ? "bg-blue-50 bg-[#222226] text-blue-600 text-white"
-                      : "text-slate-400 hover:bg-gray-100 hover:bg-[#222226] hover:text-slate-900  hover:text-white"
+                      : "text-slate-400 hover:bg-[#222226] hover:bg-[#222226] hover:text-slate-100  hover:text-white"
                   )}
                 >
                   <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 text-blue-400" : "text-slate-400")} />
@@ -237,7 +237,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
                           ? "bg-blue-50 bg-[#222226] text-blue-600 text-white"
-                          : "text-slate-400 hover:bg-gray-100 hover:bg-[#222226] hover:text-slate-900  hover:text-white",
+                          : "text-slate-400 hover:bg-[#222226] hover:bg-[#222226] hover:text-slate-100  hover:text-white",
                         isInventory && !isActive && "font-semibold"
                       )}
                     >
@@ -275,7 +275,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
                         ? "bg-blue-50 bg-[#222226] text-blue-600 text-white"
-                        : "text-slate-400 hover:bg-gray-100 hover:bg-[#222226] hover:text-slate-900  hover:text-white"
+                        : "text-slate-400 hover:bg-[#222226] hover:bg-[#222226] hover:text-slate-100  hover:text-white"
                     )}
                   >
                     <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 text-blue-400" : "text-slate-400")} />
@@ -302,7 +302,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-gray-100 hover:bg-[#222226] hover:text-slate-900  hover:text-white transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-[#222226] hover:bg-[#222226] hover:text-slate-100  hover:text-white transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -316,7 +316,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100/10 bg-[#222226]/50 border border-slate-200/10 border-[#333338]/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all duration-300 group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#222226]/10 bg-[#222226]/50 border border-[#2a2a2e]/10 border-[#333338]/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all duration-300 group"
         >
           <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
             <Home className="w-4 h-4 text-blue-500" />
@@ -332,7 +332,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   return (
     <>
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white bg-[#09090b] border-r border-[#2a2a2e] z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-[#1a1a1e] bg-[#09090b] border-r border-[#2a2a2e] z-30">
         <SidebarContent />
       </aside>
 
@@ -345,7 +345,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white bg-[#09090b] border-r border-[#2a2a2e] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-[#1a1a1e] bg-[#09090b] border-r border-[#2a2a2e] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

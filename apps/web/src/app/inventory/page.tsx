@@ -278,7 +278,7 @@ export default function InventoryPage() {
 
   if (status === "loading" || isLoadingAll) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -295,7 +295,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -305,7 +305,7 @@ export default function InventoryPage() {
               {/* 페이지 헤더 */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">자산 관리</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-100">자산 관리</h1>
                   <p className="text-sm text-muted-foreground mt-1">
                     배송받은 물건을 정리하고 재주문하세요
                   </p>
@@ -327,7 +327,7 @@ export default function InventoryPage() {
                           <Badge
                             key={item.id}
                             variant="outline"
-                            className="bg-white border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-[#1a1a1e] border-amber-300 text-amber-900 px-3 py-1"
                           >
                             {item.productName}
                           </Badge>
@@ -335,7 +335,7 @@ export default function InventoryPage() {
                         {missingLocationItems.length > 3 && (
                           <Badge
                             variant="outline"
-                            className="bg-white border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-[#1a1a1e] border-amber-300 text-amber-900 px-3 py-1"
                           >
                             +{missingLocationItems.length - 3}개 더
                           </Badge>
@@ -552,7 +552,7 @@ function InventoryCard({
           ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
           ? "border-orange-200 bg-orange-50/30"
-          : "border-gray-200 bg-white"
+          : "border-[#2a2a2e] bg-[#1a1a1e]"
       }`}
     >
       <CardHeader className="pb-3">
@@ -593,7 +593,7 @@ function InventoryCard({
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 className={`text-lg font-bold bg-transparent border-none p-0 w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded ${
-                  isOutOfStock ? "text-red-600" : "text-gray-900"
+                  isOutOfStock ? "text-red-600" : "text-slate-100"
                 }`}
               />
               <span className="text-sm text-muted-foreground">
@@ -608,7 +608,7 @@ function InventoryCard({
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
               ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-gray-50"
+              : "hover:bg-[#111114]"
           }`}
           onClick={() => onLocationClick(inventory)}
         >
@@ -768,7 +768,7 @@ function TeamInventoryCard({
           ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
           ? "border-orange-200 bg-orange-50/30"
-          : "border-gray-200 bg-white"
+          : "border-[#2a2a2e] bg-[#1a1a1e]"
       }`}
     >
       <CardHeader className="pb-3">
@@ -825,7 +825,7 @@ function TeamInventoryCard({
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 className={`text-lg font-bold bg-transparent border-none p-0 w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded ${
-                  isOutOfStock ? "text-red-600" : "text-gray-900"
+                  isOutOfStock ? "text-red-600" : "text-slate-100"
                 }`}
               />
               <span className="text-sm text-muted-foreground">
@@ -840,7 +840,7 @@ function TeamInventoryCard({
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
               ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-gray-50"
+              : "hover:bg-[#111114]"
           }`}
           onClick={() => onLocationClick(inventory)}
         >

@@ -24,7 +24,7 @@ export const DECISION_STATE_CONFIG: Record<string, DecisionStateConfig> = {
 export const DECISION_STATE_FALLBACK: DecisionStateConfig = {
   label: "미결정",
   dotColor: "slate",
-  className: "text-slate-500 bg-slate-50",
+  className: "text-slate-500 bg-[#111114]",
 };
 
 export function getDecisionConfig(state: string | null): DecisionStateConfig {
@@ -68,7 +68,7 @@ export const VERDICT_CONFIG: Record<string, VerdictConfig> = {
 
 export const QUOTE_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   PENDING: { label: "접수", className: "bg-amber-50 text-amber-700" },
-  PARSED: { label: "파싱", className: "bg-slate-50 text-slate-700" },
+  PARSED: { label: "파싱", className: "bg-[#111114] text-slate-700" },
   SENT: { label: "발송", className: "bg-blue-50 text-blue-700" },
   RESPONDED: { label: "회신", className: "bg-green-50 text-green-700" },
   COMPLETED: { label: "완료", className: "bg-emerald-50 text-emerald-700" },

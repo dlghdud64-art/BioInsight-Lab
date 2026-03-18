@@ -103,7 +103,7 @@ export function SmartPickWidget() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-blue-600" />
-          <CardTitle className="text-lg font-semibold text-gray-900">
+          <CardTitle className="text-lg font-semibold text-slate-100">
             AI 추천: 슬슬 필요하지 않으세요?
           </CardTitle>
         </div>
@@ -115,12 +115,12 @@ export function SmartPickWidget() {
         {recommendations.map((rec) => (
           <div
             key={rec.inventoryId}
-            className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-[#1a1a1e] rounded-lg p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                  <h4 className="font-semibold text-sm text-slate-100 line-clamp-1">
                     {rec.product.name}
                   </h4>
                   {rec.urgency === "urgent" && (

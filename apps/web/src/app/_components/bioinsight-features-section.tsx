@@ -36,10 +36,10 @@ export function BioInsightFeaturesSection() {
   ];
 
   return (
-    <section className="py-12 md:py-24 bg-white">
+    <section className="py-12 md:py-24 bg-[#1a1a1e]">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-8 md:mb-16">
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3 md:mb-4">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-100 mb-3 md:mb-4">
             연구에만 집중하세요
           </h2>
           <p className="text-base md:text-xl text-slate-600 max-w-2xl mx-auto break-keep">
@@ -59,7 +59,7 @@ export function BioInsightFeaturesSection() {
                   <Icon className="h-6 w-6 text-white" />
                 </div>
                 <CardHeader className="p-0">
-                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-900 mb-1">
+                  <CardTitle className="text-xl md:text-2xl font-bold text-slate-100 mb-1">
                     {feature.title}
                     {feature.titleSub && (
                       <span className="text-xs md:text-sm font-normal text-slate-500 ml-2">

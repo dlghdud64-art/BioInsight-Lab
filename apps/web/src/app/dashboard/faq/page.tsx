@@ -337,7 +337,7 @@ export default function FAQPage() {
       "ai-pdf": "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
       error: "bg-red-500/15 text-red-400 border-red-500/20",
     };
-    return colorMap[cat] || "bg-slate-500/15 text-slate-400 border-slate-500/20";
+    return colorMap[cat] || "bg-[#111114]0/15 text-slate-400 border-slate-500/20";
   };
 
   return (

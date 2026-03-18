@@ -44,7 +44,7 @@ export function SearchInput() {
           placeholder={isCasMode ? "CAS 번호로 검색 중..." : "제품명, 벤더, 시약명 검색..."}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={`pl-10 md:pl-12 text-sm md:text-base h-10 md:h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${isCasMode ? "border-blue-300 focus:border-blue-500" : ""}`}
+          className={`pl-10 md:pl-12 text-sm md:text-base h-10 md:h-11 bg-[#111114] border-[#2a2a2e] focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${isCasMode ? "border-blue-300 focus:border-blue-500" : ""}`}
           aria-label="검색어 입력"
           aria-describedby="search-description"
         />

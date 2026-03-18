@@ -420,7 +420,7 @@ function IssueWarningsSection({
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-slate-200 border-[#333338] bg-[#222226]/30"
+                  : "border-[#2a2a2e] border-[#333338] bg-[#222226]/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -441,7 +441,7 @@ function IssueWarningsSection({
                           ? "text-red-400 border-red-200"
                           : isWarning
                           ? "text-amber-400 border-amber-200"
-                          : "text-slate-500 border-slate-200"
+                          : "text-slate-500 border-[#2a2a2e]"
                       }`}
                     >
                       {issue.badgeLabel}
@@ -668,7 +668,7 @@ function LotExpirySection({
                   </Badge>
                 )}
                 {!isExpired && !isSoon && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-slate-200">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-[#2a2a2e]">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -751,7 +751,7 @@ function BusinessImpactSection({
           return (
             <div
               key={idx}
-              className="p-3 rounded-lg border border-slate-200 border-[#333338] bg-[#222226]/30"
+              className="p-3 rounded-lg border border-[#2a2a2e] border-[#333338] bg-[#222226]/30"
             >
               <div className="flex items-start gap-2">
                 <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-500 flex-shrink-0" />

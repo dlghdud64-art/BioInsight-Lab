@@ -60,22 +60,22 @@ const personas = [
 
 export function PersonaSection() {
   return (
-    <section id="personas" className="py-6 md:py-8 border-b border-slate-200 bg-white scroll-mt-14">
+    <section id="personas" className="py-6 md:py-8 border-b border-[#2a2a2e] bg-[#1a1a1e] scroll-mt-14">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-900 mb-3">
+        <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
           누가 쓰나요?
         </h2>
         <Accordion type="single" collapsible defaultValue="rnd" className="w-full">
           {personas.map((persona) => {
             const Icon = persona.icon;
             return (
-              <AccordionItem key={persona.id} value={persona.id} className="mb-4 border border-slate-200 rounded-lg bg-white px-4 data-[state=open]:bg-blue-50 data-[state=open]:border-blue-200">
+              <AccordionItem key={persona.id} value={persona.id} className="mb-4 border border-[#2a2a2e] rounded-lg bg-[#1a1a1e] px-4 data-[state=open]:bg-blue-50 data-[state=open]:border-blue-200">
                 <AccordionTrigger className="hover:no-underline py-3">
                   <div className="flex items-center gap-2">
                     <div className={`flex h-6 w-6 items-center justify-center rounded-md ${persona.iconBg} flex-shrink-0`}>
                       <Icon className={`h-3 w-3 ${persona.iconColor} flex-shrink-0`} strokeWidth={1.5} />
                     </div>
-                    <span className="text-sm font-medium text-slate-900">{persona.title}</span>
+                    <span className="text-sm font-medium text-slate-100">{persona.title}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-3">

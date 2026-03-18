@@ -77,7 +77,7 @@ const CATEGORY_CONFIG: Record<
   approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: " bg-amber-950/40",  darkText: "text-amber-400",  label: "승인 대기" },
   expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: " bg-orange-950/40", darkText: "text-orange-400", label: "유효기간 경고" },
   safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: " bg-purple-950/40", darkText: "text-purple-400", label: "안전 관리" },
-  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "bg-[#222226]",     darkText: "text-slate-400",  label: "시스템" },
+  system:            { icon: Bell,          bg: "bg-[#222226]",  text: "text-slate-600",  darkBg: "bg-[#222226]",     darkText: "text-slate-400",  label: "시스템" },
 };
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
@@ -327,7 +327,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
                   {notification.typeLabel}
                 </span>
-                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-200 bg-[#2a2a2e]">
+                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-[#2a2a2e] bg-[#2a2a2e]">
                   완료
                 </Badge>
                 <span className="ml-auto text-[10px] text-slate-400 text-slate-500 flex-shrink-0">{notification.time}</span>
@@ -381,7 +381,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             className={`inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
               isUrgent
                 ? "text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 text-red-400  bg-red-950/30  border-red-800  hover:bg-red-950/50"
-                : "text-slate-400 border border-slate-200 border-[#333338] hover:bg-slate-50 hover:bg-[#222226]"
+                : "text-slate-400 border border-[#2a2a2e] border-[#333338] hover:bg-[#111114] hover:bg-[#222226]"
             }`}
           >
             {notification.ctaLabel}
@@ -393,7 +393,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#2a2a2e] bg-white bg-[#09090b]">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#2a2a2e] bg-[#1a1a1e] bg-[#09090b]">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -416,7 +416,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="hover:text-slate-900  hover:text-slate-100 truncate transition-colors"
+                    className="hover:text-slate-100  hover:text-slate-100 truncate transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -437,7 +437,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-slate-50 bg-[#1a1a1e] border-slate-200 border-[#333338] focus:bg-white  focus:bg-slate-900 w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-[#111114] bg-[#1a1a1e] border-[#2a2a2e] border-[#333338] focus:bg-[#1a1a1e]  focus:bg-slate-900 w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -445,7 +445,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-400 hover:text-slate-900  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent transition-colors"
+            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-400 hover:text-slate-100  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent transition-colors"
             onClick={() => router.push("/test/search")}
             aria-label="검색"
           >
@@ -459,7 +459,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-400 hover:text-slate-900  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent"
+                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-400 hover:text-slate-100  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
@@ -474,7 +474,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
               {/* ── 상단: 행동 기준 요약 ── */}
-              <div className="px-3 py-2.5 border-b border-slate-200 border-[#333338] bg-slate-50/50 bg-[#1a1a1e]/50">
+              <div className="px-3 py-2.5 border-b border-[#2a2a2e] border-[#333338] bg-[#111114]/50 bg-[#1a1a1e]/50">
                 <h3 className="text-sm font-bold text-slate-100 mb-2">
                   작업 알림
                 </h3>
@@ -513,8 +513,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                       onClick={() => setTriageTab("completed")}
                       className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors ${
                         triageTab === "completed"
-                          ? "bg-slate-100 text-slate-600 ring-1 ring-slate-200 bg-[#222226] text-slate-400  ring-slate-700"
-                          : "text-slate-400 hover:bg-slate-50 text-slate-500 hover:bg-[#222226]/50"
+                          ? "bg-[#222226] text-slate-600 ring-1 ring-slate-200 bg-[#222226] text-slate-400  ring-slate-700"
+                          : "text-slate-400 hover:bg-[#111114] text-slate-500 hover:bg-[#222226]/50"
                       }`}
                     >
                       참고 {completedActions.length}
@@ -541,14 +541,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100/80 divide-[#2a2a2e]/40">
+                  <div className="divide-y divide-[#2a2a2e]/80 divide-[#2a2a2e]/40">
                     {currentTriageItems.map(renderNotificationItem)}
                   </div>
                 )}
               </div>
 
               {/* ── 하단 CTA ── */}
-              <div className="border-t border-slate-200 border-[#333338] px-3 py-2.5 flex items-center gap-2">
+              <div className="border-t border-[#2a2a2e] border-[#333338] px-3 py-2.5 flex items-center gap-2">
                 <Link
                   href={`/dashboard/notifications?tab=${triageTab}`}
                   onClick={() => setIsNotificationOpen(false)}
@@ -568,7 +568,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 >
                   <button
                     type="button"
-                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 hover:bg-[#222226]  hover:text-slate-300 transition-colors"
+                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-[#222226] hover:bg-[#222226]  hover:text-slate-300 transition-colors"
                   >
                     전체 보기
                   </button>
@@ -615,8 +615,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-slate-200 border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-slate-100 hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-slate-200 border-[#333338]">
+              <button className="flex items-center gap-2 pl-3 border-l border-[#2a2a2e] border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#222226] hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-[#2a2a2e] border-[#333338]">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="bg-blue-100  bg-blue-900/50 text-blue-600 text-blue-400 text-xs font-semibold">
                     {user?.name
@@ -682,7 +682,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-slate-100 hover:bg-[#222226] mobile-menu-button lg:hidden -mr-1"
+              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#222226] hover:bg-[#222226] mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >

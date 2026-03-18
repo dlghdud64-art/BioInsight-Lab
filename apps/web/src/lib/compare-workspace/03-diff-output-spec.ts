@@ -106,7 +106,7 @@ export const SIGNIFICANCE_BADGE_COLORS: Record<DiffSignificance, string> = {
   HIGH: "bg-orange-100 text-orange-800",
   MEDIUM: "bg-yellow-100 text-yellow-800",
   LOW: "bg-blue-100 text-blue-800",
-  INFO: "bg-gray-100 text-gray-600",
+  INFO: "bg-[#222226] text-gray-600",
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

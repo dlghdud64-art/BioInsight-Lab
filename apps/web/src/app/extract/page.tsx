@@ -262,13 +262,13 @@ export default function ExtractPage() {
           {/* Left Panel: 입력 */}
           <div className="space-y-4">
             <SecurityAlert />
-            <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-[#1a1a1e]/80 backdrop-blur-sm border border-[#2a2a2e]/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               
               <div className="relative z-10 flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-slate-900">프로토콜 입력</h2>
+                  <h2 className="font-semibold text-slate-100">프로토콜 입력</h2>
                   <SecurityIndicator />
                 </div>
 
@@ -283,7 +283,7 @@ export default function ExtractPage() {
                       ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20 scale-[1.02]" 
                       : pdfFile 
                       ? "border-green-500 bg-green-50/50" 
-                      : "border-slate-300 bg-slate-50/50 hover:border-slate-400 hover:bg-slate-100/50"
+                      : "border-slate-300 bg-[#111114]/50 hover:border-slate-400 hover:bg-[#222226]/50"
                     }
                   `}
                 >
@@ -299,7 +299,7 @@ export default function ExtractPage() {
                   {pdfFile ? (
                     <div className="space-y-2">
                       <FileText className="h-10 w-10 mx-auto text-green-600" />
-                      <p className="text-sm font-medium text-slate-900">{pdfFile.name}</p>
+                      <p className="text-sm font-medium text-slate-100">{pdfFile.name}</p>
                       <p className="text-xs text-slate-500">{(pdfFile.size / 1024).toFixed(1)} KB</p>
                       <Button
                         variant="ghost"
@@ -343,10 +343,10 @@ export default function ExtractPage() {
 
                 <div className="relative mb-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200"></div>
+                    <div className="w-full border-t border-[#2a2a2e]"></div>
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white/80 px-2 text-slate-500">또는</span>
+                    <span className="bg-[#1a1a1e]/80 px-2 text-slate-500">또는</span>
                   </div>
                 </div>
 
@@ -360,7 +360,7 @@ export default function ExtractPage() {
 1. Add 5ml of PBS buffer to the cell culture.
 2. Incubate at 37°C for 30 minutes.
 3. Add trypsin-EDTA solution..."
-                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-white/50 backdrop-blur-sm border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-[#1a1a1e]/50 backdrop-blur-sm border-[#2a2a2e] focus:border-blue-400 focus:ring-blue-400"
                 />
                 
                 <Button
@@ -386,12 +386,12 @@ export default function ExtractPage() {
 
           {/* Right Panel: 결과 */}
           <div className="space-y-4">
-            <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-[#1a1a1e]/80 backdrop-blur-sm border border-[#2a2a2e]/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               
               <div className="relative z-10 flex flex-col flex-1">
-                <h2 className="font-semibold text-slate-900 mb-4">추출 결과</h2>
+                <h2 className="font-semibold text-slate-100 mb-4">추출 결과</h2>
 
                 {hasLowConfidenceItems && (
                   <Alert className="mb-4 border-orange-200 bg-orange-50/80 backdrop-blur-sm">
@@ -445,7 +445,7 @@ export default function ExtractPage() {
                         </div>
                       </div>
                       
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                      <h3 className="text-xl font-bold text-slate-100 mb-2">
                         AI가 분석할 준비가 되었습니다
                       </h3>
                       <p className="text-sm text-slate-600 max-w-md leading-relaxed mb-4">

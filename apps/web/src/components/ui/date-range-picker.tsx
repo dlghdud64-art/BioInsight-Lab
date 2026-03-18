@@ -236,7 +236,7 @@ export function DateRangePicker({
                   key={p.key}
                   type="button"
                   onClick={() => handlePreset(p.key)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-slate-200 border-[#333338] bg-white bg-[#222226] text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700  hover:bg-blue-950/30  hover:text-blue-400 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#2a2a2e] border-[#333338] bg-[#1a1a1e] bg-[#222226] text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700  hover:bg-blue-950/30  hover:text-blue-400 transition-colors"
                 >
                   {p.label}
                 </button>
@@ -344,7 +344,7 @@ export function DateRangePicker({
             </div>
 
             {/* Bottom fixed bar: 초기화 + 적용 */}
-            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 border-[#2a2a2e] bg-white bg-[#1a1a1e]">
+            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 border-[#2a2a2e] bg-[#1a1a1e] bg-[#1a1a1e]">
               <Button
                 variant="outline"
                 className="flex-1 h-10 text-sm"

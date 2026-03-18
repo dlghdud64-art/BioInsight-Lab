@@ -56,13 +56,13 @@ export default function VendorDashboardPage() {
   const requests: VendorRequest[] = requestsData?.requests || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-[#1a1a1e] border-b border-[#2a2a2e]">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-900">벤더 포털</h1>
+              <h1 className="text-xl font-bold text-slate-100">벤더 포털</h1>
               <p className="text-sm text-slate-600 mt-1">견적 요청 관리</p>
             </div>
             <Button variant="outline" size="sm" asChild>
@@ -116,7 +116,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Requests Table */}
-        <div className="bg-white border border-slate-200 shadow-sm">
+        <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -139,7 +139,7 @@ export default function VendorDashboardPage() {
               </TableHeader>
               <TableBody>
                 {requests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-slate-50">
+                  <TableRow key={request.id} className="hover:bg-[#111114]">
                     <TableCell className="font-medium p-3">
                       {request.quoteTitle}
                     </TableCell>

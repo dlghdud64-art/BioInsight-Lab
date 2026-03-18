@@ -110,7 +110,7 @@ export function SearchStepNav() {
                       className={cn(
                         "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
                         isActive
-                          ? "bg-white/20 text-white"
+                          ? "bg-[#1a1a1e]/20 text-white"
                           : isCompleted
                           ? "bg-blue-900/30 text-blue-400"
                           : "bg-[#2a2a2e] text-slate-500"

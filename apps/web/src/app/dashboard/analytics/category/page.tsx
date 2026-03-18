@@ -67,7 +67,7 @@ export default function CategoryAnalyticsPage() {
       <div className="mb-6">
         <Link
           href="/dashboard/analytics"
-          className="text-sm text-slate-500 hover:text-slate-900  hover:text-slate-100 flex items-center mb-4 transition-colors"
+          className="text-sm text-slate-500 hover:text-slate-100  hover:text-slate-100 flex items-center mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           지출 분석 홈으로
@@ -176,7 +176,7 @@ export default function CategoryAnalyticsPage() {
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 border-[#2a2a2e] bg-slate-50 bg-[#1a1a1e]/40"
+                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 border-[#2a2a2e] bg-[#111114] bg-[#1a1a1e]/40"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div

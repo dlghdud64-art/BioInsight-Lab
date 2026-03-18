@@ -233,13 +233,13 @@ export function InventoryQRCode({
 
           <div className="flex flex-col items-center gap-3 py-2">
             {/* QR 캔버스 */}
-            <div className="border border-slate-200 rounded-xl p-3 bg-white shadow-sm">
+            <div className="border border-[#2a2a2e] rounded-xl p-3 bg-[#1a1a1e] shadow-sm">
               <canvas ref={canvasRef} />
             </div>
 
             {/* Lot 정보 */}
-            <div className="w-full bg-slate-50 rounded-lg p-3 space-y-1 text-sm">
-              <p className="font-semibold text-slate-800 leading-tight">{productName}</p>
+            <div className="w-full bg-[#111114] rounded-lg p-3 space-y-1 text-sm">
+              <p className="font-semibold text-slate-200 leading-tight">{productName}</p>
               {lotNumber && <p className="text-slate-500 text-xs">Lot: {lotNumber}</p>}
               {catalogNumber && <p className="text-slate-500 text-xs">Cat#: {catalogNumber}</p>}
               {location && <p className="text-slate-500 text-xs">위치: {location}</p>}

@@ -135,7 +135,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
           <div className="flex flex-wrap items-center gap-1.5 pt-2">
             <span className="text-[10px] font-semibold text-indigo-500 mr-0.5">비교 기준</span>
             {getComparisonCriteria().slice(0, 4).map((c, i) => (
-              <Badge key={i} variant="outline" className="text-[10px] bg-white/60 text-indigo-700 border-indigo-200 px-2 py-0.5">
+              <Badge key={i} variant="outline" className="text-[10px] bg-[#1a1a1e]/60 text-indigo-700 border-indigo-200 px-2 py-0.5">
                 {c}
               </Badge>
             ))}
@@ -150,7 +150,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
               <a
                 key={idx}
                 href={`/test/search?q=${encodeURIComponent(sq)}`}
-                className="text-[10px] px-2.5 py-1 rounded-full bg-white/80 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                className="text-[10px] px-2.5 py-1 rounded-full bg-[#1a1a1e]/80 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
               >
                 {sq}
               </a>

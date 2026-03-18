@@ -322,7 +322,7 @@ function InventoryScanContent() {
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 text-white">
         <Link href="/dashboard/inventory">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 gap-1 pl-0">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1a1a1e]/10 gap-1 pl-0">
             <ArrowLeft className="h-4 w-4" />
             재고 목록
           </Button>
@@ -391,7 +391,7 @@ function InventoryScanContent() {
               size="lg"
               variant="outline"
               onClick={stopScanner}
-              className="gap-2 border-white/30 text-white hover:bg-white/10 px-8 rounded-xl h-12"
+              className="gap-2 border-white/30 text-white hover:bg-[#1a1a1e]/10 px-8 rounded-xl h-12"
             >
               <CameraOff className="h-5 w-5" />
               중지
@@ -407,9 +407,9 @@ function InventoryScanContent() {
 
         {/* 구분선 */}
         <div className="flex items-center gap-3 w-full max-w-sm">
-          <div className="flex-1 h-px bg-white/20" />
+          <div className="flex-1 h-px bg-[#1a1a1e]/20" />
           <span className="text-white/40 text-xs">또는 ID 직접 입력</span>
-          <div className="flex-1 h-px bg-white/20" />
+          <div className="flex-1 h-px bg-[#1a1a1e]/20" />
         </div>
 
         {/* 수동 ID 입력 */}
@@ -419,12 +419,12 @@ function InventoryScanContent() {
             value={manualId}
             onChange={(e) => setManualId(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+            className="bg-[#1a1a1e]/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
           />
           <Button
             variant="outline"
             onClick={handleManualSearch}
-            className="border-white/30 text-white hover:bg-white/10 rounded-xl px-4"
+            className="border-white/30 text-white hover:bg-[#1a1a1e]/10 rounded-xl px-4"
           >
             <Search className="h-4 w-4" />
           </Button>

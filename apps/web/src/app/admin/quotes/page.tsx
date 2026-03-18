@@ -95,7 +95,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; order: n
   RESPONDED:  { label: "고객 회신 대기",  className: "bg-purple-50 text-purple-700 border-0",  order: 3 },
   COMPLETED:  { label: "견적 발송 완료",  className: "bg-emerald-50 text-emerald-700 border-0",order: 4 },
   PURCHASED:  { label: "주문 전환",       className: "bg-green-50 text-green-700 border-0",    order: 5 },
-  CANCELLED:  { label: "종료",            className: "bg-slate-100 text-slate-500 border-0",   order: 6 },
+  CANCELLED:  { label: "종료",            className: "bg-[#222226] text-slate-500 border-0",   order: 6 },
 };
 
 // SLA 계산 (24h 기준)
@@ -219,15 +219,15 @@ export default function AdminQuotesPage() {
   const selectedQuote = quoteDetail || allQuotes.find((q) => q.id === selectedQuoteId);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[#111114]">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-h-screen">
         {/* 헤더 */}
-        <div className="bg-white border-b border-slate-200 px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base font-bold text-slate-900">견적 관리</h1>
+              <h1 className="text-base font-bold text-slate-100">견적 관리</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 들어온 견적 요청을 검토하고 상태를 관리합니다.
               </p>
@@ -256,7 +256,7 @@ export default function AdminQuotesPage() {
           </div>
 
           {/* ── 필터 바 ── */}
-          <div className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap">
+          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
               <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               <Input
@@ -284,7 +284,7 @@ export default function AdminQuotesPage() {
               </SelectContent>
             </Select>
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+              <div className="flex items-center gap-2 border-l border-[#2a2a2e] pl-3">
                 <span className="text-[11px] text-slate-500">{selectedIds.size}건 선택</span>
                 <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1">
                   <UserPlus className="h-3 w-3" />담당자 지정
@@ -300,11 +300,11 @@ export default function AdminQuotesPage() {
           </div>
 
           {/* ── 테이블 ── */}
-          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg overflow-hidden">
             <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/80 hover:bg-transparent">
+                  <TableRow className="bg-[#111114]/80 hover:bg-transparent">
                     <TableHead className="w-[40px]">
                       <Checkbox
                         checked={filteredQuotes.length > 0 && selectedIds.size === filteredQuotes.length}
@@ -350,7 +350,7 @@ export default function AdminQuotesPage() {
                     </TableRow>
                   ) : (
                     filteredQuotes.map((quote) => {
-                      const cfg = STATUS_CONFIG[quote.status] ?? { label: quote.status, className: "bg-slate-100 text-slate-600 border-0", order: 99 };
+                      const cfg = STATUS_CONFIG[quote.status] ?? { label: quote.status, className: "bg-[#222226] text-slate-600 border-0", order: 99 };
                       const sla = getSLAStatus(quote.createdAt, quote.status);
                       const itemCount = quote._count?.items || quote._count?.listItems || 0;
                       const canConvert = quote.status === "COMPLETED";
@@ -432,7 +432,7 @@ export default function AdminQuotesPage() {
       <Sheet open={!!selectedQuoteId && !showConvertDialog} onOpenChange={(open) => !open && setSelectedQuoteId(null)}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-0">
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-100">
-            <SheetTitle className="text-sm font-bold text-slate-900">견적 상세</SheetTitle>
+            <SheetTitle className="text-sm font-bold text-slate-100">견적 상세</SheetTitle>
           </SheetHeader>
 
           {selectedQuote && (
@@ -441,7 +441,7 @@ export default function AdminQuotesPage() {
               <div className="grid grid-cols-2 gap-2">
                 <InfoCell label="견적번호" value={`#${selectedQuote.id.slice(-8).toUpperCase()}`} mono />
                 <InfoCell label="상태">
-                  <Badge className={cn("text-[10px]", STATUS_CONFIG[selectedQuote.status]?.className || "bg-slate-100 text-slate-600")}>
+                  <Badge className={cn("text-[10px]", STATUS_CONFIG[selectedQuote.status]?.className || "bg-[#222226] text-slate-600")}>
                     {STATUS_CONFIG[selectedQuote.status]?.label || selectedQuote.status}
                   </Badge>
                 </InfoCell>
@@ -455,10 +455,10 @@ export default function AdminQuotesPage() {
               <div>
                 <h3 className="text-[11px] font-semibold text-slate-600 mb-2">요청 품목 ({selectedQuote.items?.length || 0})</h3>
                 {selectedQuote.items && selectedQuote.items.length > 0 ? (
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="border border-[#2a2a2e] rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-50/80 hover:bg-transparent">
+                        <TableRow className="bg-[#111114]/80 hover:bg-transparent">
                           <TableHead className="text-[10px] font-semibold text-slate-500 py-2">품명</TableHead>
                           <TableHead className="text-[10px] font-semibold text-slate-500 py-2 text-center w-12">수량</TableHead>
                           <TableHead className="text-[10px] font-semibold text-slate-500 py-2 text-right w-20">단가</TableHead>
@@ -486,7 +486,7 @@ export default function AdminQuotesPage() {
                     </Table>
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400 py-4 text-center border border-dashed border-slate-200 rounded-lg">
+                  <div className="text-xs text-slate-400 py-4 text-center border border-dashed border-[#2a2a2e] rounded-lg">
                     품목 정보 없음
                   </div>
                 )}
@@ -573,7 +573,7 @@ function MiniKPI({
     <button
       type="button"
       onClick={onClick}
-      className="bg-white border border-slate-200 rounded-lg p-3 flex items-center gap-3 hover:bg-slate-50/50 transition-colors text-left"
+      className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-3 flex items-center gap-3 hover:bg-[#111114]/50 transition-colors text-left"
     >
       <div className={cn("p-1.5 rounded-md", c.bg)}>
         <Icon className={cn("h-3.5 w-3.5", c.text)} />
@@ -602,7 +602,7 @@ function InfoCell({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-50 rounded-md p-2.5 space-y-0.5">
+    <div className="bg-[#111114] rounded-md p-2.5 space-y-0.5">
       <div className="text-[10px] text-slate-400 font-medium">{label}</div>
       {children || (
         <>

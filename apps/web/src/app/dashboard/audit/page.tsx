@@ -62,7 +62,7 @@ export default function AuditTrailPage() {
             <div className="flex flex-col items-center gap-4 text-center">
               <ShieldAlert className="h-12 w-12 text-amber-600" />
               <div>
-                <h3 className="font-semibold text-slate-900">접근 권한이 없습니다</h3>
+                <h3 className="font-semibold text-slate-100">접근 권한이 없습니다</h3>
                 <p className="text-sm text-slate-600 mt-1">
                   감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.
                 </p>
@@ -167,7 +167,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-[#1a1a1e] hover:bg-[#222226] text-white  bg-slate-100  text-slate-900  hover:bg-slate-200"
+            className="bg-[#1a1a1e] hover:bg-[#222226] text-white  bg-[#222226]  text-slate-100  hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -180,10 +180,10 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      <div className="border border-slate-200 border-[#333338] rounded-lg bg-white bg-[#09090b] overflow-hidden shadow-sm">
+      <div className="border border-[#2a2a2e] border-[#333338] rounded-lg bg-[#1a1a1e] bg-[#09090b] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-slate-50 bg-[#1a1a1e]/50">
+          <TableHeader className="bg-[#111114] bg-[#1a1a1e]/50">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">일시 (Timestamp) / ID</TableHead>
               <TableHead className="font-semibold">작업자 (User)</TableHead>
@@ -196,7 +196,7 @@ export default function AuditTrailPage() {
             {auditLogs.map((log) => (
               <TableRow
                 key={log.id}
-                className="hover:bg-slate-50  hover:bg-[#1a1a1e]/50"
+                className="hover:bg-[#111114]  hover:bg-[#1a1a1e]/50"
               >
                 <TableCell>
                   <div className="font-mono text-sm font-medium text-slate-100">

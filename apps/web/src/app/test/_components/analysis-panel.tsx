@@ -28,7 +28,7 @@ export function AnalysisPanel() {
           <CardTitle className="text-sm font-semibold text-slate-800">검색어/쿼리</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="p-3 bg-slate-50 rounded-lg text-sm text-slate-700">
+          <div className="p-3 bg-[#111114] rounded-lg text-sm text-slate-700">
             {searchQuery || "검색어가 없습니다"}
           </div>
           <Link href="/test/search">

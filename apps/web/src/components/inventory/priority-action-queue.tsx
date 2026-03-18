@@ -45,7 +45,7 @@ const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: stri
   critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-500/10 text-red-400 border-red-500/20" },
   high:     { label: "높음", dot: "bg-amber-500", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-[#111114]0/10 text-slate-400 border-slate-500/20" },
 };
 
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {

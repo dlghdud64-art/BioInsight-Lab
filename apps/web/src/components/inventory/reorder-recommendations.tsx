@@ -102,11 +102,11 @@ export function ReorderRecommendations({
   const highCount = recommendations.filter((r) => r.urgency === "high").length;
 
   return (
-    <Card className="border-none shadow-sm bg-white rounded-2xl">
+    <Card className="border-none shadow-sm bg-[#1a1a1e] rounded-2xl">
       <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle className="text-base md:text-lg font-semibold text-gray-900">재주문 추천</CardTitle>
+            <CardTitle className="text-base md:text-lg font-semibold text-slate-100">재주문 추천</CardTitle>
             <CardDescription className="text-xs md:text-sm text-gray-500">
               자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
             </CardDescription>

@@ -6,13 +6,13 @@ import { Building2, Plus, RefreshCw, ArrowRight } from "lucide-react";
 
 export default function AdminOrganizationsPage() {
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[#111114]">
       <AdminSidebar />
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="bg-white border-b border-slate-200 px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base font-bold text-slate-900">조직 관리</h1>
+              <h1 className="text-base font-bold text-slate-100">조직 관리</h1>
               <p className="text-[11px] text-slate-400 mt-0.5">등록된 조직을 관리하고 승인합니다.</p>
             </div>
             <div className="flex items-center gap-2">
@@ -26,8 +26,8 @@ export default function AdminOrganizationsPage() {
           </div>
         </div>
         <div className="flex-1 p-5">
-          <div className="bg-white border border-slate-200 rounded-lg py-16 text-center">
-            <div className="inline-flex items-center justify-center p-3 rounded-full bg-slate-100 mb-3">
+          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg py-16 text-center">
+            <div className="inline-flex items-center justify-center p-3 rounded-full bg-[#222226] mb-3">
               <Building2 className="h-5 w-5 text-slate-400" />
             </div>
             <p className="text-sm font-medium text-slate-600">등록된 조직이 없습니다.</p>

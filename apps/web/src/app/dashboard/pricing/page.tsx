@@ -36,7 +36,7 @@ export default function PricingPage() {
         {/* Starter */}
         <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-slate-100 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-[#222226] bg-[#222226] rounded-full flex items-center justify-center mb-4">
               <User className="text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">스타터 (Starter)</CardTitle>
@@ -118,7 +118,7 @@ export default function PricingPage() {
         {/* Enterprise */}
         <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-slate-100 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-[#222226] bg-[#222226] rounded-full flex items-center justify-center mb-4">
               <Building2 className="text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">엔터프라이즈</CardTitle>
@@ -152,7 +152,7 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full bg-slate-50 bg-[#1a1a1e]/50">
+            <Button variant="outline" className="w-full bg-[#111114] bg-[#1a1a1e]/50">
               영업팀과 상담하기
             </Button>
           </CardFooter>
@@ -162,9 +162,9 @@ export default function PricingPage() {
       {/* 상세 기능 비교표 */}
       <div className="mt-16 max-w-5xl mx-auto">
         <h3 className="text-2xl font-bold text-center mb-8">상세 기능 비교</h3>
-        <div className="border border-slate-200 border-[#333338] rounded-lg bg-white bg-[#09090b] overflow-hidden">
+        <div className="border border-[#2a2a2e] border-[#333338] rounded-lg bg-[#1a1a1e] bg-[#09090b] overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50 bg-[#1a1a1e]/50">
+            <TableHeader className="bg-[#111114] bg-[#1a1a1e]/50">
               <TableRow>
                 <TableHead className="w-[30%]">기능</TableHead>
                 <TableHead className="text-center">Starter</TableHead>
@@ -176,7 +176,7 @@ export default function PricingPage() {
             </TableHeader>
             <TableBody>
               {/* 카테고리 1: 재고 관리 */}
-              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+              <TableRow className="bg-[#111114]/50 bg-[#1a1a1e]/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <Package className="h-3.5 w-3.5 text-slate-500" />
@@ -226,7 +226,7 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 2: 구매 및 정산 */}
-              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+              <TableRow className="bg-[#111114]/50 bg-[#1a1a1e]/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <CreditCard className="h-3.5 w-3.5 text-slate-500" />
@@ -272,7 +272,7 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 3: 분석 및 권한 */}
-              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+              <TableRow className="bg-[#111114]/50 bg-[#1a1a1e]/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <BarChart3 className="h-3.5 w-3.5 text-slate-500" />

@@ -119,14 +119,14 @@ export function WorkQueueInbox() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e] p-6">
+      <div className="rounded-xl border border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e] p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-5 w-5 rounded bg-slate-200 animate-pulse" />
-          <div className="h-5 w-32 rounded bg-slate-200 animate-pulse" />
+          <div className="h-5 w-5 rounded bg-[#2a2a2e] animate-pulse" />
+          <div className="h-5 w-32 rounded bg-[#2a2a2e] animate-pulse" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-lg bg-slate-100 animate-pulse" />
+            <div key={i} className="h-20 rounded-lg bg-[#222226] animate-pulse" />
           ))}
         </div>
       </div>
@@ -142,7 +142,7 @@ export function WorkQueueInbox() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e] shadow-sm">
+    <div className="rounded-xl border border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e] shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ function WorkQueueCard({
 
   return (
     <div className={cn(
-      "group rounded-lg border border-slate-200/80 border-[#333338] hover:border-[#333338] bg-[#222226]/30 transition-all duration-150",
+      "group rounded-lg border border-[#2a2a2e]/80 border-[#333338] hover:border-[#333338] bg-[#222226]/30 transition-all duration-150",
       (item.impactScore ?? 0) >= 80 && "border-l-2 border-l-red-500"
     )}>
       <div className="p-3">

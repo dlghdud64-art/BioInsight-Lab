@@ -129,7 +129,7 @@ export function QuoteForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">견적 입력</h2>
+          <h2 className="text-lg font-semibold text-slate-100">견적 입력</h2>
           <p className="text-sm text-slate-600 mt-1">
             각 품목의 단가와 납기를 입력해주세요
           </p>
@@ -151,7 +151,7 @@ export function QuoteForm({
       )}
 
       {/* Items Table */}
-      <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -168,7 +168,7 @@ export function QuoteForm({
               const response = responses[item.id] || {};
               
               return (
-                <TableRow key={item.id} className="hover:bg-slate-50">
+                <TableRow key={item.id} className="hover:bg-[#111114]">
                   <TableCell className="p-3">
                     <div className="font-medium text-sm">{item.productName}</div>
                     <div className="text-xs text-slate-600 mt-1">

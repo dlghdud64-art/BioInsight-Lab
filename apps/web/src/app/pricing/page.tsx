@@ -409,7 +409,7 @@ export default function PricingPage() {
                               "w-full font-semibold h-9 md:h-10 text-sm",
                               plan.id === "business"
                                 ? "bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
-                                : "bg-slate-200 hover:bg-slate-100 text-slate-900"
+                                : "bg-slate-200 hover:bg-[#222226] text-slate-100"
                             )}
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
                           >

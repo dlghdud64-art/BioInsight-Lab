@@ -345,10 +345,10 @@ export function BulkImportModal({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={`
-              border-dashed border-2 border-slate-300 bg-slate-50 rounded-lg p-12
+              border-dashed border-2 border-[#333338] bg-[#111114] rounded-lg p-12
               flex flex-col items-center justify-center text-center
               transition-colors cursor-pointer
-              ${isDragging ? "border-blue-400 bg-slate-100" : "hover:border-slate-400 hover:bg-slate-100"}
+              ${isDragging ? "border-blue-400 bg-[#222226]" : "hover:border-slate-400 hover:bg-[#222226]"}
               ${isUploading ? "pointer-events-none opacity-70" : ""}
             `}
           >

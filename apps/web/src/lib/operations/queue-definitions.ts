@@ -28,7 +28,7 @@ export const PRIORITY_BADGE_COLORS: Record<PriorityLevel, string> = {
   P0: "bg-red-100 text-red-800",
   P1: "bg-orange-100 text-orange-800",
   P2: "bg-blue-100 text-blue-800",
-  P3: "bg-gray-100 text-gray-600",
+  P3: "bg-[#222226] text-gray-600",
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
