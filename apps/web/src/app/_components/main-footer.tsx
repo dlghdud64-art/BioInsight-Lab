@@ -60,7 +60,7 @@ export function MainFooter() {
           {/* 왼쪽: 로고/설명/소셜 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BioInsightLogo showText={true} variant="dark" className="h-6" />
+              <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
               <span className="rounded-full bg-st px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
                 Beta
               </span>
