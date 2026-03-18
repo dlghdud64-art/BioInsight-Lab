@@ -77,14 +77,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased dark:bg-[#09090b] dark:text-slate-100">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+    <html lang="ko" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.classList.remove('light');document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}catch(e){}` }} />
+      </head>
+      <body className="min-h-screen bg-[#09090b] font-sans text-slate-100 antialiased">
+        <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
               <QueryProvider>
