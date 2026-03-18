@@ -49,7 +49,7 @@ const EVIDENCE_ITEMS = [
 
 export function OpsEvidenceSection() {
   return (
-    <section className="py-16 md:py-24 bg-[#0c0c0f] border-t border-[#1e1e23]">
+    <section className="py-16 md:py-24 bg-sh border-t border-bd">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-3">
@@ -67,16 +67,16 @@ export function OpsEvidenceSection() {
             return (
               <div
                 key={item.title}
-                className="bg-[#131316] border border-[#242429] rounded-md p-4 hover:border-[#2a2e35] transition-colors"
+                className="bg-pg border border-bd rounded-md p-4 hover:border-[#2a2e35] transition-colors"
               >
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-7 h-7 rounded-md bg-[#1a1a1e] border border-[#242429] flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-pn border border-bd flex items-center justify-center flex-shrink-0">
                     <Icon className={`h-3.5 w-3.5 ${item.color}`} />
                   </div>
                   <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
                 </div>
                 <p className="text-xs text-[#9ca3af] leading-relaxed mb-3">{item.description}</p>
-                <div className="border-t border-[#242429] pt-2.5">
+                <div className="border-t border-bd pt-2.5">
                   <p className="text-[10px] font-medium text-[#6b7280] uppercase tracking-wider">{item.metric}</p>
                 </div>
               </div>

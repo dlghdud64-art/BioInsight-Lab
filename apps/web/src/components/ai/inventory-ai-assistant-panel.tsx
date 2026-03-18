@@ -80,7 +80,7 @@ export function InventoryAiAssistantPanel({
         className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
       >
         {/* ═══ 1. 헤더 ═══ */}
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-[#2a2a2e]/50 flex-shrink-0">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-bd/50 flex-shrink-0">
           <SheetTitle className="text-base font-bold text-slate-100">
             {state === "empty" && "재고 운영 도우미"}
             {state === "loading" && "재고 운영 도우미"}
@@ -176,7 +176,7 @@ export function InventoryAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-[#222226]/50 p-4 mb-4">
+      <div className="rounded-full bg-el/50 p-4 mb-4">
         <Package className="h-8 w-8 text-slate-600" />
       </div>
       <p className="text-sm font-medium text-slate-400">
@@ -195,7 +195,7 @@ function LoadingState() {
     <div className="p-5 space-y-5">
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-[#222226]/30">
+          <div key={i} className="p-3 rounded-lg bg-el/30">
             <Skeleton className="h-3 w-16 mb-2" />
             <Skeleton className="h-6 w-10" />
           </div>
@@ -206,7 +206,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-28 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-[#2a2a2e]">
+            <div key={i} className="p-3 rounded-lg border border-bd">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-3 w-3/4" />
             </div>
@@ -289,7 +289,7 @@ function StockSummarySection({
         : "text-slate-400",
       bg: stockStatus.estimatedDepletionDays !== null && stockStatus.estimatedDepletionDays <= 7
         ? "bg-red-950/30"
-        : "bg-[#222226]/30",
+        : "bg-el/30",
     },
     {
       icon: AlertTriangle,
@@ -420,7 +420,7 @@ function IssueWarningsSection({
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-[#2a2a2e] border-[#333338] bg-[#222226]/30"
+                  : "border-bd border-bs bg-el/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -441,7 +441,7 @@ function IssueWarningsSection({
                           ? "text-red-400 border-red-200"
                           : isWarning
                           ? "text-amber-400 border-amber-200"
-                          : "text-slate-500 border-[#2a2a2e]"
+                          : "text-slate-500 border-bd"
                       }`}
                     >
                       {issue.badgeLabel}
@@ -507,7 +507,7 @@ function ReorderSection({
         </Badge>
       </div>
 
-      <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/50 p-3.5">
+      <div className="rounded-lg border border-bd bg-pn/50 p-3.5">
         {/* 권장 수량 */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-slate-400">권장 발주 수량</span>
@@ -647,7 +647,7 @@ function LotExpirySection({
                   ? "border-red-800/50 bg-red-950/20"
                   : isSoon
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-[#333338] bg-[#1a1a1e]/50"
+                  : "border-bs bg-pn/50"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -668,7 +668,7 @@ function LotExpirySection({
                   </Badge>
                 )}
                 {!isExpired && !isSoon && (
-                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-[#2a2a2e]">
+                  <Badge variant="outline" className="text-[9px] h-3.5 px-1 text-slate-500 border-bd">
                     D-{lot.daysUntilExpiry}
                   </Badge>
                 )}
@@ -737,7 +737,7 @@ function BusinessImpactSection({
   };
 
   return (
-    <div className={`p-5 ${isHighlighted ? "bg-[#1a1a1e]/20" : ""}`}>
+    <div className={`p-5 ${isHighlighted ? "bg-pn/20" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
         <TrendingDown className="h-4 w-4 text-slate-500" />
         <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
@@ -751,7 +751,7 @@ function BusinessImpactSection({
           return (
             <div
               key={idx}
-              className="p-3 rounded-lg border border-[#2a2a2e] border-[#333338] bg-[#222226]/30"
+              className="p-3 rounded-lg border border-bd border-bs bg-el/30"
             >
               <div className="flex items-start gap-2">
                 <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-500 flex-shrink-0" />
@@ -790,7 +790,7 @@ function StickyActions({
   const hasIssues = data.issues.length > 0;
 
   return (
-    <div className="flex-shrink-0 border-t border-[#2a2a2e] bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-bd bg-[#161d2f] px-5 py-3">
       <div className="flex gap-2">
         {hasReorder && onReviewReorder ? (
           <Button

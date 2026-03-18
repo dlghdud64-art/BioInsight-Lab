@@ -221,7 +221,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
       // 벤더 헤더 행 (그룹화 모드일 때만)
       if (groupByVendor && vendorName !== "전체") {
         rows.push(
-          <TableRow key={`vendor-${vendorName}`} className="bg-[#111114] hover:bg-[#222226]">
+          <TableRow key={`vendor-${vendorName}`} className="bg-pg hover:bg-el">
             <TableCell colSpan={2} className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">
               <span className="truncate block" title={vendorName}>{vendorName}</span>
             </TableCell>
@@ -241,7 +241,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
         globalIndex++;
         const product = products?.find((p: any) => p.id === item.productId);
         rows.push(
-          <TableRow key={item.id} className="h-14 hover:bg-[#111114]">
+          <TableRow key={item.id} className="h-14 hover:bg-pg">
             <TableCell>
               <Checkbox
                 checked={selectedQuoteIds.includes(item.id)}
@@ -300,7 +300,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
     <>
     <div className="space-y-3 md:space-y-6 pb-20 md:pb-0">
       {/* 견적 요청 섹션 */}
-      <Card className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]">
+      <Card className="rounded-lg border border-bd bg-pn">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1">
@@ -318,11 +318,11 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                   type="button"
                   onClick={() => setGroupByVendor(!groupByVendor)}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
-                    groupByVendor ? "bg-[#1a1a1e]" : "bg-slate-300"
+                    groupByVendor ? "bg-pn" : "bg-slate-300"
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[#1a1a1e] transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-pn transition-transform ${
                       groupByVendor ? "translate-x-5" : "translate-x-0.5"
                     }`}
                   />
@@ -344,7 +344,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
           <div className="space-y-4">
             {/* 선택 액션바 */}
             {selectedQuoteIds.length > 0 && quoteItems.length > 0 && (
-              <div className="flex items-center justify-between rounded-lg border border-[#2a2a2e] bg-[#111114] px-3 py-2 text-xs text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-bd bg-pg px-3 py-2 text-xs text-slate-700">
                 <span>선택된 {selectedQuoteIds.length}개 품목</span>
                 <div className="flex items-center gap-2">
                   <Button
@@ -372,7 +372,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
             {quoteItems.length === 0 ? (
               <div className="text-center py-10 md:py-20">
                 <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 md:p-12 max-w-md mx-auto">
-                  <div className="w-14 h-14 rounded-full bg-[#111114] flex items-center justify-center mx-auto mb-4">
+                  <div className="w-14 h-14 rounded-full bg-pg flex items-center justify-center mx-auto mb-4">
                     <ShoppingCart className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
                   </div>
                   <Badge variant="secondary" className="text-xs mb-3">선택 품목 0개</Badge>
@@ -397,8 +397,8 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 </div>
               </div>
             ) : (
-              <div className="border border-[#2a2a2e] rounded-xl overflow-hidden shadow-sm bg-[#1a1a1e]">
-                <div className="bg-[#111114] px-4 md:px-6 py-3 md:py-4 border-b border-[#2a2a2e]">
+              <div className="border border-bd rounded-xl overflow-hidden shadow-sm bg-pn">
+                <div className="bg-pg px-4 md:px-6 py-3 md:py-4 border-b border-bd">
                   <h2 className="text-base md:text-lg font-semibold text-slate-100 mb-1.5">요청 제품 ({quoteItems.length}개)</h2>
                   <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
@@ -419,7 +419,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 <div className="hidden md:block w-full overflow-x-auto">
                   <Table className="w-full">
                     <TableHeader>
-                      <TableRow className="bg-[#111114] hover:bg-[#111114]">
+                      <TableRow className="bg-pg hover:bg-pg">
                         <TableHead className="text-xs font-bold text-gray-500 uppercase w-16">
                           {quoteItems.length > 0 && (
                             <Checkbox
@@ -484,7 +484,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                         return (
                           <div
                             key={item.id}
-                            className="border border-[#2a2a2e] rounded-xl p-4 mb-4 bg-[#1a1a1e] shadow-sm"
+                            className="border border-bd rounded-xl p-4 mb-4 bg-pn shadow-sm"
                           >
                             {/* Header: 체크박스 + 브랜드/Cat.No */}
                             <div className="flex items-start justify-between mb-3">
@@ -595,7 +595,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 </div>
                 <div className="space-y-2">
                   {costOptimization.optimizations.slice(0, 3).map((opt: any, idx: number) => (
-                    <div key={idx} className="p-2 bg-[#1a1a1e] rounded border border-blue-100">
+                    <div key={idx} className="p-2 bg-pn rounded border border-blue-100">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-slate-100 line-clamp-1">
@@ -765,7 +765,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
 
       {/* 모바일: 고정 하단 액션 바 */}
       {quoteItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 w-full bg-[#1a1a1e] border-t border-[#2a2a2e] p-4 z-50 md:hidden flex flex-col gap-2 shadow-lg">
+        <div className="fixed bottom-0 left-0 w-full bg-pn border-t border-bd p-4 z-50 md:hidden flex flex-col gap-2 shadow-lg">
           <div className="flex items-center justify-end">
             <span className="text-sm text-gray-600 mr-2">총 견적가:</span>
             <span className="text-xl font-bold text-blue-600 whitespace-nowrap">
@@ -1001,7 +1001,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                 )}
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {optimizationResult.items.map((item: any, idx: number) => (
-                    <div key={idx} className="p-2 bg-[#1a1a1e] rounded border border-green-100">
+                    <div key={idx} className="p-2 bg-pn rounded border border-green-100">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-slate-100">
@@ -1324,7 +1324,7 @@ export function SharePanel() {
   };
 
   return (
-    <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
+    <Card className="rounded-xl border border-bd bg-pn shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-semibold text-slate-100">공유</CardTitle>
         <CardDescription className="text-xs text-slate-500">
@@ -1334,7 +1334,7 @@ export function SharePanel() {
       <CardContent className="space-y-4">
         {(localShareLink || providerShareLink) ? (
           <div className="space-y-3">
-            <div className="rounded-lg border border-[#2a2a2e] bg-[#111114] p-3">
+            <div className="rounded-lg border border-bd bg-pg p-3">
               <Label className="text-xs font-medium text-slate-700 mb-2 block">
                 공유 링크
               </Label>
@@ -1342,7 +1342,7 @@ export function SharePanel() {
                 <Input
                   value={localShareLink || providerShareLink || ""}
                   readOnly
-                  className="flex-1 text-xs font-mono bg-[#1a1a1e]"
+                  className="flex-1 text-xs font-mono bg-pn"
                 />
                 <Button
                   variant="outline"
@@ -1397,7 +1397,7 @@ export function SharePanel() {
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className="w-full bg-[#1a1a1e] text-white hover:bg-[#222226]"
+                className="w-full bg-pn text-white hover:bg-el"
                 disabled={quoteItems.length === 0 || isGeneratingShareLink}
               >
                 <Share2 className="h-4 w-4 mr-2" />
@@ -1465,7 +1465,7 @@ export function SharePanel() {
         )}
 
         {/* 내보내기 버튼 */}
-        <div className="pt-4 border-t border-[#2a2a2e]">
+        <div className="pt-4 border-t border-bd">
           <Label className="text-xs font-medium text-slate-700 mb-3 block">
             파일 내보내기
           </Label>
@@ -1475,7 +1475,7 @@ export function SharePanel() {
               size="sm"
               onClick={handleCopyTSV}
               disabled={quoteItems.length === 0}
-              className="w-full text-xs bg-[#1a1a1e] hover:bg-[#222226]"
+              className="w-full text-xs bg-pn hover:bg-el"
             >
               <Copy className="h-3 w-3 mr-2" />
               TSV 복사 (그룹웨어 붙여넣기)
@@ -1983,7 +1983,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
 
   if (isLoadingQuoteList) {
     return (
-      <Card className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]">
+      <Card className="rounded-lg border border-bd bg-pn">
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
           <span className="ml-2 text-xs text-slate-500">견적 요청 리스트 불러오는 중...</span>
@@ -2163,7 +2163,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
 
       <form id="quote-request-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Section 1: 기본 정보 */}
-        <Card className="bg-[#1a1a1e] p-4 md:p-6 rounded-lg border border-[#2a2a2e] shadow-sm">
+        <Card className="bg-pn p-4 md:p-6 rounded-lg border border-bd shadow-sm">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">기본 정보</CardTitle>
           </CardHeader>
@@ -2209,7 +2209,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section 2: 배송 및 일정 (Grid로 압축) */}
-        <Card className="bg-[#1a1a1e] p-4 md:p-6 rounded-lg border border-[#2a2a2e] shadow-sm">
+        <Card className="bg-pn p-4 md:p-6 rounded-lg border border-bd shadow-sm">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">배송 및 일정</CardTitle>
           </CardHeader>
@@ -2299,7 +2299,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                   </div>
                 )}
                 {deliveryLocation === "saved" && savedDeliveryAddress && (
-                  <div className="text-xs text-slate-500 mt-1 p-2 bg-[#111114] rounded border border-[#2a2a2e]">
+                  <div className="text-xs text-slate-500 mt-1 p-2 bg-pg rounded border border-bd">
                     {savedDeliveryAddress}
                   </div>
                 )}
@@ -2309,7 +2309,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section: 파일 첨부 */}
-        <Card className="bg-[#1a1a1e] p-4 md:p-6 rounded-lg border border-[#2a2a2e] shadow-sm">
+        <Card className="bg-pn p-4 md:p-6 rounded-lg border border-bd shadow-sm">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold flex items-center justify-between">
               첨부 파일
@@ -2322,7 +2322,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
               tabIndex={0}
               onClick={() => document.getElementById("quote-file-upload")?.click()}
               onKeyDown={(e) => e.key === "Enter" && document.getElementById("quote-file-upload")?.click()}
-              className="border-2 border-dashed border-[#2a2a2e] rounded-lg bg-[#111114] p-8 flex flex-col items-center justify-center text-center hover:bg-[#222226] transition-colors cursor-pointer"
+              className="border-2 border-dashed border-bd rounded-lg bg-pg p-8 flex flex-col items-center justify-center text-center hover:bg-el transition-colors cursor-pointer"
             >
               <input
                 id="quote-file-upload"
@@ -2344,7 +2344,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* Section 3: 추가 요청 */}
-        <Card className="bg-[#1a1a1e] p-4 md:p-6 rounded-lg border border-[#2a2a2e] shadow-sm">
+        <Card className="bg-pn p-4 md:p-6 rounded-lg border border-bd shadow-sm">
           <CardHeader className="px-0 pt-0 pb-3">
             <CardTitle className="text-base font-semibold">추가 요청</CardTitle>
           </CardHeader>
@@ -2368,7 +2368,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         </Card>
 
         {/* 모바일 sticky CTA */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-[#1a1a1e]/95 backdrop-blur-sm border-t border-[#2a2a2e] px-4 py-2.5 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-pn/95 backdrop-blur-sm border-t border-bd px-4 py-2.5 safe-area-bottom">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -2481,7 +2481,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
                   <Input
                     value={shareLink}
                     readOnly
-                    className="flex-1 text-xs font-mono bg-[#111114]"
+                    className="flex-1 text-xs font-mono bg-pg"
                   />
                   <Button
                     variant="outline"
@@ -2564,7 +2564,7 @@ export function QuoteItemsSummaryPanel({
 
   if (quoteItems.length === 0) {
     return (
-      <Card className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]">
+      <Card className="rounded-lg border border-bd bg-pn">
         <CardHeader>
           <CardTitle className="text-sm font-semibold text-slate-100">품목 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -2582,8 +2582,8 @@ export function QuoteItemsSummaryPanel({
 
   return (
     <div className="sticky top-24 h-fit">
-      <Card className="rounded-lg border-2 border-blue-100 bg-[#1a1a1e] shadow-md shadow-[0_4px_14px_0_rgba(147,197,253,0.2)]">
-        <CardHeader className="border-b border-[#2a2a2e] bg-[#111114]/50">
+      <Card className="rounded-lg border-2 border-blue-100 bg-pn shadow-md shadow-[0_4px_14px_0_rgba(147,197,253,0.2)]">
+        <CardHeader className="border-b border-bd bg-pg/50">
           <CardTitle className="text-base font-semibold text-slate-100">견적 요약</CardTitle>
           <CardDescription className="text-xs text-slate-500">
             요청할 품목 {quoteItems.length}개
@@ -2613,7 +2613,7 @@ export function QuoteItemsSummaryPanel({
                         return (
                           <div
                             key={item.id}
-                            className="flex items-start justify-between gap-2 p-3 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] hover:bg-[#111114] transition-colors"
+                            className="flex items-start justify-between gap-2 p-3 rounded-lg border border-bd bg-pn hover:bg-pg transition-colors"
                           >
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-slate-100 truncate">
@@ -2639,7 +2639,7 @@ export function QuoteItemsSummaryPanel({
                     </div>
                     {/* 벤더별 개별 메시지 입력창 (접기/열기) */}
                     {vendorGroups.size > 1 && onVendorNoteChange && (
-                      <div className="mt-2 pt-2 border-t border-[#2a2a2e]">
+                      <div className="mt-2 pt-2 border-t border-bd">
                         {expandedVendorNotes[vendorId] ? (
                           <div className="animate-in slide-in-from-top-2 duration-200">
                             <div className="flex items-center justify-between mb-1.5">
@@ -2662,7 +2662,7 @@ export function QuoteItemsSummaryPanel({
                               value={vendorNotes[vendorId] || ""}
                               onChange={(e) => onVendorNoteChange(vendorId, e.target.value)}
                               placeholder="예: 특정 Lot 번호 요청, 유통기한 확인 등 이 벤더에게만 보낼 메시지"
-                              className="bg-[#111114] border border-[#2a2a2e] rounded p-2 text-sm w-full min-h-[60px]"
+                              className="bg-pg border border-bd rounded p-2 text-sm w-full min-h-[60px]"
                             />
                           </div>
                         ) : (
@@ -2682,7 +2682,7 @@ export function QuoteItemsSummaryPanel({
                       </div>
                     )}
                     {vendorGroups.size > 1 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2e] bg-[#111114]/50 p-2 rounded">
+                      <div className="flex items-center justify-between pt-2 border-t border-bd bg-pg/50 p-2 rounded">
                         <span className="text-sm font-semibold text-slate-700">{vendorName} 소계</span>
                         <span className="text-sm font-bold text-slate-100">
                           ₩{vendorTotal.toLocaleString("ko-KR")}
@@ -2696,7 +2696,7 @@ export function QuoteItemsSummaryPanel({
           </div>
           
           {/* 총계 및 액션 */}
-          <div className="border-t-2 border-[#2a2a2e] bg-[#111114]/50 p-6 space-y-4">
+          <div className="border-t-2 border-bd bg-pg/50 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-base font-semibold text-slate-700">총 예상 금액</span>
               <span className="text-3xl font-bold text-blue-600">

@@ -115,7 +115,7 @@ export function SmartPickWidget() {
         {recommendations.map((rec) => (
           <div
             key={rec.inventoryId}
-            className="bg-[#1a1a1e] rounded-lg p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-pn rounded-lg p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">

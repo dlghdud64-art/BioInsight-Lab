@@ -85,8 +85,8 @@ export function InventoryFlowView() {
                   onClick={() => setSelectedStage(isSelected ? null : stage.id)}
                   className={`flex-shrink-0 w-[110px] rounded-lg border p-3 text-left transition-all ${
                     isSelected
-                      ? "border-blue-500 ring-2 ring-blue-500/30 bg-[#222226]"
-                      : "border-[#2a2a2e] bg-[#1a1a1e] hover:bg-[#222226]"
+                      ? "border-blue-500 ring-2 ring-blue-500/30 bg-el"
+                      : "border-bd bg-pn hover:bg-el"
                   }`}
                 >
                   <div className="flex items-center gap-1.5 mb-2">
@@ -114,7 +114,7 @@ export function InventoryFlowView() {
 
       {/* ── 선택된 단계 상세 ── */}
       {selectedStage && (
-        <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] p-4">
+        <div className="rounded-lg border border-bd bg-pn p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               {(() => {
@@ -125,12 +125,12 @@ export function InventoryFlowView() {
                   <>
                     <Icon className={`h-4 w-4 ${stage.color}`} />
                     <h3 className="text-sm font-bold text-slate-100">{stage.label}</h3>
-                    <Badge variant="secondary" className="text-[10px] bg-[#222226]">{items.length}건</Badge>
+                    <Badge variant="secondary" className="text-[10px] bg-el">{items.length}건</Badge>
                   </>
                 );
               })()}
             </div>
-            <Button size="sm" variant="outline" className="h-7 text-xs border-[#333338] text-slate-400 bg-transparent hover:bg-[#222226]">
+            <Button size="sm" variant="outline" className="h-7 text-xs border-bs text-slate-400 bg-transparent hover:bg-el">
               {MOCK_STAGES.find(s => s.id === selectedStage)?.nextActionLabel}
             </Button>
           </div>
@@ -140,7 +140,7 @@ export function InventoryFlowView() {
           ) : (
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-[#222226] hover:bg-[#2a2a2e] transition-colors">
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-el hover:bg-st transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-slate-200 truncate">{item.name}</p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
@@ -166,7 +166,7 @@ export function InventoryFlowView() {
             { label: "재주문 검토", count: 2, color: "text-orange-400", icon: RotateCcw },
             { label: "폐기 검토", count: 1, color: "text-rose-400", icon: Trash2 },
           ].map((s) => (
-            <div key={s.label} className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] p-3 flex items-center gap-3">
+            <div key={s.label} className="rounded-lg border border-bd bg-pn p-3 flex items-center gap-3">
               <s.icon className={`h-4 w-4 ${s.color}`} />
               <div>
                 <p className="text-xs font-medium text-slate-300">{s.label}</p>

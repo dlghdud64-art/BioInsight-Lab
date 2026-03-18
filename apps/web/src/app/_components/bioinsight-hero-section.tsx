@@ -30,7 +30,7 @@ export function BioInsightHeroSection() {
   };
 
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-[#1a1a1e] border-b border-[#333338]">
+    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-pn border-b border-bs">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
         {/* Value Proposition */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 md:mb-14">
@@ -75,7 +75,7 @@ export function BioInsightHeroSection() {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-[#222226] transition-colors">
+                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-el transition-colors">
                     <div className="w-10 h-10 rounded-md border border-blue-500/30 bg-blue-600/15 flex items-center justify-center">
                       <Icon className="h-5 w-5 text-blue-400" strokeWidth={1.8} />
                     </div>
@@ -106,7 +106,7 @@ export function BioInsightHeroSection() {
 
         {/* Compact Search Bar */}
         <div className="max-w-md mx-auto mt-10">
-          <form onSubmit={handleSearch} className="flex items-center h-10 border border-[#333338] rounded-md bg-[#222226] px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
+          <form onSubmit={handleSearch} className="flex items-center h-10 border border-bs rounded-md bg-el px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
             <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
             <input
               type="text"

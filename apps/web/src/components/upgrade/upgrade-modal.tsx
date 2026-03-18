@@ -134,7 +134,7 @@ export function UpgradeModal({
             </>
           ) : isMember ? (
             <>
-              <div className="bg-[#111114] border border-[#2a2a2e] rounded-lg p-4">
+              <div className="bg-pg border border-bd rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Users className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
@@ -159,7 +159,7 @@ export function UpgradeModal({
             </>
           ) : (
             <>
-              <div className="bg-[#111114] border border-[#2a2a2e] rounded-lg p-4">
+              <div className="bg-pg border border-bd rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <LogIn className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">

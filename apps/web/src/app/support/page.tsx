@@ -73,7 +73,7 @@ export default function SupportPage() {
       <div className="w-full pt-14">
 
         {/* ── 페이지 헤더 ── */}
-        <section className="border-b border-[#2a2a2e] py-12 md:py-16">
+        <section className="border-b border-bd py-12 md:py-16">
           <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-100 mb-3 tracking-tight">
               도입 문의 및 서비스 안내
@@ -102,11 +102,11 @@ export default function SupportPage() {
                     className={`w-full text-left rounded-xl border p-5 flex items-start gap-4 transition-all duration-150 ${
                       isSelected
                         ? "border-blue-500 bg-blue-500/10 shadow-sm ring-1 ring-blue-500"
-                        : "border-[#2a2a2e] bg-[#1a1a1e] hover:border-[#333338] hover:bg-[#222226]"
+                        : "border-bd bg-pn hover:border-bs hover:bg-el"
                     }`}
                   >
                     <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
-                      isSelected ? "bg-blue-600" : "bg-[#222226]"
+                      isSelected ? "bg-blue-600" : "bg-el"
                     }`}>
                       <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-blue-400"}`} />
                     </div>
@@ -140,7 +140,7 @@ export default function SupportPage() {
                 <p className="text-sm text-slate-400">확인 후 순차적으로 답변 드리겠습니다. 평일 기준으로 처리됩니다.</p>
                 <Button
                   variant="outline"
-                  className="mt-5 border-[#333338] text-slate-300 bg-transparent hover:bg-[#222226]"
+                  className="mt-5 border-bs text-slate-300 bg-transparent hover:bg-el"
                   onClick={handleReset}
                 >
                   다른 문의 남기기
@@ -163,7 +163,7 @@ export default function SupportPage() {
                       placeholder="홍길동 / BioLab Institute"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full rounded-lg border border-[#2a2a2e] bg-[#222226] px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="w-full rounded-lg border border-bd bg-el px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -174,7 +174,7 @@ export default function SupportPage() {
                       placeholder="your@email.com"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full rounded-lg border border-[#2a2a2e] bg-[#222226] px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="w-full rounded-lg border border-bd bg-el px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function SupportPage() {
                     placeholder={selectedInquiry?.placeholder ?? DEFAULT_PLACEHOLDER}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    className="w-full rounded-lg border border-[#2a2a2e] bg-[#222226] px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                    className="w-full rounded-lg border border-bd bg-el px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -204,7 +204,7 @@ export default function SupportPage() {
           </section>
 
           {/* ── 이메일 직접 문의 ── */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <section className="rounded-xl border border-bd bg-pn px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-slate-100 mb-0.5">이메일로 직접 문의하기</p>
               <p className="text-xs text-slate-500">위 양식 대신 이메일로 바로 문의하실 수도 있습니다.</p>
@@ -219,7 +219,7 @@ export default function SupportPage() {
           </section>
 
           {/* ── 지원 보조 네비게이션 ── */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-6 space-y-5">
+          <section className="rounded-xl border border-bd bg-pn p-6 space-y-5">
             <h3 className="text-sm font-bold text-slate-100">문의 후 다음 단계</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {[
@@ -234,7 +234,7 @@ export default function SupportPage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex flex-col items-center gap-1.5 rounded-lg border border-[#2a2a2e] bg-[#222226] px-3 py-3 hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors"
+                  className="group flex flex-col items-center gap-1.5 rounded-lg border border-bd bg-el px-3 py-3 hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors"
                 >
                   <item.icon className={`h-4 w-4 ${item.iconColor}`} />
                   <span className="text-xs font-medium text-slate-400 group-hover:text-blue-400">{item.label}</span>

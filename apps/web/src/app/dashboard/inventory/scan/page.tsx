@@ -158,7 +158,7 @@ function InventoryScanContent() {
   // ─── 재고 ID가 있을 때 — 상세 뷰 ─────────────────────────────────────
   if (inventoryId) {
     return (
-      <div className="min-h-screen bg-[#1a1a1e] p-4">
+      <div className="min-h-screen bg-pn p-4">
         <div className="max-w-lg mx-auto space-y-4">
           {/* 헤더 */}
           <div className="flex items-center gap-3 pt-2">
@@ -238,7 +238,7 @@ function InventoryScanContent() {
                       </p>
                       <p className="text-xs text-blue-500">{inventory.unit || "개"} (현재)</p>
                     </div>
-                    <div className="bg-[#222226] rounded-lg p-3 text-center">
+                    <div className="bg-el rounded-lg p-3 text-center">
                       <p className="text-2xl font-bold text-slate-300">
                         {inventory.safetyStock ?? "—"}
                       </p>
@@ -273,7 +273,7 @@ function InventoryScanContent() {
                       </div>
                     )}
                     {inventory.notes && (
-                      <p className="text-xs text-slate-500 bg-[#222226] rounded p-2 italic">
+                      <p className="text-xs text-slate-500 bg-el rounded p-2 italic">
                         {inventory.notes}
                       </p>
                     )}
@@ -318,11 +318,11 @@ function InventoryScanContent() {
 
   // ─── ID 없을 때 — 카메라 스캐너 뷰 ────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#1a1a1e] flex flex-col">
+    <div className="min-h-screen bg-pn flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 text-white">
         <Link href="/dashboard/inventory">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-[#1a1a1e]/10 gap-1 pl-0">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-pn/10 gap-1 pl-0">
             <ArrowLeft className="h-4 w-4" />
             재고 목록
           </Button>
@@ -391,7 +391,7 @@ function InventoryScanContent() {
               size="lg"
               variant="outline"
               onClick={stopScanner}
-              className="gap-2 border-white/30 text-white hover:bg-[#1a1a1e]/10 px-8 rounded-xl h-12"
+              className="gap-2 border-white/30 text-white hover:bg-pn/10 px-8 rounded-xl h-12"
             >
               <CameraOff className="h-5 w-5" />
               중지
@@ -407,9 +407,9 @@ function InventoryScanContent() {
 
         {/* 구분선 */}
         <div className="flex items-center gap-3 w-full max-w-sm">
-          <div className="flex-1 h-px bg-[#1a1a1e]/20" />
+          <div className="flex-1 h-px bg-pn/20" />
           <span className="text-white/40 text-xs">또는 ID 직접 입력</span>
-          <div className="flex-1 h-px bg-[#1a1a1e]/20" />
+          <div className="flex-1 h-px bg-pn/20" />
         </div>
 
         {/* 수동 ID 입력 */}
@@ -419,12 +419,12 @@ function InventoryScanContent() {
             value={manualId}
             onChange={(e) => setManualId(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-            className="bg-[#1a1a1e]/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+            className="bg-pn/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
           />
           <Button
             variant="outline"
             onClick={handleManualSearch}
-            className="border-white/30 text-white hover:bg-[#1a1a1e]/10 rounded-xl px-4"
+            className="border-white/30 text-white hover:bg-pn/10 rounded-xl px-4"
           >
             <Search className="h-4 w-4" />
           </Button>
@@ -438,7 +438,7 @@ export default function InventoryScanPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[#1a1a1e]">
+        <div className="flex items-center justify-center min-h-screen bg-pn">
           <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
         </div>
       }

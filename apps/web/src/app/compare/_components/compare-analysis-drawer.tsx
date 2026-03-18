@@ -121,7 +121,7 @@ function SignificanceBadge({ significance }: { significance: string }) {
     HIGH: { label: "높음", className: "bg-orange-600/20 text-orange-300" },
     MEDIUM: { label: "보통", className: "bg-yellow-600/20 text-yellow-300" },
     LOW: { label: "낮음", className: "bg-blue-600/20 text-blue-300" },
-    INFO: { label: "참고", className: "bg-[#222226] text-slate-400" },
+    INFO: { label: "참고", className: "bg-el text-slate-400" },
   };
   const c = config[significance] || config.INFO;
   return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
@@ -539,7 +539,7 @@ export function CompareAnalysisDrawer({
                       className={`p-3 border rounded-lg ${
                         item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY"
                           ? "bg-amber-600/10 border-amber-700"
-                          : "bg-[#1a1a1e]"
+                          : "bg-pn"
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -604,7 +604,7 @@ export function CompareAnalysisDrawer({
                 {insight && (
                   <>
                     {/* AI 신뢰도 고지 */}
-                    <div className="flex items-start gap-2 p-2 bg-[#222226] rounded text-xs text-slate-400">
+                    <div className="flex items-start gap-2 p-2 bg-el rounded text-xs text-slate-400">
                       <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                       <span>
                         AI 분석은 제품 DB 데이터 기반 참고 자료입니다.
@@ -687,7 +687,7 @@ export function CompareAnalysisDrawer({
                         <CardContent>
                           <div className="space-y-2">
                             {insight.recommendedActions.map((action, i) => (
-                              <div key={i} className="p-2 border rounded bg-[#1a1a1e]">
+                              <div key={i} className="p-2 border rounded bg-pn">
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">
                                     {actionTypeLabel(action.actionType)}
@@ -730,7 +730,7 @@ export function CompareAnalysisDrawer({
                           <p className="text-xs font-medium text-slate-400 mb-1.5">연결된 견적</p>
                           <div className="space-y-1.5">
                             {linkedOutcomes.linkedQuotes.map((q) => (
-                              <Link key={q.id} href={`/quotes/${q.id}`} className="flex items-center justify-between p-2 border rounded hover:bg-[#222226] transition-colors">
+                              <Link key={q.id} href={`/quotes/${q.id}`} className="flex items-center justify-between p-2 border rounded hover:bg-el transition-colors">
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-3.5 w-3.5 text-slate-400" />
                                   <span className="text-sm">{q.title}</span>
@@ -751,7 +751,7 @@ export function CompareAnalysisDrawer({
                           <p className="text-xs font-medium text-slate-400 mb-1.5">문의 초안 이력</p>
                           <div className="space-y-1.5">
                             {linkedOutcomes.allDrafts.map((d) => (
-                              <div key={d.id} className="flex items-center justify-between p-2 border rounded bg-[#1a1a1e]/50">
+                              <div key={d.id} className="flex items-center justify-between p-2 border rounded bg-pn/50">
                                 <div className="flex items-center gap-2">
                                   <Mail className="h-3.5 w-3.5 text-slate-400" />
                                   <span className="text-sm">{d.vendorName}</span>
@@ -770,7 +770,7 @@ export function CompareAnalysisDrawer({
                       {/* 판정 기록 + 변경 폼 */}
                       <div>
                         <p className="text-xs font-medium text-slate-400 mb-1.5">판정 기록</p>
-                        <div className="p-2 border rounded bg-[#1a1a1e]/50 space-y-2">
+                        <div className="p-2 border rounded bg-pn/50 space-y-2">
                           <div className="flex items-center gap-2">
                             <DecisionStateBadge state={linkedOutcomes.decisionState} />
                             {linkedOutcomes.decisionNote && (
@@ -916,7 +916,7 @@ export function CompareAnalysisDrawer({
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground">본문</span>
-                          <pre className="text-xs whitespace-pre-wrap bg-[#1a1a1e] p-3 rounded border mt-1 max-h-60 overflow-y-auto">
+                          <pre className="text-xs whitespace-pre-wrap bg-pn p-3 rounded border mt-1 max-h-60 overflow-y-auto">
                             {persistedDraft.body}
                           </pre>
                         </div>

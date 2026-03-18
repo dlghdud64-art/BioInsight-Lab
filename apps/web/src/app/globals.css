@@ -165,7 +165,7 @@ div.quote-table td.no-column-cell {
 /* 카드 레이아웃 고정 및 텍스트 유동성 */
 @layer components {
   .stat-card-fixed {
-    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md bg-[#1a1a1e] border-[#2a2a2e];
+    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md bg-pn border-bd;
   }
   .text-auto-scale {
     @apply truncate text-[clamp(0.875rem,3vw,1.5rem)] font-bold tracking-tighter;

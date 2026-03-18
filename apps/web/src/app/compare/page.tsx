@@ -280,7 +280,7 @@ function ComparePageContent() {
                         return (
                           <div
                             key={product.id}
-                            className="flex items-center justify-between p-3 border border-[#333338] rounded-lg hover:bg-[#222226]"
+                            className="flex items-center justify-between p-3 border border-bs rounded-lg hover:bg-el"
                           >
                             <div className="flex-1 min-w-0">
                               <h3 className="font-medium text-sm text-slate-100 truncate">
@@ -455,7 +455,7 @@ function ComparePageContent() {
               </div>
             ) : error ? (
               <div className="space-y-2">
-                <div className="p-4 bg-[#1a1a1e] border border-[#333338] rounded">
+                <div className="p-4 bg-pn border border-bs rounded">
                   <p className="text-sm text-slate-200 mb-2">
                     제품 정보를 불러오는 중 오류가 발생했습니다.
                   </p>
@@ -467,7 +467,7 @@ function ComparePageContent() {
                 {productIds.map((id: string) => (
                   <div
                     key={id}
-                    className="flex items-center justify-between p-3 border border-[#333338] rounded-lg bg-[#1a1a1e]"
+                    className="flex items-center justify-between p-3 border border-bs rounded-lg bg-pn"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-slate-100 truncate">
@@ -491,7 +491,7 @@ function ComparePageContent() {
               </div>
             ) : products.length === 0 && productIds.length > 0 ? (
               <div className="space-y-2">
-                <div className="p-4 bg-[#1a1a1e] border border-[#333338] rounded-lg">
+                <div className="p-4 bg-pn border border-bs rounded-lg">
                   <p className="text-sm text-slate-200 mb-2">
                     제품 정보를 찾을 수 없습니다.
                   </p>
@@ -506,7 +506,7 @@ function ComparePageContent() {
                 {productIds.map((id: string) => (
                   <div
                     key={id}
-                    className="flex items-center justify-between p-3 border border-[#333338] rounded-lg bg-[#1a1a1e]"
+                    className="flex items-center justify-between p-3 border border-bs rounded-lg bg-pn"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-slate-100 truncate">
@@ -535,7 +535,7 @@ function ComparePageContent() {
                   return (
                     <div
                       key={product.id}
-                      className="flex items-center justify-between p-3 border border-[#333338] rounded-lg hover:bg-[#222226] transition-colors"
+                      className="flex items-center justify-between p-3 border border-bs rounded-lg hover:bg-el transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-slate-100 truncate">

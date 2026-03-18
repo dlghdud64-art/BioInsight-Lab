@@ -307,7 +307,7 @@ export function AnalyticsDashboard() {
               {insights.map((insight, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-3 p-3 bg-[#1a1a1e] rounded-lg border border-blue-100"
+                  className="flex items-start gap-3 p-3 bg-pn rounded-lg border border-blue-100"
                 >
                   <div
                     className={cn(

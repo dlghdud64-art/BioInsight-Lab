@@ -45,7 +45,7 @@ const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: stri
   critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-500/10 text-red-400 border-red-500/20" },
   high:     { label: "높음", dot: "bg-amber-500", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-[#111114]0/10 text-slate-400 border-slate-500/20" },
+  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-pg0/10 text-slate-400 border-slate-500/20" },
 };
 
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
@@ -172,9 +172,9 @@ export function PriorityActionQueue({
   );
 
   return (
-    <div className={`rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] overflow-hidden ${className}`}>
+    <div className={`rounded-xl border border-bd bg-pn overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#2a2a2e] flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-bd flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
             <Flame className="h-3.5 w-3.5 text-amber-400" />
@@ -198,13 +198,13 @@ export function PriorityActionQueue({
       </div>
 
       {/* Category filter pills */}
-      <div className="px-4 py-2.5 border-b border-[#2a2a2e] flex gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="px-4 py-2.5 border-b border-bd flex gap-1.5 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setSelectedCategory("all")}
           className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
             selectedCategory === "all"
               ? "bg-slate-600/50 text-slate-200"
-              : "bg-[#222226] text-slate-500 hover:text-slate-300"
+              : "bg-el text-slate-500 hover:text-slate-300"
           }`}
         >
           전체 {queueItems.length}
@@ -220,7 +220,7 @@ export function PriorityActionQueue({
               className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
                 selectedCategory === cat
                   ? "bg-slate-600/50 text-slate-200"
-                  : "bg-[#222226] text-slate-500 hover:text-slate-300"
+                  : "bg-el text-slate-500 hover:text-slate-300"
               }`}
             >
               {cfg.label} {count}
@@ -239,7 +239,7 @@ export function PriorityActionQueue({
           return (
             <div
               key={item.id}
-              className="px-4 py-3 hover:bg-[#222226] transition-colors cursor-pointer group"
+              className="px-4 py-3 hover:bg-el transition-colors cursor-pointer group"
               onClick={() => onItemClick?.(item)}
             >
               {/* Row 1: Risk + Product + Category badge */}

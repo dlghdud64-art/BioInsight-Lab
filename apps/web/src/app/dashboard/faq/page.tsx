@@ -339,7 +339,7 @@ export default function FAQPage() {
       "ai-pdf": "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
       error: "bg-red-500/15 text-red-400 border-red-500/20",
     };
-    return colorMap[cat] || "bg-[#111114]0/15 text-slate-400 border-slate-500/20";
+    return colorMap[cat] || "bg-pg0/15 text-slate-400 border-slate-500/20";
   };
 
   return (
@@ -361,7 +361,7 @@ export default function FAQPage() {
           placeholder="질문 검색 (예: PDF 분석, 안전재고, 해지)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-[#232329] border-[#2a2a31] text-slate-100 placeholder:text-slate-500 focus:border-[#323239] focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-el border-bd text-slate-100 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
@@ -381,7 +381,7 @@ export default function FAQPage() {
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
                   ? "bg-blue-600 text-white"
-                  : "bg-[#1f1f25] border border-[#2a2a31] text-slate-400 hover:text-slate-200 hover:border-[#323239]"
+                  : "bg-pn border border-bd text-slate-400 hover:text-slate-200 hover:border-bd"
               }`}
             >
               <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -427,7 +427,7 @@ export default function FAQPage() {
       {/* ── FAQ 목록 ── */}
       <div className="space-y-2">
         {filteredFaqs.length === 0 ? (
-          <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] py-16 text-center">
+          <div className="rounded-xl bg-pn border border-bd py-16 text-center">
             <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
             <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
             <p className="text-xs text-slate-500 mb-4">
@@ -451,8 +451,8 @@ export default function FAQPage() {
                 key={faq.id}
                 className={`rounded-xl border transition-all overflow-hidden ${
                   isExpanded
-                    ? "bg-[#1f1f25] border-[#323239]"
-                    : "bg-[#1c1c21] border-[#2a2a31] hover:border-[#323239]"
+                    ? "bg-pn border-bd"
+                    : "bg-pn border-bd hover:border-bd"
                 }`}
               >
                 {/* 질문 헤더 */}
@@ -464,7 +464,7 @@ export default function FAQPage() {
                     className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
                       isExpanded
                         ? "bg-blue-500/20"
-                        : "bg-[#232329]"
+                        : "bg-el"
                     }`}
                   >
                     <HelpCircle
@@ -502,7 +502,7 @@ export default function FAQPage() {
 
                 {/* 답변 */}
                 {isExpanded && (
-                  <div className="px-4 md:px-5 pb-4 ml-8 border-t border-[#2a2a31]">
+                  <div className="px-4 md:px-5 pb-4 ml-8 border-t border-bd">
                     <p className="text-sm text-slate-400 leading-relaxed py-3">
                       {faq.answer}
                     </p>
@@ -512,7 +512,7 @@ export default function FAQPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-xs border-[#323239] text-slate-400 bg-transparent hover:bg-[#232329] hover:text-slate-200"
+                            className="gap-1.5 text-xs border-bd text-slate-400 bg-transparent hover:bg-el hover:text-slate-200"
                           >
                             <BookOpen className="h-3 w-3" />
                             {faq.guideLink.label}
@@ -542,7 +542,7 @@ export default function FAQPage() {
       </div>
 
       {/* ── 하단 지원 ── */}
-      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-5 py-5 mt-8 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-xl bg-pn border border-bd px-5 py-5 mt-8 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
             <MessageSquare className="h-4 w-4 text-blue-400" />
@@ -561,7 +561,7 @@ export default function FAQPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] hover:text-slate-100"
+              className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn hover:text-slate-100"
             >
               <BookOpen className="h-3.5 w-3.5" />
               이용 가이드

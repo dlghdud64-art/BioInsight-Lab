@@ -36,7 +36,7 @@ export function BioInsightFeaturesSection() {
   ];
 
   return (
-    <section className="py-12 md:py-24 bg-[#1a1a1e]">
+    <section className="py-12 md:py-24 bg-pn">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-8 md:mb-16">
           <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-slate-100 mb-3 md:mb-4">

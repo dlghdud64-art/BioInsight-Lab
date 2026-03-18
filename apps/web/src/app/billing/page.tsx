@@ -180,7 +180,7 @@ export default function BillingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#111114]">
+      <div className="min-h-screen bg-pg">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -193,7 +193,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111114]">
+    <div className="min-h-screen bg-pg">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />

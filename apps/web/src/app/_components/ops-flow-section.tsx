@@ -40,7 +40,7 @@ const FLOW_STEPS = [
 
 export function OpsFlowSection() {
   return (
-    <section className="py-16 md:py-24 bg-[#09090b]">
+    <section className="py-16 md:py-24 bg-sh">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4b5563] mb-3">
@@ -57,10 +57,10 @@ export function OpsFlowSection() {
             const Icon = step.icon;
             return (
               <div key={step.title}>
-                <div className="bg-[#131316] border border-[#242429] rounded-md p-4 md:p-5">
+                <div className="bg-pg border border-bd rounded-md p-4 md:p-5">
                   {/* Step Header */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-md bg-[#1a1a1e] border border-[#242429] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-pn border border-bd flex items-center justify-center flex-shrink-0">
                       <Icon className="h-4 w-4 text-[#9ca3af]" />
                     </div>
                     <div>

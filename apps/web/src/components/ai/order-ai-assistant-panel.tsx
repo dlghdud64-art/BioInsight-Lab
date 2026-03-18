@@ -79,7 +79,7 @@ export function OrderAiAssistantPanel({
           className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
         >
           {/* ═══ 1. 헤더 ═══ */}
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-[#2a2a2e]/50 flex-shrink-0">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-bd/50 flex-shrink-0">
             <SheetTitle className="text-base font-bold text-slate-100">
               {state === "empty" && "주문 추적 도우미"}
               {state === "loading" && "주문 추적 도우미"}
@@ -195,7 +195,7 @@ export function OrderAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-[#222226]/50 p-4 mb-4">
+      <div className="rounded-full bg-el/50 p-4 mb-4">
         <Truck className="h-8 w-8 text-slate-600" />
       </div>
       <p className="text-sm font-medium text-slate-400">
@@ -217,7 +217,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-20 mb-2" />
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-3 rounded-lg bg-[#222226]/30">
+            <div key={i} className="p-3 rounded-lg bg-el/30">
               <Skeleton className="h-3 w-16 mb-2" />
               <Skeleton className="h-6 w-10" />
             </div>
@@ -232,7 +232,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-28 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-[#2a2a2e]">
+            <div key={i} className="p-3 rounded-lg border border-bd">
               <Skeleton className="h-4 w-full mb-2" />
               <Skeleton className="h-3 w-3/4" />
             </div>
@@ -311,7 +311,7 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
       label: "주문번호",
       value: order.orderNumber,
       color: "text-slate-400",
-      bg: "bg-[#222226]/30",
+      bg: "bg-el/30",
       small: true,
     },
     {
@@ -326,7 +326,7 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
       label: "주문 금액",
       value: `₩${order.totalAmount.toLocaleString()}`,
       color: "text-slate-400",
-      bg: "bg-[#222226]/30",
+      bg: "bg-el/30",
     },
     {
       icon: Clock,
@@ -337,7 +337,7 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
         : "text-slate-400",
       bg: order.daysSinceOrdered >= 7
         ? "bg-amber-950/30"
-        : "bg-[#222226]/30",
+        : "bg-el/30",
     },
   ];
 
@@ -450,7 +450,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                   ? "border-red-800/50 bg-red-950/20"
                   : isWarning
                   ? "border-amber-800/50 bg-amber-950/20"
-                  : "border-[#333338] bg-[#222226]/30"
+                  : "border-bs bg-el/30"
               }`}
             >
               <div className="flex items-start gap-2">
@@ -531,7 +531,7 @@ function FollowUpDraftSection({
       )}
 
       {/* 초안 카드 */}
-      <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/30 p-3.5 mb-3">
+      <div className="rounded-lg border border-bd bg-pn/30 p-3.5 mb-3">
         <div className="flex items-center gap-2 mb-2">
           <Mail className="h-3.5 w-3.5 text-slate-400" />
           <span className="text-xs font-medium text-slate-300 truncate">
@@ -548,7 +548,7 @@ function FollowUpDraftSection({
           </div>
         )}
 
-        <div className="mt-2 pt-2 border-t border-[#333338]/50">
+        <div className="mt-2 pt-2 border-t border-bs/50">
           <p className="text-[11px] text-slate-500 whitespace-pre-wrap line-clamp-4 font-mono leading-relaxed">
             {bodyPreview}
           </p>
@@ -603,7 +603,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
         {responses.map((resp, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/50"
+            className="p-3 rounded-lg border border-bd bg-pn/50"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -654,7 +654,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
             </div>
 
             {/* 전체 요약 */}
-            <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-2 border-t border-[#2a2a2e]">
+            <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-2 border-t border-bd">
               {resp.overallLeadTime != null && (
                 <span>
                   납기{" "}
@@ -701,7 +701,7 @@ function StatusTransitionSection({
   const confidenceConfig: Record<string, { label: string; color: string }> = {
     high: { label: "높음", color: "bg-emerald-950/30 text-emerald-400 border-emerald-200" },
     medium: { label: "보통", color: "bg-amber-950/30 text-amber-400 border-amber-200" },
-    low: { label: "낮음", color: "bg-[#222226] text-slate-400 border-[#2a2a2e]" },
+    low: { label: "낮음", color: "bg-el text-slate-400 border-bd" },
   };
 
   const conf = confidenceConfig[proposal.confidence] || confidenceConfig.medium;
@@ -718,7 +718,7 @@ function StatusTransitionSection({
       <div className="rounded-lg border border-blue-800 bg-blue-950/20 p-3.5">
         {/* 상태 전환 표시 */}
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-[#222226] text-slate-400">
+          <Badge variant="outline" className="text-[11px] h-5 px-2 bg-el text-slate-400">
             {statusLabels[proposal.currentStatus] || proposal.currentStatus}
           </Badge>
           <ChevronRight className="h-3.5 w-3.5 text-blue-400" />
@@ -792,7 +792,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-[#2a2a2e] bg-[#1a1a1e] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-bd bg-pn px-5 py-3">
       <div className="flex gap-2">
         {hasFollowUp && (
           <Button

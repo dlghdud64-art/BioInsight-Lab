@@ -96,47 +96,47 @@ function KPIActionCard({
 }) {
   const variantStyles = {
     urgent: {
-      border: count > 0 ? "border-red-100" : "border-[#2a2a2e]",
+      border: count > 0 ? "border-red-100" : "border-bd",
       iconBg: "bg-red-50",
       iconColor: "text-red-500",
       countColor: count > 0 ? "text-red-600" : "text-slate-100",
       ctaStyle: count > 0
         ? "text-red-700 bg-red-50 border-red-200 hover:bg-red-100"
-        : "text-slate-500 border-[#2a2a2e] hover:bg-[#111114]",
+        : "text-slate-500 border-bd hover:bg-pg",
     },
     warning: {
-      border: count > 0 ? "border-amber-100" : "border-[#2a2a2e]",
+      border: count > 0 ? "border-amber-100" : "border-bd",
       iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
       countColor: count > 0 ? "text-amber-600" : "text-slate-100",
       ctaStyle: count > 0
         ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-        : "text-slate-500 border-[#2a2a2e] hover:bg-[#111114]",
+        : "text-slate-500 border-bd hover:bg-pg",
     },
     error: {
-      border: count > 0 ? "border-rose-100" : "border-[#2a2a2e]",
+      border: count > 0 ? "border-rose-100" : "border-bd",
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
       countColor: count > 0 ? "text-rose-600" : "text-slate-100",
       ctaStyle: count > 0
         ? "text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100"
-        : "text-slate-500 border-[#2a2a2e] hover:bg-[#111114]",
+        : "text-slate-500 border-bd hover:bg-pg",
     },
     default: {
-      border: "border-[#2a2a2e]",
+      border: "border-bd",
       iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
       countColor: count > 0 ? "text-blue-600" : "text-slate-100",
       ctaStyle: count > 0
         ? "text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-        : "text-slate-500 border-[#2a2a2e] hover:bg-[#111114]",
+        : "text-slate-500 border-bd hover:bg-pg",
     },
   };
 
   const s = variantStyles[variant];
 
   return (
-    <div className={cn("bg-[#1a1a1e] border rounded-lg p-4 flex flex-col gap-3", s.border)}>
+    <div className={cn("bg-pn border rounded-lg p-4 flex flex-col gap-3", s.border)}>
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-md shrink-0", s.iconBg)}>
           <Icon className={cn("h-4 w-4", s.iconColor)} />
@@ -199,12 +199,12 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#111114]">
+    <div className="flex min-h-screen bg-pg">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-h-screen">
         {/* 헤더 */}
-        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-pn border-b border-bd px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-base font-bold text-slate-100">운영 컨트롤타워</h1>
@@ -269,13 +269,13 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* ── 탭형 운영 큐 ──────────────────────────────── */}
-          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg overflow-hidden">
+          <div className="bg-pn border border-bd rounded-lg overflow-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="px-4 pt-3 border-b border-slate-100 bg-[#111114]/50">
+              <div className="px-4 pt-3 border-b border-slate-100 bg-pg/50">
                 <TabsList className="bg-transparent p-0 h-auto gap-0">
                   <TabsTrigger
                     value="orgs"
-                    className="data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     조직 승인 대기
                     {kpi.pendingOrgs > 0 && (
@@ -284,7 +284,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="users"
-                    className="data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     사용자 승인 대기
                     {kpi.pendingUsers > 0 && (
@@ -293,7 +293,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="quotes"
-                    className="data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     견적 이슈
                     {kpi.slaOverQuotes > 0 && (
@@ -302,7 +302,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    className="data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
                   >
                     관리자 활동 로그
                   </TabsTrigger>
@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-[#111114]/80 hover:bg-transparent">
+                      <TableRow className="bg-pg/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">조직명</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">소유자</TableHead>
@@ -379,7 +379,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-[#111114]/80 hover:bg-transparent">
+                      <TableRow className="bg-pg/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">이름</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">이메일</TableHead>
@@ -432,7 +432,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-[#111114]/80 hover:bg-transparent">
+                      <TableRow className="bg-pg/80 hover:bg-transparent">
                         <TableHead className="text-[11px] font-semibold text-slate-500">상태</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">견적 번호</TableHead>
                         <TableHead className="text-[11px] font-semibold text-slate-500">요청자</TableHead>
@@ -487,8 +487,8 @@ export default function AdminDashboardPage() {
                 ) : (
                   <div className="divide-y divide-[#2a2a2e]">
                     {activityLogs.map((log) => (
-                      <div key={log.id} className="px-5 py-3 flex items-center gap-3 text-xs hover:bg-[#111114]/50">
-                        <div className="p-1.5 rounded-md bg-[#222226] shrink-0">
+                      <div key={log.id} className="px-5 py-3 flex items-center gap-3 text-xs hover:bg-pg/50">
+                        <div className="p-1.5 rounded-md bg-el shrink-0">
                           <Activity className="h-3.5 w-3.5 text-slate-500" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -544,7 +544,7 @@ function EmptyQueue({
 }) {
   return (
     <div className="py-12 px-6 text-center">
-      <div className="inline-flex items-center justify-center p-3 rounded-full bg-[#222226] mb-3">
+      <div className="inline-flex items-center justify-center p-3 rounded-full bg-el mb-3">
         <Icon className="h-5 w-5 text-slate-400" />
       </div>
       <p className="text-sm font-medium text-slate-600">{title}</p>

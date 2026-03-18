@@ -102,7 +102,7 @@ export function ReorderRecommendations({
   const highCount = recommendations.filter((r) => r.urgency === "high").length;
 
   return (
-    <Card className="border-none shadow-sm bg-[#1a1a1e] rounded-2xl">
+    <Card className="border-none shadow-sm bg-pn rounded-2xl">
       <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>

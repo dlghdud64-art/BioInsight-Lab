@@ -116,7 +116,7 @@ export function PersonalizedRecommendations({
           return (
             <div
               key={product.id}
-              className="flex items-start gap-4 p-4 border rounded-lg hover:border-[#333338] hover:bg-[#111114] transition-all"
+              className="flex items-start gap-4 p-4 border rounded-lg hover:border-bs hover:bg-pg transition-all"
             >
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between gap-2">

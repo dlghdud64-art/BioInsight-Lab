@@ -151,7 +151,7 @@ export function QuoteForm({
       )}
 
       {/* Items Table */}
-      <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm overflow-hidden">
+      <div className="bg-pn border border-bd shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -168,7 +168,7 @@ export function QuoteForm({
               const response = responses[item.id] || {};
               
               return (
-                <TableRow key={item.id} className="hover:bg-[#111114]">
+                <TableRow key={item.id} className="hover:bg-pg">
                   <TableCell className="p-3">
                     <div className="font-medium text-sm">{item.productName}</div>
                     <div className="text-xs text-slate-600 mt-1">

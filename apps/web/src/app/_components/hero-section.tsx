@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 // HeroSection 컴포넌트 - 업무툴 스타일
 export function HeroSection() {
   return (
-    <section className="border-b border-[#2a2a2e] bg-gradient-to-b from-white via-slate-50/30 to-white py-8 md:py-16 lg:py-20">
+    <section className="border-b border-bd bg-gradient-to-b from-white via-slate-50/30 to-white py-8 md:py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-4 md:px-6 grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
         {/* 왼쪽: 제목 / 설명 / 버튼들 */}
         <div className="space-y-3 md:space-y-5">
@@ -35,7 +35,7 @@ export function HeroSection() {
             <Link href="/test/quote" className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-slate-300 bg-[#1a1a1e] text-slate-700 hover:bg-[#111114] hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
+                className="w-full sm:w-auto border-2 border-slate-300 bg-pn text-slate-700 hover:bg-pg hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
               >
                 견적 요청 리스트
               </Button>

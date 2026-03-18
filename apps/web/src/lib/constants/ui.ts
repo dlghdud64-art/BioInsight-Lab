@@ -15,9 +15,9 @@ export const SPACING = {
 
 // Container Styles
 export const CONTAINER = {
-  CARD: "bg-white border border-[#2a2a2e] shadow-sm",
-  TABLE: "bg-white border border-[#2a2a2e] shadow-sm",
-  SIDEBAR: "w-64 bg-white border-r border-[#2a2a2e] min-h-screen",
+  CARD: "bg-white border border-bd shadow-sm",
+  TABLE: "bg-white border border-bd shadow-sm",
+  SIDEBAR: "w-64 bg-white border-r border-bd min-h-screen",
 } as const;
 
 // Empty State Messages

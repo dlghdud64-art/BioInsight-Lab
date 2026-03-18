@@ -169,13 +169,13 @@ export default function ActivityLogsPage() {
                     <div className="space-y-2 md:space-y-3">
                       {logs.map((log: any) => {
                         const Icon = ACTIVITY_TYPE_ICONS[log.activityType] || Activity;
-                        const colorClass = ACTIVITY_TYPE_COLORS[log.activityType] || "bg-[#222226] text-slate-700 border-[#2a2a2e]";
+                        const colorClass = ACTIVITY_TYPE_COLORS[log.activityType] || "bg-el text-slate-700 border-bd";
                         const label = ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
 
                         return (
                           <div
                             key={log.id}
-                            className="flex items-start gap-2 md:gap-4 p-2.5 md:p-4 border border-[#2a2a2e] rounded-lg hover:bg-[#111114] transition-colors"
+                            className="flex items-start gap-2 md:gap-4 p-2.5 md:p-4 border border-bd rounded-lg hover:bg-pg transition-colors"
                           >
                             <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${colorClass}`}>
                               <Icon className="h-3 w-3 md:h-4 md:w-4" />

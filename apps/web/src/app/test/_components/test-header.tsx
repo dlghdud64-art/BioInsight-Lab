@@ -5,7 +5,7 @@ import { ExternalLink } from "lucide-react";
 
 export function TestHeader() {
   return (
-    <header className="mb-8 border-b bg-[#1a1a1e] pb-6">
+    <header className="mb-8 border-b bg-pn pb-6">
       <div className="flex items-start justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-3">

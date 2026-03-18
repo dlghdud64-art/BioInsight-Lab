@@ -78,7 +78,7 @@ const OP_STATUS: Record<string, { label: string; bg: string; text: string; borde
   비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100",  text: "text-purple-800",  border: "border-purple-300" },
   일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
   회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",   text: "text-amber-800",   border: "border-amber-300" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-[#222226]",   text: "text-slate-700",   border: "border-slate-300" },
+  요청_접수:      { label: "요청 접수",       bg: "bg-el",   text: "text-slate-700",   border: "border-slate-300" },
   발주_완료:      { label: "발주 완료",       bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
   취소됨:         { label: "취소됨",          bg: "bg-red-50",      text: "text-red-600",     border: "border-red-200" },
 };
@@ -118,7 +118,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div className={`bg-[#1a1a1e] rounded-xl border shadow-sm hover:shadow-md transition-shadow p-4 ${delayed ? "border-red-200" : "border-[#2a2a2e]/80"}`}>
+    <div className={`bg-pn rounded-xl border shadow-sm hover:shadow-md transition-shadow p-4 ${delayed ? "border-red-200" : "border-bd/80"}`}>
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           {/* 상태 뱃지 + 참조번호 */}
@@ -272,7 +272,7 @@ function QuotesPageContent() {
       <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
         <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-[#222226] rounded-xl animate-pulse" />)}
+          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-el rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
@@ -365,7 +365,7 @@ function QuotesPageContent() {
           <button
             key={label}
             onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-            className={`text-left rounded-xl border bg-[#1a1a1e] p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
+            className={`text-left rounded-xl border bg-pn p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
           >
             <div className="flex items-center gap-2 mb-1">
               {icon}
@@ -409,7 +409,7 @@ function QuotesPageContent() {
       {isLoading && (
         <div className="space-y-2">
           {[0,1,2].map((i) => (
-            <div key={i} className="h-28 bg-[#222226] rounded-xl animate-pulse" />
+            <div key={i} className="h-28 bg-el rounded-xl animate-pulse" />
           ))}
         </div>
       )}

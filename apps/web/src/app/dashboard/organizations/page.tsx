@@ -58,7 +58,7 @@ const ROLE_COLOR: Record<string, string> = {
   ADMIN: "border-indigo-700 bg-indigo-950/40 text-indigo-300",
   APPROVER: "border-purple-700 bg-purple-950/40 text-purple-300",
   REQUESTER: "border-blue-700 bg-blue-950/40 text-blue-300",
-  VIEWER: "border-[#333338] bg-[#222226] text-slate-400",
+  VIEWER: "border-bs bg-el text-slate-400",
 };
 
 function roleBadge(role: string) {
@@ -78,7 +78,7 @@ function planBadge(plan: string) {
       ? "border-indigo-800 bg-indigo-950/40 text-indigo-300"
       : plan === "TEAM"
         ? "border-blue-800 bg-blue-950/40 text-blue-300"
-        : "border-[#333338] bg-[#222226] text-slate-400";
+        : "border-bs bg-el text-slate-400";
   return (
     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 leading-4 ${color}`}>
       {label}
@@ -239,11 +239,11 @@ export default function OrganizationsPage() {
   /* ================================================================ */
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-slate-100">
+    <div className="min-h-screen bg-sh text-slate-100">
       <div className="mx-auto w-full max-w-7xl p-3 sm:p-4 md:p-8 space-y-5">
 
         {/* ── Summary strip ─────────────────────────────── */}
-        <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4">
+        <div className="rounded-md border border-bd bg-pn p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div>
@@ -343,13 +343,13 @@ export default function OrganizationsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
             {/* -- Left: Organization table -- */}
-            <div className="space-y-0 rounded-md border border-[#2a2a2e] bg-[#1a1a1e] overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#2a2a2e]">
+            <div className="space-y-0 rounded-md border border-bd bg-pn overflow-hidden">
+              <div className="px-4 py-3 border-b border-bd">
                 <span className="text-xs font-medium uppercase tracking-wider text-slate-500">조직 운영 현황</span>
               </div>
 
               {/* Table header */}
-              <div className="hidden sm:grid grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-2 text-xs font-medium uppercase tracking-wider text-slate-500 border-b border-[#2a2a2e] bg-[#1a1a1e]">
+              <div className="hidden sm:grid grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-2 text-xs font-medium uppercase tracking-wider text-slate-500 border-b border-bd bg-pn">
                 <span>조직</span>
                 <span className="text-center">멤버</span>
                 <span className="text-center">승인권자</span>
@@ -380,7 +380,7 @@ export default function OrganizationsPage() {
                     {organizations
                       .filter((o) => o.pendingCount > 0)
                       .map((o) => (
-                        <div key={o.id} className="flex items-center justify-between text-xs py-1.5 border-b border-[#2a2a2e] last:border-0">
+                        <div key={o.id} className="flex items-center justify-between text-xs py-1.5 border-b border-bd last:border-0">
                           <span className="text-slate-300 truncate max-w-[160px]">{o.name}</span>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="border-orange-800 bg-orange-950/40 text-orange-300 text-[10px] px-1.5 py-0">
@@ -440,10 +440,10 @@ function OrgRowItem({
   const router = useRouter();
 
   return (
-    <div className="border-b border-[#2a2a2e] last:border-0">
+    <div className="border-b border-bd last:border-0">
       {/* Main row */}
       <div
-        className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-3 items-center hover:bg-[#222226]/50 cursor-pointer transition-colors"
+        className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-3 items-center hover:bg-el/50 cursor-pointer transition-colors"
         onClick={onToggle}
       >
         {/* Org name + role */}
@@ -478,7 +478,7 @@ function OrgRowItem({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-[#222226]"
+            className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-el"
             onClick={onNavigate}
           >
             관리 <ExternalLink className="ml-1 h-3 w-3" />
@@ -486,7 +486,7 @@ function OrgRowItem({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-[#222226]"
+            className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-el"
             onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
           >
             <UserPlus className="h-3 w-3" />
@@ -496,7 +496,7 @@ function OrgRowItem({
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-4 pb-3 pl-10 space-y-2 bg-[#1a1a1e]/50">
+        <div className="px-4 pb-3 pl-10 space-y-2 bg-pn/50">
           {/* Mobile-only stats */}
           <div className="sm:hidden flex flex-wrap gap-3 text-xs text-slate-400 mb-2">
             <span>멤버 {org.memberCount}</span>
@@ -520,7 +520,7 @@ function OrgRowItem({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-[#222226]"
+              className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-el"
               onClick={onNavigate}
             >
               관리 <ExternalLink className="ml-1 h-3 w-3" />
@@ -528,7 +528,7 @@ function OrgRowItem({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-[#222226]"
+              className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-el"
               onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             >
               <UserPlus className="h-3 w-3 mr-1" /> 멤버 초대
@@ -542,8 +542,8 @@ function OrgRowItem({
 
 function SidePanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] overflow-hidden">
-      <div className="px-3 py-2.5 border-b border-[#2a2a2e]">
+    <div className="rounded-md border border-bd bg-pn overflow-hidden">
+      <div className="px-3 py-2.5 border-b border-bd">
         <span className="text-xs font-medium uppercase tracking-wider text-slate-500">{title}</span>
       </div>
       <div className="px-3 py-1.5">{children}</div>
@@ -553,12 +553,12 @@ function SidePanel({ title, children }: { title: string; children: React.ReactNo
 
 function LoadingSkeleton() {
   return (
-    <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4 space-y-3">
+    <div className="rounded-md border border-bd bg-pn p-4 space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 animate-pulse">
-          <div className="h-4 w-4 rounded bg-[#222226]" />
-          <div className="h-4 w-40 rounded bg-[#222226]" />
-          <div className="h-4 w-16 rounded bg-[#222226] ml-auto" />
+          <div className="h-4 w-4 rounded bg-el" />
+          <div className="h-4 w-40 rounded bg-el" />
+          <div className="h-4 w-16 rounded bg-el ml-auto" />
         </div>
       ))}
     </div>
@@ -567,7 +567,7 @@ function LoadingSkeleton() {
 
 function EmptyState({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] flex flex-col items-center justify-center py-20">
+    <div className="rounded-md border border-bd bg-pn flex flex-col items-center justify-center py-20">
       <h3 className="mb-2 text-base font-medium text-slate-300">소속된 조직이 없습니다</h3>
       <p className="mb-4 text-sm text-slate-500">첫 조직을 생성하고 팀원들과 함께 시작하세요.</p>
       <Button onClick={onOpen} size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs">

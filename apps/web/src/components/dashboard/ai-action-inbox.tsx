@@ -120,14 +120,14 @@ const CARD_CONFIG: Record<string, CardConfig> = {
 
 const DEFAULT_CONFIG: CardConfig = {
   icon: FileText,
-  iconBg: "bg-[#222226]",
+  iconBg: "bg-el",
   iconColor: "text-slate-400",
   borderColor: "border-l-slate-400",
   title: "작업이 준비되었습니다",
   description: "",
   cta: "확인하기",
   badgeLabel: "오늘 처리 권장",
-  badgeClass: "bg-[#111114] text-slate-600 border-[#2a2a2e]",
+  badgeClass: "bg-pg text-slate-600 border-bd",
   approveToast: "작업이 완료되었습니다",
 };
 
@@ -192,13 +192,13 @@ export function AiActionInbox() {
   // 로딩 스켈레톤
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 border-[#2a2a2e]">
-          <div className="h-4 w-32 rounded bg-[#222226] animate-pulse" />
+      <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 border-bd">
+          <div className="h-4 w-32 rounded bg-el animate-pulse" />
         </div>
         <div className="p-4 space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-20 rounded-lg bg-[#222226]/50 animate-pulse" />
+            <div key={i} className="h-20 rounded-lg bg-el/50 animate-pulse" />
           ))}
         </div>
       </div>
@@ -208,7 +208,7 @@ export function AiActionInbox() {
   // 빈 상태
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
         <div className="px-4 py-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-slate-300">
@@ -292,9 +292,9 @@ export function AiActionInbox() {
 
   return (
     <>
-      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
         {/* 헤더 */}
-        <div className="px-4 py-2.5 border-b border-slate-100 border-[#2a2a2e] flex items-center justify-between">
+        <div className="px-4 py-2.5 border-b border-slate-100 border-bd flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
@@ -322,7 +322,7 @@ export function AiActionInbox() {
             return (
               <div
                 key={item.id}
-                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-[#111114]/50 hover:bg-[#222226]/20 transition-all duration-200`}
+                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-pg/50 hover:bg-el/20 transition-all duration-200`}
               >
                 <div
                   className="flex items-start gap-3 cursor-pointer md:cursor-default"

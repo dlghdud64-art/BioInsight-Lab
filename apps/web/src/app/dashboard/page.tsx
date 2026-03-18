@@ -39,11 +39,11 @@ export default function DashboardPage() {
   if (status === "loading" || statsLoading) {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
-        <div className="h-6 w-48 rounded bg-[#222226] animate-pulse" />
-        <div className="h-[72px] rounded-xl bg-[#222226] animate-pulse" />
+        <div className="h-6 w-48 rounded bg-el animate-pulse" />
+        <div className="h-[72px] rounded-xl bg-el animate-pulse" />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-[#222226] animate-pulse" />
+            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-el animate-pulse" />
           ))}
         </div>
       </div>
@@ -194,8 +194,8 @@ export default function DashboardPage() {
       <WorkQueueInbox />
 
       {/* ═══ 1순위: 오늘의 우선 작업 ═══ */}
-      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-slate-100 border-[#2a2a2e] flex items-center justify-between">
+      <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-slate-100 border-bd flex items-center justify-between">
           <div className="flex items-center gap-2">
             {hasActionItems ? (
               <>
@@ -234,7 +234,7 @@ export default function DashboardPage() {
         {hasActionItems ? (
           <div className="divide-y divide-[#2a2a2e]/50 sm:divide-y-0 sm:grid sm:divide-x" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
             {stats.lowStockAlerts > 0 && (
-              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-[#222226] transition-colors group">
+              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
                 <div className="rounded-md bg-red-950/40 p-2 flex-shrink-0">
                   <AlertTriangle className="h-4 w-4 text-red-600 text-red-400" />
                 </div>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
               </Link>
             )}
             {stats.activeQuotes > 0 && (
-              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-[#222226] transition-colors group">
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
                 <div className="rounded-md bg-blue-950/40 p-2 flex-shrink-0">
                   <FileText className="h-4 w-4 text-blue-600 text-blue-400" />
                 </div>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
               </Link>
             )}
             {stats.expiringCount > 0 && (
-              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-[#222226] transition-colors group">
+              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
                 <div className="rounded-md bg-amber-950/40 p-2 flex-shrink-0">
                   <Calendar className="h-4 w-4 text-amber-600 text-amber-400" />
                 </div>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
               </Link>
             )}
             {stats.undecidedCompareCount > 0 && (
-              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-[#222226] transition-colors group">
+              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
                 <div className={`rounded-md p-2 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "bg-red-950/40" : "bg-purple-950/40"}`}>
                   <GitCompare className={`h-4 w-4 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-600 text-red-400" : "text-purple-600 text-purple-400"}`} />
                 </div>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
         {/* 2순위: KPI 카드 2×2 */}
         <div className="grid grid-cols-2 gap-3">
           <Link href="/dashboard/inventory">
-            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e] shadow-sm bg-[#1a1a1e]">
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd shadow-sm bg-pn">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">등록 품목</span>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
           <Link href="/dashboard/inventory?filter=low">
-            <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm ${stats.lowStockAlerts > 0 ? "border-red-200 border-red-900/50 bg-red-50/30 bg-red-950/20" : "border-[#2a2a2e] bg-[#1a1a1e]"}`}>
+            <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm ${stats.lowStockAlerts > 0 ? "border-red-200 border-red-900/50 bg-red-50/30 bg-red-950/20" : "border-bd bg-pn"}`}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-semibold text-red-600 text-red-400 uppercase tracking-wider">재고 부족</span>
@@ -366,7 +366,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
           <Link href="/dashboard/purchases">
-            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e] shadow-sm bg-[#1a1a1e]">
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd shadow-sm bg-pn">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">이번 달 지출</span>
@@ -380,7 +380,7 @@ export default function DashboardPage() {
             </Card>
           </Link>
           <Link href="/dashboard/quotes?status=PENDING">
-            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e] shadow-sm bg-[#1a1a1e]">
+            <Card className="overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd shadow-sm bg-pn">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">진행 중 견적</span>
@@ -394,7 +394,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 3순위: 빠른 실행 */}
-        <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]">
+        <Card className="shadow-sm border-bd bg-pn">
           <CardHeader className="pb-2 p-3">
             <CardTitle className="text-sm font-semibold">빠른 실행</CardTitle>
           </CardHeader>
@@ -412,13 +412,13 @@ export default function DashboardPage() {
               </Button>
             </Link>
             <Link href="/dashboard/inventory" className="block">
-              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#111114] border-slate-300 text-slate-700 hover:bg-[#222226]">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pg border-slate-300 text-slate-700 hover:bg-el">
                 <TrendingDown className="h-3.5 w-3.5 flex-shrink-0" />
                 재고 차감
               </Button>
             </Link>
             <Link href="/dashboard/inventory" className="block">
-              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 hover:bg-[#111114]">
+              <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 hover:bg-pg">
                 <Plus className="h-3.5 w-3.5 flex-shrink-0" />
                 재고 등록
               </Button>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* 4순위: 최근 알림 */}
-        <Card className="bg-[#1a1a1e] border-[#2a2a2e] shadow-sm">
+        <Card className="bg-pn border-bd shadow-sm">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -436,7 +436,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 space-y-1">
             {notifications.map((n) => (
-              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-50/50 bg-blue-950/30" : "hover:bg-[#222226]"}`}>
+              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-50/50 bg-blue-950/30" : "hover:bg-el"}`}>
                 {renderNotificationIcon(n.type)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
@@ -453,7 +453,7 @@ export default function DashboardPage() {
 
         {/* 5순위: 최근 구매 (축소) */}
         {stats.recentPurchases.length > 0 && (
-          <Card className="bg-[#1a1a1e] border-[#2a2a2e] shadow-sm">
+          <Card className="bg-pn border-bd shadow-sm">
             <CardHeader className="pb-2 p-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-slate-300">최근 구매</CardTitle>
@@ -462,7 +462,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
               {stats.recentPurchases.slice(0, 3).map((p, i) => (
-                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 border-[#2a2a2e]/30 last:border-0">
+                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 border-bd/30 last:border-0">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-950/50 text-blue-600 text-blue-400">
                     <Beaker className="h-3.5 w-3.5" />
                   </div>
@@ -489,7 +489,7 @@ export default function DashboardPage() {
           {/* 2순위: KPI 카드 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/dashboard/inventory">
-              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl bg-[#1a1a1e]">
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd/60 border-bd shadow-sm rounded-xl bg-pn">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
                   <CardTitle className="text-xs font-semibold text-slate-400 uppercase tracking-wider">등록 품목</CardTitle>
                   <div className="rounded-full p-1.5 bg-blue-950/50 flex-shrink-0"><Package className="h-3.5 w-3.5 text-blue-600 text-blue-400" /></div>
@@ -501,7 +501,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/inventory?filter=low">
-              <Card className={`h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm rounded-xl ${stats.lowStockAlerts > 0 ? "border-red-200/60  border-red-900/40 bg-red-50/20 bg-red-950/20" : "border-[#2a2a2e]/60 border-[#2a2a2e] bg-[#1a1a1e]"}`}>
+              <Card className={`h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md shadow-sm rounded-xl ${stats.lowStockAlerts > 0 ? "border-red-200/60  border-red-900/40 bg-red-50/20 bg-red-950/20" : "border-bd/60 border-bd bg-pn"}`}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
                   <CardTitle className="text-xs font-semibold text-red-600 text-red-400 uppercase tracking-wider">재고 부족</CardTitle>
                   <div className="rounded-full p-1.5 bg-red-950/50 flex-shrink-0"><AlertTriangle className="h-3.5 w-3.5 text-red-600 text-red-400" /></div>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/purchases">
-              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl bg-[#1a1a1e]">
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd/60 border-bd shadow-sm rounded-xl bg-pn">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
                   <CardTitle className="text-xs font-semibold text-slate-400 uppercase tracking-wider">이번 달 지출</CardTitle>
                   <div className="rounded-full p-1.5 bg-emerald-900/20 flex-shrink-0"><DollarSign className="h-3.5 w-3.5 text-emerald-600 text-emerald-400" /></div>
@@ -536,7 +536,7 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes?status=PENDING">
-              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl bg-[#1a1a1e]">
+              <Card className="h-[124px] flex flex-col justify-between overflow-hidden cursor-pointer transition-all hover:shadow-md border-bd/60 border-bd shadow-sm rounded-xl bg-pn">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
                   <CardTitle className="text-xs font-semibold text-slate-400 uppercase tracking-wider">진행 중 견적</CardTitle>
                   <div className="rounded-full p-1.5 bg-violet-950/50 flex-shrink-0"><FileText className="h-3.5 w-3.5 text-violet-600 text-violet-400" /></div>
@@ -563,7 +563,7 @@ export default function DashboardPage() {
           </div>
 
           {/* 5순위: 최근 구매 내역 (축소 — 최대 5건, 컴팩트) */}
-          <Card className="overflow-hidden bg-[#1a1a1e] border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl">
+          <Card className="overflow-hidden bg-pn border-bd/60 border-bd shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-semibold text-slate-300">최근 구매 내역</CardTitle>
@@ -604,7 +604,7 @@ export default function DashboardPage() {
         <div className="md:col-span-2 space-y-5">
 
           {/* 🎯 업무 바로가기 — 대시보드 공식 실행 영역 (최상단 고정) */}
-          <Card className="bg-[#1a1a1e] border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl">
+          <Card className="bg-pn border-bd/60 border-bd shadow-sm rounded-xl">
             <CardHeader className="pb-2 p-4">
               <CardTitle className="text-sm font-semibold text-slate-100">업무 바로가기</CardTitle>
               <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">검색 → 비교 → 견적 → 재고 등록</p>
@@ -652,8 +652,8 @@ export default function DashboardPage() {
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
                 </Link>
-                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-[#111114]/60 hover:bg-[#222226] transition-colors group">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#222226]/50 flex-shrink-0">
+                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-pg/60 hover:bg-el transition-colors group">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-el/50 flex-shrink-0">
                     <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -664,10 +664,10 @@ export default function DashboardPage() {
                 </Link>
               </div>
               {/* 보조 액션 */}
-              <div className="mt-3 pt-3 border-t border-slate-100 border-[#2a2a2e] space-y-0.5">
+              <div className="mt-3 pt-3 border-t border-slate-100 border-bd space-y-0.5">
                 <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider px-2 pb-1">보조 기능</p>
                 {/* 프로토콜 BOM: PDF 분석 미완성으로 베타 기간 중 비노출 */}
-                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#222226]/40 transition-colors group">
+                <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-el/40 transition-colors group">
                   <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   <span className="text-sm text-slate-400 group-hover:text-slate-100  group-hover:text-slate-100">재고 관리</span>
                   <ChevronRight className="h-3 w-3 text-slate-300 ml-auto group-hover:text-slate-500 transition-colors" />
@@ -677,7 +677,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 최근 알림 (액션 연결) */}
-          <Card className="bg-[#1a1a1e] border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl">
+          <Card className="bg-pn border-bd/60 border-bd shadow-sm rounded-xl">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -686,7 +686,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-1.5 pt-0">
               {notifications.map((n) => (
-                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-blue-50/50 bg-blue-950/30 hover:bg-blue-50  hover:bg-blue-950/50" : "hover:bg-[#222226]"}`}>
+                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-blue-50/50 bg-blue-950/30 hover:bg-blue-50  hover:bg-blue-950/50" : "hover:bg-el"}`}>
                   {renderNotificationIcon(n.type)}
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-1.5 mb-0.5">
@@ -702,7 +702,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 견적 처리 현황 */}
-          <Card className="bg-[#1a1a1e] border-[#2a2a2e]/60 border-[#2a2a2e] shadow-sm rounded-xl">
+          <Card className="bg-pn border-bd/60 border-bd shadow-sm rounded-xl">
             <CardHeader className="pb-2 p-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-slate-100">견적 처리 현황</CardTitle>
@@ -727,7 +727,7 @@ export default function DashboardPage() {
               </Link>
 
               {/* 응답 대기 */}
-              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-[#2a2a2e]/60 border-[#333338]/40 hover:bg-[#222226] transition-colors group">
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-bd/60 border-bs/40 hover:bg-el transition-colors group">
                 <div className="rounded-md bg-amber-950/40 p-1.5 flex-shrink-0">
                   <Clock className="h-3.5 w-3.5 text-amber-600 text-amber-400" />
                 </div>
@@ -753,7 +753,7 @@ export default function DashboardPage() {
 
           {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (
-            <Card className="bg-red-50/10 bg-[#1a1a1e] border-red-200/60 border-[#2a2a2e] shadow-sm rounded-xl">
+            <Card className="bg-red-50/10 bg-pn border-red-200/60 border-bd shadow-sm rounded-xl">
               <CardHeader className="pb-1 p-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xs font-semibold text-red-600 text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
@@ -765,7 +765,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-1.5">
                 {stats.lowStockItems.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 border-[#2a2a2e]/30 last:border-0">
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-red-100 border-bd/30 last:border-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-100 truncate">{item.productName}</p>
                       <p className="text-[10px] text-red-500 text-red-400">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
@@ -783,10 +783,10 @@ export default function DashboardPage() {
       </div>
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#1a1a1e]/95  bg-[#0f1623]/95 backdrop-blur-sm border-t border-[#2a2a2e] px-4 py-2.5">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-pn/95  bg-[#0f1623]/95 backdrop-blur-sm border-t border-bd px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Link href="/test/search" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-[#111114] text-slate-600 hover:bg-[#222226] border-[#2a2a2e]">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-pg text-slate-600 hover:bg-el border-bd">
               <Search className="h-3.5 w-3.5" />
               시약 검색
             </Button>

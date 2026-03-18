@@ -89,7 +89,7 @@ export function AiDraftPreviewDialog({
                 type="text"
                 value={editedSubject}
                 onChange={(e) => setEditedSubject(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-[#2a2a2e] border-[#333338] rounded-lg bg-[#1a1a1e] bg-[#1a1a1e] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-bd border-bs rounded-lg bg-pn bg-pn focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           )}

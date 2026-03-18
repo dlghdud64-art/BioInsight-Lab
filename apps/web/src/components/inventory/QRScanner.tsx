@@ -248,7 +248,7 @@ export function QRScanner({
 
         {/* idle / requesting 상태 플레이스홀더 */}
         {(state === "idle" || state === "requesting") && (
-          <div className="w-full aspect-square bg-[#1a1a1e] rounded-2xl flex flex-col items-center justify-center gap-4 text-white/60">
+          <div className="w-full aspect-square bg-pn rounded-2xl flex flex-col items-center justify-center gap-4 text-white/60">
             {state === "requesting" ? (
               <>
                 <Loader2 className="h-12 w-12 animate-spin text-blue-400" />
@@ -317,7 +317,7 @@ export function QRScanner({
             size="lg"
             variant="outline"
             onClick={handleReset}
-            className="gap-2 border-white/30 text-white hover:bg-[#1a1a1e]/10 px-8 rounded-xl h-12"
+            className="gap-2 border-white/30 text-white hover:bg-pn/10 px-8 rounded-xl h-12"
           >
             <CameraOff className="h-5 w-5" />
             중지

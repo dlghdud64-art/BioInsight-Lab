@@ -836,16 +836,16 @@ export default function PurchasesPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-[#222226]"
+                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 bg-[#1a1a1e] border-[#2a2a2e]">
+              <DropdownMenuContent align="end" className="w-44 bg-pn border-bd">
                 {isPending && !needsEvidence && (
                   <DropdownMenuItem
-                    className="text-xs gap-2 text-slate-300 focus:bg-[#222226] focus:text-slate-100"
+                    className="text-xs gap-2 text-slate-300 focus:bg-el focus:text-slate-100"
                     onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
                   >
                     <CircleCheck className="h-3.5 w-3.5" />
@@ -854,23 +854,23 @@ export default function PurchasesPage() {
                 )}
                 {purchase.vendorName && (
                   <DropdownMenuItem
-                    className="text-xs gap-2 text-slate-300 focus:bg-[#222226] focus:text-slate-100"
+                    className="text-xs gap-2 text-slate-300 focus:bg-el focus:text-slate-100"
                     onClick={() => router.push(`/dashboard/analytics?vendor=${encodeURIComponent(purchase.vendorName)}`)}
                   >
                     <Building2 className="h-3.5 w-3.5" />
                     공급사 확인
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator className="bg-[#222226]" />
+                <DropdownMenuSeparator className="bg-el" />
                 <DropdownMenuItem
-                  className="text-xs gap-2 text-slate-300 focus:bg-[#222226] focus:text-slate-100"
+                  className="text-xs gap-2 text-slate-300 focus:bg-el focus:text-slate-100"
                   onClick={() => router.push("/test/compare")}
                 >
                   <GitCompareArrows className="h-3.5 w-3.5" />
                   비교 재진입
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-xs gap-2 text-slate-300 focus:bg-[#222226] focus:text-slate-100"
+                  className="text-xs gap-2 text-slate-300 focus:bg-el focus:text-slate-100"
                   onClick={() => router.push(`/dashboard/purchases/order?item=${encodeURIComponent(purchase.itemName || "")}&vendor=${encodeURIComponent(purchase.vendorName || "")}`)}
                 >
                   <Truck className="h-3.5 w-3.5" />
@@ -878,7 +878,7 @@ export default function PurchasesPage() {
                 </DropdownMenuItem>
                 {needsEvidence && (
                   <>
-                    <DropdownMenuSeparator className="bg-[#222226]" />
+                    <DropdownMenuSeparator className="bg-el" />
                     <DropdownMenuItem
                       className="text-xs gap-2 text-amber-400 focus:bg-amber-950/30 focus:text-amber-300"
                       onClick={() => setExpandedRowId(expandedRowId === purchase.id ? null : purchase.id)}
@@ -931,7 +931,7 @@ export default function PurchasesPage() {
       {(!!session || !!guestKey) && (
         <>
           {/* ══ 1.5 운영 현황 (Operations Status) ══ */}
-          <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] p-4">
+          <div className="rounded-lg border border-bd bg-pn p-4">
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
               운영 현황
             </p>
@@ -939,7 +939,7 @@ export default function PurchasesPage() {
               <button
                 type="button"
                 onClick={() => { setQueueTab("pending"); setSelectedStatus("all"); }}
-                className="flex items-start gap-3 rounded-md border border-[#2a2a2e] bg-[#222226]/50 p-3 text-left hover:bg-[#222226] transition-colors"
+                className="flex items-start gap-3 rounded-md border border-bd bg-el/50 p-3 text-left hover:bg-el transition-colors"
               >
                 <Clock className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
@@ -953,10 +953,10 @@ export default function PurchasesPage() {
               <button
                 type="button"
                 onClick={() => { setQueueTab("processing"); setSelectedStatus("all"); }}
-                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-[#222226] transition-colors ${
+                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-el transition-colors ${
                   queueStats.processingDelay > 0
                     ? "border-red-900/50 bg-red-950/20"
-                    : "border-[#2a2a2e] bg-[#222226]/50"
+                    : "border-bd bg-el/50"
                 }`}
               >
                 <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
@@ -971,10 +971,10 @@ export default function PurchasesPage() {
               <button
                 type="button"
                 onClick={() => { setQueueTab("processing"); setSelectedStatus("all"); }}
-                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-[#222226] transition-colors ${
+                className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-el transition-colors ${
                   queueStats.followUpNeeded > 0
                     ? "border-amber-900/50 bg-amber-950/10"
-                    : "border-[#2a2a2e] bg-[#222226]/50"
+                    : "border-bd bg-el/50"
                 }`}
               >
                 <ClipboardList className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
@@ -986,7 +986,7 @@ export default function PurchasesPage() {
                 </div>
               </button>
 
-              <div className="flex items-start gap-3 rounded-md border border-[#2a2a2e] bg-[#222226]/50 p-3">
+              <div className="flex items-start gap-3 rounded-md border border-bd bg-el/50 p-3">
                 <DollarSign className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs text-slate-500 font-medium">이번 달 구매</p>
@@ -1013,15 +1013,15 @@ export default function PurchasesPage() {
                 onClick={() => setQueueTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                   queueTab === tab.key
-                    ? "bg-[#222226] text-slate-100 border border-[#333338]"
-                    : "text-slate-500 hover:text-slate-300 hover:bg-[#222226]/50 border border-transparent"
+                    ? "bg-el text-slate-100 border border-bs"
+                    : "text-slate-500 hover:text-slate-300 hover:bg-el/50 border border-transparent"
                 }`}
               >
                 {tab.label}
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                   queueTab === tab.key
                     ? "bg-slate-700 text-slate-300"
-                    : "bg-[#222226]/50 text-slate-500"
+                    : "bg-el/50 text-slate-500"
                 }`}>
                   {tab.count}
                 </span>
@@ -1032,7 +1032,7 @@ export default function PurchasesPage() {
           {/* ══ 2. 운영 KPI 카드 ══ */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* 이번 달 발주 */}
-            <div className="rounded-xl border border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <ShoppingCart className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">이번 달 발주</span>
@@ -1046,7 +1046,7 @@ export default function PurchasesPage() {
             </div>
 
             {/* 반복 구매 품목 */}
-            <div className="rounded-xl border border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <RefreshCw className="h-4 w-4 text-purple-500 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">반복 구매</span>
@@ -1065,7 +1065,7 @@ export default function PurchasesPage() {
             <div className={`rounded-xl border p-4 shadow-sm ${
               operationalKPIs.vendorConcentration >= 70
                 ? "border-amber-200/60 bg-amber-50/30  bg-amber-950/10  border-amber-900/30"
-                : "border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e]/50"
+                : "border-bd/60 bg-pn border-bd/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <Store className="h-4 w-4 text-amber-500 flex-shrink-0" />
@@ -1084,7 +1084,7 @@ export default function PurchasesPage() {
             </div>
 
             {/* 고액 구매 */}
-            <div className="rounded-xl border border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-rose-500 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">고액 구매</span>
@@ -1099,7 +1099,7 @@ export default function PurchasesPage() {
             <div className={`rounded-xl border p-4 shadow-sm ${
               operationalKPIs.pendingActions > 0
                 ? "border-blue-200/60 bg-blue-50/30  bg-blue-950/10  border-blue-900/30"
-                : "border-[#2a2a2e]/60 bg-[#1a1a1e] border-[#2a2a2e]/50"
+                : "border-bd/60 bg-pn border-bd/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -1118,7 +1118,7 @@ export default function PurchasesPage() {
           </div>
 
           {/* ══ 3. 통합 필터 바 (Desktop) ══ */}
-          <Card className="hidden md:block rounded-xl border-[#2a2a2e]/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
+          <Card className="hidden md:block rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
             <CardContent className="p-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* 검색 */}
@@ -1128,7 +1128,7 @@ export default function PurchasesPage() {
                     placeholder="품목명, 카탈로그 번호 검색"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-9 text-sm border-[#2a2a2e] border-[#333338]"
+                    className="pl-9 h-9 text-sm border-bd border-bs"
                   />
                 </div>
                 {/* 필터 그룹 */}
@@ -1188,7 +1188,7 @@ export default function PurchasesPage() {
                   placeholder="품목명 검색"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm border-[#2a2a2e] border-[#333338]"
+                  className="pl-9 h-9 text-sm border-bd border-bs"
                 />
               </div>
               <Button
@@ -1307,7 +1307,7 @@ export default function PurchasesPage() {
 
           {/* ══ 4. 구매 내역 ══ */}
           {purchasesLoading ? (
-            <Card className="rounded-xl border-[#2a2a2e]/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
+            <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
               <CardContent className="flex items-center justify-center py-16">
                 <p className="text-sm text-slate-400">구매 내역을 불러오는 중...</p>
               </CardContent>
@@ -1315,7 +1315,7 @@ export default function PurchasesPage() {
           ) : queueFilteredPurchases.length > 0 ? (
             <>
               {/* Desktop: DataTable */}
-              <Card className="hidden md:block rounded-xl border-[#2a2a2e]/50 shadow-none bg-[#161d2f] overflow-hidden">
+              <Card className="hidden md:block rounded-xl border-bd/50 shadow-none bg-[#161d2f] overflow-hidden">
                 <CardHeader className="p-4 pb-0">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1356,7 +1356,7 @@ export default function PurchasesPage() {
                   return (
                     <div
                       key={purchase.id}
-                      className="rounded-xl border border-[#2a2a2e]/60 border-[#2a2a2e]/50 bg-[#1a1a1e] p-3.5 shadow-sm"
+                      className="rounded-xl border border-bd/60 border-bd/50 bg-pn p-3.5 shadow-sm"
                     >
                       {/* Row 1: 품목명 */}
                       <p className="font-bold text-sm text-slate-200 break-words">
@@ -1399,7 +1399,7 @@ export default function PurchasesPage() {
                       </div>
 
                       {/* Row 6: 액션 버튼 */}
-                      <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-[#2a2a2e] flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-bd flex-wrap">
                         {purchaseStatus.label === "입고 대기" && (
                           <Button
                             size="sm"
@@ -1426,7 +1426,7 @@ export default function PurchasesPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-[#222226] gap-1"
+                            className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-el gap-1"
                             onClick={() => router.push(`/dashboard/analytics?vendor=${encodeURIComponent(purchase.vendorName)}`)}
                           >
                             <Building2 className="h-3 w-3" />
@@ -1436,7 +1436,7 @@ export default function PurchasesPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-[#222226] gap-1"
+                          className="h-7 text-[11px] text-slate-400 hover:text-slate-300 hover:bg-el gap-1"
                           onClick={() => router.push("/test/compare")}
                         >
                           <GitCompareArrows className="h-3 w-3" />
@@ -1458,9 +1458,9 @@ export default function PurchasesPage() {
               </div>
             </>
           ) : (
-            <Card className="rounded-xl border-[#2a2a2e]/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
+            <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
               <CardContent className="flex flex-col items-center justify-center py-14">
-                <div className="w-12 h-12 rounded-2xl bg-[#222226] bg-[#222226] flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-el bg-el flex items-center justify-center mx-auto mb-4">
                   <Package className="h-6 w-6 text-slate-300  text-slate-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-slate-300 mb-1">구매 내역이 없습니다</h3>
@@ -1507,7 +1507,7 @@ export default function PurchasesPage() {
                       <button
                         key={item.key}
                         type="button"
-                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-100  border-amber-900/30 bg-[#1a1a1e] bg-[#1a1a1e] cursor-pointer hover:bg-amber-50/50  hover:bg-amber-950/20 transition-colors text-left"
+                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-100  border-amber-900/30 bg-pn bg-pn cursor-pointer hover:bg-amber-50/50  hover:bg-amber-950/20 transition-colors text-left"
                         onClick={() => {
                           setEvidenceChecklist((prev) => ({
                             ...prev,
@@ -1522,7 +1522,7 @@ export default function PurchasesPage() {
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                             checks[item.key]
                               ? "bg-emerald-500 border-emerald-500 text-white"
-                              : "border-slate-300 border-[#333338]"
+                              : "border-slate-300 border-bs"
                           }`}
                         >
                           {checks[item.key] && <CheckCircle2 className="h-3 w-3" />}
@@ -1539,31 +1539,31 @@ export default function PurchasesPage() {
           })()}
 
           {/* ══ 5. 구매 운영 후속 조치 ══ */}
-          <div className="rounded-xl border border-[#2a2a2e]/50 bg-[#111114]/60 bg-[#1a1a1e]/30 p-4">
+          <div className="rounded-xl border border-bd/50 bg-pg/60 bg-pn/30 p-4">
             <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider mb-3">
               후속 조치 바로가기
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] bg-[#1a1a1e] hover:bg-[#111114] hover:bg-[#222226] border-[#2a2a2e] border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
                   <BarChart2 className="h-3.5 w-3.5 text-slate-500" />
                   구매 리포트
                 </Button>
               </Link>
               <Link href="/dashboard/budget">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] bg-[#1a1a1e] hover:bg-[#111114] hover:bg-[#222226] border-[#2a2a2e] border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
                   <CreditCard className="h-3.5 w-3.5 text-slate-500" />
                   예산 관리
                 </Button>
               </Link>
               <Link href="/dashboard/inventory">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] bg-[#1a1a1e] hover:bg-[#111114] hover:bg-[#222226] border-[#2a2a2e] border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
                   <Package className="h-3.5 w-3.5 text-slate-500" />
                   재고 현황
                 </Button>
               </Link>
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] bg-[#1a1a1e] hover:bg-[#111114] hover:bg-[#222226] border-[#2a2a2e] border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
                   <Store className="h-3.5 w-3.5 text-slate-500" />
                   벤더 비교 분석
                 </Button>
@@ -1704,7 +1704,7 @@ export default function PurchasesPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="currency">통화</Label>
-                      <div id="currency" className="flex h-10 w-full rounded-md border border-input bg-[#111114] px-3 py-2 text-sm text-slate-600 items-center">
+                      <div id="currency" className="flex h-10 w-full rounded-md border border-input bg-pg px-3 py-2 text-sm text-slate-600 items-center">
                         ₩ 원화 (KRW)
                       </div>
                     </div>
@@ -1728,8 +1728,8 @@ export default function PurchasesPage() {
                     <p className="text-xs text-slate-500">엑셀에서 행을 선택해 복사(Ctrl+C)한 뒤 아래에 붙여넣기(Ctrl+V)하세요.</p>
 
                     {/* 예시 데이터 (TSV 실제 형식) */}
-                    <div className="rounded-md border border-[#2a2a2e] bg-[#111114] overflow-hidden">
-                      <div className="px-3 py-1.5 bg-[#222226] border-b border-[#2a2a2e] flex items-center justify-between">
+                    <div className="rounded-md border border-bd bg-pg overflow-hidden">
+                      <div className="px-3 py-1.5 bg-el border-b border-bd flex items-center justify-between">
                         <span className="text-[11px] font-medium text-slate-600">예시 형식 (탭 또는 쉼표 구분)</span>
                         <Badge variant="outline" className="text-[10px] h-5">필수: 구매일, 벤더, 품목명, 수량</Badge>
                       </div>

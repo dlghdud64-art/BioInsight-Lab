@@ -102,8 +102,8 @@ export function GrantWalletWidget() {
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-6 shadow-lg">
             {/* 배경 패턴 */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#1a1a1e] rounded-full -mr-32 -mt-32 blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#1a1a1e] rounded-full -ml-24 -mb-24 blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-pn rounded-full -mr-32 -mt-32 blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-pn rounded-full -ml-24 -mb-24 blur-3xl" />
             </div>
 
             <div className="relative z-10 space-y-4">

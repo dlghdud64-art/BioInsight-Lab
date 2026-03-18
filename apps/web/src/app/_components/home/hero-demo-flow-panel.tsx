@@ -50,9 +50,9 @@ const SAMPLE_QUOTE_SHEET = [
 
 export function HeroDemoFlowPanel() {
   return (
-    <div className="w-full border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg overflow-hidden shadow-lg">
+    <div className="w-full border border-bd bg-pn rounded-lg overflow-hidden shadow-lg">
       {/* 헤더 */}
-      <div className="flex items-center justify-between border-b border-[#2a2a2e] bg-[#111114] px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-bd bg-pg px-4 py-2.5">
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-slate-600" strokeWidth={1.5} />
           <span className="text-xs font-semibold text-slate-100 tracking-tight">견적 요청 시트</span>
@@ -64,7 +64,7 @@ export function HeroDemoFlowPanel() {
       <div className="overflow-x-auto">
         <table className="w-full text-[9px] leading-tight">
           <thead>
-            <tr className="border-b border-[#2a2a2e] bg-[#111114]/50">
+            <tr className="border-b border-bd bg-pg/50">
               <th className="px-3 py-2 text-left font-semibold text-slate-600 whitespace-nowrap">제품명</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 whitespace-nowrap">벤더</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 whitespace-nowrap">Cat.No</th>
@@ -77,7 +77,7 @@ export function HeroDemoFlowPanel() {
           </thead>
           <tbody>
             {SAMPLE_QUOTE_SHEET.map((item, idx) => (
-              <tr key={idx} className="border-b border-slate-100 last:border-0 hover:bg-[#111114]/50">
+              <tr key={idx} className="border-b border-slate-100 last:border-0 hover:bg-pg/50">
                 <td className="px-3 py-2 text-slate-100 font-medium whitespace-nowrap max-w-[100px] truncate" title={item.name}>
                   {item.name}
                 </td>
@@ -117,14 +117,14 @@ export function HeroDemoFlowPanel() {
       </div>
 
       {/* 푸터 - 출처 표시 예시 */}
-      <div className="flex items-center justify-between border-t border-[#2a2a2e] bg-[#111114]/50 px-4 py-2">
+      <div className="flex items-center justify-between border-t border-bd bg-pg/50 px-4 py-2">
         <div className="flex items-center gap-1">
           <span className="text-[8px] text-slate-400">출처:</span>
-          <span className="text-[8px] px-1 py-0.5 bg-[#222226] rounded text-slate-500">datasheet</span>
-          <span className="text-[8px] px-1 py-0.5 bg-[#222226] rounded text-slate-500">vendor catalog</span>
+          <span className="text-[8px] px-1 py-0.5 bg-el rounded text-slate-500">datasheet</span>
+          <span className="text-[8px] px-1 py-0.5 bg-el rounded text-slate-500">vendor catalog</span>
         </div>
         <Link href="/test/search">
-          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-[#2a2a2e] text-indigo-600 hover:bg-indigo-50">
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-bd text-indigo-600 hover:bg-indigo-50">
             직접 만들기 →
           </Button>
         </Link>

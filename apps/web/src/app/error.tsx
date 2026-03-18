@@ -24,7 +24,7 @@ export default function Error({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-lg w-full space-y-6 text-center bg-[#1a1a1e] p-8 md:p-12 rounded-xl shadow-lg border border-[#2a2a2e]">
+      <div className="max-w-lg w-full space-y-6 text-center bg-pn p-8 md:p-12 rounded-xl shadow-lg border border-bd">
         <div className="flex justify-center">
           <div className="rounded-full bg-red-50 p-4">
             <AlertCircle className="h-10 w-10 text-red-500" />
@@ -37,7 +37,7 @@ export default function Error({
           </p>
         </div>
         {error.digest && (
-          <div className="text-xs text-slate-400 font-mono bg-[#111114] p-2 rounded">
+          <div className="text-xs text-slate-400 font-mono bg-pg p-2 rounded">
             오류 ID: {error.digest}
           </div>
         )}

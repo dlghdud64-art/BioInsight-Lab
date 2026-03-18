@@ -407,12 +407,12 @@ export default function GuidePage() {
           placeholder="가이드 검색 (예: 견적 요청, 재고, PDF 분석)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-[#232329] border-[#2a2a31] text-slate-100 placeholder:text-slate-500 focus:border-[#323239] focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-el border-bd text-slate-100 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
       {/* ── 최근 업데이트 ── */}
-      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] p-4 mb-6">
+      <div className="rounded-xl bg-pn border border-bd p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4 text-amber-400" />
           <h2 className="text-sm font-semibold text-slate-100">최근 업데이트</h2>
@@ -421,7 +421,7 @@ export default function GuidePage() {
           {RECENT_UPDATES.map((update, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg bg-[#1f1f25] border border-[#2a2a31] px-3.5 py-3"
+              className="flex items-start gap-3 rounded-lg bg-pn border border-bd px-3.5 py-3"
             >
               <div className="flex flex-col items-start gap-1 flex-shrink-0">
                 <span className="text-[10px] text-slate-500 font-mono">{update.date}</span>
@@ -460,7 +460,7 @@ export default function GuidePage() {
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
                       ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] border border-transparent"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-pn border border-transparent"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
@@ -473,10 +473,10 @@ export default function GuidePage() {
             })}
 
             {/* 사이드바 하단 링크 */}
-            <div className="border-t border-[#2a2a31] mt-4 pt-4 space-y-1">
+            <div className="border-t border-bd mt-4 pt-4 space-y-1">
               <Link
                 href="/dashboard/faq"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
               >
                 <HelpCircle className="h-3.5 w-3.5 text-slate-500" />
                 자주 묻는 질문
@@ -484,7 +484,7 @@ export default function GuidePage() {
               </Link>
               <Link
                 href="/dashboard/support"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
                 1:1 문의하기
@@ -510,7 +510,7 @@ export default function GuidePage() {
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     isActive
                       ? "bg-blue-600 text-white"
-                      : "bg-[#1f1f25] border border-[#2a2a31] text-slate-400 hover:text-slate-200"
+                      : "bg-pn border border-bd text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -543,7 +543,7 @@ export default function GuidePage() {
 
       {/* 데스크탑 하단 지원 */}
       <div className="hidden md:block mt-8 mb-4">
-        <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-5 py-5 flex items-center justify-between">
+        <div className="rounded-xl bg-pn border border-bd px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
               <HelpCircle className="h-4 w-4 text-blue-400" />
@@ -558,7 +558,7 @@ export default function GuidePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] hover:text-slate-100"
+                className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn hover:text-slate-100"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
                 자주 묻는 질문
@@ -589,7 +589,7 @@ function GuideContent({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] py-16 text-center">
+      <div className="rounded-xl bg-pn border border-bd py-16 text-center">
         <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
         <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
         <p className="text-xs text-slate-500">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
@@ -604,7 +604,7 @@ function GuideContent({
         <div className="flex items-center gap-2 mb-1">
           <activeCategoryMeta.icon className="h-4 w-4 text-blue-400" />
           <h2 className="text-sm font-semibold text-slate-200">{activeCategoryMeta.label}</h2>
-          <Badge className="text-[10px] px-1.5 py-0 bg-[#232329] border-[#2a2a31] text-slate-500">
+          <Badge className="text-[10px] px-1.5 py-0 bg-el border-bd text-slate-500">
             {entries.length}개 가이드
           </Badge>
         </div>
@@ -621,7 +621,7 @@ function GuideContent({
         return (
           <Card
             key={entry.id}
-            className="bg-[#1f1f25] border-[#2a2a31] hover:border-[#323239] transition-colors overflow-hidden"
+            className="bg-pn border-bd hover:border-bd transition-colors overflow-hidden"
           >
             <CardContent className="p-4 md:p-5">
               <div className="flex items-start gap-3.5">
@@ -658,7 +658,7 @@ function GuideContent({
                             <Badge
                               key={i}
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 border-[#323239] text-slate-400 bg-[#232329]"
+                              className="text-[10px] px-1.5 py-0 border-bd text-slate-400 bg-el"
                             >
                               {input}
                             </Badge>
@@ -682,7 +682,7 @@ function GuideContent({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#232329] hover:text-slate-100 hover:border-blue-500/30"
+                      className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-el hover:text-slate-100 hover:border-blue-500/30"
                     >
                       {entry.link.label}
                       <ArrowRight className="h-3 w-3" />
@@ -701,14 +701,14 @@ function GuideContent({
 /* ── 모바일 하단 지원 ── */
 function MobileSupportFooter() {
   return (
-    <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-4 py-4 mt-6 mb-4">
+    <div className="rounded-xl bg-pn border border-bd px-4 py-4 mt-6 mb-4">
       <p className="text-sm font-semibold text-slate-200 mb-3">추가 도움이 필요하신가요?</p>
       <div className="flex flex-col gap-2">
         <Link href="/dashboard/faq">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] w-full"
+            className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn w-full"
           >
             <HelpCircle className="h-3.5 w-3.5" />
             자주 묻는 질문

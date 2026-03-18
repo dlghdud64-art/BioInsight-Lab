@@ -206,7 +206,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
           <form onSubmit={handleSubmit} className="grid gap-6 py-4">
             {/* 1. 기본 식별 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-[#2a2a2e] border-[#333338] pb-2">
+              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-bd border-bs pb-2">
                 기본 식별 정보
               </h4>
 
@@ -218,7 +218,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                   id="productName"
                   value={formProductName}
                   readOnly
-                  className="border-[#333338] border-[#333338] bg-[#111114] bg-[#1a1a1e]/50"
+                  className="border-bs border-bs bg-pg bg-pn/50"
                   placeholder="예: Gibco FBS, 50ml Conical Tube"
                 />
               </div>
@@ -230,7 +230,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="manufacturer"
                     value={formBrand}
                     readOnly
-                    className="bg-[#111114] bg-[#1a1a1e]/50"
+                    className="bg-pg bg-pn/50"
                     placeholder="예: Thermo Fisher"
                   />
                 </div>
@@ -240,7 +240,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="catNo"
                     value={formCatNo}
                     readOnly
-                    className="bg-[#111114] bg-[#1a1a1e]/50 font-mono"
+                    className="bg-pg bg-pn/50 font-mono"
                     placeholder="예: 16000-044"
                   />
                 </div>
@@ -295,7 +295,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
             {/* 2. 수량 및 관리 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-[#2a2a2e] border-[#333338] pb-2 mt-2">
+              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-bd border-bs pb-2 mt-2">
                 수량 및 관리 정보
               </h4>
 
@@ -554,12 +554,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                       key={product.id}
                       type="button"
                       onClick={() => handleProductSelect(product)}
-                      className="w-full p-4 text-left hover:bg-[#111114] transition-colors"
+                      className="w-full p-4 text-left hover:bg-pg transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 rounded-lg border">
                           <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
-                          <AvatarFallback className="bg-[#222226] text-slate-600">
+                          <AvatarFallback className="bg-el text-slate-600">
                             {product.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>

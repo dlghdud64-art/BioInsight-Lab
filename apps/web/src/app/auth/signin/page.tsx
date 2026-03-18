@@ -16,7 +16,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
-      <div className="hidden lg:flex w-1/2 bg-[#09090b] relative min-h-screen flex-col overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-sh relative min-h-screen flex-col overflow-hidden">
         {/* 1. 브랜드 로고 */}
         <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
@@ -50,7 +50,7 @@ function SignInContent() {
       </div>
 
       {/* 우측 로그인 영역 */}
-      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-[#09090b]">
+      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-sh">
         {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="group flex items-center gap-3 cursor-pointer">
@@ -90,7 +90,7 @@ function SignInContent() {
               {/* Google 로그인 버튼 */}
               <Button
                 variant="outline"
-                className="w-full h-12 border-[#333338] hover:bg-[#1a1a1e]/50 hover:border-slate-600 font-medium"
+                className="w-full h-12 border-bs hover:bg-pn/50 hover:border-slate-600 font-medium"
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -117,10 +117,10 @@ function SignInContent() {
               {/* 또는 이메일로 계속하기 구분선 */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#333338]" />
+                  <span className="w-full border-t border-bs" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#09090b] px-3 text-xs text-slate-400">
+                  <span className="bg-sh px-3 text-xs text-slate-400">
                     또는 이메일로 계속하기
                   </span>
                 </div>
@@ -132,14 +132,14 @@ function SignInContent() {
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-[#1a1a1e]/50 cursor-not-allowed text-base"
+                  className="bg-pn/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-[#1a1a1e]/50 cursor-not-allowed text-base"
+                  className="bg-pn/50 cursor-not-allowed text-base"
                   style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-500 text-center">
@@ -173,7 +173,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
+      <div className="flex min-h-screen items-center justify-center bg-sh">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>

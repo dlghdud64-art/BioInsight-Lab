@@ -92,7 +92,7 @@ export function SearchAnalysisCard() {
                   <p className="text-xs font-semibold text-blue-900">예시 분석 결과</p>
                 </div>
                 <div className="space-y-2.5 text-xs">
-                  <div className="bg-[#1a1a1e] rounded border border-blue-100 p-2.5">
+                  <div className="bg-pn rounded border border-blue-100 p-2.5">
                     <div className="text-[10px] font-medium text-slate-500 mb-1.5">검색어</div>
                     <div className="text-xs font-medium text-slate-800">"Human IL-6 Sandwich ELISA kit"</div>
                   </div>
@@ -277,7 +277,7 @@ export function SearchAnalysisCard() {
                 </div>
               )}
               {queryAnalysis.properties && queryAnalysis.properties.length > 0 && (
-                <div className="pt-2 border-t border-[#2a2a2e]">
+                <div className="pt-2 border-t border-bd">
                   <div className="flex flex-wrap gap-1.5">
                     {queryAnalysis.properties.map((prop: string, idx: number) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
@@ -289,7 +289,7 @@ export function SearchAnalysisCard() {
               )}
             </div>
             {queryAnalysis.purpose && (
-              <div className="mt-3 pt-3 border-t border-[#2a2a2e]">
+              <div className="mt-3 pt-3 border-t border-bd">
                 <p className="text-xs text-slate-500 mb-1">목적</p>
                 <p className="text-sm text-slate-700">{queryAnalysis.purpose}</p>
               </div>

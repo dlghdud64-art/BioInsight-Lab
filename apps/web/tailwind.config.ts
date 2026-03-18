@@ -14,13 +14,14 @@ const config: Config = {
         sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
       },
       colors: {
-        surface: {
-          shell: "var(--surface-shell)",
-          page: "var(--surface-page)",
-          panel: "var(--surface-panel)",
-          elevated: "var(--surface-elevated)",
-          strong: "var(--surface-strong)",
-        },
+        // ── 전역 surface hierarchy (dark-only, 직접 hex) ──
+        sh: "#111114",       // shell — app 최외곽
+        pg: "#18181c",       // page — work area
+        pn: "#1f1f24",       // panel — card/section
+        el: "#27272c",       // elevated — input/search/empty
+        st: "#303036",       // strong — hover/active surface
+        bd: "#303036",       // border default
+        bs: "#3a3a40",       // border strong
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

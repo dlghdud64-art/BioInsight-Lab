@@ -60,9 +60,9 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
   };
 
   return (
-    <div className="bg-[#1a1a1e] print:bg-[#1a1a1e]" id="quote-document">
+    <div className="bg-pn print:bg-pn" id="quote-document">
       {/* A4 용지 스타일 */}
-      <div className="max-w-[210mm] mx-auto bg-[#1a1a1e] border border-[#333338] shadow-lg print:shadow-none print:border-0">
+      <div className="max-w-[210mm] mx-auto bg-pn border border-bs shadow-lg print:shadow-none print:border-0">
         <div className="p-8 md:p-12 print:p-12 space-y-8">
           {/* 헤더: 견적번호, 날짜, 공급자 정보 */}
           <div className="border-b-2 border-gray-800 pb-6">
@@ -94,26 +94,26 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
           {/* 바디: 품목 테이블 */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-100">견적 품목</h2>
-            <div className="border border-[#333338] rounded overflow-hidden">
+            <div className="border border-bs rounded overflow-hidden">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#222226] border-b-2 border-[#333338]">
-                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-[#333338] w-12">
+                  <tr className="bg-el border-b-2 border-bs">
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-bs w-12">
                       No.
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-[#333338]">
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-bs">
                       품명
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-[#333338] w-32">
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-100 border-r border-bs w-32">
                       규격
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-bold text-slate-100 border-r border-[#333338] w-20">
+                    <th className="px-4 py-3 text-center text-sm font-bold text-slate-100 border-r border-bs w-20">
                       수량
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-bold text-slate-100 border-r border-[#333338] w-28">
+                    <th className="px-4 py-3 text-right text-sm font-bold text-slate-100 border-r border-bs w-28">
                       단가
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-bold text-slate-100 border-r border-[#333338] w-32">
+                    <th className="px-4 py-3 text-right text-sm font-bold text-slate-100 border-r border-bs w-32">
                       공급가액
                     </th>
                     <th className="px-4 py-3 text-right text-sm font-bold text-slate-100 w-32">
@@ -136,11 +136,11 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
                       const vatAmount = Math.floor(lineTotal * 0.1);
 
                       return (
-                        <tr key={item.id} className="border-b border-[#2a2a2e] hover:bg-[#111114]">
-                          <td className="px-4 py-3 text-sm text-slate-100 border-r border-[#2a2a2e]">
+                        <tr key={item.id} className="border-b border-bd hover:bg-pg">
+                          <td className="px-4 py-3 text-sm text-slate-100 border-r border-bd">
                             {lineNumber}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-100 border-r border-[#2a2a2e]">
+                          <td className="px-4 py-3 text-sm text-slate-100 border-r border-bd">
                             <div className="font-medium">{item.name || "품명 없음"}</div>
                             {(item.brand || item.catalogNumber) && (
                               <div className="text-xs text-gray-500 mt-1">
@@ -154,16 +154,16 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
                               <div className="text-xs text-gray-500 mt-1 italic">{item.notes}</div>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 border-r border-[#2a2a2e]">
+                          <td className="px-4 py-3 text-sm text-gray-600 border-r border-bd">
                             {item.product?.spec || "-"}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-100 text-center border-r border-[#2a2a2e]">
+                          <td className="px-4 py-3 text-sm text-slate-100 text-center border-r border-bd">
                             {item.quantity}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-100 text-right border-r border-[#2a2a2e]">
+                          <td className="px-4 py-3 text-sm text-slate-100 text-right border-r border-bd">
                             {unitPrice > 0 ? `₩${unitPrice.toLocaleString()}` : "-"}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-100 text-right border-r border-[#2a2a2e] font-medium">
+                          <td className="px-4 py-3 text-sm text-slate-100 text-right border-r border-bd font-medium">
                             {lineTotal > 0 ? `₩${lineTotal.toLocaleString()}` : "-"}
                           </td>
                           <td className="px-4 py-3 text-sm text-slate-100 text-right font-medium">
@@ -181,13 +181,13 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
           {/* 합계 영역 */}
           <div className="flex justify-end">
             <div className="w-full md:w-80 space-y-2">
-              <div className="flex justify-between items-center py-2 border-b border-[#333338]">
+              <div className="flex justify-between items-center py-2 border-b border-bs">
                 <span className="text-sm font-medium text-slate-300">공급가액 합계</span>
                 <span className="text-sm font-semibold text-slate-100">
                   ₩{subtotal.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-[#333338]">
+              <div className="flex justify-between items-center py-2 border-b border-bs">
                 <span className="text-sm font-medium text-slate-300">부가세 (10%)</span>
                 <span className="text-sm font-semibold text-slate-100">
                   ₩{vat.toLocaleString()}
@@ -222,7 +222,7 @@ export function QuoteDocument({ quote, companyInfo }: QuoteDocumentProps) {
               })}{" "}
               까지
             </div>
-            <div className="text-center py-8 border-t border-[#333338]">
+            <div className="text-center py-8 border-t border-bs">
               <p className="text-base font-semibold text-slate-100 mb-4">
                 위와 같이 견적합니다.
               </p>

@@ -4,13 +4,13 @@ import { Sparkles, Languages, Lightbulb } from "lucide-react";
 // AISection 컴포넌트 - 연구/구매 워크벤치 스타일
 export function AISection() {
   return (
-    <section id="ai" className="py-8 md:py-10 border-b border-[#2a2a2e] bg-[#111114]">
+    <section id="ai" className="py-8 md:py-10 border-b border-bd bg-pg">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
           자동화 기능
         </h2>
         <div className="grid gap-3 md:grid-cols-3">
-          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-purple-300 hover:shadow-sm transition-all">
+          <Card className="border border-bd bg-pn rounded-lg hover:border-purple-300 hover:shadow-sm transition-all">
             <CardContent className="flex items-start gap-2.5 p-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-purple-100 flex-shrink-0">
                 <Sparkles className="h-3.5 w-3.5 text-purple-600" strokeWidth={1.5} />
@@ -24,7 +24,7 @@ export function AISection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+          <Card className="border border-bd bg-pn rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
             <CardContent className="flex items-start gap-2.5 p-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-100 flex-shrink-0">
                 <Languages className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.5} />
@@ -38,7 +38,7 @@ export function AISection() {
             </CardContent>
           </Card>
 
-          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-amber-300 hover:shadow-sm transition-all">
+          <Card className="border border-bd bg-pn rounded-lg hover:border-amber-300 hover:shadow-sm transition-all">
             <CardContent className="flex items-start gap-2.5 p-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100 flex-shrink-0">
                 <Lightbulb className="h-3.5 w-3.5 text-amber-600" strokeWidth={1.5} />

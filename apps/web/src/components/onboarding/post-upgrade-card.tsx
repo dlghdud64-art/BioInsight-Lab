@@ -61,7 +61,7 @@ export function PostUpgradeCard({
           <Link href="/settings/workspace">
             <Button
               variant="outline"
-              className="w-full justify-between bg-[#1a1a1e] hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-pn hover:bg-blue-50 border-blue-200"
               size="lg"
             >
               <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function PostUpgradeCard({
           <Link href="/dashboard/organizations">
             <Button
               variant="outline"
-              className="w-full justify-between bg-[#1a1a1e] hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-pn hover:bg-blue-50 border-blue-200"
               size="lg"
             >
               <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export function PostUpgradeCard({
           <Link href="/dashboard/budget">
             <Button
               variant="outline"
-              className="w-full justify-between bg-[#1a1a1e] hover:bg-blue-50 border-blue-200"
+              className="w-full justify-between bg-pn hover:bg-blue-50 border-blue-200"
               size="lg"
             >
               <div className="flex items-center gap-2">

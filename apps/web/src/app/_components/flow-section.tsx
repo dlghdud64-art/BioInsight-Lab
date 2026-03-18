@@ -33,7 +33,7 @@ export function FlowSection() {
   ];
 
   return (
-    <section id="flow-section" className="py-10 md:py-20 border-b border-[#2a2a2e] bg-[#1a1a1e] scroll-mt-14">
+    <section id="flow-section" className="py-10 md:py-20 border-b border-bd bg-pn scroll-mt-14">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="text-center mb-6 md:mb-14">
           <h2 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mb-1 md:mb-2">
@@ -60,7 +60,7 @@ export function FlowSection() {
                 {/* 모바일: 압축형 리스트 */}
                 <Link
                   href={step.href}
-                  className="group md:hidden flex items-center gap-3 px-3.5 py-2.5 bg-[#1a1a1e] rounded-lg border border-gray-100 hover:bg-[#111114] transition-colors w-full"
+                  className="group md:hidden flex items-center gap-3 px-3.5 py-2.5 bg-pn rounded-lg border border-gray-100 hover:bg-pg transition-colors w-full"
                 >
                   <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${colorClasses[step.color as keyof typeof colorClasses]}`}>
                     <Icon className="h-4 w-4" strokeWidth={2} />
@@ -77,7 +77,7 @@ export function FlowSection() {
                 {/* 데스크탑: 카드 형태 */}
                 <Link
                   href={step.href}
-                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-[#1a1a1e] border border-[#2a2a2e] hover:border-gray-300 w-auto"
+                  className="hidden md:flex group flex-col items-center gap-4 px-8 py-8 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-pn border border-bd hover:border-gray-300 w-auto"
                 >
                   <div className={`relative w-16 h-16 rounded-xl ${
                     step.color === 'indigo' ? 'bg-indigo-500' :

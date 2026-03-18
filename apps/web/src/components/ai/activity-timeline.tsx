@@ -76,7 +76,7 @@ export function ActivityTimeline({
           <div key={i} className="flex items-center gap-2 animate-pulse">
             <div className="h-3.5 w-3.5 rounded-full bg-gray-200" />
             <div className="h-3 w-32 rounded bg-gray-200" />
-            <div className="h-3 w-16 rounded bg-[#222226] ml-auto" />
+            <div className="h-3 w-16 rounded bg-el ml-auto" />
           </div>
         ))}
       </div>

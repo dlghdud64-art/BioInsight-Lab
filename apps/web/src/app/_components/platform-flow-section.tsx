@@ -50,7 +50,7 @@ const OPS_CAPABILITIES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-14 md:py-20 bg-[#111114] border-b border-[#333338]">
+    <section className="py-14 md:py-20 bg-pg border-b border-bs">
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-10 md:mb-14">
@@ -77,7 +77,7 @@ export function PlatformFlowSection() {
                 return (
                   <div key={stage.title} className="relative flex flex-col items-center text-center px-2">
                     {/* Node */}
-                    <div className="relative z-10 w-12 h-12 rounded-md border border-[#333338] bg-[#222226] flex items-center justify-center mb-3">
+                    <div className="relative z-10 w-12 h-12 rounded-md border border-bs bg-el flex items-center justify-center mb-3">
                       <Icon className="h-5 w-5 text-slate-300" strokeWidth={1.8} />
                     </div>
                     <span className="text-xs font-semibold text-slate-200 mb-0.5">{stage.title}</span>
@@ -91,12 +91,12 @@ export function PlatformFlowSection() {
         </div>
 
         {/* Mobile: Dense list */}
-        <div className="md:hidden space-y-0 border border-[#333338] rounded-md overflow-hidden">
+        <div className="md:hidden space-y-0 border border-bs rounded-md overflow-hidden">
           {FLOW_STAGES.map((stage, idx) => {
             const Icon = stage.icon;
             return (
-              <div key={stage.title} className="flex items-center gap-3 px-3 py-2.5 border-b border-[#333338] last:border-b-0 bg-[#222226]">
-                <div className="flex-shrink-0 w-8 h-8 rounded-md border border-[#333338] bg-[#2a2a2e] flex items-center justify-center">
+              <div key={stage.title} className="flex items-center gap-3 px-3 py-2.5 border-b border-bs last:border-b-0 bg-el">
+                <div className="flex-shrink-0 w-8 h-8 rounded-md border border-bs bg-st flex items-center justify-center">
                   <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -112,7 +112,7 @@ export function PlatformFlowSection() {
         </div>
 
         {/* Ops Capabilities Strip */}
-        <div className="mt-10 md:mt-14 border border-[#333338] rounded-md bg-[#222226]/50 px-4 py-3">
+        <div className="mt-10 md:mt-14 border border-bs rounded-md bg-el/50 px-4 py-3">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
             Operational Control
           </p>

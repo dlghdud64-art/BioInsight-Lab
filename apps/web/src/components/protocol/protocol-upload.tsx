@@ -337,7 +337,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* 실험 회차 입력 */}
-            <div className="p-4 bg-[#111114] rounded-lg border">
+            <div className="p-4 bg-pg rounded-lg border">
               <div className="flex items-center gap-4">
                 <Label htmlFor="experiment-rounds" className="whitespace-nowrap">
                   실험 회차:
@@ -374,7 +374,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
                 {extractedData.reagents.map((reagent, index) => (
                   <div
                     key={index}
-                    className="p-4 border rounded-lg hover:bg-[#111114] transition-colors"
+                    className="p-4 border rounded-lg hover:bg-pg transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">

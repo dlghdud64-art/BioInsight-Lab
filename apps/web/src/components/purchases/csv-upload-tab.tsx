@@ -294,8 +294,8 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             onDrop={handleDrop}
             onClick={() => !loading && document.getElementById("file-upload")?.click()}
             className={`
-              border-2 border-dashed rounded-lg bg-[#111114] h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
-              ${isDragging ? "border-blue-500 bg-blue-50" : "border-[#333338] hover:border-gray-400"}
+              border-2 border-dashed rounded-lg bg-pg h-64 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
+              ${isDragging ? "border-blue-500 bg-blue-50" : "border-bs hover:border-gray-400"}
               ${loading ? "opacity-50 pointer-events-none" : ""}
             `}
           >

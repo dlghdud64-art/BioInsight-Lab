@@ -205,7 +205,7 @@ function MobileSummaryStrip({ inventories }: { inventories: ProductInventory[] }
       {cards.map((c) => (
         <div
           key={c.label}
-          className={`flex-shrink-0 w-[130px] rounded-xl border ${c.border} bg-[#222226] px-3 py-2.5`}
+          className={`flex-shrink-0 w-[130px] rounded-xl border ${c.border} bg-el px-3 py-2.5`}
         >
           <div className="flex items-center gap-1.5 mb-1.5">
             <div className={`flex h-5 w-5 items-center justify-center rounded-md ${c.bg}`}>
@@ -270,7 +270,7 @@ function MobilePriorityQueue({
               key={inv.id}
               type="button"
               onClick={() => onItemTap(inv)}
-              className="w-full text-left rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3 active:bg-[#222226] transition-colors"
+              className="w-full text-left rounded-xl border border-bd bg-pn p-3 active:bg-el transition-colors"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
@@ -341,7 +341,7 @@ function MobileItemCard({
     <button
       type="button"
       onClick={onTap}
-      className="w-full text-left rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3.5 active:bg-[#222226] transition-colors"
+      className="w-full text-left rounded-xl border border-bd bg-pn p-3.5 active:bg-el transition-colors"
     >
       {/* Row 1: Name + Status */}
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -455,7 +455,7 @@ function MobileDetailSheet({
     <Sheet open={open} onOpenChange={(v: boolean) => !v && onClose()}>
       <SheetContent
         side="bottom"
-        className="rounded-t-2xl bg-[#111114] border-t border-[#2a2a2e] max-h-[85vh] overflow-y-auto px-5 pb-8"
+        className="rounded-t-2xl bg-pg border-t border-bd max-h-[85vh] overflow-y-auto px-5 pb-8"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-2 pb-3">
@@ -489,7 +489,7 @@ function MobileDetailSheet({
 
         <div className="space-y-4">
           {/* Lot Info */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3.5">
+          <section className="rounded-xl border border-bd bg-pn p-3.5">
             <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <FlaskConical className="h-3 w-3" />
               Lot 정보
@@ -524,7 +524,7 @@ function MobileDetailSheet({
           </section>
 
           {/* Location */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3.5">
+          <section className="rounded-xl border border-bd bg-pn p-3.5">
             <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <MapPin className="h-3 w-3" />
               위치
@@ -544,7 +544,7 @@ function MobileDetailSheet({
           </section>
 
           {/* Purchase Link */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3.5">
+          <section className="rounded-xl border border-bd bg-pn p-3.5">
             <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <ShoppingCart className="h-3 w-3" />
               구매 연결
@@ -570,7 +570,7 @@ function MobileDetailSheet({
           </section>
 
           {/* Safety Info */}
-          <section className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-3.5">
+          <section className="rounded-xl border border-bd bg-pn p-3.5">
             <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
               <Shield className="h-3 w-3" />
               안전 정보
@@ -596,7 +596,7 @@ function MobileDetailSheet({
               </div>
             </div>
             {inv.notes && (
-              <div className="mt-2.5 pt-2.5 border-t border-[#2a2a2e] text-xs">
+              <div className="mt-2.5 pt-2.5 border-t border-bd text-xs">
                 <span className="text-slate-600">메모</span>
                 <p className="text-slate-400 mt-0.5 leading-relaxed">{inv.notes}</p>
               </div>
@@ -670,7 +670,7 @@ function MobileDetailSheet({
             {action.type === "none" && (
               <Button
                 variant="outline"
-                className="w-full border-[#2a2a2e] text-slate-400 hover:bg-[#222226] h-11 text-sm"
+                className="w-full border-bd text-slate-400 hover:bg-el h-11 text-sm"
                 onClick={() => {
                   onEdit(inv);
                   onClose();
@@ -738,7 +738,7 @@ export function MobileInventoryView({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="품목명, 제조사, Lot..."
-          className="w-full h-10 rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] px-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+          className="w-full h-10 rounded-xl border border-bd bg-pn px-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
         />
       </div>
 

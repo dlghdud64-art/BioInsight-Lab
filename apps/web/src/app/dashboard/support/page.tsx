@@ -44,7 +44,7 @@ const FEATURE_CATEGORIES = [
   { value: "inventory", label: "재고 관리", icon: Package, color: "text-emerald-600 bg-emerald-50" },
   { value: "purchase", label: "구매 운영·이력", icon: BarChart3, color: "text-amber-600 bg-amber-50" },
   { value: "team", label: "팀·조직 관리", icon: Users, color: "text-indigo-600 bg-indigo-50" },
-  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-600 bg-[#222226]" },
+  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-600 bg-el" },
 ];
 
 const PRIORITY_OPTIONS = [
@@ -126,7 +126,7 @@ export default function DashboardSupportPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="text-[10px] border-[#2a2a2e] text-slate-500">접수 대기</Badge>;
+        return <Badge variant="outline" className="text-[10px] border-bd text-slate-500">접수 대기</Badge>;
       case "in_progress":
         return <Badge className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200">확인 중</Badge>;
       case "answered":
@@ -155,7 +155,7 @@ export default function DashboardSupportPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* 좌측: 문의 작성 */}
         <div className="space-y-5">
-          <Card className="border-[#2a2a2e] shadow-sm">
+          <Card className="border-bd shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold text-slate-100 flex items-center gap-2">
                 <LifeBuoy className="h-4.5 w-4.5 text-blue-600" />
@@ -181,7 +181,7 @@ export default function DashboardSupportPage() {
                           className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                              : "border-[#2a2a2e] bg-[#1a1a1e] hover:border-slate-300 hover:bg-[#111114]/50"
+                              : "border-bd bg-pn hover:border-slate-300 hover:bg-pg/50"
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
@@ -208,7 +208,7 @@ export default function DashboardSupportPage() {
                     placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
                     value={relatedResource}
                     onChange={(e) => setRelatedResource(e.target.value)}
-                    className="border-[#2a2a2e] text-sm h-9"
+                    className="border-bd text-sm h-9"
                   />
                   <p className="text-[10px] text-slate-400">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
                 </div>
@@ -229,7 +229,7 @@ export default function DashboardSupportPage() {
                               : opt.value === "medium"
                               ? "border-amber-400 bg-amber-50 ring-1 ring-amber-400"
                               : "border-blue-400 bg-blue-50 ring-1 ring-blue-400"
-                            : "border-[#2a2a2e] bg-[#1a1a1e] hover:bg-[#111114]"
+                            : "border-bd bg-pn hover:bg-pg"
                         }`}
                       >
                         <span className={`text-xs font-semibold ${
@@ -253,7 +253,7 @@ export default function DashboardSupportPage() {
                     placeholder="이슈를 간단히 요약해주세요"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="border-[#2a2a2e] text-sm"
+                    className="border-bd text-sm"
                   />
                 </div>
 
@@ -267,7 +267,7 @@ export default function DashboardSupportPage() {
                     placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    className="min-h-[140px] resize-none border-[#2a2a2e] text-sm"
+                    className="min-h-[140px] resize-none border-bd text-sm"
                   />
                 </div>
 
@@ -278,7 +278,7 @@ export default function DashboardSupportPage() {
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((file, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-[#2a2a2e] bg-[#111114] px-2.5 py-1.5 text-xs text-slate-700">
+                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-bd bg-pg px-2.5 py-1.5 text-xs text-slate-700">
                         <FileText className="h-3 w-3 text-slate-400" />
                         <span className="max-w-[120px] truncate">{file.name}</span>
                         <span className="text-[10px] text-slate-400">({(file.size / 1024).toFixed(0)}KB)</span>
@@ -288,7 +288,7 @@ export default function DashboardSupportPage() {
                       </div>
                     ))}
                     {attachments.length < 5 && (
-                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-[#1a1a1e] px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
+                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-pn px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
                         <Paperclip className="h-3 w-3" />
                         파일 추가
                         <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
@@ -320,7 +320,7 @@ export default function DashboardSupportPage() {
         {/* 우측: 문의 이력 + 안내 */}
         <div className="space-y-5">
           {/* 문의 이력 */}
-          <Card className="border-[#2a2a2e] shadow-sm">
+          <Card className="border-bd shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function DashboardSupportPage() {
                 {MOCK_TICKETS.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="rounded-lg border border-slate-100 bg-[#111114]/50 px-3 py-2.5 hover:bg-[#111114] transition-colors cursor-pointer"
+                    className="rounded-lg border border-slate-100 bg-pg/50 px-3 py-2.5 hover:bg-pg transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <span className="text-[10px] font-mono text-slate-400">{ticket.id}</span>
@@ -379,7 +379,7 @@ export default function DashboardSupportPage() {
           </Card>
 
           {/* 운영 안내 */}
-          <Card className="border-[#2a2a2e] shadow-sm">
+          <Card className="border-bd shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-slate-100">지원 안내</CardTitle>
             </CardHeader>

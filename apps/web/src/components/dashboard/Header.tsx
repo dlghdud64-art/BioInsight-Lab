@@ -378,7 +378,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             className={`inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
               isUrgent
                 ? "text-red-400 bg-red-950/30 border border-red-800 hover:bg-red-950/50"
-                : "text-slate-400 border border-[#333338] hover:bg-[#222226]"
+                : "text-slate-400 border border-bs hover:bg-el"
             }`}
           >
             {notification.ctaLabel}
@@ -390,7 +390,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#2a2a2e] bg-[#09090b]">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-bd bg-sh">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -434,7 +434,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-[#1a1a1e] border-[#333338] focus:bg-[#1a1a1e] w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-pn border-bs focus:bg-pn w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -467,7 +467,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
               {/* ── 상단: 행동 기준 요약 ── */}
-              <div className="px-3 py-2.5 border-b border-[#333338] bg-[#1a1a1e]/50">
+              <div className="px-3 py-2.5 border-b border-bs bg-pn/50">
                 <h3 className="text-sm font-bold text-slate-100 mb-2">
                   작업 알림
                 </h3>
@@ -506,8 +506,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                       onClick={() => setTriageTab("completed")}
                       className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors ${
                         triageTab === "completed"
-                          ? "bg-[#222226] text-slate-400 ring-1 ring-slate-700"
-                          : "text-slate-500 hover:bg-[#222226]/50"
+                          ? "bg-el text-slate-400 ring-1 ring-slate-700"
+                          : "text-slate-500 hover:bg-el/50"
                       }`}
                     >
                       참고 {completedActions.length}
@@ -541,7 +541,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </div>
 
               {/* ── 하단 CTA ── */}
-              <div className="border-t border-[#333338] px-3 py-2.5 flex items-center gap-2">
+              <div className="border-t border-bs px-3 py-2.5 flex items-center gap-2">
                 <Link
                   href={`/dashboard/notifications?tab=${triageTab}`}
                   onClick={() => setIsNotificationOpen(false)}
@@ -561,7 +561,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 >
                   <button
                     type="button"
-                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-[#222226] transition-colors"
+                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-el transition-colors"
                   >
                     전체 보기
                   </button>
@@ -608,8 +608,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-[#333338]">
+              <button className="flex items-center gap-2 pl-3 border-l border-bs flex-shrink-0 px-3 py-2 rounded-lg hover:bg-el transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-bs">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="bg-blue-900/50 text-blue-400 text-xs font-semibold">
                     {user?.name
@@ -675,7 +675,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#222226] mobile-menu-button lg:hidden -mr-1"
+              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-el mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >

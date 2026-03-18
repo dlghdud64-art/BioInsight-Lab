@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<
     label: "견적 대기",
     dot: "amber",
     className: "bg-amber-50 text-amber-700 border-amber-200",
-    borderClass: "border-[#2a2a2e]",
+    borderClass: "border-bd",
   },
   quoted: {
     label: "견적 도착",
@@ -35,20 +35,20 @@ const STATUS_CONFIG: Record<
   ordered: {
     label: "발주 완료",
     dot: "slate",
-    className: "bg-[#222226] text-slate-600 border-[#2a2a2e]",
-    borderClass: "border-[#2a2a2e]",
+    className: "bg-el text-slate-600 border-bd",
+    borderClass: "border-bd",
   },
   shipping: {
     label: "배송 중",
     dot: "emerald",
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    borderClass: "border-[#2a2a2e]",
+    borderClass: "border-bd",
   },
   delivered: {
     label: "배송 완료",
     dot: "emerald",
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    borderClass: "border-[#2a2a2e]",
+    borderClass: "border-bd",
   },
 };
 
@@ -109,12 +109,12 @@ function OrderCard({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#1a1a1e] border rounded-xl shadow-sm hover:shadow-md transition-all ${config.borderClass}`}
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-pn border rounded-xl shadow-sm hover:shadow-md transition-all ${config.borderClass}`}
     >
       <div className="flex items-center gap-4 min-w-0">
         <div
           className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${
-            isQuoted ? "bg-blue-50" : "bg-[#111114]"
+            isQuoted ? "bg-blue-50" : "bg-pg"
           }`}
         >
           <FileText
@@ -170,7 +170,7 @@ function OrderCard({
             className={
               order.actionPrimary
                 ? "bg-blue-600 hover:bg-blue-700 shrink-0"
-                : "text-slate-600 border-[#2a2a2e] shrink-0"
+                : "text-slate-600 border-bd shrink-0"
             }
             asChild
           >
@@ -255,7 +255,7 @@ function OrderHistoryPageContent() {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6 bg-[#222226]/50 p-1 flex flex-wrap h-auto gap-1">
+          <TabsList className="mb-6 bg-el/50 p-1 flex flex-wrap h-auto gap-1">
             <TabsTrigger value="all">전체</TabsTrigger>
             <TabsTrigger value="pending">견적 대기</TabsTrigger>
             <TabsTrigger
@@ -335,7 +335,7 @@ function OrderHistoryPageContent() {
 
       {/* 운영 실행 현황 (deep-link로 진입 시) */}
       {entityIdParam && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-[#1a1a1e] bg-[#1a1a1e] shadow-lg p-4">
+        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-pn bg-pn shadow-lg p-4">
           <OpsExecutionContext
             entityType="ORDER"
             entityId={entityIdParam}
