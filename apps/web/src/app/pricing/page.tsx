@@ -245,15 +245,15 @@ export default function PricingPage() {
 
               {/* ── 결제 주기 토글 ── */}
               <div className="flex items-center justify-center mb-4 md:mb-12">
-                <div className="bg-slate-900 rounded-full p-0.5 md:p-1 inline-flex border border-slate-800">
+                <div className="bg-el rounded-full p-0.5 md:p-1 inline-flex border border-bd">
                   <button
                     type="button"
                     onClick={() => setIsAnnual(false)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
                       !isAnnual
-                        ? "bg-slate-800 shadow-sm text-slate-100"
-                        : "text-slate-500 hover:text-slate-300"
+                        ? "bg-pn shadow-sm text-slate-100"
+                        : "text-slate-400 hover:text-slate-300"
                     )}
                   >
                     월간
@@ -262,10 +262,10 @@ export default function PricingPage() {
                     type="button"
                     onClick={() => setIsAnnual(true)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 flex items-center gap-1 md:gap-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent flex items-center gap-1 md:gap-2",
                       isAnnual
-                        ? "bg-slate-800 shadow-sm text-slate-100"
-                        : "text-slate-500 hover:text-slate-300"
+                        ? "bg-pn shadow-sm text-slate-100"
+                        : "text-slate-400 hover:text-slate-300"
                     )}
                   >
                     연간
@@ -301,13 +301,13 @@ export default function PricingPage() {
                         }
                       }}
                       className={cn(
-                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-slate-800 bg-slate-900",
+                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-bd bg-pn",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950 bg-slate-900 border-blue-500/40",
-                        !isSelected && "hover:border-slate-700 hover:bg-slate-900/80",
-                        isRecommended && !isSelected && "border-2 border-blue-500/30 shadow-lg md:scale-105 z-10",
-                        isRecommended && isSelected && "border-2 border-blue-500 shadow-lg ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950 md:scale-105 z-10"
+                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] bg-pn border-blue-500/40",
+                        !isSelected && "hover:border-bs hover:bg-el",
+                        isRecommended && !isSelected && "border-2 border-blue-500/40 shadow-lg md:scale-105 z-10",
+                        isRecommended && isSelected && "border-2 border-blue-500/40 shadow-lg ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] md:scale-105 z-10"
                       )}
                     >
                       {plan.badge && (
@@ -323,7 +323,7 @@ export default function PricingPage() {
                           <div
                             className={cn(
                               "p-3 rounded-full transition-colors",
-                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-slate-800"
+                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-el"
                             )}
                           >
                             <Icon
@@ -344,7 +344,6 @@ export default function PricingPage() {
                           <span className="text-xl md:text-3xl font-bold text-slate-100 text-center">
                             {renderPrice(plan)}
                           </span>
-                          {/* pricePeriod는 renderPrice에서 이미 포함 */}
                         </div>
 
                         <p className="md:hidden text-[10px] font-medium text-blue-400/80">{plan.mobileHook}</p>
@@ -407,7 +406,7 @@ export default function PricingPage() {
                               "w-full font-semibold h-9 md:h-10 text-sm",
                               plan.id === "business"
                                 ? "bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
-                                : "bg-slate-200 hover:bg-el text-slate-100"
+                                : "bg-el hover:bg-st text-slate-100"
                             )}
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
                           >
@@ -417,7 +416,7 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
+                            className="w-full border-bd hover:bg-el text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -447,7 +446,7 @@ export default function PricingPage() {
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="border-b border-slate-800 sticky top-0 bg-slate-950">
+                      <tr className="border-b border-bd sticky top-0 bg-sh">
                         <th className="text-left py-2 pr-2 font-semibold text-slate-400 w-[40%]">기능</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
@@ -460,8 +459,8 @@ export default function PricingPage() {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
                             <tr key={`mcat-${index}`} className={cn(
-                              "border-t border-slate-800",
-                              item.tier === "business" ? "bg-blue-500/5" : "bg-slate-900/50"
+                              "border-t border-bd",
+                              item.tier === "business" ? "bg-blue-500/5" : "bg-el/50"
                             )}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
@@ -470,7 +469,7 @@ export default function PricingPage() {
                                     item.tier === "business" ? "text-blue-400" : "text-slate-500"
                                   )}>{item.label}</span>
                                   {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-400 bg-blue-500/10 px-1 rounded">Biz+</span>}
-                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-slate-800 px-1 rounded">Ent.</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-el px-1 rounded">Ent.</span>}
                                 </div>
                               </td>
                             </tr>
@@ -483,7 +482,7 @@ export default function PricingPage() {
                           </td>
                         );
                         return (
-                          <tr key={`mrow-${index}`} className="border-b border-slate-800/50">
+                          <tr key={`mrow-${index}`} className="border-b border-bd/50">
                             <td className="py-1.5 pr-2 text-slate-300 font-medium">{d.feature}</td>
                             {mCell(d.starter)}
                             {mCell(d.team)}
@@ -497,12 +496,12 @@ export default function PricingPage() {
                 </div>
 
                 {/* ── 데스크톱 테이블 ── */}
-                <Card className="overflow-hidden hidden md:block border-slate-800 bg-slate-900">
+                <Card className="overflow-hidden hidden md:block border-bd bg-pn">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-slate-900 border-b border-slate-800">
+                          <TableRow className="bg-pn border-b border-bd">
                             <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-300">기능</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
@@ -519,8 +518,8 @@ export default function PricingPage() {
                                 <TableRow
                                   key={`cat-${index}`}
                                   className={cn(
-                                    "border-t border-slate-800",
-                                    isBusinessTier ? "bg-blue-500/5" : "bg-slate-900/70"
+                                    "border-t border-bd",
+                                    isBusinessTier ? "bg-blue-500/5" : "bg-el/50"
                                   )}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
@@ -529,7 +528,7 @@ export default function PricingPage() {
                                         {item.label}
                                       </span>
                                       {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-el border border-bd px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -539,7 +538,7 @@ export default function PricingPage() {
                             const renderCell = (value: boolean | string) =>
                               typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
                             return (
-                              <TableRow key={index} className="hover:bg-slate-800/40 transition-colors border-b border-slate-800/50">
+                              <TableRow key={index} className="hover:bg-el/40 transition-colors border-b border-bd/50">
                                 <TableCell className="py-2.5 pl-5 text-sm text-slate-300 font-medium">{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
@@ -561,7 +560,7 @@ export default function PricingPage() {
       </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-sh/95 backdrop-blur-sm border-t border-bd">
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -587,7 +586,7 @@ export default function PricingPage() {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 text-xs border-slate-700 text-slate-400 hover:text-slate-200 bg-transparent"
+              className="h-8 px-3 text-xs border-bd text-slate-400 hover:text-slate-200 bg-transparent"
               onClick={() => (window.location.href = "/support")}
             >
               문의
