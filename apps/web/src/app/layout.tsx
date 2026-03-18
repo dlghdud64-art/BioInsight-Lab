@@ -7,7 +7,7 @@ import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
-import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
+
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 
 export const metadata: Metadata = {
@@ -92,7 +92,7 @@ export default function RootLayout({
                 </QRScannerProviderWrapper>
                 <Toaster />
                 <CompareFlowGuard />
-                <FloatingThemeToggle />
+
                 <Analytics />
               </QueryProvider>
             </AuthSessionProvider>

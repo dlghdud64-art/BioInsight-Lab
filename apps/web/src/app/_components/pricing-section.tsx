@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-8 md:py-10 border-b border-[#252a32] bg-[#0e1117] scroll-mt-14">
+    <section id="pricing" className="py-8 md:py-10 border-b border-slate-800 scroll-mt-14">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
           요금 & 도입
@@ -13,18 +13,18 @@ export function PricingSection() {
         <div className="md:grid md:grid-cols-3 md:gap-4 md:items-start overflow-x-auto snap-x snap-mandatory scroll-pl-4 scroll-pr-4 flex md:block gap-3 pb-2 md:pb-4">
 
           {/* Starter (Free) */}
-          <Card className="border border-[#252a32] bg-[#141820] rounded-lg min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
+          <Card className="border border-slate-800 bg-slate-900 rounded-lg min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <CardTitle className="text-sm text-slate-500">Starter</CardTitle>
-                <Badge variant="outline" className="text-xs text-slate-500 border-[#2a2e36]">무료</Badge>
+                <Badge variant="outline" className="text-xs text-slate-500 border-slate-700">무료</Badge>
               </div>
               <CardDescription className="text-xs text-slate-500">
                 체험용 · 로그인 없이 시작
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
-              <div className="text-xs font-semibold text-slate-500 bg-[#1a1e24] rounded px-2 py-1 inline-block">
+              <div className="text-xs font-semibold text-slate-500 bg-slate-800 rounded px-2 py-1 inline-block">
                 등록 품목 최대 10개 (체험용)
               </div>
               <ul className="space-y-1 text-xs text-slate-500 list-disc list-inside">
@@ -34,7 +34,7 @@ export function PricingSection() {
                 <li>로그인 없이 체험 가능</li>
               </ul>
               <Link href="/auth/signin?callbackUrl=/dashboard" className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full text-xs text-slate-400 border-[#2a2e36] hover:bg-[#1a1e24] bg-transparent">
+                <Button variant="outline" size="sm" className="w-full text-xs text-slate-400 border-slate-700 hover:bg-slate-800 bg-transparent">
                   무료로 찍어보기
                 </Button>
               </Link>
@@ -42,7 +42,7 @@ export function PricingSection() {
           </Card>
 
           {/* Team */}
-          <Card className="border border-[#252a32] bg-[#141820] rounded-lg hover:border-[#3a3e46] hover:bg-[#181c24] transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
+          <Card className="border border-slate-800 bg-slate-900 rounded-lg hover:border-slate-700 transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <CardTitle className="text-sm text-slate-100">Team 플랜</CardTitle>
@@ -52,7 +52,7 @@ export function PricingSection() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
-              <div className="text-xs font-semibold text-slate-300 bg-[#1a1e24] rounded px-2 py-1 inline-block">
+              <div className="text-xs font-semibold text-slate-300 bg-slate-800 rounded px-2 py-1 inline-block">
                 등록 품목 최대 30개
               </div>
               <ul className="space-y-1 text-xs text-slate-400 list-disc list-inside">
@@ -62,21 +62,21 @@ export function PricingSection() {
                 <li>Seat 기반 과금</li>
               </ul>
               <Link href="/pricing" className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full text-xs border-[#2a2e36] text-slate-400 hover:bg-[#1a1e24] bg-transparent">
+                <Button variant="outline" size="sm" className="w-full text-xs border-slate-700 text-slate-400 hover:bg-slate-800 bg-transparent">
                   가볍게 시작하기
                 </Button>
               </Link>
             </CardContent>
           </Card>
 
-          {/* Business/Organization — 강조 카드 */}
+          {/* Business/Organization */}
           <div className="relative min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink md:scale-105 md:z-10 pt-4 md:pt-0">
             <div className="absolute top-1 md:-top-3 left-1/2 -translate-x-1/2 z-10">
               <Badge className="bg-blue-600 text-white text-xs px-3 py-0.5 shadow-md whitespace-nowrap">
                 추천
               </Badge>
             </div>
-            <Card className="border-2 border-blue-500/30 bg-[#141820] rounded-lg shadow-xl shadow-blue-500/5 ring-2 ring-blue-500/20 ring-offset-2 ring-offset-[#0e1117] h-full">
+            <Card className="border-2 border-blue-500/30 bg-slate-900 rounded-lg shadow-lg ring-2 ring-blue-500/20 ring-offset-2 ring-offset-slate-950 h-full">
               <CardHeader className="p-3 pt-5">
                 <div className="flex items-center justify-between mb-1">
                   <CardTitle className="text-sm text-slate-100">Business / Enterprise</CardTitle>

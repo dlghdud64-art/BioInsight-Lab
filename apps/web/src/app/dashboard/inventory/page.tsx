@@ -35,11 +35,13 @@ import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { AddInventoryModal } from "@/components/inventory/AddInventoryModal";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Info, FileText, BellRing, Save, Sparkles } from "lucide-react";
+import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
+import { PriorityActionQueue } from "@/components/inventory/priority-action-queue";
+import { InventoryContextPanel, type ContextPanelItem } from "@/components/inventory/inventory-context-panel";
 
 interface ProductInventory {
   id: string;
@@ -153,6 +155,35 @@ function InventoryPageContent() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
+
+  // ── Context Panel (right-side detail drawer) state ──
+  const [contextPanelItem, setContextPanelItem] = useState<ContextPanelItem | null>(null);
+  const contextPanelOpen = contextPanelItem !== null;
+
+  const openContextPanel = (inv: ProductInventory) => {
+    setContextPanelItem({
+      id: inv.id,
+      productId: inv.productId,
+      productName: inv.product.name,
+      brand: inv.product.brand,
+      catalogNumber: inv.product.catalogNumber,
+      currentQuantity: inv.currentQuantity,
+      unit: inv.unit,
+      safetyStock: inv.safetyStock,
+      lotNumber: inv.lotNumber,
+      expiryDate: inv.expiryDate,
+      location: inv.location,
+      storageCondition: inv.storageCondition,
+      hazard: inv.hazard,
+      testPurpose: inv.testPurpose,
+      vendor: inv.vendor,
+      deliveryPeriod: inv.deliveryPeriod,
+      inUseOrUnopened: inv.inUseOrUnopened,
+      averageDailyUsage: inv.averageDailyUsage,
+      leadTimeDays: inv.leadTimeDays,
+      notes: inv.notes,
+    });
+  };
 
   // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
@@ -923,7 +954,9 @@ function InventoryPageContent() {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex gap-0">
+      {/* Main content area */}
+      <div className={`flex-1 min-w-0 space-y-4 sm:space-y-6 transition-all ${contextPanelOpen ? "max-w-[calc(100%-420px)]" : "max-w-7xl mx-auto"}`}>
         {/* 상단 타이틀 및 액션 버튼 */}
         <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
           <div className="flex flex-col space-y-1 sm:space-y-2">
@@ -1073,12 +1106,19 @@ function InventoryPageContent() {
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  점검 사항
+                  운영 현황
                   {issuesCount > 0 ? (
                     <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 font-medium px-1.5 text-[11px] shadow-sm ring-2 ring-white/50 dark:bg-rose-950/50 dark:text-rose-400 animate-in zoom-in-95 duration-300 ml-2">
                       {issuesCount}
                     </span>
                   ) : null}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="lot-tracking"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <GitBranch className="w-4 h-4" />
+                  <span className="hidden sm:inline">Lot </span>추적
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1284,11 +1324,16 @@ function InventoryPageContent() {
                       });
                     }}
                     onDetailClick={(inventory) => {
-                      setSelectedItem(inventory);
-                      setSheetSafetyStock(
-                        String(inventory.safetyStock ?? inventory.minOrderQty ?? 1)
-                      );
-                      setIsSheetOpen(true);
+                      // Open context panel (right-side) on desktop; Sheet on mobile
+                      if (typeof window !== "undefined" && window.innerWidth >= 1280) {
+                        openContextPanel(inventory);
+                      } else {
+                        setSelectedItem(inventory);
+                        setSheetSafetyStock(
+                          String(inventory.safetyStock ?? inventory.minOrderQty ?? 1)
+                        );
+                        setIsSheetOpen(true);
+                      }
                     }}
                     onRestock={(inventory) => {
                       setRestockItem(inventory);
@@ -1329,68 +1374,83 @@ function InventoryPageContent() {
             )}
           </TabsContent>
 
-            {/* 2. 점검 사항 (대시보드 전용 뷰) */}
-            <TabsContent value="overview" className="m-0 p-6 space-y-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                    전체 재고
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/40">
-                    <Package className="h-4 w-4 -translate-y-[1px] text-blue-600 dark:text-blue-400" />
+            {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
+            <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
+            {/* KPI Summary Strip — dark cockpit theme */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-[#252a32] bg-[#141820] px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-slate-500">전체 재고</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Package className="h-3 w-3 text-blue-400" />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    {totalInventoryCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-slate-100">
+                  {totalInventoryCount}
+                  <span className="ml-1 text-sm font-normal text-slate-600">건</span>
+                </div>
+              </div>
 
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-red-600 dark:text-red-400">
-                    부족/품절
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
-                    <AlertTriangle className="h-4 w-4 -translate-y-[1px] text-red-600 dark:text-red-400" />
+              <div className="rounded-xl border border-red-500/20 bg-[#141820] px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-red-400/80">부족/품절</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-500/10">
+                    <AlertTriangle className="h-3 w-3 text-red-400" />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
-                    {lowOrOutOfStockCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-red-400">
+                  {lowOrOutOfStockCount}
+                  <span className="ml-1 text-sm font-normal text-slate-600">건</span>
+                </div>
+              </div>
 
-              <Card className="flex-1 shadow-sm border-slate-100 dark:border-slate-800 border-orange-100 bg-orange-50/10 dark:border-orange-900/50 dark:bg-orange-950/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                    폐기 임박
-                  </CardTitle>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40">
-                    <Calendar className="h-4 w-4 -translate-y-[1px] text-orange-600 dark:text-orange-400" />
+              <div className="rounded-xl border border-amber-500/20 bg-[#141820] px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-amber-400/80">만료 임박</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
+                    <Calendar className="h-3 w-3 text-amber-400" />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                    {expiringSoonCount}
-                    <span className="ml-1 text-lg font-normal text-slate-500">개</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-amber-400">
+                  {expiringSoonCount}
+                  <span className="ml-1 text-sm font-normal text-slate-600">건</span>
+                </div>
+              </div>
             </div>
 
-            <Card className="shadow-sm border-slate-100 dark:border-slate-800">
+            {/* Priority Action Queue */}
+            <PriorityActionQueue
+              onAction={(queueItem) => {
+                toast({
+                  title: queueItem.actionLabel,
+                  description: `${queueItem.productName}: ${queueItem.recommendedAction}`,
+                });
+              }}
+              onItemClick={(queueItem) => {
+                // Find matching inventory item and open context panel
+                const match = displayInventories.find(
+                  (inv) => inv.product.name === queueItem.productName
+                );
+                if (match) {
+                  if (typeof window !== "undefined" && window.innerWidth >= 1280) {
+                    openContextPanel(match);
+                  } else {
+                    setSelectedItem(match);
+                    setSheetSafetyStock(String(match.safetyStock ?? match.minOrderQty ?? 1));
+                    setIsSheetOpen(true);
+                  }
+                }
+              }}
+            />
+
+            {/* 조치 필요 항목 */}
+            <Card className="shadow-sm border-[#252a32] bg-[#141820]">
               <CardHeader>
-                <CardTitle className="flex items-center text-lg text-red-600 dark:text-red-400">
+                <CardTitle className="flex items-center text-lg text-red-400">
                   <Zap className="mr-2 h-5 w-5" />
                   조치 필요 항목
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-500">
                   재고 부족, 유효기간 임박, 위치 미지정 항목입니다. 아래 조치 버튼으로 바로 처리하세요.
                 </CardDescription>
               </CardHeader>
@@ -1754,8 +1814,89 @@ function InventoryPageContent() {
               </CardContent>
             </Card>
             </TabsContent>
+
+            {/* 3. Lot 추적 (placeholder) */}
+            <TabsContent value="lot-tracking" className="m-0 p-4 sm:p-6 space-y-5">
+              <div className="rounded-xl border border-[#252a32] bg-[#141820] px-6 py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 mx-auto mb-4">
+                  <GitBranch className="h-6 w-6 text-violet-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-200 mb-2">Lot 추적</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Lot별 입고/사용/폐기 이력을 시간순으로 추적합니다.
+                  동일 제품의 여러 Lot을 한눈에 비교하고, Lot별 상태를 실시간으로 확인할 수 있습니다.
+                </p>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-lg mx-auto">
+                  <div className="rounded-lg border border-[#252a32] bg-[#1a1e26] px-3 py-2.5">
+                    <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">활성 Lot</p>
+                    <p className="text-xl font-bold text-slate-200">{displayInventories.filter((i) => i.lotNumber).length}</p>
+                  </div>
+                  <div className="rounded-lg border border-amber-500/20 bg-[#1a1e26] px-3 py-2.5">
+                    <p className="text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">임박 Lot</p>
+                    <p className="text-xl font-bold text-amber-400">{expiringSoonCount}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#252a32] bg-[#1a1e26] px-3 py-2.5">
+                    <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">위치 미지정</p>
+                    <p className="text-xl font-bold text-slate-400">{displayInventories.filter((i) => !i.location).length}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="mt-6 border-violet-500/30 text-violet-400 text-xs">
+                  P2 개발 예정
+                </Badge>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
+
+        </div>{/* end main content */}
+
+        {/* ── Context Panel (right-side operational detail) ── */}
+        {contextPanelOpen && contextPanelItem && (
+          <InventoryContextPanel
+            item={contextPanelItem}
+            isOpen={contextPanelOpen}
+            onClose={() => setContextPanelItem(null)}
+            onReorder={(cpItem) => {
+              const match = displayInventories.find((inv) => inv.id === cpItem.id);
+              if (match) {
+                aiPanel.preparePanel({
+                  id: match.id,
+                  productId: match.productId,
+                  productName: match.product.name,
+                  brand: match.product.brand || undefined,
+                  catalogNumber: match.product.catalogNumber || undefined,
+                  currentQuantity: match.currentQuantity,
+                  unit: match.unit || undefined,
+                  safetyStock: match.safetyStock || undefined,
+                  minOrderQty: match.minOrderQty || undefined,
+                  location: match.location || undefined,
+                  expiryDate: match.expiryDate || undefined,
+                  lotNumber: match.lotNumber || undefined,
+                  autoReorderEnabled: match.autoReorderEnabled || false,
+                  averageDailyUsage: match.averageDailyUsage || undefined,
+                  leadTimeDays: match.leadTimeDays || undefined,
+                  lastInspectedAt: undefined,
+                });
+              }
+              setContextPanelItem(null);
+            }}
+            onEdit={(cpItem) => {
+              const match = displayInventories.find((inv) => inv.id === cpItem.id);
+              if (match) {
+                setEditingInventory(match);
+                setIsDialogOpen(true);
+              }
+              setContextPanelItem(null);
+            }}
+            onDispose={(cpItem) => {
+              toast({
+                title: "폐기 검토",
+                description: `${cpItem.productName} 폐기 절차를 확인하세요.`,
+              });
+            }}
+          />
+        )}
+        </div>{/* end flex row */}
 
         {/* 우측 상세 Sheet (Drawer) */}
         <Sheet open={isSheetOpen} onOpenChange={(open) => {
@@ -2944,7 +3085,6 @@ function InventoryPageContent() {
           </TabsContent>
         </Tabs>
         )}
-      </div>
 
       {/* 모바일 하단 고정 액션 — 재고 등록 & 차감 */}
       <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 dark:bg-[#0f1623]/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-800/50 px-4 py-2.5 safe-area-bottom">

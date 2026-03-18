@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCTASection() {
   return (
-    <section className="py-16 md:py-20 bg-slate-950 border-t border-slate-800">
+    <section className="py-16 md:py-20 bg-[#111318] border-t border-[#2e3440]">
       <div className="mx-auto max-w-3xl px-4 md:px-6 text-center">
         <div className="space-y-3 mb-8">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
@@ -30,7 +30,7 @@ export function FinalCTASection() {
             </Button>
           </Link>
           <Link href="/support" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto h-11 px-8 border-slate-700 text-slate-400 hover:bg-slate-900 font-medium text-sm">
+            <Button variant="outline" className="w-full sm:w-auto h-11 px-8 border-[#363d4a] text-slate-400 hover:bg-[#1a1e26] font-medium text-sm">
               도입 문의
             </Button>
           </Link>

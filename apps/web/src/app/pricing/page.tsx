@@ -17,7 +17,6 @@ const BUSINESS_MONTHLY = 149000;
 
 export type PlanId = "starter" | "team" | "business" | "enterprise";
 
-// ── 비교 테이블 row 타입 ────────────────────────────────────────────
 type ComparisonItem =
   | { isCategoryHeader: true; label: string; tier?: "team" | "business" | "enterprise" }
   | {
@@ -38,7 +37,6 @@ export default function PricingPage() {
   const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.9);
   const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.9);
 
-  // ── 플랜 정의 ─────────────────────────────────────────────────────
   const plans = [
     {
       id: "starter" as PlanId,
@@ -139,39 +137,33 @@ export default function PricingPage() {
     },
   ];
 
-  // ── 비교 테이블 데이터 ─────────────────────────────────────────────
   const comparisonFeatures: ComparisonItem[] = [
     { isCategoryHeader: true, label: "검색 및 비교" },
     { feature: "기본 검색 및 비교", starter: true, team: true, business: true, enterprise: true },
     { feature: "확장 검색 (제조사·CAS No.·프로토콜)", starter: false, team: true, business: true, enterprise: true },
     { feature: "대체품 추천", starter: false, team: true, business: true, enterprise: true },
-
     { isCategoryHeader: true, label: "협업" },
     { feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한" },
     { feature: "팀원 공유 재고", starter: false, team: true, business: true, enterprise: true },
     { feature: "후보 품목 공유", starter: false, team: true, business: true, enterprise: true },
     { feature: "품목 등록 수", starter: "10개", team: "50개", business: "무제한", enterprise: "무제한" },
-
     { isCategoryHeader: true, label: "요청 및 공유" },
     { feature: "기본 견적 요청", starter: true, team: true, business: true, enterprise: true },
     { feature: "구매 요청 워크플로우", starter: false, team: true, business: true, enterprise: true },
     { feature: "요청 공유 링크", starter: false, team: true, business: true, enterprise: true },
     { feature: "엑셀 업로드", starter: false, team: true, business: true, enterprise: true },
     { feature: "CSV 내보내기", starter: false, team: true, business: true, enterprise: true },
-
     { isCategoryHeader: true, label: "운영 및 통제", tier: "business" },
     { feature: "전자결재 승인 라인", starter: false, team: false, business: true, enterprise: true },
     { feature: "예산 통합 관리", starter: false, team: false, business: true, enterprise: true },
     { feature: "재고 소진 알림", starter: false, team: false, business: true, enterprise: true },
     { feature: "관리자 운영 대시보드", starter: false, team: false, business: true, enterprise: true },
     { feature: "팀원 권한 관리 (RBAC)", starter: false, team: false, business: true, enterprise: true },
-
     { isCategoryHeader: true, label: "문서 및 이력 관리", tier: "business" },
     { feature: "Audit Trail", starter: false, team: false, business: true, enterprise: true },
     { feature: "MSDS 자동 연동", starter: false, team: false, business: true, enterprise: true },
     { feature: "Lot 관리", starter: false, team: false, business: true, enterprise: true },
     { feature: "구매 이력 추적", starter: false, team: false, business: true, enterprise: true },
-
     { isCategoryHeader: true, label: "보안 / 연동", tier: "enterprise" },
     { feature: "데이터 암호화 (저장/전송)", starter: true, team: true, business: true, enterprise: true },
     { feature: "ERP API 연동", starter: false, team: false, business: false, enterprise: true },
@@ -236,7 +228,7 @@ export default function PricingPage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="w-full bg-[#0c0f13]">
+      <div className="w-full">
         <div className="pt-14 md:pt-20 min-h-screen">
           <div className="container mx-auto px-4 py-6 md:py-16">
             <div className="max-w-7xl mx-auto">
@@ -253,14 +245,14 @@ export default function PricingPage() {
 
               {/* ── 결제 주기 토글 ── */}
               <div className="flex items-center justify-center mb-4 md:mb-12">
-                <div className="bg-[#1a1e24] rounded-full p-0.5 md:p-1 inline-flex border border-[#2a2e36]">
+                <div className="bg-slate-900 rounded-full p-0.5 md:p-1 inline-flex border border-slate-800">
                   <button
                     type="button"
                     onClick={() => setIsAnnual(false)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0f13]",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
                       !isAnnual
-                        ? "bg-[#252a32] shadow-sm text-slate-100"
+                        ? "bg-slate-800 shadow-sm text-slate-100"
                         : "text-slate-500 hover:text-slate-300"
                     )}
                   >
@@ -270,9 +262,9 @@ export default function PricingPage() {
                     type="button"
                     onClick={() => setIsAnnual(true)}
                     className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0f13] flex items-center gap-1 md:gap-2",
+                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 flex items-center gap-1 md:gap-2",
                       isAnnual
-                        ? "bg-[#252a32] shadow-sm text-slate-100"
+                        ? "bg-slate-800 shadow-sm text-slate-100"
                         : "text-slate-500 hover:text-slate-300"
                     )}
                   >
@@ -309,16 +301,15 @@ export default function PricingPage() {
                         }
                       }}
                       className={cn(
-                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-[#252a32] bg-[#141820]",
+                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-slate-800 bg-slate-900",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0c0f13] bg-blue-500/5 border-blue-500/40",
-                        !isSelected && "hover:border-[#3a3e46] hover:bg-[#181c24]",
-                        isRecommended && !isSelected && "border-2 border-blue-500/30 shadow-2xl shadow-blue-500/5 md:scale-105 z-10",
-                        isRecommended && isSelected && "border-2 border-blue-500 shadow-2xl shadow-blue-500/10 ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0c0f13] md:scale-105 z-10"
+                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950 bg-slate-900 border-blue-500/40",
+                        !isSelected && "hover:border-slate-700 hover:bg-slate-900/80",
+                        isRecommended && !isSelected && "border-2 border-blue-500/30 shadow-lg md:scale-105 z-10",
+                        isRecommended && isSelected && "border-2 border-blue-500 shadow-lg ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950 md:scale-105 z-10"
                       )}
                     >
-                      {/* 뱃지 */}
                       {plan.badge && (
                         <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 z-10">
                           <Badge className="bg-blue-600 text-white px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-bold shadow-lg whitespace-nowrap">
@@ -328,30 +319,27 @@ export default function PricingPage() {
                       )}
 
                       <CardHeader className="text-center pb-1 md:pb-4 px-2.5 md:px-6 pt-3 md:pt-6">
-                        {/* 아이콘 — 모바일 숨김 */}
                         <div className="hidden md:flex justify-center mb-3">
                           <div
                             className={cn(
                               "p-3 rounded-full transition-colors",
-                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-[#1a1e24]"
+                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-slate-800"
                             )}
                           >
                             <Icon
                               className={cn(
                                 "h-6 w-6",
-                                isSelected || isRecommended ? "text-blue-400" : "text-slate-500"
+                                isSelected || isRecommended ? "text-blue-400" : "text-slate-400"
                               )}
                             />
                           </div>
                         </div>
 
-                        {/* 플랜명 + 티어 레이블 */}
                         <CardTitle className="text-lg md:text-2xl font-bold mb-0.5 text-slate-100">{plan.name}</CardTitle>
                         <p className="text-[10px] md:text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">
                           {plan.tagline}
                         </p>
 
-                        {/* 가격 */}
                         <div className="flex flex-col items-center gap-0.5 mb-1 md:mb-3 min-h-[4rem] md:min-h-[5rem] overflow-hidden justify-center">
                           <span className="text-xl md:text-3xl font-bold text-slate-100 text-center">
                             {renderPrice(plan)}
@@ -361,7 +349,6 @@ export default function PricingPage() {
                           )}
                         </div>
 
-                        {/* 모바일: 핵심 전환 이유 1줄 / 데스크톱: 풀 설명 */}
                         <p className="md:hidden text-[10px] font-medium text-blue-400/80">{plan.mobileHook}</p>
                         <CardDescription className="hidden md:block text-sm text-slate-400 leading-relaxed">
                           {plan.description}
@@ -369,7 +356,6 @@ export default function PricingPage() {
                       </CardHeader>
 
                       <CardContent className="flex-1 flex flex-col pt-0 px-2.5 md:px-6 pb-3 md:pb-6" onClick={(e) => e.stopPropagation()}>
-                        {/* 기능 목록 */}
                         <ul className="space-y-2 md:space-y-3 mb-3 md:mb-6 flex-1">
                           {plan.features.slice(0, isExpanded ? undefined : MOBILE_FEATURE_LIMIT).map((feature, index) => (
                             <li key={index} className={cn(
@@ -398,7 +384,6 @@ export default function PricingPage() {
                           ))}
                         </ul>
 
-                        {/* 모바일 기능 더보기 토글 */}
                         {hasMore && (
                           <button
                             type="button"
@@ -418,7 +403,6 @@ export default function PricingPage() {
                           </button>
                         )}
 
-                        {/* CTA 버튼 */}
                         {isSelected ? (
                           <Button
                             className={cn(
@@ -435,7 +419,7 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-[#2a2e36] hover:bg-[#1a1e24] text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
+                            className="w-full border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -461,15 +445,15 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                {/* ── 모바일: 컴팩트 테이블 ── */}
+                {/* ── 모바일 테이블 ── */}
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="border-b border-[#252a32] sticky top-0 bg-[#0c0f13]">
+                      <tr className="border-b border-slate-800 sticky top-0 bg-slate-950">
                         <th className="text-left py-2 pr-2 font-semibold text-slate-400 w-[40%]">기능</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
-                        <th className="text-center py-2 px-1 font-semibold text-blue-400 bg-blue-500/5 w-[15%]">Biz</th>
+                        <th className="text-center py-2 px-1 font-semibold text-blue-400 w-[15%]">Biz</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Ent.</th>
                       </tr>
                     </thead>
@@ -478,17 +462,17 @@ export default function PricingPage() {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
                             <tr key={`mcat-${index}`} className={cn(
-                              "border-t border-[#252a32]",
-                              item.tier === "business" ? "bg-blue-500/5" : item.tier === "enterprise" ? "bg-[#181c24]" : "bg-[#141820]"
+                              "border-t border-slate-800",
+                              item.tier === "business" ? "bg-blue-500/5" : "bg-slate-900/50"
                             )}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
                                   <span className={cn(
                                     "text-[10px] font-bold uppercase tracking-wider",
-                                    item.tier === "business" ? "text-blue-400" : item.tier === "enterprise" ? "text-slate-500" : "text-slate-500"
+                                    item.tier === "business" ? "text-blue-400" : "text-slate-500"
                                   )}>{item.label}</span>
                                   {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-400 bg-blue-500/10 px-1 rounded">Biz+</span>}
-                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-[#252a32] px-1 rounded">Ent.</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-slate-800 px-1 rounded">Ent.</span>}
                                 </div>
                               </td>
                             </tr>
@@ -497,11 +481,11 @@ export default function PricingPage() {
                         const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                         const mCell = (val: boolean | string, highlight?: boolean) => (
                           <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-500/5")}>
-                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-400" /> : <span className="text-slate-600">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
+                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-400" /> : <span className="text-slate-700">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
                           </td>
                         );
                         return (
-                          <tr key={`mrow-${index}`} className="border-b border-[#1a1e24]">
+                          <tr key={`mrow-${index}`} className="border-b border-slate-800/50">
                             <td className="py-1.5 pr-2 text-slate-300 font-medium">{d.feature}</td>
                             {mCell(d.starter)}
                             {mCell(d.team)}
@@ -514,17 +498,17 @@ export default function PricingPage() {
                   </table>
                 </div>
 
-                {/* ── 데스크톱: 기존 테이블 ── */}
-                <Card className="overflow-hidden hidden md:block border-[#252a32] bg-[#141820]">
+                {/* ── 데스크톱 테이블 ── */}
+                <Card className="overflow-hidden hidden md:block border-slate-800 bg-slate-900">
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-[#181c24] border-b border-[#252a32]">
+                          <TableRow className="bg-slate-900 border-b border-slate-800">
                             <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-300">기능</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
-                            <TableHead className="text-center font-semibold py-3 bg-blue-500/5 text-blue-400">Business</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-blue-400">Business</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Enterprise</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -537,17 +521,17 @@ export default function PricingPage() {
                                 <TableRow
                                   key={`cat-${index}`}
                                   className={cn(
-                                    "border-t border-[#252a32]",
-                                    isBusinessTier ? "bg-blue-500/5" : isEnterpriseTier ? "bg-[#181c24]" : "bg-[#141820]"
+                                    "border-t border-slate-800",
+                                    isBusinessTier ? "bg-blue-500/5" : "bg-slate-900/70"
                                   )}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
-                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : isEnterpriseTier ? "text-slate-500" : "text-slate-500")}>
+                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : "text-slate-500")}>
                                         {item.label}
                                       </span>
                                       {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-[#252a32] border border-[#2a2e36] px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -555,9 +539,9 @@ export default function PricingPage() {
                             }
                             const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-600 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
                             return (
-                              <TableRow key={index} className="hover:bg-[#1a1e24] transition-colors border-b border-[#1a1e24]">
+                              <TableRow key={index} className="hover:bg-slate-800/40 transition-colors border-b border-slate-800/50">
                                 <TableCell className="py-2.5 pl-5 text-sm text-slate-300 font-medium">{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
@@ -579,7 +563,7 @@ export default function PricingPage() {
       </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0c0f13]/95 backdrop-blur-sm border-t border-[#252a32] shadow-[0_-4px_12px_rgba(0,0,0,0.3)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800">
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -605,7 +589,7 @@ export default function PricingPage() {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 text-xs border-[#2a2e36] text-slate-400 hover:text-slate-200 bg-transparent"
+              className="h-8 px-3 text-xs border-slate-700 text-slate-400 hover:text-slate-200 bg-transparent"
               onClick={() => (window.location.href = "/support")}
             >
               문의
@@ -618,7 +602,7 @@ export default function PricingPage() {
             <p className="text-base font-semibold text-slate-100">
               현재 선택된 플랜
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               플랜을 선택 후 바로 시작하거나 도입 문의를 남겨주세요.
             </p>
           </div>
