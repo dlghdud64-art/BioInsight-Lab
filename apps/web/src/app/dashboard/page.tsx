@@ -291,18 +291,25 @@ export default function DashboardPage() {
 
       {/* --- Empty State --- */}
       {!hasAnyData && !statsLoading && (
-        <div className="rounded-xl bg-el border border-bd border-dashed p-6 md:p-8 text-center space-y-3">
-          <Package className="h-8 w-8 text-slate-500 mx-auto" />
-          <div>
-            <p className="text-sm font-semibold text-slate-200">현재 등록된 품목이 없습니다</p>
-            <p className="text-xs text-slate-400 mt-1">품목을 등록하면 재고 현황, 부족 알림, 지출 분석이 활성화됩니다</p>
+        <div className="rounded-xl bg-pn border border-bd border-dashed p-5 md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">운영 시작 가이드</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { step: "1", label: "품목 등록", desc: "시약·장비 데이터를 등록하세요", href: "/dashboard/inventory", icon: <Plus className="h-4 w-4 text-emerald-400" /> },
+              { step: "2", label: "비교 시작", desc: "벤더별 스펙·가격을 비교하세요", href: "/test/compare", icon: <GitCompare className="h-4 w-4 text-indigo-400" /> },
+              { step: "3", label: "견적 요청", desc: "공급사에 견적을 요청하세요", href: "/test/quote", icon: <FileText className="h-4 w-4 text-violet-400" /> },
+              { step: "4", label: "재고 연결", desc: "입고 후 재고를 자동 연결하세요", href: "/dashboard/inventory", icon: <Package className="h-4 w-4 text-blue-400" /> },
+            ].map((item) => (
+              <Link key={item.step} href={item.href} className="group bg-el border border-bd rounded-lg p-3 hover:bg-st transition-colors">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold text-slate-500 bg-st rounded px-1.5 py-0.5">{item.step}</span>
+                  {item.icon}
+                </div>
+                <p className="text-xs font-semibold text-slate-200">{item.label}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+              </Link>
+            ))}
           </div>
-          <Link href="/dashboard/inventory">
-            <Button size="sm" className="mt-2 gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              시작하기
-            </Button>
-          </Link>
         </div>
       )}
 
