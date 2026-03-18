@@ -28,7 +28,10 @@ export default function DashboardPage() {
       const headers: Record<string, string> = {};
       if (guestKey) headers["x-guest-key"] = guestKey;
       const response = await fetch("/api/dashboard/stats", { headers });
-      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+      if (!response.ok) {
+        console.warn("[dashboard] stats API failed:", response.status);
+        return null; // graceful fallback — 빈 데이터로 렌더링
+      }
       return response.json();
     },
     enabled: status === "authenticated",
@@ -36,7 +39,7 @@ export default function DashboardPage() {
     gcTime: 15 * 60 * 1000,      // 15분간 GC 방지
   });
 
-  if (status === "loading" || statsLoading) {
+  if (status === "loading") {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
         <div className="h-6 w-48 rounded bg-el animate-pulse" />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,12 +38,12 @@ import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-reac
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
-const OpsExecutionContext = lazy(() => import("@/components/ops/ops-execution-context").then(m => ({ default: m.OpsExecutionContext })));
-const PriorityActionQueue = lazy(() => import("@/components/inventory/priority-action-queue").then(m => ({ default: m.PriorityActionQueue })));
-const InventoryContextPanel = lazy(() => import("@/components/inventory/inventory-context-panel").then(m => ({ default: m.InventoryContextPanel })));
-const StorageLocationView = lazy(() => import("@/components/inventory/storage-location-view").then(m => ({ default: m.StorageLocationView })));
-const InventoryFlowView = lazy(() => import("@/components/inventory/inventory-flow-view").then(m => ({ default: m.InventoryFlowView })));
-const MobileInventoryView = lazy(() => import("@/components/inventory/mobile-inventory-view").then(m => ({ default: m.MobileInventoryView })));
+const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then(m => m.OpsExecutionContext), { ssr: false });
+const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
+const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
+const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then(m => m.StorageLocationView), { ssr: false });
+const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then(m => m.InventoryFlowView), { ssr: false });
+const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then(m => m.MobileInventoryView), { ssr: false });
 type ContextPanelItem = { id: string; productId: string; currentQuantity: number; unit: string; safetyStock: number | null; location: string | null; expiryDate: string | null; notes: string | null; product: { id: string; name: string; brand: string | null; catalogNumber: string | null; }; };
 
 interface ProductInventory {
