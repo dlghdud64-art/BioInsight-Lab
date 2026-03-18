@@ -3,6 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  generateBuildId: () => 'v20260318',
 
   // pdf-parse / pdfjs-dist는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
   // pdfjs-dist: pdf-parse v2의 종속 라이브러리 (번들링 시 DOM API 참조 오류 방지)
