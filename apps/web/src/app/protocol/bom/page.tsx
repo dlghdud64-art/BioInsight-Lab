@@ -683,8 +683,8 @@ export default function ProtocolBOMPage() {
               </Card>
             ) : pdfParseError && !extractionResult ? (
               /* ── 분석 실패 ── */
-              <Card className="shadow-none border-amber-800 bg-pn h-full">
-                <CardContent className="p-5 flex flex-col items-center justify-center min-h-[280px] text-center space-y-4">
+              <div className="rounded-xl border border-dashed border-bd bg-el h-full">
+                <div className="p-5 flex flex-col items-center justify-center min-h-[280px] text-center space-y-4">
                   <div className="w-12 h-12 rounded-full bg-amber-900/40 flex items-center justify-center">
                     <AlertTriangle className="h-6 w-6 text-amber-500" />
                   </div>
@@ -692,6 +692,7 @@ export default function ProtocolBOMPage() {
                     <p className="text-sm font-semibold text-slate-200">PDF 분석에 실패했습니다</p>
                     <p className="text-xs text-slate-500 max-w-xs leading-relaxed">{pdfParseError}</p>
                   </div>
+                  <p className="text-xs text-slate-400">텍스트 붙여넣기로 대체 등록할 수 있습니다.</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline" size="sm" className="text-xs"
@@ -704,11 +705,11 @@ export default function ProtocolBOMPage() {
                       size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => setActiveTab("paste")}
                     >
-                      <Clipboard className="h-3 w-3 mr-1" />텍스트 입력으로 전환
+                      <Clipboard className="h-3 w-3 mr-1" />텍스트 붙여넣기로 진행
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ) : extractionResult ? (
               /* ── 추출 완료 ── */
               <div className="space-y-4">

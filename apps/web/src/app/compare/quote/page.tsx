@@ -350,12 +350,20 @@ export default function QuotePage() {
                 <p className="text-xs text-slate-500 mb-6 max-w-md">
                   CSV 다운로드, 영문 견적서 자동 생성도 지원합니다.
                 </p>
-                <Link href="/search">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8">
-                    <Search className="h-5 w-5 mr-2" />
-                    제품 검색하러 가기
-                  </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <Link href="/test/compare">
+                    <Button size="lg" variant="outline" className="border-bd text-slate-300 hover:bg-el px-6">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      비교에서 품목 추가
+                    </Button>
+                  </Link>
+                  <Link href="/test/search">
+                    <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-6">
+                      <Search className="h-5 w-5 mr-2" />
+                      검색에서 시작하기
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

@@ -49,6 +49,8 @@ export default function SearchPage() {
     hasSearched,
     analysisLoading,
     searchQuery,
+    setSearchQuery,
+    runSearch,
     searchCategory,
     searchBrand,
     sortBy,
@@ -338,8 +340,31 @@ export default function SearchPage() {
                   ) : (
                     <div className="flex flex-col items-center text-center rounded-lg border border-dashed border-bd bg-el px-8 py-10">
                       <Package className="h-8 w-8 text-slate-500 mb-3" strokeWidth={1.5} />
-                      <p className="text-sm text-slate-300 mb-1">일치하는 제품이 없습니다.</p>
-                      <p className="text-xs text-slate-500">품목명·제조사·CAS No.를 다시 확인해 보세요.</p>
+                      <p className="text-sm text-slate-300 mb-1">검색 결과가 없습니다</p>
+                      <p className="text-xs text-slate-500 mb-4">다른 키워드로 검색해보세요</p>
+
+                      {/* 추천 키워드 칩 */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center mb-5">
+                        {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
+                          <button
+                            key={term}
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery(term);
+                              runSearch();
+                            }}
+                            className="text-xs px-2.5 py-1 rounded-md bg-pn border border-bd text-slate-400 hover:bg-st hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* PDF/BOM 대체 경로 */}
+                      <Link href="/protocol/bom" className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                        <FileText className="h-3.5 w-3.5" />
+                        텍스트 붙여넣기로 BOM 등록하기
+                      </Link>
                     </div>
                   )}
               </div>
