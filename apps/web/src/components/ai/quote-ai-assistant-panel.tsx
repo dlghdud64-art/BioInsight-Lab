@@ -74,7 +74,7 @@ export function QuoteAiAssistantPanel({
           className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
         >
           {/* ═══ 1. 헤더 ═══ */}
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-800/50 flex-shrink-0">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-[#2a2a2e]/50 flex-shrink-0">
             <SheetTitle className="text-base font-bold text-slate-100">
               {state === "empty" && "AI 요청 준비"}
               {state === "loading" && "견적 요청 도우미"}
@@ -188,7 +188,7 @@ export function QuoteAiAssistantPanel({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-      <div className="rounded-full bg-slate-800/50 p-4 mb-4">
+      <div className="rounded-full bg-[#222226]/50 p-4 mb-4">
         <FileText className="h-8 w-8 text-slate-600" />
       </div>
       <p className="text-sm font-medium text-slate-400">
@@ -208,7 +208,7 @@ function LoadingState() {
       {/* 요약 스켈레톤 */}
       <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="p-3 rounded-lg bg-slate-800/30">
+          <div key={i} className="p-3 rounded-lg bg-[#222226]/30">
             <Skeleton className="h-3 w-16 mb-2" />
             <Skeleton className="h-6 w-10" />
           </div>
@@ -222,7 +222,7 @@ function LoadingState() {
         <Skeleton className="h-3 w-24 mb-3" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 rounded-lg border border-slate-800">
+            <div key={i} className="p-3 rounded-lg border border-[#2a2a2e]">
               <Skeleton className="h-4 w-32 mb-2" />
               <Skeleton className="h-3 w-full mb-1" />
               <Skeleton className="h-3 w-3/4" />
@@ -317,7 +317,7 @@ function SummarySection({ data }: { data: QuoteAiPanelData }) {
         ? `${data.estimatedLeadTime.min}~${data.estimatedLeadTime.max}일`
         : "미정",
       color: "text-slate-400",
-      bg: "bg-slate-800/30",
+      bg: "bg-[#222226]/30",
     },
   ];
 
@@ -363,7 +363,7 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
         {vendors.map((vendor, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-blue-800 transition-colors"
+            className="p-3 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/50 hover:border-blue-800 transition-colors"
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
@@ -456,7 +456,7 @@ function DraftSection({
       </div>
 
       {/* 초안 미리보기 */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3.5 mb-3">
+      <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/30 p-3.5 mb-3">
         {/* 제목 */}
         <div className="flex items-center gap-2 mb-2">
           <Mail className="h-3.5 w-3.5 text-slate-400" />
@@ -486,7 +486,7 @@ function DraftSection({
         )}
 
         {/* 본문 미리보기 */}
-        <div className="mt-2 pt-2 border-t border-slate-700/50">
+        <div className="mt-2 pt-2 border-t border-[#333338]/50">
           <p className="text-[11px] text-slate-500 whitespace-pre-wrap line-clamp-4 font-mono leading-relaxed">
             {bodyPreview}
           </p>
@@ -656,7 +656,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e] px-5 py-3">
       <div className="flex gap-2">
         <Button
           className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"

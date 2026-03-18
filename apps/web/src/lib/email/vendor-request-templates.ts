@@ -20,7 +20,7 @@ export function generateVendorQuoteRequestEmail(data: {
   expiresAt: Date;
 }): EmailTemplate {
   const vendorGreeting = data.vendorName ? `${data.vendorName}님` : "담당자님";
-  const subject = `[BioInsight Lab] 견적 요청서 회신 부탁드립니다`;
+  const subject = `[LabAxis] 견적 요청서 회신 부탁드립니다`;
 
   const html = `
 <!DOCTYPE html>

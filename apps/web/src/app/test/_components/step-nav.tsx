@@ -57,7 +57,7 @@ function StepNavContent() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-[#141820] border-b border-[#1e2228] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-[#1a1a1e] border-b border-[#2a2a2e] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 재고에서 온 경우 안내 메시지 */}
@@ -94,7 +94,7 @@ function StepNavContent() {
                     <span className={cn(isActive ? "" : "hidden")}>{step.label}</span>
                   </Link>
                   {index < steps.length - 1 && (
-                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-[#252a32]")} />
+                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-[#2a2a2e]")} />
                   )}
                 </div>
               );
@@ -146,7 +146,7 @@ function StepNavContent() {
                     <div
                       className={cn(
                         "h-[2px] w-10 mx-1 transition-colors",
-                        lineCompleted ? "bg-blue-500" : "bg-[#252a32]"
+                        lineCompleted ? "bg-blue-500" : "bg-[#2a2a2e]"
                       )}
                     />
                   )}
@@ -170,15 +170,15 @@ export function StepNav() {
 
 function StepNavFallback() {
   return (
-    <nav className="w-full bg-[#141820] border-b border-[#1e2228] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
+    <nav className="w-full bg-[#1a1a1e] border-b border-[#2a2a2e] fixed top-14 left-0 right-0 z-[45]" style={{ minHeight: '36px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-1 py-2">
-            <div className="h-5 w-12 rounded-full bg-[#1e2228] animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-[#252a32]" />
-            <div className="h-5 w-5 rounded-full bg-[#1e2228] animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-[#252a32]" />
-            <div className="h-5 w-5 rounded-full bg-[#1e2228] animate-pulse" />
+            <div className="h-5 w-12 rounded-full bg-[#2a2a2e] animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-[#2a2a2e]" />
+            <div className="h-5 w-5 rounded-full bg-[#2a2a2e] animate-pulse" />
+            <div className="h-[1.5px] w-3 bg-[#2a2a2e]" />
+            <div className="h-5 w-5 rounded-full bg-[#2a2a2e] animate-pulse" />
           </div>
         </div>
       </div>

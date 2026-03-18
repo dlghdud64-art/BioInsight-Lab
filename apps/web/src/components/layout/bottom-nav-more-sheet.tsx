@@ -84,7 +84,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
           "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation",
           active
             ? "bg-blue-950/30 text-blue-400"
-            : "text-slate-300 hover:bg-slate-800/50"
+            : "text-slate-300 hover:bg-[#222226]/50"
         )}
       >
         <item.icon className="h-5 w-5 flex-shrink-0" />

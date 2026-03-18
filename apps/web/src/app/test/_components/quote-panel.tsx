@@ -318,7 +318,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
                   type="button"
                   onClick={() => setGroupByVendor(!groupByVendor)}
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
-                    groupByVendor ? "bg-slate-900" : "bg-slate-300"
+                    groupByVendor ? "bg-[#1a1a1e]" : "bg-slate-300"
                   }`}
                 >
                   <span
@@ -1397,7 +1397,7 @@ export function SharePanel() {
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                className="w-full bg-[#1a1a1e] text-white hover:bg-[#222226]"
                 disabled={quoteItems.length === 0 || isGeneratingShareLink}
               >
                 <Share2 className="h-4 w-4 mr-2" />
@@ -1475,7 +1475,7 @@ export function SharePanel() {
               size="sm"
               onClick={handleCopyTSV}
               disabled={quoteItems.length === 0}
-              className="w-full text-xs bg-slate-900 hover:bg-slate-800"
+              className="w-full text-xs bg-[#1a1a1e] hover:bg-[#222226]"
             >
               <Copy className="h-3 w-3 mr-2" />
               TSV 복사 (그룹웨어 붙여넣기)

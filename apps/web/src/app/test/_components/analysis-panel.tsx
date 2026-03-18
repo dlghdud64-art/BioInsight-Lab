@@ -66,7 +66,7 @@ export function AnalysisPanel() {
           <Button
             onClick={runProtocolAnalysis}
             disabled={!protocolText || isExtracting}
-            className="w-full bg-slate-900 text-white hover:bg-slate-800"
+            className="w-full bg-[#1a1a1e] text-white hover:bg-[#222226]"
           >
             <Brain className="h-4 w-4 mr-2" />
             {isExtracting ? "분석 중..." : "필드 추출 실행"}

@@ -65,6 +65,11 @@ import {
   Users,
   ArrowRight,
   ExternalLink,
+  Zap,
+  CalendarClock,
+  ShoppingCart,
+  ClipboardCheck,
+  Server,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,13 +85,17 @@ const ROLE_LABELS: Record<string, string> = {
 type SettingsSection = "profile" | "notifications" | "billing";
 
 // ── Notification config type ──
+type DeliveryMode = "immediate" | "daily";
+
 interface NotificationItem {
   id: string;
+  category: string;
   label: string;
   description: string;
   icon: React.ElementType;
   inApp: boolean;
   email: boolean;
+  deliveryOverride: DeliveryMode | null; // null = follow global default
 }
 
 // ── Cancel reason type ──
@@ -148,16 +157,16 @@ const DEMO_INVOICES = [
 // ── Fallback ──
 function SettingsPageFallback() {
   return (
-    <div className="flex-1 p-8 bg-slate-950">
+    <div className="flex-1 p-8 bg-[#09090b]">
       <div className="max-w-6xl mx-auto">
         <div className="animate-pulse">
-          <div className="h-8 bg-slate-800 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-slate-800 rounded w-1/2 mb-8" />
+          <div className="h-8 bg-[#222226] rounded w-1/4 mb-4" />
+          <div className="h-4 bg-[#222226] rounded w-1/2 mb-8" />
           <div className="flex gap-6">
-            <div className="w-56 h-64 bg-slate-800 rounded" />
+            <div className="w-56 h-64 bg-[#222226] rounded" />
             <div className="flex-1 space-y-4">
-              <div className="h-32 bg-slate-800 rounded" />
-              <div className="h-32 bg-slate-800 rounded" />
+              <div className="h-32 bg-[#222226] rounded" />
+              <div className="h-32 bg-[#222226] rounded" />
             </div>
           </div>
         </div>
@@ -192,14 +201,28 @@ function SettingsPageContent() {
 
   // ── Notification state ──
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "stock", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: true },
-    { id: "budget", label: "예산 초과", description: "예산 사용률 80% 초과 또는 한도 초과 시 알림", icon: Wallet, inApp: true, email: true },
-    { id: "approval", label: "승인 필요", description: "구매 요청 또는 견적 승인 대기 알림", icon: FileText, inApp: true, email: false },
-    { id: "vendor", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답 알림", icon: Clock, inApp: true, email: false },
-    { id: "report", label: "리포트 수신", description: "주간/월간 요약 리포트 이메일 수신", icon: BarChart3, inApp: false, email: true },
-    { id: "security", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경 알림", icon: Shield, inApp: true, email: true },
+    // 견적/구매 관련
+    { id: "quote_new", category: "견적/구매", label: "신규 견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: true, deliveryOverride: null },
+    { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
+    { id: "purchase_status", category: "견적/구매", label: "구매 진행 상태", description: "발주, 배송, 입고 등 구매 진행 알림", icon: ShoppingCart, inApp: true, email: true, deliveryOverride: null },
+    // 재고 관련
+    { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: true, deliveryOverride: "immediate" },
+    { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: true, deliveryOverride: "immediate" },
+    // 승인/결재 관련
+    { id: "approval_request", category: "승인/결재", label: "승인 요청", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
+    { id: "approval_result", category: "승인/결재", label: "승인 결과", description: "내가 요청한 건의 승인/반려 결과", icon: Check, inApp: true, email: false, deliveryOverride: null },
+    // 조직/팀 관련
+    { id: "team_member", category: "조직/팀", label: "팀원 변동", description: "멤버 초대, 탈퇴, 역할 변경 알림", icon: Users, inApp: true, email: false, deliveryOverride: null },
+    { id: "team_mention", category: "조직/팀", label: "멘션/댓글", description: "나를 멘션하거나 댓글이 달린 경우", icon: Mail, inApp: true, email: false, deliveryOverride: null },
+    // 안전/규정 관련
+    { id: "safety_msds", category: "안전/규정", label: "MSDS 업데이트", description: "안전보건자료 갱신 또는 누락 알림", icon: Shield, inApp: true, email: true, deliveryOverride: null },
+    { id: "safety_compliance", category: "안전/규정", label: "규정 위반 경고", description: "보관 조건, 라벨링 등 규정 이슈", icon: AlertCircle, inApp: true, email: true, deliveryOverride: "immediate" },
+    // 시스템 관련
+    { id: "system_login", category: "시스템", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경", icon: Lock, inApp: true, email: true, deliveryOverride: "immediate" },
+    { id: "system_maintenance", category: "시스템", label: "시스템 점검", description: "서비스 점검 및 업데이트 공지", icon: Server, inApp: true, email: false, deliveryOverride: null },
+    { id: "system_report", category: "시스템", label: "리포트 발행", description: "주간/월간 요약 리포트 이메일 수신", icon: BarChart3, inApp: false, email: true, deliveryOverride: null },
   ]);
-  const [notificationFrequency, setNotificationFrequency] = useState<"immediate" | "daily">("immediate");
+  const [notificationFrequency, setNotificationFrequency] = useState<DeliveryMode>("immediate");
 
   // ── Cancel flow state ──
   const [isCancelOpen, setIsCancelOpen] = useState(false);
@@ -214,16 +237,11 @@ function SettingsPageContent() {
 
   // ── Initial notification snapshot ──
   const [initialNotifications, setInitialNotifications] = useState(() =>
-    JSON.stringify([
-      { id: "stock", inApp: true, email: true },
-      { id: "budget", inApp: true, email: true },
-      { id: "approval", inApp: true, email: false },
-      { id: "vendor", inApp: true, email: false },
-      { id: "report", inApp: false, email: true },
-      { id: "security", inApp: true, email: true },
-    ])
+    JSON.stringify(
+      notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride }))
+    )
   );
-  const [initialFrequency, setInitialFrequency] = useState<"immediate" | "daily">("immediate");
+  const [initialFrequency, setInitialFrequency] = useState<DeliveryMode>("immediate");
 
   // ── Queries ──
   const { data: userData } = useQuery({
@@ -323,7 +341,7 @@ function SettingsPageContent() {
   }, [profileName, session?.user?.name, fullPhone, savedPhone, profileBio, profileUrl]);
 
   const isNotificationsDirty = useMemo(() => {
-    const currentSnap = JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email })));
+    const currentSnap = JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })));
     return currentSnap !== initialNotifications || notificationFrequency !== initialFrequency;
   }, [notifications, initialNotifications, notificationFrequency, initialFrequency]);
 
@@ -347,11 +365,11 @@ function SettingsPageContent() {
         setProfilePhone("");
       }
     } else {
-      const parsed = JSON.parse(initialNotifications) as { id: string; inApp: boolean; email: boolean }[];
+      const parsed = JSON.parse(initialNotifications) as { id: string; inApp: boolean; email: boolean; deliveryOverride: DeliveryMode | null }[];
       setNotifications((prev) =>
         prev.map((n) => {
           const saved = parsed.find((s) => s.id === n.id);
-          return saved ? { ...n, inApp: saved.inApp, email: saved.email } : n;
+          return saved ? { ...n, inApp: saved.inApp, email: saved.email, deliveryOverride: saved.deliveryOverride } : n;
         })
       );
       setNotificationFrequency(initialFrequency);
@@ -368,7 +386,7 @@ function SettingsPageContent() {
       await new Promise((r) => setTimeout(r, 1000));
       toast({ title: "설정 저장 완료", description: "알림 설정이 반영되었습니다." });
       setInitialNotifications(
-        JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email })))
+        JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })))
       );
       setInitialFrequency(notificationFrequency);
       setSaveSuccess(true);
@@ -397,6 +415,25 @@ function SettingsPageContent() {
     );
   };
 
+  const setDeliveryOverride = (id: string, mode: DeliveryMode | null) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, deliveryOverride: mode } : n))
+    );
+  };
+
+  // Group notifications by category for rendering
+  const notificationsByCategory = useMemo(() => {
+    const grouped: { category: string; items: NotificationItem[] }[] = [];
+    const seen = new Set<string>();
+    for (const n of notifications) {
+      if (!seen.has(n.category)) {
+        seen.add(n.category);
+        grouped.push({ category: n.category, items: notifications.filter((x) => x.category === n.category) });
+      }
+    }
+    return grouped;
+  }, [notifications]);
+
   // ── Nav items ──
   const navItems: { id: SettingsSection; label: string; sublabel: string; icon: React.ElementType }[] = [
     { id: "profile", label: "계정", sublabel: "프로필 및 보안", icon: User },
@@ -413,7 +450,7 @@ function SettingsPageContent() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-950 py-4 md:py-6">
+    <div className="w-full min-h-screen bg-[#09090b] py-4 md:py-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="space-y-1 mb-6">
@@ -423,12 +460,12 @@ function SettingsPageContent() {
           </p>
         </div>
 
-        <div className="h-px bg-slate-800 mb-6" />
+        <div className="h-px bg-[#222226] mb-6" />
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ── Left nav panel ── */}
           <nav className="lg:w-60 shrink-0">
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-2 space-y-0.5">
+            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-2 space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.id;
@@ -440,8 +477,8 @@ function SettingsPageContent() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors",
                       isActive
-                        ? "bg-slate-800 text-slate-100"
-                        : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                        ? "bg-[#222226] text-slate-100"
+                        : "text-slate-400 hover:bg-[#222226]/50 hover:text-slate-200"
                     )}
                   >
                     <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-slate-100" : "text-slate-500")} />
@@ -462,8 +499,8 @@ function SettingsPageContent() {
             {activeSection === "profile" && (
               <div className="animate-in fade-in-50 duration-300 space-y-6">
                 {/* Profile info */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                  <div className="px-6 py-5 border-b border-slate-800">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2 text-slate-100 font-semibold">
                       <User className="h-4 w-4" />
                       프로필 정보
@@ -474,22 +511,22 @@ function SettingsPageContent() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
-                        <AvatarFallback className="bg-slate-800 text-slate-300 text-lg font-semibold">
+                        <AvatarFallback className="bg-[#222226] text-slate-300 text-lg font-semibold">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit border-slate-700 bg-slate-800 text-slate-300">
+                        <Badge variant="secondary" className="w-fit border-[#333338] bg-[#222226] text-slate-300">
                           {roleLabel}
                         </Badge>
-                        <Button type="button" variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                        <Button type="button" variant="outline" size="sm" className="border-[#333338] text-slate-300 hover:bg-[#222226]">
                           <Upload className="h-4 w-4 mr-2" />
                           사진 변경
                         </Button>
                       </div>
                     </div>
 
-                    <div className="h-px bg-slate-800" />
+                    <div className="h-px bg-[#222226]" />
 
                     <div className="space-y-5">
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">기본 정보</h4>
@@ -504,7 +541,7 @@ function SettingsPageContent() {
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
                             placeholder="이름을 입력하세요"
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
@@ -514,7 +551,7 @@ function SettingsPageContent() {
                           </Label>
                           <div className="flex gap-2">
                             <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[100px] bg-slate-950 border-slate-700 text-slate-300">
+                              <SelectTrigger className="w-[100px] bg-[#09090b] border-[#333338] text-slate-300">
                                 <SelectValue placeholder="국가" />
                               </SelectTrigger>
                               <SelectContent>
@@ -530,7 +567,7 @@ function SettingsPageContent() {
                               value={profilePhone}
                               onChange={(e) => setProfilePhone(e.target.value)}
                               placeholder="010-0000-0000"
-                              className="flex-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                              className="flex-1 bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
                             />
                           </div>
                           <p className="text-[11px] text-slate-500">긴급 알림 및 본인 확인용으로 사용됩니다.</p>
@@ -543,13 +580,13 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileBio(e.target.value)}
                             placeholder="자기소개를 입력하세요"
                             rows={3}
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="h-px bg-slate-800" />
+                    <div className="h-px bg-[#222226]" />
 
                     <div className="space-y-5">
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">연락처</h4>
@@ -562,7 +599,7 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileUrl(e.target.value)}
                             placeholder="https://example.com"
                             type="url"
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
@@ -575,7 +612,7 @@ function SettingsPageContent() {
                             type="email"
                             value={profileEmail}
                             disabled
-                            className="bg-slate-950/50 border-slate-700 text-slate-500"
+                            className="bg-[#09090b]/50 border-[#333338] text-slate-500"
                           />
                         </div>
                       </div>
@@ -584,8 +621,8 @@ function SettingsPageContent() {
                 </div>
 
                 {/* Password */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                  <div className="px-6 py-5 border-b border-slate-800">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2 text-slate-100 font-semibold">
                       <Lock className="h-4 w-4" />
                       비밀번호
@@ -595,12 +632,12 @@ function SettingsPageContent() {
                   <div className="p-6">
                     <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                        <Button variant="outline" className="border-[#333338] text-slate-300 hover:bg-[#222226]">
                           <Lock className="h-4 w-4 mr-2" />
                           비밀번호 변경
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-slate-900 border-slate-800">
+                      <DialogContent className="bg-[#1a1a1e] border-[#2a2a2e]">
                         <DialogHeader>
                           <DialogTitle className="text-slate-100">비밀번호 변경</DialogTitle>
                           <DialogDescription className="text-slate-400">
@@ -617,7 +654,7 @@ function SettingsPageContent() {
                               onChange={(e) => setCurrentPassword(e.target.value)}
                               placeholder="현재 비밀번호를 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           <div className="space-y-2">
@@ -629,7 +666,7 @@ function SettingsPageContent() {
                               onChange={(e) => setNewPassword(e.target.value)}
                               placeholder="새 비밀번호를 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           <div className="space-y-2">
@@ -641,7 +678,7 @@ function SettingsPageContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               placeholder="새 비밀번호를 다시 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           {newPassword && newPassword !== confirmPassword && (
@@ -651,7 +688,7 @@ function SettingsPageContent() {
                             <Button
                               type="button"
                               variant="outline"
-                              className="border-slate-700 text-slate-300"
+                              className="border-[#333338] text-slate-300"
                               onClick={() => {
                                 setIsPasswordDialogOpen(false);
                                 setCurrentPassword("");
@@ -683,99 +720,280 @@ function SettingsPageContent() {
 
             {/* ═══ NOTIFICATIONS ═══ */}
             {activeSection === "notifications" && (
-              <div className="animate-in fade-in-50 duration-300 space-y-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                  <div className="px-6 py-5 border-b border-slate-800">
-                    <div className="flex items-center gap-2 text-slate-100 font-semibold">
-                      <Bell className="h-4 w-4" />
-                      알림 설정
+              <div className="animate-in fade-in-50 duration-300 space-y-5">
+
+                {/* ── 1. 전달 방식 (Delivery Method) ── */}
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10">
+                        <Bell className="h-4 w-4 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-semibold text-slate-100">전달 방식</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          이벤트 알림을 즉시 받거나 하루 단위 요약으로 받을 수 있습니다
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1">
-                      이벤트별 알림 채널과 수신 빈도를 설정합니다.
-                    </p>
                   </div>
 
-                  <div className="p-6 space-y-6">
-                    {/* Frequency toggle */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-medium text-slate-200">수신 빈도</div>
-                        <p className="text-xs text-slate-500 mt-0.5">알림 수신 방식을 선택합니다.</p>
-                      </div>
-                      <div className="flex items-center gap-1 bg-slate-950 border border-slate-700 rounded-md p-0.5">
-                        <button
-                          type="button"
-                          onClick={() => setNotificationFrequency("immediate")}
-                          className={cn(
-                            "px-3 py-1.5 text-xs font-medium rounded transition-colors",
-                            notificationFrequency === "immediate"
-                              ? "bg-slate-700 text-slate-100"
-                              : "text-slate-400 hover:text-slate-300"
-                          )}
-                        >
-                          즉시
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setNotificationFrequency("daily")}
-                          className={cn(
-                            "px-3 py-1.5 text-xs font-medium rounded transition-colors",
-                            notificationFrequency === "daily"
-                              ? "bg-slate-700 text-slate-100"
-                              : "text-slate-400 hover:text-slate-300"
-                          )}
-                        >
-                          일일 요약
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-slate-800" />
-
-                    {/* Column headers */}
-                    <div className="flex items-center justify-end gap-6 pr-1 text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                      <span className="w-16 text-center">앱 내</span>
-                      <span className="w-16 text-center">이메일</span>
-                    </div>
-
-                    {/* Notification rows */}
-                    <div className="space-y-1">
-                      {notifications.map((n) => {
-                        const Icon = n.icon;
-                        return (
-                          <div
-                            key={n.id}
-                            className="flex items-center justify-between py-3 px-3 rounded-md hover:bg-slate-800/40 transition-colors"
-                          >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <Icon className="h-4 w-4 text-slate-500 shrink-0" />
-                              <div className="min-w-0">
-                                <div className="text-sm font-medium text-slate-200">{n.label}</div>
-                                <p className="text-xs text-slate-500 truncate">{n.description}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-6 shrink-0">
-                              <div className="w-16 flex justify-center">
-                                <Switch
-                                  checked={n.inApp}
-                                  onCheckedChange={() => toggleNotification(n.id, "inApp")}
-                                  className="data-[state=checked]:bg-slate-500"
-                                />
-                              </div>
-                              <div className="w-16 flex justify-center">
-                                <Switch
-                                  checked={n.email}
-                                  onCheckedChange={() => toggleNotification(n.id, "email")}
-                                  className="data-[state=checked]:bg-slate-500"
-                                />
-                              </div>
-                            </div>
+                  <div className="p-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* 즉시 알림 */}
+                      <button
+                        type="button"
+                        onClick={() => setNotificationFrequency("immediate")}
+                        className={cn(
+                          "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
+                          notificationFrequency === "immediate"
+                            ? "border-blue-500 bg-blue-500/[0.06]"
+                            : "border-[#2a2a2e] bg-[#222226] hover:border-[#353a45]"
+                        )}
+                      >
+                        <div className={cn(
+                          "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
+                          notificationFrequency === "immediate"
+                            ? "bg-blue-500/15 text-blue-400"
+                            : "bg-[#2a2a2e] text-slate-500"
+                        )}>
+                          <Zap className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "text-sm font-semibold",
+                              notificationFrequency === "immediate" ? "text-slate-100" : "text-slate-300"
+                            )}>
+                              즉시 알림
+                            </span>
+                            {notificationFrequency === "immediate" && (
+                              <span className="flex h-5 items-center rounded-full bg-blue-500/15 px-2 text-[10px] font-bold text-blue-400">
+                                활성
+                              </span>
+                            )}
                           </div>
-                        );
-                      })}
+                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            이벤트가 발생하면 바로 전달됩니다
+                          </p>
+                        </div>
+                        {/* Radio indicator */}
+                        <div className={cn(
+                          "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
+                          notificationFrequency === "immediate"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-[#3a3f4a]"
+                        )}>
+                          {notificationFrequency === "immediate" && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* 하루 한 번 요약 */}
+                      <button
+                        type="button"
+                        onClick={() => setNotificationFrequency("daily")}
+                        className={cn(
+                          "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
+                          notificationFrequency === "daily"
+                            ? "border-blue-500 bg-blue-500/[0.06]"
+                            : "border-[#2a2a2e] bg-[#222226] hover:border-[#353a45]"
+                        )}
+                      >
+                        <div className={cn(
+                          "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
+                          notificationFrequency === "daily"
+                            ? "bg-blue-500/15 text-blue-400"
+                            : "bg-[#2a2a2e] text-slate-500"
+                        )}>
+                          <CalendarClock className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "text-sm font-semibold",
+                              notificationFrequency === "daily" ? "text-slate-100" : "text-slate-300"
+                            )}>
+                              하루 한 번 요약
+                            </span>
+                            {notificationFrequency === "daily" && (
+                              <span className="flex h-5 items-center rounded-full bg-blue-500/15 px-2 text-[10px] font-bold text-blue-400">
+                                활성
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            하루 동안 발생한 항목을 정리해 한 번에 전달합니다
+                          </p>
+                        </div>
+                        {/* Radio indicator */}
+                        <div className={cn(
+                          "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
+                          notificationFrequency === "daily"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-[#3a3f4a]"
+                        )}>
+                          {notificationFrequency === "daily" && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </button>
                     </div>
                   </div>
                 </div>
+
+                {/* ── 2. 채널별 알림 토글 테이블 ── */}
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-500/10">
+                        <Mail className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-semibold text-slate-100">알림 항목별 채널 설정</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          각 알림의 수신 채널과 전달 방식을 개별적으로 설정할 수 있습니다
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-6 pt-4 pb-2">
+                    {/* Column headers */}
+                    <div className="flex items-center mb-1">
+                      <div className="flex-1" />
+                      <div className="flex items-center gap-4 shrink-0">
+                        <span className="w-[52px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">앱 내</span>
+                        <span className="w-[52px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">이메일</span>
+                        <span className="w-[72px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">전달</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-3 pb-4">
+                    {notificationsByCategory.map((group, gi) => (
+                      <div key={group.category}>
+                        {/* Category header */}
+                        <div className="flex items-center gap-2 px-3 pt-4 pb-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400/80">
+                            {group.category}
+                          </span>
+                          <div className="flex-1 h-px bg-[#2a2a2e]" />
+                        </div>
+
+                        {/* Items */}
+                        <div className="space-y-0.5">
+                          {group.items.map((n) => {
+                            const Icon = n.icon;
+                            const isOverridden = n.deliveryOverride !== null;
+                            const effectiveMode = n.deliveryOverride ?? notificationFrequency;
+
+                            return (
+                              <div
+                                key={n.id}
+                                className={cn(
+                                  "flex items-center justify-between py-3 px-3 rounded-lg transition-colors group",
+                                  isOverridden
+                                    ? "bg-blue-500/[0.04] hover:bg-blue-500/[0.07]"
+                                    : "hover:bg-[#222226]"
+                                )}
+                              >
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <Icon className={cn(
+                                    "h-4 w-4 shrink-0",
+                                    isOverridden ? "text-blue-400/70" : "text-slate-500"
+                                  )} />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium text-slate-200">{n.label}</span>
+                                      {isOverridden && (
+                                        <span className="flex h-4 items-center rounded bg-blue-500/10 px-1.5 text-[9px] font-bold text-blue-400 uppercase tracking-wider">
+                                          개별
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 truncate mt-0.5">{n.description}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 shrink-0">
+                                  {/* In-app toggle */}
+                                  <div className="w-[52px] flex justify-center">
+                                    <Switch
+                                      checked={n.inApp}
+                                      onCheckedChange={() => toggleNotification(n.id, "inApp")}
+                                      className="data-[state=checked]:bg-blue-500"
+                                    />
+                                  </div>
+                                  {/* Email toggle */}
+                                  <div className="w-[52px] flex justify-center">
+                                    <Switch
+                                      checked={n.email}
+                                      onCheckedChange={() => toggleNotification(n.id, "email")}
+                                      className="data-[state=checked]:bg-blue-500"
+                                    />
+                                  </div>
+                                  {/* Delivery override dropdown */}
+                                  <div className="w-[72px] flex justify-center">
+                                    <Select
+                                      value={n.deliveryOverride ?? "default"}
+                                      onValueChange={(val: string) =>
+                                        setDeliveryOverride(n.id, val === "default" ? null : val as DeliveryMode)
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        className={cn(
+                                          "h-7 w-[68px] text-[10px] font-medium border px-2 rounded-md",
+                                          isOverridden
+                                            ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
+                                            : "border-[#2a2a2e] bg-[#222226] text-slate-500"
+                                        )}
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-[#222226] border-[#2a2a2e]">
+                                        <SelectItem value="default" className="text-xs text-slate-400">
+                                          기본값
+                                        </SelectItem>
+                                        <SelectItem value="immediate" className="text-xs text-slate-300">
+                                          즉시
+                                        </SelectItem>
+                                        <SelectItem value="daily" className="text-xs text-slate-300">
+                                          요약
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Separator between groups (not after last) */}
+                        {gi < notificationsByCategory.length - 1 && (
+                          <div className="mx-3 mt-1" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="px-6 py-3.5 border-t border-[#2a2a2e] bg-[#111114]/50">
+                    <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-[#2a2a2e]" />
+                        <span>기본값 = 상단 전달 방식 따름</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-blue-500/40" />
+                        <span className="text-blue-400/70">개별 = 항목별 전달 방식 지정됨</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             )}
 
@@ -785,9 +1003,9 @@ function SettingsPageContent() {
                 {billingLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                        <Skeleton className="h-5 w-32 bg-slate-800 mb-3" />
-                        <Skeleton className="h-8 w-48 bg-slate-800" />
+                      <div key={i} className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-6">
+                        <Skeleton className="h-5 w-32 bg-[#222226] mb-3" />
+                        <Skeleton className="h-8 w-48 bg-[#222226]" />
                       </div>
                     ))}
                   </div>
@@ -812,7 +1030,7 @@ function SettingsPageContent() {
                         {/* Plan overview grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {/* Current plan */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">현재 플랜</div>
                             <div className="flex items-center gap-2">
                               <span className="text-xl font-bold text-slate-100">{displayName}</span>
@@ -831,7 +1049,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Next billing date */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">다음 결제일</div>
                             <div className="text-xl font-bold text-slate-100">
                               {subscription?.currentPeriodEnd
@@ -841,7 +1059,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Billing amount */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">월 결제 금액</div>
                             <div className="text-xl font-bold text-slate-100">
                               {priceDisplay || "무료"}
@@ -849,7 +1067,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Seats */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">좌석 수</div>
                             <div className="flex items-center gap-2">
                               <Users className="h-4 w-4 text-slate-500" />
@@ -861,7 +1079,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Billing contact */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 담당자</div>
                             <div className="text-sm font-medium text-slate-200">
                               {billingData?.billingContact?.name ?? session?.user?.name ?? "-"}
@@ -872,7 +1090,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Payment method */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 수단</div>
                             <div className="flex items-center gap-2">
                               <CreditCard className="h-4 w-4 text-slate-500" />
@@ -884,8 +1102,8 @@ function SettingsPageContent() {
                         </div>
 
                         {/* Invoices */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                          <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                        <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                          <div className="px-6 py-4 border-b border-[#2a2a2e] flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-100 font-semibold text-sm">
                               <Receipt className="h-4 w-4" />
                               최근 청구서
@@ -894,7 +1112,7 @@ function SettingsPageContent() {
                           <div className="overflow-x-auto">
                             {!hasInvoices || isFree ? (
                               <div className="px-6 py-12 text-center">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 mb-3">
+                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#222226] mb-3">
                                   <Receipt className="h-5 w-5 text-slate-500" />
                                 </div>
                                 <p className="text-sm text-slate-400">첫 결제 이전입니다</p>
@@ -905,7 +1123,7 @@ function SettingsPageContent() {
                             ) : (
                               <Table>
                                 <TableHeader>
-                                  <TableRow className="border-slate-800 hover:bg-transparent">
+                                  <TableRow className="border-[#2a2a2e] hover:bg-transparent">
                                     <TableHead className="text-slate-400 text-xs font-medium">날짜</TableHead>
                                     <TableHead className="text-slate-400 text-xs font-medium">항목</TableHead>
                                     <TableHead className="text-slate-400 text-xs font-medium">금액</TableHead>
@@ -915,7 +1133,7 @@ function SettingsPageContent() {
                                 </TableHeader>
                                 <TableBody>
                                   {(invoices.length > 0 ? invoices : allInvoices).map((invoice: { id: string; date?: string; paidAt?: string; periodStart?: string; description?: string; amount?: number; amountDue?: number; amountPaid?: number; status?: string; invoicePdfUrl?: string }) => (
-                                    <TableRow key={invoice.id} className="border-slate-800/50 hover:bg-slate-800/30">
+                                    <TableRow key={invoice.id} className="border-[#2a2a2e]/50 hover:bg-[#222226]/30">
                                       <TableCell className="text-slate-300 text-sm">
                                         {invoice.date
                                           ? new Date(invoice.date).toLocaleDateString("ko-KR")
@@ -983,7 +1201,7 @@ function SettingsPageContent() {
 
                 {/* ── Cancel subscription dialog ── */}
                 <Dialog open={isCancelOpen} onOpenChange={(open) => { if (!open) resetCancelFlow(); }}>
-                  <DialogContent className="bg-slate-900 border-slate-800 max-w-lg">
+                  <DialogContent className="bg-[#1a1a1e] border-[#2a2a2e] max-w-lg">
                     <DialogHeader>
                       <DialogTitle className="text-slate-100">
                         {cancelStep === 1 && "구독 해지"}
@@ -1011,8 +1229,8 @@ function SettingsPageContent() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left text-sm transition-colors",
                                 cancelReason === r.value
-                                  ? "border-slate-600 bg-slate-800 text-slate-100"
-                                  : "border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                                  ? "border-slate-600 bg-[#222226] text-slate-100"
+                                  : "border-[#2a2a2e] text-slate-400 hover:border-[#333338] hover:text-slate-300"
                               )}
                             >
                               <div className={cn(
@@ -1047,7 +1265,7 @@ function SettingsPageContent() {
                             onChange={(e) => setCancelFeedback(e.target.value)}
                             placeholder="어떤 점이 아쉬우셨나요? 자유롭게 작성해 주세요. (선택사항)"
                             rows={4}
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(1)}>이전</Button>
@@ -1067,7 +1285,7 @@ function SettingsPageContent() {
                           {(() => {
                             const offer = getSaveOffer(cancelReason);
                             return (
-                              <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-5 space-y-3">
+                              <div className="bg-[#222226]/60 border border-[#333338] rounded-lg p-5 space-y-3">
                                 <h4 className="text-sm font-semibold text-slate-200">{offer.title}</h4>
                                 <p className="text-sm text-slate-400">{offer.description}</p>
                                 <Button
@@ -1134,7 +1352,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
-                              className="border-slate-700 text-slate-300"
+                              className="border-[#333338] text-slate-300"
                               onClick={resetCancelFlow}
                             >
                               취소
@@ -1163,7 +1381,7 @@ function SettingsPageContent() {
 
             {/* ── Bottom action bar (profile & notifications) ── */}
             {activeSection !== "billing" && isDirty && (
-              <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg overflow-hidden">
                 <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <p className="text-xs text-slate-500">
                     변경된 {activeSection === "profile" ? "프로필 정보" : "알림 설정"}를 저장할 수 있습니다.

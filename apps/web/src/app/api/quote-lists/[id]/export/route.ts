@@ -65,7 +65,7 @@ export async function GET(
 
     // 날짜 포맷 (파일명용)
     const dateStr = format(new Date(), "yyyyMMdd");
-    const baseFilename = `bioinsight_submit_${id}_${dateStr}`;
+    const baseFilename = `labaxis_submit_${id}_${dateStr}`;
 
     // 품목 데이터 변환 (QuoteListItem 모델 필드에 맞춤)
     type QuoteListItemType = (typeof quoteList.items)[number];

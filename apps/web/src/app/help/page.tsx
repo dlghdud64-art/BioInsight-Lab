@@ -46,7 +46,7 @@ export default function HelpPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">도움말 · 가이드</h1>
             <p className="text-muted-foreground text-lg">
-              BioInsight Lab 사용 방법을 안내합니다.
+              LabAxis 사용 방법을 안내합니다.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function HelpPage() {
               <div>
                 <h3 className="font-semibold mb-2">Q: 문의는 어디로 하나요?</h3>
                 <p className="text-sm text-muted-foreground">
-                  A: <a href="mailto:contact@bioinsight.lab" className="text-primary hover:underline">contact@bioinsight.lab</a>으로 문의주세요.
+                  A: <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a>으로 문의주세요.
                 </p>
               </div>
             </CardContent>

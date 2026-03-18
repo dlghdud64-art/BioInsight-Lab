@@ -160,7 +160,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 dark:border-[#2a2a2e] flex-shrink-0">
         <Link
           href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
@@ -202,8 +202,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   className={cn(
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-blue-50 dark:bg-[#222226] text-blue-600 dark:text-white"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#222226] hover:text-slate-900 dark:hover:text-white"
                   )}
                 >
                   <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")} />
@@ -236,8 +236,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       className={cn(
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
+                          ? "bg-blue-50 dark:bg-[#222226] text-blue-600 dark:text-white"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#222226] hover:text-slate-900 dark:hover:text-white",
                         isInventory && !isActive && "font-semibold"
                       )}
                     >
@@ -258,7 +258,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-[#2a2a2e]">
             <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               시스템 관리
             </p>
@@ -274,8 +274,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     className={cn(
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-white"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-blue-50 dark:bg-[#222226] text-blue-600 dark:text-white"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#222226] hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
                     <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400")} />
@@ -288,9 +288,9 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         )}
 
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-[#2a2a2e]">
           <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            BioInsight Lab
+            LabAxis
           </p>
           <nav className="space-y-1">
             {[
@@ -302,7 +302,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#222226] hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -312,11 +312,11 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       </div>
 
       {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
-      <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
+      <div className="mt-auto p-4 border-t border-slate-200 dark:border-[#2a2a2e] flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100/10 dark:bg-slate-800/50 border border-slate-200/10 dark:border-slate-700/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all duration-300 group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100/10 dark:bg-[#222226]/50 border border-slate-200/10 dark:border-[#333338]/50 hover:bg-blue-600/20 hover:border-blue-500/50 transition-all duration-300 group"
         >
           <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
             <Home className="w-4 h-4 text-blue-500" />
@@ -332,7 +332,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   return (
     <>
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#09090b] border-r border-slate-200 dark:border-[#2a2a2e] z-30">
         <SidebarContent />
       </aside>
 
@@ -345,7 +345,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white dark:bg-[#09090b] border-r border-slate-200 dark:border-[#2a2a2e] z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

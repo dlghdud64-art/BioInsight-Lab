@@ -71,7 +71,12 @@
       "Bash(cp \"$WORKTREE/apps/web/src/app/api/notifications/[id]/read/route.ts\" \"$MAIN/apps/web/src/app/api/notifications/[id]/read/\")",
       "Bash(cp \"$WORKTREE/apps/web/src/app/api/notifications/drafts/[id]/approve/route.ts\" \"$MAIN/apps/web/src/app/api/notifications/drafts/[id]/approve/\")",
       "Bash(gh run:*)",
-      "Bash(find /c/Users/young/ai-biocompare/apps/web/src -type f \\\\\\(-name *pdf* -o -name *bom* -o -name *protocol* -o -name *extract* \\\\\\) -not -path */node_modules/*)"
+      "Bash(find /c/Users/young/ai-biocompare/apps/web/src -type f \\\\\\(-name *pdf* -o -name *bom* -o -name *protocol* -o -name *extract* \\\\\\) -not -path */node_modules/*)",
+      "Bash(cp \".claude/worktrees/fervent-mendel/apps/web/src/app/dashboard/guide/page.tsx\" \"apps/web/src/app/dashboard/guide/page.tsx\")",
+      "Bash(cp \".claude/worktrees/fervent-mendel/apps/web/src/app/dashboard/faq/page.tsx\" \"apps/web/src/app/dashboard/faq/page.tsx\")",
+      "Bash(cp \".claude/worktrees/fervent-mendel/apps/web/src/components/inventory/priority-action-queue.tsx\" \"apps/web/src/components/inventory/priority-action-queue.tsx\")",
+      "Bash(cp \".claude/worktrees/fervent-mendel/apps/web/src/components/inventory/inventory-context-panel.tsx\" \"apps/web/src/components/inventory/inventory-context-panel.tsx\")",
+      "Bash(cp \".claude/worktrees/fervent-mendel/apps/web/src/app/dashboard/inventory/page.tsx\" \"apps/web/src/app/dashboard/inventory/page.tsx\")"
     ]
   },
   "git": {

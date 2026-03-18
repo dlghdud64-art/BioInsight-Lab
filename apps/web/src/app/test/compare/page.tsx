@@ -333,8 +333,8 @@ export default function TestComparePage() {
           {/* 비교 슬롯 그리드 */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
             {[1, 2, 3].map((slot) => (
-              <div key={slot} className="rounded-xl border border-dashed border-[#252a32] bg-[#181c22] p-6 flex flex-col items-center justify-center min-h-[180px]">
-                <div className="w-10 h-10 rounded-lg bg-[#1e2228] flex items-center justify-center mb-3">
+              <div key={slot} className="rounded-xl border border-dashed border-[#2a2a2e] bg-[#222226] p-6 flex flex-col items-center justify-center min-h-[180px]">
+                <div className="w-10 h-10 rounded-lg bg-[#2a2a2e] flex items-center justify-center mb-3">
                   <Plus className="h-5 w-5 text-slate-600" />
                 </div>
                 <span className="text-xs text-slate-600 font-medium">제품 슬롯 {slot}</span>
@@ -343,8 +343,8 @@ export default function TestComparePage() {
           </div>
 
           {/* 중앙 안내 */}
-          <div className="rounded-xl border border-[#1e2228] bg-[#141820] p-8 flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-xl bg-[#181c22] border border-[#252a32] flex items-center justify-center mb-4">
+          <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] p-8 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-xl bg-[#222226] border border-[#2a2a2e] flex items-center justify-center mb-4">
               <ArrowUpDown className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
             </div>
 
@@ -469,7 +469,7 @@ export default function TestComparePage() {
   return (
       <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-4">
       {/* 헤더 + 주요 액션 */}
-      <div className="border-b border-[#1e2228] pb-4">
+      <div className="border-b border-[#2a2a2e] pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 mb-1">Step 2. 제품 비교</h1>
@@ -496,7 +496,7 @@ export default function TestComparePage() {
               선택 항목 견적 리스트에 담기
             </Button>
             <Link href="/test/quote" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto border-slate-700 text-slate-300 whitespace-nowrap">
+              <Button variant="outline" className="w-full sm:w-auto border-[#333338] text-slate-300 whitespace-nowrap">
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {quoteItemsCount > 0
                   ? `견적 요청 리스트 보기 (${quoteItemsCount}개)`
@@ -762,7 +762,7 @@ export default function TestComparePage() {
                       </Button>
                       <Button
                         size="sm"
-                        className="text-xs bg-slate-900 text-white hover:bg-slate-800"
+                        className="text-xs bg-[#1a1a1e] text-white hover:bg-[#222226]"
                         onClick={() => setIsFilterDialogOpen(false)}
                       >
                         적용
@@ -781,7 +781,7 @@ export default function TestComparePage() {
               return (
                 <div
                   key={product.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-3 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 p-2 sm:p-3 border border-[#333338] rounded-lg hover:bg-[#222226] transition-colors"
                 >
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -888,7 +888,7 @@ export default function TestComparePage() {
               </p>
               {/* 판단 요약 */}
               {cheapestProduct && hasPriceDiff && (
-                <div className="mt-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-700">
+                <div className="mt-3 px-3 py-2 bg-[#1a1a1e] rounded-lg border border-[#333338]">
                   <p className="text-xs text-slate-300 leading-relaxed">
                     <span className="font-semibold text-blue-400">최저가</span>는{" "}
                     <span className="font-medium">{cheapestProduct.name.length > 20 ? cheapestProduct.name.substring(0, 20) + "..." : cheapestProduct.name}</span>
@@ -972,7 +972,7 @@ export default function TestComparePage() {
                 </div>
                 {/* 납기 판단 요약 */}
                 {fastestProduct && hasLeadTimeData && (
-                  <div className="mt-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-700">
+                  <div className="mt-3 px-3 py-2 bg-[#1a1a1e] rounded-lg border border-[#333338]">
                     <p className="text-xs text-slate-300 leading-relaxed">
                       <span className="font-semibold text-blue-400">최단 납기</span>는{" "}
                       <span className="font-medium">{fastestProduct.name.length > 20 ? fastestProduct.name.substring(0, 20) + "..." : fastestProduct.name}</span>
@@ -1026,7 +1026,7 @@ export default function TestComparePage() {
             {/* 모바일: 카드형 레이아웃 */}
             <div className="md:hidden space-y-4 p-4">
               {products.map((product: any, productIndex: number) => (
-                <div key={product.id} className="border border-slate-700 rounded-lg p-4 space-y-3">
+                <div key={product.id} className="border border-[#333338] rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-sm text-slate-100 flex-1">{product.name}</h3>
                     <Badge variant="outline" className="text-xs flex-shrink-0">
@@ -1057,7 +1057,7 @@ export default function TestComparePage() {
                       if (field.key === "leadTime" && value === 0) return null;
                       
                       return (
-                        <div key={field.key} className="flex items-start justify-between gap-2 py-1 border-b border-slate-800 last:border-0">
+                        <div key={field.key} className="flex items-start justify-between gap-2 py-1 border-b border-[#2a2a2e] last:border-0">
                           <span className="text-xs text-slate-400 font-medium">{field.label}</span>
                           <span className="text-xs text-slate-100 text-right flex-1">
                             {field.key === "price" && value > 0 ? (
@@ -1080,7 +1080,7 @@ export default function TestComparePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 bg-slate-900 z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
+                      <TableHead className="sticky left-0 bg-[#1a1a1e] z-10 w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">항목</TableHead>
                       {products.map((product: any, index: number) => (
                         <TableHead key={product.id} className="min-w-[120px] sm:min-w-[150px] md:min-w-[180px] text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-4">
                           <div className="flex items-start justify-between gap-0.5 sm:gap-1 md:gap-2">
@@ -1115,7 +1115,7 @@ export default function TestComparePage() {
                   <TableBody>
                     {compareFields.map((field) => (
                       <TableRow key={field.key}>
-                        <TableCell className="sticky left-0 bg-slate-900 font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">
+                        <TableCell className="sticky left-0 bg-[#1a1a1e] font-medium w-[100px] sm:w-[120px] md:w-[150px] text-[10px] sm:text-xs md:text-sm text-center sm:text-left px-1 sm:px-2 md:px-4">
                           {field.label}
                         </TableCell>
                       {products.map((product: any) => {
@@ -1442,12 +1442,12 @@ function ProductAlternativesCard({
                         ? "bg-green-600/20 text-green-400"
                         : alt.similarity >= 0.6
                         ? "bg-blue-600/20 text-blue-400"
-                        : "bg-slate-800 text-slate-400"
+                        : "bg-[#222226] text-slate-400"
                     }`}>
                       {Math.round(alt.similarity * 100)}%
                     </span>
                   </div>
-                  <div className="w-full bg-slate-800 rounded-full h-1.5">
+                  <div className="w-full bg-[#222226] rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full transition-all ${
                         alt.similarity >= 0.8

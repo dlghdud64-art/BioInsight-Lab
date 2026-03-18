@@ -61,7 +61,7 @@ export default function BudgetDetailPage() {
     return (
       <div className="w-full px-4 md:px-6 py-6">
         <div className="max-w-3xl mx-auto">
-          <Card className="border-slate-200 dark:border-slate-700">
+          <Card className="border-slate-200 dark:border-[#333338]">
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground dark:text-slate-500 mb-4" />
               <p className="text-slate-600 dark:text-slate-300 mb-2">예산을 찾을 수 없습니다.</p>
@@ -110,7 +110,7 @@ export default function BudgetDetailPage() {
           />
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900/50">
+        <Card className="border-slate-200 dark:border-[#333338] dark:bg-[#1a1a1e]/50">
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-white">
               사용 현황
@@ -135,7 +135,7 @@ export default function BudgetDetailPage() {
               </div>
               <Progress
                 value={Math.min(usageRate, 100)}
-                className={`h-2 dark:bg-slate-800 ${
+                className={`h-2 dark:bg-[#222226] ${
                   isOverBudget ? "bg-red-200 dark:bg-red-900/30" : isWarning ? "bg-orange-200 dark:bg-orange-900/30" : ""
                 }`}
               />
@@ -150,7 +150,7 @@ export default function BudgetDetailPage() {
         </Card>
 
         {budget.description && (
-          <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900/50">
+          <Card className="border-slate-200 dark:border-[#333338] dark:bg-[#1a1a1e]/50">
             <CardHeader>
               <CardTitle className="text-slate-900 dark:text-white text-base">설명</CardTitle>
             </CardHeader>

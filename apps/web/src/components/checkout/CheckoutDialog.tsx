@@ -71,7 +71,7 @@ function StepIndicator({
                 className={`
                   w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                   ${isCompleted ? "bg-emerald-500 text-white" : ""}
-                  ${isActive ? "bg-slate-900 text-white" : ""}
+                  ${isActive ? "bg-[#1a1a1e] text-white" : ""}
                   ${!isActive && !isCompleted ? "bg-slate-200 text-slate-500" : ""}
                 `}
               >

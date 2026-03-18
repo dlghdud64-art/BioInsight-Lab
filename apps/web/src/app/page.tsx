@@ -7,17 +7,17 @@ import dynamic from "next/dynamic";
 
 const PlatformFlowSection = dynamic(
   () => import("./_components/platform-flow-section").then((mod) => ({ default: mod.PlatformFlowSection })),
-  { loading: () => <div className="h-96 w-full bg-slate-900" /> }
+  { loading: () => <div className="h-96 w-full bg-[#222226]" /> }
 );
 
 const OpsConsolePreviewSection = dynamic(
   () => import("./_components/ops-console-preview-section").then((mod) => ({ default: mod.OpsConsolePreviewSection })),
-  { loading: () => <div className="h-64 w-full bg-slate-900" /> }
+  { loading: () => <div className="h-64 w-full bg-[#222226]" /> }
 );
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-slate-900" /> }
+  { loading: () => <div className="h-64 w-full bg-[#222226]" /> }
 );
 
 export default function HomePage() {

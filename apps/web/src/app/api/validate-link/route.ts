@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         method: "HEAD",
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; BioInsightLab/1.0)",
+          "User-Agent": "Mozilla/5.0 (compatible; LabAxis/1.0)",
         },
         redirect: "follow",
       });

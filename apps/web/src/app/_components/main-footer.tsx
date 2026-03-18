@@ -40,7 +40,7 @@ export function MainFooter() {
       title: "고객지원",
       links: [
         { label: "도입 문의", href: "/support", onClick: null },
-        { label: "이메일 문의", href: "mailto:contact@bioinsight.lab", onClick: null },
+        { label: "이메일 문의", href: "mailto:contact@labaxis.io", onClick: null },
       ],
     },
     {
@@ -53,7 +53,7 @@ export function MainFooter() {
   ];
 
   return (
-    <footer className="border-t border-slate-800 bg-slate-950">
+    <footer className="border-t border-[#333338] bg-[#111114]">
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
@@ -61,7 +61,7 @@ export function MainFooter() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <BioInsightLogo showText={true} variant="dark" className="h-6" />
-              <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
+              <span className="rounded-full bg-[#2a2a2e] px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
                 Beta
               </span>
             </div>
@@ -74,15 +74,15 @@ export function MainFooter() {
                 href="https://github.com/..."
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="GitHub"
               >
                 <Github className="h-4 w-4" />
               </a>
               {/* Mail */}
               <a
-                href="mailto:contact@bioinsight.lab"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
+                href="mailto:contact@labaxis.io"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="이메일 문의"
               >
                 <Mail className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function MainFooter() {
                 href="#"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 hover:border-slate-600 hover:text-slate-100 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="문서"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -143,11 +143,11 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-slate-800 pt-4 text-center md:text-left text-[11px] text-slate-500">
-          <span>&copy; {year} BioInsight Lab. All rights reserved.</span>
+        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-[#333338] pt-4 text-center md:text-left text-[11px] text-slate-500">
+          <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
-            <span className="text-slate-700">|</span>
+            <span className="text-slate-600">|</span>
             <Link href="/privacy" className="hover:text-slate-300 transition-colors">개인정보처리방침</Link>
           </div>
         </div>

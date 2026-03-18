@@ -6,7 +6,7 @@ type MainLayoutProps = {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#111114] pb-20 md:pb-0">
       {children}
       <MobileFloatingCTA />
     </div>

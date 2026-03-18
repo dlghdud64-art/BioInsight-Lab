@@ -146,7 +146,7 @@ export default function IntroPage() {
                 검색부터 운영까지 한 번에
               </h2>
               <p className="hidden md:block text-base text-slate-500 mt-2 max-w-2xl break-keep">
-                BioInsight Lab은 시약·장비 구매의 전 과정을 하나의 플랫폼에서 처리합니다.
+                LabAxis는 시약·장비 구매의 전 과정을 하나의 플랫폼에서 처리합니다.
               </p>
             </div>
 
@@ -308,7 +308,7 @@ export default function IntroPage() {
                 어떤 팀이 어떻게 사용하나요?
               </h2>
               <p className="text-sm md:text-base text-slate-500 mt-2 break-keep">
-                역할별 업무 문제와 BioInsight Lab이 만드는 변화를 확인하세요.
+                역할별 업무 문제와 LabAxis가 만드는 변화를 확인하세요.
               </p>
             </div>
 
@@ -362,7 +362,7 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
-                  <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider mb-1.5">BioInsight로 달라지는 것</p>
+                  <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider mb-1.5">LabAxis로 달라지는 것</p>
                   <ul className="space-y-1">
                     {["통합 검색으로 후보 한 번에 확인, 비교표 즉시 생성", "프로토콜 붙여넣기 → 필요 시약 자동 추출"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-blue-800 font-medium">
@@ -399,7 +399,7 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3">
-                  <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider mb-1.5">BioInsight로 달라지는 것</p>
+                  <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider mb-1.5">LabAxis로 달라지는 것</p>
                   <ul className="space-y-1">
                     {["구매→재고→사용 이력을 하나의 플랫폼에서 추적", "유효기간 임박 자동 알림, 배치 단위 이력 조회"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-emerald-800 font-medium">
@@ -436,7 +436,7 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3">
-                  <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider mb-1.5">BioInsight로 달라지는 것</p>
+                  <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider mb-1.5">LabAxis로 달라지는 것</p>
                   <ul className="space-y-1">
                     {["통합 견적 요청 — 가격 비교표 자동 생성, 5분 완료", "구매 이력·공급사 응답을 한 곳에서 관리"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-indigo-800 font-medium">

@@ -9,11 +9,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
 import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: {
-    default: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
-    template: "%s | BioInsight Lab",
+    default: `${BRAND.name} - 바이오 R&D 구매 플랫폼`,
+    template: `%s | ${BRAND.name}`,
   },
   description:
     "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼. 연구실과 조직의 구매 흐름을 통합합니다.",
@@ -29,9 +30,9 @@ export const metadata: Metadata = {
     "구매 관리",
     "재고 관리",
   ],
-  authors: [{ name: "BioInsight Lab" }],
-  creator: "BioInsight Lab",
-  publisher: "BioInsight Lab",
+  authors: [{ name: BRAND.name }],
+  creator: BRAND.name,
+  publisher: BRAND.name,
   robots: {
     index: true,
     follow: true,
@@ -39,9 +40,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://bioinsight-lab.com",
-    siteName: "BioInsight Lab",
-    title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
+    url: `https://${BRAND.domain}`,
+    siteName: BRAND.name,
+    title: `${BRAND.name} - 바이오 R&D 구매 플랫폼`,
     description:
       "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: [
@@ -49,13 +50,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "BioInsight Lab",
+        alt: BRAND.name,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BioInsight Lab - 바이오 R&D 구매 플랫폼",
+    title: `${BRAND.name} - 바이오 R&D 구매 플랫폼`,
     description:
       "바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼",
     images: ["/og-image.png"],
@@ -102,5 +103,4 @@ export default function RootLayout({
     </html>
   );
 }
-
 

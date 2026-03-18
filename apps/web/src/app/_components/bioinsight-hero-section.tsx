@@ -30,7 +30,7 @@ export function BioInsightHeroSection() {
   };
 
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-slate-950 border-b border-slate-800">
+    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-[#1a1a1e] border-b border-[#333338]">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
         {/* Value Proposition */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 md:mb-14">
@@ -75,15 +75,15 @@ export function BioInsightHeroSection() {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-slate-900 transition-colors">
-                    <div className="w-10 h-10 rounded-md border border-blue-500/20 bg-blue-600/10 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-[#222226] transition-colors">
+                    <div className="w-10 h-10 rounded-md border border-blue-500/30 bg-blue-600/15 flex items-center justify-center">
                       <Icon className="h-5 w-5 text-blue-400" strokeWidth={1.8} />
                     </div>
                     <span className="text-xs font-semibold text-slate-200">{step.label}</span>
                     <span className="text-[10px] text-slate-500 whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="h-4 w-4 text-slate-700 flex-shrink-0 mx-0.5" />
+                    <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 mx-0.5" />
                   )}
                 </div>
               );
@@ -95,7 +95,7 @@ export function BioInsightHeroSection() {
             {PIPELINE_STEPS.map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/10">
+                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-blue-500/30 bg-blue-600/15">
                   <Icon className="h-4 w-4 text-blue-400" strokeWidth={1.8} />
                   <span className="text-[11px] font-semibold text-slate-300">{step.label}</span>
                 </div>
@@ -106,14 +106,14 @@ export function BioInsightHeroSection() {
 
         {/* Compact Search Bar */}
         <div className="max-w-md mx-auto mt-10">
-          <form onSubmit={handleSearch} className="flex items-center h-10 border border-slate-700 rounded-md bg-slate-900 px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-500 transition-all">
-            <Search className="h-4 w-4 text-slate-500 flex-shrink-0" />
+          <form onSubmit={handleSearch} className="flex items-center h-10 border border-[#333338] rounded-md bg-[#222226] px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
+            <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="시약명, CAS No., 제조사 검색"
-              className="flex-1 bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none"
+              className="flex-1 bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-400 outline-none"
             />
             <Button type="submit" variant="ghost" size="sm" className="h-7 px-3 text-xs text-slate-400 hover:text-slate-100">
               검색

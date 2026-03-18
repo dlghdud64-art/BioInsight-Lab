@@ -114,7 +114,7 @@ export default function SearchPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0c0f13] mt-0 md:mt-8">
+    <div className="min-h-screen bg-[#111114] mt-0 md:mt-8">
       
       <div className="container mx-auto px-4 pb-4 md:pb-6">
         {/* 검색창 — 화면 최상단 핵심 요소 */}
@@ -122,9 +122,9 @@ export default function SearchPage() {
 
         {/* 모바일 필터 바 — 검색창 직하 요약형 */}
         <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
-          <div className="md:hidden flex items-center gap-1.5 px-1 py-1.5 overflow-x-auto border-b border-[#1e2228]">
+          <div className="md:hidden flex items-center gap-1.5 px-1 py-1.5 overflow-x-auto border-b border-[#2a2a2e]">
             <SheetTrigger asChild>
-              <button className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md border border-slate-700 text-slate-400 hover:bg-slate-800 transition-colors shrink-0">
+              <button className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md border border-[#333338] text-slate-400 hover:bg-[#222226] transition-colors shrink-0">
                 <SlidersHorizontal className="h-3 w-3" />
                 필터
                 {activeFilterCount > 0 && (
@@ -135,17 +135,17 @@ export default function SearchPage() {
               </button>
             </SheetTrigger>
             {searchCategory && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-slate-800">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-[#222226]">
                 {PRODUCT_CATEGORIES[searchCategory as keyof typeof PRODUCT_CATEGORIES] || searchCategory}
               </Badge>
             )}
             {searchBrand && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 max-w-[100px] truncate bg-slate-800">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 max-w-[100px] truncate bg-[#222226]">
                 {searchBrand}
               </Badge>
             )}
             {sortBy !== "relevance" && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-slate-800">
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0 bg-[#222226]">
                 {sortBy === "price_low" ? "가격↑" : sortBy === "price_high" ? "가격↓" : "납기순"}
               </Badge>
             )}
@@ -175,7 +175,7 @@ export default function SearchPage() {
         <section className="space-y-4 max-w-4xl mx-auto w-full">
           {/* 비교 중인 제품 바 */}
           {compareIds.length > 0 && (
-            <Card className="border border-[#1e2228] bg-[#141820]">
+            <Card className="border border-[#2a2a2e] bg-[#1a1a1e]">
               <CardContent className="py-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -205,7 +205,7 @@ export default function SearchPage() {
                           <Badge
                             key={id}
                             variant="secondary"
-                            className="text-xs pr-1 cursor-pointer hover:bg-slate-700 transition-colors"
+                            className="text-xs pr-1 cursor-pointer hover:bg-[#2a2a2e] transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleCompare(id);
@@ -219,7 +219,7 @@ export default function SearchPage() {
                                 e.stopPropagation();
                                 toggleCompare(id);
                               }}
-                              className="ml-1 hover:bg-slate-600 rounded-full p-0.5"
+                              className="ml-1 hover:bg-[#333338] rounded-full p-0.5"
                               aria-label="제거"
                             >
                               <X className="h-2.5 w-2.5" />
@@ -283,7 +283,7 @@ export default function SearchPage() {
 
                   {/* 재고 운영 인사이트 — 로그인 사용자 + 검색 결과 존재 시 보조 레이어 */}
                   {session?.user && hasSearched && searchQuery && (
-                    <div className="rounded-lg border border-[#1e2228] bg-[#141820] px-4 py-3">
+                    <div className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-4 py-3">
                       <div className="flex items-center gap-2 mb-2.5">
                         <ClipboardList className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
                         <span className="text-xs font-semibold text-slate-400">재고 운영 연결</span>
@@ -291,7 +291,7 @@ export default function SearchPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:border-slate-600 transition-colors">
+                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-[#333338] bg-[#222226] text-slate-300 hover:bg-[#2a2a2e] hover:border-[#333338] transition-colors">
                             <TrendingDown className="h-3 w-3 text-slate-500" />
                             재고 현황 확인
                           </button>
@@ -303,7 +303,7 @@ export default function SearchPage() {
                           </button>
                         </Link>
                         <Link href="/dashboard">
-                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors">
+                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-[#333338] bg-[#222226] text-slate-400 hover:bg-[#2a2a2e] transition-colors">
                             <LayoutDashboard className="h-3 w-3 text-slate-500" />
                             운영 허브
                           </button>
@@ -336,7 +336,7 @@ export default function SearchPage() {
                   {!hasSearched ? (
                     <div className="hidden" />
                   ) : (
-                    <div className="flex flex-col items-center text-center rounded-lg border border-dashed border-[#252a32] bg-[#181c22] px-8 py-10">
+                    <div className="flex flex-col items-center text-center rounded-lg border border-dashed border-[#2a2a2e] bg-[#222226] px-8 py-10">
                       <Package className="h-8 w-8 text-slate-500 mb-3" strokeWidth={1.5} />
                       <p className="text-sm text-slate-300 mb-1">일치하는 제품이 없습니다.</p>
                       <p className="text-xs text-slate-500">품목명·제조사·CAS No.를 다시 확인해 보세요.</p>
@@ -376,7 +376,7 @@ export default function SearchPage() {
       {/* 미니 품목 바 (하단 고정) */}
       {quoteItems.length > 0 && (
         <div className="fixed bottom-4 left-1/2 z-40 w-full max-w-3xl -translate-x-1/2 px-2 sm:px-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-slate-700 bg-slate-900/95 px-3 sm:px-4 py-2 shadow-lg backdrop-blur">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 rounded-full border border-[#333338] bg-[#1a1a1e]/95 px-3 sm:px-4 py-2 shadow-lg backdrop-blur">
             <p className="text-[10px] sm:text-xs text-slate-300 text-center sm:text-left">
               견적 요청 리스트 {quoteItems.length}개 · 합계 ₩{totalAmount.toLocaleString("ko-KR")}
             </p>
@@ -391,7 +391,7 @@ export default function SearchPage() {
                 className={`w-full ${sheetSide === "right" ? "sm:max-w-lg lg:max-w-xl" : ""} flex flex-col p-0 ${sheetSide === "bottom" ? "h-[90vh]" : ""}`}
               >
                 {/* 헤더: 타이틀 + 품목 개수 뱃지 */}
-                <div className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-800 px-6 pt-4">
+                <div className="flex items-center gap-2 pb-4 mb-4 border-b border-[#2a2a2e] px-6 pt-4">
                   <h2 className="text-lg font-bold tracking-tight text-slate-100">선택된 품목</h2>
                   <Badge variant="secondary" className="bg-blue-600/10 text-blue-400 rounded-full px-2.5">
                     {quoteItems.length}건
@@ -418,7 +418,7 @@ export default function SearchPage() {
                       return (
                         <div
                           key={item.id}
-                          className="relative bg-slate-900 border border-slate-800 rounded-xl p-4 hover:shadow-md transition-all duration-200"
+                          className="relative bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl p-4 hover:shadow-md transition-all duration-200"
                         >
                           {/* 삭제 버튼 - 우측 상단 */}
                           <Button
@@ -466,7 +466,7 @@ export default function SearchPage() {
                                   const qty = parseInt(e.target.value) || 1;
                                   updateQuoteItem(item.id, { quantity: Math.max(1, qty) });
                                 }}
-                                className="h-9 w-16 text-center text-sm font-medium p-0 border-slate-700 transition-all focus:ring-2 focus:ring-blue-500"
+                                className="h-9 w-16 text-center text-sm font-medium p-0 border-[#333338] transition-all focus:ring-2 focus:ring-blue-500"
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <Button
@@ -505,7 +505,7 @@ export default function SearchPage() {
 
                 {/* 하단 고정 푸터 */}
                 {quoteItems.length > 0 && (
-                  <div className="border-t border-slate-800 bg-slate-900 px-6 py-4 space-y-3 sticky bottom-0">
+                  <div className="border-t border-[#2a2a2e] bg-[#1a1a1e] px-6 py-4 space-y-3 sticky bottom-0">
                     {/* 총액 */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-400">Total</span>
@@ -627,9 +627,9 @@ function StickySearchBar() {
   };
 
   return (
-    <div className="w-full px-2 pt-3 pb-2 md:py-5 md:px-0 border-b border-[#1e2228] bg-[#141820] sticky top-0 z-10">
+    <div className="w-full px-2 pt-3 pb-2 md:py-5 md:px-0 border-b border-[#2a2a2e] bg-[#1a1a1e] sticky top-0 z-10">
       <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
-        <div className="flex items-center border border-[#252a32] rounded-lg bg-[#181c22] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+        <div className="flex items-center border border-[#2a2a2e] rounded-lg bg-[#222226] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
           <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
             <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
           </div>
@@ -664,7 +664,7 @@ function StickySearchBar() {
                 key={term}
                 type="button"
                 onClick={() => handleChipClick(term)}
-                className="text-[10px] px-1.5 py-0.5 rounded-full border border-[#252a32] bg-[#181c22] text-slate-400 font-medium hover:border-blue-400 hover:bg-blue-600/10 hover:text-blue-400 active:scale-95 transition-all cursor-pointer"
+                className="text-[10px] px-1.5 py-0.5 rounded-full border border-[#2a2a2e] bg-[#222226] text-slate-400 font-medium hover:border-blue-400 hover:bg-blue-600/10 hover:text-blue-400 active:scale-95 transition-all cursor-pointer"
               >
                 {term}
               </button>
