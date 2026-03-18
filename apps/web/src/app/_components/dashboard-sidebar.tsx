@@ -208,7 +208,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           <nav className="space-y-1">
             {dashboardLinks.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+              const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
 
               return (
                 <Link
@@ -240,7 +240,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
               <nav className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                  const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
                   const tint = ICON_TINT[item.href] || { active: "text-blue-400", inactive: "text-slate-500" };
 
                   return (
@@ -279,7 +279,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
             <nav className="space-y-1">
               {adminMenuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
                 const tint = ICON_TINT[item.href] || { active: "text-slate-300", inactive: "text-slate-500" };
                 return (
                   <Link
