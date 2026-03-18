@@ -596,6 +596,7 @@ export default function DashboardPage() {
               label: "등록 품목",
               value: stats.totalInventory.toLocaleString("ko-KR"),
               insight: getInventoryInsight(),
+              action: stats.totalInventory === 0 ? "품목 등록 시작" : undefined,
               risk: inventoryRisk,
             })}
             {renderKpiCard({
@@ -604,6 +605,7 @@ export default function DashboardPage() {
               label: "재고 부족",
               value: stats.lowStockAlerts,
               insight: getStockInsight(),
+              action: stats.lowStockAlerts > 0 ? "부족 품목 확인" : undefined,
               risk: stockRisk,
             })}
             <Link href="/dashboard/purchases">
