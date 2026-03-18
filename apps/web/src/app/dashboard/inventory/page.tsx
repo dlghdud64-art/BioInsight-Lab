@@ -44,6 +44,7 @@ import { PriorityActionQueue } from "@/components/inventory/priority-action-queu
 import { InventoryContextPanel, type ContextPanelItem } from "@/components/inventory/inventory-context-panel";
 import { StorageLocationView } from "@/components/inventory/storage-location-view";
 import { InventoryFlowView } from "@/components/inventory/inventory-flow-view";
+import { MobileInventoryView } from "@/components/inventory/mobile-inventory-view";
 
 interface ProductInventory {
   id: string;
@@ -956,7 +957,97 @@ function InventoryPageContent() {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 md:px-6 py-4 md:py-8 pb-20 lg:pb-8">
-      <div className="flex gap-0">
+      {/* ── Mobile View (below md breakpoint) ── */}
+      <div className="md:hidden">
+        <div className="flex flex-col space-y-1 mb-4">
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">재고 관리</h1>
+        </div>
+        <div className="flex flex-wrap items-start gap-2 mb-5">
+          <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            재고 등록
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/dashboard/purchases")}
+          >
+            <PackagePlus className="h-3.5 w-3.5 mr-1.5" />
+            구매 반영
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => setIsImportDialogOpen(true)}
+                className="flex items-center gap-2 text-xs"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                엑셀 업로드
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/inventory/scan")}
+                className="flex items-center gap-2 text-xs"
+              >
+                <QrCode className="h-3.5 w-3.5" />
+                QR 스캔
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleBulkLabelPrint()}
+                className="flex items-center gap-2 text-xs"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                라벨 인쇄
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <MobileInventoryView
+          inventories={displayInventories}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onReorder={(inventory) => {
+            aiPanel.preparePanel({
+              id: inventory.id,
+              productId: inventory.productId,
+              productName: inventory.product.name,
+              brand: inventory.product.brand || undefined,
+              catalogNumber: inventory.product.catalogNumber || undefined,
+              currentQuantity: inventory.currentQuantity,
+              unit: inventory.unit || undefined,
+              safetyStock: inventory.safetyStock || undefined,
+              minOrderQty: inventory.minOrderQty || undefined,
+              location: inventory.location || undefined,
+              expiryDate: inventory.expiryDate || undefined,
+              lotNumber: inventory.lotNumber || undefined,
+              autoReorderEnabled: inventory.autoReorderEnabled || false,
+              averageDailyUsage: inventory.averageDailyUsage || undefined,
+              leadTimeDays: inventory.leadTimeDays || undefined,
+              lastInspectedAt: undefined,
+            });
+          }}
+          onEdit={(inventory) => {
+            setEditingInventory(inventory);
+            setIsDialogOpen(true);
+          }}
+          onDelete={(inventory) => {
+            if (confirm(`정말 ${inventory.product.name} 재고를 삭제하시겠습니까?`)) {
+              deleteMutation.mutate(inventory.id);
+            }
+          }}
+          onRestock={(inventory) => {
+            setRestockItem(inventory);
+            setRestockForm({ addQty: "", lotNumber: "", expiryDate: "" });
+          }}
+        />
+      </div>
+
+      {/* ── Desktop View (md and above) ── */}
+      <div className="hidden md:flex gap-0">
       {/* Main content area */}
       <div className={`flex-1 min-w-0 space-y-4 sm:space-y-6 transition-all ${contextPanelOpen ? "max-w-[calc(100%-420px)]" : "max-w-7xl mx-auto"}`}>
         {/* 상단 타이틀 및 액션 버튼 */}
