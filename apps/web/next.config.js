@@ -3,6 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: false, // SWC minifier가 radix-ui + 대규모 client component에서 TDZ 발생 → terser 사용
   generateBuildId: () => 'v20260318',
 
   // pdf-parse / pdfjs-dist는 Node.js 네이티브 모듈이므로 서버 컴포넌트에서 외부 패키지로 처리
