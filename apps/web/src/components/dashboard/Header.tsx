@@ -376,9 +376,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               >
                 <Bell className="h-5 w-5" />
                 {pendingCount > 0 && (
-                  <span className={`absolute top-1 right-1 flex items-center justify-center h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white px-0.5 ${
-                    bg-blue-500
-                  }`}>
+                  <span className="absolute top-1 right-1 flex items-center justify-center h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white px-0.5 bg-blue-500">
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 )}
