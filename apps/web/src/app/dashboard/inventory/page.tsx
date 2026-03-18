@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,11 +40,12 @@ import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
-import { PriorityActionQueue } from "@/components/inventory/priority-action-queue";
-import { InventoryContextPanel, type ContextPanelItem } from "@/components/inventory/inventory-context-panel";
-import { StorageLocationView } from "@/components/inventory/storage-location-view";
-import { InventoryFlowView } from "@/components/inventory/inventory-flow-view";
-import { MobileInventoryView } from "@/components/inventory/mobile-inventory-view";
+const PriorityActionQueue = lazy(() => import("@/components/inventory/priority-action-queue").then(m => ({ default: m.PriorityActionQueue })));
+const InventoryContextPanel = lazy(() => import("@/components/inventory/inventory-context-panel").then(m => ({ default: m.InventoryContextPanel })));
+const StorageLocationView = lazy(() => import("@/components/inventory/storage-location-view").then(m => ({ default: m.StorageLocationView })));
+const InventoryFlowView = lazy(() => import("@/components/inventory/inventory-flow-view").then(m => ({ default: m.InventoryFlowView })));
+const MobileInventoryView = lazy(() => import("@/components/inventory/mobile-inventory-view").then(m => ({ default: m.MobileInventoryView })));
+type ContextPanelItem = { id: string; productId: string; currentQuantity: number; unit: string; safetyStock: number | null; location: string | null; expiryDate: string | null; notes: string | null; product: { id: string; name: string; brand: string | null; catalogNumber: string | null; }; };
 
 interface ProductInventory {
   id: string;
