@@ -14,7 +14,11 @@ import {
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
-import { WorkQueueInbox } from "@/components/dashboard/work-queue-inbox";
+import dynamic_import from "next/dynamic";
+const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-queue-inbox").then(m => m.WorkQueueInbox), {
+  ssr: false,
+  loading: () => <div className="h-16 rounded-xl bg-el animate-pulse" />,
+});
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
@@ -36,7 +40,9 @@ export default function DashboardPage() {
     },
     enabled: status === "authenticated",
     staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   if (status === "loading") {
