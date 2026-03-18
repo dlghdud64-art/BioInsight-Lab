@@ -85,9 +85,9 @@ export default function IntroPage() {
                   <span className="text-sm text-slate-400">PBS buffer 10x, 500ml</span>
                 </div>
                 {[
-                  { brand: "Sigma-Aldrich", name: "PBS 10X, pH 7.4 (500mL)", price: "\u20A938,000", lead: "3\uC77C", badge: "\uCD5C\uC800\uAC00" },
-                  { brand: "Thermo Fisher", name: "Dulbecco\u2019s PBS 10X (500mL)", price: "\u20A941,500", lead: "5\uC77C", badge: "" },
-                  { brand: "Bio-Rad", name: "10X PBS Concentrate (500mL)", price: "\u20A945,200", lead: "7\uC77C", badge: "" },
+                  { brand: "Sigma-Aldrich", name: "PBS 10X, pH 7.4 (500mL)", price: "\₩38,000", lead: "3\일", badge: "\최\저\가" },
+                  { brand: "Thermo Fisher", name: "Dulbecco\’s PBS 10X (500mL)", price: "\₩41,500", lead: "5\일", badge: "" },
+                  { brand: "Bio-Rad", name: "10X PBS Concentrate (500mL)", price: "\₩45,200", lead: "7\일", badge: "" },
                 ].map((item, i) => (
                   <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${i === 0 ? "bg-el" : "hover:bg-el"} ${i < 2 ? "mb-1" : ""}`}>
                     <div className="w-7 h-7 rounded-md bg-st flex-shrink-0 flex items-center justify-center">
@@ -95,7 +95,7 @@ export default function IntroPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-slate-100 truncate">{item.name}</p>
-                      <p className="text-[10px] text-slate-400">{item.brand} · \uB0A9\uAE30 {item.lead}</p>
+                      <p className="text-[10px] text-slate-400">{item.brand} · \납\기 {item.lead}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-xs font-bold text-slate-100">{item.price}</p>
@@ -108,14 +108,14 @@ export default function IntroPage() {
                 <div className="mt-2 flex gap-2">
                   <div className="flex-1 h-8 rounded-lg bg-blue-600 flex items-center justify-center gap-1">
                     <GitCompare className="h-3 w-3 text-slate-100" />
-                    <span className="text-[11px] font-semibold text-slate-100">\uBE44\uAD50 \uBAA9\uB85D\uC5D0 \uCD94\uAC00</span>
+                    <span className="text-[11px] font-semibold text-slate-100">\비\교 \목\록\에 \추\가</span>
                   </div>
                   <div className="h-8 px-3 rounded-lg border border-bd flex items-center">
-                    <span className="text-[11px] text-slate-300">\uACAC\uC801 \uC694\uCCAD</span>
+                    <span className="text-[11px] text-slate-300">\견\적 \요\청</span>
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 text-center">\uC2E4\uC81C \uC81C\uD488 \uAC80\uC0C9·\uBE44\uAD50·\uACAC\uC801 \uD654\uBA74</p>
+              <p className="text-[10px] text-slate-400 text-center">\실\제 \제\품 \검\색·\비\교·\견\적 \화\면</p>
             </div>
           </div>
         </section>
@@ -124,12 +124,12 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pn border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1 md:mb-2">\uC6B4\uC601 \uBCD1\uBAA9</p>
+              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1 md:mb-2">\운\영 \병\목</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
-                \uD604\uC7AC \uC5F0\uAD6C\uC2E4 \uAD6C\uB9E4 \uC6B4\uC601\uC758 \uBCD1\uBAA9
+                \현\재 \연\구\실 \구\매 \운\영\의 \병\목
               </h2>
               <p className="text-sm md:text-base text-slate-400 mt-2 max-w-2xl break-keep">
-                \uBC18\uBCF5\uB418\uB294 \uBE44\uD6A8\uC728\uC774 \uC5F0\uAD6C \uC2DC\uAC04\uC744 \uAE4E\uC544\uBA39\uACE0 \uC788\uC2B5\uB2C8\uB2E4.
+                \반\복\되\는 \비\효\율\이 \연\구 \시\간\을 \깎\아\먹\고 \있\습\니\다.
               </p>
             </div>
 
@@ -138,23 +138,23 @@ export default function IntroPage() {
                 {
                   icon: Clock,
                   iconColor: "text-amber-400",
-                  title: "\uBC18\uBCF5 \uAC80\uC0C9",
-                  desc: "\uBCA4\uB354 \uC0AC\uC774\uD2B8 10\uAC1C \uC774\uC0C1\uC744 \uC77C\uC77C\uC774 \uBC29\uBB38\uD574 \uAC19\uC740 \uC2DC\uC57D\uC744 \uAC80\uC0C9\uD569\uB2C8\uB2E4. \uAC74\uB2F9 30\uBD84 \uC774\uC0C1 \uC18C\uC694.",
-                  stat: "\uAC74\uB2F9 30\uBD84+",
+                  title: "\반\복 \검\색",
+                  desc: "\벤\더 \사\이\트 10\개 \이\상\을 \일\일\이 \방\문\해 \같\은 \시\약\을 \검\색\합\니\다. \건\당 30\분 \이\상 \소\요.",
+                  stat: "\건\당 30\분+",
                 },
                 {
                   icon: AlertTriangle,
                   iconColor: "text-red-400",
-                  title: "\uC218\uAE30 \uACAC\uC801",
-                  desc: "\uC774\uBA54\uC77C·\uC804\uD654\uB85C \uACAC\uC801\uC744 \uC218\uC9D1\uD558\uACE0, \uC5D1\uC140\uC5D0 \uC218\uAE30\uB85C \uC815\uB9AC\uD569\uB2C8\uB2E4. \uBC84\uC804 \uAD00\uB9AC\uC640 \uBE44\uAD50\uAC00 \uBD88\uAC00\uB2A5.",
-                  stat: "\uAC74\uB2F9 45\uBD84+",
+                  title: "\수\기 \견\적",
+                  desc: "\이\메\일·\전\화\로 \견\적\을 \수\집\하\고, \엑\셀\에 \수\기\로 \정\리\합\니\다. \버\전 \관\리\와 \비\교\가 \불\가\능.",
+                  stat: "\건\당 45\분+",
                 },
                 {
                   icon: PackageX,
                   iconColor: "text-red-400",
-                  title: "\uC7AC\uACE0 \uACF5\uBC31",
-                  desc: "\uAD6C\uB9E4 \uC644\uB8CC \uD6C4 \uC7AC\uACE0 \uBC18\uC601\uC774 \uB204\uB77D\uB429\uB2C8\uB2E4. \uC720\uD6A8\uAE30\uAC04 \uB9CC\uB8CC·\uC548\uC804\uC7AC\uACE0 \uBD80\uC871\uC744 \uB4A4\uB2A6\uAC8C \uBC1C\uACAC.",
-                  stat: "\uC5F0\uAC04 15%+ \uC190\uC2E4",
+                  title: "\재\고 \공\백",
+                  desc: "\구\매 \완\료 \후 \재\고 \반\영\이 \누\락\됩\니\다. \유\효\기\간 \만\료·\안\전\재\고 \부\족\을 \뒤\늦\게 \발\견.",
+                  stat: "\연\간 15%+ \손\실",
                 },
               ].map((item, i) => (
                 <div key={i} className="bg-pg border border-bd rounded-xl p-4 md:p-6">
@@ -178,24 +178,24 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pg border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1 md:mb-2">\uC6B4\uC601 \uD750\uB984</p>
+              <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1 md:mb-2">\운\영 \흐\름</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
-                \uAC80\uC0C9 \u2192 \uBE44\uAD50 \u2192 \uACAC\uC801 \u2192 \uBC1C\uC8FC \u2192 \uC785\uACE0 \u2192 \uC7AC\uACE0
+                \검\색 \→ \비\교 \→ \견\적 \→ \발\주 \→ \입\고 \→ \재\고
               </h2>
               <p className="text-sm md:text-base text-slate-400 mt-2 max-w-2xl break-keep">
-                LabAxis\uB294 \uC5F0\uAD6C\uC2E4 \uAD6C\uB9E4\uC758 \uC804 \uACFC\uC815\uC744 \uD558\uB098\uC758 \uD30C\uC774\uD504\uB77C\uC778\uC73C\uB85C \uC5F0\uACB0\uD569\uB2C8\uB2E4.
+                LabAxis\는 \연\구\실 \구\매\의 \전 \과\정\을 \하\나\의 \파\이\프\라\인\으\로 \연\결\합\니\다.
               </p>
             </div>
 
             {/* Mobile: vertical list */}
             <div className="md:hidden space-y-2">
               {[
-                { num: 1, icon: Search, title: "\uD1B5\uD569 \uAC80\uC0C9", change: "\uBCA4\uB354 10\uACF3 \u2192 \uD55C \uBC88\uC5D0 \uAC80\uC0C9", color: "text-blue-400", dot: "bg-blue-500" },
-                { num: 2, icon: GitCompare, title: "\uC81C\uD488 \uBE44\uAD50", change: "\uC5D1\uC140 \uC815\uB9AC \u2192 \uBE44\uAD50\uD45C \uC790\uB3D9 \uC0DD\uC131", color: "text-violet-400", dot: "bg-violet-500" },
-                { num: 3, icon: FileText, title: "\uACAC\uC801 \uC694\uCCAD", change: "\uC774\uBA54\uC77C \uC218\uC9D1 \u2192 \uD074\uB9AD \uD55C \uBC88\uC73C\uB85C \uC804\uC1A1", color: "text-teal-400", dot: "bg-teal-500" },
-                { num: 4, icon: ShoppingCart, title: "\uBC1C\uC8FC", change: "\uC218\uAE30 \uBC1C\uC8FC \u2192 \uC2B9\uC778 \uD6C4 \uC790\uB3D9 \uBC1C\uC8FC", color: "text-amber-400", dot: "bg-amber-500" },
-                { num: 5, icon: ClipboardCheck, title: "\uC785\uACE0 \uAC80\uC218", change: "\uC218\uAE30 \uD655\uC778 \u2192 \uC785\uACE0 \uC2A4\uCE94\uC73C\uB85C \uC790\uB3D9 \uBC18\uC601", color: "text-emerald-400", dot: "bg-emerald-500" },
-                { num: 6, icon: Warehouse, title: "\uC7AC\uACE0 \uC6B4\uC601", change: "\uC5D1\uC140 \uAD00\uB9AC \u2192 Lot·\uC720\uD6A8\uAE30\uAC04 \uC790\uB3D9 \uCD94\uC801", color: "text-slate-300", dot: "bg-slate-500" },
+                { num: 1, icon: Search, title: "\통\합 \검\색", change: "\벤\더 10\곳 \→ \한 \번\에 \검\색", color: "text-blue-400", dot: "bg-blue-500" },
+                { num: 2, icon: GitCompare, title: "\제\품 \비\교", change: "\엑\셀 \정\리 \→ \비\교\표 \자\동 \생\성", color: "text-violet-400", dot: "bg-violet-500" },
+                { num: 3, icon: FileText, title: "\견\적 \요\청", change: "\이\메\일 \수\집 \→ \클\릭 \한 \번\으\로 \전\송", color: "text-teal-400", dot: "bg-teal-500" },
+                { num: 4, icon: ShoppingCart, title: "\발\주", change: "\수\기 \발\주 \→ \승\인 \후 \자\동 \발\주", color: "text-amber-400", dot: "bg-amber-500" },
+                { num: 5, icon: ClipboardCheck, title: "\입\고 \검\수", change: "\수\기 \확\인 \→ \입\고 \스\캔\으\로 \자\동 \반\영", color: "text-emerald-400", dot: "bg-emerald-500" },
+                { num: 6, icon: Warehouse, title: "\재\고 \운\영", change: "\엑\셀 \관\리 \→ Lot·\유\효\기\간 \자\동 \추\적", color: "text-slate-300", dot: "bg-slate-500" },
               ].map((step) => (
                 <div key={step.num} className="flex items-start gap-2.5 px-3 py-2.5 bg-pn rounded-lg border border-bd">
                   <div className={`shrink-0 w-5 h-5 rounded-full ${step.dot} text-slate-100 text-[10px] font-bold flex items-center justify-center mt-0.5`}>{step.num}</div>
@@ -210,12 +210,12 @@ export default function IntroPage() {
             {/* Desktop: 6-column pipeline */}
             <div className="hidden md:grid md:grid-cols-6 gap-3">
               {[
-                { num: 1, icon: Search, title: "\uD1B5\uD569 \uAC80\uC0C9", change: "\uBCA4\uB354 10\uACF3 \u2192 \uD55C \uBC88\uC5D0", color: "text-blue-400", dot: "bg-blue-500" },
-                { num: 2, icon: GitCompare, title: "\uC81C\uD488 \uBE44\uAD50", change: "\uC5D1\uC140 \u2192 \uBE44\uAD50\uD45C \uC790\uB3D9", color: "text-violet-400", dot: "bg-violet-500" },
-                { num: 3, icon: FileText, title: "\uACAC\uC801 \uC694\uCCAD", change: "\uC774\uBA54\uC77C \u2192 \uD074\uB9AD \uD55C \uBC88", color: "text-teal-400", dot: "bg-teal-500" },
-                { num: 4, icon: ShoppingCart, title: "\uBC1C\uC8FC", change: "\uC218\uAE30 \u2192 \uC2B9\uC778 \uD6C4 \uBC1C\uC8FC", color: "text-amber-400", dot: "bg-amber-500" },
-                { num: 5, icon: ClipboardCheck, title: "\uC785\uACE0 \uAC80\uC218", change: "\uC218\uAE30 \u2192 \uC2A4\uCE94 \uBC18\uC601", color: "text-emerald-400", dot: "bg-emerald-500" },
-                { num: 6, icon: Warehouse, title: "\uC7AC\uACE0 \uC6B4\uC601", change: "\uC5D1\uC140 \u2192 \uC790\uB3D9 \uCD94\uC801", color: "text-slate-300", dot: "bg-slate-500" },
+                { num: 1, icon: Search, title: "\통\합 \검\색", change: "\벤\더 10\곳 \→ \한 \번\에", color: "text-blue-400", dot: "bg-blue-500" },
+                { num: 2, icon: GitCompare, title: "\제\품 \비\교", change: "\엑\셀 \→ \비\교\표 \자\동", color: "text-violet-400", dot: "bg-violet-500" },
+                { num: 3, icon: FileText, title: "\견\적 \요\청", change: "\이\메\일 \→ \클\릭 \한 \번", color: "text-teal-400", dot: "bg-teal-500" },
+                { num: 4, icon: ShoppingCart, title: "\발\주", change: "\수\기 \→ \승\인 \후 \발\주", color: "text-amber-400", dot: "bg-amber-500" },
+                { num: 5, icon: ClipboardCheck, title: "\입\고 \검\수", change: "\수\기 \→ \스\캔 \반\영", color: "text-emerald-400", dot: "bg-emerald-500" },
+                { num: 6, icon: Warehouse, title: "\재\고 \운\영", change: "\엑\셀 \→ \자\동 \추\적", color: "text-slate-300", dot: "bg-slate-500" },
               ].map((step, i) => (
                 <div key={step.num} className="relative">
                   <div className="bg-pn border border-bd rounded-xl p-4 h-full flex flex-col items-center text-center">
@@ -246,12 +246,12 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pn border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-violet-400 uppercase tracking-wider mb-1 md:mb-2">\uC5ED\uD560\uBCC4 \uBCC0\uD654</p>
+              <p className="text-xs font-semibold text-violet-400 uppercase tracking-wider mb-1 md:mb-2">\역\할\별 \변\화</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
-                LabAxis \uB3C4\uC785 \uD6C4, \uAC01 \uC5ED\uD560\uC740 \uC774\uB807\uAC8C \uB2EC\uB77C\uC9D1\uB2C8\uB2E4
+                LabAxis \도\입 \후, \각 \역\할\은 \이\렇\게 \달\라\집\니\다
               </h2>
               <p className="text-sm md:text-base text-slate-400 mt-2 max-w-2xl break-keep">
-                \uC5F0\uAD6C\uC6D0\uBD80\uD130 \uAD00\uB9AC\uC790\uAE4C\uC9C0, \uAC01 \uC5ED\uD560\uC5D0 \uB9DE\uB294 \uC6B4\uC601 \uBCC0\uD654\uB97C \uD655\uC778\uD558\uC138\uC694.
+                \연\구\원\부\터 \관\리\자\까\지, \각 \역\할\에 \맞\는 \운\영 \변\화\를 \확\인\하\세\요.
               </p>
             </div>
 
@@ -263,16 +263,16 @@ export default function IntroPage() {
                     <Microscope className="h-5 w-5 text-amber-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">\uC5F0\uAD6C\uC6D0</p>
-                    <h3 className="text-sm font-bold text-slate-100">\uC2E4\uD5D8 \uC900\uBE44 \uC2DC\uAC04 \uB2E8\uCD95</h3>
+                    <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">\연\구\원</p>
+                    <h3 className="text-sm font-bold text-slate-100">\실\험 \준\비 \시\간 \단\축</h3>
                   </div>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\uAE30\uC874</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\기\존</p>
                   <ul className="space-y-1">
-                    {["\uBCA4\uB354 \uC0AC\uC774\uD2B8 10+\uAC1C \uBC18\uBCF5 \uBC29\uBB38", "\uC2A4\uD399 \uBE44\uAD50\uB97C \uC5D1\uC140\uC5D0 \uC218\uAE30 \uC815\uB9AC"].map((t, i) => (
+                    {["\벤\더 \사\이\트 10+\개 \반\복 \방\문", "\스\펙 \비\교\를 \엑\셀\에 \수\기 \정\리"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
-                        <span className="text-slate-400 mt-0.5">\u00B7</span>{t}
+                        <span className="text-slate-400 mt-0.5">\·</span>{t}
                       </li>
                     ))}
                   </ul>
@@ -280,7 +280,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["\uD1B5\uD569 \uAC80\uC0C9\uC73C\uB85C \uD6C4\uBCF4 \uD55C \uBC88\uC5D0 \uD655\uC778", "\uD504\uB85C\uD1A0\uCF5C \uBD99\uC5EC\uB123\uAE30 \u2192 \uD544\uC694 \uC2DC\uC57D \uC790\uB3D9 \uCD94\uCD9C"].map((t, i) => (
+                    {["\통\합 \검\색\으\로 \후\보 \한 \번\에 \확\인", "\프\로\토\콜 \붙\여\넣\기 \→ \필\요 \시\약 \자\동 \추\출"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -296,16 +296,16 @@ export default function IntroPage() {
                     <ShoppingCart className="h-5 w-5 text-violet-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wider">\uAD6C\uB9E4 \uB2F4\uB2F9\uC790</p>
-                    <h3 className="text-sm font-bold text-slate-100">\uACAC\uC801 \uC218\uC9D1·\uBE44\uAD50 \uC790\uB3D9\uD654</h3>
+                    <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wider">\구\매 \담\당\자</p>
+                    <h3 className="text-sm font-bold text-slate-100">\견\적 \수\집·\비\교 \자\동\화</h3>
                   </div>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\uAE30\uC874</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\기\존</p>
                   <ul className="space-y-1">
-                    {["\uBCA4\uB354\uBCC4 \uACAC\uC801 \uC218\uC9D1\u00B7\uC815\uB9AC\uC5D0 \uAC74\uB2F9 45\uBD84+", "\uACAC\uC801 \uBC84\uC804 \uAD00\uB9AC\uAC00 \uC774\uBA54\uC77C\u00B7\uD30C\uC77C\uC5D0 \uBD84\uC0B0"].map((t, i) => (
+                    {["\벤\더\별 \견\적 \수\집\·\정\리\에 \건\당 45\분+", "\견\적 \버\전 \관\리\가 \이\메\일\·\파\일\에 \분\산"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
-                        <span className="text-slate-400 mt-0.5">\u00B7</span>{t}
+                        <span className="text-slate-400 mt-0.5">\·</span>{t}
                       </li>
                     ))}
                   </ul>
@@ -313,7 +313,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["\uD1B5\uD569 \uACAC\uC801 \uC694\uCCAD \u2014 \uAC00\uACA9 \uBE44\uAD50\uD45C \uC790\uB3D9 \uC0DD\uC131", "\uAD6C\uB9E4 \uC774\uB825\u00B7\uACF5\uAE09\uC0AC \uC751\uB2F5 \uD1B5\uD569 \uAD00\uB9AC"].map((t, i) => (
+                    {["\통\합 \견\적 \요\청 \— \가\격 \비\교\표 \자\동 \생\성", "\구\매 \이\력\·\공\급\사 \응\답 \통\합 \관\리"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -329,16 +329,16 @@ export default function IntroPage() {
                     <Users className="h-5 w-5 text-teal-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider">\uAD00\uB9AC\uC790</p>
-                    <h3 className="text-sm font-bold text-slate-100">\uC608\uC0B0\u00B7\uAD8C\uD55C\u00B7\uC774\uB825 \uD1B5\uC81C</h3>
+                    <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider">\관\리\자</p>
+                    <h3 className="text-sm font-bold text-slate-100">\예\산\·\권\한\·\이\력 \통\제</h3>
                   </div>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\uAE30\uC874</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">\기\존</p>
                   <ul className="space-y-1">
-                    {["\uAD6C\uB9E4 \uD604\uD669\uC744 \uC5D1\uC140\uB85C \uC9D1\uACC4, \uC2E4\uC2DC\uAC04 \uD30C\uC545 \uBD88\uAC00", "\uC2B9\uC778 \uD504\uB85C\uC138\uC2A4\uAC00 \uAD6C\uB450\u00B7\uBB38\uC11C \uAE30\uBC18"].map((t, i) => (
+                    {["\구\매 \현\황\을 \엑\셀\로 \집\계, \실\시\간 \파\악 \불\가", "\승\인 \프\로\세\스\가 \구\두\·\문\서 \기\반"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
-                        <span className="text-slate-400 mt-0.5">\u00B7</span>{t}
+                        <span className="text-slate-400 mt-0.5">\·</span>{t}
                       </li>
                     ))}
                   </ul>
@@ -346,7 +346,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["\uC2E4\uC2DC\uAC04 \uC608\uC0B0 \uC18C\uC9C4 \uD604\uD669 + \uC2B9\uC778 \uB77C\uC778 \uC790\uB3D9\uD654", "Audit Trail\uB85C \uAD6C\uB9E4 \uC774\uB825 \uC804\uAC74 \uCD94\uC801"].map((t, i) => (
+                    {["\실\시\간 \예\산 \소\진 \현\황 + \승\인 \라\인 \자\동\화", "Audit Trail\로 \구\매 \이\력 \전\건 \추\적"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -362,12 +362,12 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pg border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">\uC870\uC9C1 \uC6B4\uC601</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">\조\직 \운\영</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
-                \uD1B5\uC81C\u00B7\uCD94\uC801\u00B7\uC2B9\uC778 \u2014 \uC870\uC9C1 \uC6B4\uC601\uC744 \uC704\uD55C \uAE30\uBC18
+                \통\제\·\추\적\·\승\인 \— \조\직 \운\영\을 \위\한 \기\반
               </h2>
               <p className="text-sm md:text-base text-slate-400 mt-2 max-w-2xl break-keep">
-                \uC5ED\uD560 \uAE30\uBC18 \uAD8C\uD55C, \uC2B9\uC778 \uB77C\uC778, \uAC10\uC0AC \uC774\uB825, \uC608\uC0B0 \uD1B5\uD569\uC73C\uB85C \uC870\uC9C1\uC758 \uAD6C\uB9E4 \uD504\uB85C\uC138\uC2A4\uB97C \uCCB4\uACC4\uD654\uD569\uB2C8\uB2E4.
+                \역\할 \기\반 \권\한, \승\인 \라\인, \감\사 \이\력, \예\산 \통\합\으\로 \조\직\의 \구\매 \프\로\세\스\를 \체\계\화\합\니\다.
               </p>
             </div>
 
@@ -376,26 +376,26 @@ export default function IntroPage() {
                 {
                   icon: KeyRound,
                   iconColor: "text-amber-400",
-                  title: "\uC5ED\uD560 \uAE30\uBC18 \uAD8C\uD55C \uC81C\uC5B4",
-                  desc: "\uC870\uC9C1\uC6D0\uBCC4 \uAD8C\uD55C\uC744 \uC138\uBC00\uD558\uAC8C \uC124\uC815\uD569\uB2C8\uB2E4. \uACAC\uC801 \uC694\uCCAD\u00B7\uC2B9\uC778\u00B7\uAD00\uB9AC\uC790 \uC5ED\uD560\uC744 \uBD84\uB9AC\uD558\uC5EC \uB0B4\uBD80 \uAD6C\uB9E4 \uD504\uB85C\uC138\uC2A4\uC5D0 \uB9DE\uAC8C \uC6B4\uC601\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+                  title: "\역\할 \기\반 \권\한 \제\어",
+                  desc: "\조\직\원\별 \권\한\을 \세\밀\하\게 \설\정\합\니\다. \견\적 \요\청\·\승\인\·\관\리\자 \역\할\을 \분\리\하\여 \내\부 \구\매 \프\로\세\스\에 \맞\게 \운\영\할 \수 \있\습\니\다.",
                 },
                 {
                   icon: CheckSquare,
                   iconColor: "text-violet-400",
-                  title: "\uC2B9\uC778 \uB77C\uC778",
-                  desc: "\uACAC\uC801 \uC694\uCCAD\u00B7\uBC1C\uC8FC \uC804 \uC2B9\uC778 \uB2E8\uACC4\uB97C \uC124\uC815\uD569\uB2C8\uB2E4. \uAE08\uC561 \uAE30\uC900 \uC790\uB3D9 \uB77C\uC6B0\uD305, \uC2B9\uC778\uC790 \uC9C0\uC815 \uBC0F \uC5D0\uC2A4\uCEEC\uB808\uC774\uC158\uC744 \uC9C0\uC6D0\uD569\uB2C8\uB2E4.",
+                  title: "\승\인 \라\인",
+                  desc: "\견\적 \요\청\·\발\주 \전 \승\인 \단\계\를 \설\정\합\니\다. \금\액 \기\준 \자\동 \라\우\팅, \승\인\자 \지\정 \및 \에\스\컬\레\이\션\을 \지\원\합\니\다.",
                 },
                 {
                   icon: ScrollText,
                   iconColor: "text-teal-400",
                   title: "Audit Trail",
-                  desc: "\uBAA8\uB4E0 \uAD6C\uB9E4 \uD65C\uB3D9\uC774 \uC790\uB3D9\uC73C\uB85C \uAE30\uB85D\uB429\uB2C8\uB2E4. \uB204\uAC00, \uC5B8\uC81C, \uBB34\uC5C7\uC744 \uC694\uCCAD\u00B7\uC2B9\uC778\u00B7\uBC1C\uC8FC\uD588\uB294\uC9C0 \uC804\uAC74 \uCD94\uC801\uD569\uB2C8\uB2E4. GMP/GLP \uAC10\uC0AC \uB300\uBE44\uC5D0 \uD65C\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+                  desc: "\모\든 \구\매 \활\동\이 \자\동\으\로 \기\록\됩\니\다. \누\가, \언\제, \무\엇\을 \요\청\·\승\인\·\발\주\했\는\지 \전\건 \추\적\합\니\다. GMP/GLP \감\사 \대\비\에 \활\용\할 \수 \있\습\니\다.",
                 },
                 {
                   icon: Wallet,
                   iconColor: "text-emerald-400",
-                  title: "\uC608\uC0B0 \uD1B5\uD569",
-                  desc: "\uBD80\uC11C\u00B7\uD504\uB85C\uC81D\uD2B8\uBCC4 \uC608\uC0B0\uC744 \uC124\uC815\uD558\uACE0 \uC2E4\uC2DC\uAC04 \uC18C\uC9C4 \uD604\uD669\uC744 \uD30C\uC545\uD569\uB2C8\uB2E4. \uC608\uC0B0 \uCD08\uACFC \uC2DC \uC790\uB3D9 \uC54C\uB9BC\uACFC \uBC1C\uC8FC \uCC28\uB2E8\uC744 \uC9C0\uC6D0\uD569\uB2C8\uB2E4.",
+                  title: "\예\산 \통\합",
+                  desc: "\부\서\·\프\로\젝\트\별 \예\산\을 \설\정\하\고 \실\시\간 \소\진 \현\황\을 \파\악\합\니\다. \예\산 \초\과 \시 \자\동 \알\림\과 \발\주 \차\단\을 \지\원\합\니\다.",
                 },
               ].map((item, i) => (
                 <div key={i} className="bg-pn border border-bd rounded-xl p-4 md:p-6 flex gap-4">
@@ -412,15 +412,15 @@ export default function IntroPage() {
 
             {/* 도입 적합성 체크 */}
             <div className="bg-pn rounded-xl border border-bd p-4 md:p-6">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 md:mb-4">\uB3C4\uC785 \uC801\uD569\uC131 \uCCB4\uD06C</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 md:mb-4">\도\입 \적\합\성 \체\크</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 {[
-                  "\uC5F0\uAD6C\uD300\uACFC \uAD6C\uB9E4\uD300\uC774 \uBD84\uB9AC\uB41C \uC870\uC9C1 \uAD6C\uC870",
-                  "GMP/GLP \uD658\uACBD\uC5D0\uC11C Lot \uCD94\uC801 \uBC0F \uC774\uB825 \uAD00\uB9AC \uD544\uC694",
-                  "\uC5EC\uB7EC \uBCA4\uB354\uC5D0\uC11C \uC2DC\uC57D\u00B7\uC7A5\uBE44\uB97C \uAD6C\uB9E4\uD558\uB294 \uB2E4\uACF5\uAE09\uC0AC \uD658\uACBD",
-                  "\uAD6C\uB9E4 \uD504\uB85C\uC138\uC2A4\uC5D0 \uC2B9\uC778 \uB2E8\uACC4\uAC00 \uD544\uC694\uD55C \uC870\uC9C1",
-                  "\uC7AC\uACE0 \uC2E4\uC0AC\u00B7\uC720\uD6A8\uAE30\uAC04 \uAD00\uB9AC\uB97C \uCCB4\uACC4\uD654\uD558\uB824\uB294 \uD300",
-                  "\uC218\uAE30 \uC5D1\uC140 \uC911\uC2EC \uAD6C\uB9E4 \uAD00\uB9AC\uB97C \uB514\uC9C0\uD138\uD654\uD558\uB824\uB294 \uC870\uC9C1",
+                  "\연\구\팀\과 \구\매\팀\이 \분\리\된 \조\직 \구\조",
+                  "GMP/GLP \환\경\에\서 Lot \추\적 \및 \이\력 \관\리 \필\요",
+                  "\여\러 \벤\더\에\서 \시\약\·\장\비\를 \구\매\하\는 \다\공\급\사 \환\경",
+                  "\구\매 \프\로\세\스\에 \승\인 \단\계\가 \필\요\한 \조\직",
+                  "\재\고 \실\사\·\유\효\기\간 \관\리\를 \체\계\화\하\려\는 \팀",
+                  "\수\기 \엑\셀 \중\심 \구\매 \관\리\를 \디\지\털\화\하\려\는 \조\직",
                 ].map((item, i) => (
                   <div key={i} className={`flex items-start gap-2 ${i >= 4 ? "hidden md:flex" : ""}`}>
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
@@ -431,12 +431,12 @@ export default function IntroPage() {
               <div className="mt-5 pt-4 border-t border-bd flex flex-wrap items-center justify-center gap-3">
                 <Link href="/pricing">
                   <button className="h-9 px-5 text-sm font-semibold text-blue-400 border border-bd bg-pn hover:bg-el rounded-lg transition-colors">
-                    \uC694\uAE08 & \uD50C\uB79C \uBCF4\uAE30
+                    \요\금 & \플\랜 \보\기
                   </button>
                 </Link>
                 <Link href="/support">
                   <button className="h-9 px-5 text-sm font-medium text-slate-300 border border-bd hover:bg-el rounded-lg transition-colors">
-                    \uB3C4\uC785 \uC0C1\uB2F4 \uBB38\uC758
+                    \도\입 \상\담 \문\의
                   </button>
                 </Link>
               </div>
