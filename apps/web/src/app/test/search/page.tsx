@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal, Clock } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
@@ -601,15 +601,33 @@ export default function SearchPage() {
 function StickySearchBar() {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
     setLocalQuery(searchQuery);
   }, [searchQuery]);
 
+  // 최근 검색 로드
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("bioinsight-recent-searches");
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  const saveRecentSearch = (term: string) => {
+    const updated = [term, ...recentSearches.filter((s) => s !== term)].slice(0, 5);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+    } catch {}
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (localQuery.trim()) {
       setSearchQuery(localQuery);
+      saveRecentSearch(localQuery.trim());
       runSearch();
     }
   };
@@ -623,55 +641,105 @@ function StickySearchBar() {
   const handleChipClick = (term: string) => {
     setSearchQuery(term);
     setLocalQuery(term);
+    saveRecentSearch(term);
     runSearch();
   };
 
-  return (
-    <div className="w-full px-2 pt-3 pb-2 md:py-5 md:px-0 border-b border-bd bg-pn sticky top-0 z-10">
-      <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
-        <div className="flex items-center border border-bd rounded-lg bg-el focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-          <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
-          </div>
-          <Input
-            type="text"
-            value={localQuery}
-            onChange={handleChange}
-            placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호"
-            className="flex-1 h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
-          />
-          <Button
-            type="submit"
-            className="h-10 px-4 md:px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-semibold shrink-0 transition-colors mr-1"
-            disabled={!localQuery.trim()}
-          >
-            <Search className="h-4 w-4 md:mr-1.5" />
-            <span className="hidden md:inline">검색</span>
-          </Button>
-        </div>
-      </form>
+  const recognizedFields = [
+    "시약명",
+    "CAS No.",
+    "제조사",
+    "카탈로그 번호",
+    "Lot No.",
+  ];
 
-      {/* 검색 전: 안내 1줄 + 예시 칩 1줄 */}
-      {!hasSearched && (
-        <div className="max-w-3xl mx-auto mt-2 px-1 space-y-1.5">
-          <p className="text-[10px] text-slate-500">
-            시약명, CAS No., 제조사, 카탈로그 번호로 검색
-          </p>
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-[10px] font-medium text-slate-500 shrink-0 mr-0.5">예시</span>
-            {["Tris-HCl", "Thermo Fisher", "A1234567", "67-66-3"].map((term) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => handleChipClick(term)}
-                className="text-[10px] px-1.5 py-0.5 rounded-full border border-bd bg-el text-slate-400 font-medium hover:border-blue-400 hover:bg-blue-600/10 hover:text-blue-400 active:scale-95 transition-all cursor-pointer"
-              >
-                {term}
-              </button>
-            ))}
+  const exampleQueries = [
+    "Trypsin",
+    "Fetal Bovine Serum",
+    "A1234567",
+    "Tris-HCl",
+    "67-66-3",
+  ];
+
+  return (
+    <div className="w-full pt-4 pb-2 md:pt-6 md:pb-4 sticky top-0 z-10">
+      {/* Elevated work panel */}
+      <div className="bg-el border border-bd rounded-xl p-4 md:p-6 max-w-3xl mx-auto">
+        {/* Integrated command search bar */}
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="flex items-center bg-pn border border-bd rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+            <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
+            </div>
+            <Input
+              type="text"
+              value={localQuery}
+              onChange={handleChange}
+              placeholder="시약명, CAS No., 제조사, 카탈로그 번호로 검색"
+              className="flex-1 h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
+            />
+            <Button
+              type="submit"
+              className="h-9 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold shrink-0 transition-colors mr-1.5"
+              disabled={!localQuery.trim()}
+            >
+              <Search className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline">검색</span>
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+
+        {/* 검색 하단 컨텍스트 영역 — 검색 전에만 표시 */}
+        {!hasSearched && (
+          <div className="mt-4 space-y-3">
+            {/* 인식 가능 필드 뱃지 */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">인식 필드</span>
+              {recognizedFields.map((field) => (
+                <span
+                  key={field}
+                  className="bg-st text-slate-400 rounded-md px-2 py-0.5 text-xs"
+                >
+                  {field}
+                </span>
+              ))}
+            </div>
+
+            {/* 빠른 예시 쿼리 */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">예시</span>
+              {exampleQueries.map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => handleChipClick(term)}
+                  className="text-xs px-2 py-0.5 rounded-md bg-pn border border-bd text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+
+            {/* 최근 검색 */}
+            {recentSearches.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Clock className="h-3 w-3 text-slate-500 shrink-0" />
+                <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">최근</span>
+                {recentSearches.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => handleChipClick(term)}
+                    className="text-xs px-2 py-0.5 rounded-md text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
