@@ -974,8 +974,8 @@ function InventoryPageContent() {
             variant="outline"
             onClick={() => router.push("/dashboard/purchases")}
           >
-            <PackagePlus className="h-3.5 w-3.5 mr-1.5" />
-            구매 반영
+            <Truck className="h-3.5 w-3.5 mr-1.5" />
+            입고 반영
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1085,7 +1085,7 @@ function InventoryPageContent() {
               }}
             />
 
-            {/* ── 1차 액션: 재고 등록 · 구매 반영 ── */}
+            {/* ── 1차 액션: 재고 등록 · 입고 반영 · 라벨 인쇄 ── */}
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               재고 등록
@@ -1094,8 +1094,8 @@ function InventoryPageContent() {
               variant="outline"
               onClick={() => router.push("/dashboard/purchases")}
             >
-              <PackagePlus className="h-4 w-4 mr-2" />
-              구매 반영
+              <Truck className="h-4 w-4 mr-2" />
+              입고 반영
             </Button>
 
             {/* ── 2차 액션: 라벨 인쇄 · 엑셀 업로드 · 내보내기 ── */}
