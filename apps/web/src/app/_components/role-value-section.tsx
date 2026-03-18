@@ -81,7 +81,7 @@ export function RoleValueSection() {
                 <ul className="space-y-2 mt-3">
                   {r.items.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="w-1 h-1 rounded-full bg-[#4b5563] mt-1.5 flex-shrink-0" />
+                      <span className="w-1 h-1 rounded-full bg-st mt-1.5 flex-shrink-0" />
                       <span className="text-xs text-[#9ca3af] leading-relaxed">{item}</span>
                     </li>
                   ))}

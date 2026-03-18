@@ -99,7 +99,7 @@ export function LandingHeroSection() {
                     <span className="text-[10px] text-[#4b5563] whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < 5 && (
-                    <div className="w-6 h-px bg-[#242429] flex-shrink-0" />
+                    <div className="w-6 h-px bg-st flex-shrink-0" />
                   )}
                 </div>
               );

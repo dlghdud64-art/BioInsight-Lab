@@ -282,7 +282,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-[#1f1f24] shadow-2xl shadow-black/40 border border-bd ring-1 ring-black/20">
+            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-pn shadow-2xl shadow-black/40 border border-bd ring-1 ring-black/20">
               {/* 헤더 */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-bd">
                 <div className="flex items-center gap-2">
@@ -362,7 +362,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <HelpCircle className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-[#1f1f24] border-bd shadow-2xl shadow-black/40">
+            <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-pn border-bd shadow-2xl shadow-black/40">
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <BookOpen className="mr-2 h-4 w-4" />
@@ -412,7 +412,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2 !bg-[#1f1f24] border-bd shadow-2xl shadow-black/40">
+            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2 !bg-pn border-bd shadow-2xl shadow-black/40">
               <DropdownMenuLabel className="p-3">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium text-slate-100">{user?.name || "사용자"}</p>

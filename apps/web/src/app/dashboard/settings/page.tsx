@@ -793,7 +793,7 @@ function SettingsPageContent() {
                           "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
                           notificationFrequency === "immediate"
                             ? "border-blue-500 bg-blue-500"
-                            : "border-[#3a3f4a]"
+                            : "border-bs"
                         )}>
                           {notificationFrequency === "immediate" && (
                             <div className="h-1.5 w-1.5 rounded-full bg-pn" />
@@ -843,7 +843,7 @@ function SettingsPageContent() {
                           "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
                           notificationFrequency === "daily"
                             ? "border-blue-500 bg-blue-500"
-                            : "border-[#3a3f4a]"
+                            : "border-bs"
                         )}>
                           {notificationFrequency === "daily" && (
                             <div className="h-1.5 w-1.5 rounded-full bg-pn" />

@@ -219,7 +219,7 @@ export default function SearchPage() {
                                 e.stopPropagation();
                                 toggleCompare(id);
                               }}
-                              className="ml-1 hover:bg-[#333338] rounded-full p-0.5"
+                              className="ml-1 hover:bg-st rounded-full p-0.5"
                               aria-label="제거"
                             >
                               <X className="h-2.5 w-2.5" />

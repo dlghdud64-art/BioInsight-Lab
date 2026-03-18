@@ -219,7 +219,7 @@ export function StorageLocationView() {
             <button
               key={zone.id}
               onClick={() => setSelectedZone(isSelected ? null : zone.id)}
-              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:border-[#3a3a3e] ${
+              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:border-bs ${
                 isSelected
                   ? "bg-pn border-blue-500/60 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10"
                   : "bg-pn border-bd hover:bg-el"

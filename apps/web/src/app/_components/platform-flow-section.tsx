@@ -69,7 +69,7 @@ export function PlatformFlowSection() {
         <div className="hidden md:block">
           <div className="relative">
             {/* Connection line */}
-            <div className="absolute top-6 left-6 right-6 h-px bg-[#333338]" />
+            <div className="absolute top-6 left-6 right-6 h-px bg-st" />
 
             <div className="grid grid-cols-6 gap-0">
               {FLOW_STAGES.map((stage, idx) => {

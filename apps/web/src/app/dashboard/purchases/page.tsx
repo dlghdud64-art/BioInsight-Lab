@@ -1315,7 +1315,7 @@ export default function PurchasesPage() {
           ) : queueFilteredPurchases.length > 0 ? (
             <>
               {/* Desktop: DataTable */}
-              <Card className="hidden md:block rounded-xl border-bd/50 shadow-none bg-[#161d2f] overflow-hidden">
+              <Card className="hidden md:block rounded-xl border-bd/50 shadow-none bg-pn overflow-hidden">
                 <CardHeader className="p-4 pb-0">
                   <div className="flex items-center justify-between">
                     <div>

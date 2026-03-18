@@ -3202,7 +3202,7 @@ function InventoryPageContent() {
         )}
 
       {/* 모바일 하단 고정 액션 — 재고 등록 & 차감 */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-[#0f1623]/95 backdrop-blur-sm border-t border-bd/50 px-4 py-2.5 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-sh/95 backdrop-blur-sm border-t border-bd/50 px-4 py-2.5 safe-area-bottom">
         <div className="flex items-center gap-2 max-w-7xl mx-auto">
           <Button variant="outline" size="sm" className="flex-1 h-11 text-xs gap-1.5 border-blue-800 text-blue-400  text-blue-400 hover:bg-blue-950/20" onClick={() => setIsDialogOpen(true)}>
             <PackagePlus className="h-3.5 w-3.5" />

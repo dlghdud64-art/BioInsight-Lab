@@ -790,7 +790,7 @@ function StickyActions({
   const hasIssues = data.issues.length > 0;
 
   return (
-    <div className="flex-shrink-0 border-t border-bd bg-[#161d2f] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-bd bg-pn px-5 py-3">
       <div className="flex gap-2">
         {hasReorder && onReviewReorder ? (
           <Button

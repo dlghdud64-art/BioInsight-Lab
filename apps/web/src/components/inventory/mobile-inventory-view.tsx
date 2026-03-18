@@ -459,7 +459,7 @@ function MobileDetailSheet({
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-2 pb-3">
-          <div className="w-10 h-1 rounded-full bg-[#333338]" />
+          <div className="w-10 h-1 rounded-full bg-st" />
         </div>
 
         <SheetHeader className="mb-4 text-left">

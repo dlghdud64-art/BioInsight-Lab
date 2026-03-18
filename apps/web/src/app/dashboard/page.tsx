@@ -783,7 +783,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-pn/95  bg-[#0f1623]/95 backdrop-blur-sm border-t border-bd px-4 py-2.5">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-sh/95 backdrop-blur-sm border-t border-bd px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Link href="/test/search" className="flex-1">
             <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-pg text-slate-600 hover:bg-el border-bd">
