@@ -348,10 +348,10 @@ export function InventoryContextPanel({
 
   return (
     <div
-      className={`w-[420px] shrink-0 border-l border-[#252a32] bg-[#1a1e26] overflow-y-auto h-full ${className}`}
+      className={`w-[420px] shrink-0 border-l border-[#2a2a2e] bg-[#222226] overflow-y-auto h-full ${className}`}
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#1a1e26] border-b border-[#252a32] px-5 py-4">
+      <div className="sticky top-0 z-10 bg-[#222226] border-b border-[#2a2a2e] px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -448,7 +448,7 @@ export function InventoryContextPanel({
             {lots.map((lot) => (
               <div
                 key={lot.lotNumber}
-                className="rounded-lg border border-[#252a32] bg-[#141820] px-3 py-2.5"
+                className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-mono text-xs font-semibold text-slate-300">
@@ -495,7 +495,7 @@ export function InventoryContextPanel({
               {risks.map((risk, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-[#252a32] bg-[#141820] px-3 py-2.5"
+                  className="flex items-start gap-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
                 >
                   <Badge
                     variant="outline"
@@ -522,9 +522,9 @@ export function InventoryContextPanel({
               return (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-[#252a32] bg-[#141820] px-3 py-2.5"
+                  className="flex items-start gap-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-800 shrink-0 mt-0.5">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#222226] shrink-0 mt-0.5">
                     <FlowIcon className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -552,7 +552,7 @@ export function InventoryContextPanel({
             {actions.map((action, idx) => (
               <div
                 key={idx}
-                className={`rounded-lg border border-[#252a32] bg-[#141820] px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
+                className={`rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-bold text-slate-200">{action.label}</p>
@@ -580,11 +580,11 @@ export function InventoryContextPanel({
       </div>
 
       {/* Sticky footer actions */}
-      <div className="sticky bottom-0 bg-[#1a1e26] border-t border-[#252a32] px-5 py-3 flex gap-2">
+      <div className="sticky bottom-0 bg-[#222226] border-t border-[#2a2a2e] px-5 py-3 flex gap-2">
         <Button
           variant="outline"
           size="sm"
-          className="flex-1 h-8 text-xs border-[#252a32] bg-[#141820] text-slate-300 hover:bg-[#1e222c] hover:text-slate-100"
+          className="flex-1 h-8 text-xs border-[#2a2a2e] bg-[#1a1a1e] text-slate-300 hover:bg-[#2a2a2e] hover:text-slate-100"
           onClick={() => onEdit?.(item)}
         >
           정보 수정
@@ -619,7 +619,7 @@ function SectionHeader({
       {count !== undefined && (
         <Badge
           variant="outline"
-          className="text-[9px] px-1 py-0 border-slate-700 text-slate-500"
+          className="text-[9px] px-1 py-0 border-[#333338] text-slate-500"
         >
           {count}
         </Badge>

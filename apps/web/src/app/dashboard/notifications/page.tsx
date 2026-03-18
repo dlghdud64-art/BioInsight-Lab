@@ -53,7 +53,7 @@ const CATEGORY_CONFIG: Record<
   approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: "dark:bg-amber-950/40",  darkText: "dark:text-amber-400",  label: "승인 대기" },
   expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: "dark:bg-orange-950/40", darkText: "dark:text-orange-400", label: "유효기간 경고" },
   safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: "dark:bg-purple-950/40", darkText: "dark:text-purple-400", label: "안전 관리" },
-  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "dark:bg-slate-800",     darkText: "dark:text-slate-400",  label: "시스템" },
+  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "dark:bg-[#222226]",     darkText: "dark:text-slate-400",  label: "시스템" },
 };
 
 /* ── 시간 포맷팅 ── */
@@ -268,10 +268,10 @@ function NotificationsContent() {
         key={notification.id}
         className={`transition-all hover:shadow-md cursor-pointer ${
           isCompleted
-            ? "opacity-60 bg-slate-50/50 dark:bg-slate-900/50"
+            ? "opacity-60 bg-slate-50/50 dark:bg-[#1a1a1e]/50"
             : isUrgent
             ? "border-red-200 dark:border-red-900/40 bg-red-50/20 dark:bg-red-950/10"
-            : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+            : "hover:bg-slate-50 dark:hover:bg-[#222226]/50"
         }`}
       >
         <CardContent className="p-4">
@@ -328,7 +328,7 @@ function NotificationsContent() {
               </div>
 
               {/* 5행: 액션 영역 */}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-[#2a2a2e]">
                 {!isCompleted ? (
                   <>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -352,7 +352,7 @@ function NotificationsContent() {
                         className={`h-7 px-3 text-xs gap-1 ${
                           isUrgent
                             ? "border-red-200 text-red-700 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30"
-                            : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                            : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-[#333338] dark:text-slate-300"
                         }`}
                         asChild
                       >

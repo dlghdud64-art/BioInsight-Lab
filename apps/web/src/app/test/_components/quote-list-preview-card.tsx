@@ -169,7 +169,7 @@ export function QuoteListPreviewCard() {
               <Button
                 variant="default"
                 size="sm"
-                className="w-full text-xs bg-slate-900 hover:bg-slate-800"
+                className="w-full text-xs bg-[#1a1a1e] hover:bg-[#222226]"
               >
                 견적 보기 →
               </Button>

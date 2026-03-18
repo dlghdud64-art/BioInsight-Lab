@@ -73,12 +73,12 @@ export function ProductCard({
   const keySpecs = getKeySpecs();
 
   return (
-    <div className="bg-slate-900 rounded-lg shadow-sm hover:shadow-md border border-slate-800 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
+    <div className="bg-[#1a1a1e] rounded-lg shadow-sm hover:shadow-md border border-[#2a2a2e] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
         {/* 썸네일 + 제품명 */}
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-800 bg-slate-800 overflow-hidden flex items-center justify-center">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-[#2a2a2e] bg-[#222226] overflow-hidden flex items-center justify-center">
             {!showFallback ? (
               <img
                 src={imageSrc}
@@ -117,7 +117,7 @@ export function ProductCard({
             <Badge
               key={idx}
               variant="outline"
-              className="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded border-0 font-normal"
+              className="bg-[#222226] text-slate-400 text-xs px-2 py-0.5 rounded border-0 font-normal"
             >
               {spec.value}
             </Badge>
@@ -135,7 +135,7 @@ export function ProductCard({
         </div>
 
         {/* 가격 & 액션 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 pt-2 border-t border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 pt-2 border-t border-[#2a2a2e]">
           {/* 가격 */}
           <div className="flex-shrink-0">
             {product.price && product.price > 0 ? (
@@ -160,7 +160,7 @@ export function ProductCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded h-9 w-9 p-0"
+              className="text-slate-400 hover:text-slate-200 hover:bg-[#222226] rounded h-9 w-9 p-0"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

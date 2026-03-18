@@ -333,7 +333,7 @@ function OrderHistoryPageContent() {
 
       {/* 운영 실행 현황 (deep-link로 진입 시) */}
       {entityIdParam && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white dark:bg-slate-900 shadow-lg p-4">
+        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white dark:bg-[#1a1a1e] shadow-lg p-4">
           <OpsExecutionContext
             entityType="ORDER"
             entityId={entityIdParam}

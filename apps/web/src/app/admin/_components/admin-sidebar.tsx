@@ -50,8 +50,8 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-slate-900 text-white min-h-screen">
-      <div className="p-4 border-b border-slate-800">
+    <aside className="w-64 bg-[#1a1a1e] text-white min-h-screen">
+      <div className="p-4 border-b border-[#2a2a2e]">
         <div className="flex items-center gap-2 mb-1">
           <Shield className="h-5 w-5 text-blue-400" />
           <h2 className="font-bold text-lg">Admin Portal</h2>
@@ -72,7 +72,7 @@ export function AdminSidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive
                   ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  : "text-slate-300 hover:bg-[#222226] hover:text-white"
               )}
             >
               <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-white" : "")} />

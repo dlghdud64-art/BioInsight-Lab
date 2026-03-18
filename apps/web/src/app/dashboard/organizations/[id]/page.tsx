@@ -430,7 +430,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       </div>
 
       {/* 조직 기본 정보 요약 카드 */}
-      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+      <Card className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-[#1a1a1e] dark:border-[#2a2a2e] overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -470,7 +470,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             )}
           </div>
           {organization.description && (
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-2 border-t border-slate-100 dark:border-[#2a2a2e]">
               <span className="text-slate-500 dark:text-slate-400 text-sm">설명</span>
               <p className="text-slate-700 dark:text-slate-300 mt-0.5">{organization.description}</p>
             </div>
@@ -480,7 +480,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
       {/* KPI 카드 */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">총 멤버</CardTitle>
             <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-full">
@@ -493,7 +493,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">관리자</CardTitle>
             <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-full">
@@ -506,7 +506,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 dark:text-slate-400">초대 대기</CardTitle>
             <div className="bg-orange-50 dark:bg-orange-900/30 p-2 rounded-full">
@@ -523,15 +523,15 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
       {/* 탭 구조 */}
       <Tabs defaultValue="members" className="space-y-4">
-        <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+        <TabsList className="bg-slate-100 dark:bg-[#222226] p-1 rounded-lg">
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
             조직활동
           </TabsTrigger>
-          <TabsTrigger value="members" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+          <TabsTrigger value="members" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
             멤버
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="settings" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+            <TabsTrigger value="settings" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
               관리
             </TabsTrigger>
           )}
@@ -541,7 +541,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         <TabsContent value="dashboard">
           <div className="space-y-4">
             <h3 className="font-bold text-lg dark:text-white">조직 활동 피드</h3>
-            <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]">
               <CardContent className="p-0">
                 <div className="max-h-[480px] overflow-y-auto">
                   {organizationLogs.map((log, idx) => {
@@ -561,7 +561,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     return (
                       <div
                         key={log.id}
-                        className={`flex items-start gap-4 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${idx < organizationLogs.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                        className={`flex items-start gap-4 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-[#222226]/30 ${idx < organizationLogs.length - 1 ? "border-b border-slate-100 dark:border-[#2a2a2e]" : ""}`}
                       >
                         <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
                           <Icon className="h-5 w-5" />
@@ -602,13 +602,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   placeholder="이름, 이메일 검색..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm border-slate-200 dark:border-slate-700"
+                  className="pl-9 h-9 text-sm border-slate-200 dark:border-[#333338]"
                 />
               </div>
             </div>
             {/* 상태별 요약 카운터 */}
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#222226]/50 border border-slate-200 dark:border-[#333338]">
                 <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
                 <span className="text-xs text-slate-500 dark:text-slate-400">활성</span>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{totalMembers - pendingCount}명</span>
@@ -620,7 +620,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <span className="text-xs font-bold text-amber-700 dark:text-amber-300">{pendingCount}명</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#222226]/50 border border-slate-200 dark:border-[#333338]">
                 <ShieldCheck className="h-3.5 w-3.5 text-violet-500" />
                 <span className="text-xs text-slate-500 dark:text-slate-400">관리자</span>
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{adminCount}명</span>
@@ -632,7 +632,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </p>
 
             {filteredTeamMembers.length === 0 ? (
-              <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]">
                 <CardContent className="py-12 text-center">
                   <Mail className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
                   <p className="text-slate-500 dark:text-slate-400 mb-4">
@@ -647,11 +647,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+              <Card className="bg-white rounded-xl shadow-sm border border-slate-100 dark:bg-[#1a1a1e] dark:border-[#2a2a2e] overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800">
+                      <TableRow className="bg-slate-50 dark:bg-[#222226]/50 border-slate-100 dark:border-[#2a2a2e]">
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">팀원</TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">역할</TableHead>
                         <TableHead className="font-semibold text-slate-700 dark:text-slate-300">상태</TableHead>
@@ -667,11 +667,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                         const isSelfAdmin = member.isMe && (member.rawRole === "ADMIN" || member.rawRole === "OWNER");
                         const canEditRole = isAdmin && !isSelfAdmin && rawMember && !isPending;
                         return (
-                          <TableRow key={member.id} className="border-slate-100 dark:border-slate-800">
+                          <TableRow key={member.id} className="border-slate-100 dark:border-[#2a2a2e]">
                             <TableCell className="py-4">
                               <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9 shrink-0 border border-slate-200 dark:border-slate-700">
-                                  <AvatarFallback className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-sm font-medium">
+                                <Avatar className="h-9 w-9 shrink-0 border border-slate-200 dark:border-[#333338]">
+                                  <AvatarFallback className="bg-slate-100 text-slate-600 dark:bg-[#222226] dark:text-slate-400 text-sm font-medium">
                                     {member.initial}
                                   </AvatarFallback>
                                 </Avatar>
@@ -691,7 +691,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                                   onValueChange={(v) => updateRoleMutation.mutate({ memberId: rawMember.id, role: v })}
                                   disabled={updateRoleMutation.isPending}
                                 >
-                                  <SelectTrigger className="w-[140px] h-9 text-sm border-slate-200 dark:border-slate-700">
+                                  <SelectTrigger className="w-[140px] h-9 text-sm border-slate-200 dark:border-[#333338]">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -787,7 +787,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           <TabsContent value="settings">
             <div className="space-y-6">
               {/* 기본 정보 수정 */}
-              <Card className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]">
                 <CardHeader>
                   <CardTitle className="text-base dark:text-white">조직 기본 정보</CardTitle>
                   <CardDescription className="dark:text-slate-400">조직명과 설명을 수정합니다.</CardDescription>
@@ -795,7 +795,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <CardContent className="space-y-4">
                   {/* 연구실 로고 업로드 */}
                   <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 overflow-hidden flex items-center justify-center">
+                    <div className="w-24 h-24 shrink-0 rounded-full border border-slate-200 dark:border-[#333338] bg-slate-50 dark:bg-[#222226] overflow-hidden flex items-center justify-center">
                       {logoPreviewUrl ? (
                         <img
                           src={logoPreviewUrl}
@@ -842,13 +842,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="조직명을 입력하세요"
-                      className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                      className="dark:bg-[#222226] dark:border-[#333338] dark:text-white"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-slug" className="dark:text-slate-300">조직 주소</Label>
-                    <div className="flex rounded-md border border-slate-200 dark:border-slate-700 overflow-hidden">
-                      <span className="inline-flex items-center px-3 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shrink-0">
+                    <div className="flex rounded-md border border-slate-200 dark:border-[#333338] overflow-hidden">
+                      <span className="inline-flex items-center px-3 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#222226] border-r border-slate-200 dark:border-[#333338] shrink-0">
                         bio-insight.lab/
                       </span>
                       <Input
@@ -856,7 +856,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                         value={editSlug}
                         onChange={handleSlugChange}
                         placeholder="my-lab"
-                        className="rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-slate-800 dark:text-white"
+                        className="rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-[#222226] dark:text-white"
                       />
                     </div>
                     {slugStatus === "checking" && (
@@ -877,7 +877,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="조직에 대한 간단한 설명"
                       rows={3}
-                      className="resize-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                      className="resize-none dark:bg-[#222226] dark:border-[#333338] dark:text-white"
                     />
                   </div>
                   <Button
@@ -899,7 +899,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
       {/* 멤버 초대 모달 */}
       <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
-        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-[#1a1a1e] border-slate-200 dark:border-[#2a2a2e]">
           <DialogHeader>
             <DialogTitle className="dark:text-white">멤버 초대</DialogTitle>
             <DialogDescription className="dark:text-slate-400">
@@ -907,11 +907,11 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             </DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="email" className="mt-2">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800">
-              <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-[#222226]">
+              <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
                 이메일 초대
               </TabsTrigger>
-              <TabsTrigger value="org" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
+              <TabsTrigger value="org" className="data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400">
                 협력사 연결
               </TabsTrigger>
             </TabsList>
@@ -925,7 +925,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                   <Input
                     id="invite-email"
                     type="email"
-                    className="pl-9 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    className="pl-9 dark:bg-[#222226] dark:border-[#333338] dark:text-white"
                     placeholder="colleague@univ.edu"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
@@ -935,7 +935,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
               <div className="space-y-2">
                 <Label className="dark:text-slate-300">역할</Label>
                 <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                  <SelectTrigger className="dark:bg-[#222226] dark:border-[#333338] dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -970,7 +970,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
       {/* 권한 변경 모달 */}
       <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+        <DialogContent className="sm:max-w-[400px] bg-white dark:bg-[#1a1a1e] border-slate-200 dark:border-[#2a2a2e]">
           <DialogHeader>
             <DialogTitle className="dark:text-white">권한 변경</DialogTitle>
             <DialogDescription className="dark:text-slate-400">
@@ -1000,7 +1000,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     setPermissionDialogOpen(false);
                   }}
                 >
-                  <SelectTrigger className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                  <SelectTrigger className="dark:bg-[#222226] dark:border-[#333338] dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1050,7 +1050,7 @@ function PartnerOrgTab({
         {otherOrgs.map((org) => (
           <div
             key={org.id}
-            className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-[#333338] p-3 hover:bg-slate-50 dark:hover:bg-[#222226]/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
@@ -1066,7 +1066,7 @@ function PartnerOrgTab({
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0 text-xs border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500"
+              className="shrink-0 text-xs border-slate-200 text-slate-400 dark:border-[#333338] dark:text-slate-500"
               disabled
             >
               Coming Soon

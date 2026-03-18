@@ -157,16 +157,16 @@ const DEMO_INVOICES = [
 // ── Fallback ──
 function SettingsPageFallback() {
   return (
-    <div className="flex-1 p-8 bg-slate-950">
+    <div className="flex-1 p-8 bg-[#09090b]">
       <div className="max-w-6xl mx-auto">
         <div className="animate-pulse">
-          <div className="h-8 bg-slate-800 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-slate-800 rounded w-1/2 mb-8" />
+          <div className="h-8 bg-[#222226] rounded w-1/4 mb-4" />
+          <div className="h-4 bg-[#222226] rounded w-1/2 mb-8" />
           <div className="flex gap-6">
-            <div className="w-56 h-64 bg-slate-800 rounded" />
+            <div className="w-56 h-64 bg-[#222226] rounded" />
             <div className="flex-1 space-y-4">
-              <div className="h-32 bg-slate-800 rounded" />
-              <div className="h-32 bg-slate-800 rounded" />
+              <div className="h-32 bg-[#222226] rounded" />
+              <div className="h-32 bg-[#222226] rounded" />
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@ function SettingsPageContent() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-950 py-4 md:py-6">
+    <div className="w-full min-h-screen bg-[#09090b] py-4 md:py-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="space-y-1 mb-6">
@@ -460,12 +460,12 @@ function SettingsPageContent() {
           </p>
         </div>
 
-        <div className="h-px bg-slate-800 mb-6" />
+        <div className="h-px bg-[#222226] mb-6" />
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ── Left nav panel ── */}
           <nav className="lg:w-60 shrink-0">
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-2 space-y-0.5">
+            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-2 space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.id;
@@ -477,8 +477,8 @@ function SettingsPageContent() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors",
                       isActive
-                        ? "bg-slate-800 text-slate-100"
-                        : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                        ? "bg-[#222226] text-slate-100"
+                        : "text-slate-400 hover:bg-[#222226]/50 hover:text-slate-200"
                     )}
                   >
                     <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-slate-100" : "text-slate-500")} />
@@ -499,8 +499,8 @@ function SettingsPageContent() {
             {activeSection === "profile" && (
               <div className="animate-in fade-in-50 duration-300 space-y-6">
                 {/* Profile info */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                  <div className="px-6 py-5 border-b border-slate-800">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2 text-slate-100 font-semibold">
                       <User className="h-4 w-4" />
                       프로필 정보
@@ -511,22 +511,22 @@ function SettingsPageContent() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
-                        <AvatarFallback className="bg-slate-800 text-slate-300 text-lg font-semibold">
+                        <AvatarFallback className="bg-[#222226] text-slate-300 text-lg font-semibold">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit border-slate-700 bg-slate-800 text-slate-300">
+                        <Badge variant="secondary" className="w-fit border-[#333338] bg-[#222226] text-slate-300">
                           {roleLabel}
                         </Badge>
-                        <Button type="button" variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                        <Button type="button" variant="outline" size="sm" className="border-[#333338] text-slate-300 hover:bg-[#222226]">
                           <Upload className="h-4 w-4 mr-2" />
                           사진 변경
                         </Button>
                       </div>
                     </div>
 
-                    <div className="h-px bg-slate-800" />
+                    <div className="h-px bg-[#222226]" />
 
                     <div className="space-y-5">
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">기본 정보</h4>
@@ -541,7 +541,7 @@ function SettingsPageContent() {
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
                             placeholder="이름을 입력하세요"
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
@@ -551,7 +551,7 @@ function SettingsPageContent() {
                           </Label>
                           <div className="flex gap-2">
                             <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[100px] bg-slate-950 border-slate-700 text-slate-300">
+                              <SelectTrigger className="w-[100px] bg-[#09090b] border-[#333338] text-slate-300">
                                 <SelectValue placeholder="국가" />
                               </SelectTrigger>
                               <SelectContent>
@@ -567,7 +567,7 @@ function SettingsPageContent() {
                               value={profilePhone}
                               onChange={(e) => setProfilePhone(e.target.value)}
                               placeholder="010-0000-0000"
-                              className="flex-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                              className="flex-1 bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
                             />
                           </div>
                           <p className="text-[11px] text-slate-500">긴급 알림 및 본인 확인용으로 사용됩니다.</p>
@@ -580,13 +580,13 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileBio(e.target.value)}
                             placeholder="자기소개를 입력하세요"
                             rows={3}
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="h-px bg-slate-800" />
+                    <div className="h-px bg-[#222226]" />
 
                     <div className="space-y-5">
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">연락처</h4>
@@ -599,7 +599,7 @@ function SettingsPageContent() {
                             onChange={(e) => setProfileUrl(e.target.value)}
                             placeholder="https://example.com"
                             type="url"
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
@@ -612,7 +612,7 @@ function SettingsPageContent() {
                             type="email"
                             value={profileEmail}
                             disabled
-                            className="bg-slate-950/50 border-slate-700 text-slate-500"
+                            className="bg-[#09090b]/50 border-[#333338] text-slate-500"
                           />
                         </div>
                       </div>
@@ -621,8 +621,8 @@ function SettingsPageContent() {
                 </div>
 
                 {/* Password */}
-                <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                  <div className="px-6 py-5 border-b border-slate-800">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2 text-slate-100 font-semibold">
                       <Lock className="h-4 w-4" />
                       비밀번호
@@ -632,12 +632,12 @@ function SettingsPageContent() {
                   <div className="p-6">
                     <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                        <Button variant="outline" className="border-[#333338] text-slate-300 hover:bg-[#222226]">
                           <Lock className="h-4 w-4 mr-2" />
                           비밀번호 변경
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-slate-900 border-slate-800">
+                      <DialogContent className="bg-[#1a1a1e] border-[#2a2a2e]">
                         <DialogHeader>
                           <DialogTitle className="text-slate-100">비밀번호 변경</DialogTitle>
                           <DialogDescription className="text-slate-400">
@@ -654,7 +654,7 @@ function SettingsPageContent() {
                               onChange={(e) => setCurrentPassword(e.target.value)}
                               placeholder="현재 비밀번호를 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           <div className="space-y-2">
@@ -666,7 +666,7 @@ function SettingsPageContent() {
                               onChange={(e) => setNewPassword(e.target.value)}
                               placeholder="새 비밀번호를 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           <div className="space-y-2">
@@ -678,7 +678,7 @@ function SettingsPageContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               placeholder="새 비밀번호를 다시 입력하세요"
                               required
-                              className="bg-slate-950 border-slate-700 text-slate-100"
+                              className="bg-[#09090b] border-[#333338] text-slate-100"
                             />
                           </div>
                           {newPassword && newPassword !== confirmPassword && (
@@ -688,7 +688,7 @@ function SettingsPageContent() {
                             <Button
                               type="button"
                               variant="outline"
-                              className="border-slate-700 text-slate-300"
+                              className="border-[#333338] text-slate-300"
                               onClick={() => {
                                 setIsPasswordDialogOpen(false);
                                 setCurrentPassword("");
@@ -723,8 +723,8 @@ function SettingsPageContent() {
               <div className="animate-in fade-in-50 duration-300 space-y-5">
 
                 {/* ── 1. 전달 방식 (Delivery Method) ── */}
-                <div className="bg-[#141820] border border-[#252a32] rounded-xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-[#252a32]">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2.5">
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10">
                         <Bell className="h-4 w-4 text-blue-400" />
@@ -748,14 +748,14 @@ function SettingsPageContent() {
                           "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
                           notificationFrequency === "immediate"
                             ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-[#252a32] bg-[#1a1e26] hover:border-[#353a45]"
+                            : "border-[#2a2a2e] bg-[#222226] hover:border-[#353a45]"
                         )}
                       >
                         <div className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
                           notificationFrequency === "immediate"
                             ? "bg-blue-500/15 text-blue-400"
-                            : "bg-[#252a32] text-slate-500"
+                            : "bg-[#2a2a2e] text-slate-500"
                         )}>
                           <Zap className="h-5 w-5" />
                         </div>
@@ -798,14 +798,14 @@ function SettingsPageContent() {
                           "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
                           notificationFrequency === "daily"
                             ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-[#252a32] bg-[#1a1e26] hover:border-[#353a45]"
+                            : "border-[#2a2a2e] bg-[#222226] hover:border-[#353a45]"
                         )}
                       >
                         <div className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
                           notificationFrequency === "daily"
                             ? "bg-blue-500/15 text-blue-400"
-                            : "bg-[#252a32] text-slate-500"
+                            : "bg-[#2a2a2e] text-slate-500"
                         )}>
                           <CalendarClock className="h-5 w-5" />
                         </div>
@@ -844,8 +844,8 @@ function SettingsPageContent() {
                 </div>
 
                 {/* ── 2. 채널별 알림 토글 테이블 ── */}
-                <div className="bg-[#141820] border border-[#252a32] rounded-xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-[#252a32]">
+                <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl overflow-hidden">
+                  <div className="px-6 py-5 border-b border-[#2a2a2e]">
                     <div className="flex items-center gap-2.5">
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-500/10">
                         <Mail className="h-4 w-4 text-slate-400" />
@@ -879,7 +879,7 @@ function SettingsPageContent() {
                           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400/80">
                             {group.category}
                           </span>
-                          <div className="flex-1 h-px bg-[#252a32]" />
+                          <div className="flex-1 h-px bg-[#2a2a2e]" />
                         </div>
 
                         {/* Items */}
@@ -896,7 +896,7 @@ function SettingsPageContent() {
                                   "flex items-center justify-between py-3 px-3 rounded-lg transition-colors group",
                                   isOverridden
                                     ? "bg-blue-500/[0.04] hover:bg-blue-500/[0.07]"
-                                    : "hover:bg-[#1a1e26]"
+                                    : "hover:bg-[#222226]"
                                 )}
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -947,12 +947,12 @@ function SettingsPageContent() {
                                           "h-7 w-[68px] text-[10px] font-medium border px-2 rounded-md",
                                           isOverridden
                                             ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                                            : "border-[#252a32] bg-[#1a1e26] text-slate-500"
+                                            : "border-[#2a2a2e] bg-[#222226] text-slate-500"
                                         )}
                                       >
                                         <SelectValue />
                                       </SelectTrigger>
-                                      <SelectContent className="bg-[#1a1e26] border-[#252a32]">
+                                      <SelectContent className="bg-[#222226] border-[#2a2a2e]">
                                         <SelectItem value="default" className="text-xs text-slate-400">
                                           기본값
                                         </SelectItem>
@@ -980,10 +980,10 @@ function SettingsPageContent() {
                   </div>
 
                   {/* Legend */}
-                  <div className="px-6 py-3.5 border-t border-[#252a32] bg-[#0e1117]/50">
+                  <div className="px-6 py-3.5 border-t border-[#2a2a2e] bg-[#111114]/50">
                     <div className="flex items-center gap-4 text-[11px] text-slate-500">
                       <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-[#252a32]" />
+                        <div className="h-2 w-2 rounded-full bg-[#2a2a2e]" />
                         <span>기본값 = 상단 전달 방식 따름</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -1003,9 +1003,9 @@ function SettingsPageContent() {
                 {billingLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                        <Skeleton className="h-5 w-32 bg-slate-800 mb-3" />
-                        <Skeleton className="h-8 w-48 bg-slate-800" />
+                      <div key={i} className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-6">
+                        <Skeleton className="h-5 w-32 bg-[#222226] mb-3" />
+                        <Skeleton className="h-8 w-48 bg-[#222226]" />
                       </div>
                     ))}
                   </div>
@@ -1030,7 +1030,7 @@ function SettingsPageContent() {
                         {/* Plan overview grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {/* Current plan */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">현재 플랜</div>
                             <div className="flex items-center gap-2">
                               <span className="text-xl font-bold text-slate-100">{displayName}</span>
@@ -1049,7 +1049,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Next billing date */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">다음 결제일</div>
                             <div className="text-xl font-bold text-slate-100">
                               {subscription?.currentPeriodEnd
@@ -1059,7 +1059,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Billing amount */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">월 결제 금액</div>
                             <div className="text-xl font-bold text-slate-100">
                               {priceDisplay || "무료"}
@@ -1067,7 +1067,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Seats */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">좌석 수</div>
                             <div className="flex items-center gap-2">
                               <Users className="h-4 w-4 text-slate-500" />
@@ -1079,7 +1079,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Billing contact */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 담당자</div>
                             <div className="text-sm font-medium text-slate-200">
                               {billingData?.billingContact?.name ?? session?.user?.name ?? "-"}
@@ -1090,7 +1090,7 @@ function SettingsPageContent() {
                           </div>
 
                           {/* Payment method */}
-                          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 수단</div>
                             <div className="flex items-center gap-2">
                               <CreditCard className="h-4 w-4 text-slate-500" />
@@ -1102,8 +1102,8 @@ function SettingsPageContent() {
                         </div>
 
                         {/* Invoices */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-lg">
-                          <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                        <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg">
+                          <div className="px-6 py-4 border-b border-[#2a2a2e] flex items-center justify-between">
                             <div className="flex items-center gap-2 text-slate-100 font-semibold text-sm">
                               <Receipt className="h-4 w-4" />
                               최근 청구서
@@ -1112,7 +1112,7 @@ function SettingsPageContent() {
                           <div className="overflow-x-auto">
                             {!hasInvoices || isFree ? (
                               <div className="px-6 py-12 text-center">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-800 mb-3">
+                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#222226] mb-3">
                                   <Receipt className="h-5 w-5 text-slate-500" />
                                 </div>
                                 <p className="text-sm text-slate-400">첫 결제 이전입니다</p>
@@ -1123,7 +1123,7 @@ function SettingsPageContent() {
                             ) : (
                               <Table>
                                 <TableHeader>
-                                  <TableRow className="border-slate-800 hover:bg-transparent">
+                                  <TableRow className="border-[#2a2a2e] hover:bg-transparent">
                                     <TableHead className="text-slate-400 text-xs font-medium">날짜</TableHead>
                                     <TableHead className="text-slate-400 text-xs font-medium">항목</TableHead>
                                     <TableHead className="text-slate-400 text-xs font-medium">금액</TableHead>
@@ -1133,7 +1133,7 @@ function SettingsPageContent() {
                                 </TableHeader>
                                 <TableBody>
                                   {(invoices.length > 0 ? invoices : allInvoices).map((invoice: { id: string; date?: string; paidAt?: string; periodStart?: string; description?: string; amount?: number; amountDue?: number; amountPaid?: number; status?: string; invoicePdfUrl?: string }) => (
-                                    <TableRow key={invoice.id} className="border-slate-800/50 hover:bg-slate-800/30">
+                                    <TableRow key={invoice.id} className="border-[#2a2a2e]/50 hover:bg-[#222226]/30">
                                       <TableCell className="text-slate-300 text-sm">
                                         {invoice.date
                                           ? new Date(invoice.date).toLocaleDateString("ko-KR")
@@ -1201,7 +1201,7 @@ function SettingsPageContent() {
 
                 {/* ── Cancel subscription dialog ── */}
                 <Dialog open={isCancelOpen} onOpenChange={(open) => { if (!open) resetCancelFlow(); }}>
-                  <DialogContent className="bg-slate-900 border-slate-800 max-w-lg">
+                  <DialogContent className="bg-[#1a1a1e] border-[#2a2a2e] max-w-lg">
                     <DialogHeader>
                       <DialogTitle className="text-slate-100">
                         {cancelStep === 1 && "구독 해지"}
@@ -1229,8 +1229,8 @@ function SettingsPageContent() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left text-sm transition-colors",
                                 cancelReason === r.value
-                                  ? "border-slate-600 bg-slate-800 text-slate-100"
-                                  : "border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                                  ? "border-slate-600 bg-[#222226] text-slate-100"
+                                  : "border-[#2a2a2e] text-slate-400 hover:border-[#333338] hover:text-slate-300"
                               )}
                             >
                               <div className={cn(
@@ -1265,7 +1265,7 @@ function SettingsPageContent() {
                             onChange={(e) => setCancelFeedback(e.target.value)}
                             placeholder="어떤 점이 아쉬우셨나요? 자유롭게 작성해 주세요. (선택사항)"
                             rows={4}
-                            className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-600"
+                            className="bg-[#09090b] border-[#333338] text-slate-100 placeholder:text-slate-600"
                           />
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(1)}>이전</Button>
@@ -1285,7 +1285,7 @@ function SettingsPageContent() {
                           {(() => {
                             const offer = getSaveOffer(cancelReason);
                             return (
-                              <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-5 space-y-3">
+                              <div className="bg-[#222226]/60 border border-[#333338] rounded-lg p-5 space-y-3">
                                 <h4 className="text-sm font-semibold text-slate-200">{offer.title}</h4>
                                 <p className="text-sm text-slate-400">{offer.description}</p>
                                 <Button
@@ -1352,7 +1352,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
-                              className="border-slate-700 text-slate-300"
+                              className="border-[#333338] text-slate-300"
                               onClick={resetCancelFlow}
                             >
                               취소
@@ -1381,7 +1381,7 @@ function SettingsPageContent() {
 
             {/* ── Bottom action bar (profile & notifications) ── */}
             {activeSection !== "billing" && isDirty && (
-              <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg overflow-hidden">
                 <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <p className="text-xs text-slate-500">
                     변경된 {activeSection === "profile" ? "프로필 정보" : "알림 설정"}를 저장할 수 있습니다.

@@ -172,9 +172,9 @@ export function PriorityActionQueue({
   );
 
   return (
-    <div className={`rounded-xl border border-[#252a32] bg-[#141820] overflow-hidden ${className}`}>
+    <div className={`rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#252a32] flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-[#2a2a2e] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
             <Flame className="h-3.5 w-3.5 text-amber-400" />
@@ -198,13 +198,13 @@ export function PriorityActionQueue({
       </div>
 
       {/* Category filter pills */}
-      <div className="px-4 py-2.5 border-b border-[#252a32] flex gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="px-4 py-2.5 border-b border-[#2a2a2e] flex gap-1.5 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setSelectedCategory("all")}
           className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
             selectedCategory === "all"
               ? "bg-slate-600/50 text-slate-200"
-              : "bg-[#1a1e26] text-slate-500 hover:text-slate-300"
+              : "bg-[#222226] text-slate-500 hover:text-slate-300"
           }`}
         >
           전체 {queueItems.length}
@@ -220,7 +220,7 @@ export function PriorityActionQueue({
               className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
                 selectedCategory === cat
                   ? "bg-slate-600/50 text-slate-200"
-                  : "bg-[#1a1e26] text-slate-500 hover:text-slate-300"
+                  : "bg-[#222226] text-slate-500 hover:text-slate-300"
               }`}
             >
               {cfg.label} {count}
@@ -239,7 +239,7 @@ export function PriorityActionQueue({
           return (
             <div
               key={item.id}
-              className="px-4 py-3 hover:bg-[#1a1e26] transition-colors cursor-pointer group"
+              className="px-4 py-3 hover:bg-[#222226] transition-colors cursor-pointer group"
               onClick={() => onItemClick?.(item)}
             >
               {/* Row 1: Risk + Product + Category badge */}

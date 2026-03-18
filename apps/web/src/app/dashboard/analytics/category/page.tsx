@@ -114,7 +114,7 @@ export default function CategoryAnalyticsPage() {
       {!isLoading && !isError && hasData && (
         <div className="grid gap-6 md:grid-cols-2">
           {/* 좌측: 도넛 차트 */}
-          <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+          <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="text-lg">비중 (도넛 차트)</CardTitle>
             </CardHeader>
@@ -165,7 +165,7 @@ export default function CategoryAnalyticsPage() {
           </Card>
 
           {/* 우측: 항목별 상세 금액 리스트 */}
-          <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+          <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="text-lg">항목별 상세 금액</CardTitle>
             </CardHeader>
@@ -176,7 +176,7 @@ export default function CategoryAnalyticsPage() {
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40"
+                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-[#2a2a2e] bg-slate-50 dark:bg-[#1a1a1e]/40"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div

@@ -116,7 +116,7 @@ function PPEIcon({ type, required }: { type: string; required?: boolean }) {
   const base = "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center";
   const active = required
     ? "text-blue-400 bg-blue-950/50"
-    : "text-slate-600 bg-slate-800";
+    : "text-slate-600 bg-[#222226]";
   const label =
     type === "gloves"
       ? "보호장갑"
@@ -463,7 +463,7 @@ export default function SafetyManagerPage() {
               GMP/KOSHA 규격 대응. 고위험 물질, MSDS, 필수 보호구를 한눈에 관리합니다.
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs shrink-0 border-slate-700">
+          <Button onClick={handleExport} variant="outline" size="sm" className="text-xs shrink-0 border-[#333338]">
             <Download className="h-3.5 w-3.5 mr-1.5" />
             <span className="hidden sm:inline">CSV </span>내보내기
           </Button>
@@ -471,7 +471,7 @@ export default function SafetyManagerPage() {
 
         {/* 1. 상단 안전 요약 KPI */}
         <div className="grid gap-3 sm:gap-4 grid-cols-3">
-          <Card className="border-slate-800/50 shadow-sm bg-slate-900">
+          <Card className="border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
             <CardContent className="pt-4 sm:pt-6 pb-4 flex justify-between items-center">
               <div className="space-y-0.5">
                 <p className="text-[11px] sm:text-sm font-medium text-slate-400">전체 관리</p>
@@ -507,10 +507,10 @@ export default function SafetyManagerPage() {
         </div>
 
         {/* 슬림 필터 바 */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 py-3 px-3 sm:px-4 border rounded-lg border-slate-800/50 bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 py-3 px-3 sm:px-4 border rounded-lg border-[#2a2a2e]/50 bg-[#1a1a1e]">
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select value={riskFilter} onValueChange={setRiskFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-[#333338]">
                 <SelectValue placeholder="위험 등급" />
               </SelectTrigger>
               <SelectContent>
@@ -521,7 +521,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={msdsFilter} onValueChange={setMsdsFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-[#333338]">
                 <SelectValue placeholder="MSDS 상태" />
               </SelectTrigger>
               <SelectContent>
@@ -531,7 +531,7 @@ export default function SafetyManagerPage() {
               </SelectContent>
             </Select>
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-slate-700">
+              <SelectTrigger className="w-[110px] sm:w-[140px] h-8 sm:h-9 text-xs border-[#333338]">
                 <SelectValue placeholder="보관 장소" />
               </SelectTrigger>
               <SelectContent>
@@ -545,7 +545,7 @@ export default function SafetyManagerPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              className="pl-9 h-9 text-xs border-slate-700"
+              className="pl-9 h-9 text-xs border-[#333338]"
               placeholder="물질명 또는 CAS 번호 검색..."
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
@@ -557,7 +557,7 @@ export default function SafetyManagerPage() {
         </p>
 
         {/* 2. 고도화된 제품 리스트 (antialiased 텍스트, 선명한 아이콘) */}
-        <Card className="shadow-sm border-slate-800/50 bg-slate-900 antialiased">
+        <Card className="shadow-sm border-[#2a2a2e]/50 bg-[#1a1a1e] antialiased">
           <CardHeader>
             <CardTitle className="text-lg text-white">관리 대상 물질 리스트</CardTitle>
             <CardDescription className="text-slate-400">
@@ -576,7 +576,7 @@ export default function SafetyManagerPage() {
                     ? { label: "고위험", cls: "bg-red-900/40 text-red-300 border-red-800" }
                     : item.level === "MEDIUM"
                       ? { label: "중위험", cls: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800" }
-                      : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" };
+                      : { label: "일반", cls: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-[#222226] dark:text-slate-400 dark:border-[#333338]" };
                   const actionBadge = item.actionStatus === "action_required"
                     ? { label: "조치 필요", cls: "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800" }
                     : item.actionStatus === "caution"
@@ -589,7 +589,7 @@ export default function SafetyManagerPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-l-4 border-slate-100 dark:border-slate-800/50 ${getBorderColor(item.level)}`}
+                      className={`p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-[#222226]/50 transition-colors border-l-4 border-slate-100 dark:border-[#2a2a2e]/50 ${getBorderColor(item.level)}`}
                     >
                       {/* 1행: 핵심 식별 정보 */}
                       <div className="flex items-center gap-2 flex-wrap">
@@ -599,7 +599,7 @@ export default function SafetyManagerPage() {
                           ))}
                         </div>
                         <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-700 font-mono">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-slate-50 dark:bg-[#222226] text-slate-400 border-[#333338] font-mono">
                           {item.cas}
                         </Badge>
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${riskBadge.cls}`}>
@@ -689,11 +689,11 @@ export default function SafetyManagerPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="msds-substance" className="text-xs font-medium">물질명</Label>
-                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
+                <Input id="msds-substance" value={msdsTarget?.name || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-[#1a1a1e]" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="msds-cas" className="text-xs font-medium">CAS No.</Label>
-                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-slate-900" />
+                <Input id="msds-cas" value={msdsTarget?.cas || ""} disabled className="h-8 text-xs bg-slate-50 dark:bg-[#1a1a1e]" />
               </div>
             </div>
             <div className="space-y-1.5">
