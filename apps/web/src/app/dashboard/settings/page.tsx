@@ -70,6 +70,10 @@ import {
   ShoppingCart,
   ClipboardCheck,
   Server,
+  Trash2,
+  UserPlus,
+  KeyRound,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +121,9 @@ const CANCEL_REASONS: { value: CancelReason; label: string }[] = [
   { value: "performance", label: "성능/안정성 문제" },
   { value: "other", label: "기타" },
 ];
+
+// ── Safety-critical notification IDs: always "immediate" + badge ──
+const SAFETY_CRITICAL_IDS = new Set(["stock_low", "stock_expiry", "safety_compliance", "system_security"]);
 
 function getSaveOffer(reason: CancelReason | null): { title: string; description: string; cta: string } {
   switch (reason) {
@@ -200,27 +207,31 @@ function SettingsPageContent() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
   // ── Notification state ──
+
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    // 견적/구매 관련
-    { id: "quote_new", category: "견적/구매", label: "신규 견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: true, deliveryOverride: null },
-    { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
-    { id: "purchase_status", category: "견적/구매", label: "구매 진행 상태", description: "발주, 배송, 입고 등 구매 진행 알림", icon: ShoppingCart, inApp: true, email: true, deliveryOverride: null },
-    // 재고 관련
+    // 1. 재고
     { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: true, deliveryOverride: "immediate" },
     { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: true, deliveryOverride: "immediate" },
-    // 승인/결재 관련
-    { id: "approval_request", category: "승인/결재", label: "승인 요청", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
-    { id: "approval_result", category: "승인/결재", label: "승인 결과", description: "내가 요청한 건의 승인/반려 결과", icon: Check, inApp: true, email: false, deliveryOverride: null },
-    // 조직/팀 관련
-    { id: "team_member", category: "조직/팀", label: "팀원 변동", description: "멤버 초대, 탈퇴, 역할 변경 알림", icon: Users, inApp: true, email: false, deliveryOverride: null },
-    { id: "team_mention", category: "조직/팀", label: "멘션/댓글", description: "나를 멘션하거나 댓글이 달린 경우", icon: Mail, inApp: true, email: false, deliveryOverride: null },
-    // 안전/규정 관련
-    { id: "safety_msds", category: "안전/규정", label: "MSDS 업데이트", description: "안전보건자료 갱신 또는 누락 알림", icon: Shield, inApp: true, email: true, deliveryOverride: null },
-    { id: "safety_compliance", category: "안전/규정", label: "규정 위반 경고", description: "보관 조건, 라벨링 등 규정 이슈", icon: AlertCircle, inApp: true, email: true, deliveryOverride: "immediate" },
-    // 시스템 관련
-    { id: "system_login", category: "시스템", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경", icon: Lock, inApp: true, email: true, deliveryOverride: "immediate" },
-    { id: "system_maintenance", category: "시스템", label: "시스템 점검", description: "서비스 점검 및 업데이트 공지", icon: Server, inApp: true, email: false, deliveryOverride: null },
-    { id: "system_report", category: "시스템", label: "리포트 발행", description: "주간/월간 요약 리포트 이메일 수신", icon: BarChart3, inApp: false, email: true, deliveryOverride: null },
+    { id: "stock_disposal", category: "재고", label: "폐기 검토", description: "만료·손상 품목의 폐기 절차 검토 요청", icon: Trash2, inApp: true, email: false, deliveryOverride: null },
+    // 2. 견적/구매
+    { id: "quote_new", category: "견적/구매", label: "견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: true, deliveryOverride: null },
+    { id: "quote_approval", category: "견적/구매", label: "승인 필요", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
+    { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
+    // 3. 조직/권한
+    { id: "org_invite", category: "조직/권한", label: "초대", description: "조직 또는 워크스페이스 초대 수신", icon: UserPlus, inApp: true, email: true, deliveryOverride: null },
+    { id: "org_role_change", category: "조직/권한", label: "권한 변경", description: "내 역할 또는 팀원 권한 변경 알림", icon: KeyRound, inApp: true, email: false, deliveryOverride: null },
+    { id: "org_owner_transfer", category: "조직/권한", label: "Owner 이전", description: "조직 소유권 이전 요청 또는 완료", icon: Crown, inApp: true, email: true, deliveryOverride: null },
+    // 4. 안전
+    { id: "safety_compliance", category: "안전", label: "규정 위반", description: "보관 조건, 라벨링 등 규정 위반 경고", icon: AlertCircle, inApp: true, email: true, deliveryOverride: "immediate" },
+    { id: "safety_msds", category: "안전", label: "MSDS 미등록", description: "안전보건자료 미등록 또는 누락 품목 알림", icon: Shield, inApp: true, email: true, deliveryOverride: null },
+    // 5. 결제/구독
+    { id: "billing_failed", category: "결제/구독", label: "결제 실패", description: "카드 만료 또는 결제 수단 오류", icon: XCircle, inApp: true, email: true, deliveryOverride: null },
+    { id: "billing_plan_change", category: "결제/구독", label: "구독 상태 변경", description: "플랜 업그레이드·다운그레이드·갱신 알림", icon: CreditCard, inApp: true, email: true, deliveryOverride: null },
+    { id: "billing_cancel", category: "결제/구독", label: "해지", description: "구독 해지 예정 또는 해지 완료 안내", icon: RotateCcw, inApp: true, email: true, deliveryOverride: null },
+    // 6. 시스템
+    { id: "system_pdf_fail", category: "시스템", label: "PDF 분석 실패", description: "업로드한 PDF의 자동 분석 실패 알림", icon: FileText, inApp: true, email: false, deliveryOverride: null },
+    { id: "system_security", category: "시스템", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경", icon: Lock, inApp: true, email: true, deliveryOverride: "immediate" },
+    { id: "system_daily_digest", category: "시스템", label: "일일 요약 메일", description: "하루 동안의 주요 활동을 정리한 요약 메일", icon: Mail, inApp: false, email: true, deliveryOverride: null },
   ]);
   const [notificationFrequency, setNotificationFrequency] = useState<DeliveryMode>("immediate");
 
@@ -774,7 +785,7 @@ function SettingsPageContent() {
                             )}
                           </div>
                           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            이벤트가 발생하면 바로 전달됩니다
+                            발생 즉시 앱/이메일로 전달됩니다
                           </p>
                         </div>
                         {/* Radio indicator */}
@@ -824,7 +835,7 @@ function SettingsPageContent() {
                             )}
                           </div>
                           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            하루 동안 발생한 항목을 정리해 한 번에 전달합니다
+                            매일 오전 주요 알림을 요약 메일로 발송합니다
                           </p>
                         </div>
                         {/* Radio indicator */}
@@ -887,27 +898,34 @@ function SettingsPageContent() {
                           {group.items.map((n) => {
                             const Icon = n.icon;
                             const isOverridden = n.deliveryOverride !== null;
-                            const effectiveMode = n.deliveryOverride ?? notificationFrequency;
+                            const isCritical = SAFETY_CRITICAL_IDS.has(n.id);
 
                             return (
                               <div
                                 key={n.id}
                                 className={cn(
                                   "flex items-center justify-between py-3 px-3 rounded-lg transition-colors group",
-                                  isOverridden
-                                    ? "bg-blue-500/[0.04] hover:bg-blue-500/[0.07]"
-                                    : "hover:bg-el"
+                                  isCritical
+                                    ? "bg-amber-500/[0.04] hover:bg-amber-500/[0.07]"
+                                    : isOverridden
+                                      ? "bg-blue-500/[0.04] hover:bg-blue-500/[0.07]"
+                                      : "hover:bg-el"
                                 )}
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                   <Icon className={cn(
                                     "h-4 w-4 shrink-0",
-                                    isOverridden ? "text-blue-400/70" : "text-slate-500"
+                                    isCritical ? "text-amber-400/80" : isOverridden ? "text-blue-400/70" : "text-slate-500"
                                   )} />
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm font-medium text-slate-200">{n.label}</span>
-                                      {isOverridden && (
+                                      {isCritical && (
+                                        <span className="flex h-4 items-center rounded bg-amber-500/15 px-1.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider">
+                                          즉시
+                                        </span>
+                                      )}
+                                      {!isCritical && isOverridden && (
                                         <span className="flex h-4 items-center rounded bg-blue-500/10 px-1.5 text-[9px] font-bold text-blue-400 uppercase tracking-wider">
                                           개별
                                         </span>
@@ -981,14 +999,18 @@ function SettingsPageContent() {
 
                   {/* Legend */}
                   <div className="px-6 py-3.5 border-t border-bd bg-pg/50">
-                    <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
                       <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-st" />
-                        <span>기본값 = 상단 전달 방식 따름</span>
+                        <div className="h-2 w-2 rounded-full bg-amber-500/50" />
+                        <span className="text-amber-400/70">즉시 = 안전-critical 항목 (즉시 전달 기본값)</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-blue-500/40" />
                         <span className="text-blue-400/70">개별 = 항목별 전달 방식 지정됨</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-st" />
+                        <span>기본값 = 상단 전달 방식 따름</span>
                       </div>
                     </div>
                   </div>
