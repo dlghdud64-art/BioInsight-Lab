@@ -231,7 +231,7 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
       actions.push({
         type: "reorder",
         label: "재주문 검토",
-        reasoning: `최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 예상`,
+        reasoning: `재주문: 최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 — 리드타임(${item.leadTimeDays ?? 14}일) 감안 시 즉시 발주 권장`,
         priority: "high",
       });
     }
@@ -243,20 +243,20 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
       actions.push({
         type: "dispose",
         label: "폐기 검토",
-        reasoning: `lot ${item.lotNumber || "N/A"} / 만료 D-${days} / 미개봉 ${Math.max(1, Math.floor(item.currentQuantity * 0.3))}ea`,
+        reasoning: `폐기: 만료 D-${days} / 미개봉 ${Math.max(1, Math.floor(item.currentQuantity * 0.3))}ea — lot ${item.lotNumber || "N/A"} 유효기한 임박으로 폐기 또는 긴급 소진 필요`,
         priority: "high",
       });
       actions.push({
         type: "use_first",
         label: "우선 사용 권장",
-        reasoning: `만료 임박 lot 우선 소진으로 폐기 손실 최소화`,
+        reasoning: `만료 임박 lot 우선 소진으로 폐기 손실 최소화 — FEFO(First-Expiry-First-Out) 원칙 적용`,
         priority: "medium",
       });
     } else if (days <= 0) {
       actions.push({
         type: "dispose",
         label: "즉시 폐기",
-        reasoning: `유효기간 만료 ${Math.abs(days)}일 경과, 사용 불가`,
+        reasoning: `폐기: 유효기간 만료 ${Math.abs(days)}일 경과, 사용 불가 — 규정 상 즉시 폐기 처리 필수`,
         priority: "high",
       });
     }
@@ -266,7 +266,7 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
     actions.push({
       type: "relocate",
       label: "위치 이동/등록",
-      reasoning: `${item.storageCondition.includes("freezer") ? "냉동" : item.storageCondition.includes("fridge") ? "냉장" : "상온"} 보관 품목, 현재 위치 미지정`,
+      reasoning: `위치 이동: ${item.storageCondition.includes("freezer") ? "냉동" : item.storageCondition.includes("fridge") ? "냉장" : "상온"} 보관 조건 불일치 — 현재 위치 미지정으로 품질 저하 위험`,
       priority: "medium",
     });
   }
@@ -547,7 +547,7 @@ export function InventoryContextPanel({
 
         {/* ── E. Recommended Actions ── */}
         <section>
-          <SectionHeader icon={Sparkles} label="권장 조치" />
+          <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
           <div className="mt-2.5 space-y-2">
             {actions.map((action, idx) => (
               <div
@@ -570,8 +570,12 @@ export function InventoryContextPanel({
                     <ChevronRight className="h-2.5 w-2.5" />
                   </Button>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  {action.reasoning}
+                <p className="text-[11px] text-slate-500 leading-relaxed flex items-start gap-1">
+                  <Info className="h-3 w-3 shrink-0 mt-px text-slate-600" />
+                  <span>
+                    <span className="font-medium text-slate-400">추천 이유:</span>{" "}
+                    {action.reasoning}
+                  </span>
                 </p>
               </div>
             ))}
