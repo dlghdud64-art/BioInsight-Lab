@@ -95,7 +95,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 safe-area-bottom">
+      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-pn border-t border-bd">
         <SheetHeader className="pb-2">
           <SheetTitle className="text-base font-bold text-slate-100">
             전체 메뉴
