@@ -16,14 +16,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
   Search, Bell, HelpCircle, ChevronRight,
   AlertTriangle, FileText, Truck, BookOpen, Headphones,
   Settings, CreditCard, LogOut,
-  ShieldAlert, Clock, CheckCircle2, ArrowRight,
-  Flame, ClipboardCheck, Menu,
+  ShieldAlert, Clock, CheckCircle2,
+  ClipboardCheck, Menu,
 } from "lucide-react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 
@@ -66,18 +66,18 @@ interface TaskNotification {
   time: string;
 }
 
-/** 카테고리별 아이콘/색상 매핑 */
+/** 카테고리별 아이콘/색상 매핑 (단순화) */
 const CATEGORY_CONFIG: Record<
   NotificationCategory,
-  { icon: React.ElementType; bg: string; text: string; darkBg: string; darkText: string; label: string }
+  { icon: React.ElementType; color: string; label: string }
 > = {
-  stock_alert:       { icon: AlertTriangle, bg: "bg-red-100",    text: "text-red-600",    darkBg: " bg-red-950/40",    darkText: "text-red-400",    label: "재고 부족" },
-  quote_arrived:     { icon: FileText,      bg: "bg-blue-100",   text: "text-blue-600",   darkBg: " bg-blue-950/40",   darkText: "text-blue-400",   label: "견적 도착" },
-  delivery_complete: { icon: Truck,         bg: "bg-emerald-100",text: "text-emerald-600",darkBg: " bg-emerald-950/40",darkText: "text-emerald-400",label: "입고 완료" },
-  approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: " bg-amber-950/40",  darkText: "text-amber-400",  label: "승인 대기" },
-  expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: " bg-orange-950/40", darkText: "text-orange-400", label: "유효기간 경고" },
-  safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: " bg-purple-950/40", darkText: "text-purple-400", label: "안전 관리" },
-  system:            { icon: Bell,          bg: "bg-[#222226]",  text: "text-slate-600",  darkBg: "bg-[#222226]",     darkText: "text-slate-400",  label: "시스템" },
+  stock_alert:       { icon: AlertTriangle, color: "text-red-400",     label: "재고 부족" },
+  quote_arrived:     { icon: FileText,      color: "text-blue-400",    label: "견적 도착" },
+  delivery_complete: { icon: Truck,         color: "text-emerald-400", label: "입고 완료" },
+  approval_pending:  { icon: ClipboardCheck,color: "text-amber-400",   label: "승인 대기" },
+  expiry_warning:    { icon: Clock,         color: "text-orange-400",  label: "유효기간 경고" },
+  safety_alert:      { icon: ShieldAlert,   color: "text-purple-400",  label: "안전 관리" },
+  system:            { icon: Bell,          color: "text-slate-400",   label: "시스템" },
 };
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
@@ -267,128 +267,40 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
   const user = session?.user;
 
-  // ── 알림 분류: 즉시 조치 / 오늘 처리 / 참고·완료 ──
-  const immediateActions = notifications.filter((n) => n.status === "pending" && n.priority === "urgent");
-  const todayActions = notifications.filter((n) => n.status === "pending" && n.priority === "normal");
-  const completedActions = notifications.filter((n) => n.status === "completed");
-  const pendingCount = immediateActions.length + todayActions.length;
-
-  // Triage 탭: 기본 진입은 즉시 조치 우선
-  const [triageTab, setTriageTab] = useState<"immediate" | "today" | "completed">("immediate");
-  const currentTriageItems = triageTab === "immediate" ? immediateActions : triageTab === "today" ? todayActions : completedActions;
-
-  const handleNotificationCTA = (e: React.MouseEvent, notification: TaskNotification) => {
-    e.stopPropagation();
-    // 처리 완료로 변경
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, status: "completed" as ProcessingStatus } : n))
-    );
-    setIsNotificationOpen(false);
-    router.push(notification.ctaHref);
-  };
+  // ── 알림 카운트 ──
+  const pendingCount = notifications.filter((n) => n.status === "pending").length;
 
   const handleNotificationClick = (notification: TaskNotification) => {
     setIsNotificationOpen(false);
     router.push(notification.ctaHref);
   };
 
-  /** 알림 아이콘 렌더링 */
-  const renderCategoryIcon = (category: NotificationCategory, size: "sm" | "md" = "md") => {
-    const config = CATEGORY_CONFIG[category];
-    const Icon = config.icon;
-    const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
-    const padSize = size === "sm" ? "p-1.5" : "p-2";
-    return (
-      <div className={`flex-shrink-0 rounded-lg ${config.bg} ${config.darkBg} ${padSize}`}>
-        <Icon className={`${iconSize} ${config.text} ${config.darkText}`} />
-      </div>
-    );
-  };
-
-  /** 단일 알림 아이템 렌더링 — Operations Triage Card */
+  /** 단일 알림 row — 컴팩트 이벤트 피드 */
   const renderNotificationItem = (notification: TaskNotification) => {
     const isCompleted = notification.status === "completed";
-    const isUrgent = notification.priority === "urgent";
+    const isUrgent = notification.priority === "urgent" && !isCompleted;
     const config = CATEGORY_CONFIG[notification.category];
+    const Icon = config.icon;
 
-    // 완료/참고 카드: 버튼 없이 카드 전체 클릭
-    if (isCompleted) {
-      return (
-        <button
-          key={notification.id}
-          type="button"
-          onClick={() => handleNotificationClick(notification)}
-          className="w-full text-left px-3 py-2.5 opacity-50 hover:opacity-70 transition-colors"
-        >
-          <div className="flex items-start gap-2.5">
-            {renderCategoryIcon(notification.category, "sm")}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
-                  {notification.typeLabel}
-                </span>
-                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-[#2a2a2e] bg-[#2a2a2e]">
-                  완료
-                </Badge>
-                <span className="ml-auto text-[10px] text-slate-400 text-slate-500 flex-shrink-0">{notification.time}</span>
-              </div>
-              <p className="text-xs text-slate-400 text-slate-500 line-through truncate">
-                {notification.targetName}
-              </p>
-            </div>
-          </div>
-        </button>
-      );
-    }
-
-    // 미처리 카드: 상태 → 이슈 → 조치 이유 → 하단 action
     return (
-      <div
+      <button
         key={notification.id}
-        className={`px-3 py-3 ${isUrgent ? "bg-red-50/30  bg-red-950/10" : ""}`}
+        type="button"
+        onClick={() => handleNotificationClick(notification)}
+        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-[#222226] transition-colors ${
+          isCompleted ? "opacity-50" : ""
+        } ${isUrgent ? "border-l-2 border-red-500" : "border-l-2 border-transparent"}`}
       >
-        {/* 본문: 아이콘 + 텍스트 */}
-        <div className="flex items-start gap-2.5">
-          {renderCategoryIcon(notification.category, "sm")}
-          <div className="flex-1 min-w-0 overflow-hidden">
-            {/* 1행: 상태 배지 + 우측 시간 */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text} ${config.darkText}`}>
-                {notification.typeLabel}
-              </span>
-              {isUrgent && (
-                <Badge className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm bg-red-50 text-red-600 border-0  bg-red-950/40 text-red-400">
-                  긴급
-                </Badge>
-              )}
-              <span className="ml-auto text-[10px] text-slate-400 text-slate-500 flex-shrink-0">{notification.time}</span>
-            </div>
-            {/* 2행: 품목명 */}
-            <p className="text-xs font-semibold text-slate-100 truncate">
-              {notification.targetName}
-            </p>
-            {/* 3행: 조치 이유 */}
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              {notification.statusText}
-            </p>
-          </div>
+        <Icon className={`h-4 w-4 flex-shrink-0 ${config.color}`} />
+        <div className="flex-1 min-w-0">
+          <p className={`text-xs truncate ${isCompleted ? "text-slate-500 line-through" : "text-slate-200"}`}>
+            <span className="font-medium">{notification.typeLabel}</span>
+            <span className="text-slate-500 mx-1">·</span>
+            {notification.targetName}
+          </p>
         </div>
-        {/* 하단 액션 존: primary action 1개 */}
-        <div className="mt-2.5 pl-8">
-          <button
-            type="button"
-            onClick={(e) => handleNotificationCTA(e, notification)}
-            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
-              isUrgent
-                ? "text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 text-red-400  bg-red-950/30  border-red-800  hover:bg-red-950/50"
-                : "text-slate-400 border border-[#2a2a2e] border-[#333338] hover:bg-[#111114] hover:bg-[#222226]"
-            }`}
-          >
-            {notification.ctaLabel}
-            <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
+        <span className="text-[10px] text-slate-500 flex-shrink-0">{notification.time}</span>
+      </button>
     );
   };
 
@@ -407,7 +319,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
                 {index > 0 && (
-                  <ChevronRight className="h-4 w-4 text-slate-400 text-slate-500 flex-shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
                 )}
                 {index === breadcrumbs.length - 1 ? (
                   <span className="font-normal text-sm text-slate-200 truncate">
@@ -416,7 +328,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="hover:text-slate-100  hover:text-slate-100 truncate transition-colors"
+                    className="hover:text-slate-100 truncate transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -430,14 +342,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           {/* 전역 검색창: 데스크톱 전용 (모바일은 하단 플로팅 검색 사용) */}
           <div className="hidden md:flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
-            <Search className="absolute left-3 h-4 w-4 text-slate-400 text-slate-500 pointer-events-none flex-shrink-0" />
+            <Search className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none flex-shrink-0" />
             <Input
               type="search"
               placeholder="시약, 재고 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-[#111114] bg-[#1a1a1e] border-[#2a2a2e] border-[#333338] focus:bg-[#1a1a1e]  focus:bg-slate-900 w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-[#111114] bg-[#1a1a1e] border-[#333338] focus:bg-[#222226] w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -445,7 +357,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-400 hover:text-slate-100  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent transition-colors"
+            className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-400 hover:text-slate-100 hover:bg-transparent transition-colors"
             onClick={() => router.push("/test/search")}
             aria-label="검색"
           >
@@ -459,119 +371,50 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-400 hover:text-slate-100  hover:text-slate-100 hover:bg-transparent  hover:bg-transparent"
+                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-400 hover:text-slate-100 hover:bg-transparent"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
                 {pendingCount > 0 && (
                   <span className={`absolute top-1 right-1 flex items-center justify-center h-4 min-w-[16px] rounded-full text-[10px] font-bold text-white px-0.5 ${
-                    immediateActions.length > 0 ? "bg-red-500" : "bg-blue-500"
+                    bg-blue-500
                   }`}>
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
-              {/* ── 상단: 행동 기준 요약 ── */}
-              <div className="px-3 py-2.5 border-b border-[#2a2a2e] border-[#333338] bg-[#111114]/50 bg-[#1a1a1e]/50">
-                <h3 className="text-sm font-bold text-slate-100 mb-2">
-                  작업 알림
-                </h3>
-                {/* Triage 탭 필터 */}
-                <div className="flex items-center gap-1.5">
-                  {immediateActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("immediate")}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "immediate"
-                          ? "bg-red-50 text-red-700 ring-1 ring-red-200  bg-red-950/40 text-red-400  ring-red-800"
-                          : "text-red-500 hover:bg-red-50/50 text-red-400  hover:bg-red-950/20"
-                      }`}
-                    >
-                      <Flame className="h-2.5 w-2.5" />
-                      즉시 조치 {immediateActions.length}
-                    </button>
-                  )}
-                  {todayActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("today")}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "today"
-                          ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200  bg-amber-950/40 text-amber-400  ring-amber-800"
-                          : "text-amber-500 hover:bg-amber-50/50 text-amber-400  hover:bg-amber-950/20"
-                      }`}
-                    >
-                      오늘 처리 {todayActions.length}
-                    </button>
-                  )}
-                  {completedActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("completed")}
-                      className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "completed"
-                          ? "bg-[#222226] text-slate-600 ring-1 ring-slate-200 bg-[#222226] text-slate-400  ring-slate-700"
-                          : "text-slate-400 hover:bg-[#111114] text-slate-500 hover:bg-[#222226]/50"
-                      }`}
-                    >
-                      참고 {completedActions.length}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* ── 작업 목록 (탭 필터) ── */}
-              <div className="max-h-[420px] overflow-y-auto">
-                {pendingCount === 0 && completedActions.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <CheckCircle2 className="h-8 w-8 text-emerald-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-400">모든 작업이 처리되었습니다</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">새 작업이 발생하면 여기에 표시됩니다</p>
-                  </div>
-                ) : currentTriageItems.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <CheckCircle2 className="h-6 w-6 text-slate-300 mx-auto mb-1.5" />
-                    <p className="text-xs text-slate-400">
-                      {triageTab === "immediate" ? "즉시 조치할 항목이 없습니다" :
-                       triageTab === "today" ? "오늘 처리할 항목이 없습니다" :
-                       "완료된 항목이 없습니다"}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#2a2a2e]/80 divide-[#2a2a2e]/40">
-                    {currentTriageItems.map(renderNotificationItem)}
-                  </div>
+            <DropdownMenuContent align="end" className="w-[320px] p-0 shadow-xl bg-[#1a1a1e] border-[#2a2a2e]">
+              {/* ── 헤더 ── */}
+              <div className="px-3 py-2.5 border-b border-[#2a2a2e] flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-100">알림</h3>
+                {pendingCount > 0 && (
+                  <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4">
+                    {pendingCount}건
+                  </Badge>
                 )}
               </div>
 
-              {/* ── 하단 CTA ── */}
-              <div className="border-t border-[#2a2a2e] border-[#333338] px-3 py-2.5 flex items-center gap-2">
-                <Link
-                  href={`/dashboard/notifications?tab=${triageTab}`}
-                  onClick={() => setIsNotificationOpen(false)}
-                  className="flex-1"
-                >
-                  <button
-                    type="button"
-                    className="w-full text-center text-xs font-semibold py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700  bg-blue-600  hover:bg-blue-500 transition-colors"
-                  >
-                    작업함 보기
-                  </button>
-                </Link>
+              {/* ── 알림 목록 ── */}
+              <div className="max-h-[360px] overflow-y-auto divide-y divide-[#2a2a2e]">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <CheckCircle2 className="h-6 w-6 text-slate-500 mx-auto mb-2" />
+                    <p className="text-xs text-slate-400">새 알림이 없습니다</p>
+                  </div>
+                ) : (
+                  notifications.map(renderNotificationItem)
+                )}
+              </div>
+
+              {/* ── 하단 ── */}
+              <div className="border-t border-[#2a2a2e] px-3 py-2 text-center">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
-                  className="flex-shrink-0"
+                  className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
                 >
-                  <button
-                    type="button"
-                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-[#222226] hover:bg-[#222226]  hover:text-slate-300 transition-colors"
-                  >
-                    전체 보기
-                  </button>
+                  전체 보기
                 </Link>
               </div>
             </DropdownMenuContent>
@@ -583,7 +426,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-400 hover:text-blue-600 hover:bg-transparent  hover:bg-transparent transition-colors hidden lg:flex"
+                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-400 hover:text-blue-600 hover:bg-transparent transition-colors hidden lg:flex"
                 aria-label="도움말"
               >
                 <HelpCircle className="h-5 w-5" />
@@ -615,8 +458,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-[#2a2a2e] border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#222226] hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-[#2a2a2e] border-[#333338]">
+              <button className="flex items-center gap-2 pl-3 border-l border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#222226] hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-[#333338]">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="bg-blue-100  bg-blue-900/50 text-blue-600 text-blue-400 text-xs font-semibold">
                     {user?.name
