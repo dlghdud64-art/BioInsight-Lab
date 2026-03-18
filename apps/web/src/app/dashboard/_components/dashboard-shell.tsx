@@ -9,7 +9,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-shell">
+    <div className="flex h-screen overflow-hidden bg-[#0c0c0e]">
       <DashboardSidebar
         isMobileOpen={isMobileMenuOpen}
         onMobileOpenChange={setIsMobileMenuOpen}
