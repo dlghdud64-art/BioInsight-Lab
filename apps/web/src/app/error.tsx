@@ -23,16 +23,16 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-sh">
       <div className="max-w-lg w-full space-y-6 text-center bg-pn p-8 md:p-12 rounded-xl shadow-lg border border-bd">
         <div className="flex justify-center">
-          <div className="rounded-full bg-red-50 p-4">
+          <div className="rounded-full bg-red-500/10 p-4">
             <AlertCircle className="h-10 w-10 text-red-500" />
           </div>
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-100">일시적인 오류가 발생했습니다</h2>
-          <p className="text-sm md:text-base text-slate-600">
+          <p className="text-sm md:text-base text-slate-400">
             잠시 후 다시 시도해주세요. 문제가 계속되면 고객지원팀에 문의해주세요.
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function Error({
             asChild
             variant="outline"
             size="lg"
-            className="border-slate-300"
+            className="border-bd text-slate-300 hover:bg-el"
           >
             <Link href="/">
               <Home className="h-4 w-4 mr-2" />

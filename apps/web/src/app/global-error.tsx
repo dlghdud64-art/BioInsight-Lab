@@ -25,7 +25,7 @@ export default function GlobalError({
               <AlertCircle className="h-12 w-12 text-red-500" />
             </div>
             <h2 className="text-2xl font-bold text-slate-100">심각한 오류가 발생했습니다</h2>
-            <p className="text-gray-600">{error.message || "알 수 없는 오류가 발생했습니다."}</p>
+            <p className="text-slate-400">{error.message || "알 수 없는 오류가 발생했습니다."}</p>
             <div className="flex gap-2 justify-center">
               <Button onClick={reset} variant="default">
                 다시 시도
