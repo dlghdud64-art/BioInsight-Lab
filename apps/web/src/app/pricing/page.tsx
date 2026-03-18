@@ -335,7 +335,7 @@ export default function PricingPage() {
                           </div>
                         </div>
 
-                        <CardTitle className="text-lg md:text-2xl font-bold mb-0.5 text-slate-100">{plan.name}</CardTitle>
+                        <CardTitle className="text-base md:text-xl font-bold mb-0.5 text-slate-100">{plan.name}</CardTitle>
                         <p className="text-[10px] md:text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">
                           {plan.tagline}
                         </p>

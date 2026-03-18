@@ -224,7 +224,7 @@ export default function SupportPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {[
                 { href: "/support", icon: Mail, label: "고객 지원 및 문의", iconColor: "text-blue-400" },
-                { href: "/dashboard/faq", icon: Search, label: "FAQ", iconColor: "text-blue-400" },
+                { href: "/faq", icon: Search, label: "FAQ", iconColor: "text-blue-400" },
                 { href: "/intro", icon: FileText, label: "서비스 소개", iconColor: "text-slate-400" },
                 { href: "/pricing", icon: Building2, label: "요금 & 도입", iconColor: "text-slate-400" },
                 { href: "/auth/signin", icon: LogIn, label: "로그인", iconColor: "text-slate-400" },
