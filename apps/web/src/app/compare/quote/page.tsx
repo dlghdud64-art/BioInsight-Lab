@@ -321,16 +321,34 @@ export default function QuotePage() {
               <p className="text-sm text-slate-400 mt-1">선택한 품목으로 벤더에 가격/납기 확인을 요청할 수 있어요.</p>
             </div>
 
-            {/* Empty state — workspace placeholder */}
-            <div className="rounded-xl border border-bd bg-pn p-6 md:p-8">
-              {/* 견적 항목 드롭 영역 */}
-              <div className="rounded-lg border border-dashed border-bd bg-el px-6 py-12 flex flex-col items-center text-center mb-6">
-                <div className="w-14 h-14 rounded-xl bg-st border border-bd flex items-center justify-center mb-4">
-                  <ShoppingCart className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
+            {/* Empty state — elevated workspace placeholder */}
+            <div className="rounded-xl border border-bd bg-el p-6 md:p-8">
+              {/* 견적 항목 슬롯 영역 */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                {[1, 2, 3].map((slot) => (
+                  <div
+                    key={slot}
+                    className="rounded-lg border border-dashed border-bd bg-pn px-4 py-8 flex flex-col items-center text-center transition-colors hover:border-slate-600"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-el border border-bd flex items-center justify-center mb-2">
+                      <ShoppingCart className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <span className="text-xs text-slate-500 font-medium">품목 {slot}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* 액션 유도 안내 */}
+              <div className="flex flex-col items-center text-center pt-2 pb-2">
+                <div className="w-12 h-12 rounded-xl bg-pn border border-bd flex items-center justify-center mb-4">
+                  <FileText className="h-6 w-6 text-slate-500" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-100 mb-2">견적 바구니가 비어있습니다</h2>
-                <p className="text-sm text-slate-400 mb-6 max-w-md">
-                  제품을 검색하고 비교 목록에 추가한 후 견적을 요청할 수 있습니다.
+                <h2 className="text-lg font-semibold text-slate-100 mb-1.5">품목을 추가하고 견적을 요청하세요</h2>
+                <p className="text-sm text-slate-400 mb-1 max-w-md leading-relaxed">
+                  제품을 검색 · 비교한 뒤 견적 바구니에 담으면 벤더에게 가격/납기를 요청할 수 있습니다.
+                </p>
+                <p className="text-xs text-slate-500 mb-6 max-w-md">
+                  CSV 다운로드, 영문 견적서 자동 생성도 지원합니다.
                 </p>
                 <Link href="/search">
                   <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white px-8">

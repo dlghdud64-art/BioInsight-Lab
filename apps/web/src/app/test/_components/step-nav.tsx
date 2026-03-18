@@ -85,16 +85,19 @@ function StepNavContent() {
                     )}
                   >
                     {isCompleted ? (
-                      <CheckCircle2 className="h-3 w-3" />
+                      <CheckCircle2 className="h-3 w-3 text-blue-400" />
                     ) : (
-                      <span className="w-3.5 h-3.5 flex items-center justify-center rounded-full bg-current text-white text-[9px] font-bold shrink-0">
-                        <span className={cn(isActive ? "text-white" : "text-slate-500")}>{step.step}</span>
+                      <span className={cn(
+                        "w-3.5 h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold shrink-0",
+                        isActive ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-500"
+                      )}>
+                        {step.step}
                       </span>
                     )}
                     <span className={cn(isActive ? "" : "hidden")}>{step.label}</span>
                   </Link>
                   {index < steps.length - 1 && (
-                    <div className={cn("h-[1.5px] w-3 mx-0.5", step.step < currentStep ? "bg-blue-400" : "bg-st")} />
+                    <div className={cn("h-[1.5px] w-3 mx-0.5 bg-bd", step.step < currentStep && "bg-blue-400")} />
                   )}
                 </div>
               );
@@ -116,22 +119,21 @@ function StepNavContent() {
                     href={step.href}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all relative",
-                      isActive &&
-                        "bg-blue-600 text-white",
-                      isCompleted &&
-                        "bg-transparent text-slate-400 hover:text-slate-300 cursor-pointer",
+                      isActive && "bg-blue-600 text-white shadow-sm shadow-blue-600/20",
+                      isCompleted && "bg-transparent text-blue-400 hover:text-blue-300 cursor-pointer",
                       isPending && "bg-transparent text-slate-500 cursor-pointer hover:text-slate-400"
                     )}
                   >
                     {isCompleted ? (
                       <>
-                        <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
-                        <span className="text-slate-400">
+                        <CheckCircle2 className="h-5 w-5 text-blue-400 shrink-0" />
+                        <span className="text-blue-400">
                           Step {step.step} {step.label}
                         </span>
                       </>
                     ) : isActive ? (
                       <>
+                        <Icon className="h-4 w-4 shrink-0" />
                         <span className="font-bold">Step {step.step}</span>
                         <span>{step.label}</span>
                       </>
@@ -145,8 +147,8 @@ function StepNavContent() {
                   {index < steps.length - 1 && (
                     <div
                       className={cn(
-                        "h-[2px] w-10 mx-1 transition-colors",
-                        lineCompleted ? "bg-blue-500" : "bg-st"
+                        "h-[2px] w-10 mx-1 transition-colors bg-bd",
+                        lineCompleted && "bg-blue-500"
                       )}
                     />
                   )}
@@ -175,9 +177,9 @@ function StepNavFallback() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-1 py-2">
             <div className="h-5 w-12 rounded-full bg-st animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-st" />
+            <div className="h-[1.5px] w-3 bg-bd" />
             <div className="h-5 w-5 rounded-full bg-st animate-pulse" />
-            <div className="h-[1.5px] w-3 bg-st" />
+            <div className="h-[1.5px] w-3 bg-bd" />
             <div className="h-5 w-5 rounded-full bg-st animate-pulse" />
           </div>
         </div>

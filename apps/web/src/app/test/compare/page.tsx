@@ -329,31 +329,35 @@ export default function TestComparePage() {
         </div>
 
         {/* Empty State — workspace placeholder */}
-        <div className="w-full max-w-3xl mx-auto">
-          {/* 비교 슬롯 그리드 */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        <div className="w-full max-w-3xl mx-auto rounded-xl border border-bd bg-pn p-6 md:p-8">
+          {/* 비교 슬롯 3개 placeholder */}
+          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             {[1, 2, 3].map((slot) => (
-              <div key={slot} className="rounded-xl border border-dashed border-bd bg-el p-6 flex flex-col items-center justify-center min-h-[180px]">
-                <div className="w-10 h-10 rounded-lg bg-st flex items-center justify-center mb-3">
-                  <Plus className="h-5 w-5 text-slate-600" />
+              <div
+                key={slot}
+                className="rounded-xl border border-dashed border-bd bg-el p-4 md:p-6 flex flex-col items-center justify-center min-h-[160px] md:min-h-[200px] transition-colors hover:border-slate-600"
+              >
+                <div className="w-11 h-11 rounded-xl bg-pn border border-bd flex items-center justify-center mb-3">
+                  <Plus className="h-5 w-5 text-slate-500" />
                 </div>
-                <span className="text-xs text-slate-600 font-medium">제품 슬롯 {slot}</span>
+                <span className="text-xs text-slate-500 font-medium">슬롯 {slot}</span>
+                <span className="text-[10px] text-slate-600 mt-0.5">비어 있음</span>
               </div>
             ))}
           </div>
 
-          {/* 중앙 안내 */}
-          <div className="rounded-xl border border-bd bg-pn p-8 flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
-              <ArrowUpDown className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
+          {/* 액션 유도 안내 */}
+          <div className="flex flex-col items-center text-center pt-2 pb-2">
+            <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
+              <Compare className="h-6 w-6 text-slate-500" strokeWidth={1.5} />
             </div>
 
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">비교할 제품이 없습니다</h3>
-            <p className="text-sm text-slate-300 mb-1 max-w-md leading-relaxed">
-              Step 1에서 제품을 선택하고 '비교 담기'를 눌러주세요.
+            <h3 className="text-lg font-semibold text-slate-100 mb-1.5">제품을 추가하고 비교하세요</h3>
+            <p className="text-sm text-slate-400 mb-1 max-w-md leading-relaxed">
+              Step 1에서 제품을 검색한 뒤 &apos;비교 담기&apos;를 눌러 슬롯을 채워보세요.
             </p>
             <p className="text-xs text-slate-500 mb-6 max-w-md">
-              최대 5개까지 제품을 비교할 수 있습니다.
+              최대 5개 제품의 스펙 · 가격 · 납기를 한눈에 비교할 수 있습니다.
             </p>
 
             <Link href="/test/search">
