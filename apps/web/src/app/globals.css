@@ -184,3 +184,19 @@ div.quote-table td.no-column-cell {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
+
+/* ── Surface hierarchy utilities ── */
+@layer utilities {
+  .bg-sh { background-color: var(--surface-shell); }
+  .bg-pg { background-color: var(--surface-page); }
+  .bg-pn { background-color: var(--surface-panel); }
+  .bg-el { background-color: var(--surface-elevated); }
+  .bg-st { background-color: var(--surface-strong); }
+  .border-bd { border-color: var(--border-default); }
+  .border-bs { border-color: var(--border-strong); }
+  .divide-bd > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-default); }
+  .hover\:bg-el:hover { background-color: var(--surface-elevated); }
+  .hover\:bg-st:hover { background-color: var(--surface-strong); }
+  .hover\:bg-pn:hover { background-color: var(--surface-panel); }
+  .bg-sh\/95 { background-color: color-mix(in srgb, var(--surface-shell) 95%, transparent); }
+}

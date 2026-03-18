@@ -3,6 +3,14 @@ import type { Config } from "tailwindcss";
 // Tailwind 설정 - 중복 정의 제거
 const config: Config = {
   darkMode: ["class"],
+  safelist: [
+    "bg-sh", "bg-pg", "bg-pn", "bg-el", "bg-st",
+    "border-bd", "border-bs",
+    "text-sh", "text-pg", "text-pn",
+    "hover:bg-el", "hover:bg-st", "hover:bg-pn",
+    "divide-bd",
+    { pattern: /bg-(sh|pg|pn|el|st)\/\d+/ },
+  ],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
