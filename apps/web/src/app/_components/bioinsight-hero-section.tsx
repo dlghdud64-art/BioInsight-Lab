@@ -30,25 +30,25 @@ export function BioInsightHeroSection() {
   };
 
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-pn border-b border-bs">
+    <section className="relative w-full pt-32 md:pt-40 pb-20 md:pb-28 bg-pn border-b border-bs">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
         {/* Value Proposition */}
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 md:mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">
+        <div className="max-w-3xl mx-auto text-center mb-14 md:mb-20">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-6 md:mb-8">
             Biotech Procurement Operations Platform
           </p>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-100 leading-tight break-keep">
+          <h1 className="text-2xl sm:text-4xl md:text-[3.25rem] font-bold tracking-tight text-slate-100 leading-[1.3] md:leading-[1.35] break-keep mb-6 md:mb-8 max-w-2xl mx-auto">
             구매 요청부터 입고까지,{" "}
             <br className="hidden sm:block" />
             <span className="text-blue-400">운영 상태를 한눈에</span>
           </h1>
-          <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed break-keep">
+          <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed break-keep mb-8 md:mb-10">
             비교 → 견적 → 발주 → 입고 → 재고까지.
             연구실 구매 운영의 전 과정을 하나의 콘솔에서 추적하고 통제합니다.
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-3 pt-4">
+          <div className="flex items-center justify-center gap-3 mb-10 md:mb-12">
             <Link href="/dashboard">
               <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
                 운영 콘솔 시작하기
@@ -105,7 +105,7 @@ export function BioInsightHeroSection() {
         </div>
 
         {/* Compact Search Bar */}
-        <div className="max-w-md mx-auto mt-10">
+        <div className="max-w-md mx-auto mt-12 md:mt-14">
           <form onSubmit={handleSearch} className="flex items-center h-10 border border-bs rounded-md bg-el px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
             <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
             <input

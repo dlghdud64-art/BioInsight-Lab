@@ -29,7 +29,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
           {/* ── LEFT: 로고 → 항상 홈 ── */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <BioInsightLogo showText={true} variant="dark" />
+            <span className="text-lg font-bold tracking-tight text-slate-100">LabAxis</span>
           </Link>
 
           {/* ── Sheet 드로어 내용 ────────────────────────── */}
