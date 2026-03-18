@@ -156,7 +156,7 @@ export default function PricingPage() {
     { feature: "예산 통합 관리", starter: false, team: false, business: true, enterprise: true },
     { feature: "Lot 관리 · 재고 소진 알림", starter: false, team: false, business: true, enterprise: true },
     { feature: "관리자 운영 대시보드", starter: false, team: false, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "승인 / 감사 / 문서", tier: "business" },
+    { isCategoryHeader: true, label: "승인 / 권한 / 감사", tier: "business" },
     { feature: "Audit Trail", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
     { feature: "MSDS 자동 연동", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
     { feature: "구매 이력 · 문서 추적", starter: false, team: false, business: true, enterprise: true },
