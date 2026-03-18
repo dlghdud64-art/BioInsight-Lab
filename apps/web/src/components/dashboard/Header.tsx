@@ -74,12 +74,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 1, category: "stock_alert", read: false, text: "FBS (Fetal Bovine Serum) 재고가 부족합니다", href: "/dashboard/inventory?filter=low", time: "10분 전" },
-    { id: 2, category: "expiry_warning", read: false, text: "DMEM Medium (Lot #2024-A12) 유효기간 D-3 임박", href: "/dashboard/inventory", time: "30분 전" },
-    { id: 3, category: "approval_pending", read: false, text: "Antibody Kit 구매 요청 승인 대기 중", href: "/dashboard/purchases", time: "1시간 전" },
-    { id: 4, category: "quote_arrived", read: false, text: "Thermo Fisher 외 2건 견적이 도착했습니다", href: "/dashboard/quotes", time: "2시간 전" },
-    { id: 5, category: "delivery_complete", read: true, text: "50ml Conical Tube (100개) 입고 완료", href: "/dashboard/inventory", time: "어제" },
-    { id: 6, category: "safety_alert", read: true, text: "에탄올 (Ethanol, 99.5%) MSDS 등록 완료", href: "/dashboard/safety", time: "2일 전" },
+    { id: 1, category: "stock_alert", read: false, text: "재고 부족 품목 3건 — 재주문 검토 필요", href: "/dashboard/inventory?filter=low", time: "10분 전" },
+    { id: 2, category: "expiry_warning", read: false, text: "만료 임박 Lot 1건 (D-3) — 확인 필요", href: "/dashboard/inventory", time: "30분 전" },
+    { id: 3, category: "approval_pending", read: false, text: "승인 대기 견적 2건 — 구매 승인 페이지", href: "/dashboard/purchases", time: "1시간 전" },
+    { id: 4, category: "quote_arrived", read: false, text: "공급사 견적 도착 — Thermo Fisher 외 2건", href: "/dashboard/quotes", time: "2시간 전" },
+    { id: 5, category: "delivery_complete", read: true, text: "입고 완료 — 50ml Conical Tube (100개)", href: "/dashboard/inventory", time: "어제" },
+    { id: 6, category: "safety_alert", read: true, text: "MSDS 등록 완료 — Ethanol 99.5%", href: "/dashboard/safety", time: "2일 전" },
+    { id: 7, category: "system", read: true, text: "일일 요약 메일 발송 완료", href: "/dashboard/notifications", time: "2일 전" },
+    { id: 8, category: "quote_arrived", read: true, text: "PDF BOM 분석 실패 — 텍스트 붙여넣기로 재시도", href: "/protocol/bom", time: "3일 전" },
   ]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
