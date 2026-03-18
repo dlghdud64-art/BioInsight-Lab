@@ -26,7 +26,9 @@ export function BioInsightHeroSection() {
           <h1 className="text-[1.625rem] sm:text-4xl md:text-[3.25rem] font-bold tracking-tight text-slate-100 leading-[1.4] md:leading-[1.4] break-keep mb-8 md:mb-10 max-w-[680px] mx-auto">
             구매 요청부터 입고·재고까지,
             <br />
-            연구 구매 운영을 <span className="text-blue-400">한곳에서</span> 연결합니다
+            연구 구매 운영을
+            <br className="hidden sm:block" />
+            <span className="text-blue-400">한곳에서</span> 연결합니다
           </h1>
           <p className="text-sm md:text-lg text-slate-400 max-w-[520px] mx-auto leading-[1.7] break-keep mb-10 md:mb-12">
             시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지

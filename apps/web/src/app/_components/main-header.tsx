@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { UserMenu } from "@/components/auth/user-menu";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Button } from "@/components/ui/button";
 import { Menu, Search, FileText, Phone, Info, Headset, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";

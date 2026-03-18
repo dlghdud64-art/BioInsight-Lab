@@ -52,7 +52,7 @@ export default function PricingPage() {
       icon: Package,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "md:min-h-[420px]",
+      cardHeight: "md:min-h-[540px]",
       buttonText: "무료로 시작하기",
       features: [
         "개인 전용 (팀원 초대 불가)",
@@ -74,7 +74,7 @@ export default function PricingPage() {
       icon: Users,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "md:min-h-[500px]",
+      cardHeight: "md:min-h-[540px]",
       buttonText: "팀으로 시작하기",
       features: [
         "팀원 5명까지",
@@ -99,7 +99,7 @@ export default function PricingPage() {
       icon: Building,
       badge: "연구팀·구매팀 표준 플랜",
       isRecommended: true,
-      cardHeight: "md:min-h-[580px]",
+      cardHeight: "md:min-h-[540px]",
       buttonText: "Business 시작하기",
       features: [
         "팀원 무제한",
@@ -125,7 +125,7 @@ export default function PricingPage() {
       icon: Building2,
       badge: null as string | null,
       isRecommended: false,
-      cardHeight: "md:min-h-[500px]",
+      cardHeight: "md:min-h-[540px]",
       buttonText: "도입 상담 문의",
       features: [
         "Business 전체 기능",
@@ -141,7 +141,7 @@ export default function PricingPage() {
   const comparisonFeatures: ComparisonItem[] = [
     { isCategoryHeader: true, label: "검색 / 비교" },
     { feature: "통합 검색 · 기본 비교", starter: true, team: true, business: true, enterprise: true },
-    { feature: "확장 검색 (제조사 · CAS No. · 프로토콜)", starter: false, team: true, business: true, enterprise: true },
+    { feature: "확장 검색 (제조사·CAS No.·프로토콜)", starter: false, team: true, business: true, enterprise: true },
     { feature: "대체품 추천", starter: false, team: true, business: true, enterprise: true },
     { isCategoryHeader: true, label: "견적 / 구매 요청" },
     { feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한", key: true },
@@ -503,7 +503,7 @@ export default function PricingPage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-pn border-b border-bd">
-                            <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-300">기능</TableHead>
+                            <TableHead className="font-semibold w-[280px] py-3 pl-5 text-slate-300">기능</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
                             <TableHead className="text-center font-semibold py-3 text-blue-400">Business</TableHead>

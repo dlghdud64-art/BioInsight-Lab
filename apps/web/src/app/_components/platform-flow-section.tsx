@@ -1,51 +1,39 @@
 import {
-  Search, GitCompare, FileText, ShoppingCart, PackageCheck,
-  Warehouse, ChevronRight, Users, Clock, Shield,
+  Search, GitCompare, FileText, ShieldCheck, Package,
+  ArrowRight,
 } from "lucide-react";
 
-const FLOW_STAGES = [
+const OPS_VALUES = [
   {
     icon: Search,
-    title: "통합 검색",
-    desc: "시약명·CAS No.·제조사로 검색, 대체 후보 자동 매칭",
-    detail: "500만+ 글로벌 카탈로그 DB",
+    title: "벤더 분산 제거",
+    before: "벤더 사이트 6~10곳 반복 검색, 건당 30분 이상",
+    after: "통합 검색으로 즉시 비교 가능한 후보 리스트 확보",
   },
   {
     icon: GitCompare,
-    title: "비교 워크스페이스",
-    desc: "벤더별 가격·납기·스펙을 나란히 비교",
-    detail: "비교 세션 자동 저장 · 공유",
+    title: "판단 속도 향상",
+    before: "엑셀에서 수기로 스펙·가격 정리, 공유 불가",
+    after: "비교 워크스페이스에서 팀 단위 실시간 판단",
   },
   {
     icon: FileText,
-    title: "견적 관리",
-    desc: "견적 요청·회신·비교를 한곳에서 추적",
-    detail: "SLA 추적 · 자동 리마인더",
+    title: "커뮤니케이션 구조화",
+    before: "이메일로 견적 요청, 회신 추적 불가",
+    after: "구조화된 견적 요청·회신·비교, SLA 자동 추적",
   },
   {
-    icon: ShoppingCart,
-    title: "발주·승인",
-    desc: "승인 워크플로 → 발주 전환 → 공급사 전달",
-    detail: "역할별 승인 · 감사 로그",
+    icon: ShieldCheck,
+    title: "상태 추적 강화",
+    before: "승인·발주·입고를 별도 관리, 빈번한 누락",
+    after: "승인 → 발주 → 입고 → 재고 자동 연결, 상태 실시간 추적",
   },
   {
-    icon: PackageCheck,
-    title: "입고 확인",
-    desc: "수령 확인·검수·수량 검증 → 재고 자동 반영",
-    detail: "입고 지연 에스컬레이션",
+    icon: Package,
+    title: "재고 운영 연동",
+    before: "구매 완료 후 재고 수동 등록, Lot·유효기간 관리 어려움",
+    after: "입고 시 재고 자동 반영, 만료·부족 선제 대응",
   },
-  {
-    icon: Warehouse,
-    title: "재고·운영",
-    desc: "실시간 재고 현황, 안전재고 알림, 자동 재주문",
-    detail: "유통기한 · 보관조건 추적",
-  },
-];
-
-const OPS_CAPABILITIES = [
-  { icon: Users, label: "배정·인수인계", desc: "담당자 명확화, handoff 추적" },
-  { icon: Clock, label: "SLA 관리", desc: "초과 시 자동 에스컬레이션" },
-  { icon: Shield, label: "거버넌스", desc: "일일 검토 · 감사 · 개선 모드" },
 ];
 
 export function PlatformFlowSection() {
@@ -55,81 +43,53 @@ export function PlatformFlowSection() {
         {/* Section Header */}
         <div className="mb-10 md:mb-14">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
-            Operations Pipeline
+            Operational Value
           </p>
           <h2 className="text-lg md:text-2xl font-bold text-slate-100 tracking-tight mb-1">
-            검색에서 재고까지, 끊기지 않는 운영 흐름
+            각 단계에서 무엇이 달라지는가
           </h2>
           <p className="text-xs md:text-sm text-slate-400 max-w-xl">
-            각 단계의 상태·담당자·SLA가 하나의 콘솔에서 실시간으로 연결됩니다.
+            기존 방식의 병목을 LabAxis가 어떻게 해소하는지 단계별로 보여드립니다.
           </p>
         </div>
 
-        {/* Desktop: Timeline */}
-        <div className="hidden md:block">
-          <div className="relative">
-            {/* Connection line */}
-            <div className="absolute top-6 left-6 right-6 h-px bg-st" />
-
-            <div className="grid grid-cols-6 gap-0">
-              {FLOW_STAGES.map((stage, idx) => {
-                const Icon = stage.icon;
-                return (
-                  <div key={stage.title} className="relative flex flex-col items-center text-center px-2">
-                    {/* Node */}
-                    <div className="relative z-10 w-12 h-12 rounded-md border border-bs bg-el flex items-center justify-center mb-3">
-                      <Icon className="h-5 w-5 text-slate-300" strokeWidth={1.8} />
-                    </div>
-                    <span className="text-xs font-semibold text-slate-200 mb-0.5">{stage.title}</span>
-                    <span className="text-[10px] text-slate-400 leading-tight mb-1">{stage.desc}</span>
-                    <span className="text-[9px] text-slate-500 leading-tight">{stage.detail}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile: Dense list */}
-        <div className="md:hidden space-y-0 border border-bs rounded-md overflow-hidden">
-          {FLOW_STAGES.map((stage, idx) => {
-            const Icon = stage.icon;
+        {/* Value Cards */}
+        <div className="space-y-3 md:space-y-4">
+          {OPS_VALUES.map((item) => {
+            const Icon = item.icon;
             return (
-              <div key={stage.title} className="flex items-center gap-3 px-3 py-2.5 border-b border-bs last:border-b-0 bg-el">
-                <div className="flex-shrink-0 w-8 h-8 rounded-md border border-bs bg-st flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
+              <div
+                key={item.title}
+                className="bg-pn border border-bd rounded-lg p-4 md:p-5 hover:bg-el/40 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Icon className="h-5 w-5 text-slate-400" strokeWidth={1.8} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm md:text-base font-semibold text-slate-100 mb-2">
+                      {item.title}
+                    </h3>
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          <span className="text-slate-500 font-medium">기존</span>{" "}
+                          {item.before}
+                        </p>
+                      </div>
+                      <ArrowRight className="hidden md:block h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          <span className="text-blue-400 font-medium">LabAxis</span>{" "}
+                          {item.after}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-slate-100">{stage.title}</span>
-                  <p className="text-[11px] text-slate-400 leading-tight">{stage.desc}</p>
-                </div>
-                {idx < FLOW_STAGES.length - 1 && (
-                  <ChevronRight className="h-3 w-3 text-slate-500 flex-shrink-0" />
-                )}
               </div>
             );
           })}
-        </div>
-
-        {/* Ops Capabilities Strip */}
-        <div className="mt-10 md:mt-14 border border-bs rounded-md bg-el/50 px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
-            Operational Control
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {OPS_CAPABILITIES.map((cap) => {
-              const Icon = cap.icon;
-              return (
-                <div key={cap.label} className="flex items-center gap-2.5">
-                  <Icon className="h-4 w-4 text-slate-400 flex-shrink-0" strokeWidth={1.8} />
-                  <div>
-                    <span className="text-xs font-semibold text-slate-300">{cap.label}</span>
-                    <span className="text-[10px] text-slate-500 ml-1.5">{cap.desc}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </section>

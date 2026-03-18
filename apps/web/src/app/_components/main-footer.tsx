@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { Github, Mail, ExternalLink } from "lucide-react";
 
 function scrollToId(id: string) {
@@ -66,7 +65,8 @@ export function MainFooter() {
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼입니다.
+              바이오 시약·장비 검색, 견적, 구매, 재고 관리를
+              <br />하나로 연결한 운영 플랫폼입니다.
             </p>
             <div className="flex items-center gap-3 text-slate-400">
               {/* GitHub */}
