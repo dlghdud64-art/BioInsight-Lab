@@ -100,7 +100,7 @@ export function PlatformFlowSection() {
                   <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-slate-200">{stage.title}</span>
+                  <span className="text-sm font-semibold text-slate-100">{stage.title}</span>
                   <p className="text-[11px] text-slate-400 leading-tight">{stage.desc}</p>
                 </div>
                 {idx < FLOW_STAGES.length - 1 && (

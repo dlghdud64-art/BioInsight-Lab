@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -19,16 +15,6 @@ const PIPELINE_STEPS = [
 ];
 
 export function BioInsightHeroSection() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
   return (
     <section className="relative w-full pt-32 md:pt-40 pb-20 md:pb-28 bg-pn border-b border-bs">
       <div className="container px-4 md:px-6 mx-auto relative z-10">
@@ -49,15 +35,15 @@ export function BioInsightHeroSection() {
 
           {/* CTAs */}
           <div className="flex items-center justify-center gap-3 mb-10 md:mb-12">
-            <Link href="/dashboard">
-              <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
-                운영 콘솔 시작하기
-                <ArrowRight className="ml-1.5 h-4 w-4" />
+            <Link href="/test/search">
+              <Button className="h-12 px-10 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg">
+                시약·장비 검색 시작하기
+                <Search className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/support">
-              <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
-                데모 요청
+              <Button variant="ghost" className="h-12 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
+                도입 문의
               </Button>
             </Link>
           </div>
@@ -104,22 +90,6 @@ export function BioInsightHeroSection() {
           </div>
         </div>
 
-        {/* Compact Search Bar */}
-        <div className="max-w-md mx-auto mt-12 md:mt-14">
-          <form onSubmit={handleSearch} className="flex items-center h-10 border border-bs rounded-md bg-el px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
-            <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="시약명, CAS No., 제조사 검색"
-              className="flex-1 bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-400 outline-none"
-            />
-            <Button type="submit" variant="ghost" size="sm" className="h-7 px-3 text-xs text-slate-400 hover:text-slate-100">
-              검색
-            </Button>
-          </form>
-        </div>
       </div>
     </section>
   );

@@ -31,7 +31,7 @@ export function BioInsightSocialProofSection() {
   return (
     <section className="py-0 bg-el/80 border-y border-bs">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#2a2a2e]/60">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-bd/60">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
@@ -42,10 +42,10 @@ export function BioInsightSocialProofSection() {
                 <Icon className="h-5 w-5 text-blue-400 flex-shrink-0" strokeWidth={1.8} />
                 <div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-base md:text-lg font-bold text-blue-400 leading-none">
+                    <span className="text-base md:text-lg font-bold text-slate-100 leading-none">
                       {metric.value}
                     </span>
-                    <span className="text-xs font-medium text-slate-400 leading-none">
+                    <span className="text-xs font-medium text-slate-300 leading-none">
                       {metric.label}
                     </span>
                   </div>
