@@ -40,7 +40,7 @@ export function MainFooter() {
       title: "고객지원",
       links: [
         { label: "도입 문의", href: "/support", onClick: null },
-        { label: "이메일 문의", href: "mailto:contact@bioinsight.lab", onClick: null },
+        { label: "이메일 문의", href: "mailto:contact@labaxis.io", onClick: null },
       ],
     },
     {
@@ -81,7 +81,7 @@ export function MainFooter() {
               </a>
               {/* Mail */}
               <a
-                href="mailto:contact@bioinsight.lab"
+                href="mailto:contact@labaxis.io"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#363d4a] hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="이메일 문의"
               >
@@ -144,7 +144,7 @@ export function MainFooter() {
 
         {/* 하단 바 */}
         <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-[#2e3440] pt-4 text-center md:text-left text-[11px] text-slate-500">
-          <span>&copy; {year} BioInsight Lab. All rights reserved.</span>
+          <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
             <span className="text-slate-600">|</span>

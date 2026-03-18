@@ -93,7 +93,7 @@ export function ComparisonSection() {
                   : "text-blue-600 bg-blue-50 border border-blue-200 animate-pulse"
               }`}
             >
-              BioInsight
+              LabAxis
             </button>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function ComparisonSection() {
               </span>
               <span className="w-8" />
               <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                BioInsight 도입 후
+                LabAxis 도입 후
               </span>
             </div>
 

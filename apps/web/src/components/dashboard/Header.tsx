@@ -659,7 +659,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   청구 및 구독
                 </Link>
               </DropdownMenuItem>
-              <a href="mailto:support@bioinsight.com">
+              <a href="mailto:support@labaxis.io">
                 <DropdownMenuItem className="flex items-center gap-3 py-3 text-sm cursor-pointer">
                   <HelpCircle className="h-4 w-4" />
                   고객센터

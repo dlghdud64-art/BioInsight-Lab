@@ -58,7 +58,7 @@ describe("generateVendorInquiryDraft", () => {
     });
 
     expect(result.subject).toContain("Methanol ACS");
-    expect(result.body).toContain("BioInsight Lab");
+    expect(result.body).toContain("LabAxis");
     expect(result.vendorName).toBe("Fisher Scientific");
     expect(result.productName).toBe("Methanol ACS");
     expect(result.inquiryFields.length).toBeGreaterThan(0);

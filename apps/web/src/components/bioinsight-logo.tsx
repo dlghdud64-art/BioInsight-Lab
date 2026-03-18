@@ -43,21 +43,18 @@ export function BioInsightLogo({
       {/* 아이콘: 이미지 파일 사용 */}
       <Image
         src="/brand/Bio-Insight.png"
-        alt="BioInsight Lab"
+        alt="LabAxis"
         width={60}
         height={60}
         className={iconClass}
       />
 
-      {/* 텍스트: BioInsight Lab */}
+      {/* 텍스트: LabAxis */}
       {showText && (
         <div className="leading-tight">
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-0">
             <span className={cn(textClass, isDark ? "text-white" : "text-slate-100")}>
-              BioInsight
-            </span>
-            <span className={cn(textClass, isDark ? "text-teal-300" : "text-teal-300")}>
-              Lab
+              LabAxis
             </span>
           </div>
           {showSubtitle && (

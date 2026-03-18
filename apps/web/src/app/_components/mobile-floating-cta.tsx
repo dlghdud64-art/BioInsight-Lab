@@ -22,7 +22,7 @@ export function MobileFloatingCTA() {
           </Button>
         </Link>
         <a
-          href="mailto:contact@bioinsight.lab"
+          href="mailto:contact@labaxis.io"
           className="flex-1 max-w-[200px]"
         >
           <Button

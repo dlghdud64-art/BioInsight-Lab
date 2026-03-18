@@ -55,7 +55,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                문의사항이 있으시면 <a href="mailto:contact@bioinsight.lab" className="text-primary hover:underline">contact@bioinsight.lab</a>으로 연락주세요.
+                문의사항이 있으시면 <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a>으로 연락주세요.
               </p>
             </CardContent>
           </Card>

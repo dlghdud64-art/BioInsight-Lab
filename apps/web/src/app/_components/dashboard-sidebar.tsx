@@ -290,7 +290,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
           <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            BioInsight Lab
+            LabAxis
           </p>
           <nav className="space-y-1">
             {[

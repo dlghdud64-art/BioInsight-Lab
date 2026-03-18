@@ -93,7 +93,7 @@ export const ENTERPRISE_INFO = {
   tagline: "기관 도입",
   description: "보안·연동·대규모 운영이 필요한 기관용 플랜",
   priceDisplay: "별도 문의",
-  contactEmail: "sales@bioinsight.co.kr",
+  contactEmail: "sales@labaxis.io",
   features: [
     "Business 전체 기능",
     "ERP API 연동",
