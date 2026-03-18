@@ -82,13 +82,13 @@ div.quote-table td.no-column-cell {
 @layer base {
   :root {
     /* LabAxis Surface Hierarchy — dark-only */
-    --surface-shell: #0c0c0e;
-    --surface-page: #131316;
-    --surface-panel: #1a1a1e;
-    --surface-elevated: #222226;
-    --surface-strong: #2a2a2e;
-    --border-default: #2a2a2e;
-    --border-strong: #333338;
+    --surface-shell: #161619;
+    --surface-page: #1d1d22;
+    --surface-panel: #25252b;
+    --surface-elevated: #2d2d34;
+    --surface-strong: #36363e;
+    --border-default: #36363e;
+    --border-strong: #42424b;
 
     /* shadcn/ui semantic tokens (HSL) — neutral gray, no blue tint */
     --background: 0 0% 5%;
