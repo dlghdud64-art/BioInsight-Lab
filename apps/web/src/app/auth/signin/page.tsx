@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Users, Zap, Search, GitCompare, FileText, ShoppingCart, PackageCheck, Warehouse } from "lucide-react";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 const pipelineSteps = [
   { icon: Search, label: "검색" },
@@ -35,7 +34,7 @@ function SignInContent() {
         {/* 상단: 로고 */}
         <div className="pt-12 pl-12">
           <Link href="/" className="inline-block">
-            <BioInsightLogo variant="dark" size="md" />
+            <span className="text-2xl font-bold tracking-tight text-slate-100">LabAxis</span>
           </Link>
         </div>
 
@@ -82,8 +81,8 @@ function SignInContent() {
       <div className="w-full lg:w-[45%] flex flex-col min-h-screen bg-pg">
         {/* 모바일: 상단 로고 중앙 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
-          <Link href="/">
-            <BioInsightLogo variant="dark" compact />
+          <Link href="/" className="text-xl font-bold tracking-tight text-slate-100">
+            LabAxis
           </Link>
         </div>
 
@@ -153,14 +152,14 @@ function SignInContent() {
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-50 cursor-not-allowed"
+                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-60 cursor-not-allowed"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-50 cursor-not-allowed"
+                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-60 cursor-not-allowed"
                   style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-500 text-center">
