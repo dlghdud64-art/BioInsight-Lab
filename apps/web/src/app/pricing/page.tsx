@@ -220,7 +220,7 @@ export default function PricingPage() {
     return (
       <span key="monthly" className="animate-in slide-in-from-bottom-2 fade-in duration-300">
         {plan.price}
-        {plan.pricePeriod}
+        {plan.pricePeriod && <span className="text-[10px] md:text-sm font-normal text-slate-400">{plan.pricePeriod}</span>}
       </span>
     );
   };
