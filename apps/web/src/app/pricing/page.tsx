@@ -206,7 +206,7 @@ export default function PricingPage() {
           <span className="text-slate-500 line-through text-xs md:text-lg font-normal">{plan.price}</span>
           <span className="text-lg md:text-3xl font-bold text-slate-100">
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
-            <span className="text-[10px] md:text-sm font-normal text-slate-400">/월</span>
+            <span className="text-[10px] md:text-sm font-normal text-slate-400">/월(연간)</span>
           </span>
           <span className="inline-flex items-center rounded-md bg-green-500/10 px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold text-green-400 ring-1 ring-green-500/20">
             10% 할인
