@@ -14,6 +14,13 @@ const config: Config = {
         sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
       },
       colors: {
+        surface: {
+          shell: "var(--surface-shell)",
+          page: "var(--surface-page)",
+          panel: "var(--surface-panel)",
+          elevated: "var(--surface-elevated)",
+          strong: "var(--surface-strong)",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -74,32 +81,11 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
-        "motion-fade-switch": {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        "motion-soft-refresh": {
-          "0%": { opacity: "0.5" },
-          "100%": { opacity: "1" },
-        },
-        "motion-optimistic": {
-          "0%": { opacity: "1" },
-          "50%": { opacity: "0.6" },
-          "100%": { opacity: "1" },
-        },
-        "motion-rollback": {
-          "0%": { transform: "scale(0.98)", borderColor: "rgb(239,68,68)" },
-          "100%": { transform: "scale(1)" },
-        },
       },
       animation: {
         shake: "shake 0.5s ease-in-out infinite",
         marquee: "marquee 60s linear infinite",
         fadeIn: "fadeIn 0.5s ease-in-out forwards",
-        "motion-fade-switch": "motion-fade-switch 120ms ease-out",
-        "motion-soft-refresh": "motion-soft-refresh 180ms ease-out",
-        "motion-optimistic": "motion-optimistic 120ms ease-out",
-        "motion-rollback": "motion-rollback 200ms ease-out",
       },
     },
   },

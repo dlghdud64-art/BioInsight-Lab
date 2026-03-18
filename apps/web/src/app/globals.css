@@ -73,34 +73,43 @@ div.quote-table td.no-column-cell {
 }
 
 /* ============================================
-   LabAxis Design System (B2B SaaS)
+   LabAxis Design System (B2B SaaS) — Dark-only
+   - Surface hierarchy: shell → page → panel → elevated → strong
    - Radius: 0.5rem (모던, 과하지 않은 둥글기)
-   - Primary: Deep Blue (신뢰감)
-   - Surface: 흰색 유지, body만 옅은 회색으로 카드 대비
-   - Card: border + shadow-sm / Badge: 파스텔+도트 / Button: primary·outline
+   - Primary: Deep Blue (신뢰감, CTA/accent 전용)
+   - Card: border-default + shadow-sm
    ============================================ */
 @layer base {
   :root {
-    /* Surface: 카드·팝오버는 흰색 유지 (body는 아래에서 slate-50) */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* LabAxis Surface Hierarchy — dark-only */
+    --surface-shell: #0c0c0e;
+    --surface-page: #131316;
+    --surface-panel: #1a1a1e;
+    --surface-elevated: #222226;
+    --surface-strong: #2a2a2e;
+    --border-default: #2a2a2e;
+    --border-strong: #333338;
+
+    /* shadcn/ui semantic tokens (HSL) */
+    --background: 240 7% 4%;
+    --foreground: 210 40% 98%;
+    --card: 240 5% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 5% 11%;
+    --popover-foreground: 210 40% 98%;
     /* Primary: 딥 블루 (221.2 83.2% 53.3%) */
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
     --ring: 221.2 83.2% 53.3%;
     /* Radius: 통일된 둥글기 (0.5rem = 8px) */
     --radius: 0.5rem;
@@ -109,20 +118,6 @@ div.quote-table td.no-column-cell {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-  }
-
-  /* 다크모드: 시력 보호 색상 - slate-800(#1e293b) 이하 명도 통일 */
-  .dark {
-    --background: 222.2 47.4% 6%;
-    --foreground: 210 40% 98%;
-    --card: 215 28% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 215 28% 17%;
-    --popover-foreground: 210 40% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
   }
 }
 
@@ -139,10 +134,10 @@ div.quote-table td.no-column-cell {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
-    @apply bg-slate-50 text-slate-900 antialiased;
-  }
-  .dark body {
-    @apply bg-[#0b1120] text-slate-100;
+    background-color: var(--surface-shell);
+    color: #f1f5f9;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   * {
     font-family: inherit;
@@ -170,7 +165,7 @@ div.quote-table td.no-column-cell {
 /* 카드 레이아웃 고정 및 텍스트 유동성 */
 @layer components {
   .stat-card-fixed {
-    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md dark:bg-[#161d2f] dark:border-slate-800/50;
+    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md bg-surface-panel border-[--border-default];
   }
   .text-auto-scale {
     @apply truncate text-[clamp(0.875rem,3vw,1.5rem)] font-bold tracking-tighter;

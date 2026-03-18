@@ -78,7 +78,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen bg-[#09090b] font-sans text-slate-100 antialiased">
+      <body className="min-h-screen bg-surface-shell font-sans text-slate-100 antialiased">
         <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
