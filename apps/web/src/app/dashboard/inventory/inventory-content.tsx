@@ -123,15 +123,17 @@ function StatusBadge({ status }: { status: ItemStatus }) {
 }
 
 /* ── 빠른 작업 버튼 ── */
-function QuickActions({ inv, onSelect }: {
+function QuickActions({ inv, onSelect, onReceive, onLabel }: {
   inv: ProductInventory; onSelect: (inv: ProductInventory) => void;
+  onReceive?: (inv: ProductInventory) => void;
+  onLabel?: (inv: ProductInventory) => void;
 }) {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-0.5">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-200">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-200" onClick={() => onReceive?.(inv)}>
               <PackagePlus className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
@@ -139,7 +141,7 @@ function QuickActions({ inv, onSelect }: {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-200">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-200" onClick={() => onLabel?.(inv)}>
               <Printer className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
@@ -336,10 +338,21 @@ export function InventoryContent() {
     retry: 1,
   });
 
-  const items: ProductInventory[] = useMemo(
+  const DEMO_ITEMS: ProductInventory[] = [
+    { id: "demo-1", productId: "p1", currentQuantity: 3, unit: "EA", safetyStock: 10, minOrderQty: 5, location: "냉장고 A-2", expiryDate: new Date(Date.now() + 5 * 86400000).toISOString(), notes: null, lotNumber: "LOT-2024-001", storageCondition: "refrigerated", product: { id: "p1", name: "Fetal Bovine Serum (FBS)", brand: "Gibco", catalogNumber: "10270-106" } },
+    { id: "demo-2", productId: "p2", currentQuantity: 0, unit: "L", safetyStock: 2, minOrderQty: 1, location: "시약장 B-1", expiryDate: new Date(Date.now() + 90 * 86400000).toISOString(), notes: null, lotNumber: "LOT-2024-012", storageCondition: "room_temp", product: { id: "p2", name: "Ethanol 99.5%", brand: "Sigma-Aldrich", catalogNumber: "E7023" } },
+    { id: "demo-3", productId: "p3", currentQuantity: 25, unit: "EA", safetyStock: 5, minOrderQty: 10, location: null, expiryDate: null, notes: "Lot 추적 필요", lotNumber: null, storageCondition: null, product: { id: "p3", name: "DMEM High Glucose", brand: "Thermo Fisher", catalogNumber: "11965092" } },
+    { id: "demo-4", productId: "p4", currentQuantity: 8, unit: "EA", safetyStock: 10, minOrderQty: 5, location: "냉동고 C-1", expiryDate: new Date(Date.now() + 15 * 86400000).toISOString(), notes: null, lotNumber: "LOT-2024-045", storageCondition: "frozen", product: { id: "p4", name: "Trypsin-EDTA 0.25%", brand: "Gibco", catalogNumber: "25200-056" } },
+    { id: "demo-5", productId: "p5", currentQuantity: 50, unit: "ml", safetyStock: 20, minOrderQty: 10, location: "시약장 A-3", expiryDate: new Date(Date.now() + 180 * 86400000).toISOString(), notes: null, lotNumber: "LOT-2024-078", storageCondition: "room_temp", product: { id: "p5", name: "PBS 10X, pH 7.4", brand: "Gibco", catalogNumber: "70011-044" } },
+  ];
+
+  const rawItems: ProductInventory[] = useMemo(
     () => (Array.isArray(inventories) ? inventories : []),
     [inventories],
   );
+
+  // 실제 데이터가 없으면 데모 데이터 표시
+  const items = rawItems.length > 0 ? rawItems : DEMO_ITEMS;
 
   /* KPI 계산 */
   const lowCount = useMemo(() => items.filter(isLowStock).length, [items]);
@@ -388,15 +401,15 @@ export function InventoryContent() {
 
         {/* 데스크탑 액션 */}
         <div className="hidden md:flex items-center gap-2">
-          <Button size="sm" className="gap-1.5">
+          <Button size="sm" className="gap-1.5" onClick={() => router.push("/dashboard/inventory?action=add")}>
             <Plus className="h-3.5 w-3.5" />
             재고 등록
           </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 border-bd">
+          <Button size="sm" variant="outline" className="gap-1.5 border-bd" onClick={() => router.push("/dashboard/inventory?action=receive")}>
             <PackagePlus className="h-3.5 w-3.5" />
             입고 반영
           </Button>
-          <Button size="sm" variant="outline" className="gap-1.5 border-bd">
+          <Button size="sm" variant="outline" className="gap-1.5 border-bd" onClick={() => router.push("/dashboard/inventory?action=label")}>
             <Printer className="h-3.5 w-3.5" />
             라벨 인쇄
           </Button>
@@ -421,7 +434,7 @@ export function InventoryContent() {
 
         {/* 모바일 액션 */}
         <div className="flex md:hidden items-center gap-2">
-          <Button size="sm" className="gap-1.5">
+          <Button size="sm" className="gap-1.5" onClick={() => router.push("/dashboard/inventory?action=add")}>
             <Plus className="h-3.5 w-3.5" />
             등록
           </Button>
@@ -570,7 +583,7 @@ export function InventoryContent() {
                               <StatusBadge status={status} />
                             </TableCell>
                             <TableCell className="text-right py-2.5">
-                              <QuickActions inv={inv} onSelect={setSelectedItem} />
+                              <QuickActions inv={inv} onSelect={setSelectedItem} onReceive={(i) => router.push(`/dashboard/inventory?action=receive&id=${i.id}`)} onLabel={(i) => router.push(`/dashboard/inventory?action=label&id=${i.id}`)} />
                             </TableCell>
                           </TableRow>
                         );
