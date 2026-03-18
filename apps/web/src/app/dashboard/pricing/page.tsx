@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { Check, Minus, Building2, Users, User, Package, CreditCard, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

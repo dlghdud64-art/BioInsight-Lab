@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { WorkQueueConsole } from "@/components/dashboard/work-queue-console";
 
 export const metadata = {
