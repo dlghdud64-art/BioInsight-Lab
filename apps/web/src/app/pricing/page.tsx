@@ -26,6 +26,7 @@ type ComparisonItem =
       team: boolean | string;
       business: boolean | string;
       enterprise: boolean | string;
+      key?: boolean;
     };
 
 export default function PricingPage() {
@@ -138,38 +139,34 @@ export default function PricingPage() {
   ];
 
   const comparisonFeatures: ComparisonItem[] = [
-    { isCategoryHeader: true, label: "검색 및 비교" },
-    { feature: "기본 검색 및 비교", starter: true, team: true, business: true, enterprise: true },
-    { feature: "확장 검색 (제조사·CAS No.·프로토콜)", starter: false, team: true, business: true, enterprise: true },
+    { isCategoryHeader: true, label: "검색 / 비교" },
+    { feature: "통합 검색 · 기본 비교", starter: true, team: true, business: true, enterprise: true },
+    { feature: "확장 검색 (제조사 · CAS No. · 프로토콜)", starter: false, team: true, business: true, enterprise: true },
     { feature: "대체품 추천", starter: false, team: true, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "협업" },
-    { feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한" },
-    { feature: "팀원 공유 재고", starter: false, team: true, business: true, enterprise: true },
-    { feature: "후보 품목 공유", starter: false, team: true, business: true, enterprise: true },
-    { feature: "품목 등록 수", starter: "10개", team: "50개", business: "무제한", enterprise: "무제한" },
-    { isCategoryHeader: true, label: "요청 및 공유" },
+    { isCategoryHeader: true, label: "견적 / 구매 요청" },
+    { feature: "팀원 수", starter: "1명", team: "5명", business: "무제한", enterprise: "무제한", key: true },
+    { feature: "품목 등록 수", starter: "10개", team: "50개", business: "무제한", enterprise: "무제한", key: true },
     { feature: "기본 견적 요청", starter: true, team: true, business: true, enterprise: true },
-    { feature: "구매 요청 워크플로우", starter: false, team: true, business: true, enterprise: true },
-    { feature: "요청 공유 링크", starter: false, team: true, business: true, enterprise: true },
-    { feature: "엑셀 업로드", starter: false, team: true, business: true, enterprise: true },
-    { feature: "CSV 내보내기", starter: false, team: true, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "운영 및 통제", tier: "business" },
-    { feature: "전자결재 승인 라인", starter: false, team: false, business: true, enterprise: true },
+    { feature: "구매 요청 생성 · 공유", starter: false, team: true, business: true, enterprise: true },
+    { feature: "후보 품목 공유", starter: false, team: true, business: true, enterprise: true },
+    { feature: "엑셀 업로드 · CSV 내보내기", starter: false, team: true, business: true, enterprise: true },
+    { isCategoryHeader: true, label: "운영 / 재고", tier: "business" },
+    { feature: "전자결재 승인 라인", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
+    { feature: "역할 기반 권한 관리 (RBAC)", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
     { feature: "예산 통합 관리", starter: false, team: false, business: true, enterprise: true },
-    { feature: "재고 소진 알림", starter: false, team: false, business: true, enterprise: true },
+    { feature: "Lot 관리 · 재고 소진 알림", starter: false, team: false, business: true, enterprise: true },
     { feature: "관리자 운영 대시보드", starter: false, team: false, business: true, enterprise: true },
-    { feature: "팀원 권한 관리 (RBAC)", starter: false, team: false, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "문서 및 이력 관리", tier: "business" },
-    { feature: "Audit Trail", starter: false, team: false, business: true, enterprise: true },
-    { feature: "MSDS 자동 연동", starter: false, team: false, business: true, enterprise: true },
-    { feature: "Lot 관리", starter: false, team: false, business: true, enterprise: true },
-    { feature: "구매 이력 추적", starter: false, team: false, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "보안 / 연동", tier: "enterprise" },
+    { isCategoryHeader: true, label: "승인 / 감사 / 문서", tier: "business" },
+    { feature: "Audit Trail", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
+    { feature: "MSDS 자동 연동", starter: "—", team: "—", business: "포함", enterprise: "포함", key: true },
+    { feature: "구매 이력 · 문서 추적", starter: false, team: false, business: true, enterprise: true },
+    { isCategoryHeader: true, label: "조직 운영 / 보안 / 연동", tier: "enterprise" },
     { feature: "데이터 암호화 (저장/전송)", starter: true, team: true, business: true, enterprise: true },
-    { feature: "ERP API 연동", starter: false, team: false, business: false, enterprise: true },
+    { feature: "ERP API 연동", starter: "—", team: "—", business: "—", enterprise: "포함", key: true },
     { feature: "SSO 지원", starter: false, team: false, business: false, enterprise: true },
     { feature: "무제한 데이터 저장", starter: false, team: false, business: false, enterprise: true },
     { feature: "전담 매니저 및 SLA", starter: false, team: false, business: false, enterprise: true },
+    { feature: "조직 맞춤 구축 지원", starter: false, team: false, business: false, enterprise: true },
   ];
 
   const getCheckoutUrl = useCallback(
@@ -437,9 +434,13 @@ export default function PricingPage() {
                   <h2 className="text-base md:text-3xl font-bold text-slate-100 mb-1 md:mb-2">
                     플랜별 기능 비교
                   </h2>
-                  <p className="text-[11px] md:text-sm text-slate-500">
-                    Team은 협업 · Business부터 운영 통제
-                  </p>
+
+                  <div className="flex items-center justify-center gap-4 md:gap-6 mt-3 flex-wrap">
+                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Starter</span> 개인 시작</span>
+                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Team</span> 협업 시작</span>
+                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-blue-400 font-semibold">Business</span> 조직 운영 표준</span>
+                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Enterprise</span> 보안/연동/대규모</span>
+                  </div>
                 </div>
 
                 {/* ── 모바일 테이블 ── */}
@@ -534,12 +535,13 @@ export default function PricingPage() {
                                 </TableRow>
                               );
                             }
-                            const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
+                            const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string; key?: boolean };
+                            const isKey = dataItem.key;
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className={cn("text-sm font-medium", value === "—" ? "text-slate-600" : "text-slate-200")}>{value}</span>;
                             return (
-                              <TableRow key={index} className="hover:bg-el/40 transition-colors border-b border-bd/50">
-                                <TableCell className="py-2.5 pl-5 text-sm text-slate-300 font-medium">{dataItem.feature}</TableCell>
+                              <TableRow key={index} className={cn("hover:bg-el/40 transition-colors border-b border-bd/50", isKey && "border-l-2 border-l-blue-500/50")}>
+                                <TableCell className={cn("py-2.5 pl-5 text-sm font-medium", isKey ? "text-slate-100" : "text-slate-300")}>{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
                                 <TableCell className="text-center py-2.5 bg-blue-500/5">{renderCell(dataItem.business)}</TableCell>
