@@ -23,27 +23,28 @@ export function BioInsightHeroSection() {
           <p className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-6 md:mb-8">
             Biotech Procurement Operations Platform
           </p>
-          <h1 className="text-2xl sm:text-4xl md:text-[3.25rem] font-bold tracking-tight text-slate-100 leading-[1.3] md:leading-[1.35] break-keep mb-6 md:mb-8 max-w-2xl mx-auto">
-            구매 요청부터 입고까지,{" "}
-            <br className="hidden sm:block" />
-            <span className="text-blue-400">운영 상태를 한눈에</span>
+          <h1 className="text-[1.625rem] sm:text-4xl md:text-[3.25rem] font-bold tracking-tight text-slate-100 leading-[1.4] md:leading-[1.4] break-keep mb-8 md:mb-10 max-w-[680px] mx-auto">
+            구매 요청부터 입고·재고까지,
+            <br />
+            연구 구매 운영을 <span className="text-blue-400">한곳에서</span> 연결합니다
           </h1>
-          <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed break-keep mb-8 md:mb-10">
-            비교 → 견적 → 발주 → 입고 → 재고까지.
-            연구실 구매 운영의 전 과정을 하나의 콘솔에서 추적하고 통제합니다.
+          <p className="text-sm md:text-lg text-slate-400 max-w-[520px] mx-auto leading-[1.7] break-keep mb-10 md:mb-12">
+            시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지
+            <br className="hidden sm:block" />
+            흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-3 mb-10 md:mb-12">
+          <div className="flex items-center justify-center gap-4 mb-12 md:mb-16">
             <Link href="/test/search">
-              <Button className="h-12 px-10 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg">
+              <Button className="h-12 px-10 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-lg shadow-sm shadow-blue-600/20">
                 시약·장비 검색 시작하기
                 <Search className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/support">
-              <Button variant="ghost" className="h-12 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
-                도입 문의
+              <Button variant="outline" className="h-12 px-8 border-bd text-slate-300 hover:text-slate-100 hover:bg-el font-medium text-sm rounded-lg">
+                도입 문의하기
               </Button>
             </Link>
           </div>
