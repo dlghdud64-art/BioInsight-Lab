@@ -39,6 +39,16 @@ const CATEGORIES: { value: Category; label: string }[] = [
   { value: "system", label: "시스템" },
 ];
 
+/* ── 카테고리별 tint ── */
+const CATEGORY_TINT: Record<Exclude<Category, "all">, { read: string; unread: string }> = {
+  inventory: { read: "text-slate-500", unread: "text-teal-400" },
+  quote:     { read: "text-slate-500", unread: "text-blue-400" },
+  org:       { read: "text-slate-500", unread: "text-violet-400" },
+  safety:    { read: "text-slate-500", unread: "text-amber-400" },
+  billing:   { read: "text-slate-500", unread: "text-blue-400" },
+  system:    { read: "text-slate-500", unread: "text-slate-300" },
+};
+
 /* ── 알림 타입 ── */
 
 interface Notification {
@@ -322,7 +332,7 @@ export default function NotificationsPage() {
                 </span>
 
                 {/* 아이콘 — bare, 배경 타일 없음 */}
-                <Icon className="h-4 w-4 mt-0.5 flex-shrink-0 text-slate-400" />
+                <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${n.read ? CATEGORY_TINT[n.category].read : CATEGORY_TINT[n.category].unread}`} />
 
                 {/* 텍스트 */}
                 <div className="flex-1 min-w-0">

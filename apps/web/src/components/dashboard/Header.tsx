@@ -53,18 +53,18 @@ interface Notification {
   time: string;
 }
 
-/** 카테고리별 아이콘 매핑 */
+/** 카테고리별 아이콘 + tint 매핑 */
 const CATEGORY_CONFIG: Record<
   NotificationCategory,
-  { icon: React.ElementType }
+  { icon: React.ElementType; tint: string; unreadTint: string }
 > = {
-  stock_alert:       { icon: AlertTriangle },
-  quote_arrived:     { icon: FileText },
-  delivery_complete: { icon: Truck },
-  approval_pending:  { icon: ClipboardCheck },
-  expiry_warning:    { icon: Clock },
-  safety_alert:      { icon: ShieldAlert },
-  system:            { icon: Bell },
+  stock_alert:       { icon: AlertTriangle, tint: "text-slate-500", unreadTint: "text-teal-400" },
+  quote_arrived:     { icon: FileText,      tint: "text-slate-500", unreadTint: "text-blue-400" },
+  delivery_complete: { icon: Truck,         tint: "text-slate-500", unreadTint: "text-blue-400" },
+  approval_pending:  { icon: ClipboardCheck,tint: "text-slate-500", unreadTint: "text-blue-400" },
+  expiry_warning:    { icon: Clock,         tint: "text-slate-500", unreadTint: "text-teal-400" },
+  safety_alert:      { icon: ShieldAlert,   tint: "text-slate-500", unreadTint: "text-amber-400" },
+  system:            { icon: Bell,          tint: "text-slate-500", unreadTint: "text-slate-300" },
 };
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
@@ -198,10 +198,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     router.push(notification.href);
   };
 
-  /** 알림 카테고리 아이콘 (bare, wrapper 없음) */
-  const renderCategoryIcon = (category: NotificationCategory) => {
-    const Icon = CATEGORY_CONFIG[category].icon;
-    return <Icon className="h-4 w-4 text-slate-400 flex-shrink-0" />;
+  /** 알림 카테고리 아이콘 (bare, unread시 tint 적용) */
+  const renderCategoryIcon = (category: NotificationCategory, isRead: boolean) => {
+    const config = CATEGORY_CONFIG[category];
+    const Icon = config.icon;
+    const color = isRead ? config.tint : config.unreadTint;
+    return <Icon className={`h-4 w-4 flex-shrink-0 ${color}`} />;
   };
 
   return (
@@ -324,10 +326,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                         ) : (
                           <span className="w-1.5 h-1.5 flex-shrink-0" />
                         )}
-                        {renderCategoryIcon(n.category)}
+                        {renderCategoryIcon(n.category, n.read)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-200 leading-snug line-clamp-2">{n.text}</p>
+                        <p className={`text-xs leading-snug line-clamp-2 ${n.read ? "text-slate-400" : "text-slate-200"}`}>{n.text}</p>
                         <span className="text-[11px] text-slate-500 mt-0.5 block">{n.time}</span>
                       </div>
                     </button>
