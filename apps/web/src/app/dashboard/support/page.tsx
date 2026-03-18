@@ -203,22 +203,20 @@ export default function DashboardSupportPage() {
               <Label className="text-xs font-semibold text-slate-300">
                 업무 영향도 <span className="text-red-500">*</span>
               </Label>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {IMPACT_OPTIONS.map((opt) => (
-                  <label
+                  <button
                     key={opt.value}
-                    className="flex items-center gap-2 cursor-pointer"
+                    type="button"
+                    onClick={() => setImpact(opt.value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      impact === opt.value
+                        ? `${opt.colorClass} border-current bg-current/5`
+                        : "text-slate-400 border-bd bg-el hover:bg-st"
+                    }`}
                   >
-                    <input
-                      type="radio"
-                      name="impact"
-                      value={opt.value}
-                      checked={impact === opt.value}
-                      onChange={(e) => setImpact(e.target.value)}
-                      className="accent-blue-500"
-                    />
-                    <span className={`text-xs font-medium ${opt.colorClass}`}>{opt.label}</span>
-                  </label>
+                    {opt.label}
+                  </button>
                 ))}
               </div>
             </div>

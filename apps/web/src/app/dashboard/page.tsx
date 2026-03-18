@@ -256,7 +256,7 @@ export default function DashboardPage() {
   // -- KPI 판단 카드 렌더 (공통) --
   const renderKpiCard = (config: {
     href: string; icon: React.ReactNode; label: string; value: React.ReactNode;
-    insight: string; risk: string; className?: string;
+    insight: string; action?: string; risk: string; className?: string;
   }) => (
     <Link href={config.href}>
       <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
@@ -267,6 +267,9 @@ export default function DashboardPage() {
           </div>
           <div className="text-2xl font-bold text-slate-200 leading-tight">{config.value}</div>
           <p className="text-[10px] md:text-[11px] text-slate-400 leading-tight truncate">{config.insight}</p>
+          {config.action && (
+            <p className="text-[10px] md:text-[11px] text-blue-400 font-medium mt-0.5">{config.action} →</p>
+          )}
         </CardContent>
       </Card>
     </Link>
@@ -459,6 +462,7 @@ export default function DashboardPage() {
             label: "등록 품목",
             value: stats.totalInventory.toLocaleString("ko-KR"),
             insight: getInventoryInsight(),
+            action: stats.totalInventory === 0 ? "품목 등록 시작" : undefined,
             risk: inventoryRisk,
           })}
           {renderKpiCard({
@@ -467,6 +471,7 @@ export default function DashboardPage() {
             label: "재고 부족",
             value: stats.lowStockAlerts,
             insight: getStockInsight(),
+            action: stats.lowStockAlerts > 0 ? "부족 품목 확인" : undefined,
             risk: stockRisk,
           })}
           {renderKpiCard({
@@ -475,6 +480,7 @@ export default function DashboardPage() {
             label: "이번 달 지출",
             value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
             insight: getSpendingInsight(),
+            action: stats.monthlySpending === 0 ? "첫 구매 등록" : undefined,
             risk: spendingRisk,
           })}
           {renderKpiCard({
@@ -483,6 +489,7 @@ export default function DashboardPage() {
             label: "진행 중 견적",
             value: stats.activeQuotes,
             insight: getQuoteInsight(),
+            action: stats.activeQuotes === 0 ? "견적 요청 시작" : stats.respondedQuotes > 0 ? "응답 검토" : undefined,
             risk: quoteRisk,
           })}
         </div>
