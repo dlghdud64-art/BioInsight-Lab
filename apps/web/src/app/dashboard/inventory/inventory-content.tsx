@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+// Dialog kept static — radix portal needed for SSR hydration
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -24,12 +25,13 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InventorySearch } from "@/components/inventory/InventorySearch";
+const InventorySearch = dynamic(() => import("@/components/inventory/InventorySearch").then(m => m.InventorySearch), { ssr: false });
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { useQRScanner } from "@/contexts/QRScannerContext";
-import { DatePicker } from "@/components/ui/date-picker";
+const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+// Sheet is kept static as it wraps children — radix portal
 import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
