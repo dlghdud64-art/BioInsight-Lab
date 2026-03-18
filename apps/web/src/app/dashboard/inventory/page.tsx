@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -39,7 +37,7 @@ import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-reac
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import { InventoryAiAssistantPanel } from "@/components/ai/inventory-ai-assistant-panel";
-import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
+const OpsExecutionContext = lazy(() => import("@/components/ops/ops-execution-context").then(m => ({ default: m.OpsExecutionContext })));
 const PriorityActionQueue = lazy(() => import("@/components/inventory/priority-action-queue").then(m => ({ default: m.PriorityActionQueue })));
 const InventoryContextPanel = lazy(() => import("@/components/inventory/inventory-context-panel").then(m => ({ default: m.InventoryContextPanel })));
 const StorageLocationView = lazy(() => import("@/components/inventory/storage-location-view").then(m => ({ default: m.StorageLocationView })));
