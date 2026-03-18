@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, AlertTriangle, Plus, Search } from "lucide-react";
 import Link from "next/link";
+// bisect step 2: radix heavy imports
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export function InventoryContent() {
   const { data: session } = useSession();
@@ -150,7 +157,7 @@ export function InventoryContent() {
       )}
 
       {/* Bisect marker */}
-      <p className="text-[10px] text-slate-600 text-center">bisect: minimal shell + fetch + list (no radix heavy components)</p>
+      <p className="text-[10px] text-slate-600 text-center">bisect step 2: + Tabs/Table/Dialog/Select/DropdownMenu/Sheet (radix imports only, not rendered)</p>
     </div>
   );
 }
