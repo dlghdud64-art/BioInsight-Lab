@@ -15,13 +15,13 @@ const config: Config = {
       },
       colors: {
         // ── 전역 surface hierarchy (dark-only, 직접 hex) ──
-        sh: "#161619",       // shell — app 최외곽
-        pg: "#1d1d22",       // page — work area
-        pn: "#25252b",       // panel — card/section
-        el: "#2d2d34",       // elevated — input/search/empty
-        st: "#36363e",       // strong — hover/active surface
-        bd: "#36363e",       // border default
-        bs: "#42424b",       // border strong
+        sh: "#1c1c21",       // shell — app 최외곽
+        pg: "#232329",       // page — work area
+        pn: "#2b2b32",       // panel — card/section
+        el: "#34343c",       // elevated — input/search/empty
+        st: "#3d3d46",       // strong — hover/active surface
+        bd: "#3d3d46",       // border default
+        bs: "#4a4a54",       // border strong
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

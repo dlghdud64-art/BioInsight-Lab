@@ -82,34 +82,34 @@ div.quote-table td.no-column-cell {
 @layer base {
   :root {
     /* LabAxis Surface Hierarchy — dark-only */
-    --surface-shell: #161619;
-    --surface-page: #1d1d22;
-    --surface-panel: #25252b;
-    --surface-elevated: #2d2d34;
-    --surface-strong: #36363e;
-    --border-default: #36363e;
-    --border-strong: #42424b;
+    --surface-shell: #1c1c21;
+    --surface-page: #232329;
+    --surface-panel: #2b2b32;
+    --surface-elevated: #34343c;
+    --surface-strong: #3d3d46;
+    --border-default: #3d3d46;
+    --border-strong: #4a4a54;
 
-    /* shadcn/ui semantic tokens (HSL) — neutral gray, no blue tint */
-    --background: 0 0% 5%;
+    /* shadcn/ui semantic tokens (HSL) — cool gray, no blue tint */
+    --background: 240 6% 11%;
     --foreground: 0 0% 95%;
-    --card: 0 0% 10%;
+    --card: 240 5% 16%;
     --card-foreground: 0 0% 95%;
-    --popover: 0 0% 8%;
+    --popover: 240 5% 14%;
     --popover-foreground: 0 0% 95%;
     /* Primary: blue accent */
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 14%;
+    --secondary: 240 4% 20%;
     --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 0 0% 14%;
+    --muted: 240 4% 20%;
+    --muted-foreground: 240 3% 58%;
+    --accent: 240 4% 20%;
     --accent-foreground: 0 0% 95%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 16%;
-    --input: 0 0% 14%;
+    --border: 240 4% 24%;
+    --input: 240 4% 20%;
     --ring: 221.2 83.2% 53.3%;
     /* Radius: 통일된 둥글기 (0.5rem = 8px) */
     --radius: 0.5rem;
