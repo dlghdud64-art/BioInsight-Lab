@@ -82,29 +82,29 @@ div.quote-table td.no-column-cell {
 @layer base {
   :root {
     /* LabAxis Surface Hierarchy — dark-only */
-    --surface-shell: #24242b;
-    --surface-page: #2b2b33;
-    --surface-panel: #33333c;
-    --surface-elevated: #3c3c46;
-    --surface-strong: #464650;
-    --border-default: #464650;
-    --border-strong: #53535e;
+    --surface-shell: #242628;
+    --surface-page: #2b2d30;
+    --surface-panel: #333538;
+    --surface-elevated: #3c3e42;
+    --surface-strong: #46484c;
+    --border-default: #46484c;
+    --border-strong: #535559;
 
-    /* shadcn/ui semantic tokens (HSL) — cool gray, no blue tint */
-    --background: 240 6% 11%;
-    --foreground: 0 0% 95%;
-    --card: 240 5% 16%;
-    --card-foreground: 0 0% 95%;
-    --popover: 240 5% 14%;
-    --popover-foreground: 0 0% 95%;
-    /* Primary: blue accent */
-    --primary: 221.2 83.2% 53.3%;
+    /* shadcn/ui semantic tokens (HSL) — neutral graphite, minimal tint */
+    --background: 220 3% 14%;
+    --foreground: 0 0% 93%;
+    --card: 220 3% 19%;
+    --card-foreground: 0 0% 93%;
+    --popover: 220 3% 16%;
+    --popover-foreground: 0 0% 93%;
+    /* Primary: muted blue accent (채도 낮춤) */
+    --primary: 221 70% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 20%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 240 4% 20%;
-    --muted-foreground: 240 3% 58%;
-    --accent: 240 4% 20%;
+    --secondary: 220 2% 22%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 220 2% 22%;
+    --muted-foreground: 220 2% 55%;
+    --accent: 220 2% 22%;
     --accent-foreground: 0 0% 95%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
