@@ -344,9 +344,7 @@ export default function PricingPage() {
                           <span className="text-xl md:text-3xl font-bold text-slate-100 text-center">
                             {renderPrice(plan)}
                           </span>
-                          {plan.pricePeriod && !isAnnual && (
-                            <span className="text-xs md:text-sm text-slate-500">{plan.pricePeriod}</span>
-                          )}
+                          {/* pricePeriod는 renderPrice에서 이미 포함 */}
                         </div>
 
                         <p className="md:hidden text-[10px] font-medium text-blue-400/80">{plan.mobileHook}</p>
