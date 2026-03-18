@@ -34,10 +34,10 @@ export default function PricingPage() {
       {/* 3단 요금제 카드 */}
       <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
         {/* Starter */}
-        <Card className="border-slate-200 dark:border-[#2a2a2e] flex flex-col">
+        <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-slate-100 dark:bg-[#222226] rounded-full flex items-center justify-center mb-4">
-              <User className="text-slate-600 dark:text-slate-400 w-6 h-6" />
+            <div className="mx-auto w-12 h-12 bg-slate-100 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+              <User className="text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">스타터 (Starter)</CardTitle>
             <CardDescription className="mt-2">초기 랩실 및 개인 연구원</CardDescription>
@@ -46,7 +46,7 @@ export default function PricingPage() {
             </div>
           </CardHeader>
           <CardContent className="flex-1">
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3 text-sm text-slate-400">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                 개인 전용 (팀원 초대 불가)
@@ -73,37 +73,37 @@ export default function PricingPage() {
         </Card>
 
         {/* Pro (Best Choice) */}
-        <Card className="border-blue-600 dark:border-blue-500 shadow-lg relative flex flex-col transform md:-translate-y-4">
+        <Card className="border-blue-600  border-blue-500 shadow-lg relative flex flex-col transform md:-translate-y-4">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide">
             BEST CHOICE
           </div>
           <CardHeader className="text-center pb-4 pt-8">
-            <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-4">
-              <Users className="text-blue-600 dark:text-blue-400 w-6 h-6" />
+            <div className="mx-auto w-12 h-12 bg-blue-100  bg-blue-900/50 rounded-full flex items-center justify-center mb-4">
+              <Users className="text-blue-600 text-blue-400 w-6 h-6" />
             </div>
-            <CardTitle className="text-2xl text-blue-900 dark:text-blue-100">프로 (Pro)</CardTitle>
+            <CardTitle className="text-2xl text-blue-900  text-blue-100">프로 (Pro)</CardTitle>
             <CardDescription className="mt-2">체계적인 관리가 필요한 대학/벤처</CardDescription>
             <div className="mt-4">
               <span className="text-4xl font-bold">₩99,000</span>
-              <span className="text-slate-500 dark:text-slate-400"> / 월</span>
+              <span className="text-slate-400"> / 월</span>
             </div>
           </CardHeader>
           <CardContent className="flex-1">
-            <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300 font-medium">
+            <ul className="space-y-3 text-sm text-slate-300 font-medium">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <Check className="w-4 h-4 text-blue-600 text-blue-400 shrink-0" />
                 팀원 및 재고 무제한
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <Check className="w-4 h-4 text-blue-600 text-blue-400 shrink-0" />
                 Lot / 유효기한 개별 추적
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <Check className="w-4 h-4 text-blue-600 text-blue-400 shrink-0" />
                 MSDS 및 고위험 물질 관리
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <Check className="w-4 h-4 text-blue-600 text-blue-400 shrink-0" />
                 예산 설정 및 지출 분석 대시보드
               </li>
             </ul>
@@ -116,10 +116,10 @@ export default function PricingPage() {
         </Card>
 
         {/* Enterprise */}
-        <Card className="border-slate-200 dark:border-[#2a2a2e] flex flex-col">
+        <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-slate-100 dark:bg-[#222226] rounded-full flex items-center justify-center mb-4">
-              <Building2 className="text-slate-600 dark:text-slate-400 w-6 h-6" />
+            <div className="mx-auto w-12 h-12 bg-slate-100 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+              <Building2 className="text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">엔터프라이즈</CardTitle>
             <CardDescription className="mt-2">기업 연구소 및 대형 R&D 센터</CardDescription>
@@ -128,12 +128,12 @@ export default function PricingPage() {
             </div>
           </CardHeader>
           <CardContent className="flex-1">
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <ul className="space-y-3 text-sm text-slate-400">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                 Pro 기능 전체 포함
               </li>
-              <li className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100">
+              <li className="flex items-center gap-2 font-bold text-slate-100">
                 <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                 단일 세금계산서 (통합 정산)
               </li>
@@ -152,7 +152,7 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full bg-slate-50 dark:bg-[#1a1a1e]/50">
+            <Button variant="outline" className="w-full bg-slate-50 bg-[#1a1a1e]/50">
               영업팀과 상담하기
             </Button>
           </CardFooter>
@@ -162,13 +162,13 @@ export default function PricingPage() {
       {/* 상세 기능 비교표 */}
       <div className="mt-16 max-w-5xl mx-auto">
         <h3 className="text-2xl font-bold text-center mb-8">상세 기능 비교</h3>
-        <div className="border border-slate-200 dark:border-[#333338] rounded-lg bg-white dark:bg-[#09090b] overflow-hidden">
+        <div className="border border-slate-200 border-[#333338] rounded-lg bg-white bg-[#09090b] overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50 dark:bg-[#1a1a1e]/50">
+            <TableHeader className="bg-slate-50 bg-[#1a1a1e]/50">
               <TableRow>
                 <TableHead className="w-[30%]">기능</TableHead>
                 <TableHead className="text-center">Starter</TableHead>
-                <TableHead className="text-center bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-bold">
+                <TableHead className="text-center bg-blue-50/50 bg-blue-950/30 text-blue-700  text-blue-300 font-bold">
                   Pro
                 </TableHead>
                 <TableHead className="text-center">Enterprise</TableHead>
@@ -176,8 +176,8 @@ export default function PricingPage() {
             </TableHeader>
             <TableBody>
               {/* 카테고리 1: 재고 관리 */}
-              <TableRow className="bg-slate-50/50 dark:bg-[#1a1a1e]/30">
-                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
+              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <Package className="h-3.5 w-3.5 text-slate-500" />
                     재고 관리
@@ -185,40 +185,40 @@ export default function PricingPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">팀원 수</TableCell>
-                <TableCell className="text-center text-slate-500 dark:text-slate-400">1명</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
+                <TableCell className="font-medium text-slate-300">팀원 수</TableCell>
+                <TableCell className="text-center text-slate-400">1명</TableCell>
+                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
                   무제한
                 </TableCell>
-                <TableCell className="text-center text-slate-600 dark:text-slate-300 font-medium">무제한</TableCell>
+                <TableCell className="text-center text-slate-300 font-medium">무제한</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">재고 등록 한도</TableCell>
-                <TableCell className="text-center text-slate-500 dark:text-slate-400">최대 100개</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
+                <TableCell className="font-medium text-slate-300">재고 등록 한도</TableCell>
+                <TableCell className="text-center text-slate-400">최대 100개</TableCell>
+                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
                   무제한
                 </TableCell>
-                <TableCell className="text-center text-slate-600 dark:text-slate-300 font-medium">무제한</TableCell>
+                <TableCell className="text-center text-slate-300 font-medium">무제한</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">Lot 및 유효기한 개별 관리</TableCell>
+                <TableCell className="font-medium text-slate-300">Lot 및 유효기한 개별 관리</TableCell>
                 <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Check className="w-4 h-4 mx-auto text-blue-600 dark:text-blue-400" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">MSDS / 안전 관리</TableCell>
+                <TableCell className="font-medium text-slate-300">MSDS / 안전 관리</TableCell>
                 <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Check className="w-4 h-4 mx-auto text-blue-600 dark:text-blue-400" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
@@ -226,8 +226,8 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 2: 구매 및 정산 */}
-              <TableRow className="bg-slate-50/50 dark:bg-[#1a1a1e]/30">
-                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
+              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <CreditCard className="h-3.5 w-3.5 text-slate-500" />
                     구매 및 정산
@@ -235,36 +235,36 @@ export default function PricingPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">최저가 견적 요청</TableCell>
+                <TableCell className="font-medium text-slate-300">최저가 견적 요청</TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Check className="w-4 h-4 mx-auto text-blue-600 dark:text-blue-400" />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Check className="w-4 h-4 mx-auto text-emerald-500" />
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">단일 세금계산서 (통합 정산)</TableCell>
-                <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
-                </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">커스텀 결재선 (Approval)</TableCell>
+                <TableCell className="font-medium text-slate-300">단일 세금계산서 (통합 정산)</TableCell>
                 <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Check className="w-4 h-4 mx-auto text-emerald-500" />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium text-slate-300">커스텀 결재선 (Approval)</TableCell>
+                <TableCell className="text-center">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
+                </TableCell>
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
@@ -272,8 +272,8 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 3: 분석 및 권한 */}
-              <TableRow className="bg-slate-50/50 dark:bg-[#1a1a1e]/30">
-                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
+              <TableRow className="bg-slate-50/50 bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <BarChart3 className="h-3.5 w-3.5 text-slate-500" />
                     분석 및 권한
@@ -281,36 +281,36 @@ export default function PricingPage() {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">예산 설정 및 팀원별 지출 분석</TableCell>
+                <TableCell className="font-medium text-slate-300">예산 설정 및 팀원별 지출 분석</TableCell>
                 <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Check className="w-4 h-4 mx-auto text-blue-600 dark:text-blue-400" />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Check className="w-4 h-4 mx-auto text-emerald-500" />
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">ERP / 구매 시스템 연동</TableCell>
-                <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
-                </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium text-slate-700 dark:text-slate-300">전담 매니저</TableCell>
+                <TableCell className="font-medium text-slate-300">ERP / 구매 시스템 연동</TableCell>
                 <TableCell className="text-center">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20 dark:bg-blue-950/20">
-                  <Minus className="w-4 h-4 mx-auto text-slate-300 dark:text-slate-600" />
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Check className="w-4 h-4 mx-auto text-emerald-500" />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium text-slate-300">전담 매니저</TableCell>
+                <TableCell className="text-center">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
+                </TableCell>
+                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                  <Minus className="w-4 h-4 mx-auto text-slate-300  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />

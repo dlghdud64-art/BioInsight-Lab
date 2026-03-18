@@ -111,7 +111,7 @@ export function FeaturesShowcaseSection() {
                     <p className="text-xs text-gray-500 mb-2">순도 99.9%</p>
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-base font-bold text-gray-900">₩45,000</span>
-                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
+                      <Badge className="bg-blue-100 text-blue-700  bg-blue-900/40  text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
                         <Tag className="h-2.5 w-2.5" />
                         최저가
                       </Badge>

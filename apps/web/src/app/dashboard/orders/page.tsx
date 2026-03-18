@@ -258,7 +258,7 @@ function OrderHistoryPageContent() {
             <TabsTrigger value="pending">견적 대기</TabsTrigger>
             <TabsTrigger
               value="quoted"
-              className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-600 dark:text-slate-300"
+              className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50  data-[state=active]:bg-blue-950/30 text-slate-300"
             >
               <Bell className="mr-2 h-4 w-4 text-slate-500" />
               견적 도착
@@ -333,7 +333,7 @@ function OrderHistoryPageContent() {
 
       {/* 운영 실행 현황 (deep-link로 진입 시) */}
       {entityIdParam && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white dark:bg-[#1a1a1e] shadow-lg p-4">
+        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-white bg-[#1a1a1e] shadow-lg p-4">
           <OpsExecutionContext
             entityType="ORDER"
             entityId={entityIdParam}

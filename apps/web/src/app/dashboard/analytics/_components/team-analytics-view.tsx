@@ -82,13 +82,13 @@ const TEAM_DATA: TeamSpendingData[] = [
 function getStatusStyle(status: TeamSpendingData["status"]) {
   switch (status) {
     case "안정":
-      return { bg: "bg-emerald-50 dark:bg-emerald-950/20", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-900/40" };
+      return { bg: "bg-emerald-50  bg-emerald-950/20", text: "text-emerald-700 text-emerald-400", border: "border-emerald-200  border-emerald-900/40" };
     case "주의":
-      return { bg: "bg-amber-50 dark:bg-amber-950/20", text: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/40" };
+      return { bg: "bg-amber-50  bg-amber-950/20", text: "text-amber-700 text-amber-400", border: "border-amber-200  border-amber-900/40" };
     case "초과 위험":
-      return { bg: "bg-red-50 dark:bg-red-950/20", text: "text-red-700 dark:text-red-400", border: "border-red-200 dark:border-red-900/40" };
+      return { bg: "bg-red-50 bg-red-950/20", text: "text-red-700 text-red-400", border: "border-red-200  border-red-900/40" };
     case "검토 필요":
-      return { bg: "bg-blue-50 dark:bg-blue-950/20", text: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-900/40" };
+      return { bg: "bg-blue-50  bg-blue-950/20", text: "text-blue-700 text-blue-400", border: "border-blue-200  border-blue-900/40" };
   }
 }
 
@@ -123,52 +123,52 @@ export default function TeamAnalyticsView() {
       {/* ══ 1. 팀별 KPI 카드 ══ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
-        <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-blue-500 flex-shrink-0" />
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">전체 팀</span>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전체 팀</span>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{totalTeams}개</div>
+          <div className="text-xl font-bold text-slate-100">{totalTeams}개</div>
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
-        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-900/30" : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50"}`}>
+        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30  bg-amber-950/10  border-amber-900/30" : "border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50"}`}>
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
           </div>
-          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"}`}>
+          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 text-amber-400" : "text-slate-100"}`}>
             {riskTeams}개
           </div>
           <p className="text-xs text-slate-400 mt-1">소진율 75% 이상</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-purple-500 flex-shrink-0" />
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">최고 지출 팀</span>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">최고 지출 팀</span>
           </div>
-          <div className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">{topSpendingTeam.name}</div>
+          <div className="text-lg font-bold text-slate-100 truncate">{topSpendingTeam.name}</div>
           <p className="text-xs text-slate-400 mt-1">₩{topSpendingTeam.spent.toLocaleString("ko-KR")}</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ArrowUpRight className="h-4 w-4 text-rose-500 flex-shrink-0" />
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">전월 대비 증가</span>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전월 대비 증가</span>
           </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{increasedTeams}개 팀</div>
+          <div className="text-xl font-bold text-slate-100">{increasedTeams}개 팀</div>
           <p className="text-xs text-slate-400 mt-1">이번 달 지출 증가</p>
         </div>
       </div>
 
       {/* ══ 2. 예산 위험 팀 알림 ══ */}
       {riskTeamList.length > 0 && (
-        <Card className="rounded-xl border-amber-100 dark:border-amber-900/30 bg-amber-50/40 dark:bg-amber-950/10 shadow-sm">
+        <Card className="rounded-xl border-amber-100  border-amber-900/30 bg-amber-50/40  bg-amber-950/10 shadow-sm">
           <CardHeader className="pb-2 p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-              <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">예산 위험 팀 현황</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-200">예산 위험 팀 현황</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -182,7 +182,7 @@ export default function TeamAnalyticsView() {
                     ) : (
                       <Shield className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
                     )}
-                    <span className="text-sm text-slate-700 dark:text-slate-300 leading-snug">
+                    <span className="text-sm text-slate-300 leading-snug">
                       <span className="font-medium">{team.name}</span>
                       {" — "}
                       예산 소진율 {team.burnRate}%
@@ -203,10 +203,10 @@ export default function TeamAnalyticsView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* 팀별 사용액 비교 */}
-        <Card className="rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+        <Card className="rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
           <CardHeader className="pb-2 p-4">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">팀별 사용액 비교</CardTitle>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">배정 예산 대비 현재 사용액</p>
+            <CardTitle className="text-sm font-semibold text-slate-200">팀별 사용액 비교</CardTitle>
+            <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">배정 예산 대비 현재 사용액</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <ResponsiveContainer width="100%" height={240}>
@@ -241,10 +241,10 @@ export default function TeamAnalyticsView() {
         </Card>
 
         {/* 팀별 예산 소진율 비교 */}
-        <Card className="rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+        <Card className="rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
           <CardHeader className="pb-2 p-4">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">팀별 예산 소진율</CardTitle>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">소진율 기준 내림차순 정렬</p>
+            <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 소진율</CardTitle>
+            <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">소진율 기준 내림차순 정렬</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <ResponsiveContainer width="100%" height={240}>
@@ -278,10 +278,10 @@ export default function TeamAnalyticsView() {
       </div>
 
       {/* ══ 4. 팀별 분석 테이블 ══ */}
-      <Card className="rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+      <Card className="rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
         <CardHeader className="p-4 pb-0">
-          <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-200">팀별 예산 집행 현황</CardTitle>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+          <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 집행 현황</CardTitle>
+          <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">
             전체 {totalTeams}개 팀 중 {riskTeams}개 팀이 주의 이상 상태
           </p>
         </CardHeader>
@@ -289,7 +289,7 @@ export default function TeamAnalyticsView() {
           <div className="overflow-x-auto">
             <Table className="min-w-[800px]">
               <TableHeader>
-                <TableRow className="border-slate-100 dark:border-[#2a2a2e]/50">
+                <TableRow className="border-slate-100 border-[#2a2a2e]/50">
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">팀명</TableHead>
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">배정 예산</TableHead>
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">사용액</TableHead>
@@ -304,27 +304,27 @@ export default function TeamAnalyticsView() {
                 {TEAM_DATA.map((team) => {
                   const statusStyle = getStatusStyle(team.status);
                   return (
-                    <TableRow key={team.id} className="border-slate-100 dark:border-[#2a2a2e]/30 hover:bg-slate-50 dark:hover:bg-[#222226]/20 transition-colors">
+                    <TableRow key={team.id} className="border-slate-100 border-[#2a2a2e]/30 hover:bg-slate-50 hover:bg-[#222226]/20 transition-colors">
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="font-medium text-slate-800 dark:text-slate-200 text-sm">{team.name}</span>
+                          <span className="font-medium text-slate-200 text-sm">{team.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-2.5 text-right text-sm text-slate-600 dark:text-slate-400">
+                      <TableCell className="py-2.5 text-right text-sm text-slate-400">
                         ₩{team.budget.toLocaleString("ko-KR")}
                       </TableCell>
                       <TableCell className="py-2.5 text-right">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                        <span className="font-semibold text-slate-200 text-sm">
                           ₩{team.spent.toLocaleString("ko-KR")}
                         </span>
                       </TableCell>
                       <TableCell className="py-2.5 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className={`text-xs font-semibold ${team.burnRate >= 90 ? "text-red-600 dark:text-red-400" : team.burnRate >= 75 ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-slate-400"}`}>
+                          <span className={`text-xs font-semibold ${team.burnRate >= 90 ? "text-red-600 text-red-400" : team.burnRate >= 75 ? "text-amber-600 text-amber-400" : "text-slate-400"}`}>
                             {team.burnRate}%
                           </span>
-                          <div className="w-14 h-1.5 bg-slate-100 dark:bg-slate-700/60 rounded-full overflow-hidden">
+                          <div className="w-14 h-1.5 bg-[#2a2a2e]/60 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all"
                               style={{
@@ -344,15 +344,15 @@ export default function TeamAnalyticsView() {
                           ) : (
                             <Minus className="h-3 w-3 text-slate-400" />
                           )}
-                          <span className={`text-xs font-medium ${team.monthChange > 0 ? "text-rose-600 dark:text-rose-400" : team.monthChange < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                          <span className={`text-xs font-medium ${team.monthChange > 0 ? "text-rose-600  text-rose-400" : team.monthChange < 0 ? "text-emerald-600 text-emerald-400" : "text-slate-400"}`}>
                             {team.monthChange > 0 ? "+" : ""}{team.monthChange}%
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-2.5 text-sm text-slate-600 dark:text-slate-400">
+                      <TableCell className="py-2.5 text-sm text-slate-400">
                         {team.topCategory}
                       </TableCell>
-                      <TableCell className="py-2.5 text-sm text-slate-600 dark:text-slate-400 max-w-[120px]">
+                      <TableCell className="py-2.5 text-sm text-slate-400 max-w-[120px]">
                         <span className="truncate block">{team.topVendor}</span>
                       </TableCell>
                       <TableCell className="py-2.5 text-center">
@@ -370,31 +370,31 @@ export default function TeamAnalyticsView() {
       </Card>
 
       {/* ══ 5. 팀 관점 액션 ══ */}
-      <div className="rounded-xl border border-slate-200 dark:border-[#2a2a2e]/50 bg-slate-50/60 dark:bg-[#1a1a1e]/30 p-4">
-        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+      <div className="rounded-xl border border-[#2a2a2e]/50 bg-slate-50/60 bg-[#1a1a1e]/30 p-4">
+        <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider mb-3">
           팀 관리 후속 조치
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Link href="/dashboard/purchases">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
               팀별 구매 내역
             </Button>
           </Link>
           <Link href="/dashboard/budget">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
               <CreditCard className="h-3.5 w-3.5 text-slate-500" />
               예산 재배정 검토
             </Button>
           </Link>
           <Link href="/dashboard/analytics/category">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
               <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
               카테고리별 상세 분석
             </Button>
           </Link>
           <Link href="/dashboard/settings">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
               <Settings className="h-3.5 w-3.5 text-slate-500" />
               조직 / 예산 관리
             </Button>

@@ -82,21 +82,21 @@ export function AiDraftPreviewDialog({
           {/* 이메일 제목 */}
           {emailSubject !== undefined && (
             <div>
-              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              <label className="text-xs font-medium text-slate-400 mb-1 block">
                 제목
               </label>
               <input
                 type="text"
                 value={editedSubject}
                 onChange={(e) => setEditedSubject(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-[#333338] rounded-lg bg-white dark:bg-[#1a1a1e] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-200 border-[#333338] rounded-lg bg-white bg-[#1a1a1e] focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           )}
 
           {/* 이메일 본문 */}
           <div>
-            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+            <label className="text-xs font-medium text-slate-400 mb-1 block">
               본문
             </label>
             <Textarea
@@ -107,7 +107,7 @@ export function AiDraftPreviewDialog({
             />
           </div>
 
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          <p className="text-[11px] text-slate-400 text-slate-500">
             내용을 수정한 뒤 승인할 수 있습니다. 승인 후에는 되돌릴 수 없습니다.
           </p>
         </div>

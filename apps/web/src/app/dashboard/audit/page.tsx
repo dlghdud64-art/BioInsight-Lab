@@ -153,11 +153,11 @@ export default function AuditTrailPage() {
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
         <div className="flex flex-col space-y-2">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center gap-2 text-slate-400 mb-1">
             <Lock className="h-4 w-4" />
             <span className="font-semibold tracking-tight text-sm">보안 및 컴플라이언스</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
             감사 증적 (Audit Trail)
             <Lock className="h-6 w-6 text-slate-500" />
           </h2>
@@ -167,7 +167,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-[#1a1a1e] hover:bg-[#222226] text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            className="bg-[#1a1a1e] hover:bg-[#222226] text-white  bg-slate-100  text-slate-900  hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -180,10 +180,10 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      <div className="border border-slate-200 dark:border-[#333338] rounded-lg bg-white dark:bg-[#09090b] overflow-hidden shadow-sm">
+      <div className="border border-slate-200 border-[#333338] rounded-lg bg-white bg-[#09090b] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-slate-50 dark:bg-[#1a1a1e]/50">
+          <TableHeader className="bg-slate-50 bg-[#1a1a1e]/50">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">일시 (Timestamp) / ID</TableHead>
               <TableHead className="font-semibold">작업자 (User)</TableHead>
@@ -196,39 +196,39 @@ export default function AuditTrailPage() {
             {auditLogs.map((log) => (
               <TableRow
                 key={log.id}
-                className="hover:bg-slate-50 dark:hover:bg-[#1a1a1e]/50"
+                className="hover:bg-slate-50  hover:bg-[#1a1a1e]/50"
               >
                 <TableCell>
-                  <div className="font-mono text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="font-mono text-sm font-medium text-slate-100">
                     {log.time}
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">{log.id}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-slate-900 dark:text-slate-100">{log.user}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <div className="font-medium text-slate-100">{log.user}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">
                     IP: {log.ip}
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant="secondary"
-                    className="mb-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                    className="mb-1 bg-blue-50  bg-blue-950/40 text-blue-700  text-blue-300 hover:bg-blue-50  hover:bg-blue-950/40"
                   >
                     {log.action}
                   </Badge>
-                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-medium text-slate-100">
                     {log.target}
                   </div>
                 </TableCell>
                 <TableCell>
                   {log.before !== "-" ? (
                     <div className="flex items-center gap-2 text-sm flex-wrap">
-                      <span className="text-red-500 dark:text-red-400 line-through decoration-red-300 dark:decoration-red-600">
+                      <span className="text-red-500 text-red-400 line-through decoration-red-300  decoration-red-600">
                         {log.before}
                       </span>
                       <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span className="text-emerald-600 text-emerald-400 font-bold">
                         {log.after}
                       </span>
                     </div>
@@ -237,7 +237,7 @@ export default function AuditTrailPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">{log.reason}</span>
+                  <span className="text-sm text-slate-400">{log.reason}</span>
                 </TableCell>
               </TableRow>
             ))}

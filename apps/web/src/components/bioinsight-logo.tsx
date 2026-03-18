@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type BioInsightLogoProps = {
   className?: string;
   showText?: boolean; // 아이콘만 쓰고 싶으면 false로
-  variant?: "light" | "dark"; // dark: 어두운 배경용 (텍스트 흰색 계열)
+  variant?: "light" | "dark"; //  어두운 배경용 (텍스트 흰색 계열)
   compact?: boolean; // Sheet·모바일 등 작은 공간용 (h-7 w-7, text-sm)
   size?: "sm" | "md" | "lg"; // sm=compact, md=사이드바(h-9 text-xl), lg=기본 반응형
 };

@@ -47,13 +47,13 @@ const CATEGORY_CONFIG: Record<
   NotificationCategory,
   { icon: React.ElementType; bg: string; text: string; darkBg: string; darkText: string; label: string }
 > = {
-  stock_alert:       { icon: AlertTriangle, bg: "bg-red-100",    text: "text-red-600",    darkBg: "dark:bg-red-950/40",    darkText: "dark:text-red-400",    label: "재고 부족" },
-  quote_arrived:     { icon: FileText,      bg: "bg-blue-100",   text: "text-blue-600",   darkBg: "dark:bg-blue-950/40",   darkText: "dark:text-blue-400",   label: "견적 도착" },
-  delivery_complete: { icon: Truck,         bg: "bg-emerald-100",text: "text-emerald-600",darkBg: "dark:bg-emerald-950/40",darkText: "dark:text-emerald-400",label: "입고 완료" },
-  approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: "dark:bg-amber-950/40",  darkText: "dark:text-amber-400",  label: "승인 대기" },
-  expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: "dark:bg-orange-950/40", darkText: "dark:text-orange-400", label: "유효기간 경고" },
-  safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: "dark:bg-purple-950/40", darkText: "dark:text-purple-400", label: "안전 관리" },
-  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "dark:bg-[#222226]",     darkText: "dark:text-slate-400",  label: "시스템" },
+  stock_alert:       { icon: AlertTriangle, bg: "bg-red-100",    text: "text-red-600",    darkBg: " bg-red-950/40",    darkText: "text-red-400",    label: "재고 부족" },
+  quote_arrived:     { icon: FileText,      bg: "bg-blue-100",   text: "text-blue-600",   darkBg: " bg-blue-950/40",   darkText: "text-blue-400",   label: "견적 도착" },
+  delivery_complete: { icon: Truck,         bg: "bg-emerald-100",text: "text-emerald-600",darkBg: " bg-emerald-950/40",darkText: "text-emerald-400",label: "입고 완료" },
+  approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: " bg-amber-950/40",  darkText: "text-amber-400",  label: "승인 대기" },
+  expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: " bg-orange-950/40", darkText: "text-orange-400", label: "유효기간 경고" },
+  safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: " bg-purple-950/40", darkText: "text-purple-400", label: "안전 관리" },
+  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "bg-[#222226]",     darkText: "text-slate-400",  label: "시스템" },
 };
 
 /* ── 시간 포맷팅 ── */
@@ -268,10 +268,10 @@ function NotificationsContent() {
         key={notification.id}
         className={`transition-all hover:shadow-md cursor-pointer ${
           isCompleted
-            ? "opacity-60 bg-slate-50/50 dark:bg-[#1a1a1e]/50"
+            ? "opacity-60 bg-slate-50/50 bg-[#1a1a1e]/50"
             : isUrgent
-            ? "border-red-200 dark:border-red-900/40 bg-red-50/20 dark:bg-red-950/10"
-            : "hover:bg-slate-50 dark:hover:bg-[#222226]/50"
+            ? "border-red-200  border-red-900/40 bg-red-50/20  bg-red-950/10"
+            : "hover:bg-slate-50 hover:bg-[#222226]/50"
         }`}
       >
         <CardContent className="p-4">
@@ -286,17 +286,17 @@ function NotificationsContent() {
                   {notification.typeLabel}
                 </span>
                 {isUrgent && !isCompleted && (
-                  <Badge className="h-4 px-1.5 text-[10px] font-bold bg-red-50 text-red-600 border-0 dark:bg-red-950/40 dark:text-red-400">
+                  <Badge className="h-4 px-1.5 text-[10px] font-bold bg-red-50 text-red-600 border-0  bg-red-950/40 text-red-400">
                     긴급
                   </Badge>
                 )}
                 {isCompleted && (
-                  <Badge variant="secondary" className="h-4 px-1.5 text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">
+                  <Badge variant="secondary" className="h-4 px-1.5 text-[10px] bg-emerald-100 text-emerald-700  bg-emerald-950/50 text-emerald-400 border-emerald-200  border-emerald-800">
                     완료
                   </Badge>
                 )}
                 {!isCompleted && !isUrgent && (
-                  <Badge className="h-4 px-1.5 text-[10px] bg-amber-50 text-amber-600 border-0 dark:bg-amber-950/30 dark:text-amber-400">
+                  <Badge className="h-4 px-1.5 text-[10px] bg-amber-50 text-amber-600 border-0  bg-amber-950/30 text-amber-400">
                     미처리
                   </Badge>
                 )}
@@ -305,33 +305,33 @@ function NotificationsContent() {
               {/* 2행: 대상 이름 */}
               <p className={`text-sm font-semibold ${
                 isCompleted
-                  ? "text-slate-400 dark:text-slate-500 line-through"
-                  : "text-slate-900 dark:text-slate-100"
+                  ? "text-slate-400 text-slate-500 line-through"
+                  : "text-slate-100"
               }`}>
                 {notification.targetName}
               </p>
 
               {/* 3행: 상세 내용 */}
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              <p className="text-sm text-slate-400 mt-1">
                 {notification.content}
               </p>
 
               {/* 4행: 상태 텍스트 + 시간 */}
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-slate-400">
                   {notification.statusText}
                 </span>
-                <span className="text-slate-300 dark:text-slate-600">·</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="text-slate-300  text-slate-600">·</span>
+                <span className="text-xs text-slate-400 text-slate-500">
                   {formatTime(notification.time)}
                 </span>
               </div>
 
               {/* 5행: 액션 영역 */}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-[#2a2a2e]">
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 border-[#2a2a2e]">
                 {!isCompleted ? (
                   <>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-400 text-slate-500">
                       → {notification.nextAction}
                     </span>
                     <div className="flex items-center gap-2">
@@ -351,8 +351,8 @@ function NotificationsContent() {
                         variant={isUrgent ? "outline" : "outline"}
                         className={`h-7 px-3 text-xs gap-1 ${
                           isUrgent
-                            ? "border-red-200 text-red-700 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30"
-                            : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-[#333338] dark:text-slate-300"
+                            ? "border-red-200 text-red-700 bg-red-50 hover:bg-red-100  border-red-800 text-red-400  bg-red-950/30"
+                            : "border-slate-200 text-slate-700 hover:bg-slate-50 border-[#333338] text-slate-300"
                         }`}
                         asChild
                       >
@@ -365,7 +365,7 @@ function NotificationsContent() {
                   </>
                 ) : (
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-xs text-emerald-500 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="text-xs text-emerald-500 text-emerald-400 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
                       처리 완료
                     </span>
@@ -395,10 +395,10 @@ function NotificationsContent() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100">
             알림 센터
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-400 mt-1">
             모든 알림을 확인하고 작업을 처리하세요
           </p>
         </div>
@@ -416,36 +416,36 @@ function NotificationsContent() {
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className={urgentPendingCount > 0 ? "border-red-100 dark:border-red-900/30" : ""}>
+        <Card className={urgentPendingCount > 0 ? "border-red-100  border-red-900/30" : ""}>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-red-50 dark:bg-red-950/30 p-2.5">
-              <Flame className="h-5 w-5 text-red-500 dark:text-red-400" />
+            <div className="rounded-lg bg-red-950/30 p-2.5">
+              <Flame className="h-5 w-5 text-red-500 text-red-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{urgentPendingCount}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">긴급 처리</p>
+              <p className="text-2xl font-bold text-slate-100">{urgentPendingCount}</p>
+              <p className="text-xs text-slate-400">긴급 처리</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-amber-100 dark:bg-amber-950/40 p-2.5">
-              <ClipboardCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="rounded-lg bg-amber-950/40 p-2.5">
+              <ClipboardCheck className="h-5 w-5 text-amber-600 text-amber-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingNotifications.length}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">미처리 작업</p>
+              <p className="text-2xl font-bold text-slate-100">{pendingNotifications.length}</p>
+              <p className="text-xs text-slate-400">미처리 작업</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/40 p-2.5">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="rounded-lg bg-emerald-950/40 p-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 text-emerald-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{completedNotifications.length}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">완료된 작업</p>
+              <p className="text-2xl font-bold text-slate-100">{completedNotifications.length}</p>
+              <p className="text-xs text-slate-400">완료된 작업</p>
             </div>
           </CardContent>
         </Card>
@@ -465,7 +465,7 @@ function NotificationsContent() {
           <TabsTrigger value="pending">
             미처리
             {pendingNotifications.length > 0 && (
-              <Badge className="ml-2 h-5 px-1.5 text-xs bg-amber-50 text-amber-700 border-0 dark:bg-amber-950/40 dark:text-amber-400">
+              <Badge className="ml-2 h-5 px-1.5 text-xs bg-amber-50 text-amber-700 border-0  bg-amber-950/40 text-amber-400">
                 {pendingNotifications.length}
               </Badge>
             )}
@@ -473,7 +473,7 @@ function NotificationsContent() {
           <TabsTrigger value="completed">
             완료
             {completedNotifications.length > 0 && (
-              <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-emerald-100 text-emerald-700  bg-emerald-950/50 text-emerald-400">
                 {completedNotifications.length}
               </Badge>
             )}
@@ -494,7 +494,7 @@ function NotificationsContent() {
             <Card>
               <CardContent className="p-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">모든 작업이 처리되었습니다</p>
+                <p className="text-sm font-medium text-slate-400">모든 작업이 처리되었습니다</p>
                 <p className="text-xs text-slate-400 mt-1">새 알림이 발생하면 여기에 표시됩니다</p>
               </CardContent>
             </Card>
@@ -515,7 +515,7 @@ function NotificationsContent() {
             <Card>
               <CardContent className="p-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">처리할 작업이 없습니다</p>
+                <p className="text-sm font-medium text-slate-400">처리할 작업이 없습니다</p>
               </CardContent>
             </Card>
           ) : (
@@ -534,7 +534,7 @@ function NotificationsContent() {
             <Card>
               <CardContent className="p-12 text-center">
                 <ClipboardCheck className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">완료된 작업이 없습니다</p>
+                <p className="text-sm font-medium text-slate-400">완료된 작업이 없습니다</p>
               </CardContent>
             </Card>
           ) : (
@@ -548,7 +548,7 @@ function NotificationsContent() {
             <Card>
               <CardContent className="p-12 text-center">
                 <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">보관된 알림이 없습니다</p>
+                <p className="text-sm font-medium text-slate-400">보관된 알림이 없습니다</p>
               </CardContent>
             </Card>
           ) : (

@@ -21,7 +21,7 @@ export default function BillingPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 페이지 헤더 */}
         <div className="flex flex-col space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">정산 및 세금계산서</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100">정산 및 세금계산서</h2>
           <p className="text-muted-foreground">
             여러 벤더의 구매 내역을 LabAxis 단일 세금계산서로 한 번에 처리하세요.
           </p>
@@ -34,8 +34,8 @@ export default function BillingPage() {
               <CardTitle className="text-sm font-semibold text-muted-foreground">
                 이번 달 청구 금액
               </CardTitle>
-              <div className="rounded-full bg-blue-100 p-2 dark:bg-blue-900/40">
-                <Receipt className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className="rounded-full bg-blue-100 p-2  bg-blue-900/40">
+                <Receipt className="h-4 w-4 text-blue-600 text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
@@ -49,12 +49,12 @@ export default function BillingPage() {
               <CardTitle className="text-sm font-semibold text-muted-foreground">
                 미납 금액
               </CardTitle>
-              <div className="rounded-full bg-green-100 p-2 dark:bg-green-900/40">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="rounded-full bg-green-100 p-2  bg-green-900/40">
+                <CheckCircle className="h-4 w-4 text-green-600 text-green-400" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400 md:text-3xl">
+              <div className="text-2xl font-bold text-green-600 text-green-400 md:text-3xl">
                 ₩ 0
               </div>
               <p className="text-xs text-muted-foreground mt-1">모두 결제 완료</p>
@@ -66,8 +66,8 @@ export default function BillingPage() {
               <CardTitle className="text-sm font-semibold text-muted-foreground">
                 발행된 세금계산서
               </CardTitle>
-              <div className="rounded-full bg-slate-100 p-2 dark:bg-[#222226]">
-                <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <div className="rounded-full bg-slate-100 p-2 bg-[#222226]">
+                <FileText className="h-4 w-4 text-slate-400" />
               </div>
             </CardHeader>
             <CardContent>
@@ -78,20 +78,20 @@ export default function BillingPage() {
         </div>
 
         {/* 통합 세금계산서 내역 (메인 카드) */}
-        <Card className="shadow-sm border-blue-200 dark:border-blue-800">
-          <CardHeader className="rounded-t-lg border-b border-blue-100 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+        <Card className="shadow-sm border-blue-200  border-blue-800">
+          <CardHeader className="rounded-t-lg border-b border-blue-100 bg-blue-50/50  border-blue-900 bg-blue-950/30">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg">2026년 2월 통합 세금계산서</CardTitle>
-                <CardDescription className="mt-1 font-medium text-slate-600 dark:text-slate-400">
+                <CardDescription className="mt-1 font-medium text-slate-400">
                   Sigma-Aldrich, Thermo Fisher, Eppendorf 외 3곳 통합
                 </CardDescription>
               </div>
               <Badge
                 variant="outline"
-                className="h-6 w-fit shrink-0 rounded-full border-blue-200 bg-blue-100 px-2.5 font-semibold text-blue-700 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+                className="h-6 w-fit shrink-0 rounded-full border-blue-200 bg-blue-100 px-2.5 font-semibold text-blue-700  border-blue-800  bg-blue-900/50  text-blue-300"
               >
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-blue-600  bg-blue-400" />
                 국세청 전송 완료
               </Badge>
             </div>
@@ -102,7 +102,7 @@ export default function BillingPage() {
                 <p className="text-sm text-muted-foreground">결제 기한: 2026.03.10</p>
                 <p className="mt-1 text-2xl font-bold">₩ 12,450,000</p>
               </div>
-              <Button className="w-fit bg-[#1a1a1e] text-white hover:bg-[#222226] dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
+              <Button className="w-fit bg-[#1a1a1e] text-white hover:bg-[#222226]  bg-slate-100  text-slate-900  hover:bg-slate-200">
                 <Download className="mr-2 h-4 w-4" />
                 계산서 다운로드
               </Button>
@@ -178,7 +178,7 @@ export default function BillingPage() {
                 </div>
                 <Badge
                   variant="outline"
-                  className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300"
+                  className="border-blue-200 bg-blue-50 text-blue-700  border-blue-800  bg-blue-950/50  text-blue-300"
                 >
                   발행 완료
                 </Badge>

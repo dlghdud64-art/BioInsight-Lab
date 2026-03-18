@@ -58,7 +58,7 @@ export default function MonthlyAnalyticsPage() {
         </Button>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">월별 지출 상세 분석</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-100">월별 지출 상세 분석</h2>
             <p className="text-muted-foreground mt-1">
               12개월간의 예산 소진 흐름을 상세하게 확인하세요.
             </p>

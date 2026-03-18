@@ -299,14 +299,14 @@ export default function BudgetPage() {
             {Array.from({ length: 3 }).map((_, idx) => (
               <Card key={idx} className="shadow-sm border-slate-200 animate-pulse">
                 <CardHeader className="pb-2">
-                  <div className="h-5 w-36 rounded bg-slate-200 dark:bg-slate-700 mb-2" />
-                  <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+                  <div className="h-5 w-36 rounded bg-slate-200 bg-[#2a2a2e] mb-2" />
+                  <div className="h-4 w-48 rounded bg-slate-200 bg-[#2a2a2e]" />
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="h-3 rounded bg-slate-100 dark:bg-[#222226]" />
+                  <div className="h-3 rounded bg-slate-100 bg-[#222226]" />
                   <div className="flex justify-end gap-2">
-                    <div className="h-8 w-20 rounded bg-slate-100 dark:bg-[#222226]" />
-                    <div className="h-8 w-14 rounded bg-slate-100 dark:bg-[#222226]" />
+                    <div className="h-8 w-20 rounded bg-slate-100 bg-[#222226]" />
+                    <div className="h-8 w-14 rounded bg-slate-100 bg-[#222226]" />
                   </div>
                 </CardContent>
               </Card>
@@ -735,8 +735,8 @@ function BudgetForm({
       </div>
 
       {submitError && (
-        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-[#1a1a1e] px-3 py-2">
-          <p className="text-xs text-red-600 dark:text-red-400">
+        <div className="rounded-md border border-red-200  border-red-800 bg-red-50 bg-[#1a1a1e] px-3 py-2">
+          <p className="text-xs text-red-600 text-red-400">
             {submitError}
           </p>
         </div>

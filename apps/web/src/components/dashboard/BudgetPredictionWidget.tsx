@@ -167,7 +167,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (isLoadingState) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-[#1a1a1e] dark:border-[#2a2a2e] animate-pulse">
+      <Card className="border border-slate-200 shadow-sm bg-white bg-[#1a1a1e] border-[#2a2a2e] animate-pulse">
         <CardContent className="p-4 h-[100px] sm:p-5 sm:h-[140px]" />
       </Card>
     );
@@ -175,19 +175,19 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (!selectedBudget || !selectedBudget.hasBudget) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-[#1a1a1e] dark:border-[#2a2a2e]">
+      <Card className="border border-slate-200 shadow-sm bg-white bg-[#1a1a1e] border-[#2a2a2e]">
         <CardContent className="py-6 px-5 flex items-center gap-4">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/40">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50  bg-blue-950/40">
             <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-blue-300 opacity-50" />
             <Loader2 className="relative h-4 w-4 text-blue-500 animate-spin" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI가 데이터 학습 중입니다</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm font-semibold text-slate-200">AI가 데이터 학습 중입니다</p>
+            <p className="text-xs text-slate-400 mt-0.5">
               예산을 등록하면 AI 소진 예측 분석이 시작됩니다.
             </p>
           </div>
-          <a href="/dashboard/settings/budget" className="ml-auto shrink-0 text-xs text-blue-600 hover:underline dark:text-blue-400">
+          <a href="/dashboard/settings/budget" className="ml-auto shrink-0 text-xs text-blue-600 hover:underline text-blue-400">
             예산 등록 →
           </a>
         </CardContent>
@@ -207,7 +207,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
   const otherWarningCount = otherWarningBudgets.length;
 
   return (
-    <Card className={`border border-slate-200 shadow-sm overflow-hidden dark:border-[#2a2a2e] ${hasWarning ? "bg-red-50/30 dark:bg-red-950/20" : "bg-white dark:bg-[#1a1a1e]"}`}>
+    <Card className={`border border-slate-200 shadow-sm overflow-hidden border-[#2a2a2e] ${hasWarning ? "bg-red-50/30 bg-red-950/20" : "bg-white bg-[#1a1a1e]"}`}>
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}
@@ -219,7 +219,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
                 </span>
-                <span className="text-xs font-medium text-blue-600 dark:text-blue-400 tracking-wide">
+                <span className="text-xs font-medium text-blue-600 text-blue-400 tracking-wide">
                   AI 예측 분석 중
                 </span>
               </div>
@@ -228,7 +228,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   value={effectiveSelected ?? ""}
                   onValueChange={(v) => setSelectedScopeKey(v || null)}
                 >
-                  <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 dark:border-[#333338]">
+                  <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 border-[#333338]">
                     <SelectValue placeholder="예산 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,7 +240,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="px-2 py-1.5 rounded-full bg-slate-50 dark:bg-[#222226]/60 border border-slate-200/80 dark:border-[#333338]/80 text-[11px] text-slate-600 dark:text-slate-300">
+                <div className="px-2 py-1.5 rounded-full bg-slate-50 bg-[#222226]/60 border border-slate-200/80 border-[#333338]/80 text-[11px] text-slate-300">
                   {effectiveBudgets[0]?.budgetName}
                 </div>
               )}
@@ -250,23 +250,23 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-red-500 shrink-0" />
-                <p className="text-xs text-slate-600 dark:text-slate-400">예산 고갈 예측</p>
+                <p className="text-xs text-slate-400">예산 고갈 예측</p>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 leading-tight tracking-tight">
+              <p className="text-2xl sm:text-3xl font-bold text-red-600 text-red-400 leading-tight tracking-tight">
                 [{selectedBudget.budgetName}] {exhaustLabel}
               </p>
             </div>
 
             {/* 소진 속도 */}
             <div className="flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
+              <p className="text-xs text-slate-400">
                 월평균{" "}
-                <span className="text-slate-900 dark:text-slate-200 font-medium">
+                <span className="text-slate-200 font-medium">
                   {formatKRW(selectedBudget.avgMonthlyBurnRate)}
                 </span>{" "}
                 소진 중 &middot; 잔여{" "}
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="text-emerald-600 text-emerald-400 font-medium">
                   {formatKRW(selectedBudget.remaining)}
                 </span>
               </p>
@@ -274,22 +274,22 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
             {/* 예산 소진률 Progress Bar */}
             <div className="space-y-1 pt-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span>
                   사용 예산{" "}
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  <span className="font-semibold text-slate-100">
                     {formatKRW(selectedBudget.totalSpent)}
                   </span>
                 </span>
-                <span className={`font-semibold ${usageRate >= 80 ? "text-red-600 dark:text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+                <span className={`font-semibold ${usageRate >= 80 ? "text-red-600 text-red-400" : "text-slate-100"}`}>
                   {usageRate}%
                 </span>
               </div>
               <Progress
                 value={usageRate}
-                className={`h-2.5 ${usageRate >= 80 ? "[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/40" : "bg-slate-100 dark:bg-[#222226]/60"}`}
+                className={`h-2.5 ${usageRate >= 80 ? "[&>div]:bg-red-500 bg-red-950/40" : "bg-slate-100 bg-[#222226]/60"}`}
               />
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] text-slate-400 text-slate-500">
                 총 예산 {formatKRW(selectedBudget.totalBudget)} 기준
               </p>
             </div>
@@ -326,17 +326,17 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
         {/* AI 인사이트 영역 */}
         {selectedBudget.hasWarning && selectedBudget.warningMessage && (
-          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-700 dark:text-amber-200 leading-relaxed">
+          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-950/30 border border-amber-200  border-amber-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-700  text-amber-200 leading-relaxed">
               {selectedBudget.warningMessage}
             </p>
           </div>
         )}
         {!selectedBudget.hasWarning && (
-          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 dark:bg-[#222226]/50 border border-slate-200 dark:border-[#333338] px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 bg-[#222226]/50 border border-slate-200 border-[#333338] px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
           </div>
@@ -348,7 +348,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
             <button
               type="button"
               onClick={() => otherWarningBudgets[0] && setSelectedScopeKey(otherWarningBudgets[0].scopeKey)}
-              className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+              className="text-xs text-amber-600 text-amber-400 hover:underline"
             >
               + 주의가 필요한 다른 예산 {otherWarningCount}건이 있습니다.
             </button>
@@ -359,7 +359,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               variant="outline"
               disabled={isDownloading}
               onClick={handleDownload}
-              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/50 text-xs h-8 px-3"
+              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300  border-emerald-800 text-emerald-400  hover:bg-emerald-950/50 text-xs h-8 px-3"
             >
               {isDownloading ? (
                 <>

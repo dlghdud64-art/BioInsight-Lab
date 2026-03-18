@@ -119,7 +119,7 @@ export function WorkQueueInbox() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 p-6">
+      <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e] p-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="h-5 w-5 rounded bg-slate-200 animate-pulse" />
           <div className="h-5 w-32 rounded bg-slate-200 animate-pulse" />
@@ -142,12 +142,12 @@ export function WorkQueueInbox() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-slate-800/50 shadow-sm">
+    <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e] shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-2">
           <Zap className="h-5 w-5 text-amber-500" />
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-sm font-semibold text-slate-100">
             AI 작업함
           </h2>
           {(data?.activeCount ?? 0) > 0 && (
@@ -206,10 +206,10 @@ export function WorkQueueInbox() {
 
       {/* Recent Completed (접힘 영역) */}
       {(data?.completedCount ?? 0) > 0 && (
-        <div className="border-t border-slate-100 dark:border-slate-800">
+        <div className="border-t border-slate-100 border-[#2a2a2e]">
           <button
             onClick={() => setShowCompleted((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-500 hover:bg-[#222226]/50 transition-colors"
           >
             <span>최근 완료 ({data?.completedCount}건)</span>
             <ChevronDown
@@ -275,7 +275,7 @@ function WorkQueueCard({
 
   return (
     <div className={cn(
-      "group rounded-lg border border-slate-200/80 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/30 transition-all duration-150",
+      "group rounded-lg border border-slate-200/80 border-[#333338] hover:border-[#333338] bg-[#222226]/30 transition-all duration-150",
       (item.impactScore ?? 0) >= 80 && "border-l-2 border-l-red-500"
     )}>
       <div className="p-3">
@@ -286,7 +286,7 @@ function WorkQueueCard({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+              <span className="text-sm font-medium text-slate-100 truncate">
                 {item.title}
               </span>
               <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 leading-4", statusBadge.color)}>
@@ -301,12 +301,12 @@ function WorkQueueCard({
 
             {/* Row 2: Activity summary + urgency reason */}
             {activityLabel && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+              <p className="text-xs text-slate-400 mt-0.5 truncate">
                 {activityLabel}
               </p>
             )}
             {item.urgencyReason && (
-              <p className="text-[11px] font-medium text-orange-600 dark:text-orange-400 mt-0.5 flex items-center gap-1">
+              <p className="text-[11px] font-medium text-orange-600 text-orange-400 mt-0.5 flex items-center gap-1">
                 <Zap className="h-3 w-3" />
                 {item.urgencyReason}
               </p>

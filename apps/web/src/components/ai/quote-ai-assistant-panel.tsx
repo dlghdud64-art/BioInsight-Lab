@@ -656,7 +656,7 @@ function StickyActions({
   };
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e] px-5 py-3">
+    <div className="flex-shrink-0 border-t border-[#2a2a2e] bg-white bg-[#1a1a1e] px-5 py-3">
       <div className="flex gap-2">
         <Button
           className="flex-1 h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white"

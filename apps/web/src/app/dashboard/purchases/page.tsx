@@ -479,24 +479,24 @@ export default function PurchasesPage() {
 
     // 구매 상태
     const purchaseStatus = days <= 7
-      ? { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800" }
-      : { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+      ? { label: "입고 대기", className: "bg-blue-50 text-blue-700 border-blue-200  bg-blue-950/20 text-blue-400  border-blue-800" }
+      : { label: "구매 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200  bg-emerald-950/20 text-emerald-400  border-emerald-800" };
 
     // 후속 처리 상태
     let followUpStatus: { label: string; className: string; action?: string } | null = null;
 
     if (amount >= 2000000 && days <= 14) {
       if (completedCount === 0) {
-        followUpStatus = { label: "증빙 업로드 필요", className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800", action: "증빙 파일 등록" };
+        followUpStatus = { label: "증빙 업로드 필요", className: "bg-amber-50 text-amber-700 border-amber-200  bg-amber-950/20 text-amber-400  border-amber-800", action: "증빙 파일 등록" };
       } else if (completedCount < totalItems) {
-        followUpStatus = { label: "증빙 검토 필요", className: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-800", action: "회계팀 전달" };
+        followUpStatus = { label: "증빙 검토 필요", className: "bg-orange-50 text-orange-700 border-orange-200  bg-orange-950/20 text-orange-400  border-orange-800", action: "회계팀 전달" };
       } else {
-        followUpStatus = { label: "정산 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" };
+        followUpStatus = { label: "정산 완료", className: "bg-emerald-50 text-emerald-700 border-emerald-200  bg-emerald-950/20 text-emerald-400  border-emerald-800" };
       }
     }
 
     if (!followUpStatus && days > 7 && days <= 14) {
-      followUpStatus = { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-800", action: "재고로 반영" };
+      followUpStatus = { label: "재고 반영 필요", className: "bg-violet-50 text-violet-700 border-violet-200  bg-violet-950/20 text-violet-400  border-violet-800", action: "재고로 반영" };
     }
 
     return { purchaseStatus, followUpStatus };
@@ -704,7 +704,7 @@ export default function PurchasesPage() {
       cell: ({ row }) => {
         const date = row.original.purchasedAt;
         return (
-          <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+          <span className="text-sm text-slate-400 whitespace-nowrap">
             {date ? format(new Date(date), "yyyy.MM.dd") : "-"}
           </span>
         );
@@ -719,13 +719,13 @@ export default function PurchasesPage() {
         const count = repeatPurchaseMap.get(key) || 0;
         return (
           <div className="flex flex-col gap-0.5 max-w-[180px]">
-            <span className="font-medium text-slate-800 dark:text-slate-200 text-sm truncate">{item.itemName || "-"}</span>
+            <span className="font-medium text-slate-200 text-sm truncate">{item.itemName || "-"}</span>
             <div className="flex items-center gap-1.5">
               {item.catalogNumber && (
                 <span className="text-[11px] text-slate-400 font-mono">{item.catalogNumber}</span>
               )}
               {count >= 2 && (
-                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 dark:text-blue-400">
+                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50  bg-blue-950/20  border-blue-800 text-blue-400">
                   <Repeat className="h-2.5 w-2.5 mr-0.5" />{count}회
                 </Badge>
               )}
@@ -738,7 +738,7 @@ export default function PurchasesPage() {
       accessorKey: "vendorName",
       header: "공급사",
       cell: ({ row }) => (
-        <span className="text-sm text-slate-600 dark:text-slate-400">{row.original.vendorName || "-"}</span>
+        <span className="text-sm text-slate-400">{row.original.vendorName || "-"}</span>
       ),
     },
     {
@@ -747,7 +747,7 @@ export default function PurchasesPage() {
       cell: ({ row }) => {
         const cat = row.original.category;
         return (
-          <span className="text-xs text-slate-500 dark:text-slate-400">{getCategoryLabel(cat)}</span>
+          <span className="text-xs text-slate-400">{getCategoryLabel(cat)}</span>
         );
       },
     },
@@ -757,7 +757,7 @@ export default function PurchasesPage() {
       cell: ({ row }) => {
         const item = row.original;
         return (
-          <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+          <span className="text-sm text-slate-400 whitespace-nowrap">
             {item.qty || 0} {item.unit || ""}
           </span>
         );
@@ -768,7 +768,7 @@ export default function PurchasesPage() {
       header: "총액",
       cell: ({ row }) => {
         const amount = row.original.amount;
-        return <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{formatCurrency(amount)}</span>;
+        return <span className="font-semibold text-slate-200 text-sm">{formatCurrency(amount)}</span>;
       },
     },
     {
@@ -902,10 +902,10 @@ export default function PurchasesPage() {
       {/* ══ 1. 페이지 헤더 ══ */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-100">
             구매 운영
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-slate-400 mt-0.5">
             구매 이력을 확인하고, 재구매·재고·공급사·리포트로 이어지는 후속 조치를 바로 처리하세요.
           </p>
         </div>
@@ -1032,12 +1032,12 @@ export default function PurchasesPage() {
           {/* ══ 2. 운영 KPI 카드 ══ */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* 이번 달 발주 */}
-            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <ShoppingCart className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">이번 달 발주</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">이번 달 발주</span>
               </div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-xl font-bold text-slate-100">
                 {summaryLoading ? "..." : `${operationalKPIs.thisMonthOrders}건`}
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -1046,12 +1046,12 @@ export default function PurchasesPage() {
             </div>
 
             {/* 반복 구매 품목 */}
-            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <RefreshCw className="h-4 w-4 text-purple-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">반복 구매</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">반복 구매</span>
               </div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-xl font-bold text-slate-100">
                 {summaryLoading ? "..." : `${operationalKPIs.repeatItemCount}개`}
               </div>
               <p className="text-xs text-slate-400 mt-1 truncate">
@@ -1064,17 +1064,17 @@ export default function PurchasesPage() {
             {/* 공급사 집중도 */}
             <div className={`rounded-xl border p-4 shadow-sm ${
               operationalKPIs.vendorConcentration >= 70
-                ? "border-amber-200/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-900/30"
-                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50"
+                ? "border-amber-200/60 bg-amber-50/30  bg-amber-950/10  border-amber-900/30"
+                : "border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <Store className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">공급사 집중도</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">공급사 집중도</span>
               </div>
               <div className={`text-xl font-bold ${
                 operationalKPIs.vendorConcentration >= 70
-                  ? "text-amber-700 dark:text-amber-400"
-                  : "text-slate-900 dark:text-slate-100"
+                  ? "text-amber-700 text-amber-400"
+                  : "text-slate-100"
               }`}>
                 {summaryLoading ? "..." : `${operationalKPIs.vendorConcentration}%`}
               </div>
@@ -1084,12 +1084,12 @@ export default function PurchasesPage() {
             </div>
 
             {/* 고액 구매 */}
-            <div className="rounded-xl border border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50 p-4 shadow-sm">
+            <div className="rounded-xl border border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-rose-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">고액 구매</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">고액 구매</span>
               </div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-xl font-bold text-slate-100">
                 {summaryLoading ? "..." : `${operationalKPIs.highValueRecent}건`}
               </div>
               <p className="text-xs text-slate-400 mt-1">최근 30일 · 200만원 이상</p>
@@ -1098,14 +1098,14 @@ export default function PurchasesPage() {
             {/* 후속 처리 필요 */}
             <div className={`rounded-xl border p-4 shadow-sm ${
               operationalKPIs.pendingActions > 0
-                ? "border-blue-200/60 bg-blue-50/30 dark:bg-blue-950/10 dark:border-blue-900/30"
-                : "border-slate-200/60 bg-white dark:bg-[#161d2f] dark:border-[#2a2a2e]/50"
+                ? "border-blue-200/60 bg-blue-50/30  bg-blue-950/10  border-blue-900/30"
+                : "border-slate-200/60 bg-[#1a1a1e] border-[#2a2a2e]/50"
             }`}>
               <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">후속 처리 필요</span>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">후속 처리 필요</span>
               </div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-xl font-bold text-slate-100">
                 {summaryLoading ? "..." : `${operationalKPIs.pendingActions}건`}
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -1118,7 +1118,7 @@ export default function PurchasesPage() {
           </div>
 
           {/* ══ 3. 통합 필터 바 (Desktop) ══ */}
-          <Card className="hidden md:block rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+          <Card className="hidden md:block rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
             <CardContent className="p-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 {/* 검색 */}
@@ -1128,7 +1128,7 @@ export default function PurchasesPage() {
                     placeholder="품목명, 카탈로그 번호 검색"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-9 text-sm border-slate-200 dark:border-[#333338]"
+                    className="pl-9 h-9 text-sm border-slate-200 border-[#333338]"
                   />
                 </div>
                 {/* 필터 그룹 */}
@@ -1188,7 +1188,7 @@ export default function PurchasesPage() {
                   placeholder="품목명 검색"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm border-slate-200 dark:border-[#333338]"
+                  className="pl-9 h-9 text-sm border-slate-200 border-[#333338]"
                 />
               </div>
               <Button
@@ -1219,7 +1219,7 @@ export default function PurchasesPage() {
                 <div className="space-y-4">
                   {/* 기간 */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">기간</label>
+                    <label className="text-xs font-medium text-slate-400">기간</label>
                     <DateRangePicker
                       startDate={customDateRange?.from}
                       endDate={customDateRange?.to}
@@ -1229,7 +1229,7 @@ export default function PurchasesPage() {
 
                   {/* 공급사 */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">공급사</label>
+                    <label className="text-xs font-medium text-slate-400">공급사</label>
                     <Select value={selectedVendor} onValueChange={setSelectedVendor}>
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="공급사" />
@@ -1245,7 +1245,7 @@ export default function PurchasesPage() {
 
                   {/* 분류 */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">분류</label>
+                    <label className="text-xs font-medium text-slate-400">분류</label>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="분류" />
@@ -1261,7 +1261,7 @@ export default function PurchasesPage() {
 
                   {/* 상태 */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400">상태</label>
+                    <label className="text-xs font-medium text-slate-400">상태</label>
                     <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                       <SelectTrigger className="w-full h-9 text-xs">
                         <SelectValue placeholder="상태" />
@@ -1307,7 +1307,7 @@ export default function PurchasesPage() {
 
           {/* ══ 4. 구매 내역 ══ */}
           {purchasesLoading ? (
-            <Card className="rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+            <Card className="rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
               <CardContent className="flex items-center justify-center py-16">
                 <p className="text-sm text-slate-400">구매 내역을 불러오는 중...</p>
               </CardContent>
@@ -1356,10 +1356,10 @@ export default function PurchasesPage() {
                   return (
                     <div
                       key={purchase.id}
-                      className="rounded-xl border border-slate-200/60 dark:border-[#2a2a2e]/50 bg-white dark:bg-[#161d2f] p-3.5 shadow-sm"
+                      className="rounded-xl border border-slate-200/60 border-[#2a2a2e]/50 bg-[#1a1a1e] p-3.5 shadow-sm"
                     >
                       {/* Row 1: 품목명 */}
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 break-words">
+                      <p className="font-bold text-sm text-slate-200 break-words">
                         {purchase.itemName || "-"}
                       </p>
 
@@ -1370,17 +1370,17 @@ export default function PurchasesPage() {
                       </p>
 
                       {/* Row 3: 공급사 */}
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 break-words">
+                      <p className="text-xs text-slate-400 mt-1 break-words">
                         {purchase.vendorName || "-"}
                       </p>
 
                       {/* Row 4: 금액 · 반복 구매 */}
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                        <span className="font-semibold text-sm text-slate-200">
                           {formatCurrency(purchase.amount)}
                         </span>
                         {repeatCount >= 2 && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 dark:text-blue-400">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-blue-200 text-blue-600 bg-blue-50  bg-blue-950/20  border-blue-800 text-blue-400">
                             <Repeat className="h-2.5 w-2.5 mr-0.5" />반복 {repeatCount}회
                           </Badge>
                         )}
@@ -1458,12 +1458,12 @@ export default function PurchasesPage() {
               </div>
             </>
           ) : (
-            <Card className="rounded-xl border-slate-200/60 dark:border-[#2a2a2e]/50 shadow-sm bg-white dark:bg-[#161d2f]">
+            <Card className="rounded-xl border-slate-200/60 border-[#2a2a2e]/50 shadow-sm bg-[#1a1a1e]">
               <CardContent className="flex flex-col items-center justify-center py-14">
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#222226] flex items-center justify-center mx-auto mb-4">
-                  <Package className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 bg-[#222226] flex items-center justify-center mx-auto mb-4">
+                  <Package className="h-6 w-6 text-slate-300  text-slate-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">구매 내역이 없습니다</h3>
+                <h3 className="text-sm font-semibold text-slate-300 mb-1">구매 내역이 없습니다</h3>
                 <p className="text-xs text-slate-400 mb-5">내역을 등록하면 운영 인사이트를 확인할 수 있습니다.</p>
                 <Button
                   onClick={() => setIsImportDialogOpen(true)}
@@ -1484,15 +1484,15 @@ export default function PurchasesPage() {
             const checks = evidenceChecklist[expandedRowId] || {};
             const completedCount = Object.values(checks).filter(Boolean).length;
             return (
-              <Card className="rounded-xl border-amber-200/60 dark:border-amber-800/50 shadow-sm bg-amber-50/30 dark:bg-amber-950/10">
+              <Card className="rounded-xl border-amber-200/60  border-amber-800/50 shadow-sm bg-amber-50/30  bg-amber-950/10">
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                      <CardTitle className="text-sm font-semibold text-amber-800  text-amber-300 flex items-center gap-2">
                         <ClipboardList className="h-4 w-4" />
                         증빙 체크리스트
                       </CardTitle>
-                      <CardDescription className="text-[11px] text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+                      <CardDescription className="text-[11px] text-amber-600/70 text-amber-400/70 mt-0.5">
                         {selectedPurchase.itemName} · {formatCurrency(selectedPurchase.amount)} · {completedCount}/{EVIDENCE_ITEMS.length} 완료
                       </CardDescription>
                     </div>
@@ -1507,7 +1507,7 @@ export default function PurchasesPage() {
                       <button
                         key={item.key}
                         type="button"
-                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-white dark:bg-[#1a1a1e] cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors text-left"
+                        className="flex items-center gap-3 w-full p-2.5 rounded-lg border border-amber-100  border-amber-900/30 bg-white bg-[#1a1a1e] cursor-pointer hover:bg-amber-50/50  hover:bg-amber-950/20 transition-colors text-left"
                         onClick={() => {
                           setEvidenceChecklist((prev) => ({
                             ...prev,
@@ -1522,12 +1522,12 @@ export default function PurchasesPage() {
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                             checks[item.key]
                               ? "bg-emerald-500 border-emerald-500 text-white"
-                              : "border-slate-300 dark:border-slate-600"
+                              : "border-slate-300 border-[#333338]"
                           }`}
                         >
                           {checks[item.key] && <CheckCircle2 className="h-3 w-3" />}
                         </span>
-                        <span className={`text-sm ${checks[item.key] ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-300"}`}>
+                        <span className={`text-sm ${checks[item.key] ? "text-slate-400 line-through" : "text-slate-300"}`}>
                           {item.label}
                         </span>
                       </button>
@@ -1539,31 +1539,31 @@ export default function PurchasesPage() {
           })()}
 
           {/* ══ 5. 구매 운영 후속 조치 ══ */}
-          <div className="rounded-xl border border-slate-200 dark:border-[#2a2a2e]/50 bg-slate-50/60 dark:bg-[#1a1a1e]/30 p-4">
-            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+          <div className="rounded-xl border border-[#2a2a2e]/50 bg-slate-50/60 bg-[#1a1a1e]/30 p-4">
+            <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider mb-3">
               후속 조치 바로가기
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
                   <BarChart2 className="h-3.5 w-3.5 text-slate-500" />
                   구매 리포트
                 </Button>
               </Link>
               <Link href="/dashboard/budget">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
                   <CreditCard className="h-3.5 w-3.5 text-slate-500" />
                   예산 관리
                 </Button>
               </Link>
               <Link href="/dashboard/inventory">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
                   <Package className="h-3.5 w-3.5 text-slate-500" />
                   재고 현황
                 </Button>
               </Link>
               <Link href="/dashboard/analytics">
-                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white dark:bg-[#1a1a1e] hover:bg-slate-50 dark:hover:bg-[#222226] border-slate-200 dark:border-[#333338] font-medium transition-colors">
+                <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-white bg-[#1a1a1e] hover:bg-slate-50 hover:bg-[#222226] border-slate-200 border-[#333338] font-medium transition-colors">
                   <Store className="h-3.5 w-3.5 text-slate-500" />
                   벤더 비교 분석
                 </Button>

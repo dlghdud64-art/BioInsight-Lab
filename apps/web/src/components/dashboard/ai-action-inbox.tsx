@@ -41,78 +41,78 @@ interface CardConfig {
 const CARD_CONFIG: Record<string, CardConfig> = {
   QUOTE_DRAFT: {
     icon: FileText,
-    iconBg: "bg-blue-50 dark:bg-blue-950/40",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-blue-50  bg-blue-950/40",
+    iconColor: "text-blue-600 text-blue-400",
     borderColor: "border-l-blue-500",
     title: "견적 요청 초안이 준비되었습니다",
     description: "선택한 품목 기준으로 벤더 문의 초안을 만들었습니다. 수량과 납기만 확인하면 바로 요청할 수 있습니다.",
     cta: "견적 요청 검토하기",
     badgeLabel: "즉시 확인 필요",
-    badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    badgeClass: "bg-red-50 text-red-700  bg-red-950/40 text-red-400 border-red-200  border-red-800",
     approveToast: "견적 요청이 생성되었습니다",
     approveHref: "/dashboard/quotes",
   },
   VENDOR_EMAIL_DRAFT: {
     icon: Mail,
-    iconBg: "bg-blue-50 dark:bg-blue-950/40",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-blue-50  bg-blue-950/40",
+    iconColor: "text-blue-600 text-blue-400",
     borderColor: "border-l-blue-500",
     title: "벤더 이메일 초안이 준비되었습니다",
     description: "벤더에 보낼 견적 요청 이메일을 작성했습니다. 확인 후 발송할 수 있습니다.",
     cta: "이메일 초안 확인하기",
     badgeLabel: "즉시 확인 필요",
-    badgeClass: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    badgeClass: "bg-red-50 text-red-700  bg-red-950/40 text-red-400 border-red-200  border-red-800",
     approveToast: "이메일 초안이 승인되었습니다",
   },
   FOLLOWUP_DRAFT: {
     icon: Clock,
-    iconBg: "bg-amber-50 dark:bg-amber-950/40",
-    iconColor: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-50  bg-amber-950/40",
+    iconColor: "text-amber-600 text-amber-400",
     borderColor: "border-l-amber-500",
     title: "회신 지연 주문이 있습니다",
     description: "회신 대기 중인 주문에 대해 follow-up 메일 초안을 준비했습니다.",
     cta: "follow-up 초안 확인하기",
     badgeLabel: "회신 대기",
-    badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    badgeClass: "bg-amber-50 text-amber-700  bg-amber-950/40 text-amber-400 border-amber-200  border-amber-800",
     approveToast: "Follow-up 메일이 승인되었습니다",
     approveHref: "/dashboard/orders",
   },
   STATUS_CHANGE_SUGGEST: {
     icon: Clock,
-    iconBg: "bg-purple-50 dark:bg-purple-950/40",
-    iconColor: "text-purple-600 dark:text-purple-400",
+    iconBg: "bg-purple-50  bg-purple-950/40",
+    iconColor: "text-purple-600 text-purple-400",
     borderColor: "border-l-purple-500",
     title: "주문 상태 변경 제안",
     description: "벤더 회신을 분석하여 주문 상태 변경을 제안합니다.",
     cta: "상태 변경안 검토하기",
     badgeLabel: "상태 변경 제안",
-    badgeClass: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+    badgeClass: "bg-purple-50 text-purple-700  bg-purple-950/40 text-purple-400 border-purple-200  border-purple-800",
     approveToast: "주문 상태가 변경되었습니다",
     approveHref: "/dashboard/orders",
   },
   REORDER_SUGGESTION: {
     icon: Package,
-    iconBg: "bg-orange-50 dark:bg-orange-950/40",
-    iconColor: "text-orange-600 dark:text-orange-400",
+    iconBg: "bg-orange-50  bg-orange-950/40",
+    iconColor: "text-orange-600 text-orange-400",
     borderColor: "border-l-orange-500",
     title: "재발주 검토가 필요한 품목이 있습니다",
     description: "부족 재고와 사용 추이를 기준으로 우선 확인할 품목을 정리했습니다.",
     cta: "재발주 우선순위 보기",
     badgeLabel: "재고 위험",
-    badgeClass: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    badgeClass: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
     approveToast: "재발주 요청이 승인되었습니다",
     approveHref: "/dashboard/inventory",
   },
   EXPIRY_ALERT: {
     icon: AlertTriangle,
-    iconBg: "bg-red-50 dark:bg-red-950/40",
-    iconColor: "text-red-600 dark:text-red-400",
+    iconBg: "bg-red-50  bg-red-950/40",
+    iconColor: "text-red-600 text-red-400",
     borderColor: "border-l-red-500",
     title: "유효기한 임박 품목이 있습니다",
     description: "만료 예정인 품목을 확인하고 필요한 조치를 검토하세요.",
     cta: "임박 품목 확인하기",
     badgeLabel: "오늘 처리 권장",
-    badgeClass: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+    badgeClass: "bg-yellow-50 text-yellow-700  bg-yellow-950/40  text-yellow-400 border-yellow-200  border-yellow-800",
     approveToast: "조치가 확인되었습니다",
     approveHref: "/dashboard/inventory",
   },
@@ -120,8 +120,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
 
 const DEFAULT_CONFIG: CardConfig = {
   icon: FileText,
-  iconBg: "bg-slate-50 dark:bg-slate-800",
-  iconColor: "text-slate-600 dark:text-slate-400",
+  iconBg: "bg-[#222226]",
+  iconColor: "text-slate-400",
   borderColor: "border-l-slate-400",
   title: "작업이 준비되었습니다",
   description: "",
@@ -136,27 +136,27 @@ const DEFAULT_CONFIG: CardConfig = {
 const STAGE_CONFIG: Record<string, { label: string; className: string }> = {
   QUOTE_DRAFT: {
     label: "검토 필요",
-    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    className: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
   },
   VENDOR_EMAIL_DRAFT: {
     label: "검토 필요",
-    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400 border-orange-200 dark:border-orange-800",
+    className: "bg-orange-50 text-orange-700  bg-orange-950/40 text-orange-400 border-orange-200  border-orange-800",
   },
   FOLLOWUP_DRAFT: {
     label: "응답 대기",
-    className: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+    className: "bg-amber-50 text-amber-700  bg-amber-950/40 text-amber-400 border-amber-200  border-amber-800",
   },
   STATUS_CHANGE_SUGGEST: {
     label: "승인 필요",
-    className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+    className: "bg-purple-50 text-purple-700  bg-purple-950/40 text-purple-400 border-purple-200  border-purple-800",
   },
   REORDER_SUGGESTION: {
     label: "조치 필요",
-    className: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200 dark:border-red-800",
+    className: "bg-red-50 text-red-700  bg-red-950/40 text-red-400 border-red-200  border-red-800",
   },
   EXPIRY_ALERT: {
     label: "확인 필요",
-    className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+    className: "bg-yellow-50 text-yellow-700  bg-yellow-950/40  text-yellow-400 border-yellow-200  border-yellow-800",
   },
 };
 
@@ -192,13 +192,13 @@ export function AiActionInbox() {
   // 로딩 스켈레톤
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/50">
-          <div className="h-4 w-32 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 border-[#2a2a2e]">
+          <div className="h-4 w-32 rounded bg-[#222226] animate-pulse" />
         </div>
         <div className="p-4 space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-20 rounded-lg bg-slate-50 dark:bg-slate-800/50 animate-pulse" />
+            <div key={i} className="h-20 rounded-lg bg-[#222226]/50 animate-pulse" />
           ))}
         </div>
       </div>
@@ -208,13 +208,13 @@ export function AiActionInbox() {
   // 빈 상태
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
         <div className="px-4 py-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <p className="text-sm font-medium text-slate-300">
             지금 바로 확인할 AI 작업이 없습니다
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 text-slate-500 mt-1">
             견적 요청, 주문 회신, 재고 위험 항목이 생기면 여기에서 바로 확인할 수 있습니다.
           </p>
         </div>
@@ -292,20 +292,20 @@ export function AiActionInbox() {
 
   return (
     <>
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800/50 bg-white dark:bg-[#161d2f] shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm overflow-hidden">
         {/* 헤더 */}
-        <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-b border-slate-100 border-[#2a2a2e] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
             </span>
-            <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <h3 className="text-xs font-semibold text-slate-300">
               AI 작업함
             </h3>
             <Badge
               variant="secondary"
-              className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+              className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-blue-100 text-blue-700  bg-blue-900/40  text-blue-300"
             >
               {pendingCount}
             </Badge>
@@ -313,7 +313,7 @@ export function AiActionInbox() {
         </div>
 
         {/* 카드 목록 */}
-        <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+        <div className="divide-y divide-[#2a2a2e]/50">
           {items.map((item) => {
             const config = CARD_CONFIG[item.type] || DEFAULT_CONFIG;
             const IconComp = config.icon;
@@ -322,7 +322,7 @@ export function AiActionInbox() {
             return (
               <div
                 key={item.id}
-                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all duration-200`}
+                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-slate-50/50 hover:bg-[#222226]/20 transition-all duration-200`}
               >
                 <div
                   className="flex items-start gap-3 cursor-pointer md:cursor-default"
@@ -341,7 +341,7 @@ export function AiActionInbox() {
                   {/* 내용 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h4 className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                      <h4 className="text-sm font-medium text-slate-200 truncate">
                         {item.title || config.title}
                       </h4>
                       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 flex-shrink-0 ${config.badgeClass}`}>
@@ -355,7 +355,7 @@ export function AiActionInbox() {
                     </div>
 
                     {/* 설명: 모바일에서는 확장 시에만 표시 */}
-                    <p className={`text-xs text-slate-500 dark:text-slate-400 line-clamp-2 ${
+                    <p className={`text-xs text-slate-400 line-clamp-2 ${
                       expandedId !== item.id ? "hidden md:block" : ""
                     }`}>
                       {item.description || config.description}
@@ -397,7 +397,7 @@ export function AiActionInbox() {
                         {isItemDismissing ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-0.5" />}
                         무시
                       </Button>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+                      <span className="text-[10px] text-slate-400 text-slate-500 ml-auto">
                         {timeAgo(item.createdAt)}
                       </span>
                     </div>
