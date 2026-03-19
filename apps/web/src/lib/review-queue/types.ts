@@ -10,10 +10,12 @@ export type SourceType = "search" | "excel" | "protocol";
 
 // ── 검토 상태 ──
 export type ReviewStatus =
-  | "confirmed"      // 확정 가능 — 바로 비교/견적으로 이동 가능
-  | "needs_review"   // 검토 필요 — 사용자 확인 후 진행
-  | "match_failed"   // 매칭 실패 — 수동 선택 필요
-  | "excluded";      // 제외됨 — 사용자가 명시적으로 제외
+  | "confirmed"        // 확정 가능 — 바로 비교/견적으로 이동 가능
+  | "needs_review"     // 검토 필요 — 사용자 확인 후 진행
+  | "match_failed"     // 매칭 실패 — 수동 선택 필요
+  | "compare_needed"   // 비교 필요 — 비교 워크스페이스로 보내야 함
+  | "approved"         // 승인 완료 — 최종 승인됨
+  | "excluded";        // 제외됨 — 사용자가 명시적으로 제외
 
 // ── confidence 수준 ──
 export type ConfidenceLevel = "high" | "medium" | "low";
