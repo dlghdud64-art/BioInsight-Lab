@@ -244,20 +244,19 @@ export function OverviewBlockSkeleton({ message = "데이터를 불러오는 중
 // ═══════════════════════════════════════════════════
 
 interface TwoColumnProps {
-  children: React.ReactNode;
-  ratio?: "1:1" | "2:1" | "1:2";
+  left: React.ReactNode;
+  right: React.ReactNode;
+  ratio?: "8:4" | "7:5";
   className?: string;
 }
 
-export function OverviewTwoColumnLayout({ children, ratio = "1:1", className }: TwoColumnProps) {
-  const gridCls =
-    ratio === "2:1" ? "md:grid-cols-[2fr_1fr]" :
-    ratio === "1:2" ? "md:grid-cols-[1fr_2fr]" :
-    "md:grid-cols-2";
+export function OverviewTwoColumnLayout({ left, right, ratio = "8:4", className }: TwoColumnProps) {
+  const gridCls = ratio === "7:5" ? "md:grid-cols-[7fr_5fr]" : "md:grid-cols-[8fr_4fr]";
 
   return (
-    <div className={cn("grid gap-3", gridCls, className)}>
-      {children}
+    <div className={cn("grid gap-4", gridCls, className)}>
+      <div>{left}</div>
+      <div>{right}</div>
     </div>
   );
 }
