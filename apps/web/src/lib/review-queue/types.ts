@@ -1,8 +1,9 @@
 /**
- * Step 1 공통 Review Queue — 직접 검색 / 엑셀 업로드 / 프로토콜 업로드가 공유하는 item schema
+ * Step 1 공통 Review Queue + Step 2/3 Handoff Contract
  *
- * 모든 입력 방식은 ReviewQueueItem으로 정규화되어 review queue에 적재된다.
- * 승인된 항목만 Step 2(비교) / Step 3(견적)으로 handoff된다.
+ * 모든 입력 방식(검색/엑셀/프로토콜)은 ReviewQueueItem으로 정규화.
+ * 승인된 항목만 Step 2(비교) / Step 3(견적)으로 handoff.
+ * handoff 후에도 source lineage + reviewReason 유지.
  */
 
 // ── 입력 소스 ──
@@ -13,9 +14,9 @@ export type ReviewStatus =
   | "confirmed"        // 확정 가능 — 바로 비교/견적으로 이동 가능
   | "needs_review"     // 검토 필요 — 사용자 확인 후 진행
   | "match_failed"     // 매칭 실패 — 수동 선택 필요
-  | "compare_needed"   // 비교 필요 — 비교 워크스페이스로 보내야 함
-  | "approved"         // 승인 완료 — 최종 승인됨
-  | "excluded";        // 제외됨 — 사용자가 명시적으로 제외
+  | "compare_needed"   // 비교 필요 — Step 2 compare queue 대상
+  | "approved"         // 승인 완료 — Step 3 견적 대상
+  | "excluded";        // 제외됨
 
 // ── confidence 수준 ──
 export type ConfidenceLevel = "high" | "medium" | "low";
@@ -31,99 +32,224 @@ export interface MatchCandidate {
 
 // ── 핵심: Review Queue Item ──
 export interface ReviewQueueItem {
-  /** 고유 ID (uuid) */
   id: string;
-
-  /** 입력 소스 */
   sourceType: SourceType;
-
-  /** 원본 입력값 (검색어, 엑셀 행 텍스트, 프로토콜 추출 텍스트) */
   rawInput: string;
-
-  /** 파싱된 품목명 */
   parsedItemName: string;
-
-  /** 파싱된 제조사 */
   manufacturer: string | null;
-
-  /** 파싱된 카탈로그 번호 */
   catalogNumber: string | null;
-
-  /** 파싱된 규격 */
   spec: string | null;
-
-  /** 필요 수량 */
   quantity: number | null;
-
-  /** 단위 */
   unit: string | null;
-
-  /** AI confidence */
   confidence: ConfidenceLevel;
-
-  /** 검토 상태 */
   status: ReviewStatus;
-
-  /** 매칭 후보 목록 (score 내림차순) */
   matchCandidates: MatchCandidate[];
-
-  /** 사용자가 최종 선택한 제품 */
   selectedProduct: MatchCandidate | null;
-
-  /** 검토가 필요한 이유 */
   needsReview: boolean;
   reviewReason: string | null;
-
-  /** 타임스탬프 */
   addedAt: string; // ISO
+
+  // ── downstream link (중복 전송 방지) ──
+  linkedCompareItemId?: string | null;
+  linkedQuoteDraftItemId?: string | null;
 }
 
 // ── Row Action ──
 export type ReviewAction =
-  | "approve"           // 승인 → status: confirmed
-  | "edit"              // 수정 → 사용자가 필드 편집
-  | "exclude"           // 제외 → status: excluded
-  | "add_to_compare"    // 비교 리스트에 담기 → Step 2
-  | "add_to_quote";     // 견적 초안에 담기 → Step 3
+  | "approve"
+  | "edit"
+  | "exclude"
+  | "add_to_compare"
+  | "add_to_quote";
 
-// ── Step 2/3 Handoff Contract ──
+// ── reviewReason 내부 코드 → 사용자 문구 매핑 ──
+export const REVIEW_REASON_LABELS: Record<string, string> = {
+  name_missing: "품목명 확인 필요",
+  manufacturer_missing: "제조사 확인 필요",
+  catalog_missing: "카탈로그 번호 확인 필요",
+  spec_unclear: "규격 확인 필요",
+  quantity_missing: "수량 확인 필요",
+  unit_missing: "단위 확인 필요",
+  multiple_candidates: "후보 비교 필요",
+  category_level_only: "제품군 수준으로만 추출되었습니다",
+  spec_collision: "규격이 유사한 후보가 여러 개 있습니다",
+  brand_ambiguous: "제조사 구분이 필요합니다",
+  packaging_unclear: "포장 단위 확인 필요",
+  spec_mismatch: "원문 규격과 후보 규격이 다를 수 있습니다",
+  protocol_to_product_gap: "문서 표현과 실제 구매 단위 연결 검토가 필요합니다",
+  no_match: "일치하는 후보를 찾지 못했습니다",
+  evidence_only: "근거 문장은 있으나 제품 후보를 특정하지 못했습니다",
+  row_empty: "유효한 입력 행이 아닙니다",
+};
+
+// ═══════════════════════════════════════════════════
+// Step 2: Compare Queue Item
+// ═══════════════════════════════════════════════════
+
+export type CompareStatus =
+  | "pending_comparison"    // 비교 대기
+  | "selection_needed"      // 후보 선택 필요
+  | "selection_confirmed"   // 선택 확정
+  | "removed";              // 제거됨
+
+export interface CompareQueueItem {
+  compareItemId: string;
+  sourceQueueItemId: string;
+  sourceType: SourceType;
+  parsedItemName: string;
+  normalizedNeed: string;
+  candidateProducts: MatchCandidate[];
+  selectedProductId: string | null;
+  manufacturer: string | null;
+  catalogNumber: string | null;
+  spec: string | null;
+  quantity: number | null;
+  unit: string | null;
+  comparisonReason: string | null;
+  reviewReason: string | null;
+  confidence: ConfidenceLevel;
+  sourceContext: string;
+  evidenceSummary: string | null;
+  status: CompareStatus;
+}
+
+// ═══════════════════════════════════════════════════
+// Step 3: Quote Draft Item
+// ═══════════════════════════════════════════════════
+
+export type QuoteDraftStatus =
+  | "draft_ready"             // 견적 요청 가능
+  | "missing_required_fields" // 필수 필드 누락
+  | "awaiting_review"         // 추가 검토 대기
+  | "removed";                // 제거됨
+
+export interface QuoteDraftItem {
+  quoteDraftItemId: string;
+  sourceQueueItemId: string;
+  sourceType: SourceType;
+  selectedProductId: string;
+  parsedItemName: string;
+  manufacturer: string | null;
+  catalogNumber: string | null;
+  spec: string | null;
+  quantity: number;
+  unit: string;
+  notes: string | null;
+  sourceContext: string;
+  evidenceSummary: string | null;
+  budgetHint: string | null;
+  inventoryHint: string | null;
+  status: QuoteDraftStatus;
+}
+
+// ═══════════════════════════════════════════════════
+// Handoff: Step 1 → Step 2 (Compare)
+// ═══════════════════════════════════════════════════
+
+/** Step 2로 보낼 수 있는지 판정 */
+export function canHandoffToCompare(item: ReviewQueueItem): boolean {
+  if (item.status === "excluded" || item.status === "match_failed") return false;
+  if (!item.parsedItemName) return false;
+  if ((item.matchCandidates?.length ?? 0) < 1) return false;
+  // compare_needed는 기본 Step 2 대상
+  if (item.status === "compare_needed") return true;
+  // approved 또는 confirmed도 후보가 있으면 compare 가능
+  if (item.status === "approved" || item.status === "confirmed") return true;
+  // needs_review도 후보가 있고 사용자가 명시적으로 요청 시 가능
+  if (item.status === "needs_review" && (item.matchCandidates?.length ?? 0) >= 1) return true;
+  return false;
+}
+
+/** Review Queue Item → Compare Queue Item 변환 */
+export function mapQueueItemToCompareItem(item: ReviewQueueItem): CompareQueueItem {
+  const normalizedNeed = [item.parsedItemName, item.spec].filter(Boolean).join(" · ");
+  const sourceContext = item.sourceType === "search"
+    ? `검색어: "${item.rawInput}"`
+    : item.sourceType === "excel"
+    ? `엑셀: ${item.rawInput}`
+    : `프로토콜: ${item.rawInput}`;
+
+  return {
+    compareItemId: `cmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceQueueItemId: item.id,
+    sourceType: item.sourceType,
+    parsedItemName: item.parsedItemName,
+    normalizedNeed,
+    candidateProducts: item.matchCandidates,
+    selectedProductId: item.selectedProduct?.productId ?? null,
+    manufacturer: item.manufacturer,
+    catalogNumber: item.catalogNumber,
+    spec: item.spec,
+    quantity: item.quantity,
+    unit: item.unit,
+    comparisonReason: item.matchCandidates.length > 1 ? "후보 비교 필요" : null,
+    reviewReason: item.reviewReason,
+    confidence: item.confidence,
+    sourceContext,
+    evidenceSummary: null, // protocol source일 때 evidence summary 가능
+    status: item.matchCandidates.length > 1 ? "selection_needed" : "pending_comparison",
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// Handoff: Step 1 → Step 3 (Quote Draft)
+// ═══════════════════════════════════════════════════
+
+/** Step 3로 보낼 수 있는지 판정 — 가장 엄격한 조건 */
+export function canHandoffToQuote(item: ReviewQueueItem): boolean {
+  if (item.status !== "approved" && item.status !== "confirmed") return false;
+  if (!item.selectedProduct) return false;
+  if (item.quantity == null || item.quantity <= 0) return false;
+  if (!item.unit) return false;
+  if (!item.parsedItemName) return false;
+  return true;
+}
+
+/** Review Queue Item → Quote Draft Item 변환 */
+export function mapQueueItemToQuoteDraftItem(item: ReviewQueueItem): QuoteDraftItem | null {
+  if (!item.selectedProduct || item.quantity == null || !item.unit) return null;
+
+  const sourceContext = item.sourceType === "search"
+    ? `검색어: "${item.rawInput}"`
+    : item.sourceType === "excel"
+    ? `엑셀: ${item.rawInput}`
+    : `프로토콜: ${item.rawInput}`;
+
+  const missingFields: string[] = [];
+  if (!item.manufacturer && !item.catalogNumber) missingFields.push("제조사/카탈로그 번호 누락");
+  if (!item.spec) missingFields.push("규격 누락");
+
+  return {
+    quoteDraftItemId: `qd-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceQueueItemId: item.id,
+    sourceType: item.sourceType,
+    selectedProductId: item.selectedProduct.productId,
+    parsedItemName: item.parsedItemName,
+    manufacturer: item.manufacturer,
+    catalogNumber: item.catalogNumber,
+    spec: item.spec,
+    quantity: item.quantity,
+    unit: item.unit,
+    notes: item.rawInput,
+    sourceContext,
+    evidenceSummary: null,
+    budgetHint: null,
+    inventoryHint: null,
+    status: missingFields.length > 0 ? "missing_required_fields" : "draft_ready",
+  };
+}
+
+// ── 기존 호환 HandoffItem ──
 export interface HandoffItem {
-  /** review queue item ID */
   reviewItemId: string;
-
-  /** 확정된 제품 */
   productId: string;
   productName: string;
   brand: string | null;
   catalogNumber: string | null;
-
-  /** 수량/규격 */
   quantity: number | null;
   unit: string | null;
   spec: string | null;
-
-  /** 원본 소스 */
   sourceType: SourceType;
-}
-
-/**
- * Handoff 규칙:
- * - selectedProduct가 확정된 항목만 Step 2 비교로 이동 가능
- * - quantity/spec 검토 완료 항목만 Step 3 견적 가능
- * - status === "needs_review" 또는 "match_failed" 항목은 Step 1에 남김
- * - status === "excluded" 항목은 handoff 대상에서 제외
- */
-export function canHandoffToCompare(item: ReviewQueueItem): boolean {
-  return item.status === "confirmed" && item.selectedProduct !== null;
-}
-
-export function canHandoffToQuote(item: ReviewQueueItem): boolean {
-  return (
-    item.status === "confirmed" &&
-    item.selectedProduct !== null &&
-    item.quantity !== null &&
-    item.quantity > 0
-  );
 }
 
 export function toHandoffItem(item: ReviewQueueItem): HandoffItem | null {
@@ -139,4 +265,13 @@ export function toHandoffItem(item: ReviewQueueItem): HandoffItem | null {
     spec: item.spec,
     sourceType: item.sourceType,
   };
+}
+
+// ── Bulk 필터 헬퍼 ──
+export function filterEligibleCompareItems(items: ReviewQueueItem[]): ReviewQueueItem[] {
+  return items.filter(canHandoffToCompare);
+}
+
+export function filterEligibleQuoteItems(items: ReviewQueueItem[]): ReviewQueueItem[] {
+  return items.filter(canHandoffToQuote);
 }
