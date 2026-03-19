@@ -25,6 +25,7 @@ import {
   ActivityFeedBlockContent,
   QuickLinksBlock,
 } from "./overview-blocks";
+import { OverviewTwoColumnLayout } from "./overview-shell";
 import { BLOCK_SKELETON_HEIGHTS } from "@/lib/review-queue/ops-hub-block-states";
 
 // ═══════════════════════════════════════════════════
@@ -100,25 +101,29 @@ export function OrganizationOverviewPage({ vm, blockStates }: OrganizationOvervi
         <AlertsBlockContent items={vm.alerts.items} />
       </BlockWrapper>
 
-      {/* 4. Work Queue */}
-      <BlockWrapper
-        title="지금 처리할 작업"
-        helperText="바로 처리 가능한 항목부터 보여줍니다"
-        state={blockStates.workQueue}
-        minHeight={BLOCK_SKELETON_HEIGHTS.workQueue}
-      >
-        <WorkQueueBlockContent sections={vm.workQueue.sections} />
-      </BlockWrapper>
-
-      {/* 5. Approval Inbox */}
-      <BlockWrapper
-        title="승인 대기함"
-        helperText="조직 차원의 승인과 검토가 필요한 요청입니다"
-        state={blockStates.approvalInbox}
-        minHeight={BLOCK_SKELETON_HEIGHTS.approvalInbox}
-      >
-        <ApprovalInboxBlockContent inbox={vm.approvalInbox} />
-      </BlockWrapper>
+      {/* 4-5. Work Queue + Approval Inbox (Two-Column) */}
+      <OverviewTwoColumnLayout
+        left={
+          <BlockWrapper
+            title="지금 처리할 작업"
+            helperText="바로 처리 가능한 항목부터 보여줍니다"
+            state={blockStates.workQueue}
+            minHeight={BLOCK_SKELETON_HEIGHTS.workQueue}
+          >
+            <WorkQueueBlockContent sections={vm.workQueue.sections} />
+          </BlockWrapper>
+        }
+        right={
+          <BlockWrapper
+            title="승인 대기함"
+            helperText="조직 차원의 승인과 검토가 필요한 요청입니다"
+            state={blockStates.approvalInbox}
+            minHeight={BLOCK_SKELETON_HEIGHTS.approvalInbox}
+          >
+            <ApprovalInboxBlockContent inbox={vm.approvalInbox} />
+          </BlockWrapper>
+        }
+      />
 
       {/* 6. Activity Feed */}
       <BlockWrapper

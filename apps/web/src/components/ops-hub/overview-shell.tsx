@@ -65,19 +65,13 @@ interface SectionHeaderProps {
   title: string;
   helperText?: string;
   action?: React.ReactNode;
-  tone?: "default" | "subtle";
 }
 
-export function OverviewSectionHeader({ title, helperText, action, tone = "default" }: SectionHeaderProps) {
+export function OverviewSectionHeader({ title, helperText, action }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <h3 className={cn(
-          "font-bold",
-          tone === "default" ? "text-sm text-slate-100" : "text-xs text-slate-300"
-        )}>
-          {title}
-        </h3>
+        <h3 className="text-sm font-bold text-slate-100">{title}</h3>
         {helperText && (
           <span className="text-[10px] text-slate-500 hidden md:inline">{helperText}</span>
         )}
