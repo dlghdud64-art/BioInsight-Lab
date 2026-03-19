@@ -1457,8 +1457,8 @@ function InventoryPageContent() {
                     }}
                     onMoveLocation={(inventory) => {
                       toast({
-                        title: "위치 이동",
-                        description: `${inventory.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
+                        title: "보관 위치 변경",
+                        description: `${inventory.product.name} 보관 위치 변경 기능은 준비 중입니다.`,
                       });
                     }}
                     onPrintLabel={(productName, lots) => {

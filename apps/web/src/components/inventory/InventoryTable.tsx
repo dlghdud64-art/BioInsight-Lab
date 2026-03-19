@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
-  AlertTriangle, Thermometer, Snowflake, Ban, PackagePlus,
+  AlertTriangle, Thermometer, Snowflake, PackagePlus,
   MoreVertical, Pencil, Eye, Trash2, ChevronRight, ChevronDown,
   Clock, RotateCcw, Printer, MapPin, Package,
   PackageX, Truck, ArrowLeftRight, QrCode,
@@ -163,8 +163,6 @@ function getRiskScore(group: ProductGroup): number {
 
 /* ── 상태 배지 렌더링 ── */
 
-const BADGE_BASE = "inline-flex items-center justify-center rounded-full shadow-sm ring-2 ring-white/50  ring-slate-900/50 shrink-0";
-
 function StatusBadge({ status }: { status: string }) {
   const isShort = status === "부족" || status === "out_of_stock" || status === "low";
   const isImpending = status.startsWith("소진 임박") || status === "재주문 권장";
@@ -172,43 +170,56 @@ function StatusBadge({ status }: { status: string }) {
   const isExpiry = status === "임박";
   const isDiscarded = status === "폐기";
 
-  if (isShort || isImpending || isDiscarded) {
+  // 폐기/만료 — red (진짜 치명 상태만)
+  if (isDiscarded) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className={`h-6 w-6 ${BADGE_BASE} bg-red-100  bg-red-900/50 text-red-600 text-red-400`}>
-          <Ban className="h-3.5 w-3.5" strokeWidth={2.25} />
-        </span>
-        <span className="text-[11px] font-semibold text-red-600 text-red-400 whitespace-nowrap">{isDiscarded ? "폐기" : isImpending ? status : "부족"}</span>
+        <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+        <span className="text-[11px] font-medium text-red-400 whitespace-nowrap">폐기</span>
       </span>
     );
   }
+  // 부족 — amber (운영 상태)
+  if (isShort) {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+        <span className="text-[11px] font-medium text-amber-400 whitespace-nowrap">부족</span>
+      </span>
+    );
+  }
+  // 재발주 필요 — blue (액션 유도)
+  if (isImpending) {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+        <span className="text-[11px] font-medium text-blue-400 whitespace-nowrap">{status}</span>
+      </span>
+    );
+  }
+  // 주의 — amber
   if (isWarning) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className={`h-6 w-6 ${BADGE_BASE} bg-orange-100  bg-orange-900/50 text-orange-600 text-orange-400`}>
-          <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2.25} />
-        </span>
-        <span className="text-[11px] font-semibold text-orange-600 text-orange-400 whitespace-nowrap">주의</span>
+        <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+        <span className="text-[11px] font-medium text-amber-400 whitespace-nowrap">주의</span>
       </span>
     );
   }
+  // 만료 임박 — deep amber
   if (isExpiry) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className={`h-6 w-6 ${BADGE_BASE} bg-amber-100  bg-amber-900/50 text-amber-700 text-amber-400`}>
-          <Clock className="h-3.5 w-3.5" strokeWidth={2.25} />
-        </span>
-        <span className="text-[11px] font-semibold text-amber-700 text-amber-400 whitespace-nowrap">임박</span>
+        <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0" />
+        <span className="text-[11px] font-medium text-amber-400 whitespace-nowrap">임박</span>
       </span>
     );
   }
-  // 정상
+  // 정상 — green
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className={`h-6 w-6 ${BADGE_BASE} bg-emerald-100  bg-emerald-900/50 text-emerald-600 text-emerald-400`}>
-        <span className="h-2 w-2 rounded-full bg-emerald-500" />
-      </span>
-      <span className="text-[11px] font-semibold text-emerald-600 text-emerald-400 whitespace-nowrap">정상</span>
+      <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+      <span className="text-[11px] font-medium text-emerald-400 whitespace-nowrap">정상</span>
     </span>
   );
 }
@@ -309,7 +320,7 @@ export function InventoryTable({
               return (
                 <div
                   key={group.productId}
-                  className={`${isRisky ? "bg-red-50/30  bg-red-950/10" : ""}`}
+                  className={`${isRisky ? "bg-amber-500/5" : ""}`}
                 >
                   {/* ── 품목 카드 ── */}
                   <div className="px-3.5 py-3">
@@ -328,8 +339,8 @@ export function InventoryTable({
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2.5">
                       <span className="flex items-center gap-1">
                         <span className={`font-bold text-sm ${
-                          groupStatus === "부족" ? "text-red-600 text-red-400" :
-                          groupStatus === "주의" ? "text-orange-600 text-orange-400" :
+                          groupStatus === "부족" ? "text-amber-400" :
+                          groupStatus === "주의" ? "text-amber-400" :
                           "text-slate-100"
                         }`}>
                           총 {group.totalQuantity}
@@ -374,8 +385,8 @@ export function InventoryTable({
                         className={`h-7 px-2.5 text-[11px] gap-1 ${
                           isRisky
                             ? groupStatus === "부족" || displayStatus === "폐기"
-                              ? "text-red-600 border-red-200 hover:bg-red-50  border-red-800  hover:bg-red-950"
-                              : "text-amber-600 border-amber-200 hover:bg-amber-50  border-amber-800  hover:bg-amber-950"
+                              ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                              : "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                             : "text-slate-600 border-bd hover:bg-pg border-bs hover:bg-el"
                         }`}
                         onClick={() => onReorder(group.lots[0])}
@@ -417,9 +428,9 @@ export function InventoryTable({
                             key={lot.id}
                             className={`rounded-lg border p-3 ${
                               lotUrgent
-                                ? "border-red-200 bg-red-50/40  border-red-900 bg-red-950/20"
+                                ? "border-amber-500/20 bg-amber-500/5"
                                 : lotExpiringSoon
-                                  ? "border-amber-200 bg-amber-50/30  border-amber-900  bg-amber-950/20"
+                                  ? "border-amber-500/20 bg-amber-500/5"
                                   : "border-bd bg-pn border-bs bg-pn/60"
                             }`}
                           >
@@ -474,7 +485,7 @@ export function InventoryTable({
                                   size="sm"
                                   className={`h-7 px-2.5 text-[11px] gap-1 ${
                                     lotUrgent
-                                      ? "text-red-600 border-red-200 hover:bg-red-50  border-red-800  hover:bg-red-950"
+                                      ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                                       : "text-slate-600 border-bd hover:bg-el border-bs hover:bg-el"
                                   }`}
                                   onClick={() => onConsume(lot)}
@@ -580,7 +591,7 @@ export function InventoryTable({
                         ${isExpanded
                           ? "bg-blue-50/60  bg-blue-950/20 hover:bg-blue-50/80  hover:bg-blue-950/30 shadow-sm"
                           : isRisky
-                          ? "bg-red-50/20  bg-red-950/5 hover:bg-red-50/40  hover:bg-red-950/10"
+                          ? "bg-amber-500/5 hover:bg-amber-500/10"
                           : "bg-pn bg-sh hover:bg-pg  hover:bg-pn/50"
                         }
                       `}
@@ -627,8 +638,8 @@ export function InventoryTable({
                       {/* 총 수량 */}
                       <TableCell className="text-right whitespace-nowrap">
                         <span className={`font-bold text-base ${
-                          groupStatus === "부족" ? "text-red-600 text-red-400" :
-                          groupStatus === "주의" ? "text-orange-600 text-orange-400" :
+                          groupStatus === "부족" ? "text-amber-400" :
+                          groupStatus === "주의" ? "text-amber-400" :
                           "text-slate-100"
                         }`}>
                           {group.totalQuantity}
@@ -693,8 +704,8 @@ export function InventoryTable({
                                       size="sm"
                                       className={`h-7 px-2 text-[11px] gap-1 ${
                                         groupStatus === "부족" || displayStatus === "폐기"
-                                          ? "text-red-600 text-red-400 border-red-200  border-red-800 hover:bg-red-950/30"
-                                          : "text-orange-600 text-orange-400 border-orange-200  border-orange-800 hover:bg-orange-50  hover:bg-orange-950/30"
+                                          ? "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                                          : "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                                       }`}
                                       onClick={() => onReorder(group.lots[0])}
                                     >
@@ -922,8 +933,8 @@ export function InventoryTable({
                                             className={`h-7 px-2 text-[11px] gap-1 ${
                                               lotNeedsUrgent
                                                 ? lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
-                                                  ? "text-red-600 text-red-400 border-red-200  border-red-800 hover:bg-red-950/30"
-                                                  : "text-orange-600 text-orange-400 border-orange-200  border-orange-800 hover:bg-orange-50  hover:bg-orange-950/30"
+                                                  ? "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                                                  : "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
                                                 : "text-slate-400 border-bd border-bs hover:bg-pg hover:bg-el"
                                             }`}
                                             onClick={() => onConsume(lot)}
@@ -950,7 +961,7 @@ export function InventoryTable({
                                             이동
                                           </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>위치 이동</TooltipContent>
+                                        <TooltipContent>보관 위치 변경</TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
                                   )}
