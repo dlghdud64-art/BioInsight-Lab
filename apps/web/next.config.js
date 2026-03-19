@@ -53,7 +53,11 @@ const nextConfig = {
       crypto: false,
     };
 
-    // (reserved for future optimization)
+    // SWC minifier TDZ 회피: 클라이언트 번들 minimize 완전 비활성화
+    // 번들 크기가 증가하지만 런타임 TDZ 에러를 근본적으로 제거
+    if (!isServer) {
+      config.optimization.minimize = false;
+    }
 
     return config;
   }
