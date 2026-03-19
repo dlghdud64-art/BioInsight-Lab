@@ -239,40 +239,20 @@ export default function BudgetPage() {
           icon={Wallet}
           actions={
             <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
-              <PermissionGate
-                permission="budgets.create"
-                disabledFallback={
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button size="sm" className="text-xs md:text-sm h-8 md:h-10 opacity-50" disabled>
-                          <Lock className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                          <span className="hidden sm:inline">예산 추가</span>
-                          <span className="sm:hidden">추가</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">관리자만 예산을 추가할 수 있습니다</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                }
-              >
-                <DialogTrigger asChild>
-                  <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
-                    <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                    <span className="hidden sm:inline">예산 추가</span>
-                    <span className="sm:hidden">추가</span>
-                  </Button>
-                </DialogTrigger>
-              </PermissionGate>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
+                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">예산안 만들기</span>
+                  <span className="sm:hidden">추가</span>
+                </Button>
+              </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingBudget ? "예산 수정" : "예산 추가"}
+                    {editingBudget ? "예산 수정" : "예산안 만들기"}
                   </DialogTitle>
                   <DialogDescription>
-                    예산 정보를 입력하고 기간을 설정합니다.
+                    팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.
                   </DialogDescription>
                 </DialogHeader>
                 <BudgetForm
@@ -316,10 +296,11 @@ export default function BudgetPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">등록된 예산이 없습니다.</p>
+              <p className="text-slate-300 mb-2">등록된 예산이 없습니다.</p>
+              <p className="text-slate-500 text-sm mb-4">팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.</p>
               <Button onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
-                첫 예산 추가하기
+                예산안 만들기
               </Button>
             </CardContent>
           </Card>
@@ -753,7 +734,7 @@ function BudgetForm({
               {budget ? "수정 중..." : "저장 중..."}
             </>
           ) : (
-            budget ? "예산 수정 저장" : "예산 추가"
+            budget ? "예산 수정 저장" : "예산안 저장"
           )}
         </Button>
       </div>

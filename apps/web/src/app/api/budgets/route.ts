@@ -158,7 +158,8 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // ── [RBAC] organizationId는 body에서 받지 않고 서버 세션에서 추출 ──────────
-    // OWNER 또는 ADMIN 만 예산 생성 가능 (Viewer/Requester/Approver 금지)
+    // 예산안 생성은 VIEWER를 제외한 모든 역할이 가능 (create ≠ approve)
+    // 활성화/승인/종료는 OWNER/ADMIN만 가능 (별도 API)
     const membership = await db.organizationMember.findFirst({
       where: { userId: session.user.id },
       select: { organizationId: true, role: true },
@@ -168,10 +169,10 @@ export async function POST(request: NextRequest) {
     const isPersonalBudget = !membership; // 조직 소속 없음 → 개인 예산
 
     if (membership) {
-      const allowedRoles: OrganizationRole[] = [OrganizationRole.OWNER, OrganizationRole.ADMIN];
-      if (!allowedRoles.includes(membership.role)) {
+      // VIEWER만 생성 불가, 나머지(REQUESTER/APPROVER/ADMIN/OWNER)는 생성 가능
+      if (membership.role === OrganizationRole.VIEWER) {
         return NextResponse.json(
-          { error: "예산 생성 권한이 없습니다. 조직의 Owner 또는 Admin만 예산을 생성할 수 있습니다." },
+          { error: "예산안을 생성하려면 REQUESTER 이상의 역할이 필요합니다." },
           { status: 403 }
         );
       }
