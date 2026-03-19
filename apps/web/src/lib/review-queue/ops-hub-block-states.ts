@@ -180,30 +180,74 @@ export const BLOCK_COPY = {
   alerts: {
     loading: "운영 경고를 확인하는 중...",
     empty: "현재 우선 확인이 필요한 운영 경고가 없습니다",
+    emptyDescription: "예산, 재고, 승인 관련 경고가 발생하면 여기에 표시됩니다.",
     error: "운영 경고를 불러오지 못했습니다",
+    errorDescription: "네트워크 상태를 확인하고 다시 시도해주세요.",
     unavailable: "운영 경고 기능을 사용할 수 없습니다",
+    unavailableDescription: "이 기능은 Business 플랜 이상에서 제공됩니다.",
     retryCta: "경고 다시 불러오기",
   },
   workQueue: {
     loading: "처리할 작업을 정리하는 중...",
     empty: "지금 바로 처리할 작업이 없습니다",
+    emptyDescription: "검토 큐에 항목이 추가되면 처리할 작업이 여기에 표시됩니다.",
+    emptyCta: "Step 1 검토 큐 열기",
     error: "작업 대기 항목을 불러오지 못했습니다",
+    errorDescription: "잠시 후 다시 시도하거나 새로고침해주세요.",
     unavailable: "작업 큐 기능을 사용할 수 없습니다",
+    unavailableDescription: "팀 운영 기능은 Team 플랜 이상에서 사용할 수 있습니다.",
     retryCta: "작업 큐 다시 불러오기",
   },
   approvalInbox: {
     loading: "승인 요청을 확인하는 중...",
     empty: "현재 승인 대기 요청이 없습니다",
+    emptyDescription: "견적 제출이나 예산 검토에서 승인이 필요하면 여기에 표시됩니다.",
     error: "승인 요청을 불러오지 못했습니다",
-    unavailable: "승인 기능을 사용할 수 없습니다",
+    errorDescription: "네트워크 상태를 확인하고 다시 시도해주세요.",
+    unavailable: "승인 워크플로우를 사용할 수 없습니다",
+    unavailableDescription: "팀 승인 기능은 Business 플랜 이상에서 사용할 수 있습니다.",
+    unavailableCta: "플랜 업그레이드",
     retryCta: "승인 요청 다시 불러오기",
   },
   activityFeed: {
     loading: "최근 운영 활동을 불러오는 중...",
     empty: "아직 기록된 운영 활동이 없습니다",
+    emptyDescription: "검토, 비교, 제출, 승인 작업을 시작하면 활동 이력이 여기에 기록됩니다.",
+    emptyCta: "Step 1 시작하기",
     error: "최근 운영 활동을 불러오지 못했습니다",
+    errorDescription: "잠시 후 다시 시도해주세요.",
     unavailable: "활동 피드 기능을 사용할 수 없습니다",
+    unavailableDescription: "이 기능은 Team 플랜 이상에서 제공됩니다.",
     retryCta: "활동 다시 불러오기",
+  },
+} as const;
+
+/** 도메인별 상태 카피 세트 (재사용 가능) */
+export const DOMAIN_COPY = {
+  inventory: {
+    empty: { title: "등록된 재고가 없습니다", description: "입고된 시약과 장비를 등록하면 lot, 유효기간, 부족 수량을 함께 관리할 수 있습니다.", cta: "재고 등록 시작하기" },
+    error: { title: "재고 데이터를 불러오지 못했습니다", description: "잠시 후 다시 시도해주세요.", cta: "다시 불러오기" },
+    unavailable: { title: "재고 관리 기능을 사용할 수 없습니다", description: "조직에 참여하면 팀 재고를 함께 관리할 수 있습니다.", cta: "조직 설정 보기" },
+  },
+  quote: {
+    empty: { title: "진행 중인 견적이 없습니다", description: "비교 확정된 항목을 견적 초안으로 보내면 공급사에 견적을 요청할 수 있습니다.", cta: "검토 큐에서 시작하기" },
+    error: { title: "견적 데이터를 불러오지 못했습니다", description: "네트워크 상태를 확인하고 다시 시도해주세요.", cta: "다시 불러오기" },
+    unavailable: { title: "견적 기능을 사용할 수 없습니다", description: "현재 권한으로는 견적 요청에 접근할 수 없습니다.", cta: "권한 요청하기" },
+  },
+  search: {
+    empty: { title: "검색 결과가 없습니다", description: "다른 키워드로 검색하거나 필터를 조정해보세요.", cta: "검색 다시 시도" },
+    filterEmpty: { title: "현재 필터에 해당하는 항목이 없습니다", description: "필터 조건을 변경하면 더 많은 결과를 볼 수 있습니다.", cta: "필터 초기화" },
+    error: { title: "검색 결과를 불러오지 못했습니다", description: "잠시 후 다시 시도해주세요.", cta: "다시 검색" },
+  },
+  budget: {
+    empty: { title: "등록된 예산이 없습니다", description: "팀 또는 프로젝트 예산을 생성하면 지출을 추적하고 초과를 방지할 수 있습니다.", cta: "예산안 만들기" },
+    error: { title: "예산 데이터를 불러오지 못했습니다", description: "잠시 후 다시 시도해주세요.", cta: "다시 불러오기" },
+    unavailable: { title: "예산 관리 기능을 사용할 수 없습니다", description: "예산 통합 관리는 Business 플랜 이상에서 제공됩니다.", cta: "플랜 업그레이드" },
+  },
+  approval: {
+    empty: { title: "현재 승인 대기 요청이 없습니다", description: "견적 제출이나 예산 검토에서 승인이 필요하면 여기에 표시됩니다." },
+    error: { title: "승인 요청을 불러오지 못했습니다", description: "네트워크 상태를 확인하고 다시 시도해주세요.", cta: "다시 불러오기" },
+    unavailable: { title: "승인 워크플로우를 사용할 수 없습니다", description: "팀 승인 기능은 Business 플랜 이상에서 사용할 수 있습니다.", cta: "플랜 업그레이드" },
   },
 } as const;
 
