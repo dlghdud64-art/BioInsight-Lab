@@ -688,28 +688,32 @@ function StickySearchBar() {
 
   return (
     <div className="w-full pt-4 pb-2 md:pt-6 md:pb-4 sticky top-0 z-10">
-      {/* Elevated work panel */}
-      <div className="bg-el border border-bd rounded-xl p-4 md:p-6 max-w-3xl mx-auto">
-        {/* Integrated command search bar */}
+      {/* Search workbench panel */}
+      <div className="bg-el border border-bd rounded-xl p-5 md:p-8 max-w-3xl mx-auto">
+        {/* Helper text */}
+        <p className="text-xs text-slate-500 mb-3 hidden md:block">
+          제품명, 제조사, 카탈로그 번호 기준으로 검색하고 비교 리스트에 담을 수 있습니다.
+        </p>
+        {/* Command search bar */}
         <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex items-center bg-pn border border-bd rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-            <div className="pl-3 md:pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center bg-pn border border-bs rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-sm">
+            <div className="pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-300" />
             </div>
             <Input
               type="text"
               value={localQuery}
               onChange={handleChange}
-              placeholder="시약명, CAS No., 제조사, 카탈로그 번호로 검색"
-              className="flex-1 h-12 px-3 md:px-4 text-sm md:text-[15px] border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
+              placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호로 검색"
+              className="flex-1 h-14 px-4 text-[15px] md:text-base border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
             />
             <Button
               type="submit"
-              className="h-9 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold shrink-0 transition-colors mr-1.5"
+              className="h-10 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold shrink-0 transition-colors mr-2"
               disabled={!localQuery.trim()}
             >
-              <Search className="h-4 w-4 md:mr-1.5" />
-              <span className="hidden md:inline">검색</span>
+              <Search className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">검색 시작</span>
             </Button>
           </div>
         </form>
@@ -762,6 +766,16 @@ function StickySearchBar() {
                 ))}
               </div>
             )}
+
+            {/* 운영 흐름 연결 */}
+            <div className="flex items-center gap-2 pt-2 border-t border-bd mt-1">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">바로가기</span>
+              <Link href="/dashboard/inventory" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">재고 현황 확인</Link>
+              <span className="text-slate-600">·</span>
+              <Link href="/test/compare" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">비교 리스트 보기</Link>
+              <span className="text-slate-600">·</span>
+              <Link href="/test/quote" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">견적 요청으로 이동</Link>
+            </div>
           </div>
         )}
       </div>
