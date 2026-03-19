@@ -267,6 +267,48 @@ export function toHandoffItem(item: ReviewQueueItem): HandoffItem | null {
   };
 }
 
+// ═══════════════════════════════════════════════════
+// Step 2 → Step 3 Handoff (Compare → Quote Draft)
+// ═══════════════════════════════════════════════════
+
+/** Compare item을 Step 3로 보낼 수 있는지 판정 */
+export function canPromoteCompareItemToQuote(item: CompareQueueItem): boolean {
+  if (item.status !== "selection_confirmed") return false;
+  if (!item.selectedProductId) return false;
+  if (item.quantity == null || item.quantity <= 0) return false;
+  if (!item.unit) return false;
+  if (!item.parsedItemName) return false;
+  return true;
+}
+
+/** Compare Queue Item → Quote Draft Item 변환 */
+export function mapCompareItemToQuoteDraftItem(item: CompareQueueItem): QuoteDraftItem | null {
+  if (!item.selectedProductId || item.quantity == null || !item.unit) return null;
+
+  const missingFields: string[] = [];
+  if (!item.manufacturer && !item.catalogNumber) missingFields.push("제조사/카탈로그 번호 누락");
+  if (!item.spec) missingFields.push("규격 누락");
+
+  return {
+    quoteDraftItemId: `qd-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceQueueItemId: item.sourceQueueItemId,
+    sourceType: item.sourceType,
+    selectedProductId: item.selectedProductId,
+    parsedItemName: item.parsedItemName,
+    manufacturer: item.manufacturer,
+    catalogNumber: item.catalogNumber,
+    spec: item.spec,
+    quantity: item.quantity,
+    unit: item.unit,
+    notes: `${item.sourceContext}${item.comparisonReason ? ` / ${item.comparisonReason}` : ""}`,
+    sourceContext: item.sourceContext,
+    evidenceSummary: item.evidenceSummary,
+    budgetHint: null,
+    inventoryHint: null,
+    status: missingFields.length > 0 ? "missing_required_fields" : "draft_ready",
+  };
+}
+
 // ── Bulk 필터 헬퍼 ──
 export function filterEligibleCompareItems(items: ReviewQueueItem[]): ReviewQueueItem[] {
   return items.filter(canHandoffToCompare);
@@ -274,4 +316,8 @@ export function filterEligibleCompareItems(items: ReviewQueueItem[]): ReviewQueu
 
 export function filterEligibleQuoteItems(items: ReviewQueueItem[]): ReviewQueueItem[] {
   return items.filter(canHandoffToQuote);
+}
+
+export function filterEligibleCompareToQuote(items: CompareQueueItem[]): CompareQueueItem[] {
+  return items.filter(canPromoteCompareItemToQuote);
 }
