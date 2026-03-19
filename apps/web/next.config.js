@@ -66,8 +66,8 @@ const nextConfig = {
             },
           }),
         ];
-      } catch {
-        // terser-webpack-plugin이 없으면 기본 SWC 유지
+      } catch (e) {
+        console.error('[next.config] terser-webpack-plugin 로드 실패 — SWC fallback:', e.message);
       }
     }
 
