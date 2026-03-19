@@ -190,17 +190,7 @@ function InventoryPageContent() {
     });
   };
 
-  // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
-  useEffect(() => {
-    if (entityIdParam && inventoryResponse?.inventories) {
-      const target = inventoryResponse?.inventories.find((item: ProductInventory) => item.id === entityIdParam);
-      if (target) {
-        setSelectedItem(target);
-        setIsSheetOpen(true);
-      }
-    }
-  }, [entityIdParam, inventoryResponse?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
@@ -258,6 +248,17 @@ function InventoryPageContent() {
     },
     enabled: status === "authenticated" && inventoryView === "my",
   });
+
+  // Deep-link: entity_id → 해당 아이템 시트 열기 (inventoryResponse 선언 이후)
+  useEffect(() => {
+    if (entityIdParam && inventoryResponse?.inventories) {
+      const target = inventoryResponse.inventories.find((item: ProductInventory) => item.id === entityIdParam);
+      if (target) {
+        setSelectedItem(target);
+        setIsSheetOpen(true);
+      }
+    }
+  }, [entityIdParam, inventoryResponse?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 팀 인벤토리 조회
   const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{ inventories: any[] }>({
