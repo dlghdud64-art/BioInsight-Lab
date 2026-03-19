@@ -23,6 +23,51 @@ function generateId(): string {
 export function useReviewQueue() {
   const [items, setItems] = useState<ReviewQueueItem[]>([]);
 
+  // ── 중복 체크: sourceType + rawInput + catalogNumber + manufacturer ──
+  const isDuplicate = useCallback((item: ReviewQueueItem): boolean => {
+    return items.some(
+      (existing) =>
+        existing.sourceType === item.sourceType &&
+        existing.rawInput === item.rawInput &&
+        existing.catalogNumber === item.catalogNumber &&
+        existing.manufacturer === item.manufacturer
+    );
+  }, [items]);
+
+  // ── normalize된 ReviewQueueItem 직접 추가 (중복 체크 포함) ──
+  const addQueueItem = useCallback((item: ReviewQueueItem): { added: boolean; existingId?: string } => {
+    const existing = items.find(
+      (e) =>
+        e.sourceType === item.sourceType &&
+        e.rawInput === item.rawInput &&
+        e.catalogNumber === item.catalogNumber &&
+        e.manufacturer === item.manufacturer
+    );
+    if (existing) {
+      return { added: false, existingId: existing.id };
+    }
+    setItems((prev) => [...prev, item]);
+    return { added: true };
+  }, [items]);
+
+  // ── normalize된 배열 일괄 추가 (중복 필터) ──
+  const addQueueItems = useCallback((newItems: ReviewQueueItem[]): number => {
+    const uniqueItems = newItems.filter(
+      (item) =>
+        !items.some(
+          (e) =>
+            e.sourceType === item.sourceType &&
+            e.rawInput === item.rawInput &&
+            e.catalogNumber === item.catalogNumber &&
+            e.manufacturer === item.manufacturer
+        )
+    );
+    if (uniqueItems.length > 0) {
+      setItems((prev) => [...prev, ...uniqueItems]);
+    }
+    return uniqueItems.length;
+  }, [items]);
+
   // ── 항목 추가 (검색/엑셀/프로토콜 공통) ──
   const addItem = useCallback((params: {
     sourceType: SourceType;
@@ -186,6 +231,9 @@ export function useReviewQueue() {
     items,
     addItem,
     addBatch,
+    addQueueItem,
+    addQueueItems,
+    isDuplicate,
     approve,
     exclude,
     updateItem,
