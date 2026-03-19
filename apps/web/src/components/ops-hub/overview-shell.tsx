@@ -92,19 +92,13 @@ export function OverviewSectionHeader({ title, helperText, action, tone = "defau
 // ═══════════════════════════════════════════════════
 
 interface SectionFooterProps {
-  label: string;
-  href: string;
+  children: React.ReactNode;
 }
 
-export function OverviewSectionFooter({ label, href }: SectionFooterProps) {
+export function OverviewSectionFooter({ children }: SectionFooterProps) {
   return (
-    <div className="flex justify-end">
-      <Button asChild variant="ghost" size="sm" className="h-7 text-[11px] text-slate-400 hover:text-slate-200 gap-1">
-        <Link href={href}>
-          {label}
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      </Button>
+    <div className="flex items-center justify-end gap-2 pt-1">
+      {children}
     </div>
   );
 }
