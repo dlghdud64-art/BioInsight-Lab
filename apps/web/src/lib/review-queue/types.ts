@@ -309,6 +309,48 @@ export function mapCompareItemToQuoteDraftItem(item: CompareQueueItem): QuoteDra
   };
 }
 
+// ═══════════════════════════════════════════════════
+// Step 3 Quote Draft 상태 판정 + 제출 가능 함수
+// ═══════════════════════════════════════════════════
+
+/** Quote Draft 상태 자동 판정 */
+export function evaluateQuoteDraftStatus(item: QuoteDraftItem): QuoteDraftStatus {
+  if (item.status === "removed") return "removed";
+  if (!item.selectedProductId || !item.parsedItemName || !item.quantity || !item.unit) {
+    return "missing_required_fields";
+  }
+  // 예산/재고 경고가 있으면 awaiting_review
+  if (item.budgetHint === "budgetCheckRequired" || item.inventoryHint === "possibleDuplicatePurchase") {
+    return "awaiting_review";
+  }
+  return "draft_ready";
+}
+
+/** 단건 제출 가능 여부 */
+export function canSubmitQuoteDraftItem(item: QuoteDraftItem): boolean {
+  return item.status === "draft_ready" && !!item.selectedProductId && !!item.quantity && !!item.unit;
+}
+
+/** 일괄 제출 가능 여부 — 모든 항목이 제출 가능해야 true */
+export function canBulkSubmitQuoteDraftItems(items: QuoteDraftItem[]): boolean {
+  return items.length > 0 && items.every(canSubmitQuoteDraftItem);
+}
+
+/** 경고 메시지 수집 */
+export function mapQuoteDraftWarnings(item: QuoteDraftItem): string[] {
+  const warnings: string[] = [];
+  if (!item.selectedProductId) warnings.push("제품 선택이 필요합니다");
+  if (!item.quantity) warnings.push("수량을 입력해주세요");
+  if (!item.unit) warnings.push("단위를 입력해주세요");
+  if (!item.manufacturer && !item.catalogNumber) warnings.push("제조사 또는 카탈로그 번호가 없습니다");
+  if (!item.spec) warnings.push("규격 정보가 없습니다");
+  if (item.budgetHint === "budgetCheckRequired") warnings.push("예산 확인이 필요합니다");
+  if (item.budgetHint === "noBudgetContext") warnings.push("예산 정보가 연결되지 않았습니다");
+  if (item.inventoryHint === "possibleDuplicatePurchase") warnings.push("동일 또는 유사 재고가 존재할 수 있습니다");
+  if (item.inventoryHint === "inventoryCheckRequired") warnings.push("현재 보유 재고와 대조가 필요합니다");
+  return warnings;
+}
+
 // ── Bulk 필터 헬퍼 ──
 export function filterEligibleCompareItems(items: ReviewQueueItem[]): ReviewQueueItem[] {
   return items.filter(canHandoffToCompare);
@@ -320,4 +362,8 @@ export function filterEligibleQuoteItems(items: ReviewQueueItem[]): ReviewQueueI
 
 export function filterEligibleCompareToQuote(items: CompareQueueItem[]): CompareQueueItem[] {
   return items.filter(canPromoteCompareItemToQuote);
+}
+
+export function filterSubmittableQuoteDrafts(items: QuoteDraftItem[]): QuoteDraftItem[] {
+  return items.filter(canSubmitQuoteDraftItem);
 }
