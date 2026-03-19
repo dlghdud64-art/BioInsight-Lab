@@ -8,6 +8,11 @@ const InventorySummaryBlock = dynamic(
   { ssr: false, loading: () => <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-el animate-pulse" />)}</div> }
 );
 
+const InventoryTableBlock = dynamic(
+  () => import("./blocks/inventory-table-block").then(m => m.InventoryTableBlock),
+  { ssr: false, loading: () => <div className="h-64 rounded-xl bg-el animate-pulse" /> }
+);
+
 export function InventoryContent() {
   return (
     <Suspense fallback={<div className="p-8 text-center text-slate-500">로딩 중...</div>}>
@@ -16,9 +21,7 @@ export function InventoryContent() {
           <h1 className="text-xl md:text-2xl font-bold text-slate-100">재고 관리</h1>
         </div>
         <InventorySummaryBlock />
-        <div className="rounded-xl border border-bd bg-pn p-6 text-center">
-          <p className="text-sm text-slate-400">재고 테이블 복구 중 — KPI baseline 안전 상태</p>
-        </div>
+        <InventoryTableBlock />
       </div>
     </Suspense>
   );
