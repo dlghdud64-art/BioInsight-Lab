@@ -367,3 +367,91 @@ export function filterEligibleCompareToQuote(items: CompareQueueItem[]): Compare
 export function filterSubmittableQuoteDrafts(items: QuoteDraftItem[]): QuoteDraftItem[] {
   return items.filter(canSubmitQuoteDraftItem);
 }
+
+// ═══════════════════════════════════════════════════
+// Queue Priority / Blocked / SLA Model
+// ═══════════════════════════════════════════════════
+
+/** 우선순위 — 정렬 기준 */
+export type QueuePriority = "urgent" | "today" | "normal" | "low";
+
+/** 차단 여부 + 사유 */
+export interface BlockedInfo {
+  isBlocked: boolean;
+  reason: string | null;       // "필수 문서 누락" / "선행 승인 미완료"
+  unblockAction: string | null; // "문서 업로드" / "승인 요청"
+  unblockHref: string | null;
+}
+
+/** SLA / 기한 정보 */
+export interface DueInfo {
+  dueDate: string | null;        // ISO
+  isOverdue: boolean;
+  overdueLabel: string | null;   // "24시간 초과" / "3일 지연"
+  dueLabel: string | null;       // "오늘 18:00 마감" / "D-2"
+}
+
+/** Queue Summary — 상단 backlog 요약 */
+export interface QueueSummary {
+  total: number;
+  urgent: number;
+  todayRecommended: number;
+  blocked: number;
+  overdue: number;
+}
+
+/** Queue item에 우선순위/차단/기한 신호를 부착하는 wrapper */
+export interface QueueItemSignals {
+  priority: QueuePriority;
+  blocked: BlockedInfo;
+  due: DueInfo;
+}
+
+/** 우선순위 점수 계산 — 정렬용 */
+export function computePriorityScore(signals: QueueItemSignals): number {
+  let score = 0;
+  // 우선순위 기본 점수
+  if (signals.priority === "urgent") score += 1000;
+  else if (signals.priority === "today") score += 500;
+  else if (signals.priority === "normal") score += 100;
+  // overdue 가산
+  if (signals.due.isOverdue) score += 300;
+  // blocked 감산 (처리 가능한 것이 먼저)
+  if (signals.blocked.isBlocked) score -= 50;
+  return score;
+}
+
+/** Queue items 정렬 — 운영 우선순위 기준 */
+export function sortByPriority<T extends { signals: QueueItemSignals }>(items: T[]): T[] {
+  return [...items].sort((a, b) => computePriorityScore(b.signals) - computePriorityScore(a.signals));
+}
+
+/** Queue Summary 계산 */
+export function computeQueueSummary<T extends { signals: QueueItemSignals }>(items: T[]): QueueSummary {
+  return {
+    total: items.length,
+    urgent: items.filter(i => i.signals.priority === "urgent").length,
+    todayRecommended: items.filter(i => i.signals.priority === "today" || i.signals.priority === "urgent").length,
+    blocked: items.filter(i => i.signals.blocked.isBlocked).length,
+    overdue: items.filter(i => i.signals.due.isOverdue).length,
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// Drill-down / Cross-page Context
+// ═══════════════════════════════════════════════════
+
+/** 페이지 간 문맥 전달 객체 */
+export interface DrilldownContext {
+  sourcePageId: string;          // "dashboard" / "approval-queue" / "inventory"
+  sourceLabel: string;           // "승인 대기 큐" / "재고 부족 알림"
+  dataFilters: Record<string, string>; // { status: "pending", urgency: "high" }
+  viewContext: {
+    sort?: string;
+    tab?: string;
+    page?: number;
+    density?: string;
+  };
+  returnHref: string;            // 복귀 URL
+  returnLabel: string;           // "승인 대기 큐로 돌아가기"
+}
