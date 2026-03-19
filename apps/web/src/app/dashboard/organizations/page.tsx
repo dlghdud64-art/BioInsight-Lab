@@ -5,7 +5,23 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Plus, Users, Loader2, ChevronDown, ChevronRight, ExternalLink, UserPlus, Clock, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Users,
+  Loader2,
+  ExternalLink,
+  UserPlus,
+  Clock,
+  AlertTriangle,
+  Settings,
+  Activity,
+  Building2,
+  Shield,
+  ChevronRight,
+  Zap,
+  UserCheck,
+  MailWarning,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,7 +58,7 @@ interface OrgRow {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Role helpers                                                       */
+/*  Role / Plan helpers                                                */
 /* ------------------------------------------------------------------ */
 
 const ROLE_LABEL: Record<string, string> = {
@@ -71,17 +87,30 @@ function roleBadge(role: string) {
   );
 }
 
+const PLAN_MAP: Record<string, { label: string; color: string }> = {
+  ENTERPRISE: {
+    label: "Enterprise",
+    color: "border-amber-700 bg-amber-950/40 text-amber-300",
+  },
+  ORGANIZATION: {
+    label: "Business",
+    color: "border-indigo-700 bg-indigo-950/40 text-indigo-300",
+  },
+  TEAM: {
+    label: "Team",
+    color: "border-blue-700 bg-blue-950/40 text-blue-300",
+  },
+  FREE: {
+    label: "Starter",
+    color: "border-bs bg-el text-slate-400",
+  },
+};
+
 function planBadge(plan: string) {
-  const label = plan === "ORGANIZATION" ? "Pro" : plan === "TEAM" ? "Basic" : "Starter";
-  const color =
-    plan === "ORGANIZATION"
-      ? "border-indigo-800 bg-indigo-950/40 text-indigo-300"
-      : plan === "TEAM"
-        ? "border-blue-800 bg-blue-950/40 text-blue-300"
-        : "border-bs bg-el text-slate-400";
+  const entry = PLAN_MAP[plan] ?? PLAN_MAP.FREE;
   return (
-    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 leading-4 ${color}`}>
-      {label}
+    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 leading-4 ${entry.color}`}>
+      {entry.label}
     </Badge>
   );
 }
@@ -104,6 +133,40 @@ function mapOrg(org: any): OrgRow {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Warning helpers                                                    */
+/* ------------------------------------------------------------------ */
+
+function getOrgWarnings(org: OrgRow): { icon: React.ReactNode; text: string; severity: "warn" | "info" }[] {
+  const warnings: { icon: React.ReactNode; text: string; severity: "warn" | "info" }[] = [];
+
+  if (org.pendingCount > 0) {
+    warnings.push({
+      icon: <MailWarning className="h-3 w-3" />,
+      text: `초대 ${org.pendingCount}건 대기 중`,
+      severity: "warn",
+    });
+  }
+
+  if (org.adminCount === 0) {
+    warnings.push({
+      icon: <Shield className="h-3 w-3" />,
+      text: "승인권자 미지정",
+      severity: "warn",
+    });
+  }
+
+  if (org.memberCount >= 10 && org.plan === "FREE") {
+    warnings.push({
+      icon: <AlertTriangle className="h-3 w-3" />,
+      text: "좌석 한도 초과 우려",
+      severity: "warn",
+    });
+  }
+
+  return warnings;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -116,7 +179,6 @@ export default function OrganizationsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [organizations, setOrganizations] = useState<OrgRow[]>([]);
-  const [expandedIds, setExpandedIds] = useState<Set<string | number>>(new Set());
   const [formData, setFormData] = useState({ name: "", description: "", organizationType: "" });
 
   /* ---------- data fetching ---------- */
@@ -217,22 +279,11 @@ export default function OrganizationsPage() {
     }
   };
 
-  /* ---------- expand/collapse ---------- */
-
-  const toggleExpand = (id: string | number) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   /* ---------- computed ---------- */
 
   const totalMembers = organizations.reduce((s, o) => s + o.memberCount, 0);
   const totalPending = organizations.reduce((s, o) => s + o.pendingCount, 0);
-  const myRoles = [...new Set(organizations.map((o) => o.role))];
+  const orgsWithWarnings = organizations.filter((o) => getOrgWarnings(o).length > 0);
 
   /* ================================================================ */
   /*  RENDER                                                           */
@@ -242,36 +293,22 @@ export default function OrganizationsPage() {
     <div className="min-h-screen bg-sh text-slate-100">
       <div className="mx-auto w-full max-w-7xl p-3 sm:p-4 md:p-8 space-y-5">
 
-        {/* ── Summary strip ─────────────────────────────── */}
-        <div className="rounded-md border border-bd bg-pn p-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-              <div>
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500 mr-2">총 조직</span>
-                <span className="font-semibold text-slate-100">{organizations.length}</span>
-              </div>
-              <div>
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500 mr-2">총 멤버</span>
-                <span className="font-semibold text-slate-100">{totalMembers}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500 mr-1">내 역할</span>
-                {myRoles.length > 0
-                  ? myRoles.map((r) => <span key={r}>{roleBadge(r)}</span>)
-                  : <span className="text-slate-400 text-xs">-</span>}
-              </div>
-            </div>
-            <Button
-              onClick={() => setIsOpen(true)}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 h-8 text-xs shrink-0"
-            >
-              <Plus className="mr-1 h-3.5 w-3.5" /> 조직 생성
-            </Button>
+        {/* -- Page header ------------------------------------------ */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-100">조직 포트폴리오</h1>
+            <p className="text-xs text-slate-500 mt-0.5">소속 조직 운영 현황 및 관리</p>
           </div>
+          <Button
+            onClick={() => setIsOpen(true)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 h-8 text-xs shrink-0"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" /> 조직 생성
+          </Button>
         </div>
 
-        {/* ── Create organization dialog ────────────────── */}
+        {/* -- Create organization dialog --------------------------- */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -335,84 +372,104 @@ export default function OrganizationsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* ── Main content ──────────────────────────────── */}
+        {/* -- Main content ----------------------------------------- */}
         {isFetching ? (
           <LoadingSkeleton />
         ) : organizations.length === 0 ? (
           <EmptyState onOpen={() => setIsOpen(true)} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
-            {/* -- Left: Organization table -- */}
-            <div className="space-y-0 rounded-md border border-bd bg-pn overflow-hidden">
-              <div className="px-4 py-3 border-b border-bd">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">조직 운영 현황</span>
-              </div>
-
-              {/* Table header */}
-              <div className="hidden sm:grid grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-2 text-xs font-medium uppercase tracking-wider text-slate-500 border-b border-bd bg-pn">
-                <span>조직</span>
-                <span className="text-center">멤버</span>
-                <span className="text-center">승인권자</span>
-                <span className="text-center">플랜</span>
-                <span className="text-right">액션</span>
-              </div>
-
-              {/* Organization rows */}
+            {/* -- Left: Organization cards -- */}
+            <div className="space-y-3">
               {organizations.map((org) => (
-                <OrgRowItem
+                <OrgCard
                   key={org.id}
                   org={org}
-                  expanded={expandedIds.has(org.id)}
-                  onToggle={() => toggleExpand(org.id)}
                   onNavigate={() => router.push(`/dashboard/organizations/${org.id}`)}
                 />
               ))}
             </div>
 
-            {/* -- Right: Side panel -- */}
+            {/* -- Right: Operations panel -- */}
             <div className="space-y-4">
-              {/* Pending invites */}
-              <SidePanel title="초대 대기 목록">
-                {totalPending === 0 ? (
-                  <p className="text-xs text-slate-500 py-2">대기 중인 초대가 없습니다.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {organizations
-                      .filter((o) => o.pendingCount > 0)
-                      .map((o) => (
-                        <div key={o.id} className="flex items-center justify-between text-xs py-1.5 border-b border-bd last:border-0">
-                          <span className="text-slate-300 truncate max-w-[160px]">{o.name}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-orange-800 bg-orange-950/40 text-orange-300 text-[10px] px-1.5 py-0">
-                              {o.pendingCount}건 대기
-                            </Badge>
-                            <button
-                              onClick={() => router.push(`/dashboard/organizations/${o.id}`)}
-                              className="text-blue-400 hover:text-blue-300 text-[10px] underline underline-offset-2"
-                            >
-                              확인
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </SidePanel>
-
-              {/* Recent role changes */}
-              <SidePanel title="최근 역할 변경 로그">
-                <p className="text-xs text-slate-500 py-2">역할 변경 이력이 없습니다.</p>
-              </SidePanel>
-
-              {/* Inactive members warning */}
-              <SidePanel title="비활성 멤버 경고">
-                <div className="flex items-start gap-2 py-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-slate-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-slate-500">
-                    장기 미접속 멤버 정보는 각 조직 관리 페이지에서 확인할 수 있습니다.
-                  </p>
+              {/* Portfolio stats */}
+              <div className="rounded-md border border-bd bg-pn overflow-hidden">
+                <div className="px-3 py-2.5 border-b border-bd">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    포트폴리오 요약
+                  </span>
                 </div>
-              </SidePanel>
+                <div className="p-3 space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <StatCell label="총 조직" value={organizations.length} icon={<Building2 className="h-3.5 w-3.5 text-slate-500" />} />
+                    <StatCell label="총 멤버" value={totalMembers} icon={<Users className="h-3.5 w-3.5 text-slate-500" />} />
+                    <StatCell label="초대 대기" value={totalPending} icon={<UserPlus className="h-3.5 w-3.5 text-slate-500" />} highlight={totalPending > 0} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action required */}
+              <div className="rounded-md border border-bd bg-pn overflow-hidden">
+                <div className="px-3 py-2.5 border-b border-bd">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                    바로 처리할 항목
+                  </span>
+                </div>
+                <div className="p-3">
+                  {orgsWithWarnings.length === 0 ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      <p className="text-xs text-slate-400">처리가 필요한 항목이 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {orgsWithWarnings.map((org) => {
+                        const warnings = getOrgWarnings(org);
+                        return (
+                          <button
+                            key={org.id}
+                            onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
+                            className="w-full text-left rounded border border-bd bg-st/30 hover:bg-el/50 p-2.5 transition-colors group"
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-medium text-slate-200 truncate max-w-[180px]">
+                                {org.name}
+                              </span>
+                              <ChevronRight className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                            </div>
+                            <div className="space-y-1">
+                              {warnings.map((w, i) => (
+                                <div key={i} className={`flex items-center gap-1.5 text-[11px] ${w.severity === "warn" ? "text-orange-400" : "text-slate-500"}`}>
+                                  {w.icon}
+                                  <span>{w.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick create CTA */}
+              <div className="rounded-md border border-bd bg-pn overflow-hidden">
+                <div className="p-4 text-center">
+                  <Building2 className="h-5 w-5 text-slate-600 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400 mb-3">
+                    새 팀이나 프로젝트를 위한 조직을 추가하세요.
+                  </p>
+                  <Button
+                    onClick={() => setIsOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs border-bd text-slate-300 hover:bg-el"
+                  >
+                    <Plus className="mr-1 h-3 w-3" /> 조직 만들기
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -425,153 +482,209 @@ export default function OrganizationsPage() {
 /*  Sub-components                                                     */
 /* ================================================================== */
 
-function OrgRowItem({
+/* -- Organization card -------------------------------------------- */
+
+function OrgCard({
   org,
-  expanded,
-  onToggle,
   onNavigate,
 }: {
   org: OrgRow;
-  expanded: boolean;
-  onToggle: () => void;
   onNavigate: () => void;
 }) {
-  const approverCount = org.adminCount;
   const router = useRouter();
+  const warnings = getOrgWarnings(org);
+  const hasWarnings = warnings.length > 0;
 
   return (
-    <div className="border-b border-bd last:border-0">
-      {/* Main row */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px_80px_120px] gap-2 px-4 py-3 items-center hover:bg-el/50 cursor-pointer transition-colors"
-        onClick={onToggle}
-      >
-        {/* Org name + role */}
-        <div className="flex items-center gap-2 min-w-0">
-          <button className="shrink-0 text-slate-500">
-            {expanded
-              ? <ChevronDown className="h-3.5 w-3.5" />
-              : <ChevronRight className="h-3.5 w-3.5" />}
-          </button>
-          <span className="text-sm font-medium text-slate-100 truncate">{org.name}</span>
-          {roleBadge(org.role)}
-        </div>
-
-        {/* Member count */}
-        <div className="hidden sm:flex items-center justify-center gap-1 text-xs text-slate-300">
-          <Users className="h-3 w-3 text-slate-500" />
-          {org.memberCount}
-        </div>
-
-        {/* Approver count */}
-        <div className="hidden sm:flex items-center justify-center text-xs text-slate-300">
-          {approverCount}
-        </div>
-
-        {/* Plan */}
-        <div className="hidden sm:flex justify-center">
-          {planBadge(org.plan)}
-        </div>
-
-        {/* Actions */}
-        <div className="hidden sm:flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-el"
-            onClick={onNavigate}
-          >
-            관리 <ExternalLink className="ml-1 h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-el"
-            onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
-          >
-            <UserPlus className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div className="px-4 pb-3 pl-10 space-y-2 bg-pn/50">
-          {/* Mobile-only stats */}
-          <div className="sm:hidden flex flex-wrap gap-3 text-xs text-slate-400 mb-2">
-            <span>멤버 {org.memberCount}</span>
-            <span>승인권자 {approverCount}</span>
+    <div
+      className={`rounded-md border bg-pn transition-colors hover:bg-el/30 ${
+        hasWarnings ? "border-orange-900/60" : "border-bd"
+      }`}
+    >
+      {/* Card header */}
+      <div className="px-4 py-3 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {/* Name + role + plan */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-slate-100 truncate">{org.name}</span>
+            {roleBadge(org.role)}
             {planBadge(org.plan)}
           </div>
 
-          {org.description && (
-            <p className="text-xs text-slate-400">{org.description}</p>
-          )}
-
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
-            <span>초대 대기: {org.pendingCount}건</span>
+          {/* Stat row */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-400">
             <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" /> 최근 활동: -
+              <Users className="h-3 w-3 text-slate-500" />
+              멤버 {org.memberCount}
             </span>
+            {org.pendingCount > 0 && (
+              <span className="flex items-center gap-1 text-orange-400">
+                <UserPlus className="h-3 w-3" />
+                초대 대기 {org.pendingCount}
+              </span>
+            )}
+            {org.adminCount > 0 && (
+              <span className="flex items-center gap-1">
+                <Shield className="h-3 w-3 text-slate-500" />
+                승인권자 {org.adminCount}
+              </span>
+            )}
           </div>
 
-          {/* Mobile actions */}
-          <div className="sm:hidden flex gap-2 pt-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2.5 text-xs text-blue-400 hover:text-blue-300 hover:bg-el"
-              onClick={onNavigate}
-            >
-              관리 <ExternalLink className="ml-1 h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-300 hover:bg-el"
-              onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
-            >
-              <UserPlus className="h-3 w-3 mr-1" /> 멤버 초대
-            </Button>
+          {/* Activity summary */}
+          <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
+            <Clock className="h-3 w-3" />
+            <span>최근 활동: 조직 관리 페이지에서 확인</span>
+          </div>
+        </div>
+
+        {/* Quick actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
+            title="멤버 관리"
+          >
+            <Users className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            onClick={() => router.push(`/dashboard/activity-logs`)}
+            title="활동 보기"
+          >
+            <Activity className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
+            title="설정"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Warning strip */}
+      {hasWarnings && (
+        <div className="px-4 py-2 border-t border-orange-900/40 bg-orange-950/20">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {warnings.map((w, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-[11px] text-orange-400">
+                {w.icon}
+                <span>{w.text}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Footer: navigate CTA */}
+      <div className="px-4 py-2.5 border-t border-bd flex items-center justify-between">
+        {org.description ? (
+          <p className="text-[11px] text-slate-500 truncate max-w-[60%]">{org.description}</p>
+        ) : (
+          <span />
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-[11px] text-blue-400 hover:text-blue-300 hover:bg-el"
+          onClick={onNavigate}
+        >
+          관리 페이지 <ExternalLink className="ml-1 h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }
 
-function SidePanel({ title, children }: { title: string; children: React.ReactNode }) {
+/* -- Stat cell ---------------------------------------------------- */
+
+function StatCell({
+  label,
+  value,
+  icon,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  highlight?: boolean;
+}) {
   return (
-    <div className="rounded-md border border-bd bg-pn overflow-hidden">
-      <div className="px-3 py-2.5 border-b border-bd">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">{title}</span>
+    <div className="rounded border border-bd bg-st/30 p-2 text-center">
+      <div className="flex items-center justify-center gap-1 mb-1">{icon}</div>
+      <div className={`text-base font-semibold ${highlight ? "text-orange-400" : "text-slate-100"}`}>
+        {value}
       </div>
-      <div className="px-3 py-1.5">{children}</div>
+      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</div>
     </div>
   );
 }
+
+/* -- Loading skeleton --------------------------------------------- */
 
 function LoadingSkeleton() {
   return (
-    <div className="rounded-md border border-bd bg-pn p-4 space-y-3">
+    <div className="space-y-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 animate-pulse">
-          <div className="h-4 w-4 rounded bg-el" />
-          <div className="h-4 w-40 rounded bg-el" />
-          <div className="h-4 w-16 rounded bg-el ml-auto" />
+        <div key={i} className="rounded-md border border-bd bg-pn p-4 animate-pulse">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-4 w-32 rounded bg-el" />
+            <div className="h-4 w-12 rounded bg-el" />
+            <div className="h-4 w-12 rounded bg-el" />
+          </div>
+          <div className="flex gap-4">
+            <div className="h-3 w-20 rounded bg-el" />
+            <div className="h-3 w-20 rounded bg-el" />
+            <div className="h-3 w-24 rounded bg-el" />
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
+/* -- Empty state -------------------------------------------------- */
+
 function EmptyState({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="rounded-md border border-bd bg-pn flex flex-col items-center justify-center py-20">
-      <h3 className="mb-2 text-base font-medium text-slate-300">소속된 조직이 없습니다</h3>
-      <p className="mb-4 text-sm text-slate-500">첫 조직을 생성하고 팀원들과 함께 시작하세요.</p>
-      <Button onClick={onOpen} size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs">
-        <Plus className="mr-1 h-3.5 w-3.5" /> 새 조직 만들기
+    <div className="rounded-md border border-bd bg-pn flex flex-col items-center justify-center py-16 px-6">
+      <Building2 className="h-10 w-10 text-slate-700 mb-4" />
+      <h3 className="mb-2 text-base font-medium text-slate-200">
+        조직을 만들어 팀 운영을 시작하세요
+      </h3>
+      <p className="mb-5 text-sm text-slate-500 text-center max-w-md">
+        조직 워크스페이스에서 팀원을 초대하고, 역할 기반 권한 관리와 공동 구매를 시작할 수 있습니다.
+      </p>
+
+      <ul className="mb-6 space-y-2 text-xs text-slate-400 w-full max-w-xs">
+        <li className="flex items-start gap-2">
+          <Zap className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+          <span>역할 기반 승인 체계로 안전한 구매 워크플로우</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Users className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+          <span>팀 단위 예산 관리 및 활동 모니터링</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <Shield className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+          <span>부서별 시약 공유 및 재고 추적 통합</span>
+        </li>
+      </ul>
+
+      <Button
+        onClick={onOpen}
+        size="sm"
+        className="bg-blue-600 hover:bg-blue-700 h-9 text-xs px-5"
+      >
+        <Plus className="mr-1.5 h-3.5 w-3.5" /> 조직 만들기
       </Button>
     </div>
   );
