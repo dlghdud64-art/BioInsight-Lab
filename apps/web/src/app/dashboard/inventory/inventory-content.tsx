@@ -817,12 +817,12 @@ function InventoryPageContent() {
     return "low_stock"; // fallback
   };
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
-    expired:       { label: "만료됨",     cls: "bg-red-900/50 text-red-400",       priority: 0 },
-    out_of_stock:  { label: "품절",       cls: "bg-red-900/50 text-red-400",       priority: 1 },
-    expiring:      { label: "임박",       cls: "bg-amber-900/50 text-amber-400", priority: 2 },
-    low_stock:     { label: "재고 부족",  cls: "bg-orange-900/50 text-orange-400", priority: 3 },
-    reorder_lead:  { label: "재주문 권장", cls: "bg-amber-900/50 text-amber-400", priority: 4 },
-    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",  priority: 5 },
+    expired:       { label: "만료됨",     cls: "bg-red-500/10 text-red-400",       priority: 0 },
+    out_of_stock:  { label: "품절",       cls: "bg-red-500/10 text-red-400",       priority: 1 },
+    expiring:      { label: "만료 임박",  cls: "bg-amber-500/10 text-amber-400",   priority: 2 },
+    low_stock:     { label: "부족",       cls: "bg-amber-500/10 text-amber-400",   priority: 3 },
+    reorder_lead:  { label: "재발주 필요", cls: "bg-blue-500/10 text-blue-400",    priority: 4 },
+    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",            priority: 5 },
   };
 
   if (status === "loading") {
@@ -1501,14 +1501,14 @@ function InventoryPageContent() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-red-500/20 bg-pn px-4 py-3">
+              <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-red-400/80">부족/품절</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-950/300/10">
-                    <AlertTriangle className="h-3 w-3 text-red-400" />
+                  <span className="text-[11px] font-medium text-amber-400/80">부족/품절</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
+                    <AlertTriangle className="h-3 w-3 text-amber-400" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-red-400">
+                <div className="text-2xl font-bold tracking-tight text-amber-400">
                   {lowOrOutOfStockCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
@@ -1556,8 +1556,8 @@ function InventoryPageContent() {
             {/* 조치 필요 항목 */}
             <Card className="shadow-sm border-bd bg-pn">
               <CardHeader>
-                <CardTitle className="flex items-center text-lg text-red-400">
-                  <Zap className="mr-2 h-5 w-5" />
+                <CardTitle className="flex items-center text-lg text-slate-100">
+                  <Zap className="mr-2 h-5 w-5 text-amber-400" />
                   조치 필요 항목
                 </CardTitle>
                 <CardDescription className="text-slate-500">
@@ -1617,12 +1617,12 @@ function InventoryPageContent() {
                     switch (issueType) {
                       case "expired":
                       case "out_of_stock":
-                        return "bg-red-950/10  bg-red-950/10 border-red-900/30  border-red-900/30";
+                        return "bg-red-500/5 border-red-500/10";
                       case "expiring":
-                        return "bg-amber-950/10  bg-amber-950/10 border-amber-900/30  border-amber-900/30";
+                        return "bg-amber-500/5 border-amber-500/10";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-orange-950/10  bg-orange-950/10 border-orange-900/30  border-orange-900/30";
+                        return "bg-amber-500/5 border-amber-500/10";
                       case "no_location":
                         return "bg-pn/30 border-bs";
                     }
@@ -1659,8 +1659,8 @@ function InventoryPageContent() {
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
                                 <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
                                   issueType === "expired"
-                                    ? "bg-red-900/50 text-red-400"
-                                    : "bg-amber-900/50 text-amber-400"
+                                    ? "bg-red-500/10 text-red-400"
+                                    : "bg-amber-500/10 text-amber-400"
                                 }`}>{daysLeft}</Badge>
                               )}
                             </div>
@@ -1681,8 +1681,8 @@ function InventoryPageContent() {
                               <span className="text-slate-300  text-slate-400">·</span>
                               <span className="whitespace-nowrap">
                                 <span className={`font-semibold ${
-                                  inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
-                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-400  text-orange-400" :
+                                  inv.currentQuantity === 0 ? "text-red-400" :
+                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
                                   "text-slate-300"
                                 }`}>{inv.currentQuantity}</span> {inv.unit}
                                 {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
@@ -1705,8 +1705,8 @@ function InventoryPageContent() {
                                 variant="outline"
                                 className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
                                   issueType === "out_of_stock"
-                                    ? "text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
-                                    : "text-orange-400 border-orange-800 hover:bg-orange-950/30  text-orange-400  border-orange-800  hover:bg-orange-950/30"
+                                    ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                                    : "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1746,7 +1746,7 @@ function InventoryPageContent() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -1813,7 +1813,7 @@ function InventoryPageContent() {
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      className="gap-2 text-xs text-red-400  text-red-400"
+                                      className="gap-2 text-xs text-red-400"
                                       onClick={() => {
                                         toast({
                                           title: "폐기 검토",
