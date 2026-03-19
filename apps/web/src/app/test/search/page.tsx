@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal, Clock } from "lucide-react";
+import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal, Clock, Upload, CheckCircle2, AlertTriangle, XCircle, Edit3 } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
 import { PageHeader } from "@/app/_components/page-header";
@@ -627,6 +627,9 @@ function StickySearchBar() {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [inputMode, setInputMode] = useState<"search" | "excel" | "protocol">("search");
+  const [excelUploaded, setExcelUploaded] = useState(false);
+  const [protocolUploaded, setProtocolUploaded] = useState(false);
 
   useEffect(() => {
     setLocalQuery(searchQuery);
@@ -686,99 +689,324 @@ function StickySearchBar() {
     "67-66-3",
   ];
 
+  const modeTabs: { key: "search" | "excel" | "protocol"; label: string }[] = [
+    { key: "search", label: "직접 검색" },
+    { key: "excel", label: "엑셀 업로드 해석" },
+    { key: "protocol", label: "프로토콜 업로드 해석" },
+  ];
+
   return (
     <div className="w-full pt-4 pb-2 md:pt-6 md:pb-4 sticky top-0 z-10">
       {/* Search workbench panel */}
       <div className="bg-el border border-bd rounded-xl p-5 md:p-8 max-w-3xl mx-auto">
-        {/* Helper text */}
-        <p className="text-xs text-slate-500 mb-3 hidden md:block">
-          제품명, 제조사, 카탈로그 번호 기준으로 검색하고 비교 리스트에 담을 수 있습니다.
-        </p>
-        {/* Command search bar */}
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex items-center bg-pn border border-bs rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-sm">
-            <div className="pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-slate-300" />
-            </div>
-            <Input
-              type="text"
-              value={localQuery}
-              onChange={handleChange}
-              placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호로 검색"
-              className="flex-1 h-14 px-4 text-[15px] md:text-base border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
-            />
-            <Button
-              type="submit"
-              className="h-10 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold shrink-0 transition-colors mr-2"
-              disabled={!localQuery.trim()}
+        {/* 입력 모드 스위처 */}
+        <div className="bg-el rounded-lg p-1 flex gap-1 mb-4">
+          {modeTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setInputMode(tab.key)}
+              className={`flex-1 text-xs sm:text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                inputMode === tab.key
+                  ? "bg-pn text-slate-100"
+                  : "text-slate-400 hover:text-slate-300"
+              }`}
             >
-              <Search className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">검색 시작</span>
-            </Button>
-          </div>
-        </form>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {/* 검색 하단 컨텍스트 영역 — 검색 전에만 표시 */}
-        {!hasSearched && (
-          <div className="mt-4 space-y-3">
-            {/* 인식 가능 필드 뱃지 */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">인식 필드</span>
-              {recognizedFields.map((field) => (
-                <span
-                  key={field}
-                  className="bg-st text-slate-400 rounded-md px-2 py-0.5 text-xs"
+        {/* 직접 검색 모드 */}
+        {inputMode === "search" && (
+          <>
+            {/* Helper text */}
+            <p className="text-xs text-slate-500 mb-3 hidden md:block">
+              제품명, 제조사, 카탈로그 번호 기준으로 검색하고 비교 리스트에 담을 수 있습니다.
+            </p>
+            {/* Command search bar */}
+            <form onSubmit={handleSubmit} className="w-full">
+              <div className="flex items-center bg-pn border border-bs rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-sm">
+                <div className="pl-4 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-slate-300" />
+                </div>
+                <Input
+                  type="text"
+                  value={localQuery}
+                  onChange={handleChange}
+                  placeholder="시약명 / CAS No. / 제조사 / 카탈로그 번호로 검색"
+                  className="flex-1 h-14 px-4 text-[15px] md:text-base border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
+                />
+                <Button
+                  type="submit"
+                  className="h-10 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold shrink-0 transition-colors mr-2"
+                  disabled={!localQuery.trim()}
                 >
-                  {field}
-                </span>
-              ))}
-            </div>
+                  <Search className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">검색 시작</span>
+                </Button>
+              </div>
+            </form>
 
-            {/* 빠른 예시 쿼리 */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">예시</span>
-              {exampleQueries.map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  onClick={() => handleChipClick(term)}
-                  className="text-xs px-2 py-0.5 rounded-md bg-pn border border-bd text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
+            {/* 검색 하단 컨텍스트 영역 — 검색 전에만 표시 */}
+            {!hasSearched && (
+              <div className="mt-4 space-y-3">
+                {/* 인식 가능 필드 뱃지 */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">인식 필드</span>
+                  {recognizedFields.map((field) => (
+                    <span
+                      key={field}
+                      className="bg-st text-slate-400 rounded-md px-2 py-0.5 text-xs"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
 
-            {/* 최근 검색 */}
-            {recentSearches.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Clock className="h-3 w-3 text-slate-500 shrink-0" />
-                <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">최근</span>
-                {recentSearches.map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => handleChipClick(term)}
-                    className="text-xs px-2 py-0.5 rounded-md text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
-                  >
-                    {term}
-                  </button>
-                ))}
+                {/* 빠른 예시 쿼리 */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">예시</span>
+                  {exampleQueries.map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => handleChipClick(term)}
+                      className="text-xs px-2 py-0.5 rounded-md bg-pn border border-bd text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 최근 검색 */}
+                {recentSearches.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Clock className="h-3 w-3 text-slate-500 shrink-0" />
+                    <span className="text-[11px] text-slate-500 shrink-0 mr-0.5">최근</span>
+                    {recentSearches.map((term) => (
+                      <button
+                        key={term}
+                        type="button"
+                        onClick={() => handleChipClick(term)}
+                        className="text-xs px-2 py-0.5 rounded-md text-slate-400 hover:bg-el hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 운영 흐름 연결 */}
+                <div className="flex items-center gap-2 pt-2 border-t border-bd mt-1">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">바로가기</span>
+                  <Link href="/dashboard/inventory" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">재고 현황 확인</Link>
+                  <span className="text-slate-600">·</span>
+                  <Link href="/test/compare" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">비교 리스트 보기</Link>
+                  <span className="text-slate-600">·</span>
+                  <Link href="/test/quote" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">견적 요청으로 이동</Link>
+                </div>
               </div>
             )}
+          </>
+        )}
 
-            {/* 운영 흐름 연결 */}
-            <div className="flex items-center gap-2 pt-2 border-t border-bd mt-1">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">바로가기</span>
-              <Link href="/dashboard/inventory" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">재고 현황 확인</Link>
-              <span className="text-slate-600">·</span>
-              <Link href="/test/compare" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">비교 리스트 보기</Link>
-              <span className="text-slate-600">·</span>
-              <Link href="/test/quote" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">견적 요청으로 이동</Link>
-            </div>
+        {/* 엑셀 업로드 해석 모드 */}
+        {inputMode === "excel" && (
+          <div className="space-y-4">
+            {!excelUploaded ? (
+              <>
+                <div
+                  className="bg-el border-2 border-dashed border-bd rounded-xl p-8 text-center cursor-pointer hover:border-blue-500/40 transition-colors"
+                  onClick={() => setExcelUploaded(true)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); setExcelUploaded(true); }}
+                >
+                  <Upload className="h-8 w-8 text-slate-400 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-200 mb-1">발주표 또는 재고표를 업로드하세요</p>
+                  <p className="text-xs text-slate-400 mb-3">Excel/CSV 파일에서 품목명, 제조사, 카탈로그 번호, 수량을 자동으로 추출합니다.</p>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Badge variant="secondary" className="text-[10px] bg-st text-slate-400">.xlsx</Badge>
+                    <Badge variant="secondary" className="text-[10px] bg-st text-slate-400">.csv</Badge>
+                  </div>
+                  <Button type="button" className="bg-blue-600 hover:bg-blue-500 text-white text-sm">
+                    파일 선택
+                  </Button>
+                </div>
+                <p className="text-[11px] text-slate-500 text-center">
+                  AI가 컬럼을 자동 인식하고, 후보 제품을 매칭합니다. 승인 전 자동 구매는 발생하지 않습니다.
+                </p>
+              </>
+            ) : (
+              <ExcelUploadResult onReset={() => setExcelUploaded(false)} />
+            )}
+          </div>
+        )}
+
+        {/* 프로토콜 업로드 해석 모드 */}
+        {inputMode === "protocol" && (
+          <div className="space-y-4">
+            {!protocolUploaded ? (
+              <>
+                <div
+                  className="bg-el border-2 border-dashed border-bd rounded-xl p-8 text-center cursor-pointer hover:border-blue-500/40 transition-colors"
+                  onClick={() => setProtocolUploaded(true)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); setProtocolUploaded(true); }}
+                >
+                  <FileText className="h-8 w-8 text-slate-400 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-200 mb-1">실험 프로토콜 문서를 업로드하세요</p>
+                  <p className="text-xs text-slate-400 mb-3">PDF/DOCX에서 필요 시약과 소모품을 자동 추출하고, 기존 재고와 비교합니다.</p>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Badge variant="secondary" className="text-[10px] bg-st text-slate-400">.pdf</Badge>
+                    <Badge variant="secondary" className="text-[10px] bg-st text-slate-400">.docx</Badge>
+                  </div>
+                  <Button type="button" className="bg-blue-600 hover:bg-blue-500 text-white text-sm">
+                    파일 선택
+                  </Button>
+                </div>
+                <p className="text-[11px] text-slate-500 text-center">
+                  추출 결과를 검토한 뒤 부족 품목만 견적 요청할 수 있습니다.
+                </p>
+              </>
+            ) : (
+              <ProtocolUploadResult onReset={() => setProtocolUploaded(false)} />
+            )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* 엑셀 업로드 결과 (mock) */
+function ExcelUploadResult({ onReset }: { onReset: () => void }) {
+  const mockData = [
+    { id: 1, raw: "PBS buffer 1X, 500ml", extracted: "PBS Buffer 1X 500mL", candidate: "Gibco PBS pH 7.4", confidence: "high" as const, status: "확정 가능" },
+    { id: 2, raw: "FBS 소혈청 500ml", extracted: "Fetal Bovine Serum 500mL", candidate: "Gibco FBS (16000-044)", confidence: "medium" as const, status: "검토 필요" },
+    { id: 3, raw: "트립신 0.25%", extracted: "Trypsin-EDTA 0.25%", candidate: "Gibco Trypsin-EDTA", confidence: "high" as const, status: "확정 가능" },
+  ];
+
+  const confidenceBadge = (c: "high" | "medium" | "low") => {
+    if (c === "high") return <Badge className="bg-emerald-600/15 text-emerald-400 border-0 text-[10px]"><CheckCircle2 className="h-3 w-3 mr-1" />확정 가능</Badge>;
+    if (c === "medium") return <Badge className="bg-amber-600/15 text-amber-400 border-0 text-[10px]"><AlertTriangle className="h-3 w-3 mr-1" />검토 필요</Badge>;
+    return <Badge className="bg-red-600/15 text-red-400 border-0 text-[10px]"><XCircle className="h-3 w-3 mr-1" />매칭 실패</Badge>;
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* 요약 */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-300">
+          <span className="font-semibold text-slate-100">3건</span> 추출됨 · <span className="text-emerald-400">2건</span> 확정 가능 · <span className="text-amber-400">1건</span> 검토 필요
+        </p>
+        <button onClick={onReset} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">다시 업로드</button>
+      </div>
+
+      {/* 테이블 */}
+      <div className="border border-bd rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-sh text-slate-400 border-b border-bd">
+                <th className="text-left px-3 py-2 font-medium">원문</th>
+                <th className="text-left px-3 py-2 font-medium">추출값</th>
+                <th className="text-left px-3 py-2 font-medium">추천 후보</th>
+                <th className="text-left px-3 py-2 font-medium">상태</th>
+                <th className="text-left px-3 py-2 font-medium w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockData.map((row) => (
+                <tr key={row.id} className="border-b border-bd last:border-0 hover:bg-sh/50 transition-colors">
+                  <td className="px-3 py-2.5 text-slate-400 max-w-[140px] truncate">{row.raw}</td>
+                  <td className="px-3 py-2.5 text-slate-200 font-medium">{row.extracted}</td>
+                  <td className="px-3 py-2.5 text-slate-300">{row.candidate}</td>
+                  <td className="px-3 py-2.5">{confidenceBadge(row.confidence)}</td>
+                  <td className="px-3 py-2.5">
+                    <button className="text-slate-500 hover:text-slate-300 transition-colors" title="수정">
+                      <Edit3 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 하단 CTA */}
+      <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm">
+        승인된 항목을 비교 리스트에 담기
+      </Button>
+    </div>
+  );
+}
+
+/* 프로토콜 업로드 결과 (mock) */
+function ProtocolUploadResult({ onReset }: { onReset: () => void }) {
+  const mockData = [
+    { id: 1, item: "PBS Buffer 1X", needed: "2L", stock: "5L", status: "보유" as const },
+    { id: 2, item: "Fetal Bovine Serum", needed: "500mL", stock: "500mL", status: "보유" as const },
+    { id: 3, item: "Trypsin-EDTA 0.25%", needed: "200mL", stock: "100mL", status: "부족" as const },
+    { id: 4, item: "DMEM High Glucose", needed: "1L", stock: "1L", status: "보유" as const },
+    { id: 5, item: "Collagenase Type IV", needed: "100mg", stock: "-", status: "미등록" as const },
+  ];
+
+  const statusBadge = (s: "보유" | "부족" | "미등록") => {
+    if (s === "보유") return <Badge className="bg-emerald-600/15 text-emerald-400 border-0 text-[10px]">보유</Badge>;
+    if (s === "부족") return <Badge className="bg-amber-600/15 text-amber-400 border-0 text-[10px]">부족</Badge>;
+    return <Badge className="bg-red-600/15 text-red-400 border-0 text-[10px]">미등록</Badge>;
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* 요약 */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-300">
+          <span className="font-semibold text-slate-100">5건</span> 추출됨 · <span className="text-emerald-400">3건</span> 재고 보유 · <span className="text-amber-400">2건</span> 부족
+        </p>
+        <button onClick={onReset} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">다시 업로드</button>
+      </div>
+
+      {/* 테이블 */}
+      <div className="border border-bd rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-sh text-slate-400 border-b border-bd">
+                <th className="text-left px-3 py-2 font-medium">추출 품목</th>
+                <th className="text-left px-3 py-2 font-medium">필요량</th>
+                <th className="text-left px-3 py-2 font-medium">현재 재고</th>
+                <th className="text-left px-3 py-2 font-medium">상태</th>
+                <th className="text-left px-3 py-2 font-medium">액션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockData.map((row) => (
+                <tr key={row.id} className="border-b border-bd last:border-0 hover:bg-sh/50 transition-colors">
+                  <td className="px-3 py-2.5 text-slate-200 font-medium">{row.item}</td>
+                  <td className="px-3 py-2.5 text-slate-300">{row.needed}</td>
+                  <td className="px-3 py-2.5 text-slate-400">{row.stock}</td>
+                  <td className="px-3 py-2.5">{statusBadge(row.status)}</td>
+                  <td className="px-3 py-2.5">
+                    {(row.status === "부족" || row.status === "미등록") && (
+                      <button className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap">
+                        견적 요청 추가
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 하단 CTA */}
+      <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm">
+        부족 품목을 견적 요청에 담기
+      </Button>
     </div>
   );
 }
