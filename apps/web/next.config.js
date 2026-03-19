@@ -53,23 +53,7 @@ const nextConfig = {
       crypto: false,
     };
 
-    // SWC minifier TDZ 우회: terser를 직접 설치하여 사용
-    if (!isServer) {
-      try {
-        const TerserPlugin = require('terser-webpack-plugin');
-        config.optimization.minimizer = [
-          new TerserPlugin({
-            terserOptions: {
-              compress: { passes: 1 },
-              mangle: true,
-              output: { comments: false },
-            },
-          }),
-        ];
-      } catch (e) {
-        console.error('[next.config] terser-webpack-plugin 로드 실패 — SWC fallback:', e.message);
-      }
-    }
+    // (reserved for future optimization)
 
     return config;
   }
