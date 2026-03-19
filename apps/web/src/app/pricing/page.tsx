@@ -274,7 +274,7 @@ export default function PricingPage() {
               </div>
 
               {/* ── 가격 카드 ── */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 mb-10 md:mb-16 items-stretch lg:items-end">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 mb-10 md:mb-16 items-stretch">
                 {plans.map((plan) => {
                   const Icon = plan.icon;
                   const isRecommended = plan.isRecommended;
