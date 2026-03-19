@@ -44,6 +44,10 @@ export function BlockSkeleton({ children, minHeight }: BlockSkeletonProps) {
     <div
       className="bg-pn border border-bd rounded-xl p-4 space-y-3"
       style={{ minHeight: minHeight ? `${minHeight}px` : undefined }}
+      role="status"
+      aria-busy="true"
+      aria-label="데이터를 불러오는 중"
+      data-testid="block-skeleton"
     >
       {children ?? (
         <>
@@ -82,7 +86,7 @@ export function EmptyState({
   icon,
 }: EmptyStateProps) {
   return (
-    <div className="bg-pn border border-bd rounded-xl p-6 text-center">
+    <div className="bg-pn border border-bd rounded-xl p-6 text-center" role="status" data-testid="block-empty-state">
       {icon && <div className="flex justify-center mb-3">{icon}</div>}
       <p className="text-sm font-medium text-slate-300 mb-1">{title}</p>
       {description && <p className="text-xs text-slate-500 mb-4">{description}</p>}
@@ -122,9 +126,9 @@ export function ErrorState({
   retryCta = "다시 불러오기",
 }: ErrorStateProps) {
   return (
-    <div className="bg-pn border border-amber-500/20 rounded-xl p-5 flex items-center justify-between">
+    <div className="bg-pn border border-amber-500/20 rounded-xl p-5 flex items-center justify-between" role="alert" data-testid="block-error-state">
       <div className="flex items-center gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+        <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" aria-hidden="true" />
         <div>
           <p className="text-sm font-medium text-slate-200">{title}</p>
           <p className="text-xs text-slate-500 mt-0.5">{description}</p>
@@ -164,8 +168,8 @@ export function UnavailableState({
   primaryAction,
 }: UnavailableStateProps) {
   return (
-    <div className="bg-pn border border-bd rounded-xl p-5 text-center opacity-75">
-      <Lock className="h-5 w-5 text-slate-500 mx-auto mb-2" />
+    <div className="bg-pn border border-bd rounded-xl p-5 text-center opacity-75" role="status" aria-label="기능 사용 불가" data-testid="block-unavailable-state">
+      <Lock className="h-5 w-5 text-slate-500 mx-auto mb-2" aria-hidden="true" />
       <p className="text-sm font-medium text-slate-300 mb-1">{title}</p>
       {description && <p className="text-xs text-slate-500 mb-3">{description}</p>}
       {primaryAction && (

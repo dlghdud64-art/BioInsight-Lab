@@ -37,17 +37,15 @@ export function OverviewSection({
   children,
   footer,
   headerAction,
-  tone = "default",
   className,
 }: OverviewSectionProps) {
   return (
-    <section className={cn("space-y-3", className)}>
+    <section className={cn("space-y-3", className)} aria-label={title}>
       {/* Header */}
       <OverviewSectionHeader
         title={title}
         helperText={helperText}
         action={headerAction}
-        tone={tone}
       />
       {/* Body */}
       <div>{children}</div>
@@ -71,7 +69,7 @@ export function OverviewSectionHeader({ title, helperText, action }: SectionHead
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <h3 className="text-sm font-bold text-slate-100">{title}</h3>
+        <h2 className="text-sm font-bold text-slate-100">{title}</h2>
         {helperText && (
           <span className="text-[10px] text-slate-500 hidden md:inline">{helperText}</span>
         )}
