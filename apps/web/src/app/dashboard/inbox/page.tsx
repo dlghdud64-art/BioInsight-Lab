@@ -46,6 +46,12 @@ import {
   SEVERITY_DOT_COLORS,
   RESOLUTION_ACTION_LABELS,
 } from "@/lib/ops-console/blocker-adapter";
+import {
+  buildManualSearchReentryContext,
+  buildReentryCommand,
+  SOURCE_TYPE_LABELS,
+  type ReentrySourceType,
+} from "@/lib/ops-console/reentry-context";
 
 // ── Priority badge 색상 ──
 const PRIORITY_BADGE: Record<string, string> = {

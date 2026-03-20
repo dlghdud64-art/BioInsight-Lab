@@ -28,6 +28,8 @@ import {
   createHandoffCommand,
   createBlockerCommand,
 } from './action-model';
+import type { ReentryContext } from './reentry-context';
+import { buildReentryCommand, buildReentryDecisionSummary } from './reentry-context';
 
 // ---------------------------------------------------------------------------
 // 1. Quote Command Surface
@@ -573,4 +575,38 @@ export function buildInboxQuickAction(
     default:
       return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// 6. Re-entry Command Injection
+// ---------------------------------------------------------------------------
+
+/**
+ * 기존 CommandSurface에 re-entry context command를 주입한다.
+ * detail page에서 re-entry 버튼을 command bar에 노출할 때 사용.
+ */
+export function injectReentryCommand(
+  surface: CommandSurface,
+  reentryCtx: ReentryContext | undefined,
+): CommandSurface {
+  if (!reentryCtx) return surface;
+
+  const cmd = buildReentryCommand(reentryCtx);
+  const decision = buildReentryDecisionSummary(reentryCtx);
+
+  const reentryCommand = createHandoffCommand(
+    `reentry-${reentryCtx.sourceType}`,
+    cmd.label,
+    cmd.href,
+    () => {},
+  );
+
+  // Re-entry commands go into context commands (navigation tier)
+  return {
+    ...surface,
+    contextCommands: [
+      ...surface.contextCommands,
+      reentryCommand,
+    ],
+  };
 }

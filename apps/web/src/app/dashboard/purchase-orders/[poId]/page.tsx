@@ -18,6 +18,8 @@ import { buildPOCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildPOOwnership } from "@/lib/ops-console/ownership-adapter";
 import { buildPOBlockers } from "@/lib/ops-console/blocker-adapter";
+import { buildPORecoveryReentryContext } from "@/lib/ops-console/reentry-context";
+import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -173,20 +175,6 @@ export default function PurchaseOrderDetailPage() {
     return { blockers, reviewPoints, warnings: [] };
   })();
 
-  const commandSurface: CommandSurface = useMemo(
-    () =>
-      buildPOCommandSurface({
-        po,
-        approval,
-        ack,
-        vendorName,
-        onIssuePO: () => store.issuePO(po.id),
-        onAcknowledgePO: () => store.acknowledgePO(po.id),
-        onGoToReceiving: () => router.push("/dashboard/receiving"),
-      }),
-    [po, approval, ack, vendorName, store, router],
-  );
-
   const ownership = useMemo(
     () => buildPOOwnership(po, approval, ack),
     [po, approval, ack],
@@ -195,6 +183,28 @@ export default function PurchaseOrderDetailPage() {
   const blockerView = useMemo(
     () => buildPOBlockers(po, approval, ack),
     [po, approval, ack],
+  );
+
+  // Re-entry context for alternate sourcing (when ack pending or vendor issue)
+  const reentryCtx = useMemo(
+    () => ackPending ? buildPORecoveryReentryContext(po, ack) : undefined,
+    [po, ack, ackPending],
+  );
+
+  const commandSurface: CommandSurface = useMemo(
+    () => {
+      const base = buildPOCommandSurface({
+        po,
+        approval,
+        ack,
+        vendorName,
+        onIssuePO: () => store.issuePO(po.id),
+        onAcknowledgePO: () => store.acknowledgePO(po.id),
+        onGoToReceiving: () => router.push("/dashboard/receiving"),
+      });
+      return injectReentryCommand(base, reentryCtx);
+    },
+    [po, approval, ack, vendorName, store, router, reentryCtx],
   );
 
   const metaRail: MetaRailProps = {

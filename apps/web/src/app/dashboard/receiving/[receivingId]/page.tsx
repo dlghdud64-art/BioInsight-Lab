@@ -19,6 +19,9 @@ import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
 import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
+import { buildReceivingExceptionReentryContext } from "@/lib/ops-console/reentry-context";
+import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
+import { ReentryActionButton } from "../../_components/reentry-display";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -158,16 +161,6 @@ export default function ReceivingDetailPage() {
     return { blockers, reviewPoints, warnings };
   })();
 
-  const commandSurface: CommandSurface = useMemo(
-    () =>
-      buildReceivingCommandSurface({
-        rb,
-        onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
-        onPostToInventory: () => store.postToInventory(rb.id),
-      }),
-    [rb, store],
-  );
-
   const ownership = useMemo(
     () => buildReceivingOwnership(rb),
     [rb],
@@ -176,6 +169,25 @@ export default function ReceivingDetailPage() {
   const blockerView = useMemo(
     () => buildReceivingBlockers(rb),
     [rb],
+  );
+
+  // Re-entry context for replacement sourcing (when exception exists)
+  const hasException = hasDocMissing || hasQuarantine || totalReceived < totalOrdered;
+  const reentryCtx = useMemo(
+    () => hasException ? buildReceivingExceptionReentryContext(rb) : undefined,
+    [rb, hasException],
+  );
+
+  const commandSurface: CommandSurface = useMemo(
+    () => {
+      const base = buildReceivingCommandSurface({
+        rb,
+        onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
+        onPostToInventory: () => store.postToInventory(rb.id),
+      });
+      return injectReentryCommand(base, reentryCtx);
+    },
+    [rb, store, reentryCtx],
   );
 
   const metaRail: MetaRailProps = {

@@ -24,6 +24,11 @@ import { buildStockRiskOwnership } from "@/lib/ops-console/ownership-adapter";
 import { OwnershipStrip } from "../_components/ownership-display";
 import { buildStockRiskBlockers } from "@/lib/ops-console/blocker-adapter";
 import { AggregatedBlockerStrip } from "../_components/blocker-display";
+import {
+  buildStockRiskReentryContext,
+  buildExpiryReentryContext,
+} from "@/lib/ops-console/reentry-context";
+import { ReentryActionButton } from "../_components/reentry-display";
 
 // ── Status config ──────────────────────────────────────────────────
 type RiskStatus = "healthy" | "watch" | "reorder_due" | "critical_shortage" | "expiry_risk" | "quarantine_constrained" | "blocked";
@@ -403,6 +408,14 @@ export default function StockRiskPage() {
                                       {reason}
                                     </p>
                                   ))}
+                                </div>
+                              )}
+                              {!isConverted && !isBlocked && (
+                                <div className="mt-1">
+                                  <ReentryActionButton
+                                    context={buildStockRiskReentryContext(rr, stockPositions.find((s) => s.inventoryItemId === rr.inventoryItemId))}
+                                    compact
+                                  />
                                 </div>
                               )}
                             </div>

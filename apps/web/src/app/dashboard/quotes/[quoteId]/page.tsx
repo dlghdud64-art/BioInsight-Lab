@@ -25,6 +25,8 @@ import { buildQuoteCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildQuoteOwnership } from "@/lib/ops-console/ownership-adapter";
 import { buildQuoteBlockers } from "@/lib/ops-console/blocker-adapter";
+import { buildQuoteFollowupReentryContext } from "@/lib/ops-console/reentry-context";
+import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
 
 // ── 상태 라벨 ──
 const STATUS_LABELS: Record<string, string> = {
@@ -213,16 +215,18 @@ export default function QuoteDetailPage() {
   })();
 
   const commandSurface: CommandSurface = useMemo(
-    () =>
-      buildQuoteCommandSurface({
+    () => {
+      const base = buildQuoteCommandSurface({
         quoteRequest,
         responses,
         comparison,
         vendorMap,
         onSelectVendor: handleSelectVendor,
         onConvertToPO: handleConvertToPO,
-      }),
-    [quoteRequest, responses, comparison, vendorMap],
+      });
+      return injectReentryCommand(base, reentryCtx);
+    },
+    [quoteRequest, responses, comparison, vendorMap, reentryCtx],
   );
 
   const ownership = useMemo(
@@ -233,6 +237,13 @@ export default function QuoteDetailPage() {
   const blockerView = useMemo(
     () => buildQuoteBlockers(quoteRequest, responses, comparison),
     [quoteRequest, responses, comparison],
+  );
+
+  // Re-entry context for follow-up (when not yet converted)
+  const needsFollowup = !isConverted && (hasSubstitute || hasMissingDocs || respondedCount < quoteRequest.vendorIds.length);
+  const reentryCtx = useMemo(
+    () => needsFollowup ? buildQuoteFollowupReentryContext(quoteRequest, responses) : undefined,
+    [quoteRequest, responses, needsFollowup],
   );
 
   const metaRail: MetaRailProps = {
